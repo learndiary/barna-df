@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../fbi.genome.astalavista/fbi.genome.astalavista.iml" filepath="$PROJECT_DIR$/../fbi.genome.astalavista/fbi.genome.astalavista.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../fbi.genome.io/fbi.genome.io.iml" filepath="$PROJECT_DIR$/../fbi.genome.io/fbi.genome.io.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../fbi.genome.model/fbi.genome.model.iml" filepath="$PROJECT_DIR$/../fbi.genome.model/fbi.genome.model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../fbi.genome.reconstruction/fbi.genome.reconstruction.iml" filepath="$PROJECT_DIR$/../fbi.genome.reconstruction/fbi.genome.reconstruction.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../fbi.genome.rnaseq/fbi.genome.rnaseq.iml" filepath="$PROJECT_DIR$/../fbi.genome.rnaseq/fbi.genome.rnaseq.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../fbi.genome.simulator/fbi.genome.simulator.iml" filepath="$PROJECT_DIR$/../fbi.genome.simulator/fbi.genome.simulator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fbi_commons.iml" filepath="$PROJECT_DIR$/fbi_commons.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../fbi_genome/fbi_genome.iml" filepath="$PROJECT_DIR$/../fbi_genome/fbi_genome.iml" />
+    </modules>
+  </component>
+</project>
+
