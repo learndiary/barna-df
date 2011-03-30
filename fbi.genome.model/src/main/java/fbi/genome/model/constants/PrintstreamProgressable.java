@@ -1,8 +1,8 @@
 package fbi.genome.model.constants;
 
-import java.io.PrintStream;
+import fbi.commons.Progressable;
 
-import commons.Progressable;
+import java.io.PrintStream;
 
 
 

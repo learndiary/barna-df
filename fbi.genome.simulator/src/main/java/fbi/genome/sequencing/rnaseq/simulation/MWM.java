@@ -1,7 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 
-import commons.file.FileHelper;
+import fbi.commons.file.FileHelper;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;

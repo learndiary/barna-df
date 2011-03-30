@@ -7,32 +7,22 @@
 package fbi.genome.model;
 
 //import gphase.NMDSimulator;
-import commons.ByteArrayCharSequence;
-import commons.file.FileHelper;
+
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.file.FileHelper;
 import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.constants.Constants2;
+
+import java.io.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //import gphase.algo.AlignmentGenerator;
 //import gphase.algo.AlignmentWrapper;
 //import gphase.db.EnsemblDBAdaptor;
 //import gphase.ext.ClustalWrapper;
 //import gphase.graph.SpliceGraph;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.RandomAccessFile;
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.StringTokenizer;
-import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 

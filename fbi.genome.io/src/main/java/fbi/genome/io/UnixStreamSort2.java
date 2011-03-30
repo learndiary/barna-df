@@ -4,30 +4,18 @@ package fbi.genome.io;
 //import io.gff.ThreadedBufferedReader;
 //import io.gff.GTFSorter.ByteArrayCharSequence;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.file.FileHelper;
+import fbi.genome.model.commons.MyArrays;
+import fbi.genome.model.commons.MyFile;
+import fbi.genome.model.constants.Constants;
+
+import java.io.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.regex.Pattern;
-
-import commons.ByteArrayCharSequence;
-
-
-import commons.file.FileHelper;
-
-
-import fbi.genome.model.commons.MyArrays;
-import fbi.genome.model.commons.MyFile;
-import fbi.genome.model.constants.Constants;
 
 public class UnixStreamSort2 extends Thread {
 	public static final long MAX_FILE_SIZE_BYTES= 50000000;

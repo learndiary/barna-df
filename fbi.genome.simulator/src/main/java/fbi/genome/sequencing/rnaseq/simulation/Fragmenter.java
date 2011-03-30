@@ -1,11 +1,11 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import commons.ByteArrayCharSequence;
-import commons.MyFormatter;
-import commons.file.FileHelper;
-import commons.thread.StoppableRunnable;
-import commons.thread.SyncIOHandler2;
-import commons.thread.ThreadedQWriter;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.MyFormatter;
+import fbi.commons.file.FileHelper;
+import fbi.commons.thread.StoppableRunnable;
+import fbi.commons.thread.SyncIOHandler2;
+import fbi.commons.thread.ThreadedQWriter;
 import fbi.genome.io.BufferedByteArrayReader;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;
@@ -13,7 +13,6 @@ import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.constants.Constants;
-import fbi.genome.sequencing.rnaseq.simulation.ProgressablePlotter;
 import org.apache.commons.math.random.RandomDataImpl;
 
 import java.io.*;

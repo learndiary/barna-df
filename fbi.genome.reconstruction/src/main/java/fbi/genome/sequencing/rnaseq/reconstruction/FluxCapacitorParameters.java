@@ -1,14 +1,12 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import fbi.commons.file.FileHelper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.constants.Constants;
-
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-
-import commons.file.FileHelper;
 
 public class FluxCapacitorParameters {
 

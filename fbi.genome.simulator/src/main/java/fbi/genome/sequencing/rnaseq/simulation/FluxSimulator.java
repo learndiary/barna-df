@@ -1,39 +1,34 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import commons.Log;
-import commons.TableFormatter;
-import commons.file.FileHelper;
-import commons.system.SystemInspector;
+import fbi.commons.Log;
 import fbi.genome.io.SpliceGraphIO;
 import fbi.genome.model.IntronModel;
 import fbi.genome.model.constants.Constants;
 import org.apache.commons.math.random.RandomDataImpl;
 
 import java.io.*;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Random;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import java.util.concurrent.Callable;
 
 //import gphase.solexa.lp.GraphLPsolver5;
 //import gphase.solexa.simulation.Nebulizer;
 
 // TODO check whether selected fragments concord w pro file
 
-public class FluxSimulator extends Thread {
-
+public class FluxSimulator implements Callable<Void> {
+    /**
+     * Default flank length
+     */
+    private static final int FLANK5_LEN= 50, FLANK3_LEN= 50;
 	public static String version= "";
-	
-	public static final String CLI_ABBREV_DO_EXPR= "expr", CLI_ABBREV_DO_RT= "rt", CLI_ABBREV_DO_FRAG= "frag", CLI_ABBREV_DO_FILTER= "filt", CLI_ABBREV_DO_SEQ= "seq";
-	public static final char CLI_SHORT_DO_EXPR= 'x', CLI_SHORT_DO_RT= 'r', CLI_SHORT_DO_FRAG= 'f', CLI_SHORT_DO_FILTER= 'i', CLI_SHORT_DO_SEQ= 's';
-	public static final int FLANK5_LEN= 50, FLANK3_LEN= 50;
+
 	public static boolean c= false;
 
 	public static final String PROPERTY_BUILD= "simulator.build";
 	public static final String PROPERTY_JDK= "simulator.jdk";
-	
-	private HashMap<String, Method> cliAbbrevMap, cliLongMap;
-	private HashMap<Character, Method> cliShortMap;
-	private HashMap<Method, String> cliExplMap;
 	
 	//boolean gui= false, help= false, doExpr= false, doLib= false, doSeq= false, doSJ= false, doInstall= false;
 	boolean help= false, doExpr= false, doLib= false, doSeq= false, doSJ= false, doInstall= false;
@@ -43,7 +38,9 @@ public class FluxSimulator extends Thread {
 	Fragmenter fragmenter;
 	Sequencer sequencer;
 	int[] eflanks= null;
-	
+
+
+
 	public static void exit(int code) {
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 			
@@ -109,18 +106,26 @@ public class FluxSimulator extends Thread {
 		if(!readProperties()){
             System.exit(-1);
         }
-		
-		FluxSimulator sim= new FluxSimulator();
-        if(!sim.parseParameters(args)){
+		// prepare options
+        FluxOptions options = new FluxOptions();
+        try {
+            if(!options.parseParameters(args)){
+                System.exit(-1);
+            }
+        } catch (Exception e) {
+            Log.error("Error while parsing command line parameters: " + e.getMessage());
             System.exit(-1);
         }
 
-        if (sim.help) {
-			sim.printUsage();
-			System.exit(0);
-		}
-		sim.run();
-	}
+
+        FluxSimulator sim= new FluxSimulator();
+        options.apply(sim);
+        try {
+            sim.call();
+        } catch (Exception e) {
+            Log.error(e.getMessage());
+        }
+    }
 	
 	
 	public static boolean invertTable(File invFile) {
@@ -183,129 +188,9 @@ public class FluxSimulator extends Thread {
 	}
 
 
-    /**
-     * Parse the command line parameters and return true if everything is fine.
-     * Return false otherwise
-     *
-     * @param args the command line args
-     * @return valid returns true if all command line arguments are valid
-     */
-    public boolean parseParameters(String[] args) {
-        for (int i = 0; args!= null&& i < args.length; i++) {
-            if (args[i].startsWith(Constants.CLI_PAR_LONG))
-                i= setParameter(getCLIlongMap().get(args[i].substring(Constants.CLI_PAR_LONG.length())), args, i);
-            else if (args[i].startsWith(Constants.CLI_PAR_SHORT)) {
-                Method m= getCLIabbrevMap().get(args[i].substring(Constants.CLI_PAR_SHORT.length()));
-                if (m== null) {
-                    int j= Constants.CLI_PAR_SHORT.length();
-                    for (; j < args[i].length(); j++)
-                        if (getCLIshortMap().get(args[i].charAt(j))== null)	// Character.toLowerCase()
-                            break;
-                    if (j< args[i].length()) {
-                        Log.error("I did not understand the parameter " + args[i] + "!");
-                        return false;
-                    } // else
-                    int x= i;
-                    for (j = Constants.CLI_PAR_SHORT.length(); j < args[i].length(); j++)
-                        x= setParameter(getCLIshortMap().get(args[i].charAt(j)), args, x);
-                    i= x;
-                } else
-                    i= setParameter(m, args, i);
-            } else {
-                Log.error("What do you mean by "+ args[i]+ "?\nRunaway argument or bad monday?");
-                return false;
-            }
-        }
-        return true;
-    }
 
-    private int setParameter(Method m, String[] args, int i) {
-		if (m== null) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[PARLEZVOUS] I do not understand parameter "+ args[i]+"!");
-			System.exit(-1);
-		}
-		
-		String[] cc= new String[m.getParameterTypes().length];
-		if (cc!= null&& cc.length+ i>= args.length) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[WOLLY] Missing arguments for parameter "+args[i]+"!");
-			System.exit(-1);
-		}
-		for (int j = 0; j < cc.length; j++) 
-			cc[j]= args[i+ 1+ j];
-		try {
-			m.invoke(this, cc);
-		} catch (Exception e) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[FATAL] Failed to set parameter "+args[i]+"!");
-			System.exit(-1);
-		}
-		return (i+ cc.length);
-	}
-	
-	private HashMap<Character, Method> getCLIshortMap() {
-		if (cliShortMap == null) {
-			cliShortMap = new HashMap<Character, Method>();
-			try {
-				cliShortMap.put('p', this.getClass().getDeclaredMethod("setFile", new Class[] {String.class}));
-				//cliShortMap.put('X', this.getClass().getDeclaredMethod("setGUI", null));
-				cliShortMap.put('h', this.getClass().getDeclaredMethod("setHelp", null));
-				cliShortMap.put('x', this.getClass().getDeclaredMethod("setDoExpr", null));
-				cliShortMap.put('l', this.getClass().getDeclaredMethod("setDoLib", null));
-				cliShortMap.put('s', this.getClass().getDeclaredMethod("setDoSeq", null));
-				cliShortMap.put('j', this.getClass().getDeclaredMethod("setDoSJ", new Class[] {String.class}));
-				cliShortMap.put('g', this.getClass().getDeclaredMethod("setGenomeDir", new Class[] {String.class}));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}			
-		}
 
-		return cliShortMap;
-	}
-	
-	private HashMap<String, Method> getCLIabbrevMap() {
-		if (cliAbbrevMap == null) {
-			cliAbbrevMap = new HashMap<String, Method>();
-			try {
-				cliAbbrevMap.put("par", this.getClass().getDeclaredMethod("setFile", new Class[] {String.class}));
-				//cliAbbrevMap.put("gui", this.getClass().getDeclaredMethod("setGUI", null));
-				cliAbbrevMap.put("expr", this.getClass().getDeclaredMethod("setDoExpr", null));
-				cliAbbrevMap.put("lib", this.getClass().getDeclaredMethod("setDoLib", null));
-				cliAbbrevMap.put("seq", this.getClass().getDeclaredMethod("setDoSeq", null));
-				cliAbbrevMap.put("sj", this.getClass().getDeclaredMethod("setDoSJ", new Class[] {String.class}));
-				cliAbbrevMap.put("5flank", this.getClass().getDeclaredMethod("set5flank", new Class[] {String.class}));
-				cliAbbrevMap.put("3flank", this.getClass().getDeclaredMethod("set3flank", new Class[] {String.class}));
-				cliAbbrevMap.put("imodel", this.getClass().getDeclaredMethod("setImodel", new Class[] {String.class}));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
-		return cliAbbrevMap;
-	}
-	private HashMap<String, Method> getCLIlongMap() {
-		if (cliLongMap == null) {
-			cliLongMap = new HashMap<String, Method>();
-			try {
-				cliLongMap.put("parameter", this.getClass().getDeclaredMethod("setFile", new Class[] {String.class}));
-				//cliLongMap.put("graphical", this.getClass().getDeclaredMethod("setGUI", null));
-				cliLongMap.put("help", this.getClass().getDeclaredMethod("setHelp", null));
-				cliLongMap.put("express", this.getClass().getDeclaredMethod("setDoExpr", null));
-				cliLongMap.put("library", this.getClass().getDeclaredMethod("setDoLib", null));
-				cliLongMap.put("sequence", this.getClass().getDeclaredMethod("setDoSeq", null));
-				cliLongMap.put("junctions", this.getClass().getDeclaredMethod("setDoSJ", new Class[] {String.class}));
-				cliLongMap.put("imodel", this.getClass().getDeclaredMethod("setImodel", new Class[] {String.class}));
-				cliLongMap.put("genome", this.getClass().getDeclaredMethod("setGenomeDir", new Class[] {String.class}));
-				cliLongMap.put("install", this.getClass().getDeclaredMethod("setDoInstall", null));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		return cliLongMap;
-	}
-	
 	public void setFile(String fName) {
 		file= new File(fName);
 	}
@@ -372,163 +257,58 @@ public class FluxSimulator extends Thread {
 	}
 	
 	
-	public static void install() {
-		String wrapper= System.getProperty(Constants.PROPERTY_KEY_WRAPPER_BASE);
-		try {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[INIT] installing..");
-			
-			File demoDir= new File(wrapper+ File.separator+ ".."+ File.separator+ "demo");
-			if ((!demoDir.exists())|| (!demoDir.isDirectory())) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\t[FAILED] didn't find \'demo\' folder.");
-			}
-			String[] files= demoDir.list();
-			String demoPath= demoDir.getAbsolutePath();
-			try {
-				demoPath= demoDir.getCanonicalPath();
-			} catch (Exception exx) {
-				; // :)
-			}
-			for (int i = 0; i < files.length; i++) {
-				if (!files[i].endsWith(FluxSimulatorSettings.DEF_SFX_PAR))
-					continue;
-				File tmpFile= File.createTempFile("simulator", "install");
-				File parFile= new File(demoPath+ File.separator+ files[i]);
-				if (!FileHelper.copy(parFile, tmpFile)) {
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-						System.err.println("\t[FAILED] couldn't copy to "+ System.getProperty("java.io.tmpdir"));
-				}
-				BufferedReader buffy= new BufferedReader(new FileReader(tmpFile));
-				BufferedWriter writer= new BufferedWriter(new FileWriter(parFile));
-				int ctr= 0;
-				for (String s = null; (s= buffy.readLine())!= null;++ctr) {
-					if (!(s.startsWith(FluxSimulatorSettings.PAR_FRG_FNAME)||
-							s.startsWith(FluxSimulatorSettings.PAR_PRO_FNAME)||
-							s.startsWith(FluxSimulatorSettings.PAR_SEQ_FNAME)||
-							s.startsWith(FluxSimulatorSettings.PAR_REF_FNAME)||
-							s.startsWith(FluxSimulatorSettings.PAR_ERR_FNAME))) {
-						writer.write(s);
-						writer.write(System.getProperty("line.separator"));
-						continue;
-					}
-					String[] ss= s.split("\\s");
-					writer.write(ss[0]);
-					writer.write("\t");
-					int p1= ss[1].lastIndexOf("\\"), p2= ss[1].lastIndexOf('/');
-					int p= Math.max(p1, p2);
-					// IzPack variable substitution, eg ${INSTALL_PATH}${FILE_SEPARATOR}testRun.pro
-					int p3= ss[1].lastIndexOf("}");
-					p= Math.max(p, p3);
-					writer.write(demoPath+ File.separator+ ss[1].substring(p+1));
-					writer.write(System.getProperty("line.separator"));
-				}
-				buffy.close();
-				writer.flush();
-				writer.close();
-				tmpFile.delete();
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\twrote "+ctr+" lines to "+parFile.getName());
-			}
-				
 
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("\t[OK]");
-		} catch (Exception e) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("\t[FAILED] "+ e.getMessage());
-		}
-	}
 	
-	
-	public void run() {
-		
-		if (doInstall) {
-			install();
-			System.exit(0);
-		}
-		
-		if (doSJ&& (doExpr|| doLib|| doSeq)) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (doExpr|| doLib|| doSeq)
-					System.err.println("[TOOMUCH] Cannot mix splice junction extraction with an RNAseq experiment " +
-							"(expression, library construction and sequencing).");
-			}
-			System.exit(-1);
-		} else {
-			FluxSimulator.c= SystemInspector.checkRuntime();
-		}
+	public Void call() throws Exception {
+        Log.info("[HELLO] I am the Flux Simulator (build "+version+"), nice to meet you!\n");
+        if (file== null || !file.exists()) {
+            throw new RuntimeException("I have no parameter file and I want to scream!");
+        }
+
 		if (doSJ) {
-			
-			if (file== null|| !file.exists()) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[AIIII] I have no parameter file and I want to scream!");
-				System.exit(-1);
-			}
 			if (fileGenome== null|| !fileGenome.exists()) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[AIAIII] I have no directory with the genomic sequences!");
-				System.exit(-1);
-			} else
+				throw new RuntimeException("[AIAIII] I have no directory with the genomic sequences!");
+			} else{
+                // todo : refoactor this to not use a static variable
 				fbi.genome.model.Graph.overrideSequenceDirPath= fileGenome.getAbsolutePath();
+            }
 
 			int[] flanks= getEFlanks();
 			flanks[0]= flanks[0]< 0? FLANK5_LEN: flanks[0];
-			flanks[1]= flanks[1]< 0? FLANK5_LEN: flanks[1];
-			
+			flanks[1]= flanks[1]< 0? FLANK3_LEN: flanks[1];
+
 			IntronModel iModel= new IntronModel();
-			if (fileIM!= null)
+			if (fileIM!= null){
+                Log.info("Reading Model file " + fileIM.getAbsolutePath());
 				iModel.read(fileIM);
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("Extracting splice junctions, 5'sequence "+flanks[0]
-					+ ", 3'sequence "+eflanks[1]+", intron model "+ iModel.getName());
-				SpliceGraphIO.extractSpliceJunctions(flanks[0], flanks[1], iModel, file, null);
+            }
+            Log.info("Extracting splice junctions, 5'sequence "+flanks[0]
+                + ", 3'sequence "+eflanks[1]+", intron model "+ iModel.getName());
+            SpliceGraphIO.extractSpliceJunctions(flanks[0], flanks[1], iModel, file, null);
+            // todo: exit here ?
 		}
 
 
-        /*
-		if (gui) {
-			FluxSimulatorGUI gui= FluxSimulatorGUI.createGUI();
-			if (file!= null) {
-				settings= gui.load(file);
-				if (settings!= null)
-					gui.loadInit();
-			}
-			return;
-		}
-		*/
-		
-		// CLI
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("[HELLO] I am the Flux Simulator (build "+version+"), nice to meet you!\n");
-		if (file== null) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[AIIII] I have no parameter file and I want to scream!");
-			System.exit(-1);
-		}
-		
-		
 		// init
 		settings= FluxSimulatorSettings.createSettings(file);
 		if (settings== null)
-			System.exit(-1);
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("[INIT] I am collecting information on the run.");
+			throw new RuntimeException("Unable to create Setting file!");
+
+		Log.info("[INIT] I am collecting information on the run.");
 		profiler= new Profiler(settings);
 		settings.setProfiler(profiler);
 		if (settings.getProFile()!= null&& settings.getProFile().exists()&& settings.getProFile().canRead()) {
 			profiler.loadStats();
 			if (doExpr&& profiler.isFinishedExpression()) {
 				if (!userCLIconfirm("[CAUTION] I overwrite the expression values in file "+settings.getProFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
-					System.exit(0);	
+					return null;
 				else {
 					boolean b= settings.getProFile().delete();	// TODO maybe only remove rfreqs..
 					if (settings.getProfiler()!= null)
 						settings.getProfiler().status= -1;
 				}
 			}
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println();
+            Log.info("");
 		}
 		fragmenter= new Fragmenter(settings);
 		if (settings.getFrgFile()!= null&& settings.getFrgFile().exists()&& settings.getFrgFile().canRead()) {
@@ -540,44 +320,50 @@ public class FluxSimulator extends Thread {
 				settings.getFrgFile().delete();
 			} else 
 				fragmenter.loadStats();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println();
+            Log.info("");
 		}
 		sequencer= new Sequencer(settings);
 		if (settings.getErrFile()!= null&& !sequencer.loadErrors())
-			System.exit(-1);
+			throw new RuntimeException(""); // todo: describe the problem
 		if (settings.getSeqFile()!= null&& settings.getSeqFile().exists()&& settings.getSeqFile().canRead()) {
 			if (doExpr|| doLib|| doSeq) {
 				if (!userCLIconfirm("[ATTENTION] I am going to delete the sequencing file "+settings.getSeqFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
-					System.exit(0);
+					return null;
 				settings.getSeqFile().delete();
 			} else
 				sequencer.loadStats();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println();
+            Log.info("");
 		}
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println();
-		
+        Log.info("");
+
 		// do
 		long t0= System.currentTimeMillis();
-		if (doExpr) 
+
+
+        if (doExpr)
 			doExpr();
-		else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("[NOEXPR] you did not ask for expression, I skip it.\n");
-		if (doLib) 
+		else{
+			Log.info("you did not ask for expression, I skip it.\n");
+        }
+
+
+        if (doLib)
 			doLib();
-		else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("[NOLIB] you did not want me to construct the library, I skip it.");
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println();
+		else{
+			Log.info("you did not want me to construct the library, I skip it.");
+        }
+        Log.info("");
+
+
 		if (doSeq)
 			doSeq();
-		else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("[NOSEQ] sequencing has not been demanded, skipped.");
+		else {
+			Log.info("sequencing has not been demanded, skipped.");
+        }
 	
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("\n[END] I finished, took me "+(System.currentTimeMillis()- t0)/ 1000+" sec.");
+
+	    Log.info("\n[END] I finished, took me " + (System.currentTimeMillis() - t0) / 1000 + " sec.");
+        return null;
 	}
 	
 	void doExpr() {
@@ -595,15 +381,11 @@ public class FluxSimulator extends Thread {
 //				System.err.println("[FATAL] Problem during expression, I exit.");
 //			System.exit(-1);
 //		}
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println(); 	// sep line
 	}
 	
 	void doLib() {
 		if (!fragmenter.isReady()) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[WHATSUP] I am missing parameters for performing fragmentation.");
-			System.exit(-1);
+			throw new RuntimeException("[WHATSUP] I am missing parameters for performing fragmentation.");
 		}
 		// see run()
 /*		if (fragmenter.isFinished()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
@@ -611,90 +393,19 @@ public class FluxSimulator extends Thread {
 				System.exit(-1);
 */				
 		fragmenter.run();
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println(); 	// sep line
 	}
 	
 	void doSeq() {
 		if (!sequencer.isReady()) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[NONONO] I am missing parameters for sequencing.");
-			System.exit(-1);
+			throw new RuntimeException("[NONONO] I am missing parameters for sequencing.");
 		}
 		sequencer.run();
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println(); 	// sep line
 	}
 	
 	public static final String[] user_yes= new String[] {"yes", "y", "si", "yo", "ja", "ok"},
 		user_no= new String[] {"no", "n", "nein", "nope", "nix", "noe"};
 	
-	public void printUsage() {
-		if (Constants.verboseLevel== Constants.VERBOSE_SHUTUP) 
-			return;
-		
-		System.err.println("[HELLO] I am the Flux Simulator (build "+version+"), nice to meet you!\n");
-		System.err.println("[NOARGS] So, here is the list of arguments I understand:\n");
-		
-		TableFormatter tf= new TableFormatter(3);
-		tf.setTabRow(true);
-		tf.add(new String[] {"Parameter", "Argument", "Description"});
-		Iterator<Method> it= getCliExplMap().keySet().iterator();
-		while (it.hasNext()) {
-			Method m= it.next();
-			StringBuilder sb= new StringBuilder("[");
-			Object[] oo= getCLIshortMap().entrySet().toArray();
-			for (int i = 0; i < oo.length; i++) {
-				Entry<Character, Method> en= (Entry<Character, Method>) oo[i];
-				if (en.getValue().equals(m)) {
-					sb.append(Constants.CLI_PAR_SHORT);
-					sb.append(en.getKey());
-					break;
-				}
-			}
-			oo= getCLIabbrevMap().entrySet().toArray();
-			for (int i = 0; i < oo.length; i++) {
-				Entry<String, Method> en= (Entry<String, Method>) oo[i];
-				if (en.getValue().equals(m)) {
-					if (sb.length()> 1)
-						sb.append("|");
-					sb.append(Constants.CLI_PAR_SHORT);
-					sb.append(en.getKey());
-					break;
-				}
-			}
-			oo= getCLIlongMap().entrySet().toArray();
-			for (int i = 0; i < oo.length; i++) {
-				Entry<String, Method> en= (Entry<String, Method>) oo[i];
-				if (en.getValue().equals(m)) {
-					if (sb.length()> 1)
-						sb.append("|");
-					sb.append(Constants.CLI_PAR_LONG);
-					sb.append(en.getKey());
-					break;
-				}
-			}
-			sb.append("]");
-			String s1= sb.toString();
-			
-			sb= new StringBuilder();
-			if (m.getParameterTypes()!= null&& m.getParameterTypes().length> 0) {
-				for (int i = 0; i < m.getParameterTypes().length; i++) {
-					sb.append(m.getParameterTypes()[i].getSimpleName().toString());
-					sb.append(",");
-				}
-				sb.deleteCharAt(sb.length()- 1);
-			}
-			String s2= sb.toString();
-			String s3= getCliExplMap().get(m);
-			
-			tf.add(new String[] {s1,s2,s3});
-		}
-		
-		System.err.println(tf.toString());
-		System.err.println("\nByebye.");
-	}
-	
+
 	public static boolean userCLIconfirm(String message) {
 		
 		if (Constants.verboseLevel== Constants.VERBOSE_SHUTUP)
@@ -807,8 +518,9 @@ public class FluxSimulator extends Thread {
 
 		return val;
 	}
-	
-	private class FragmentA implements Comparable {
+
+
+    private class FragmentA implements Comparable {
 		int start= 0, end= 0;
 		public FragmentA(int a, int b) {
 			start= a;
@@ -878,30 +590,6 @@ public class FluxSimulator extends Thread {
 		double mid= ((double) min)+ (max- min)/ 2f;
 		double realValue= mid+ (rdm* (max-mid)/ CUT_OFF_GAUSSIAN_VAL);
 		return realValue; 
-	}
-
-	private HashMap<Method, String> getCliExplMap() {
-		if (cliExplMap == null) {
-			cliExplMap = new HashMap<Method, String>();
-			try {
-				cliExplMap.put(this.getClass().getDeclaredMethod("setFile", new Class[] {String.class}), "specify parameter file (PAR file)");
-				//cliExplMap.put(this.getClass().getDeclaredMethod("setGUI", null), "start graphical user interface (GUI)");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setHelp", null), "request command line options");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setDoExpr", null), "simulate expression");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setDoLib", null), "simulate library construction");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setDoSeq", null), "simulate sequencing");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setDoSJ", new Class[] {String.class}), "extract splice junctions (GTF file)");
-				cliExplMap.put(this.getClass().getDeclaredMethod("set5flank", new Class[] {String.class}), "exonic flank 5' of intron (-sj)");
-				cliExplMap.put(this.getClass().getDeclaredMethod("set3flank", new Class[] {String.class}), "exonic flank 3' of intron (-sj)");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setImodel", new Class[] {String.class}), "specify the introm model (-sj)");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setGenomeDir", new Class[] {String.class}), "set the path to the directory with genomic sequences (-sj)");
-				cliExplMap.put(this.getClass().getDeclaredMethod("setDoInstall", null), "install the demonstration (.par) files");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		return cliExplMap;
 	}
 
 	

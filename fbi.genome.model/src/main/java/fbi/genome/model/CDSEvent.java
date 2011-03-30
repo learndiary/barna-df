@@ -1,10 +1,10 @@
 package fbi.genome.model;
 
+import fbi.commons.MyFormatter;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import commons.MyFormatter;
 
 public class CDSEvent extends ASEvent {
 

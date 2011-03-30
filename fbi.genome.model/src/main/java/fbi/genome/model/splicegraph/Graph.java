@@ -1,36 +1,17 @@
 package fbi.genome.model.splicegraph;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Queue;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.zip.GZIPOutputStream;
-
 import fbi.genome.model.*;
-import commons.MyFormatter;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.commons.IntVector;
-import fbi.genome.model.commons.MyArrays;
-import fbi.genome.model.commons.MyFile;
-import fbi.genome.model.commons.MyMath;
-import fbi.genome.model.commons.MyTime;
+import fbi.genome.model.commons.*;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
 import fbi.genome.model.splicegraph.SuperEdge.EdgeTuple;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.zip.GZIPOutputStream;
 
 /**
  

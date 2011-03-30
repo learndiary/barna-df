@@ -1,8 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation.error;
 
-import commons.ByteArrayCharSequence;
-import commons.Progressable;
-
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Progressable;
 import fbi.genome.io.GEMobject;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.model.commons.IntVector;

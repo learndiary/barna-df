@@ -1,41 +1,23 @@
 package fbi.genome.sequencing.rnaseq.reconstruction.gui;
 
+import fbi.commons.ReadyOrNot;
+import fbi.commons.gui.SimpleBinPlotterPanel;
+import fbi.commons.thread.StoppableRunnable;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.commons.Distribution;
 import fbi.genome.model.constants.Constants;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableModel;
-
-import commons.ReadyOrNot;
-import commons.gui.SimpleBinPlotterPanel;
-import commons.thread.StoppableRunnable;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class InputGUI extends JPanel implements ReadyOrNot, StoppableRunnable {
 

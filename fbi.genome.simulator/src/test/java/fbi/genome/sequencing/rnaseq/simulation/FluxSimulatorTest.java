@@ -1,6 +1,5 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,6 +22,11 @@ public class FluxSimulatorTest {
     @Test
     public void testSimpleRun1(){
         FluxSimulator.main(new String[]{});
+    }
+
+    @Test
+    public void printHelp(){
+        FluxSimulator.main(new String[]{"--help"});
     }
 
 

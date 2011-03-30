@@ -1,19 +1,11 @@
-
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.UnixStreamSort;
 import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.gff.GFFSorter.Cocs;
 import fbi.genome.model.constants.Constants;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 
 
 public class Unsort {

@@ -1,10 +1,9 @@
 package fbi.genome.io;
 
-import commons.file.FileHelper;
+import fbi.commons.file.FileHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.Date;
 
 

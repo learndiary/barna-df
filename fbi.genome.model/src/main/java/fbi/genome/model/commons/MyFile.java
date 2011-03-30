@@ -1,9 +1,9 @@
 package fbi.genome.model.commons;
 
 
-import java.io.PrintStream;
+import fbi.commons.MyFormatter;
 
-import commons.MyFormatter;
+import java.io.PrintStream;
 
 public class MyFile extends java.io.File {
 	

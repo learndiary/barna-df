@@ -1,9 +1,9 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import commons.ByteArrayCharSequence;
-import commons.file.FileHelper;
-import commons.file.ReverseFileReader;
-import commons.thread.StoppableRunnable;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.file.FileHelper;
+import fbi.commons.file.ReverseFileReader;
+import fbi.commons.thread.StoppableRunnable;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;

@@ -1,7 +1,7 @@
 package fbi.genome.io.gff;
 
-import commons.ByteArrayCharSequence;
-import commons.file.FileHelper;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.file.FileHelper;
 import fbi.genome.io.UnixStreamSort;
 import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.model.commons.MyArrayHashMap;
@@ -9,19 +9,7 @@ import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;

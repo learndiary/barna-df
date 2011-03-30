@@ -1,6 +1,6 @@
 package fbi.genome.io;
 
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.model.constants.Constants;
 
 import java.io.IOException;

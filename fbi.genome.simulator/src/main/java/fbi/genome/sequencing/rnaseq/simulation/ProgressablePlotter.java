@@ -1,7 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 
 public interface ProgressablePlotter {
 	public boolean plot(int start, int end, int segLen, ByteArrayCharSequence ID);

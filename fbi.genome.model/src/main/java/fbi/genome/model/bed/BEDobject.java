@@ -1,13 +1,14 @@
 package fbi.genome.model.bed;
 
 //import gphase.gui.ColorMaster;
-import commons.ByteArrayCharSequence;
+
+import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.model.AnnotationObject;
 import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Graph;
 import fbi.genome.model.commons.MyArrays;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.NoSuchElementException;
 import java.util.Vector;
 

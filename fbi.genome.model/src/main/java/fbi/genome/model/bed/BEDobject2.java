@@ -1,9 +1,9 @@
 package fbi.genome.model.bed;
 
-import java.util.Comparator;
-
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.model.Graph;
+
+import java.util.Comparator;
 
 public class BEDobject2 extends ByteArrayCharSequence {
 

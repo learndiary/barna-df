@@ -1,21 +1,11 @@
 package fbi.genome.io.gff;
 
-import fbi.genome.model.Exon;
-import fbi.genome.model.Gene;
-import fbi.genome.model.Graph;
-import fbi.genome.model.SpliceSite;
-import fbi.genome.model.Transcript;
-import fbi.genome.model.Translation;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.HashMap;
-
-import commons.file.FileHelper;
+import fbi.commons.file.FileHelper;
+import fbi.genome.model.*;
 import fbi.genome.model.gff.GFFObject;
+
+import java.io.*;
+import java.util.HashMap;
 
 /**
  * Reads locus by locus and

@@ -1,10 +1,10 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
-import commons.MyFormatter;
-import commons.file.FileHelper;
-import commons.system.SystemInspector;
-import commons.thread.SyncIOHandler2;
-import commons.thread.ThreadedQWriter;
+import fbi.commons.MyFormatter;
+import fbi.commons.file.FileHelper;
+import fbi.commons.system.SystemInspector;
+import fbi.commons.thread.SyncIOHandler2;
+import fbi.commons.thread.ThreadedQWriter;
 import fbi.genome.io.UnixStreamSort;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;

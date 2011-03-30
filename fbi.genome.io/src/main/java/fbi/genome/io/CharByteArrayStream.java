@@ -1,17 +1,11 @@
 package fbi.genome.io;
 
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
+import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-
-import java.nio.ByteBuffer;
 
 
 public class CharByteArrayStream {

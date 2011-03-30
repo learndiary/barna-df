@@ -6,16 +6,11 @@
  */
 package fbi.genome.model;
 
+import fbi.commons.MyFormatter;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.tools.NMDSimulator;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Vector;
-
-import commons.MyFormatter;
+import java.util.*;
 
 /**
  * 

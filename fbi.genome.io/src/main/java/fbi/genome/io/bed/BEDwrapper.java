@@ -1,34 +1,14 @@
 package fbi.genome.io.bed;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
-import java.util.regex.Pattern;
-
-import commons.ByteArrayCharSequence;
-import commons.Progressable;
-import commons.thread.SyncIOHandler2;
-
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Progressable;
+import fbi.commons.thread.SyncIOHandler2;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.DefaultIOWrapper;
+import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.UnixStreamSort;
 import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.gff.GFFSorter.Cocs;
-import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.io.rna.ReadDescriptor;
 import fbi.genome.io.rna.SolexaPairedEndDescriptor;
@@ -39,6 +19,12 @@ import fbi.genome.model.commons.MyArrayHashMap;
 import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
+import java.util.regex.Pattern;
 
 public class BEDwrapper extends DefaultIOWrapper {
 

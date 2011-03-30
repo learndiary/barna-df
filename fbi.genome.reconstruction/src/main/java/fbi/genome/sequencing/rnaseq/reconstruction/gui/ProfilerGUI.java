@@ -1,45 +1,20 @@
 package fbi.genome.sequencing.rnaseq.reconstruction.gui;
 
+import fbi.commons.ReadyOrNot;
+import fbi.commons.gui.SimpleBinPlotterPanel;
+import fbi.commons.thread.StoppableRunnable;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitor;
 import fbi.genome.sequencing.rnaseq.reconstruction.TProfile;
 import fbi.genome.sequencing.rnaseq.reconstruction.TProfileFunction;
+import fbi.genome.sequencing.rnaseq.simulation.Fragmenter;
 
-
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Hashtable;
 import java.util.Random;
-
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JSeparator;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-
-import commons.ReadyOrNot;
-import commons.gui.SimpleBinPlotterPanel;
-import commons.thread.StoppableRunnable;
-import fbi.genome.sequencing.rnaseq.simulation.Fragmenter;
 
 public class ProfilerGUI extends JPanel implements ReadyOrNot, StoppableRunnable  {
 	public class Plotter9 {

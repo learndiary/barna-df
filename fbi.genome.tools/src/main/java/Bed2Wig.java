@@ -1,4 +1,4 @@
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.io.BufferedByteArrayReader;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.IntVector;

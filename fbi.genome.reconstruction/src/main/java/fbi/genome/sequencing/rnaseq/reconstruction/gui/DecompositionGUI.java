@@ -1,32 +1,18 @@
 package fbi.genome.sequencing.rnaseq.reconstruction.gui;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import fbi.commons.ReadyOrNot;
+import fbi.commons.thread.StoppableRunnable;
+import fbi.genome.model.constants.Constants;
+import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitor;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import fbi.genome.model.constants.Constants;
-import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitor;
-
-import javax.swing.BorderFactory;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.UIManager;
-
-import commons.ReadyOrNot;
-import commons.thread.StoppableRunnable;
 
 public class DecompositionGUI extends JPanel implements ReadyOrNot, StoppableRunnable {
 

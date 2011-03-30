@@ -1,10 +1,10 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import commons.ByteArrayCharSequence;
-import commons.file.FileHelper;
-import commons.thread.StoppableRunnable;
-import commons.thread.SyncIOHandler2;
-import commons.thread.ThreadedQWriter;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.file.FileHelper;
+import fbi.commons.thread.StoppableRunnable;
+import fbi.commons.thread.SyncIOHandler2;
+import fbi.commons.thread.ThreadedQWriter;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.Fasta;
 import fbi.genome.io.UnixStreamSort;

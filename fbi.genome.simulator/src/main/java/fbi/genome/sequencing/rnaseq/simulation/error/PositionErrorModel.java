@@ -2,7 +2,7 @@ package fbi.genome.sequencing.rnaseq.simulation.error;
 
 
 
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 
 import java.util.Arrays;
 import java.util.Random;

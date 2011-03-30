@@ -1,7 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import commons.ByteArrayCharSequence;
-import commons.file.FileHelper;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.file.FileHelper;
 import fbi.genome.model.constants.Constants;
 
 import java.io.*;

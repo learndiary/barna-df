@@ -1,40 +1,20 @@
 package fbi.genome.io.gff;
 
+import fbi.commons.thread.StoppableRunnable;
 import fbi.genome.io.DefaultIOWrapper;
-import fbi.genome.model.AbstractRegion;
-import fbi.genome.model.DirectedRegion;
-import fbi.genome.model.Exon;
-import fbi.genome.model.Gene;
-import fbi.genome.model.Species;
-import fbi.genome.model.SpliceSite;
-import fbi.genome.model.Transcript;
-import fbi.genome.model.Translation;
+import fbi.genome.model.*;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.constants.Constants;
-//import genome.tools.MyArray;
+import fbi.genome.model.gff.GFFObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.text.Collator;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.*;
 import java.util.regex.Pattern;
 
+//import genome.tools.MyArray;
 //import org.apache.commons.collections.BidiMap;
-
-
-import commons.thread.StoppableRunnable;
-import fbi.genome.model.gff.GFFObject;
 
 
 /**

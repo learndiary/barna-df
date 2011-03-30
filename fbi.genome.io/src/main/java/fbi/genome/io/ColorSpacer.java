@@ -1,11 +1,10 @@
 package fbi.genome.io;
 
-import commons.ByteArrayCharSequence;
+import fbi.commons.ByteArrayCharSequence;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-
 import java.util.Hashtable;
 
 public class ColorSpacer {

@@ -1,3 +1,4 @@
+import fbi.commons.file.FileHelper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
@@ -9,8 +10,6 @@ import fbi.genome.model.splicegraph.Node;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-
-import commons.file.FileHelper;
 
 /**
  * builds up splice graph, outputs introns

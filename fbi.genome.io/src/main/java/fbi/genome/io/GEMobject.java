@@ -1,5 +1,8 @@
 package fbi.genome.io;
 
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Progressable;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -7,9 +10,6 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import commons.ByteArrayCharSequence;
-import commons.Progressable;
 
 
 public class GEMobject {

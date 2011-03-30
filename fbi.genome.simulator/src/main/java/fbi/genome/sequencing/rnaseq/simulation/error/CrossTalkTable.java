@@ -3,8 +3,6 @@ package fbi.genome.sequencing.rnaseq.simulation.error;
 import java.util.Arrays;
 import java.util.Random;
 
-import commons.Progressable;
-
 public class CrossTalkTable {
 
 	public static final String ERR_ID= "CROSSTALK";
