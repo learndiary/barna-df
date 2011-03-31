@@ -625,6 +625,63 @@ make sense
 		return s;
 	}
 
+
+    /**
+     * Converts a given File as a Unix path relative to the given directory. If directory is
+     * null, the current working directory is used
+     *
+     * @param file the source file
+     * @param directory the directory (null permitted)
+     * @return path to the file relative to the directory
+     */
+    public static String toRelative(File file, File directory) {
+        String absFile = file.getAbsolutePath();
+        String absDir = directory.getAbsolutePath();
+        absFile = absFile.substring(absDir.length() + 1);
+        //absFile = absFile.replace('\\', '/');
+        return absFile;
+    }
+
+    /**
+     * Resolves a file from a relative path. If the given base directory is null, the current working
+     * directory is used
+     *
+     * @param rel the relative path
+     * @param dir the directory to which the path is relative to
+     * @return file referenced by the relative path
+     */
+    public static File fromRelative(String rel, File dir) {
+        if(isAbsolute(rel)) return new File(rel);
+
+        // find the right splitter
+        String sep = System.getProperty("file.separator");
+        String matcher = sep.equals("/") ? "\\/" : "\\\\";
+        String[] split = rel.split(matcher);
+        File f;
+        if(dir != null){
+            f = new File(dir.getAbsolutePath());
+        }else{
+            f = new File(".");
+        }
+        for (String p : split) {
+            f = new File(f, p);
+        }
+        return f;
+    }
+
+    /**
+     * Returns true if the given path is absolute
+     *
+     * @param path the path
+     * @return absolute true if path is absolute
+     */
+    public static boolean isAbsolute(String path){
+        if(path.startsWith("/")) return true;
+        if (path.matches("^.:\\\\.*")) return true;
+        return false;
+    }
+
+
 	public static void fastChannelCopy(File inputFile, File outputFile, boolean append, Progressable prog) throws IOException {
 		final InputStream input = new FileInputStream(inputFile);  
 		final OutputStream output = new FileOutputStream(outputFile, append);  

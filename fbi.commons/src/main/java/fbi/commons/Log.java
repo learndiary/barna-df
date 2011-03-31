@@ -13,13 +13,13 @@ public class Log {
      */
     public static final byte VERBOSE_DEBUG = 3;
     /**
-     * Show errors only
-     */
-    public static final byte VERBOSE_ERRORS = 2;
-    /**
      * Default log level
      */
-    public static final byte VERBOSE_NORMAL = 1;
+    public static final byte VERBOSE_NORMAL = 2;
+    /**
+     * Show errors only
+     */
+    public static final byte VERBOSE_ERRORS = 1;
     /**
      * Quite log level
      */

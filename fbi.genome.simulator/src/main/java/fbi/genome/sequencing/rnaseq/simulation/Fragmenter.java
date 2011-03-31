@@ -314,7 +314,7 @@ public class Fragmenter implements StoppableRunnable {
 		}
 		
 		private int[] where= new int[10], starts= new int[10];
-		void processRT(int start, int end, int len, ByteArrayCharSequence id) {
+		void processRT_current(int start, int end, int len, ByteArrayCharSequence id) {
 
 			if (len< 6)
 				processFragNot(start, end, len, id);
@@ -724,7 +724,7 @@ public class Fragmenter implements StoppableRunnable {
 			return (r<= val);
 		}
 
-		void processFilter(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFilter_current(int start, int end, int len, ByteArrayCharSequence id) {
 			
 			if (len< gelSizeMin|| len> gelSizeMax) {
 				--newMols;
@@ -1183,7 +1183,7 @@ public class Fragmenter implements StoppableRunnable {
 			rw.writeLine(cs, fos);	// id is invalid now
 		}
 
-		void processFilter_110210(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFilter(int start, int end, int len, ByteArrayCharSequence id) {
 					//RandomDataImpl rndGel= new RandomDataImpl();
 					//rndGel.nextGaussian(mu, sigma);
 					//rndGel.nextPoisson(mean)
@@ -1656,7 +1656,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processRT110217(int start, int end, int len, ByteArrayCharSequence id) {
+		void processRT(int start, int end, int len, ByteArrayCharSequence id) {
 		
 					int howmany= 0;
 					if (Fragmenter.this.settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_RANDOM)) {
@@ -1930,7 +1930,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processFrag110211(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
 				            
 							double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 		
@@ -2095,7 +2095,7 @@ public class Fragmenter implements StoppableRunnable {
 								--tgtMols;
 						}
 
-		void processFrag(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag_current(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
 				            
 			if (len<= 1) {	// does not break
 				updateMedian(len);
@@ -2517,7 +2517,7 @@ public class Fragmenter implements StoppableRunnable {
 					rdiNebuBP= new RandomDataImpl();
 					rndBP= new Random();
 				}
-				initPWM(mode);
+				//initPWM(mode);
 				if (isStop()|| !process(mode)) {
 					stopProcessors();
 					return;
@@ -2534,7 +2534,7 @@ public class Fragmenter implements StoppableRunnable {
 				}
 			}
 		} else {
-			initPWM(MODE_RT);
+			//initPWM(MODE_RT);
 			if (isStop()|| !process(MODE_RT)) {
 				stopProcessors();
 				return;
@@ -2549,7 +2549,7 @@ public class Fragmenter implements StoppableRunnable {
 					mode= MODE_FRAG;
 					rndBP= new Random();
 				}
-				initPWM(mode);
+				//initPWM(mode);
 				if (isStop()|| !process(mode)) {
 					stopProcessors();
 					return;
@@ -3335,11 +3335,11 @@ public class Fragmenter implements StoppableRunnable {
 			}
 			Processor[] processors= getProcessorPool(mode, Math.min(settings.getMaxThreads(), 1));			
 			for (roundCtr= 0;(!isStop()) 
-					&& (mode== MODE_FRAG&& roundCtr< 1)
-						|| ((mode== MODE_FILT|| mode==MODE_RT)&& roundCtr< 1)
-//					((mode== MODE_NEBU&& breakRatio> settings.getThold())	// && breakRatio> settings.getThold()
-//							|| (mode== MODE_FRAG&& ((cumuLen== -1|| (cumuLen/ (float) currMols)> 400)))		// && roundCtr< 4, tgtFrac< thrTgt||	 
-//							|| ((mode== MODE_RT|| mode== MODE_FILT)&& roundCtr< 1))
+//					&& (mode== MODE_FRAG&& roundCtr< 1)
+//						|| ((mode== MODE_FILT|| mode==MODE_RT)&& roundCtr< 1)
+					&& ((mode== MODE_NEBU&& breakRatio> settings.getThold())	// && breakRatio> settings.getThold()
+							|| (mode== MODE_FRAG&& ((cumuLen== -1|| (cumuLen/ (float) currMols)> 400)))		// && roundCtr< 4, tgtFrac< thrTgt||
+							|| ((mode== MODE_RT|| mode== MODE_FILT)&& roundCtr< 1))
 					; ++roundCtr, mode= getMode()) {
 				
 				avgLength= cumuLen/ (double) prevMols; 

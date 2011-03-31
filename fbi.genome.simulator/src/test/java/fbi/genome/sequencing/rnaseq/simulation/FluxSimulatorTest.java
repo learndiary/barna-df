@@ -21,12 +21,12 @@ public class FluxSimulatorTest {
 
     @Test
     public void testSimpleRun1(){
-        FluxSimulator.main(new String[]{});
+        //FluxSimulator.main(new String[]{});
     }
 
     @Test
     public void printHelp(){
-        FluxSimulator.main(new String[]{"--help"});
+        //FluxSimulator.main(new String[]{"--help"});
     }
 
 

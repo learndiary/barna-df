@@ -8,7 +8,7 @@ import fbi.genome.model.constants.Constants;
 import java.io.*;
 
 /**
- * Wrap around command line options
+ * Wrap around command line options, parse them and apply them to the flux simulator
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -61,17 +61,17 @@ public class FluxOptions {
     public FluxOptions() {
         // create options
         options = new Options(this);
-        options.addOption("setHelp", "request command line options", null, "help");
+        options.addOption("showHelp", "request command line options", null, "help");
         options.addParameter("setFile", "specify parameter file (PAR file)", 'p', "par", "parameter");
-        options.addOption("setDoExpr", "simulate expression", 'x', "expr", "express");
-        options.addOption("setDoLib", "simulate library construction", 'l', "lib", "library");
-        options.addOption("setDoSeq", "simulate sequencing", 's', "seq", "sequence");
+        options.addOption("expressionMode", "simulate expression", 'x', "expr", "express");
+        options.addOption("libraryMode", "simulate library construction", 'l', "lib", "library");
+        options.addOption("sequenceMode", "simulate sequencing", 's', "seq", "sequence");
         options.addParameter("setDoSJ", "extract splice junctions (GTF file)", 'j', "sj", "junctions");
         options.addParameter("set5flank", "exonic flank 5' of intron (-sj)", null, "5flank");
         options.addParameter("set3flank", "exonic flank 3' of intron (-sj)", null, "3flank");
         options.addParameter("setGenomeDir", "set the path to the directory with genomic sequences (-sj)", 'g', "genome");
         options.addParameter("setImodel", "specify the intron model (-sj)", null, "imodel");
-        options.addOption("setDoInstall", "install the demonstration (.par) files", null, "install");
+        options.addOption("doInstall", "install the demonstration (.par) files", null, "install");
     }
 
     /**
@@ -115,14 +115,18 @@ public class FluxOptions {
         }
 
         // apply the parameters
-        sim.eflanks = getEFlanks();
-        sim.file = file;
-        sim.fileGenome = fileGenome;
-        sim.fileIM = fileIM;
-        sim.doExpr = expression;
-        sim.doLib = library;
-        sim.doSeq = sequence;
-        sim.doSJ = extractSpliceJunctions;
+        if(getEFlanks()[0] > 0)
+            sim.set5flank(getEFlanks()[0]);
+        if(getEFlanks()[1] > 0)
+            sim.set3flank(getEFlanks()[1]);
+
+        sim.setFile(file);
+        sim.setGenomeDir(fileGenome);
+        sim.setImodel(fileIM);
+        sim.setExpression(expression);
+        sim.setLibrary(library);
+        sim.setSequence(sequence);
+        sim.setExtractSpliceJunctions(extractSpliceJunctions, file);
     }
 
     private static void install() {
@@ -216,35 +220,35 @@ public class FluxOptions {
     /**
      * Install
      */
-    public void setDoInstall(){
+    public void doInstall(){
         install= true;
     }
 
     /**
      * Activate expression mode
      */
-    public void setDoExpr(){
+    public void expressionMode(){
         expression= true;
     }
 
     /**
      * Activate library mode
      */
-    public void setDoLib(){
+    public void libraryMode(){
         library = true;
     }
 
     /**
      * Activate sequence mode
      */
-    public void setDoSeq(){
+    public void sequenceMode(){
         sequence = true;
     }
 
     /**
      * Activate help
      */
-    public void setHelp(){
+    public void showHelp(){
         help= true;
     }
 
@@ -254,7 +258,6 @@ public class FluxOptions {
      * @param path path to the genome directory
      */
     public void setGenomeDir(String path) {
-        fbi.genome.model.Graph.overrideSequenceDirPath= path;
         this.fileGenome= new File(path);
     }
 

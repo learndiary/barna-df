@@ -954,14 +954,13 @@ public class Sequencer implements StoppableRunnable {
 	/**
 	 * @deprecated
 	 * @param obj
-	 * @param c
 	 * @param absDir
 	 * @param tDir
 	 * @param seq
 	 * @param sequals
 	 * @return
 	 */
-	private String createQSeq(BEDobject obj, boolean c, byte absDir, byte tDir, char[] seq, byte[] sequals) {
+	private String createQSeq(BEDobject obj, byte absDir, byte tDir, char[] seq, byte[] sequals) {
 		 
 		String s= obj.getChrom().equals(getPolyAobj().getChrom())?"":obj.readSequence();
 //		 if (absDir< 0) {
@@ -974,8 +973,9 @@ public class Sequencer implements StoppableRunnable {
 		 } catch (ArrayIndexOutOfBoundsException e) {
 			 e.printStackTrace();
 		 }
-		 for (int i = 0; c&& i < s.length(); i++) 
-			 seq[i]= (c&& rnd.nextBoolean())? seq[i/2]: seq[i];
+        // c was always false
+//		 for (int i = 0; c&& i < s.length(); i++)
+//			 seq[i]= (c&& rnd.nextBoolean())? seq[i/2]: seq[i];
 		 if (s.length()< seq.length) {
 			 if (absDir== tDir)
 				 Arrays.fill(seq,s.length(),seq.length,'a');
@@ -1048,10 +1048,11 @@ public class Sequencer implements StoppableRunnable {
 		
 		byte[] a= obj2.a;
 		cs.reset();
+        int p1= obj2.getNameP1(), p2= obj2.getNameP2();
+        cs.ensureLength(0, 1+ (p2-p1));
 		byte[] b= cs.a;
 		b[0]= (babes== null|| !babes.hasQualities())? BYTE_GT: BYTE_AT;
 		++cs.end;
-		int p1= obj2.getNameP1(), p2= obj2.getNameP2();
 		assert(p1> 0&& p2> 0);
 		System.arraycopy(a, p1, b, 1, p2- p1);
 		cs.end+= p2- p1;
@@ -1474,7 +1475,7 @@ public class Sequencer implements StoppableRunnable {
 				//System.err.println(settings.readNr+" reads, "+nrOfFrags+ " frags, p= "+p);
 				Hashtable<CharSequence,Long> map= new Hashtable<CharSequence,Long>(settings.getProfiler().getMolecules().length);
 				Long long0= new Long(1);
-				boolean c= FluxSimulator.c;
+
 				
 				for (reader.read(); !stop&& (g= reader.getGenes())!= null; reader.read()) {
 					
@@ -1513,12 +1514,6 @@ public class Sequencer implements StoppableRunnable {
 						for (int j = 0; (!isStop())&& j < g[i].getTranscripts().length; j++) {
 							Transcript t= g[i].getTranscripts()[j];
 							Transcript t2= null;
-							if (c) {
-								if (g[i].getTranscriptCount()> 1)
-									t2= (j> 0)? g[i].getTranscripts()[j-1]: g[i].getTranscripts()[j+1];
-								else if (g.length> 1)
-									t2= (i> 0)? g[i-1].getTranscripts()[0]: g[i+1].getTranscripts()[0];
-							}
 							int[][] m= mapFrags.remove(t.getTranscriptID());
 							if (m!= null) {
 								 for (int k = 0; k < m.length; k++, ++totalFrags) {
@@ -1550,7 +1545,7 @@ public class Sequencer implements StoppableRunnable {
 											 if (settings.isFastQ()) {
 												 String qname= createQname(obj,t,t2,k,absDir,m[k][0],m[k][1],
 														 m[k][0],Math.min(m[k][0]+ settings.getReadLength()- 1, m[k][1])), 
-												 	qseq= createQSeq(obj, c, absDir, t.getStrand(), seq, sequals);
+												 	qseq= createQSeq(obj, absDir, t.getStrand(), seq, sequals);
 												 if (multiThread) {
 													 qfasta.add(qname);
 													 qfasta.add(qseq);
@@ -1585,7 +1580,7 @@ public class Sequencer implements StoppableRunnable {
 												 bwriter.write(obj+ "\n");
 											 if (settings.isFastQ()) {
 												 String qname= createQname(obj,t,t2,k,absDir,m[k][0],m[k][1], Math.max(m[k][1]- settings.getReadLength()+ 1, m[k][0]),m[k][1]), 
-												 	qseq= createQSeq(obj,c, absDir, t.getStrand(), seq, sequals);
+												 	qseq= createQSeq(obj,absDir, t.getStrand(), seq, sequals);
 												 if (multiThread) {
 													 qfasta.add(qname);
 													 qfasta.add(qseq);

@@ -1,6 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
 import fbi.genome.model.constants.Constants;
 
@@ -301,24 +302,7 @@ public class FluxSimulatorSettings {
 				String id= token[0]+ "@"+ token[1];
 				if (mapFrags.containsKey(id)) {
 					long absCnt= mapFrags.get(id);
-					if (FluxSimulator.c&& false) {
-						Iterator<CharSequence> kk= mapFrags.keySet().iterator();
-						for(CharSequence kx= null,k;kk.hasNext();kx=k) {
-							k= kk.next();
-							if (token[1].equals(k)) {
-								if (kk.hasNext()) {
-									absCnt= mapFrags.get(kk.next());
-									break;
-								}
-								if (kx!= null) {
-									absCnt= mapFrags.get(kx);
-									break;
-								}
-								absCnt= mapFrags.get(k);
-								break;
-							}
-						}
-					}
+
 					double relFreq= absCnt/ (double) total;
 					if (Double.isNaN(relFreq))
 						System.currentTimeMillis();
@@ -352,13 +336,14 @@ public class FluxSimulatorSettings {
 	public static FluxSimulatorSettings createSettings(File f) {
 	try {
 			
-		if (f== null|| !f.exists()) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (f== null)
-					System.err.println("\t[UHOH] I have no parameter file and I want to scream!");
-				else
-					System.err.println("\t[UHOH] parameter file does not exist: "+f.getCanonicalPath());
-			}
+		if (f== null|| !f.exists() || f.isDirectory()) {
+            if (f== null)
+                Log.error("\t[UHOH] I have no parameter file and I want to scream!");
+            else if(f.isDirectory())
+                Log.error("\t[UHOH] parameter file is a directory: "+f.getCanonicalPath());
+            else
+                Log.error("\t[UHOH] parameter file does not exist: "+f.getCanonicalPath());
+
 			return null;
 		} else {
 			f= new File(f.getCanonicalPath());	// kill Win32ShellFolder instances, they fuck up relative path conversion
@@ -379,20 +364,20 @@ public class FluxSimulatorSettings {
 			else if (s.startsWith(PAR_SEQ_READ_LENGTH)) 
 				settings.readLength= Integer.parseInt(s.substring(PAR_SEQ_READ_LENGTH.length()).trim());
 			else if (s.startsWith(PAR_PRO_FNAME)) 
-				proname= s.substring(PAR_PRO_FNAME.length()).trim();
+				proname= FileHelper.fromRelative(s.substring(PAR_PRO_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
 			else if (s.startsWith(PAR_REF_FNAME))
-				refname= s.substring(PAR_REF_FNAME.length()).trim();
+				refname= FileHelper.fromRelative(s.substring(PAR_REF_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
 			else if (s.startsWith(PAR_FRG_FNAME))
-				frgname= s.substring(PAR_FRG_FNAME.length()).trim();
+				frgname= FileHelper.fromRelative(s.substring(PAR_FRG_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
 			else if (s.startsWith(PAR_ERR_FNAME))
-				errname= s.substring(PAR_ERR_FNAME.length()).trim();
+				errname= FileHelper.fromRelative(s.substring(PAR_ERR_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
 			else if (s.startsWith(PAR_SEQ_FNAME))
-				seqname= s.substring(PAR_SEQ_FNAME.length()).trim();
+				seqname= FileHelper.fromRelative(s.substring(PAR_SEQ_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
 			else if (s.startsWith(PAR_TMP_FNAME)) {
-				tmpname= s.substring(PAR_TMP_FNAME.length()).trim();
+				tmpname= FileHelper.fromRelative(s.substring(PAR_TMP_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
 				System.setProperty(Constants.PROPERTY_TMPDIR, tmpname);
 			} else if (s.startsWith(PAR_GEN_DIR))
-				genname= s.substring(PAR_GEN_DIR.length()).trim();
+				genname= FileHelper.fromRelative(s.substring(PAR_GEN_DIR.length()).trim(), f.getParentFile()).getAbsolutePath();
 			if (s.startsWith(PAR_COMMENT))
 				continue;
 			
