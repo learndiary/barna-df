@@ -7,6 +7,18 @@
     <groupId>fbi</groupId>
     <artifactId>fbi.genome.model</artifactId>
     <version>1.0-SNAPSHOT</version>
+
+    <scm>
+        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.model</url>
+        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.model</connection>
+        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.model</developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+
     <dependencies>
         <dependency>
             <groupId>fbi</groupId>
@@ -14,4 +26,19 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
+
+    <!-- Deployment information -->
+    <distributionManagement>
+        <repository>
+            <id>fbi</id>
+            <name>fbi-releases</name>
+            <url>http://10.3.11.123:8080/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>fbi</id>
+            <name>fbi-snapshots</name>
+            <url>http://10.3.11.123:8080/artifactory/libs-snapshot-local</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
