@@ -1,6 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
 import fbi.commons.file.ReverseFileReader;
 import fbi.commons.thread.StoppableRunnable;
@@ -38,14 +39,11 @@ public class Profiler implements StoppableRunnable {
 	
 	
 	public void run() {
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println("[PROFILING] I am assigning the expression profile");
-		
+        Log.info("PROFILING", "I am assigning the expression profile");
 		status= getStatus();
 		if (status== STAT_NONE) {
 			if (!readAnnotation())
-				System.exit(-1);
+				throw new RuntimeException("Error while reading annotations!");
 			status= STAT_ANN;
 			writeProfile();
 		}
@@ -53,10 +51,10 @@ public class Profiler implements StoppableRunnable {
 		if (!isReady()) 
 			return;
 		if (!profile())
-			FluxSimulator.exit(-1);
+			throw new RuntimeException("Error creating profile !");
 
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("\tmolecules\t"+sumMol);
+			Log.info(null,"\tmolecules\t"+sumMol);
 		
 	}
 	

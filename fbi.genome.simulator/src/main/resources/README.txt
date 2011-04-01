@@ -27,11 +27,10 @@ GETTING STARTED
 
 your platform:
 
-sim.bat     Windows
+flux.bat     Windows
 
-sim.sh      UNIX clones
+flux         UNIX clones and Mac OS X
 
-sim.command Mac OSX
 
 * If you just want to play around, start the graphical user interface with
 

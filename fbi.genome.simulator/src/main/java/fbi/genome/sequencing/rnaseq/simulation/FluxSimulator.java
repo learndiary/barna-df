@@ -1,16 +1,17 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
-import fbi.commons.tools.CommandLine;
-import fbi.genome.io.SpliceGraphIO;
-import fbi.genome.model.IntronModel;
-import fbi.genome.model.constants.Constants;
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
+import org.cyclopsgroup.jcli.annotation.Option;
+import org.cyclopsgroup.jcli.spi.ParsingContext;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -20,7 +21,12 @@ import java.util.jar.Manifest;
 
 // TODO check whether selected fragments concord w pro file
 
-public class FluxSimulator implements Callable<Void> {
+/**
+ * Flux Simulator starter class
+ *
+ */
+@Cli(name="flux", restrict = false)
+public class FluxSimulator {
     /**
      * Current Flux Simulator version
      */
@@ -31,365 +37,150 @@ public class FluxSimulator implements Callable<Void> {
     public static String FLUX_REVISION = "";
 
     /**
-     * Default 5' flank
+     * The tool to be executed
      */
-    private static final int FLANK5_LEN= 50;
-    /**
-     * Default 3' flank
-     */
-    private static final int FLANK3_LEN= 50;
+    private String toolName;
 
     /**
-     * Expression mode
+     * Show help message
      */
-	private boolean expression = false;
-    /**
-     * Library mode
-     */
-    private boolean library = false;
-    /**
-     * Sequence mode
-     */
-    private boolean sequence = false;
-    /**
-     * Extract splice junctions mode
-     */
-    private boolean extractSpliceJunctions = false;
-
-    /**
-     * The parameter file
-     */
-	private File file;
-    /**
-     * IModel file
-     */
-    private File modelFile;
-    /**
-     * Genome directory
-     */
-    private File genomeFile;
-    /**
-     * The flux settings
-     */
-	private FluxSimulatorSettings settings;
-    /**
-     * The Profiler
-     */
-	private Profiler profiler;
-    /**
-     * The Fragmenter
-     */
-	private Fragmenter fragmenter;
-    /**
-     * The sequencer
-     */
-	private Sequencer sequencer;
-    /**
-     * Store the flanks
-     */
-	private int[] eflanks= null;
+    private boolean help;
 
 
     /**
-     * Create a new simulator
-     */
-    public FluxSimulator() {
-    }
-
-
-    /**
-     * Set the input file
+     * Start the Flux simulator
      *
-     * @param file the file
+     * @param args the command line arguments
      */
-    public void setFile(File file) {
-        this.file= file;
-    }
-
-    /**
-     * Set the model file
-     *
-     * @param modelFile absolute path to the model file
-     */
-    public void setImodel(File modelFile) {
-        this.modelFile = modelFile;
-    }
-
-    /**
-     * Activate splice junction extraction and use the given file as input
-     *
-     * @param extractSpliceJunctions activate/deactivate
-     * @param file input file
-     */
-    public void setExtractSpliceJunctions(boolean extractSpliceJunctions, File file) {
-        this.extractSpliceJunctions = extractSpliceJunctions;
-        if(extractSpliceJunctions) setFile(file);
-    }
-
-    /**
-     *
-     * @return expressionMode true if expression mode is on
-     */
-    public boolean isExpression() {
-        return expression;
-    }
-
-    /**
-     * Activate expression mode
-     *
-     * @param expression activate/deactivate expression mode
-     */
-    public void setExpression(boolean expression) {
-        this.expression = expression;
-    }
-
-    /**
-     *
-     * @return libraryMode true if library mode is active
-     */
-    public boolean isLibrary() {
-        return library;
-    }
-
-    /**
-     * Activate/Deactivate library mode
-     *
-     * @param library activate/deactivate library mode
-     */
-    public void setLibrary(boolean library) {
-        this.library = library;
-    }
-
-    /**
-     *
-     * @return sequenceMode true if sequence mode is active
-     */
-    public boolean isSequence() {
-        return sequence;
-    }
-
-    /**
-     * Activate/deactivate sequence mode
-     * @param sequence activate/deactivate sequence mode
-     */
-    public void setSequence(boolean sequence) {
-        this.sequence = sequence;
-    }
-
-    /**
-     * Get the current flanks. Returns a two element array, index 0 is 5' flank,  index 1 is the 3' flank
-     *
-     * @return flanks the flanks
-     */
-    public int[] getEFlanks() {
-        if (eflanks == null) {
-            eflanks = new int[2];
-            eflanks[0]= -1;
-            eflanks[1]= -1;
+    public static void main(String[] args) {
+        /*
+        Read properties
+         */
+        if(!readProperties()){
+            System.exit(-1);
         }
 
-        return eflanks;
-    }
+        // register tools
+        List<FluxTool> tools = new ArrayList<FluxTool>();
+        tools.add(new SpliceJunctionExtractor());
+        tools.add(new SimulationPipeline());
 
-    /**
-     * Set the genome directory
-     *
-     * @param genomeDir absolute path to the genome directory
-     */
-    public void setGenomeDir(File genomeDir) {
-        if(genomeDir != null && !genomeDir.isDirectory()) throw new IllegalArgumentException(genomeDir + " is no directory!");
-        this.genomeFile = genomeDir;
-    }
+        // prepare the simulator
+        FluxSimulator simulator = new FluxSimulator();
+        ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(FluxSimulator.class);
+        fluxArguments.process(args, simulator);
 
-    /**
-     * Set the 5' flank
-     *
-     * @param length flank length  @code{> 0}
-     */
-    public void set5flank(int length) {
-        getEFlanks()[0]= -1;
-        if(length <= 0){
-            throw new IllegalArgumentException("Not a valid length for 5' exon flank: " + length);
+        // prepare tools
+        List<org.cyclopsgroup.jcli.spi.Cli> toolClis = new ArrayList<org.cyclopsgroup.jcli.spi.Cli>();
+        for (FluxTool fluxTool : tools) {
+            ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
+            ParsingContext context = toolArguments.createParsingContext();
+            toolClis.add(context.cli());
         }
-        getEFlanks()[0]= length;
-    }
-
-    /**
-     * Set the 3' flank
-     *
-     * @param length flank length @code{> 0}
-     */
-    public void set3flank(int length) {
-        getEFlanks()[1]= -1;
-        if(length <= 0){
-            throw new IllegalArgumentException("Not a valid length for 3' exon flank: " + length);
-        }
-        getEFlanks()[1]= length;
-    }
 
 
-    /**
-     * Executes the pipeline
-     *
-     * @return void always returns null
-     * @throws Exception in case of execution or configuration errors
-     */
-    public Void call() throws Exception {
+
+        // start
         Log.info("I am the Flux Simulator (v"+ FLUX_VERSION +" build"+FLUX_REVISION+"), nice to meet you!\n");
-        if (file == null || !file.exists()) {
-            throw new RuntimeException("I have no parameter file and I want to scream!");
+
+        // find the tool to start
+        FluxTool tool = null;
+        if(simulator.getToolName() != null){
+            int i = 0;
+            for (org.cyclopsgroup.jcli.spi.Cli cli : toolClis) {
+                if(cli.getName().equals(simulator.getToolName())){
+                    tool = tools.get(i);
+                    break;
+                }
+                i++;
+            }
         }
 
-        if (extractSpliceJunctions) {
-            if (genomeFile == null|| !genomeFile.exists()) {
-                throw new RuntimeException("[AIAIII] I have no directory with the genomic sequences!");
-            } else{
-                // todo : refactor this to not use a static variable
-                fbi.genome.model.Graph.overrideSequenceDirPath= genomeFile.getAbsolutePath();
-            }
+        if(simulator.isHelp()){
+            // show help message
+            PrintWriter stdoutWriter = new PrintWriter(System.err);
+            if(tool == null){
+                // show general help
+                try {
+                    fluxArguments.printHelp(stdoutWriter);
+                    stdoutWriter.flush();
 
-            int[] flanks= getEFlanks();
-            flanks[0]= flanks[0]< 0? FLANK5_LEN: flanks[0];
-            flanks[1]= flanks[1]< 0? FLANK3_LEN: flanks[1];
-
-            IntronModel iModel= new IntronModel();
-            if (modelFile != null){
-                Log.info("Reading Model file " + modelFile.getAbsolutePath());
-                iModel.read(modelFile);
-            }
-            Log.info("Extracting splice junctions, 5'sequence "+flanks[0]
-                + ", 3'sequence "+eflanks[1]+", intron model "+ iModel.getName());
-            SpliceGraphIO.extractSpliceJunctions(flanks[0], flanks[1], iModel, file, null);
-            // todo: exit here ?
-        }
-
-
-        // init
-        settings= FluxSimulatorSettings.createSettings(file);
-        if (settings== null)
-            throw new RuntimeException("Unable to create Setting file!");
-
-        Log.info("[INIT] I am collecting information on the run.");
-        profiler= new Profiler(settings);
-        settings.setProfiler(profiler);
-        if (settings.getProFile()!= null&& settings.getProFile().exists()&& settings.getProFile().canRead()) {
-            profiler.loadStats();
-            if (expression && profiler.isFinishedExpression()) {
-                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file "+settings.getProFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
-                    return null;
-                else {
-                    boolean b= settings.getProFile().delete();	// TODO maybe only remove rfreqs..
-                    if (settings.getProfiler()!= null)
-                        settings.getProfiler().status= -1;
+                    System.err.println("\tTools available:");
+                    for (FluxTool fluxTool : tools) {
+                        ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
+                        ParsingContext context = toolArguments.createParsingContext();
+                        System.err.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
+                    }
+                    System.err.println("\n");
+                    System.err.println("To get help for a specific tool try -t <tool> --help");
+                } catch (IOException e) {
+                    Log.error("This is embarrassing. Something went terribly wrong and I can not even print the help message ! ", e);
+                }
+            }else{
+                // show tool help
+                // create the argument parser
+                ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
+                try {
+                    toolArguments.printHelp(stdoutWriter);
+                    stdoutWriter.flush();
+                } catch (IOException e) {
+                    Log.error("This is embarrassing. Something went terribly wrong and I can not even print the help message ! ", e);
                 }
             }
-            Log.info("");
-        }
-        fragmenter= new Fragmenter(settings);
-        if (settings.getFrgFile()!= null&& settings.getFrgFile().exists()&& settings.getFrgFile().canRead()) {
-            if (expression || library) {
-                //System.err.println("RE-USING library");
-                // see doLib()
-//				if (!userCLIconfirm("[WARNING] I will overwrite the library file "+settings.getFrgFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
-//					System.exit(0);
-                settings.getFrgFile().delete();
-            } else
-                fragmenter.loadStats();
-            Log.info("");
-        }
-        sequencer= new Sequencer(settings);
-        if (settings.getErrFile()!= null&& !sequencer.loadErrors())
-            throw new RuntimeException(""); // todo: describe the problem
-        if (settings.getSeqFile()!= null&& settings.getSeqFile().exists()&& settings.getSeqFile().canRead()) {
-            if (expression || library || sequence) {
-                if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file "+settings.getSeqFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
-                    return null;
-                settings.getSeqFile().delete();
-            } else
-                sequencer.loadStats();
-            Log.info("");
-        }
-        Log.info("");
-
-        // do
-        long t0= System.currentTimeMillis();
-
-
-        if (expression)
-            doExpr();
-        else{
-            Log.info("you did not ask for expression, I skip it.\n");
+            // exit after printing help
+            System.exit(-1);
         }
 
+        if(tool != null){
+            // execute the tool
+            ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
+            toolArguments.process(args, tool);
 
-        if (library)
-            doLib();
-        else{
-            Log.info("you did not want me to construct the library, I skip it.");
+            try {
+                tool.call();
+            } catch (Exception e) {
+                Log.error("Error while executing "+ tool.getClass(), e);
+            }
         }
-        Log.info("");
-
-
-        if (sequence)
-            doSeq();
-        else {
-            Log.info("sequencing has not been demanded, skipped.");
-        }
-
-
-        Log.info("\n[END] I finished, took me " + (System.currentTimeMillis() - t0) / 1000 + " sec.");
-        return null;
     }
 
-    void doExpr() {
-//		if (!profiler.isFinishedReadAnnotation())
-//			profiler.readAnnotation();
-//
-//		if (!profiler.isReady()) {
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[MISSING] I lack parameters for performing expression.");
-//			System.exit(-1);
-//		}
-        profiler.run();
-//		if (!profiler.profile()) {
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[FATAL] Problem during expression, I exit.");
-//			System.exit(-1);
-//		}
+    /**
+     * Get the name of the tool that is used
+     *
+     * @return toolName the name of the tool
+     */
+    public String getToolName() {
+        return toolName;
     }
 
-    void doLib() {
-        if (!fragmenter.isReady()) {
-            throw new RuntimeException("[WHATSUP] I am missing parameters for performing fragmentation.");
-        }
-        // see run()
-/*		if (fragmenter.isFinished()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			if (!userCLIconfirm("[CAREFULLY] There are files describing a constructed libary, do you want to overwrite?\n(Yes,No,Don't care)"))
-				System.exit(-1);
-*/
-        fragmenter.run();
+    /**
+     * Set the name of the tool
+     *
+     * @param toolName toolname
+     */
+    @Option(name = "t", longName = "tool", description = "select the tool")
+    public void setToolName(String toolName) {
+        this.toolName = toolName;
     }
 
-    void doSeq() {
-        if (!sequencer.isReady()) {
-            throw new RuntimeException("[NONONO] I am missing parameters for sequencing.");
-        }
-        sequencer.run();
+    /**
+     * Should the help be displayed
+     *
+     * @return help true if help message should be displayed
+     */
+    public boolean isHelp() {
+        return help;
     }
 
-
-
-
-
-
-
-
-	public static void exit(int code) {
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			
-		}
-	}
-
+    /**
+     * Show the help message
+     *
+     * @param help the help message
+     */
+    @Option(name = "h", longName = "help", description = "show help message")
+    public void setHelp(boolean help) {
+        this.help = help;
+    }
 
     /**
      * Read properties like version and build revision from jar file
@@ -459,34 +250,7 @@ public class FluxSimulator implements Callable<Void> {
         return true;
 		
 	}
-	
-	public static void main(String[] args) {
-		
-		if(!readProperties()){
-            System.exit(-1);
-        }
-		// prepare options
-        FluxOptions options = new FluxOptions();
-        try {
-            if(!options.parseParameters(args)){
-                System.exit(-1);
-            }
-        } catch (Exception e) {
-            Log.error("Error while parsing command line parameters: " + e.getMessage());
-            System.exit(-1);
-        }
 
-
-        FluxSimulator sim= new FluxSimulator();
-        options.apply(sim);
-        try {
-            sim.call();
-        } catch (Exception e) {
-            Log.error(e.getMessage());
-        }
-    }
-	
-	
 	public static boolean invertTable(File invFile) {
 		
 		System.err.println("[INFO] inverting .pro file");
@@ -536,6 +300,4 @@ public class FluxSimulator implements Callable<Void> {
 			System.err.println("\t[OHNO] failed to move "+tmpFile+" to "+invFile);
 		return true;
 	}
-
-
 }

@@ -2485,7 +2485,7 @@ public class Fragmenter implements StoppableRunnable {
 			System.err.println("[LIBRARY] creating the cDNA libary");
 		
 		if (!init())
-			FluxSimulator.exit(-1);
+			throw new RuntimeException("Failed to initialize the Fragmenter!");
 		
 		if (settings.getFrgFile().exists()&& checkFrgFile())
 			return;
@@ -2572,13 +2572,13 @@ public class Fragmenter implements StoppableRunnable {
 			return;
 		}
 		if (!writeFinalFile())
-			FluxSimulator.exit(-1);
+			throw new RuntimeException("Error while writing final fragmentation!");
 		if (isStop()) {
 			stopProcessors();
 			return;
 		}
 		if (!FluxSimulatorSettings.appendProfile(settings, FluxSimulatorSettings.PRO_COL_NR_FRG, mapFrags))	// writeProFile()
-			FluxSimulator.exit(-1);
+			throw new RuntimeException("Error appending profile!");
 		stopProcessors();
 	}
 

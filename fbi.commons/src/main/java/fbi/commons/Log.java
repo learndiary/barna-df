@@ -83,10 +83,24 @@ public class Log {
      * @param message the message
      */
     public static void info(String message){
+        info("INFO", message);
+    }
+
+    /**
+     * Log an info message using a given prefix
+     *
+     * @param message the message
+     */
+    public static void info(String prefix, String message){
         if(verboseLevel >= VERBOSE_NORMAL){
-            System.err.println("[INFO] "+message);
+            if(prefix != null && !prefix.isEmpty()){
+                System.err.println("["+prefix+"] "+message);
+            }else{
+                System.err.println(message);
+            }
         }
     }
+
 
     /**
      * Log an error message
