@@ -26,7 +26,11 @@ libdir="$dir/../lib"
 cp=""
 for lib in $libdir/*
 do
-    cp=$lib:$cp
+    if [ -n "$cp" ]; then
+        cp=$lib:$cp
+    else
+        cp=$lib
+    fi
 done
 
 java -Xmx1G -DwrapperDir="$dir/bin" -cp $cp fbi.genome.sequencing.rnaseq.simulation.FluxSimulator "$@"

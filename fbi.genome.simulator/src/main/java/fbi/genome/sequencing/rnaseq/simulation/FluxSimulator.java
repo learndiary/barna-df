@@ -5,13 +5,14 @@ import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 import org.cyclopsgroup.jcli.spi.ParsingContext;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -61,9 +62,7 @@ public class FluxSimulator {
         }
 
         // register tools
-        List<FluxTool> tools = new ArrayList<FluxTool>();
-        tools.add(new SpliceJunctionExtractor());
-        tools.add(new SimulationPipeline());
+        List<FluxTool> tools = findTools();
 
         // prepare the simulator
         FluxSimulator simulator = new FluxSimulator();
@@ -142,6 +141,38 @@ public class FluxSimulator {
                 Log.error("Error while executing "+ tool.getClass(), e);
             }
         }
+    }
+
+    /**
+     * Search for flux tools. Currently the search is limited to classes in the fbi package.
+     *
+     * @return tools all detected flux tools
+     */
+    static List<FluxTool> findTools() {
+
+        // scan the classpath to find tools
+        List<FluxTool> tools = new ArrayList<FluxTool>();
+        List<URL> fbiUrls = new ArrayList<URL>(ClasspathHelper.getUrlsForPackagePrefix("fbi"));
+
+        ConfigurationBuilder config = new ConfigurationBuilder();
+        config.useParallelExecutor();
+        config.setScanners(new SubTypesScanner());
+        config.setUrls(fbiUrls);
+
+        Reflections reflections = new Reflections(config);
+
+
+        Set<Class<? extends FluxTool>> toolClasses = reflections.getSubTypesOf(FluxTool.class);
+        for (Class<? extends FluxTool> toolClass : toolClasses) {
+            try {
+                FluxTool fluxTool = toolClass.newInstance();
+                tools.add(fluxTool);
+            } catch (Exception e) {
+                Log.error("Error while creating tool instance for " + toolClass.getName(), e);
+                Log.error("Make sure the class exists and has a default constructor.");
+            }
+        }
+        return tools;
     }
 
     /**

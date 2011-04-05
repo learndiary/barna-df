@@ -4,6 +4,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test basic functions
@@ -20,14 +24,9 @@ public class FluxSimulatorTest {
     }
 
     @Test
-    public void testSimpleRun1(){
-        //FluxSimulator.main(new String[]{});
+    public void testFindTools(){
+        List<FluxTool> tools = FluxSimulator.findTools();
+        assertNotNull(tools);
+        assertEquals(2, tools.size());
     }
-
-    @Test
-    public void printHelp(){
-        //FluxSimulator.main(new String[]{"--help"});
-    }
-
-
 }

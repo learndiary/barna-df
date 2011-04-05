@@ -49,6 +49,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -124,12 +125,25 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Commandline annotations-->
         <dependency>
             <groupId>org.cyclopsgroup</groupId>
             <artifactId>jcli</artifactId>
             <version>1.0-alpha-4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
+        <!-- Classpath scanner-->
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.5-RC2</version>
+        </dependency>
 
     </dependencies>
     <repositories>
@@ -137,6 +151,13 @@
             <id>ThinkCentre-M58e</id>
             <name>ThinkCentre-M58e-releases</name>
             <url>http://localhost:8080/artifactory/repo</url>
+        </repository>
+
+        <!-- class scanner -->
+        <repository>
+            <id>reflections-repo</id>
+            <name>Reflections Maven2 Repository</name>
+            <url>http://reflections.googlecode.com/svn/repo</url>
         </repository>
     </repositories>
 
