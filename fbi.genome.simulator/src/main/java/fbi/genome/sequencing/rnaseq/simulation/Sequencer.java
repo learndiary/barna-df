@@ -2,8 +2,9 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.file.FileHelper;
+import fbi.commons.io.IOHandler;
+import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
-import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.Fasta;
@@ -43,7 +44,7 @@ public class Sequencer implements StoppableRunnable {
 	ModelPool babes= null;
 	boolean multiThread= false;
 	boolean outputSAM= false;
-	SyncIOHandler2 rw;
+	IOHandler rw;
 	int cntPlus, cntMinus;
 	
     public Sequencer(FluxSimulatorSettings settings) {
@@ -224,7 +225,7 @@ public class Sequencer implements StoppableRunnable {
 
 
 
-		private void process(boolean left, Transcript t, int fstart, int fend, int k) {
+		private void process(boolean left, Transcript t, int fstart, int fend, int k) throws IOException {
 			
 			byte absDir= (byte) (t.getStrand()>= 0?1: -1),
 				antiDir= (byte) (t.getStrand()>= 0?-1: 1);
@@ -541,7 +542,7 @@ public class Sequencer implements StoppableRunnable {
 			InputStream is= new FileInputStream(inFile);
 			File tmpOut= File.createTempFile("sim", "_sorted");
 			final OutputStream os= new FileOutputStream(tmpOut);
-			rw= new SyncIOHandler2(2);
+			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
 			rw.addStream(is, 10* 1024);
 			rw.addStream(os, 10* 1024);
 			PipedOutputStream out = new PipedOutputStream();
@@ -590,7 +591,7 @@ public class Sequencer implements StoppableRunnable {
 			sorter.join();
 			t.join();
 			rw.close();
-			rw.join();
+			//rw.join();
 			if (Constants.progress!= null)
 				Constants.progress.finish();
 			
@@ -611,10 +612,10 @@ public class Sequencer implements StoppableRunnable {
 				System.err.println("\t"+ sss);
 
 			FileInputStream inStram= new FileInputStream(in);
-			rw= new SyncIOHandler2(2);
+			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
 			rw.addStream(inStram);
-			if (FluxSimulatorSettings.optDisk)
-				rw.start();
+//			if (FluxSimulatorSettings.optDisk)
+//				rw.start();
 			File zipF= new File(System.getProperty("java.io.tmpdir")+ File.separator
 					+ "master.zip");
 			ZipOutputStream zipOut= new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipF)));
@@ -808,15 +809,15 @@ public class Sequencer implements StoppableRunnable {
 			// 0x00000000401d8000 JavaThread "Sequencing Processor 1" [_thread_in_vm, id=19810,
 			// also happened in rw thread 
 			// workaround with -XX:-UseBias
-			rw= new SyncIOHandler2(2);
+			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
 			rw.addStream(oBed);
 			if (tmpFasta!= null) {
 				oFasta= new FileOutputStream(tmpFasta);
 				rw.addStream(oFasta);
 			}
 			// GFFReader and Zipfile unfortunately not
-			if (FluxSimulatorSettings.optDisk)
-				rw.start();
+//			if (FluxSimulatorSettings.optDisk)
+//				rw.start();
 			Processor[] processors= getProcessorPool(Math.min(settings.getMaxThreads(), 1));
 			cntPlus= cntMinus= 0;
 			for (reader.read(); !stop&& (g= reader.getGenes())!= null; reader.read()) {
@@ -1821,7 +1822,7 @@ public class Sequencer implements StoppableRunnable {
 			// IO handler disk
 			InputStream istream= new FileInputStream(inFile);
 			OutputStream ostream= new FileOutputStream(outFile);
-			rw= new SyncIOHandler2(2);
+			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
 			rw.addStream(ostream, 10* 1024);
 			
 			// setup sorter / zipper pipes
@@ -1852,8 +1853,8 @@ public class Sequencer implements StoppableRunnable {
 				sorter.start();
 				zipper.start();
 			}
-			if (FluxSimulatorSettings.optDisk)
-				rw.start();
+//			if (FluxSimulatorSettings.optDisk)
+//				rw.start();
 
 			// feed sorter
 			OutputStream feedOut= pipeOut== null?new ZipOutputStream(ostream):new BufferedOutputStream(pipeOut);
@@ -1926,8 +1927,8 @@ public class Sequencer implements StoppableRunnable {
 				linesRec= zipper.linesRec;
 			}
 			rw.close();
-			if (rw.isAlive())
-				rw.join();
+//			if (rw.isAlive())
+//				rw.join();
 			ostream.close();
 			
 			assert(cnt== zipper.linesRec);

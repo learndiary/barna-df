@@ -751,8 +751,12 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
 	public void ensureLength(int from, int len) {
 		int diff= (from+ len)- a.length;
-		if (diff> 0) 
-			extend(diff);
+		if (diff> 0) {
+            int e = a.length * 2;
+            if(e > diff) diff = e;
+            extend(diff);
+        }
+			//extend(diff);
 	}
 
 	public void toUpperCase() {

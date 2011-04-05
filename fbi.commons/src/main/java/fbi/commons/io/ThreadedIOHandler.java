@@ -1,49 +1,14 @@
-package fbi.commons.thread;
+package fbi.commons.io;
 
 import fbi.commons.ByteArrayCharSequence;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Hashtable;
 
-public class SyncIOHandler2 extends Thread {
-    /**
-     * New line
-     */
-	private static byte BYTE_NL= '\n';
-    /**
-     * Windows new line
-     */
-    private static byte BYTE_CR= '\r';
-    /**
-     * The default buffer size
-     */
-	private static final int DEFAULT_BUFFER_SIZE = 10* 1024;
-
-
-	public static void main(String[] args) {
-		try {
-			// H_sapiens-HepG2_10879_42KJPAAXX_75_sorted.bed
-			// H_sapiens-HepG2-r2.nextgeneid.AS_sorted.gtf
-			// big.gtf
-			InputStream fis= new FileInputStream("N:\\tmp\\H_sapiens-HepG2-r2.nextgeneid.AS_sorted.gtf");
-			OutputStream fos= new FileOutputStream("N:\\tmp\\H_sapiens-HepG2-r2.nextgeneid.AS_sorted.gtf_3");
-			SyncIOHandler2 tst= new SyncIOHandler2(2);
-			tst.addStream(fis, 10* 1024);
-			tst.addStream(fos, 10* 1024);
-			tst.setMonitor(true);
-			tst.start();
-			
-			ByteArrayCharSequence cs= new ByteArrayCharSequence(128);
-			while ((cs= tst.readLine(fis))!= null)
-				tst.writeLine(cs, fos);
-			tst.close();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
+class ThreadedIOHandler extends Thread implements IOHandler{
 	Hashtable<Object, byte[]> bufHash;
 	Hashtable<Object, Integer> posHash;
 	HashSet<Object> closedHash;
@@ -58,13 +23,13 @@ public class SyncIOHandler2 extends Thread {
 	Monitor mon;
 	boolean monitor= false;
 	class Monitor extends Thread {
-		
+
 		long delta= 5000;
-		
+
 		public Monitor() {
 			super("RequestMonitor");
 		}
-		
+
 		@Override
 		public void run() {
 			while (!stop) {
@@ -80,9 +45,9 @@ public class SyncIOHandler2 extends Thread {
 		}
 
 	}
-	
-	
-	public SyncIOHandler2(int maxStreamCapacity) {
+
+
+	public ThreadedIOHandler(int maxStreamCapacity) {
 		super("SyncDiskThread");
 		this.maxStreamCap= maxStreamCapacity;
 		bufHash= new Hashtable<Object, byte[]>(maxStreamCapacity* 2);
@@ -93,7 +58,7 @@ public class SyncIOHandler2 extends Thread {
 	}
 	
 	public void addStream(Object stream) {
-		addStream(stream, DEFAULT_BUFFER_SIZE);
+		addStream(stream, IOHandler.DEFAULT_BUFFER_SIZE);
 	}
 	public void addStream(Object stream, int bufSize) {
 		byte[] buf= null;
@@ -229,9 +194,13 @@ public class SyncIOHandler2 extends Thread {
 					//System.err.println("filling "+ bufHash.get(a[x]).length+ " - "+ posHash.get(a[x]));
 					fill((InputStream) a[x]);
 				} else if (a[x] instanceof OutputStream)
-					flush((OutputStream) a[x]);
-				
-			}
+                    try {
+                        flush((OutputStream) a[x]);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+            }
 //			System.err.println("free.");
 			
 		}
@@ -245,7 +214,7 @@ public class SyncIOHandler2 extends Thread {
 		}
 	}
 	
-	public void close() {
+	public boolean close() {
 		stop= true;
 		while(isAlive())
 			try {
@@ -262,8 +231,8 @@ public class SyncIOHandler2 extends Thread {
 		for (int i = 0; i < n; ++i) {
 			if (a[i] instanceof OutputStream) {
 				OutputStream out= (OutputStream) a[i];
-				flush(out);
-				try {
+                try {
+				    flush(out);
 					out.close();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -277,10 +246,11 @@ public class SyncIOHandler2 extends Thread {
 				}
 			}
 		}
-	}
+        return true;
+    }
 	
 	public int readLine(InputStream in, ByteArrayCharSequence cs) {
-		byte n= BYTE_NL, r= BYTE_CR;
+		byte n= IOHandler.BYTE_NL, r= IOHandler.BYTE_CR;
 		byte[] b= bufHash.get(in); // , bb= null;
 //		System.err.print("rLine() locking b..");
 //		System.err.flush();
@@ -308,7 +278,6 @@ public class SyncIOHandler2 extends Thread {
 			}
 			i = 0;
 			for (; i < p&& b[i]!= n; ++i);	// find lsep
-			
 
 			if (i> 0&& b[i-1]== r)
 				--i;
@@ -324,7 +293,7 @@ public class SyncIOHandler2 extends Thread {
 			    System.arraycopy(b, i, b, 0, p- i);
 			    posHash.put(in, pos- i);
             }else{
-                posHash.put(in, 0);
+                posHash.put(in, 0); // last line
             }
 			//System.err.println("read "+ i+ " from "+ idx);
 		}
@@ -370,7 +339,7 @@ public class SyncIOHandler2 extends Thread {
 		return len;
 	}
 
-	public boolean writeLine(ByteArrayCharSequence cs, OutputStream out) {
+	public void writeLine(ByteArrayCharSequence cs, OutputStream out) throws IOException{
 		int len= cs.length();
 		byte[] b= bufHash.get(out);
 //		System.err.print("wLine() locking b..");
@@ -394,16 +363,16 @@ public class SyncIOHandler2 extends Thread {
 			}
 			System.arraycopy(cs.a, cs.start, b, pos, len);
 			pos+= len;
-			b[pos++]= BYTE_NL;
+			b[pos++]= IOHandler.BYTE_NL;
 			posHash.put(out, pos);
 		}
 		//System.out.println("put "+len);
 //		System.err.println("free.");
 			
-		return true;
+
 	}
 	
-	public boolean write(byte[] bb, int x, int len, OutputStream idx) {
+	public void write(byte[] bb, int x, int len, OutputStream idx) throws IOException{
 		byte[] b= bufHash.get(idx);
 //		System.err.print("write() locking b..");
 //		System.err.flush();
@@ -427,25 +396,21 @@ public class SyncIOHandler2 extends Thread {
 		}
 		//System.out.println("put "+len);
 //		System.err.println("free.");
-		return true;
+
 	}
 	
 	public static final Integer INTEGER_0= new Integer(0);
 
-    private void flush(OutputStream out) {
+    private void flush(OutputStream out) throws IOException {
 		byte[] b= bufHash.get(out);
 		int p= -1;
 		synchronized (b) {
 			p= posHash.get(out);
-            try {
-                out.write(b, 0, p);
-                out.flush();
-				posHash.put(out, INTEGER_0);
-				totOut+= p;
-				b.notify();
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
+            out.write(b, 0, p);
+            out.flush();
+            posHash.put(out, INTEGER_0);
+            totOut+= p;
+            b.notify();
 
 
 		}
@@ -465,20 +430,32 @@ public class SyncIOHandler2 extends Thread {
 	 * @param idx
 	 * @return
 	 */
-	public ByteArrayCharSequence readLine(InputStream idx) {
-			byte n= BYTE_NL, r= BYTE_CR;
+	public ByteArrayCharSequence readLine(InputStream idx) throws IOException{
+        if(1==1){
+            ByteArrayCharSequence cs= new ByteArrayCharSequence(IOHandler.DEFAULT_BUFFER_SIZE);
+            int i = readLine(idx, cs);
+            if(i <0) return null;
+            return cs;
+        }
+
+
+			byte n= IOHandler.BYTE_NL, r= IOHandler.BYTE_CR;
 			byte[] b= bufHash.get(idx), bb= null;			
 			synchronized (b) {
 	//			while (pos[idx]== 0) 
 	//				fill(idx);
 				int pos= posHash.get(idx);
 				while (pos< minVol&& idx!= null) {
-					try {
-						interrupt();
-						b.wait();
-					} catch (InterruptedException e) {
-						; // :)
-					}
+                    if (isAlive()){
+                        try {
+                            interrupt();
+                            b.wait();
+                        } catch (InterruptedException e) {
+                            ; // :)
+                        }
+                    }else{
+                        fill(idx);
+                    }
 					pos= posHash.get(idx);
 				}
 				int p= posHash.get(idx);

@@ -137,7 +137,14 @@ public class FluxSimulator {
 
             try {
                 tool.call();
-            } catch (Exception e) {
+            }catch (IOException ioError){
+                // check for some specific errors
+                if(ioError.getMessage().equals("No space left on device")){
+                    Log.error("[DISK] There is no space left on the device!");
+                }else{
+                    Log.error("Error while executing "+ tool.getClass(), ioError);
+                }
+            }catch (Exception e) {
                 Log.error("Error while executing "+ tool.getClass(), e);
             }
         }

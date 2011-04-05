@@ -3,8 +3,9 @@ package fbi.genome.sequencing.rnaseq.simulation;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.MyFormatter;
 import fbi.commons.file.FileHelper;
+import fbi.commons.io.IOHandler;
+import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
-import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
 import fbi.genome.io.BufferedByteArrayReader;
 import fbi.genome.io.gff.GFFReader;
@@ -53,24 +54,27 @@ public class Fragmenter implements StoppableRunnable {
 		
 		@Override
 		public void run() {
-			if (lock!= null&& isAlive()) {
-				// sync all, else deadlocks
-				synchronized (lock) {
-					while((!end)&& !Fragmenter.this.stop) {
-						if (((mode== MODE_WRITE_INITIAL&& locID== null)
-								|| (mode!= MODE_WRITE_INITIAL&& cs== null))
-								&& (!Fragmenter.this.stop)&& (!end)) 
-							try {
-								lock.wait();
-							} catch (InterruptedException e) {
-								; // Exceptions slow
-							}
-						if ((mode== MODE_WRITE_INITIAL&& locID!= null)|| (mode!= MODE_WRITE_INITIAL&& cs!= null))
-							process();
-					}
-				}
-			} else
-				process();
+
+            try{
+                if (lock!= null&& isAlive()) {
+                    // sync all, else deadlocks
+                    synchronized (lock) {
+                        while((!end)&& !Fragmenter.this.stop) {
+                            if (((mode== MODE_WRITE_INITIAL&& locID== null)
+                                    || (mode!= MODE_WRITE_INITIAL&& cs== null))
+                                    && (!Fragmenter.this.stop)&& (!end))
+                                try {
+                                    lock.wait();
+                                } catch (InterruptedException e) {
+                                    ; // Exceptions slow
+                                }
+                            if ((mode== MODE_WRITE_INITIAL&& locID!= null)|| (mode!= MODE_WRITE_INITIAL&& cs!= null))
+                                process();
+                        }
+                    }
+                } else
+                    process();
+            }catch(Exception e ){throw new RuntimeException(e);}
 		}
 		
 		public boolean ready() {
@@ -79,7 +83,7 @@ public class Fragmenter implements StoppableRunnable {
 			return (cs== null);
 		}
 		
-		void process() {
+		void process() throws IOException {
 			
 			if (mode== MODE_WRITE_INITIAL) {
 				processInitial();
@@ -120,7 +124,7 @@ public class Fragmenter implements StoppableRunnable {
 		}
 	
 		
-		void processFilter_new(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFilter_new(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 			
 			double p= filtFac* Math.exp(-Math.pow(len- filtMu, 2)/ (2d* filtSigSquare));
 			p*= 10;
@@ -138,7 +142,7 @@ public class Fragmenter implements StoppableRunnable {
 
 		}
 		
-		void processNebu_v10(int start, int end, int len, ByteArrayCharSequence id) {
+		void processNebu_v10(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 			int bp= (int) nextGaussianDouble(rndNebu, start+1, end);	//	Math.ceil() f* slow 
 			int len2= Math.min(bp- start, end- bp+ 1);	// shorter
 			int len1=(bp-start==len2)?end-bp+1:bp-start;	// longer
@@ -203,7 +207,7 @@ public class Fragmenter implements StoppableRunnable {
 			
 		}
 		
-		void processFrag_old(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag_old(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
             double k= 3.4;	// 4
             
             // weibull random sampling ?
@@ -314,7 +318,7 @@ public class Fragmenter implements StoppableRunnable {
 		}
 		
 		private int[] where= new int[10], starts= new int[10];
-		void processRT_current(int start, int end, int len, ByteArrayCharSequence id) {
+		void processRT_current(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 
 			if (len< 6)
 				processFragNot(start, end, len, id);
@@ -384,7 +388,7 @@ public class Fragmenter implements StoppableRunnable {
 		}
 
 		RandomDataImpl rndImpl= new RandomDataImpl(); // DEBUG
-		void processFrag_curr(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag_curr(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
             
 			double lambda= settings.getLambda();
 /*			if (len<= lambda) {	// does not break
@@ -523,7 +527,7 @@ public class Fragmenter implements StoppableRunnable {
 		}
 
 		private void processFragNot(int start, int end, int len,
-				ByteArrayCharSequence id) {
+				ByteArrayCharSequence id) throws IOException {
         	lenSum+= len;                            	
         	++lenNb;
 			maxLen= Math.max(maxLen,len);
@@ -543,7 +547,7 @@ public class Fragmenter implements StoppableRunnable {
 		 * @param len
 		 * @param id
 		 */
-		void processNebu(int start, int end, int len, ByteArrayCharSequence id) {
+		void processNebu(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		            
 					// fragment breaks dependent on bp
 					double lambda= settings.getLambda()/ 2d;
@@ -624,7 +628,7 @@ public class Fragmenter implements StoppableRunnable {
 						--tgtMols;
 				}
 
-		void processFragUniform_save(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFragUniform_save(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 			
 			double lambda= settings.getLambda();
 			double val= 
@@ -724,7 +728,7 @@ public class Fragmenter implements StoppableRunnable {
 			return (r<= val);
 		}
 
-		void processFilter_current(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFilter_current(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 			
 			if (len< gelSizeMin|| len> gelSizeMax) {
 				--newMols;
@@ -817,7 +821,7 @@ public class Fragmenter implements StoppableRunnable {
 				}
     	}
 
-		void processFrag_110108(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag_110108(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 				            
 							double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 		
@@ -996,7 +1000,7 @@ public class Fragmenter implements StoppableRunnable {
 								--tgtMols;
 						}
 
-		void processRT_PWM(int start, int end, int len, ByteArrayCharSequence id) {
+		void processRT_PWM(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 			
 			//int[] myWhere= where, myStarts= starts;
 			--newMols;	// substract the original one	
@@ -1019,7 +1023,7 @@ public class Fragmenter implements StoppableRunnable {
 			
 		}
 		
-		void processRT_Bernoulli(int start, int end, int len, ByteArrayCharSequence id) {
+		void processRT_Bernoulli(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		
 				//int[] myWhere= where, myStarts= starts;
 				--newMols;	// substract the original one	
@@ -1126,7 +1130,7 @@ public class Fragmenter implements StoppableRunnable {
 			return -1;
 		}
 
-		void processFragUniform(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFragUniform(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 
 			int bp= -1;
 			if (mapPWMsense== null) {
@@ -1183,7 +1187,7 @@ public class Fragmenter implements StoppableRunnable {
 			rw.writeLine(cs, fos);	// id is invalid now
 		}
 
-		void processFilter(int start, int end, int len, ByteArrayCharSequence id) {
+		void processFilter(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 					//RandomDataImpl rndGel= new RandomDataImpl();
 					//rndGel.nextGaussian(mu, sigma);
 					//rndGel.nextPoisson(mean)
@@ -1209,7 +1213,7 @@ public class Fragmenter implements StoppableRunnable {
 		
 				}
 
-		void processFragPaolo(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFragPaolo(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
             
 			// Paolos version
 			int nr= (int) Math.round(rdiNebuBP.nextUniform(1, 5));
@@ -1292,7 +1296,7 @@ public class Fragmenter implements StoppableRunnable {
 
 		
 		
-		void processFragBreakNDeg(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFragBreakNDeg(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 				            
 			double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 
@@ -1346,7 +1350,7 @@ public class Fragmenter implements StoppableRunnable {
 			
 		}
 
-		private void processFragDeg(int start, int end, ByteArrayCharSequence id, int mod) {
+		private void processFragDeg(int start, int end, ByteArrayCharSequence id, int mod) throws IOException {
         	
 			int len= end- start+ 1;
 			double p= 1- (250d/ len);
@@ -1395,7 +1399,7 @@ public class Fragmenter implements StoppableRunnable {
         	
 		}
 		
-		private void processFragWrite(int start, int end, int len) {
+		private void processFragWrite(int start, int end, int len) throws IOException {
 			
 			if (start> end)
 				System.currentTimeMillis();
@@ -1440,7 +1444,7 @@ public class Fragmenter implements StoppableRunnable {
 			med[p]= nuLen;
 		}
 
-		void processFragDeg(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFragDeg(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 						            
 					double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 		
@@ -1518,7 +1522,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processFrag110214(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag110214(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 						            
 					double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 		
@@ -1590,7 +1594,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processFrag110228_newPaper(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag110228_newPaper(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		            
 					//double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 
@@ -1656,7 +1660,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processRT(int start, int end, int len, ByteArrayCharSequence id) {
+		void processRT(int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		
 					int howmany= 0;
 					if (Fragmenter.this.settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_RANDOM)) {
@@ -1776,7 +1780,7 @@ public class Fragmenter implements StoppableRunnable {
 					}
 				}
 
-		void processFrag110223_Weibull(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag110223_Weibull(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		            
 					// 110223_dynamicWeibull
 			
@@ -1865,7 +1869,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processFrag110225delta(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag110225delta(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		            
 					//double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 		
@@ -1930,7 +1934,7 @@ public class Fragmenter implements StoppableRunnable {
 					
 				}
 
-		void processFrag(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 				            
 							double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
 		
@@ -2095,7 +2099,7 @@ public class Fragmenter implements StoppableRunnable {
 								--tgtMols;
 						}
 
-		void processFrag_current(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag_current(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 				            
 			if (len<= 1) {	// does not break
 				updateMedian(len);
@@ -2155,7 +2159,7 @@ public class Fragmenter implements StoppableRunnable {
 			}
 		}
 
-		void processFrag_110316_LAST(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFrag_110316_LAST(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 		            
 					// iterative WEibull
 			
@@ -2216,7 +2220,7 @@ public class Fragmenter implements StoppableRunnable {
 		
 				}
 
-		void processFragEma1(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
+		void processFragEma1(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) throws IOException {
 				            
 			if (len<= 1) {	// does not break
 				updateMedian(len);
@@ -3308,7 +3312,7 @@ public class Fragmenter implements StoppableRunnable {
 	}
 	
 	long prevMols= 0;
-	SyncIOHandler2 rw;
+	IOHandler rw;
 	double filtMu, filtSigSquare, filtFac;
 	long cumuLen;
 	int[] med= new int[3];
@@ -3399,13 +3403,13 @@ public class Fragmenter implements StoppableRunnable {
 				//ThreadedBufferedByteArrayStream inBacs= null;
 				FileInputStream fis= new FileInputStream(tmpFile);
 				FileOutputStream fos= new FileOutputStream(tmpWriteFile);
-				rw= new SyncIOHandler2(2);
+				rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
 				rw.addStream(fis, 10* 1024);
 				rw.addStream(fos, 10* 1024);
 				for (int i = 0; i < processorPool.length; i++) 
 					processorPool[i].setFos(fos);
-				if (FluxSimulatorSettings.optDisk) 
-					rw.start();
+//				if (FluxSimulatorSettings.optDisk)
+//					rw.start();
 				
 				ByteArrayCharSequence cs= new ByteArrayCharSequence(100);
 				
@@ -3467,8 +3471,8 @@ public class Fragmenter implements StoppableRunnable {
 				}
 				
 				rw.close();
-				if (FluxSimulatorSettings.optDisk) 
-					rw.join();
+//				if (FluxSimulatorSettings.optDisk)
+//					rw.join();
 				
 				//fis.close();
 				//writer.flush();
@@ -3723,7 +3727,7 @@ public class Fragmenter implements StoppableRunnable {
 //			buffy.close();
 			
 			FileOutputStream fos= new FileOutputStream(tmpFile);	
-			rw= new SyncIOHandler2(1);
+			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(1);
 			rw.addStream(fos, 10* 1024);
 //			if (FluxSimulatorSettings.optDisk)  
 //				rw.start();
@@ -3802,8 +3806,8 @@ public class Fragmenter implements StoppableRunnable {
 			this.processorPool= null;
 			
 			rw.close();
-			if (FluxSimulatorSettings.optDisk) 
-				rw.join();
+			//if (FluxSimulatorSettings.optDisk)
+			//	rw.join();
 
 			prevMols= molInit;
 			if (plotter!= null)
