@@ -302,8 +302,9 @@ public class SimulationPipeline implements FluxTool<Void> {
     }
 
     void doLib() {
-        if (!getFragmenter().isReady()) {
-            throw new RuntimeException("[WHATSUP] I am missing parameters for performing fragmentation.");
+        String message = getFragmenter().isReady();
+        if (message != null) {
+            throw new RuntimeException(message);
         }
         // see run()
 //		if (fragmenter.isFinished()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)

@@ -3865,11 +3865,18 @@ public class Fragmenter implements StoppableRunnable {
 	public void setPlotter(ProgressablePlotter plotter) {
 		this.plotter = plotter;
 	}
-	
-	public boolean isReady() {
-		if (settings!= null&& settings.getProfiler()!= null&& settings.getProfiler().getMolecules()!= null&& settings.getFrgFile()!= null)
-			return true;
-		return false;
+
+    /**
+     * Returns an error message if something is broken or missing and null if everything is fine
+     *
+     * @return message error message or null
+     */
+	public String isReady() {
+        if(settings == null) return "No Setting specified!";
+        if(settings.getProfiler() == null) return "Profiler is not initialized!";
+        if(settings.getProfiler().getMolecules() == null) return "Profiler has no molecules!";
+        if(settings.getFrgFile() == null) return "No fragmentation file specified!";
+		return null;
 	}
 	
 	public boolean isFinished() {
