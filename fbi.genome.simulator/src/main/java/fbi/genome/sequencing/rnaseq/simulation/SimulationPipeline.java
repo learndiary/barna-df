@@ -1,7 +1,9 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
+import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.CommandLine;
+import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
@@ -114,7 +116,7 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param file parameter file
      */
-    @Option(name="p", longName = "parameter", description = "specify parameter file (PAR file)")
+    @Option(name="p", longName = "parameter", description = "specify parameter file (PAR file)", displayName = "file", required = true)
     public void setFile(File file) {
         this.file = file;
     }
@@ -169,6 +171,33 @@ public class SimulationPipeline implements FluxTool<Void> {
             sequencer = new Sequencer(getSettings());
         }
         return sequencer;
+    }
+
+
+    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+        if(getFile() == null){
+            Log.error("");
+            Log.error("No parameter file specified !");
+            Log.error("\n");
+            printer.print(toolArguments);
+            return false;
+        }
+        if(!getFile().canRead()) {
+            Log.error("");
+            Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
+            Log.error("\n");
+            printer.print(toolArguments);
+            return false;
+        }
+
+        if(!isExpression() && !isLibrary() && !isSequence()){
+            Log.error("");
+            Log.error("You must enable at least one mode (-x -l -s)");
+            Log.error("\n");
+            printer.print(toolArguments);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -285,8 +314,9 @@ public class SimulationPipeline implements FluxTool<Void> {
     }
 
     void doSeq() {
-        if (!getSequencer().isReady()) {
-            throw new RuntimeException("[NONONO] I am missing parameters for sequencing.");
+        String message = getSequencer().isReady();
+        if (message != null) {
+            throw new RuntimeException(message);
         }
         getSequencer().run();
     }

@@ -1318,11 +1318,20 @@ public class Sequencer implements StoppableRunnable {
 	public boolean isStop() {
 		return this.stop;
 	}
-	
-	public boolean isReady() {
-		if (settings!= null&& settings.getFrgFile()!= null&& settings.getFrgFile().exists()&& settings.getFrgFile().length()> 0)
-			return true;
-		return false;
+
+    /**
+     * Returns an error message if something is broken or missing and null if everything is fine
+     *
+     * @return message error message or null
+     */
+	public String isReady() {
+        if(settings == null) return "No Setting specified!";
+        File file = settings.getFrgFile();
+        if(file == null || !file.exists()){
+            if(file == null)return "No Fragmentation file specified! Check your parameters file!";
+            if(!file.exists() || settings.getFrgFile().length() == 0) return "Fragmentation file " + file.getAbsolutePath() + " not found or empty. Make sure fragmentation was done !";
+        }
+		return null;
 	}
 	
 	public boolean isFinished() {

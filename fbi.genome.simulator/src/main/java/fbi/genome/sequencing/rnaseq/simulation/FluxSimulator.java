@@ -1,6 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
+import fbi.commons.options.HelpPrinter;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -69,6 +70,7 @@ public class FluxSimulator {
         ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(FluxSimulator.class);
         fluxArguments.process(args, simulator);
 
+
         // prepare tools
         List<org.cyclopsgroup.jcli.spi.Cli> toolClis = new ArrayList<org.cyclopsgroup.jcli.spi.Cli>();
         for (FluxTool fluxTool : tools) {
@@ -95,45 +97,31 @@ public class FluxSimulator {
             }
         }
 
+        PrintWriter out = new PrintWriter(System.err);
+        HelpPrinter printer = new HelpPrinter(out);
+
         if(simulator.isHelp()){
             // show help message
-            PrintWriter stdoutWriter = new PrintWriter(System.err);
-            if(tool == null){
-                // show general help
-                try {
-                    fluxArguments.printHelp(stdoutWriter);
-                    stdoutWriter.flush();
-
-                    System.err.println("\tTools available:");
-                    for (FluxTool fluxTool : tools) {
-                        ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
-                        ParsingContext context = toolArguments.createParsingContext();
-                        System.err.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
-                    }
-                    System.err.println("\n");
-                    System.err.println("To get help for a specific tool try -t <tool> --help");
-                } catch (IOException e) {
-                    Log.error("This is embarrassing. Something went terribly wrong and I can not even print the help message ! ", e);
-                }
+            if(tool == null) {
+               printFluxHelp(tools, fluxArguments, out, printer);
             }else{
                 // show tool help
                 // create the argument parser
                 ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
-                try {
-                    toolArguments.printHelp(stdoutWriter);
-                    stdoutWriter.flush();
-                } catch (IOException e) {
-                    Log.error("This is embarrassing. Something went terribly wrong and I can not even print the help message ! ", e);
-                }
+                //toolArguments.printHelp(out);
+                printer.print(toolArguments);
+                out.flush();
             }
             // exit after printing help
             System.exit(-1);
         }
-
         if(tool != null){
             // execute the tool
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
             toolArguments.process(args, tool);
+            if(!tool.validateParameters(printer, toolArguments)){
+                System.exit(-1);
+            }
 
             try {
                 tool.call();
@@ -145,9 +133,40 @@ public class FluxSimulator {
                     Log.error("Error while executing "+ tool.getClass(), ioError);
                 }
             }catch (Exception e) {
-                Log.error("Error while executing "+ tool.getClass(), e);
+                Log.error(e.getMessage());
+                Log.debug("Error while executing "+ tool.getClass(), e);
             }
+        }else{
+            if(simulator.getToolName() == null || simulator.getToolName().isEmpty()){
+                Log.error("");
+                Log.error("No tool specified!");
+                Log.error("\n");
+            }else{
+                Log.error("");
+                Log.error("Unable to find tool : " + simulator.getToolName());
+                Log.error("\n");
+            }
+
+            // warn and show help
+            printFluxHelp(tools, fluxArguments, out, printer);
+            System.exit(-1);
         }
+    }
+
+    private static void printFluxHelp(List<FluxTool> tools, ArgumentProcessor fluxArguments, PrintWriter out, HelpPrinter printer) {
+        // show general help
+        //fluxArguments.printHelp(out);
+        printer.print(fluxArguments);
+        out.println("\tTools available:");
+        for (FluxTool fluxTool : tools) {
+            ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
+            ParsingContext context = toolArguments.createParsingContext();
+            out.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
+        }
+        out.println();
+        out.println("To get help for a specific tool try -t <tool> --help");
+        out.println();
+        out.flush();
     }
 
     /**
@@ -196,7 +215,7 @@ public class FluxSimulator {
      *
      * @param toolName toolname
      */
-    @Option(name = "t", longName = "tool", description = "select the tool")
+    @Option(name = "t", longName = "tool", description = "select the tool", displayName = "tool", required = true)
     public void setToolName(String toolName) {
         this.toolName = toolName;
     }

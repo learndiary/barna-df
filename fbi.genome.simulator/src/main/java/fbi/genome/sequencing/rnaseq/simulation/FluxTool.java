@@ -1,5 +1,8 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import fbi.commons.options.HelpPrinter;
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+
 import java.util.concurrent.Callable;
 
 /**
@@ -11,5 +14,17 @@ import java.util.concurrent.Callable;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public interface FluxTool<T> extends Callable<T> {
+
+    /**
+     * This method is called after the command line arguments are processed. Implementations
+     * should validate the parameters. If a required parameter is not set, return false and use
+     * the printer to print information
+     *
+     *
+     * @param printer the printer to print the actual help message
+     * @param toolArguments the argument processor
+     * @return valid true if valid arguments
+     */
+    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments);
 
 }

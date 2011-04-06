@@ -30,6 +30,20 @@
             <artifactId>commons-cli</artifactId>
             <version>1.2</version>
         </dependency>
+
+        <!-- Commandline annotations-->
+        <dependency>
+            <groupId>org.cyclopsgroup</groupId>
+            <artifactId>jcli</artifactId>
+            <version>1.0-alpha-4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

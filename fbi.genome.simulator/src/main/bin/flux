@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+## CONFIGURATION
+
+MEM="1G"
+
 # test for a java installation in the path
 if [ -z "`which java`" ]
 then
@@ -33,4 +38,4 @@ do
     fi
 done
 
-java -Xmx1G -DwrapperDir="$dir/bin" -cp $cp fbi.genome.sequencing.rnaseq.simulation.FluxSimulator "$@"
+java -Xmx$MEM -DwrapperDir="$dir/bin" -cp $cp fbi.genome.sequencing.rnaseq.simulation.FluxSimulator "$@"
