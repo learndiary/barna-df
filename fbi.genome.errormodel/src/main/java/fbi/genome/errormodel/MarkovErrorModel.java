@@ -1,6 +1,7 @@
 package fbi.genome.errormodel;
 
 import fbi.commons.Log;
+import fbi.commons.StringConstants;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.Qualities;
 import fbi.genome.sequencing.rnaseq.simulation.FluxTool;
@@ -9,7 +10,6 @@ import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.File;
-import java.util.Random;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -18,6 +18,7 @@ import java.util.Random;
 public class MarkovErrorModel implements FluxTool{
 
     private File file;
+    private int readLength;
 
     public File getFile() {
         return file;
@@ -27,13 +28,26 @@ public class MarkovErrorModel implements FluxTool{
         this.file = file;
     }
 
+    public int getReadLength() {
+        return readLength;
+    }
+    @Option(name = "l", longName="length", description = "read length")
+    public void setReadLength(int readLength) {
+        this.readLength = readLength;
+    }
+
     public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
         if(getFile() == null){
-            printer.out.println("No input file specified!");
+            printer.out.println("No input file specified!\n");
             printer.print(toolArguments);
             return false;
         }else if(!getFile().exists()){
-            printer.out.println(getFile().getAbsolutePath() + " does not exist!");
+            printer.out.println(getFile().getAbsolutePath() + " does not exist!\n");
+            printer.print(toolArguments);
+            return false;
+        }
+        if(readLength == 0){
+            printer.out.println("Please specify a read length!\n");
             printer.print(toolArguments);
             return false;
         }
@@ -41,19 +55,18 @@ public class MarkovErrorModel implements FluxTool{
     }
 
     public Object call() throws Exception {
-        Log.info("Create Markov Model");
+        Log.progressStart("Creating Markov Model");
         MapFileReader reader = new MapFileReader(getFile(), Qualities.Technology.Phred);
         int numStates = Qualities.PHRED_RANGE[1];
-        QualityTransitions trans = new QualityTransitions(numStates);
+        QualityTransitions trans = new QualityTransitions(numStates, readLength);
         int c = 0;
         Read read = null;
-        Random random = new Random();
-
-        while((read = reader.parseNext()) != null && c < 100000 ){
-
+        int limit = 100000;
+        while((read = reader.parseNext()) != null && c < limit ){
             trans.addRead(read);
-
+            Log.progress(c++,limit);
         }
+        Log.progressFinish(StringConstants.OK, true);
         return null;
     }
 }
