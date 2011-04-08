@@ -2,6 +2,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
+import fbi.commons.StringConstants;
 import fbi.commons.file.FileHelper;
 import fbi.commons.file.ReverseFileReader;
 import fbi.commons.thread.StoppableRunnable;
@@ -138,7 +139,7 @@ public class Profiler implements StoppableRunnable {
 				return false;
 			
 			//if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			Constants.progress.setString("Reading reference annotation");
+			Log.progressStart("Reading reference annotation");
 			reader.read();
 			java.util.Vector<ByteArrayCharSequence> v= new java.util.Vector<ByteArrayCharSequence>(30000);
 			Vector<ByteArrayCharSequence>vLoc= new java.util.Vector<ByteArrayCharSequence>(30000);
@@ -147,8 +148,6 @@ public class Profiler implements StoppableRunnable {
 			HashMap<ByteArrayCharSequence,ByteArrayCharSequence> locMap= 
 					new HashMap<ByteArrayCharSequence,ByteArrayCharSequence>();
 			mapLenExp= new Hashtable<ByteArrayCharSequence,int[]>();
-			if (Constants.progress!= null)
-				Constants.progress.setValue(0);
 			for (Gene[] g; (!stop)&& (g= reader.getGenes())!= null; reader.read()) {				
 				for (int i = 0; (!stop)&& i < g.length; i++) {
 					++cntLoci;
@@ -200,8 +199,8 @@ public class Profiler implements StoppableRunnable {
 			
 			calcStats();
 			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				Constants.progress.message("\tfound "+ids.length+" transcripts\n");
+
+			Log.message("\tfound "+ids.length+" transcripts\n");
 		
 			System.gc();
 
@@ -291,7 +290,7 @@ public class Profiler implements StoppableRunnable {
 						return null;
 					settings.setRefFile(new File(settings.getProFile().getParent()+ File.separator+ refFile.getName()));
 					if (!refFile.equals(settings.getRefFile())) {
-						if (!FileHelper.move(refFile, settings.getRefFile(), Constants.progress))
+						if (!FileHelper.move(refFile, settings.getRefFile()))
 							settings.setRefFile(refFile);
 					}
 					gffReader= new GFFReader(settings.getRefFile().getAbsolutePath());
@@ -311,9 +310,9 @@ public class Profiler implements StoppableRunnable {
 	
 	double sumMol= 0;
 	public boolean profile() {
-		
-		if (Constants.progress!= null)			
-			Constants.progress.setString("profiling");
+
+        Log.progressStart("profiling");
+
 		try {
 			if (ids== null) {
 				ids= new ByteArrayCharSequence[FileHelper.countLines(settings.getProFile().getCanonicalPath())];
@@ -351,13 +350,9 @@ public class Profiler implements StoppableRunnable {
 				}
 			}
 
-		
-			if (Constants.progress!= null) {
-				Constants.progress.setString("OK");
-				Constants.progress.finish();
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" OK");
-			
+
+            Log.progressFinish(StringConstants.OK, false);
+
 			if (!isStop()) {
 				Hashtable<CharSequence,Long> map= new Hashtable<CharSequence,Long>(settings.getProfiler().getMolecules().length);
 				for (int i = 0; i < settings.getProfiler().getMolecules().length; i++)
@@ -375,13 +370,8 @@ public class Profiler implements StoppableRunnable {
 			return true;
 			
 		} catch (Exception e) {
-			if (Constants.progress!= null) {
-				Constants.progress.setString("FAILED");
-				Constants.progress.finish();
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" FAILED");
-			if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-				e.printStackTrace();
+            Log.progressFailed("FAILED");
+            Log.error("Error while profiling :" + e.getMessage(), e);
 			return false;
 		}
 	}
@@ -595,10 +585,7 @@ public class Profiler implements StoppableRunnable {
 
 		int lim= Integer.MAX_VALUE;	// last working token
 		try {
-			if (Constants.progress!= null) {
-				Constants.progress.setString("initializing profiler ");
-				Constants.progress.setValue(0);
-			}
+            Log.progressStart("initializing profiler ");
 			int lines= FileHelper.countLines(settings.getProFile().getAbsolutePath());
 			//String lineSep= FileHelper.getLineSeparator() // TODO
 			ids= new ByteArrayCharSequence[lines]; 
@@ -619,16 +606,9 @@ public class Profiler implements StoppableRunnable {
 			for (buffy.readLine(cs); cs.end> 0; buffy.readLine(cs)) {
 				
 				cs.resetFind();
-				
 				bytesRead+= cs.length()+ 1;	// TODO fs
-				if (ptr% 1000== 0&& bytesRead* 10d/ bytesTot> perc) {
-					++perc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();	// setValue(perc)
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
-						System.err.print("*");
-						System.err.flush();
-					}
+				if (ptr% 1000== 0) {
+                    Log.progress(bytesRead, bytesTot);
 				}
 				if (lim< 3)
 					break;	// give up
@@ -703,9 +683,8 @@ public class Profiler implements StoppableRunnable {
 			buffy.close();
 		} catch (Exception e) {
 			lim= -1; // :)
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			e.printStackTrace();
+            Log.progressFailed("ERROR");
+            Log.error("Error while loading stats: " + e.getMessage(), e);
 			return false;
 		}
 		
@@ -718,8 +697,9 @@ public class Profiler implements StoppableRunnable {
 			locIDs= null;
 		} else if (!isStop())
 			calcStats();
-		if (Constants.progress!= null)
-			Constants.progress.finish();
+
+
+        Log.progressFinish();
 		return true;
 	}
 

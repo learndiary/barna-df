@@ -43,8 +43,7 @@ public class GEMobject {
 			long bytesRead= 0, totBytes= inFile.length();
 			int perc= 0;
 			if (prog!= null) {
-				prog.setString("parsing error model from GEM alignment ");
-				prog.setValue(0);
+				prog.start("parsing error model from GEM alignment ");
 			}
 			long readCtr= 0;
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(10000);

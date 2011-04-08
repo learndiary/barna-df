@@ -266,9 +266,8 @@ public class FluxSimulatorSettings {
 	}
 	public static boolean appendProfile(FluxSimulatorSettings settings, int colNr, Hashtable<CharSequence,Long> mapFrags) {
 		try {
-			if (Constants.progress!= null)
-				Constants.progress.setString("Updating .pro file ");
-			
+            Log.progressStart("Updating .pro file ");
+
 			long total= 0;
 			Iterator<Long> iter= mapFrags.values().iterator();
 			while(iter.hasNext())
@@ -284,10 +283,8 @@ public class FluxSimulatorSettings {
 			for (String s= null; (s= buffy.readLine())!= null;++lineCtr) {
 				
 				bytesRead+= s.length()+ PRO_FILE_CR.length();
-				if (lineCtr% 1000== 0&& bytesRead* 10d/ bytesTotal> perc) {
-					++perc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();	// setValue(perc)
+				if (lineCtr% 1000== 0) {
+                    Log.progress(bytesRead, bytesTotal);
 				}
 				
 				token= s.split(FluxSimulatorSettings.PRO_FILE_SEP);

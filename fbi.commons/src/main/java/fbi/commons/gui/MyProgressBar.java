@@ -47,10 +47,6 @@ public class MyProgressBar extends JPanel implements Progressable {
 		bar.setMaximum(newValue);
 	}
 
-	public void setMinimum(int newValue) {
-		bar.setMinimum(newValue);
-	}
-
 	private void runFromEverywhere(Runnable runner) {
 		if (EventQueue.isDispatchThread())
 			runner.run();
@@ -102,8 +98,24 @@ public class MyProgressBar extends JPanel implements Progressable {
 		bar.setValue(bar.getMinimum());
 		lab.setText(StringConstants.SPACE);
 	}
-	
-	public void message(String value) {
+
+    public void finish(String msg, boolean time) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void failed(String msg) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public int steps() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public int currentStep() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void message(String value) {
 		final String val= value;
 		Runnable runner= new Runnable() {
 			public void run() {
@@ -116,6 +128,9 @@ public class MyProgressBar extends JPanel implements Progressable {
 
 	public void finish(String msg, long time) {
 		// TODO Auto-generated method stub
-		
 	}
+
+    public void start(String message) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
 }

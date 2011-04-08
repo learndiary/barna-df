@@ -1,9 +1,11 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
+import fbi.commons.options.HelpPrinter;
 import fbi.commons.options.Options;
 import fbi.genome.io.SpliceGraphIO;
 import fbi.genome.model.IntronModel;
+import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
@@ -145,5 +147,9 @@ public class SpliceJunctionExtractor implements FluxTool<Void> {
     @Option(name="m", longName = "model", description = "specify the intron model")
     public void setModelFile(File modelFile) {
         this.modelFile = modelFile;
+    }
+
+    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+        return true;
     }
 }

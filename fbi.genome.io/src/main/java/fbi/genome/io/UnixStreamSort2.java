@@ -5,6 +5,8 @@ package fbi.genome.io;
 //import io.gff.GTFSorter.ByteArrayCharSequence;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
+import fbi.commons.StringConstants;
 import fbi.commons.file.FileHelper;
 import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.commons.MyFile;
@@ -688,15 +690,8 @@ public class UnixStreamSort2 extends Thread {
 	long maxSortedFileSize= 100000;
 	File nextSortedFile(InputStream iStream) {
 		try {
-			long t0= System.currentTimeMillis();
 			if (!silent) {
-				if (Constants.progress!= null) {
-					Constants.progress.setString("dividing");
-					Constants.progress.setValue(0);
-				} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					System.err.print("\tdividing ");
-					System.err.flush();
-				}
+                Log.progressStart("dividing");
 			}
 
 			long bytes= 0;
@@ -809,15 +804,9 @@ public class UnixStreamSort2 extends Thread {
 
 	void divideAndSort() {
 			try {
-				long t0= System.currentTimeMillis();
+
 				if (!silent) {
-					if (Constants.progress!= null) {
-						Constants.progress.setString("dividing");
-						Constants.progress.setValue(0);
-					} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						System.err.print("\tdividing ");
-						System.err.flush();
-					}
+                    Log.progressStart("dividing");
 				}
 	
 				ThreadedBufferedByteArrayStream buffy= null;
@@ -847,18 +836,9 @@ public class UnixStreamSort2 extends Thread {
 					bytesRead+= line.length()+ lineSep.length();
 					++lineCnt;
 					if (size> 0) {
-						int perc = (int) ((bytesRead * 10d) / size);
-						if (lastPerc!= 9&& perc > lastPerc) {	// ;)
-							++lastPerc;
-							if (!silent) {
-								if (Constants.progress!= null)
-									Constants.progress.progress();	// setValue(perc)
-								else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-									System.err.print("*");
-									System.err.flush();
-								}
-							}
-						}
+                        if (!silent) {
+                            Log.progress(bytesRead, size);
+                        }
 					}
 					
 					long currMem= Runtime.getRuntime().totalMemory(), currFreeMem= Runtime.getRuntime().freeMemory(); 
@@ -920,13 +900,7 @@ public class UnixStreamSort2 extends Thread {
 				}
 				
 				if (!silent) {
-					if (Constants.progress!= null)
-						Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						if (lastPerc< 9)
-							System.err.print("*");
-						System.err.println(" "+(System.currentTimeMillis()- t0)/ 1000+" sec.");
-					}
+                    Log.progressFinish(StringConstants.OK, true);
 				}
 		
 			} catch (Exception e) {

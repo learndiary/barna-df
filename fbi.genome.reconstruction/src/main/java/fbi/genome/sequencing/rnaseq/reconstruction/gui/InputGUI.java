@@ -1,5 +1,6 @@
 package fbi.genome.sequencing.rnaseq.reconstruction.gui;
 
+import fbi.commons.Log;
 import fbi.commons.ReadyOrNot;
 import fbi.commons.gui.SimpleBinPlotterPanel;
 import fbi.commons.thread.StoppableRunnable;
@@ -110,15 +111,10 @@ public class InputGUI extends JPanel implements ReadyOrNot, StoppableRunnable {
 						new Thread(new Runnable() {
 							public void run() {
 						    	if (!FluxCapacitorGUI.singleton.capacitor.fileInitBED()) {
-							    	if (Constants.progress!= null) 
-							    		Constants.progress.finish();
+                                    Log.progressFinish();
 							    	return;
 						    	}
-						    	if (Constants.progress!= null) {
-						    		Constants.progress.finish();
-						    		//Constants.progress.setValue(-1);
-						    		//Constants.progress.setString(" ");
-						    	}
+                                Log.progressFinish();
 						    	BEDwrapper reader= FluxCapacitorGUI.singleton.capacitor.getBedReader();
 						    	tfMapAll.setText(Integer.toString(reader.getCountAll()));
 						    	tfMapEntire.setText(Integer.toString(reader.getCountEntire()));
@@ -505,13 +501,11 @@ public class InputGUI extends JPanel implements ReadyOrNot, StoppableRunnable {
 							new Thread(new Runnable() {
 								public void run() {
 									if (!FluxCapacitorGUI.singleton.capacitor.fileInitReference()) {
-								    	if (Constants.progress!= null) 
-								    		Constants.progress.finish();
+                                        Log.progressFinish();
 								    	return;
 									}
-							    	if (Constants.progress!= null) 
-							    		Constants.progress.finish();
-							    	
+                                    Log.progressFinish();
+
 							    	GFFReader reader= FluxCapacitorGUI.singleton.capacitor.getGTFreader();
 							    	tfLoc.setText(Integer.toString(reader.getReadGenes()));
 							    	tfTx.setText(Integer.toString(reader.getReadTranscripts()));

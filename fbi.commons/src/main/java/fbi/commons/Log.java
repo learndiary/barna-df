@@ -34,6 +34,11 @@ public class Log {
     public static byte verboseLevel= VERBOSE_NORMAL; // todo: does this need to be public ?
 
     /**
+     * The console progress
+     */
+    private static Progressable progress = new PrintstreamProgressable(System.err);
+
+    /**
      * Set logging level and returns true if the given string was a proper logging level, otherwise this returns false
      * and the logging level is not changed
      *
@@ -87,6 +92,21 @@ public class Log {
     }
 
     /**
+     * Log an waring message
+     *
+     * @param message the message
+     */
+    public static void warn(String message){
+        info("WARN", message);
+    }
+
+    public static void warn(String prefix, String message){
+        info("WARN", message);
+    }
+
+
+
+    /**
      * Log an info message using a given prefix
      *
      * @param message the message
@@ -126,4 +146,79 @@ public class Log {
     }
 
 
+    /**
+     * Print the message as long as we are not in silent mode. The message is printed 'as is'
+     * without any prefix.
+     *
+     * @param message the message
+     */
+    public static void message(String message){
+        if(verboseLevel > VERBOSE_SHUTUP){
+            System.err.println(message);
+        }
+    }
+
+    /**
+     * Start a new progress
+     *
+     * @param message the message (null permitted)
+     */
+    public static void progressStart(String message) {
+        progress.start(message);
+    }
+
+    /**
+     * Do a progress step
+     */
+    public static void progress(){
+        progress.progress();
+    }
+    /**
+     * Checks if the progress should be printed
+     *
+     * @param currentValue the current value
+     * @param maxValue the maximum value
+     */
+    public static void progress(long currentValue, long maxValue) {
+        int preStep = (int) Math.ceil((double) maxValue / progress.steps());
+        while(currentValue < maxValue && progress.currentStep() < progress.steps() && progress.currentStep() * preStep <= currentValue){
+            progress();
+        }
+    }
+
+
+    /**
+     * Finish the current progress
+     */
+    public static void progressFinish() {
+        progress.finish();
+    }
+
+    /**
+     * Finish the current progress with an optional message and optionally print the time
+     *
+     * @param msg the message (null permitted)
+     * @param time print the time
+     */
+    public static void progressFinish(String msg, boolean time) {
+        progress.finish(msg, time);
+    }
+
+    /**
+     * Progress failed
+     *
+     * @param msg the message (null permitted)
+     */
+    public static void progressFailed(String msg) {
+        progress.failed(msg);
+    }
+
+    /**
+     * Returns the number of steps provided by the progress
+     *
+     * @return steps the number of steps provided by the progress
+     */
+    public static int progressSteps() {
+        return progress.steps();
+    }
 }

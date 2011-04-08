@@ -133,7 +133,7 @@ public class FluxSimulator {
                     Log.error("Error while executing "+ tool.getClass(), ioError);
                 }
             }catch (Exception e) {
-                Log.error(e.getMessage());
+                Log.error(e.getMessage(), e);
                 Log.debug("Error while executing "+ tool.getClass(), e);
             }
         }else{

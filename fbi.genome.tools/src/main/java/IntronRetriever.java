@@ -2,7 +2,6 @@ import fbi.commons.file.FileHelper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
-import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
@@ -28,7 +27,7 @@ public class IntronRetriever {
 		if (!reader.isApplicable()) {
 			File tmpGTF= reader.createSortedFile();
 			f= new File(args[0]+ "_sorted.gtf");
-			FileHelper.move(tmpGTF, f, Constants.progress);
+			FileHelper.move(tmpGTF, f);
 			reader= new GFFReader(f.getAbsolutePath());
 		}
 		Gene[] genes= null;

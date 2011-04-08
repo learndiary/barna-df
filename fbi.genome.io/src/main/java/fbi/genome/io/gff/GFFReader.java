@@ -1,5 +1,7 @@
 package fbi.genome.io.gff;
 
+import fbi.commons.Log;
+import fbi.commons.StringConstants;
 import fbi.commons.thread.StoppableRunnable;
 import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.model.*;
@@ -86,7 +88,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	int limitGTFObs= 0;
 	// long bytesRead = 0, size = 0l; // from superclass
 
-	int lastPerc = 0, readAheadLimit= -1, readAheadTranscripts= 50000;
+	int readAheadLimit= -1, readAheadTranscripts= 50000;
 
 	Vector<String> readChr = null, skippedChr = new Vector<String>(), skippedFeatures = new Vector<String>(), skippedTranscripts = new Vector<String>();
 	int readTranscripts = 0, readExons = 0, readGenes = 0, readChrs = 0;
@@ -464,7 +466,6 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		nrGenes= 0;
 		nrTranscripts= 0;
 		nrExons= 0;
-		lastPerc= 0;
 		vLines= null;
 		genes= null;
 		gtfObj= null;
@@ -561,7 +562,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	IntVector txPerLocus= null, txLengths= null;
 	public void scanFile() {
 
-		long t0= System.currentTimeMillis();
+        Log.progressStart("scanning");
 		reset();
 		
 		setReadGTF(false);
@@ -570,11 +571,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		setReadAheadTranscripts(1); // keep mem low
 		txPerLocus= new IntVector();
 		txLengths= new IntVector();
-		
-		if (Constants.progress!= null) {
-			Constants.progress.setString("scanning");
-			Constants.progress.setValue(0);
-		}		
+
+
+
 		try {
 			read();
 			while (getGenes()!= null) {
@@ -591,9 +590,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		}
 		
 		boolean b= close();
-		if (Constants.progress!= null) {
-			Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-		}		
+        Log.progressFinish(StringConstants.OK, true);
 
 	}
 	
@@ -723,12 +720,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 			int lastPerc = (int) ((bytesRead * 10d) / size);
 			// long t0= System.currentTimeMillis();
 			while (true) {
-				int perc = (int) ((bytesRead * 10d) / size);
-				if (perc > lastPerc && !silent) {
-					++lastPerc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-				}
+                Log.progress(bytesRead, size);
 
 				// buffy.mark(MAX_GTF_LINE_LENGTH); // does not work as planned, see reset() below
 				long saveBytesRead= bytesRead;
@@ -1197,12 +1189,8 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 							vLines.add(line);
 						++nrLinesRead;
 						bytesRead += line.length() + fileSep.length();				
-						int perc = (int) ((bytesRead * 10d) / size);
-						if (perc > lastPerc && stars) {
-							++lastPerc;
-							if (Constants.progress!= null) 
-								Constants.progress.progress();
-						}
+
+                        Log.progress(bytesRead, size);
 					}
 				}
 				
@@ -1684,15 +1672,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 			}
 		else
 			buffy = new BufferedReader(new InputStreamReader(inputStream));
-	
-		if (Constants.progress!= null) {
-			Constants.progress.setString("checking");
-			Constants.progress.setValue(0);
-		} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			System.err.println("[SAFETYCHECK] Checking GTF file "+f.getName());
-//			System.err.print("\tprogress ");
-			System.err.flush();
-		}
+
+        Log.progressStart("checking");
+
 		long bytesRead = 0l;
 		long size = f.length();
 		int perc = 0;
@@ -1712,16 +1694,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	
 				++lineCtr;
 				bytesRead += line.length() + 1;
-				if ((stars)&& bytesRead * 10 / size > perc) {
-//					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-//						System.err.print("*");
-//						System.err.flush();
-//					}
-					++perc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();	// setValue(perc)
-				}
-				String[] tokens = line.split("\\s"); 
+
+                Log.progress(bytesRead, size);
+				String[] tokens = line.split("\\s");
 														
 					// trim attribute strings
 				for (int i = 0; i < tokens.length; i++) {
@@ -1849,14 +1824,12 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 			}
 	
 			buffy.close();
-			
-			if (Constants.progress!= null) {
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" OK.");
-			
+
+            Log.progressFinish(StringConstants.OK, true);
+
 		} catch (IOException e) {
-			e.printStackTrace();
+            Log.progressFailed("ERROR");
+            Log.error("Error while checking GTF file!", e);
 		}
 
 		return true;

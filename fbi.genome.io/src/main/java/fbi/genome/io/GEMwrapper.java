@@ -1,7 +1,5 @@
 package fbi.genome.io;
 
-import fbi.genome.model.constants.Constants;
-
 import java.io.File;
 
 public class GEMwrapper {
@@ -9,6 +7,6 @@ public class GEMwrapper {
 		GEMobject.GEMtoBED(
 				new File("C:\\workspace\\Genome\\resources\\formats\\GEM_alignment_qualities.0.map"), 
 				null, 
-				Constants.progress);
+				null);
 	}
 }

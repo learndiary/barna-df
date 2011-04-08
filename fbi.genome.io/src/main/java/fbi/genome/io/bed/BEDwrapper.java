@@ -1,7 +1,9 @@
 package fbi.genome.io.bed;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
 import fbi.commons.Progressable;
+import fbi.commons.StringConstants;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.DefaultIOWrapper;
@@ -60,14 +62,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 	
 	public boolean isApplicable() {
 		try {
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[CAREFULLY] Checking BED file "+fName);
-			long t0= System.currentTimeMillis();
-			if (Constants.progress!= null) {
-				Constants.progress.setString("checking");
-				Constants.progress.setValue(0);
-			}
-
+            Log.progressStart("checking");
 			File f= new File(fPath+File.separator+fName);
 			BufferedReader buffy= new BufferedReader(new FileReader(f), 10* 1024* 1024);
 			int rowCtr= 0, perc= 0;
@@ -78,16 +73,9 @@ public class BEDwrapper extends DefaultIOWrapper {
 			for (String s= buffy.readLine(); s!= null; s= buffy.readLine()) {
 				++rowCtr;
 				bRead+= s.length()+ 1;
-				if (bRead* 10f/ size> perc) {
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						System.err.print("*");
-						System.err.flush();
-					}  
-					++perc;
-				}
-				
+
+                Log.progress(bRead, size);
+
 				if (s.startsWith("track")|| s.startsWith("browser"))
 					continue;
 
@@ -139,21 +127,12 @@ public class BEDwrapper extends DefaultIOWrapper {
 				}
 			}
 			buffy.close();
-			if (Constants.progress!= null) {
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println(Constants.SPACE+ Constants.OK);
-			}
-
+            Log.progressFinish(Constants.OK, true);
 				
 			nrUniqueLinesRead= rowCtr;
 		} catch (Exception e) {
 			e.printStackTrace();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" ERROR.");
-			else if (Constants.progress!= null) {
-				Constants.progress.finish();
-			}
+            Log.progressFailed(" ERROR.");
 		}
 		
 		
@@ -368,7 +347,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	public int countLines(Progressable prog) {
 		try {
 			if (prog!= null)
-				prog.setString("progress ");
+				prog.start("progress ");
 			int cnt= 0;
 			File f= new File(this.fPath+MyFile.separator+this.fName);
 			BufferedReader buffy= new BufferedReader(new FileReader(f));
@@ -435,14 +414,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	private int scanFileReadLines= 0;
 	public boolean scanFile() {
 		try {
-			
-			long t0= System.currentTimeMillis();
 			scanFileReadLines= 0;
-			if (Constants.progress!= null) {
-				Constants.progress.setString("scanning");
-				Constants.progress.setValue(0);
-			}
-			
+            Log.progressStart("scanning");
 			countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
 			
 			File f= new File(this.fPath+MyFile.separator+this.fName);
@@ -495,11 +468,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			for(String s; (s= buffy.readLine())!= null;++countAll,bRead+= s.length()+ sepLen) {
 
 				++nrUniqueLinesRead;
-				if (bRead*10d/bTot> perc) {
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-					++perc;
-				}
+
+                Log.progress(bRead, bTot);
 
 				if (s.startsWith(BROWSER)|| s.startsWith(TRACK))
 					continue;
@@ -543,19 +513,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			tmpWriter.close();
 			
 			thrCounter.join();
-			
-			if (Constants.progress!= null) {
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(Constants.SPACE+ Constants.OK+ Constants.SPACE);
-			
+
+            Log.progressFinish(Constants.OK, true);
+
 			return true;
 			
 		} catch (Exception e) {
-			e.printStackTrace();
-			if (Constants.progress!= null) {
-				Constants.progress.finish();
-			}
+			Log.progressFailed("ERROR");
+            Log.error("Error while scanning BED file!", e);
 			return false;
 		}
 	}
@@ -593,6 +558,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	// not static for fileSep
 	public File sortBED(File f) {
 				try {
+                    Log.progressStart("Sorting File");
 					boolean silent= false;
 					char mapKeySepChar= '@';
 					String eol= "\n";
@@ -679,19 +645,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							.readLine(cs)) {
 						++rowCtr;
 						bytesRead += line.length() + eol.length();
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-							int perc = (int) ((bytesRead * 10d) / size);
-							if (!silent&& (perc > lastPerc)) {
-								++lastPerc;
-								if (Constants.progress!= null)
-									Constants.progress.progress();
-								else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-									System.err.print("*");
-									System.err.flush();
-								}
-							}
-						}
-										
+                        if(!silent){
+                            Log.progress(bytesRead, size);
+                        }
 						writer.write(line.toString());
 						writer.write(eol);
 					}
@@ -703,10 +659,12 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					writer.close();
 			
 					pipe.join();
+                    Log.progressFinish(StringConstants.OK, true);
 					return outFile;
 			
 				} catch (Exception e) {
-					e.printStackTrace();
+                    Log.progressFailed("ERROR");
+                    Log.error("Error while sorting file!", e);
 				}
 			
 				return null;

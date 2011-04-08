@@ -1,12 +1,12 @@
 package fbi.genome.sequencing.rnaseq.simulation.error;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
+import fbi.commons.PrintstreamProgressable;
 import fbi.commons.Progressable;
 import fbi.genome.io.GEMobject;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.model.commons.IntVector;
-import fbi.genome.model.constants.Constants;
-import fbi.genome.model.constants.PrintstreamProgressable;
 import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 
 import java.io.*;
@@ -117,8 +117,7 @@ public class ModelPool {
 			long bytesRead= 0, totBytes= f.length();
 			int perc= 0;
 			if (prog!= null) {
-				prog.setString("parsing error model from GEM alignment ");
-				prog.setValue(0);
+				prog.start("parsing error model from GEM alignment ");
 			}
 			long readCtr= 0;
 			for (ByteArrayCharSequence line = buffy.readLine(cs); (!parsingStopped)&& line.end!= 0; line = buffy.readLine(cs)) {
@@ -214,7 +213,7 @@ public class ModelPool {
 			if (parsingStopped) {
 				buffy.setStop(true);				
 				if (prog!= null)
-					prog.setString("stopped.");
+					prog.start("stopped.");
 				parsingStopped= false;
 				return null;
 			}
@@ -222,50 +221,38 @@ public class ModelPool {
 			babeAtThePool.init(readCtr);
 			
 			if (prog!= null)
-				prog.setString("parsed "+readCtr+" reads.");
+				prog.start("parsed " + readCtr + " reads.");
 			return babeAtThePool;
 			
 		} catch (Exception e) {
 			if (prog!= null)
-				prog.setString("failed.");
+				prog.start("failed.");
 			e.printStackTrace();
 		}
 		
 		return null;				
 	}
 	
-	public void write(File f, Progressable prog) {
+	public void write(File f) {
 		
 		try {
-			if (prog!= null) {
-				prog.setString("Writing model ");
-				prog.setMinimum(0);
-				prog.setMaximum(10);
-				prog.setValue(0);
-			}
+            Log.progressStart("Writing model ");
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(f));
 			buffy.write(this.toString());
-			if (prog!= null)
-				prog.setValue(10);
 			buffy.flush();
 			buffy.close();
+            Log.progressFinish();
 		} catch (Exception e) {
-			if (prog!= null)
-				prog.setString("Error writing model");
-			e.printStackTrace();
+            Log.progressFailed("ERROR");
+            Log.error("Error writing model: " + e.getMessage(), e);
 		}
 	}
 	
-	public static ModelPool read(File f, Progressable prog, FluxSimulatorSettings settings) {
+	public static ModelPool read(File f, FluxSimulatorSettings settings) {
 		
 		try {
-			if (prog!= null) {
-				prog.setString("Reading error model ");
-				prog.setMinimum(0);
-				prog.setMaximum(10);
-				prog.setValue(0);
-			}
-			
+            Log.progressStart("Reading error model ");
+
 			BufferedReader buffy= new BufferedReader(new FileReader(f));
 			ModelPool babe= null;
 			for (String s= buffy.readLine(); s!= null;) {
@@ -378,18 +365,14 @@ public class ModelPool {
 				} else
 					s= buffy.readLine();
 			}
-			
-			if (prog!= null) {
-				prog.finish();
-			}
-			buffy.close();
+
+            Log.progressFinish();
+						buffy.close();
 			return babe;
 			
 		} catch (Exception e) {
-			if (prog!= null)
-				prog.setString("Error reading model");
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				e.printStackTrace();
+            Log.progressFailed("ERROR");
+            Log.error("Error reading model: " + e.getMessage(), e);
 		}
 		return null;
 	}

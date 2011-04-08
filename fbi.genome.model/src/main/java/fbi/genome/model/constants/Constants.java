@@ -1,7 +1,6 @@
 package fbi.genome.model.constants;
 
 import fbi.commons.Dialogable;
-import fbi.commons.Progressable;
 
 import java.lang.management.ManagementFactory;
 import java.text.DateFormat;
@@ -47,8 +46,7 @@ public class Constants {
 	public static final String ERROR= "ERROR";
 	
 	public static final String CLI_PAR_LONG= "--", CLI_PAR_SHORT= "-";
-	
-	public static Progressable progress= new PrintstreamProgressable(System.err);
+
 	public static Dialogable dialog= new PrintstreamDialogable(System.err, System.in);
 	
 	public static String getTime() {		

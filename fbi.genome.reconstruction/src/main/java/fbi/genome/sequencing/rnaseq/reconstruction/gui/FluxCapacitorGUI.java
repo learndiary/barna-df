@@ -1,6 +1,7 @@
 package fbi.genome.sequencing.rnaseq.reconstruction.gui;
 
 import fbi.commons.Dialogable;
+import fbi.commons.Log;
 import fbi.commons.ReadyOrNot;
 import fbi.commons.gui.MyProgressBar;
 import fbi.commons.gui.SimpleBinPlotterPanel;
@@ -1021,11 +1022,10 @@ public class FluxCapacitorGUI extends JFrame {
 		
 		labStatus= new MyProgressBar();
 		labStatus.setString(Constants.SPACE);
-		labStatus.setMinimum(0);
 		labStatus.setMaximum(9);
 		labStatus.setValue(-1);
 		//labStatus.setBorder(BorderFactory.createLineBorder(Color.black));
-		Constants.progress= labStatus;
+		//Constants.progress= labStatus;
 		add(labStatus, BorderLayout.SOUTH);
 		
 		setJMenuBar(createJMenuBar());
@@ -1916,8 +1916,7 @@ public class FluxCapacitorGUI extends JFrame {
 		loadActive= true;
 		for (int i = 0; i < comp.length; i++) {						
 			((ReadyOrNot) comp[i]).setLoadStats(true);
-			if (Constants.progress!= null)
-				Constants.progress.setString("Loading "+ ((Component) comp[i]).getName());						
+            Log.progressStart("Loading "+ ((Component) comp[i]).getName());
 			blockThread= new BlockingThread(comp[i], blockThread);
 			blockThread.setForceIdx(i);
 			blockThread.start();

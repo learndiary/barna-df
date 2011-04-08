@@ -1,6 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
@@ -78,17 +79,8 @@ public class Sequencer implements StoppableRunnable {
 			int lastPerc= 0;
 			while(in.readLine(cs)> 0&& !stop) {
 				++linesRec;
-				currBytes+= cs.length()+ 1;				
-				if (currBytes* 10d/ totBytes> lastPerc) {
-					++lastPerc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						System.err.print("*");
-						System.err.flush();
-					}
-				}
-				
+				currBytes+= cs.length()+ 1;
+                Log.progress(currBytes, totBytes);
 				try {
 					lastID= writeOutZip(cs, out, lastID);
 				} catch (Exception e) {
@@ -371,10 +363,15 @@ public class Sequencer implements StoppableRunnable {
 		// load model
 		if (settings.getErrFile()!= null) {
 //			String s= settings.getErrFile().getAbsolutePath();
-			babes= ModelPool.read(settings.getErrFile(), Constants.progress, settings);
+			babes= ModelPool.read(settings.getErrFile(), settings);
 			if (babes== null)
 				return false;
-			
+
+            // check qualities for issued #48
+            if(!babes.hasQualities() && settings.isFastQ()){
+                settings.setFastQ(false);
+                Log.warn("FastQ output requested, but the model does not support qualities. Disabled FastQ output!");
+            }
 			return true; 
 		} 
 		// else
@@ -386,14 +383,9 @@ public class Sequencer implements StoppableRunnable {
 			return false;
 		
 		try {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				String s= "initializing sequencer ";
-				if (Constants.progress== null)
-					System.err.print("\t"+ s);
-				else
-					Constants.progress.setString(s);
-			}
-			
+            String s= "initializing sequencer ";
+            Log.progressStart(s);
+
 			totalReads= FileHelper.countLines(settings.getSeqFile().getAbsolutePath());
 			
 			
@@ -464,12 +456,8 @@ public class Sequencer implements StoppableRunnable {
 	void writeInitialFile_old() {
 		try {
 			String sss= "sequencing init";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(sss);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t"+ sss);
-			
+            Log.progressStart(sss);
+
 			BufferedReader buffy= new BufferedReader(new FileReader(settings.getFrgFile()));
 			long bytesRead= 0, totBytes= settings.getFrgFile().length();			
 			int cnt= 0, perc= 0;
@@ -480,16 +468,7 @@ public class Sequencer implements StoppableRunnable {
 			for (String s; 
 				!stop&& (s= buffy.readLine())!= null; 
 				++cnt, bytesRead+= s.length()+ System.getProperty("line.separator").length()) {
-				if (bytesRead* 10d/ totBytes> perc) {	// cnt% 1000== 0&& 
-					if (Constants.progress== null) {
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-							System.err.print("*");
-							System.err.flush();
-						}
-					} else
-						Constants.progress.progress();	// setValue(perc)
-					++perc;
-				}
+                Log.progress(bytesRead, totBytes);
 				token= s.split(Fragmenter.FRG_FILE_TAB);
 				
 				if (!token[2].equals(currentID)) {
@@ -532,12 +511,8 @@ public class Sequencer implements StoppableRunnable {
 		// Sort
 		try {
 			String sss= "init sorting";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(sss);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t"+ sss);
-	
+            Log.progressStart(sss);
+
 			File inFile= settings.getFrgFile();
 			InputStream is= new FileInputStream(inFile);
 			File tmpOut= File.createTempFile("sim", "_sorted");
@@ -578,12 +553,7 @@ public class Sequencer implements StoppableRunnable {
 			while(rw.readLine(is,cs)> 0) {
 				++cnt;
 				currBytes+= cs.length()+ 1;
-				if (currBytes* 10d/ totBytes> lastPerc) {
-					++lastPerc;
-					if (Constants.progress!= null) 
-						Constants.progress.progress();
-				}
-				//System.err.println("w: "+ cs.toString());
+                Log.progress(currBytes, totBytes);
 				bout.write(cs.a, cs.start, cs.length());
 				bout.write(BYTE_NL);
 			}
@@ -592,9 +562,7 @@ public class Sequencer implements StoppableRunnable {
 			t.join();
 			rw.close();
 			//rw.join();
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			
+            Log.progressFinish();
 			return cnt;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -605,11 +573,7 @@ public class Sequencer implements StoppableRunnable {
 	int writeInitialFileZip(ByteArrayCharSequence cs, File in, File out) {
 		try {
 			String sss= "init zipping";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(sss);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t"+ sss);
+            Log.progressStart(sss);
 
 			FileInputStream inStram= new FileInputStream(in);
 			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
@@ -627,11 +591,7 @@ public class Sequencer implements StoppableRunnable {
 			int lastPerc= 0;
 			while(rw.readLine(inStram, cs)!= 0) {
 				currBytes+= cs.length()+ 1;
-				if (currBytes* 10d/ totBytes> lastPerc) {
-					++lastPerc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-				}
+                Log.progress(currBytes, totBytes);
 				cs.resetFind();
 				ByteArrayCharSequence id= cs.getToken(2);
 				int pEnd= cs.p1- 1;
@@ -649,6 +609,7 @@ public class Sequencer implements StoppableRunnable {
 			}
 			rw.close();
 			zipOut.close();
+            Log.progressFinish();
 			
 			return cnt;
 			
@@ -734,13 +695,7 @@ public class Sequencer implements StoppableRunnable {
 				return false;
 			
 			String sss= "sequencing";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(sss);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+sss);
-				System.err.flush();
-			}
+            Log.progressStart(sss);
 
 			GFFReader reader= new GFFReader(settings.getRefFile().getCanonicalPath());
 			reader.setReadAheadLimit(500);
@@ -864,16 +819,14 @@ public class Sequencer implements StoppableRunnable {
 			hashLoc= null;
 			hashTrp= null;
 			System.gc();
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println();
-				System.err.println("\t"+ totalFrags+ " fragments found");
-				System.err.println("\t"+ totalReads+ " reads sequenced");
-				System.err.println("\t"+ cntPolyA+ " reads fall in poly-A tail");
-				System.err.println("\t"+ cntTruncReads+ " truncated reads");
-			}
-				
+
+            Log.progressFinish();
+            Log.message("");
+            Log.message("\t"+ totalFrags+ " fragments found");
+            Log.message("\t"+ totalReads+ " reads sequenced");
+            Log.message("\t"+ cntPolyA+ " reads fall in poly-A tail");
+            Log.message("\t"+ cntTruncReads+ " truncated reads");
+
 			
 			// I/O end
 			rw.close();
@@ -886,17 +839,15 @@ public class Sequencer implements StoppableRunnable {
 			
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 				
 				System.err.println("\n\tMoving temporary BED file");
-			FileHelper.move(tmpFile, settings.getSeqFile(), Constants.progress);
-			if (Constants.progress!= null) 				
-				Constants.progress.finish();
-			
+			FileHelper.move(tmpFile, settings.getSeqFile());
+            Log.progressFinish();
+
 			if (tmpFasta!= null) {
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 					System.err.println("\n\tCopying qFasta file");
 				File fileFASTA= getFASTAfile();				
-				FileHelper.move(tmpFasta, fileFASTA, Constants.progress);
-				if (Constants.progress!= null) 				
-					Constants.progress.finish();
+				FileHelper.move(tmpFasta, fileFASTA);
+                Log.progressFinish();
 			}
 			
 			if (!stop) 
@@ -1432,14 +1383,8 @@ public class Sequencer implements StoppableRunnable {
 	boolean sequence_old() { 
 			try {
 				String sss= "sequencing";
-				if (Constants.progress!= null) {
-					Constants.progress.setString(sss);
-					Constants.progress.setValue(0);
-				} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					System.err.println("\t"+sss);
-					System.err.flush();
-				}
-	
+                Log.progressStart(sss);
+
 				GFFReader reader= new GFFReader(settings.getRefFile().getCanonicalPath());
 				reader.setReadAheadLimit(500);
 				reader.setSilent(true);
@@ -1660,20 +1605,16 @@ public class Sequencer implements StoppableRunnable {
 					}
 				}
 				
-				
-				if (Constants.progress!= null) 				
-					Constants.progress.setString("Moving temporary BED file");
-				FileHelper.move(tmpFile, settings.getSeqFile(), Constants.progress);
-				if (Constants.progress!= null) 				
-					Constants.progress.finish();
-				
+
+                Log.progressStart("Moving temporary BED file");
+				FileHelper.move(tmpFile, settings.getSeqFile());
+                Log.progressFinish();
+
 				if (tmpFasta!= null) {
-					if (Constants.progress!= null)
-						Constants.progress.setString("Copying qFasta file");
-					File fileFASTA= getFASTAfile();				
-					FileHelper.move(tmpFasta, fileFASTA, Constants.progress);
-					if (Constants.progress!= null) 				
-						Constants.progress.finish();
+                    Log.progressStart("Copying qFasta file");
+					File fileFASTA= getFASTAfile();
+					FileHelper.move(tmpFasta, fileFASTA);
+                    Log.progressFinish();
 				}
 				
 				if (!stop) {
@@ -1820,14 +1761,8 @@ public class Sequencer implements StoppableRunnable {
 		// Sort
 		try {
 			String sss= "initing";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(sss);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
-				System.err.print("\t"+ sss+ " ");
-				System.err.flush();
-			}
-	
+            Log.progressStart(sss);
+
 			// IO handler disk
 			InputStream istream= new FileInputStream(inFile);
 			OutputStream ostream= new FileOutputStream(outFile);
@@ -1875,16 +1810,7 @@ public class Sequencer implements StoppableRunnable {
 				currBytes+= cs.length()+ 1;				
 				++cnt;
 				//System.err.println(cnt+ "\t"+ currBytes);
-				if (currBytes* 10f/ totBytes> perc) {
-					++perc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
-						System.err.print("*");
-						System.err.flush();
-					}
-					
-				}
+                Log.progress(currBytes, totBytes);
 				//System.err.println("w: "+ cs.toString());
 				boolean closeAll= false;
 				try {  
@@ -1908,11 +1834,8 @@ public class Sequencer implements StoppableRunnable {
 					break;
 				}
 			}
-			
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println();
+
+            Log.progressFinish();
 
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t"+ cnt+ " lines submitted");
@@ -1920,14 +1843,7 @@ public class Sequencer implements StoppableRunnable {
 			
 			// wait for zipping
 			sss= "zipping";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(sss);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
-				System.err.print("\t"+ sss+ " ");
-				System.err.flush();
-			}
-
+            Log.progressStart(sss);
 			feedOut.close();
 			if (sorter.isAlive())
 				sorter.join();			
@@ -1945,15 +1861,10 @@ public class Sequencer implements StoppableRunnable {
 			// end
 			if (stop) 
 				return -1;
-			
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+ linesRec+ " lines zipped");
-			}
-			
+
+            Log.progressFinish();
+		    Log.message("\t"+ linesRec+ " lines zipped");
+
 			return cnt;
 			
 		} catch (Exception e) {

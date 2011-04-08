@@ -28,4 +28,13 @@ public class IOHandlerFactory {
         }
         return defaultHandler;
     }
+
+    /**
+     * Create a new instance of the default handler
+     *
+     * @return handler new instance of the default handler
+     */
+    public static IOHandler createDefaultHandler(){
+        return new SimpleIOHandler();
+    }
 }

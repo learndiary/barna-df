@@ -1,7 +1,9 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
 import fbi.commons.MyFormatter;
+import fbi.commons.StringConstants;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
@@ -2595,7 +2597,7 @@ public class Fragmenter implements StoppableRunnable {
 					return null;
 				settings.setRefFile(new File(settings.getProFile().getParent()+ File.separator+ refFile.getName()));
 				if (!refFile.equals(settings.getRefFile())) {
-					if (!FileHelper.move(refFile, settings.getRefFile(), Constants.progress))
+					if (!FileHelper.move(refFile, settings.getRefFile()))
 						settings.setRefFile(refFile);
 				}
 				gffReader= new GFFReader(settings.getRefFile().getAbsolutePath());
@@ -2713,30 +2715,13 @@ public class Fragmenter implements StoppableRunnable {
 	}
 
 	private boolean writeFinalFile() {
-		
-		if (Constants.progress!= null) {
-			Constants.progress.setString("Copying results");
-			Constants.progress.setValue(0);
-		} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			System.err.print("\tcopying results ");
-			System.err.flush();
-			FileHelper.setSilent(false);
-		}
+		Log.message("Copying results");
 
-		if (FileHelper.move(tmpFile, settings.getFrgFile(), Constants.progress)) {
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println(" OK");
-				// System.err.println("\twrote "+MyFile.humanReadableSize(settings.frgFile.length())+" to "+settings.frgFile.getAbsolutePath());
-			}
+		if (FileHelper.move(tmpFile, settings.getFrgFile())) {
 			return true;
 		}
-		if (Constants.progress!= null)
-			Constants.progress.finish();
-		else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println(" FAILED");
-		return false;
+        Log.error("Unable to copy results!");
+        return false;
 	}
 
 	private boolean checkFrgFile() {
@@ -3376,10 +3361,9 @@ public class Fragmenter implements StoppableRunnable {
 				if (plotter!= null) {
 					plotter.reset(msg);
 				}
-				if (Constants.progress!= null) {
-					Constants.progress.setString(msg);
-					Constants.progress.setValue(0);
-				} 
+
+				Log.progressStart(msg);
+
 
 				Object[] keys= mapFrags.keySet().toArray();
 				for (int i = 0; i < keys.length; i++) 
@@ -3422,13 +3406,8 @@ public class Fragmenter implements StoppableRunnable {
 //					if (currMols%100000== 0) {	// no, wron perc update !!
 //						System.err.println(currMols);
 //					}
-					int frac= (int) (byteNow* 10d/ byteTot);	// (currMols* 10d/ prevMols)
-					if (frac> perc) {
-						++perc; 	// perc= frac;
-						if (Constants.progress!= null)
-							Constants.progress.progress();	// setValue(perc)
-					}
-					
+                    Log.progress(byteNow, byteTot);
+
 					//qwriter.add(s);
 					////qwriter.writeAll();
 					++currMols;
@@ -3529,9 +3508,8 @@ public class Fragmenter implements StoppableRunnable {
 				b= tmpWriteFile.renameTo(tmpFile);
 				if (!b)
 					throw new IOException("Couldn't move file");;
-								
-				if (Constants.progress!= null)
-					Constants.progress.finish(null, System.currentTimeMillis()- t0);
+
+                Log.progressFinish(null, true);
 				long total= 0;
 				Iterator iter= mapFrags.keySet().iterator();
 				while(iter.hasNext()) {
@@ -3690,18 +3668,12 @@ public class Fragmenter implements StoppableRunnable {
 		lenSum= 0;	// for RT priming length, here with median
 		lenNb= 0;
 		cntMolInit= 0;
-		long t0= System.currentTimeMillis();
+
 		try {
 			//if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				//System.err.print("\tiniting fragments +");
 			String msg= "Initializing Fragmentation File";
-			if (Constants.progress!= null) {
-				Constants.progress.setValue(0);
-				Constants.progress.setString(msg);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.print("\t"+msg);
-				System.err.flush();
-			}
+            Log.progressStart(msg);
 
 			//BufferedReader buffy= new BufferedReader(new FileReader(settings.proFile));
 			//String[] token;
@@ -3738,13 +3710,7 @@ public class Fragmenter implements StoppableRunnable {
 			int perc= 0; molInit= 0; medLen= 0; minLen= Integer.MAX_VALUE; maxLen= Integer.MIN_VALUE;
 			for (int i = 0; (!isStop())&& i < settings.getProfiler().getMolecules().length; i++) {
 				if (i% 1000== 0) {
-					if (i* 10d/ settings.getProfiler().getMolecules().length> perc) {
-						++perc;
-						if (Constants.progress!= null) 
-							Constants.progress.progress();	// setValue(perc)
-						
-					}
-					//writer.flush();
+                    Log.progress(i, settings.getProfiler().getMolecules().length);
 				}
 				if (profiler.getLen()[i]>= Fragmenter.this.settings.getFiltMin()&&
 						settings.getProfiler().getLen()[i]<= Fragmenter.this.settings.getFiltMax())
@@ -3814,14 +3780,7 @@ public class Fragmenter implements StoppableRunnable {
 				plotter.setMolTot(molInit);
 			
 			//System.out.println("targets: "+tgtMols);
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (Constants.progress!= null)
-					Constants.progress.finish(null, System.currentTimeMillis()- t0);
-				else {
-					System.err.println(" OK");
-					//System.err.println("\twrote "+MyFile.humanReadableSize(tmpFile.length())+ " to "+tmpFile.getCanonicalPath());
-				}
-			}
+            Log.progressFinish(StringConstants.OK, true);
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t"+ cntMolInit+ " mol inited");
 			}
@@ -3887,11 +3846,9 @@ public class Fragmenter implements StoppableRunnable {
 
 	public boolean loadStats() {
 		try {
-			if (Constants.progress!= null) {
-				Constants.progress.setString("initializing library ");
-				Constants.progress.setValue(0);
-			}
-			molInit= 0;			
+
+            Log.progressStart("initializing library ");
+			molInit= 0;
 			for (int i = 0; (!isStop())&& i < settings.getProfiler().getMolecules().length; i++) 
 				molInit+= settings.getProfiler().getMolecules()[i];
 			if (plotter!= null)
@@ -3907,14 +3864,8 @@ public class Fragmenter implements StoppableRunnable {
 			for (currMols= 0, newMols= 0; (!isStop())&& (buffy.readLine(fos, cs).length()> 0)/*(s= buffy.readLine())!= null*/; ++currMols) {
 				cs.resetFind();
 				bytesRead+= cs.length()+ 1;
-				double frac= bytesRead* 10d/ totBytes;
-				if (frac> perc) {
-					if (Constants.progress!= null) 
-						Constants.progress.progress();
-					
-					++perc;
-				}
-				
+                Log.progress(bytesRead, totBytes);
+
 				
 /*				if (token== null)
 					token= s.split(FRG_FILE_TAB);
@@ -3932,8 +3883,7 @@ public class Fragmenter implements StoppableRunnable {
 			}			
 			//buffy.close();
 			fos.close();
-			if (Constants.progress!= null)
-				Constants.progress.finish();
+            Log.progressFinish();
 			if ((!isStop())&& plotter!= null) {
 				plotter.paint();
 				plotter.setMolTot(currMols);

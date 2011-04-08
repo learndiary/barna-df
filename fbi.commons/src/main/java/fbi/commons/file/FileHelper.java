@@ -3,7 +3,6 @@ package fbi.commons.file;
 
 import fbi.commons.Log;
 import fbi.commons.MyFormatter;
-import fbi.commons.Progressable;
 import fbi.commons.StringConstants;
 
 import java.io.*;
@@ -14,34 +13,56 @@ import java.nio.channels.WritableByteChannel;
 import java.util.*;
 import java.util.zip.*;
 
- 
+/**
+ * File Utilities
+ *
+ */
 public class FileHelper {
- 
+    /**
+     * Indicates file compression
+     */
 	public static final byte COMPRESSION_NONE= 0, COMPRESSION_ZIP= 1, COMPRESSION_GZIP= 2;
 
-
+    /**
+     * Reads the file until the first new line character appears. This looks for
+     * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
+     *
+     * @param f the file
+     * @return separator the file separator or empty string
+     */
     public static String guessFileSep(File f) {
-
-        String fileSep= null;
+        String fileSep= "";
+        BufferedReader buffy = null;
         try {
-            BufferedReader buffy= new BufferedReader(new FileReader(f));
+            buffy= new BufferedReader(new FileReader(f));
             char[] b= new char[1];
-            buffy.read(b);
-            while (buffy.ready()&& b[0]!= '\n'&& b[0]!= '\r')
-                buffy.read(b);
-            fileSep= new String(b);
-            buffy.read(b);
-            while (buffy.ready()&& (b[0]== '\n'|| b[0]== '\r')) {
-                fileSep+= b[0];
-                buffy.read(b);
+            while(buffy.read(b)!= -1){
+                if(b[0] =='\n' || b[0] == '\r'){
+                    // found a separator
+                    char first = b[0];
+                    fileSep += b[0];
+                    // check if this is followed by another new line \r or \n
+                    if(buffy.read(b) != -1){
+                        if(b[0] =='\n' || b[0] == '\r'){
+                            if (first == '\r' || b[0] == '\r')
+                                fileSep += b[0];
+                        }
+                    }
+                    //return fileSep;
+                    break;
+                }
             }
-            buffy.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        }catch (IOException e){
+            Log.error("Unable to identify newline character in " + f.getAbsolutePath(), e);
+        }finally {
+            if(buffy != null){
+                try {
+                    buffy.close();
+                } catch (IOException ignore) {
+                    // ignore
+                }
+            }
         }
-        if (fileSep== null)
-            fileSep= "";
         return fileSep;
     }
 
@@ -79,7 +100,7 @@ public class FileHelper {
 		return "";
 	}
 			
-	public static void inflate(File src, File dest, byte compression, Progressable progress) throws Exception {
+	public static void inflate(File src, File dest, byte compression) throws Exception {
 		InflaterInputStream in= null;
 		if (compression== COMPRESSION_ZIP) 
 			in= new ZipInputStream(new FileInputStream(src));
@@ -87,17 +108,15 @@ public class FileHelper {
 			in= new MultiMemberGZIPInputStream(new FileInputStream(src)); // GZIPInputStream
 		if (in== null)
 			return;
-		
-		long t0= System.currentTimeMillis();
+
 		int bufSize= 65536;
 		BufferedOutputStream buffy= new BufferedOutputStream(new FileOutputStream(dest), bufSize);
 		byte[] buf= new byte[bufSize];
 		int rec= 0, perc= 0;
 		long read= 0, max= src.length()* 10;
-		if (progress!= null) {
-			progress.setMinimum(0);
-			progress.setString("\tinflating");
-		} 
+
+        Log.progressStart("\tinflating");
+
 		while((rec= in.read(buf, 0, buf.length))!= -1) {	// in.available()!= 0 , fails for concat
 			// not the problem
 //			rec= 0;
@@ -107,33 +126,17 @@ public class FileHelper {
 //					try {in.wait(500);} catch (InterruptedException ex) {} // :)
 //			}
 			read+= rec;
-			if (read* 10d/ max> perc&& perc<= 10) {
-				++perc;
-				if (progress!= null)
-					progress.progress();
-				else if (Log.verboseLevel> Log.VERBOSE_SHUTUP) {
-					System.err.print("*");
-					System.err.flush();
-				}
-			}
-//			System.err.println(buf.length+" "+rec);
+            Log.progress(read, max);
 			if (rec> 0)
 				buffy.write(buf, 0, rec);
 		}
-//		System.err.println(in.available()+" "+rec);
 		in.close();
 		buffy.flush();
 		buffy.close();
-		if (progress!= null) 
-			progress.finish(StringConstants.OK, System.currentTimeMillis()- t0);
-		else if (Log.verboseLevel> Log.VERBOSE_SHUTUP) {
-			for (int i = perc+1; i <= 10; i++) 
-				System.err.print("*");
-			System.err.println(" OK.");
-		}
+        Log.progressFinish(StringConstants.OK, true);
 	}
 	
-	public static void deflate(File src, File dest, byte compression, Progressable progress) throws Exception {
+	public static void deflate(File src, File dest, byte compression) throws Exception {
 		DeflaterOutputStream out= null;
 		if (compression== COMPRESSION_ZIP) {
 			ZipOutputStream zout= new ZipOutputStream(new FileOutputStream(dest));
@@ -149,18 +152,11 @@ public class FileHelper {
 		byte[] buf= new byte[bufSize];
 		int rec= 0, perc= 0;
 		long read= 0, max= src.length();
-		if (progress!= null) {
-			progress.setMinimum(0);
-			progress.setMaximum(10);
-			progress.setString("deflating");
-		}
+
+        Log.progressStart("deflating");
 		while((rec= buffy.read(buf, 0, buf.length))> 0) {
 			read+= rec;
-			if (read* 10d/ max> perc) {
-				++perc;
-				if (progress!= null)
-					progress.progress();
-			}
+            Log.progress(read, max);
 			out.write(buf, 0, rec);
 		}
 		buffy.close();
@@ -168,8 +164,7 @@ public class FileHelper {
 			((ZipOutputStream) out).closeEntry();
 		out.flush();
 		out.close();
-		if (progress!= null)
-			progress.finish();
+        Log.progressFinish();
 	}
 	
 	static boolean silent= true;
@@ -432,8 +427,8 @@ public class FileHelper {
 		return -1;
 	}
 	
-	public static boolean move(File from, File to, Progressable prog) {
-		return move(from, to, prog, null);
+	public static boolean move(File from, File to) {
+		return move(from, to, null);
 	}
 	
 	/**
@@ -443,16 +438,10 @@ public class FileHelper {
 	 * @param to
 	 * @return
 	 */
-	public static boolean move(File from, File to, Progressable prog, String msg) {
-		
-		if (prog!= null) {
-			if (msg!= null)
-				prog.setString(msg);
-			else
-				prog.setString("moving");
-			prog.setValue(0);
-		}
-			
+	public static boolean move(File from, File to, String msg) {
+
+        Log.progressStart(msg != null ? msg : "moving");
+
 		if (to.exists())
 			to.delete();
 		
@@ -460,14 +449,12 @@ public class FileHelper {
 		if (ok)
 			return true;
 		try { 
-			fastChannelCopy(from, to, false, prog);
+			fastChannelCopy(from, to, false);
 		} catch (Exception e) {
-			if (Log.verboseLevel> Log.VERBOSE_SHUTUP)
-				System.err.println("[FATAL] couldn't copy: "+ e.getMessage());
+            Log.error("[FATAL] couldn't copy: "+ e.getMessage(), e);
 			return false;
 		}
-		if (prog!= null)
-			prog.finish();
+		Log.progressFinish();
 		return from.delete();
 	}
 	
@@ -682,29 +669,26 @@ make sense
     }
 
 
-	public static void fastChannelCopy(File inputFile, File outputFile, boolean append, Progressable prog) throws IOException {
+	public static void fastChannelCopy(File inputFile, File outputFile, boolean append) throws IOException {
 		final InputStream input = new FileInputStream(inputFile);  
 		final OutputStream output = new FileOutputStream(outputFile, append);  
 			// get an channel from the stream  
 		final ReadableByteChannel inputChannel = Channels.newChannel(input);  
 		final WritableByteChannel outputChannel = Channels.newChannel(output);  
-		fastChannelCopy(inputChannel, outputChannel, prog, inputFile.length());
+		fastChannelCopy(inputChannel, outputChannel, inputFile.length());
 			// closing the channels  
 		inputChannel.close();  
 		outputChannel.close();
 	}
 	
-	public static void fastChannelCopy(final ReadableByteChannel src, final WritableByteChannel dest, Progressable prog, double max) throws IOException {  
+	public static void fastChannelCopy(final ReadableByteChannel src, final WritableByteChannel dest, double max) throws IOException {
 			final ByteBuffer buffer = ByteBuffer.allocateDirect(16 * 1024);
 			int perc= 0, x= -1;
 			long tot= 0;
 			while ((x= src.read(buffer)) != -1) {
 				tot+= x;
-				if (prog!= null&& (tot* 10d/max)> perc) {
-					prog.progress();	// setValue(++perc)
-					++perc;
-				}
-				// prepare the buffer to be drained  
+                Log.progress(tot, (long) max);
+				// prepare the buffer to be drained
 				buffer.flip();  
 				// write to the channel, may block  
 				dest.write(buffer);  
@@ -764,16 +748,9 @@ make sense
 		return cntFail;
 	}
 
-	private static boolean zipRecursive(ZipOutputStream zos, String pfx, File in, int depth, Progressable progress) {
-		
-		long t0= System.currentTimeMillis();
+	private static boolean zipRecursive(ZipOutputStream zos, String pfx, File in, int depth) {
 		if (depth== 0&& !silent) {
-			if (progress!= null) {
-				progress.setString("zipping");
-				progress.setValue(0);
-			} else if (Log.verboseLevel> Log.VERBOSE_SHUTUP){
-				System.err.println("\tzipping");
-			}
+            Log.progressStart("zipping");
 		}
 		
 		if (in.isDirectory()) {
@@ -783,17 +760,9 @@ make sense
 			int perc= 0;
 			for (int i = 0; i < files.length; i++) {
 				if (depth== 0&& !silent) {
-					if (i* 10f/ files.length> perc) {
-						++perc;
-						if (progress!= null)
-							progress.progress();
-						else if (Log.verboseLevel> Log.VERBOSE_SHUTUP) {
-							System.err.print(StringConstants.STAR);
-							System.err.flush();
-						}
-					}
+                    Log.progress(i, files.length);
 				}
-				if (!zipRecursive(zos, pfx, files[i], depth+ 1, progress))
+				if (!zipRecursive(zos, pfx, files[i], depth+ 1))
 					return false;
 			}
 			return true;
@@ -808,15 +777,7 @@ make sense
 				for (String s= null; (s = buffy.readLine())!= null; ) {
 					bread+= s.length()+ 1;
 					if (depth== 0&& !silent) {
-						if (bread* 10f/ size> perc) {
-							++perc;
-							if (progress!= null)
-								progress.progress();
-							else if (Log.verboseLevel> Log.VERBOSE_SHUTUP) {
-								System.err.print(StringConstants.STAR);
-								System.err.flush();
-							}
-						}
+                        Log.progress(bread, size);
 					}
 					zos.write(s.getBytes());
 					zos.write(System.getProperty("line.separator").getBytes());
@@ -824,12 +785,7 @@ make sense
 				zos.closeEntry();
 				buffy.close();
 				if (depth== 0&& !silent) {
-					if (progress!= null)
-						progress.finish(StringConstants.OK, System.currentTimeMillis()- t0);
-					else if (Log.verboseLevel> Log.VERBOSE_SHUTUP) {
-						System.err.println(StringConstants.OK+ StringConstants.SPACE+ StringConstants.PAROPEN
-								+ (System.currentTimeMillis()- t0)+ "sec"+ StringConstants.PARCLOSE);
-					}
+                    Log.progressFinish(StringConstants.OK, true);
 				}
 				return true;
 			} catch (Exception e) {
@@ -838,7 +794,7 @@ make sense
 		}
 	}
 	
-	public static boolean zip(File in, File out, Progressable progress) {
+	public static boolean zip(File in, File out) {
 		
 		if (in== null|| !in.exists())
 			return false;
@@ -847,7 +803,7 @@ make sense
 		try {
 		    ZipOutputStream zos = new ZipOutputStream(
 		    		new BufferedOutputStream(new FileOutputStream(out)));
-		    returnVal= zipRecursive(zos, null, in, 0, progress);
+		    returnVal= zipRecursive(zos, null, in, 0);
 		    zos.flush();
 		    zos.close();
 			System.currentTimeMillis();
@@ -869,28 +825,22 @@ make sense
 		return null;
 	}
 
-	public static boolean zipFilesInDir(File dir, File dst,
-			Progressable progress) {
+	public static boolean zipFilesInDir(File dir, File dst) {
 		
 		try {
+            if (!silent){
+                Log.progressStart("zipping");
+            }
 			File[] ff= dir.listFiles();
-			ZipOutputStream zos = new ZipOutputStream(
-		    		new BufferedOutputStream(new FileOutputStream(dst)));
-			int perc= 0;
+			ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dst)));
+
+
 			for (int i = 0; i < ff.length; i++) {
 				if (!silent) {
-					if (i* 10f/ ff.length> perc) {
-						++perc;
-						if (progress!= null)
-							progress.progress();
-						else if (Log.verboseLevel> Log.VERBOSE_SHUTUP) {
-							System.err.print(StringConstants.STAR);
-							System.err.flush();
-						}
-					}
+                    Log.progress(i, ff.length);
 				}
 				if (ff[i].isDirectory()) 
-				    if (!zipRecursive(zos, null, ff[i], 0, progress))
+				    if (!zipRecursive(zos, null, ff[i], 0))
 				    	return false;
 				String name= ff[i].getName();
 				zos.putNextEntry(new ZipEntry(name));
@@ -920,7 +870,14 @@ make sense
 			}
 		    zos.flush();
 		    zos.close();
+            if(!silent){
+                Log.progressFinish();
+            }
 		} catch (Exception e) {
+            if(!silent){
+                Log.progressFailed("ERROR");
+            }
+            Log.error("Error while zipping directory: " + e.getMessage(),e);
 			return false;
 		}
 		return true;

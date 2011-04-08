@@ -5,6 +5,8 @@ package fbi.genome.io;
 //import io.gff.GTFSorter.ByteArrayCharSequence;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
+import fbi.commons.StringConstants;
 import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
@@ -558,14 +560,7 @@ public class UnixStreamSort extends Thread {
 		try {
 			long t0= System.currentTimeMillis();
 			if (!silent) {
-				if (Constants.progress!= null) {
-					Constants.progress.setString("merging");
-					Constants.progress.setValue(0);
-				} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					System.err.print("\tmerging ");
-					System.err.flush();
-				}
-
+                Log.progressStart("merging");
 			}						
 			// The head of this queue is the least element with respect to the specified ordering..
 			PriorityReaderThreadComparator comp2= new PriorityReaderThreadComparator(comp);
@@ -592,18 +587,7 @@ public class UnixStreamSort extends Thread {
 			char[] eol= System.getProperty("line.separator").toCharArray();
 			while(!queue.isEmpty()) {
 				if (!silent) {	// && size> 0
-					int perc = (int) ((linesRead * 10d) / lineCnt);
-					if (perc > lastPerc) { // ;) lastPerc!= 9&& 
-						++lastPerc;
-						if (!silent) {
-							if (Constants.progress!= null)
-								Constants.progress.progress();	// setValue(perc)						lastPerc= perc;
-							else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-								System.err.print("*");
-								System.err.flush();
-							}
-						}
-					}
+                    Log.progress(linesRead, lineCnt);
 				}
 				++linesRead;
 
@@ -626,13 +610,7 @@ public class UnixStreamSort extends Thread {
 				iter.next().close();
 			
 			if (!silent) {
-				if (Constants.progress!= null)
-					Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-				else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					if (lastPerc!= 9)	// ;)
-						System.err.print("*");
-					System.err.println(" "+(System.currentTimeMillis()- t0)/ 1000+" sec.");
-				}
+                Log.progressFinish(StringConstants.OK, true);
 			}
 			
 			return outFile;
@@ -705,13 +683,7 @@ public class UnixStreamSort extends Thread {
 		try {
 			long t0= System.currentTimeMillis();
 			if (!silent) {
-				if (Constants.progress!= null) {
-					Constants.progress.setString("dividing");
-					Constants.progress.setValue(0);
-				} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					System.err.print("\tdividing ");
-					System.err.flush();
-				}
+                Log.progressStart("dividing");
 			}
 
 			ThreadedBufferedByteArrayStream buffy= null;
@@ -740,19 +712,8 @@ public class UnixStreamSort extends Thread {
 				
 				bytesRead+= line.length()+ lineSep.length();
 				++lineCnt;
-				if (size> 0) {
-					int perc = (int) ((bytesRead * 10d) / size);
-					if (lastPerc!= 9&& perc > lastPerc) {	// ;)
-						++lastPerc;
-						if (!silent) {
-							if (Constants.progress!= null)
-								Constants.progress.progress();	// setValue(perc)
-							else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-								System.err.print("*");
-								System.err.flush();
-							}
-						}
-					}
+				if (!silent && size> 0) {
+                    Log.progress(bytesRead, size);
 				}
 				
 				long currMem= Runtime.getRuntime().totalMemory(), currFreeMem= Runtime.getRuntime().freeMemory(); 
@@ -814,13 +775,7 @@ public class UnixStreamSort extends Thread {
 			}
 			
 			if (!silent) {
-				if (Constants.progress!= null)
-					Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-				else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					if (lastPerc< 9)
-						System.err.print("*");
-					System.err.println(" "+(System.currentTimeMillis()- t0)/ 1000+" sec.");
-				}
+                Log.progressFinish(StringConstants.OK, true);
 			}
 	
 		} catch (Exception e) {
@@ -904,14 +859,7 @@ public class UnixStreamSort extends Thread {
 			try {
 				long t0= System.currentTimeMillis();
 				if (!silent) {
-					if (Constants.progress!= null) {
-						Constants.progress.setString("merging");
-						Constants.progress.setValue(0);
-					} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						System.err.print("\tmerging ");
-						System.err.flush();
-					}
-	
+                    Log.progressStart("merging");
 				}						
 				// The head of this queue is the least element with respect to the specified ordering..
 				PriorityReaderThreadComparator comp2= new PriorityReaderThreadComparator(comp);
@@ -938,18 +886,7 @@ public class UnixStreamSort extends Thread {
 				char[] eol= System.getProperty("line.separator").toCharArray();
 				while(!queue.isEmpty()) {
 					if (!silent) {	// && size> 0
-						int perc = (int) ((linesRead * 10d) / lineCnt);
-						if (perc > lastPerc) { // ;) lastPerc!= 9&& 
-							++lastPerc;
-							if (!silent) {
-								if (Constants.progress!= null)
-									Constants.progress.progress();	// setValue(perc)						lastPerc= perc;
-								else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-									System.err.print("*");
-									System.err.flush();
-								}
-							}
-						}
+                        Log.progress(linesRead, lineCnt);
 					}
 					++linesRead;
 	
@@ -972,13 +909,7 @@ public class UnixStreamSort extends Thread {
 					iter.next().close();
 				
 				if (!silent) {
-					if (Constants.progress!= null)
-						Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						if (lastPerc!= 9)	// ;)
-							System.err.print("*");
-						System.err.println(" "+(System.currentTimeMillis()- t0)/ 1000+" sec.");
-					}
+                    Log.progressFinish(StringConstants.OK, true);
 				}
 				
 				return outFile;

@@ -6,7 +6,9 @@ package fbi.genome.sequencing.rnaseq.reconstructionew;
 
 //import io.Sammy;
 
+import fbi.commons.Log;
 import fbi.commons.MyFormatter;
+import fbi.commons.StringConstants;
 import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
@@ -10371,8 +10373,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			System.err.println("[PRESCAN] Checking read length(s)");
 		nrReadsAll= 0;
 		int[] lenMinMax= new int[] {Integer.MAX_VALUE, Integer.MIN_VALUE};
-		if (Constants.progress!= null)
-			Constants.progress.setString("progress ");
+        Log.progressStart("progress ");
 		try {
 			BufferedReader buffy= new BufferedReader(new FileReader(fileBED));
 			File f= File.createTempFile(PFX_CAPACITOR, "prescanIDs");
@@ -10380,11 +10381,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			long bRead= 0, bTot= fileBED.length();
 			int perc= 0, lines= 0;
 			for(String s; (s= buffy.readLine())!= null;++nrReadsAll,bRead+= s.length()+1, ++lines) {
-				if (bRead*10d/bTot> perc) {
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-					++perc;
-				}	
+                Log.progress(bRead,  bTot);
 
 				if (s.charAt(0)== '#')
 					continue;
@@ -10467,9 +10464,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			buffy.close();
 			writer.flush();
 			writer.close();
-			if (Constants.progress!= null)
-				Constants.progress.finish();
-			
+            Log.progressFinish();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -10860,7 +10856,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 	
 	public void setBatch() {
 		Constants.verboseLevel= Constants.VERBOSE_SHUTUP;
-		Constants.progress= null;
+
 	}
 	
 	public void setCompression(String comp) {
@@ -11217,7 +11213,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 
 	
 	private boolean move(File src, File dest) {
-		if (FileHelper.move(src, dest, Constants.progress)) {
+		if (FileHelper.move(src, dest)) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t"+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());
 			}
@@ -11234,15 +11230,10 @@ public class FluxCapacitorNew extends FluxCapacitor {
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 			System.err.println("\t"+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());
 		try {
-			if (Constants.progress!= null) {
-				Constants.progress.setString("copying");
-				Constants.progress.setValue(0);
-			}
-			long t0= System.currentTimeMillis();
-			FileHelper.fastChannelCopy(src, dest, false, Constants.progress);
-			if (Constants.progress!= null) 
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			return true;
+            Log.progressStart("copying");
+			FileHelper.fastChannelCopy(src, dest, false);
+            Log.progressFinish(StringConstants.OK, true);
+            return true;
 		} catch (IOException e) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println(e.getMessage());;
@@ -11289,9 +11280,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println("\tzipping "+ fileLPdir.getAbsolutePath()
 						+"\n\t->"+ dst.getAbsolutePath());
-			if (!FileHelper.zip(fileLPdir, 
-					dst, 
-					Constants.progress)) {
+			if (!FileHelper.zip(fileLPdir, dst)) {
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 					System.err.println("\n[PROBLEMS] encountered error during zipping, check file.");
 			} else {
@@ -11369,7 +11358,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				dest= new File(dest.getAbsolutePath()+ Constants.DOT+ FileHelper.getCompressionExtension(compression));
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println("\t"+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());			
-			FileHelper.deflate(src, dest, compression, Constants.progress);
+			FileHelper.deflate(src, dest, compression);
 			if (!copy) {
 				if (!src.delete())
 					return false;
@@ -11390,7 +11379,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\tinflate "+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());
 			}
-			FileHelper.inflate(src, dest, compression, Constants.progress);
+			FileHelper.inflate(src, dest, compression);
 			return true;
 		} catch (Exception e) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
@@ -11864,21 +11853,15 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			
 			
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\tappending relative measurements");
-				Constants.progress.setString("progress");
+				Log.message("\tappending relative measurements");
+                Log.progressStart("progress");
 			}
 			long totBytes= fileOut.length(), bytes= 0;
 			int perc= 0;
 			String s= null;
 			while((s= buffy.readLine())!= null) {
 				bytes+= s.length()+ 1;
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					if (bytes* 10d/ totBytes> perc) {
-						Constants.progress.progress();
-						++perc;
-					}
-				}
-				
+                Log.progress(bytes, totBytes);
 				writer.write(s);
 				String[] ss= s.split("\\s");	// TODO kill regexp
 				if (ss.length< 8)
@@ -11977,13 +11960,11 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			writer.flush();
 			writer.close();
 			fileOut.delete();			
-			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
-				Constants.progress.finish();
-		  	}
-			
+
+            Log.progressFinish();
+
 			if (fileOUToriginal== null) {
-				if (!FileHelper.move(fileTmp, fileOut, Constants.progress)) {
+				if (!FileHelper.move(fileTmp, fileOut)) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 						System.err.println("[FAILED] Cannot move file.");
 					System.exit(-1);
@@ -11993,11 +11974,9 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			}
 				
 				
-			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
-				Constants.progress.finish();
-		  	}
-			
+
+            Log.progressFinish();
+
 //			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
 //				Constants.progress.setValue(0);
 //				Constants.progress.setString("progress");
@@ -12185,14 +12164,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			long t0= System.currentTimeMillis();
 			final String MSG_WRITING_PROFILES= "writing profiles",
 						NT= "nt", RPKM= "rpkm", UNDERSCORE= "_";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(MSG_WRITING_PROFILES);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.print(Constants.TAB+ MSG_WRITING_PROFILES);
-				System.err.print(Constants.SPACE);
-			}
-			
+            Log.progressStart(MSG_WRITING_PROFILES);
+
 			FileOutputStream fos = new FileOutputStream(getFileProfile());
 		    ZipOutputStream zos = new ZipOutputStream(fos);
 
@@ -12214,11 +12187,9 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			zos.flush();
 			fos.flush();
 			zos.close();
-			if (Constants.progress!= null)
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println();
-			
+
+            Log.progressFinish(StringConstants.OK, true);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -12234,14 +12205,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			long t0= System.currentTimeMillis();
 			final String MSG_WRITING_PROFILES= "writing profiles",
 						NT= "nt", RPKM= "rpkm", UNDERSCORE= "_";
-			if (Constants.progress!= null) {
-				Constants.progress.setString(MSG_WRITING_PROFILES);
-				Constants.progress.setValue(0);
-			} else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.print(Constants.TAB+ MSG_WRITING_PROFILES);
-				System.err.print(Constants.SPACE);
-			}
-			
+            Log.progressStart(MSG_WRITING_PROFILES);
+
 			//TProfile[] t= func.getTProfiles();
 //			TSuperProfile[][] supis=
 //				func.getMasterProfiles(strand== STRAND_ENABLED, pairedEnd, insertMinMax, readLenMin);
@@ -12324,11 +12289,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			zos.flush();
 			fos.flush();
 			zos.close();
-			if (Constants.progress!= null)
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println();
-			
+            Log.progressFinish(StringConstants.OK, true);
 			return null;
 			
 		} catch (Exception e) {
@@ -12470,14 +12431,13 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
 			}
 			final String profiling= "profiling ", decomposing= "decomposing "; 
-			if (Constants.progress!= null) {
+
 				if (mode== MODE_LEARN)
-					Constants.progress.setString(profiling);
+					Log.progressStart(profiling);
 				else if (mode== MODE_RECONSTRUCT)
-					Constants.progress.setString(decomposing);
-				Constants.progress.setValue(0);
-			}
-			
+					Log.progressStart(decomposing);
+
+
 			if (mode== MODE_LEARN) 
 				gtfReader.setKeepOriginalLines(false);
 			else if (mode== MODE_RECONSTRUCT)
@@ -12716,10 +12676,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				} catch (Exception e) {
 					; //:)
 				}
-			if (Constants.progress!= null)
-				Constants.progress.finish(Constants.OK, System.currentTimeMillis()- t0);
-			else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(Constants.SPACE+ Constants.OK);
+            Log.progressFinish(StringConstants.OK, true);
 			if (checkGTFscanExons> 0&& checkGTFscanExons!= getGTFreader().getNrExons())
 				System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ getGTFreader().getNrExons());
 			checkGTFscanExons= getGTFreader().getNrExons(); 

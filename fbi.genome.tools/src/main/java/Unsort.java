@@ -1,9 +1,9 @@
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.UnixStreamSort;
 import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.gff.GFFSorter.Cocs;
-import fbi.genome.model.constants.Constants;
 
 import java.io.*;
 
@@ -44,19 +44,7 @@ public class Unsort {
 				.readLine(cs)) {
 			++rowCtr;
 			bytesRead += line.length() + eol.length();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				int perc = (int) ((bytesRead * 10d) / size);
-				if (perc > lastPerc) {
-					++lastPerc;
-					if (Constants.progress!= null)
-						Constants.progress.progress();
-					else if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						System.err.print("*");
-						System.err.flush();
-					}
-				}
-			}
-							
+            Log.progress(bytesRead, size);
 			writer.write(line.toString());
 			writer.write(eol);
 		}
