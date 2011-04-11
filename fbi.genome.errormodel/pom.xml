@@ -38,7 +38,7 @@
         <repository>
             <id>ThinkCentre-M58e</id>
             <name>ThinkCentre-M58e-releases</name>
-            <url>http://localhost:8080/artifactory/repo</url>
+            <url>http://ThinkCentre-M58e.ti00a1.pcb.ub.es:8080/artifactory/repo</url>
         </repository>
 
         <!-- class scanner -->

@@ -32,12 +32,12 @@
         <repository>
             <id>fbi</id>
             <name>fbi-releases</name>
-            <url>http://10.3.11.123:8080/artifactory/libs-release-local</url>
+            <url>http://ThinkCentre-M58e.ti00a1.pcb.ub.es:8080/artifactory/libs-release-local</url>
         </repository>
         <snapshotRepository>
             <id>fbi</id>
             <name>fbi-snapshots</name>
-            <url>http://10.3.11.123:8080/artifactory/libs-snapshot-local</url>
+            <url>http://ThinkCentre-M58e.ti00a1.pcb.ub.es:8080/artifactory/libs-snapshot-local</url>
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
