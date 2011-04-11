@@ -40,7 +40,7 @@ class MapFileReader {
         this.read = new Read();
     }
 
-    Read parseNext() throws IOException {
+    Read parseNext(boolean skip) throws IOException {
         if (stream == null){
             stream = new BufferedInputStream(new FileInputStream(file));
             io = IOHandlerFactory.createDefaultHandler();
@@ -49,6 +49,7 @@ class MapFileReader {
 
         ByteArrayCharSequence line = io.readLine(stream);
         if(line == null) return null;
+        if(skip) return read;
 
 
         // parse the line and
@@ -64,4 +65,6 @@ class MapFileReader {
 
         return read;
     }
+
+
 }

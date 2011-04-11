@@ -37,6 +37,11 @@ class SimpleIOHandler implements IOHandler{
     private int bufferSize;
 
     /**
+     * The buffer
+     */
+    private ByteArrayCharSequence bufferSequence;
+
+    /**
      * Create a new handler
      */
     SimpleIOHandler() {
@@ -136,6 +141,15 @@ class SimpleIOHandler implements IOHandler{
         outputStream.write(BYTE_NL);
     }
 
+    public void writeLine(Object object, OutputStream out) throws IOException {
+        if(object == null) throw new NullPointerException();
+        if(bufferSequence == null){
+            bufferSequence = new ByteArrayCharSequence(object.toString());
+        }
+        bufferSequence.reset();
+        bufferSequence.append(object.toString());
+        writeLine(bufferSequence, out);
+    }
 
     public ByteArrayCharSequence readLine(InputStream stream) throws IOException {
         ByteArrayInputStream cc = cachedStreams.get(stream);

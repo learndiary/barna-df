@@ -22,7 +22,9 @@ class ThreadedIOHandler extends Thread implements IOHandler{
 	int minVol= 1024;
 	Monitor mon;
 	boolean monitor= false;
-	class Monitor extends Thread {
+    private ByteArrayCharSequence bufferSequence;
+
+    class Monitor extends Thread {
 
 		long delta= 5000;
 
@@ -339,6 +341,17 @@ class ThreadedIOHandler extends Thread implements IOHandler{
 		return len;
 	}
 
+    public void writeLine(Object object, OutputStream out) throws IOException {
+        if(object == null) throw new NullPointerException();
+        if(bufferSequence == null){
+            bufferSequence = new ByteArrayCharSequence(object.toString());
+        }
+        bufferSequence.reset();
+        bufferSequence.append(object.toString());
+        writeLine(bufferSequence, out);
+    }
+
+
 	public void writeLine(ByteArrayCharSequence cs, OutputStream out) throws IOException{
 		int len= cs.length();
 		byte[] b= bufHash.get(out);
@@ -487,4 +500,7 @@ class ThreadedIOHandler extends Thread implements IOHandler{
 	public void setMonitor(boolean monitor) {
 		this.monitor = monitor;
 	}
+
+
+
 }

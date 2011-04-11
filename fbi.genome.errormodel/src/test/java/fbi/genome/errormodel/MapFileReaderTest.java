@@ -24,14 +24,14 @@ public class MapFileReaderTest {
     public void testReadOne(){
         MapFileReader reader = new MapFileReader(testfile, Qualities.Technology.Phred);
         try {
-            Read read1 = reader.parseNext();
+            Read read1 = reader.parseNext(false);
             assertNotNull(read1);
 
             assertEquals("HWUSI-EAS627_1:2:1:4:1299/1", read1.getName());
             assertEquals("ATTTTNNTCAAAAACTTTGTCTTTTTTTCTTTCCTCCCCTAAATTTTCCCCAATTTAAATTTTTCCCCCAGGGGTC", read1.getSequence());
             assertEquals(76, read1.getLength());
             // only one read
-            assertNull(reader.parseNext());
+            assertNull(reader.parseNext(false));
         } catch (IOException e) {
             e.printStackTrace();
             fail();

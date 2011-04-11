@@ -77,6 +77,16 @@ public interface IOHandler {
     public void writeLine(ByteArrayCharSequence cs, OutputStream out) throws IOException;
 
     /**
+     * Write the given character sequence as line
+     *
+     * @param object the line to write
+     * @param out the line content
+     * @throws IOException in case of an error
+     */
+    public void writeLine(Object object, OutputStream out) throws IOException;
+
+
+    /**
      * Read a line from the given stream and load it into the returned the sequence. The sequence
      * contains only the line. If the method returns null, nothing was read.
      *
