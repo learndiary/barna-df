@@ -20,6 +20,9 @@ class MapFileReader {
      * The input file
      */
     private File file;
+    /**
+     * The technology
+     */
     private Qualities.Technology qualityTechnology;
     /**
      * Current read
@@ -38,6 +41,7 @@ class MapFileReader {
         this.file = file;
         this.qualityTechnology = qualityTechnology;
         this.read = new Read();
+
     }
 
     Read parseNext(boolean skip) throws IOException {
@@ -57,6 +61,7 @@ class MapFileReader {
         read.setName(split[0]);
         read.setSequence(split[1]);
         String quals = split[2];
+
 
         for (int i = 0; i < read.getLength(); i++) {
             char q = quals.charAt(i);
