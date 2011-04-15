@@ -22,13 +22,10 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-//import gphase.solexa.lp.GraphLPsolver5;
-//import gphase.solexa.simulation.Nebulizer;
-
-// TODO check whether selected fragments concord w pro file
 
 /**
- * Flux Simulator starter class
+ * Flux Simulator starter class. Contains the main method and parses command line arguments. During startup,
+ * this checks for any {@link FluxTool} implementations and adds them to the list of available tools.
  *
  */
 @Cli(name="flux", restrict = false)
@@ -86,7 +83,11 @@ public class FluxSimulator {
 
 
         // start
-        Log.info("I am the Flux Simulator (v"+ FLUX_VERSION +" build"+FLUX_REVISION+"), nice to meet you!\n");
+        if(FLUX_VERSION.length() > 0 && FLUX_REVISION.length() > 0){
+            Log.info("I am the Flux Simulator (v"+ FLUX_VERSION +" build"+FLUX_REVISION+"), nice to meet you!\n");
+        }else{
+            Log.info("I am the Flux Simulator ( Devel Mode ), nice to meet you!\n");
+        }
 
         // find the tool to start
         FluxTool tool = null;
@@ -101,6 +102,7 @@ public class FluxSimulator {
             }
         }
 
+        // delegate help prints to std err
         PrintWriter out = new PrintWriter(System.err);
         HelpPrinter printer = new HelpPrinter(out);
 

@@ -8,6 +8,9 @@ import org.cyclopsgroup.jcli.spi.Option;
 import org.cyclopsgroup.jcli.spi.ParsingContext;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -47,7 +50,15 @@ public class HelpPrinter {
 
         Cli cli = context.cli();
         Argument argument = context.argument();
-        List<Option> options = context.options();
+        List<Option> options = new ArrayList<Option>(context.options());
+        Collections.sort(options, new Comparator<Option>() {
+            public int compare(Option o1, Option o2) {
+                if(o1.isRequired() && !o2.isRequired()) return -1;
+                if(!o1.isRequired() && o2.isRequired()) return 1;
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
 
         // print general command information
         out.println("[USAGE]");
@@ -61,7 +72,11 @@ public class HelpPrinter {
                 if(!option.isRequired()){
                     out.print("[");
                 }
-                out.print("-"+option.getName());
+                if(option.getName().length() > 0)
+                    out.print("-"+option.getName());
+                else{
+                    out.print("--"+option.getLongName());
+                }
                 if(!option.isFlag()){
                     out.print(" <" + option.getDisplayName() + ">");
                 }
@@ -78,7 +93,7 @@ public class HelpPrinter {
         if(cli.getDescription() != null && !cli.getDescription().isEmpty()){
             out.println();
             out.println("[DESCRIPTION]");
-            out.println(cli.getDescription());
+            out.println(" "+cli.getDescription());
         }
 
         // print options
@@ -88,8 +103,16 @@ public class HelpPrinter {
             TableFormatter table = new TableFormatter(4);
             for (Option option : options) {
                 String[] cols = new String[4];
-                cols[0] = "-"+option.getName();
-                cols[1] = "--"+option.getLongName();
+
+                // defaults
+                cols[0] = "";
+                cols[1]  = "";
+
+                if(option.getName().length() > 0)
+                    cols[0] = "-"+option.getName();
+                if(option.getLongName().length() > 0)
+                    cols[1] = "--"+option.getLongName();
+
                 if(!option.isFlag()){
                     cols[2] = "<"+option.getDisplayName()+">";
                 }else{

@@ -164,15 +164,9 @@ public class FluxSimulatorSettings {
 				s= settings.getGenDir().getAbsolutePath();
 				writer.write(PAR_GEN_DIR+ "\t"+ s+ "\n");
 			}
-			if (settings.getTmpDir()!= null) 
-					//&& !settings.getTmpDir().getPath().equalsIgnoreCase(new File(System.getProperty("java.io.tmpdir")).getPath())) 
+			if (settings.getTmpDir()!= null && !settings.getTmpDir().equals(new File(System.getProperty("java.io.tmpdir"))))
 				{
 				s= settings.getTmpDir().getAbsolutePath();
-				/*FileHelper.getRelativePath(f, settings.getTmpDir());
-				if (!new File(f.getParentFile().getPath()+File.separator+s).exists())
-					s= settings.getTmpDir().getPath();
-				else
-					s= s.replace(File.separatorChar, '/');*/
 				writer.write(PAR_TMP_FNAME+ "\t"+ s+ "\n");
 			}
 
@@ -735,11 +729,10 @@ public class FluxSimulatorSettings {
 				if (fx.exists()&& fx.isDirectory())
 					settings.genDir= fx;
 			}
-			
 			return settings;
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.error("A problem occurred while reading the settings file : " + e.getMessage(), e);
 			return null;
 		}
 		
@@ -914,7 +907,7 @@ public class FluxSimulatorSettings {
 	long nbCells= -1;
 	long nbMolecules= -1;
 	int minRTLen= -1, maxRTLen= -1;
-	File tmpDir;
+	File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 	double thold = Double.NaN;
 	double sigma = Double.NaN;
 	double lambda= Double.NaN;
@@ -1411,4 +1404,15 @@ public class FluxSimulatorSettings {
 		this.fileFilterDistr = fileFilterDistr;
 	}
 
+    /**
+     * Verify the current settings and return null if everything is fine. Otherwise return an error message
+     *
+     * @return message the error message or null if everything is fine
+     */
+    public String validate() {
+        if(getTmpDir() == null) return "No Scratch directory specified";
+        if(!getTmpDir().exists() || !getTmpDir().canWrite()) return "There is a problem with the scratch directory " +
+                getTmpDir().getAbsolutePath() + ". It either does not exist or I can not write!";
+        return null;
+    }
 }

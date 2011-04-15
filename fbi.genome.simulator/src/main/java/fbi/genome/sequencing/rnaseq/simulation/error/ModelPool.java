@@ -367,7 +367,7 @@ public class ModelPool {
 			}
 
             Log.progressFinish();
-						buffy.close();
+			buffy.close();
 			return babe;
 			
 		} catch (Exception e) {

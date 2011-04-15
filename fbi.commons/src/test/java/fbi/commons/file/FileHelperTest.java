@@ -25,4 +25,8 @@ public class FileHelperTest {
         assertEquals("\r\n", win);
         assertEquals("\n", unix);
     }
+    @Test
+    public void testCountLines(){
+        assertEquals(3, FileHelper.countLines(FileHelperTest.class.getResource("/TestFileSepUnix.txt").getFile()));
+    }
 }

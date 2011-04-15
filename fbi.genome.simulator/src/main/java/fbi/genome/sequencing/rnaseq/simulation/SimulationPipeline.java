@@ -10,6 +10,8 @@ import org.cyclopsgroup.jcli.annotation.Option;
 import java.io.File;
 
 /**
+ * Flux Tool that implements the simulation pipeline
+ *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 @Cli(name = "simulator", description = "Flux Simulation Pipeline")
@@ -191,11 +193,10 @@ public class SimulationPipeline implements FluxTool<Void> {
         }
 
         if(!isExpression() && !isLibrary() && !isSequence()){
-            Log.error("");
-            Log.error("You must enable at least one mode (-x -l -s)");
-            Log.error("\n");
-            printer.print(toolArguments);
-            return false;
+            Log.info("No mode selected, executing the full pipeline (-x -l -s)");
+            setExpression(true);
+            setLibrary(true);
+            setSequence(true);
         }
         return true;
     }
@@ -211,8 +212,19 @@ public class SimulationPipeline implements FluxTool<Void> {
             throw new RuntimeException("I have no parameter file and I want to scream!");
         }
 
-        Log.info("[INIT] I am collecting information on the run.");
+        Log.info("I am collecting information on the run.");
         FluxSimulatorSettings settings = getSettings(); // initialize settings
+        if(settings == null){
+            Log.error("No settings available");
+            return null;
+        }
+        // validate the settings
+        String message = settings.validate();
+        if(message != null){
+            Log.error("Unable to verify settings: " + message);
+            return null;
+        }
+
 
         if (settings.getProFile()!= null&& settings.getProFile().exists()&& settings.getProFile().canRead()) {
             getProfiler().loadStats();
@@ -232,25 +244,26 @@ public class SimulationPipeline implements FluxTool<Void> {
 
         if (settings.getFrgFile()!= null&& settings.getFrgFile().exists()&& settings.getFrgFile().canRead()) {
             if (isExpression() || isLibrary()) {
-                //System.err.println("RE-USING library");
-                // see doLib()
-//				if (!userCLIconfirm("[WARNING] I will overwrite the library file "+settings.getFrgFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
-//					System.exit(0);
+                Log.info("Removing existing fragmentation file " + settings.getFrgFile().getAbsolutePath());
                 settings.getFrgFile().delete();
-            } else
+            } else{
+                Log.info("Loading Fragmentation from " + settings.getFrgFile());
                 getFragmenter().loadStats();
-            Log.message("");
+            }
         }
 
         if (settings.getErrFile()!= null&& !getSequencer().loadErrors())
             throw new RuntimeException("The sequencer produced errors !"); // todo: describe the problem
+
         if (settings.getSeqFile()!= null&& settings.getSeqFile().exists()&& settings.getSeqFile().canRead()) {
-            if (isExpression() || isLibrary() || isSequence()) {
+            if (isSequence()) {
                 if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file " + settings.getSeqFile().getName() + ", please confirm:\n\t(Yes,No,Don't know)"))
                     return null;
                 settings.getSeqFile().delete();
-            } else
+            } else{
+                Log.info("Loading sequencing file " + settings.getSeqFile().getAbsolutePath());
                 getSequencer().loadStats();
+            }
             Log.message("");
         }
         Log.message("");
@@ -259,67 +272,37 @@ public class SimulationPipeline implements FluxTool<Void> {
         long t0= System.currentTimeMillis();
 
         if (isExpression())
-            doExpr();
+            getProfiler().run();
         else{
             Log.info("you did not ask for expression, I skip it.\n");
         }
 
 
-        if (isLibrary())
-            doLib();
-        else{
-            Log.info("you did not want me to construct the library, I skip it.");
+        if (isLibrary()){
+            message = getFragmenter().isReady();
+            if (message != null) {
+                throw new RuntimeException(message);
+            }
+            getFragmenter().run();
+        }else{
+            Log.info("you did not want me to construct the library, I skip it.\n");
         }
         Log.message("");
 
 
-        if (isSequence())
-            doSeq();
-        else {
-            Log.info("sequencing has not been demanded, skipped.");
+        if (isSequence()){
+            message = getSequencer().isReady();
+            if (message != null) {
+                throw new RuntimeException(message);
+            }
+            getSequencer().run();
+        }else {
+            Log.info("sequencing has not been demanded, skipped.\n");
         }
 
 
         Log.message("\n[END] I finished, took me " + (System.currentTimeMillis() - t0) / 1000 + " sec.");
         return null;
-    }
-
-    void doExpr() {
-//		if (!profiler.isFinishedReadAnnotation())
-//			profiler.readAnnotation();
-//
-//		if (!profiler.isReady()) {
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[MISSING] I lack parameters for performing expression.");
-//			System.exit(-1);
-//		}
-        getProfiler().run();
-//		if (!profiler.profile()) {
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[FATAL] Problem during expression, I exit.");
-//			System.exit(-1);
-//		}
-    }
-
-    void doLib() {
-        String message = getFragmenter().isReady();
-        if (message != null) {
-            throw new RuntimeException(message);
-        }
-        // see run()
-//		if (fragmenter.isFinished()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//			if (!userCLIconfirm("[CAREFULLY] There are files describing a constructed libary, do you want to overwrite?\n(Yes,No,Don't care)"))
-//				System.exit(-1);
-
-        getFragmenter().run();
-    }
-
-    void doSeq() {
-        String message = getSequencer().isReady();
-        if (message != null) {
-            throw new RuntimeException(message);
-        }
-        getSequencer().run();
     }
 
 }

@@ -2486,24 +2486,19 @@ public class Fragmenter implements StoppableRunnable {
 	}
 	
 	public void run() {
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println("[LIBRARY] creating the cDNA libary");
+		Log.message("[LIBRARY] creating the cDNA library");
 		
 		if (!init())
 			throw new RuntimeException("Failed to initialize the Fragmenter!");
 		
-		if (settings.getFrgFile().exists()&& checkFrgFile())
+		if (settings.getFrgFile().exists()){
+            Log.message("Fragmentation file " + settings.getFrgFile().getAbsolutePath() +" exists, skipping fragmentation!");
 			return;
+        }
 		
-		// REUSE frg file
-		//if (settings.getFrgFile().exists()) {
-			//FileHelper.move(settings.getFrgFile(), tmpFile, null);
-		//} else {
-			tmpFile= writeInitialFile();
-			if (tmpFile== null)
-				return; // FluxSimulator.exit(-1);
-		//}
+		tmpFile= writeInitialFile();
+		if (tmpFile== null)
+			return;
 
 		// read insert size distribution
 		if (settings.getFileFilterDistr()!= null) {
@@ -2724,40 +2719,22 @@ public class Fragmenter implements StoppableRunnable {
         return false;
 	}
 
-	private boolean checkFrgFile() {
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			System.err.print("\tchecking file "+settings.getFrgFile().getAbsolutePath()+" ");
-			System.err.flush();
-		}
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println(" OK");
-		
-		return false;
-	}
-	
 
 	boolean init() {
 		
 		if (settings.getProFile()== null) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t[OOPS] no input for nebulizing");
+		    Log.error("no input for nebulizing");
 			return false;
 		} else {
 			int nbTx= 0;
-			try {
-				FileHelper.countLines(settings.getProFile().getCanonicalPath());
-			} catch (IOException e) {
-				if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-					e.printStackTrace();
-				return false;
-			}
-			mapFrags= new Hashtable<CharSequence,Long>(nbTx, 1f);
+    		nbTx = FileHelper.countLines(settings.getProFile());
+            if(nbTx < 0){
+                mapFrags = new Hashtable<CharSequence, Long>();
+            }else{
+			    mapFrags= new Hashtable<CharSequence,Long>(nbTx, 1f);
+            }
 		}
 		
-		if (settings.getTmpDir()== null) {
-			settings.setTmpDir(new File(System.getProperty("java.io.tmpdir")));
-		}
 		if ((!settings.getTmpDir().exists())|| (!settings.getTmpDir().canWrite())) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t[UHUPS] there is something wrong with the scratch directory:");
@@ -3661,6 +3638,8 @@ public class Fragmenter implements StoppableRunnable {
 	RandomDataImpl rndTSS;
 	Random rndPA, rndPlusMinus;
 	int cntMolInit= 0;
+
+
 	private File writeInitialFile() {
 		rndTSS= new RandomDataImpl();
 		rndPA= new Random();
@@ -3670,46 +3649,19 @@ public class Fragmenter implements StoppableRunnable {
 		cntMolInit= 0;
 
 		try {
-			//if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				//System.err.print("\tiniting fragments +");
-			String msg= "Initializing Fragmentation File";
-            Log.progressStart(msg);
+            Log.progressStart("Initializing Fragmentation File");
 
-			//BufferedReader buffy= new BufferedReader(new FileReader(settings.proFile));
-			//String[] token;
-			//int lineCtr= 0;
-			//long bytesRead= 0, totalBytes= settings.proFile.length();
-//			for (String s; (!stop)&& (s= buffy.readLine())!= null; ++lineCtr) {
-//				bytesRead+= s.length()+ 1;	// line.separator
-//				
-//				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-//					// perc= MyFormatter.printPercentage(perc, bytesRead, totalBytes, System.err);
-//					int frac= (int) (bytesRead* 10d/ totalBytes);
-//					if (frac> perc) {
-//						perc= frac;
-//						Constants.progress.setValue(perc);
-//					}
-//				}
-//				token= s.split("\\s");
-//				int nb= Integer.parseInt(token[3]);
-//				int len= Integer.parseInt(token[1]);
-//				if (lineCtr% 1000== 0)
-//					writer.flush();
-//			}
-//			buffy.close();
-			
-			FileOutputStream fos= new FileOutputStream(tmpFile);	
+			FileOutputStream fos= new FileOutputStream(tmpFile);
 			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(1);
 			rw.addStream(fos, 10* 1024);
-//			if (FluxSimulatorSettings.optDisk)  
-//				rw.start();
+
 			Profiler profiler= settings.getProfiler();
 			Processor[] processors= getProcessorPool(MODE_WRITE_INITIAL, Math.min(settings.getMaxThreads(), 4));
 			for (int i = 0; i < processors.length; i++) 
 				processors[i].setFos(fos);
-			int perc= 0; molInit= 0; medLen= 0; minLen= Integer.MAX_VALUE; maxLen= Integer.MIN_VALUE;
+			int molInit= 0; medLen= 0; minLen= Integer.MAX_VALUE; maxLen= Integer.MIN_VALUE;
 			for (int i = 0; (!isStop())&& i < settings.getProfiler().getMolecules().length; i++) {
-				if (i% 1000== 0) {
+				if (i % 1000 == 0) {
                     Log.progress(i, settings.getProfiler().getMolecules().length);
 				}
 				if (profiler.getLen()[i]>= Fragmenter.this.settings.getFiltMin()&&

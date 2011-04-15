@@ -128,10 +128,25 @@ public class Log {
      * @param message the message
      */
     public static void error(String message){
+        error("ERROR", message);
+    }
+
+    /**
+     * Log an error message with a custom error prefix
+     *
+     * @param prefix the error prefix (null permitted)
+     * @param message the message
+     */
+    public static void error(String prefix, String message){
         if(verboseLevel >= VERBOSE_ERRORS){
-            System.err.println("[ERROR] "+message);
+            if(prefix != null && prefix.length() > 0)
+                System.err.println("["+prefix+"]"+" "+message);
+            else{
+                System.err.println(message);
+            }
         }
     }
+
     /**
      * Log an error message and print the stacktrace of the error
      *

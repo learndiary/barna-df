@@ -413,18 +413,43 @@ public class FileHelper {
 		}
 		return -1;
 	}
-	
-	public static int countLines(String fileName) {
+
+    /**
+     * Reads the complete file and counts the line numbers. Error are catched and this returns -1 if
+     * the number of lines could not be counted successfully.
+     *
+     * @param file the filename
+     * @return lines the number of lines or -1 in case of any errors
+     */
+	public static int countLines(File file) {
+        BufferedReader buffy = null;
 		try {
 			int cntLines= 0;
-			BufferedReader buffy= new BufferedReader(new FileReader(fileName));
+			buffy= new BufferedReader(new FileReader(file));
 			for(String s;(s= buffy.readLine())!= null;++cntLines);
-			buffy.close();
 			return cntLines;
 		} catch (Exception e) {
 			; // :)
-		}
+		}finally {
+            if(buffy != null){
+                try {
+                    buffy.close();
+                } catch (IOException ignore) {
+                    // ignore
+                }
+            }
+        }
 		return -1;
+    }
+    /**
+     * Reads the complete file and counts the line numbers. Error are catched and this returns -1 if
+     * the number of lines could not be counted successfully.
+     *
+     * @param fileName the filename
+     * @return lines the number of lines or -1 in case of any errors
+     */
+	public static int countLines(String fileName) {
+        return countLines(new File(fileName));
 	}
 	
 	public static boolean move(File from, File to) {
