@@ -11,9 +11,13 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -306,55 +310,5 @@ public class FluxSimulator {
 		}
         return true;
 		
-	}
-
-	public static boolean invertTable(File invFile) {
-		
-		System.err.println("[INFO] inverting .pro file");
-		File tmpFile= new File(invFile.getAbsolutePath()+"_inv");
-		try {
-			Vector<StringTokenizer> lineTokis= new Vector<StringTokenizer>();
-			BufferedReader buffy= new BufferedReader(new FileReader(invFile));
-			for (String s= buffy.readLine(); s!= null; s= buffy.readLine()) 
-				lineTokis.add(new StringTokenizer(s));
-			buffy.close();
-			
-			int c= -1;
-			for (int i = 0; i < lineTokis.size(); i++) {
-				if (c< 0)
-					c= lineTokis.elementAt(i).countTokens();
-				else if (c!= lineTokis.elementAt(i).countTokens()) {
-					System.err.println("\t[OHNO] inconsistent column count "+c+" <> "+lineTokis.elementAt(i).countTokens());
-					return false;
-				}
-			}
-			
-			BufferedWriter writer= new BufferedWriter(new FileWriter(tmpFile));
-			while (true) {
-				for (int i = 0; i < lineTokis.size(); i++) {
-					writer.write(lineTokis.elementAt(i).nextToken());
-					if (i< lineTokis.size()-1)
-						writer.write("\t");
-					else
-						writer.write("\n");
-				}
-				if (!lineTokis.elementAt(0).hasMoreTokens()) 
-					break;					
-			}			
-			writer.flush();
-			writer.close();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			if (tmpFile.exists())
-				tmpFile.delete();
-			return false;
-		}
-		
-		if (!invFile.delete()) 
-			System.err.println("\t[OHNO] failed to remove "+invFile);
-		if (!tmpFile.renameTo(invFile)) 
-			System.err.println("\t[OHNO] failed to move "+tmpFile+" to "+invFile);
-		return true;
 	}
 }

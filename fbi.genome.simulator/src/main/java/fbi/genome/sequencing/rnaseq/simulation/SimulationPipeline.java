@@ -225,7 +225,7 @@ public class SimulationPipeline implements FluxTool<Void> {
                         settings.getProfiler().status= -1;
                 }
             }
-            Log.info("");
+            Log.message("");
         }
 
 
@@ -239,7 +239,7 @@ public class SimulationPipeline implements FluxTool<Void> {
                 settings.getFrgFile().delete();
             } else
                 getFragmenter().loadStats();
-            Log.info("");
+            Log.message("");
         }
 
         if (settings.getErrFile()!= null&& !getSequencer().loadErrors())
@@ -251,9 +251,9 @@ public class SimulationPipeline implements FluxTool<Void> {
                 settings.getSeqFile().delete();
             } else
                 getSequencer().loadStats();
-            Log.info("");
+            Log.message("");
         }
-        Log.info("");
+        Log.message("");
 
         // now start the pipeline
         long t0= System.currentTimeMillis();
@@ -270,7 +270,7 @@ public class SimulationPipeline implements FluxTool<Void> {
         else{
             Log.info("you did not want me to construct the library, I skip it.");
         }
-        Log.info("");
+        Log.message("");
 
 
         if (isSequence())
@@ -280,7 +280,7 @@ public class SimulationPipeline implements FluxTool<Void> {
         }
 
 
-        Log.info("\n[END] I finished, took me " + (System.currentTimeMillis() - t0) / 1000 + " sec.");
+        Log.message("\n[END] I finished, took me " + (System.currentTimeMillis() - t0) / 1000 + " sec.");
         return null;
     }
 
