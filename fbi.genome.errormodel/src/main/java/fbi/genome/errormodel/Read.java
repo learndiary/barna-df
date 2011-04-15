@@ -1,5 +1,7 @@
 package fbi.genome.errormodel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -14,6 +16,8 @@ class Read {
    private CharSequence sequence;
    private int length;
    private int[] qualities;
+   private List<Mapping> mappings;
+
 
 
     public CharSequence getName() {
@@ -50,6 +54,101 @@ class Read {
 
     public void setQualities(int[] qualities) {
         this.qualities = qualities;
+    }
+
+    public Mapping addMapping(){
+        if (mappings == null) mappings = new ArrayList<Mapping>();
+        Mapping mapping = new Mapping();
+        mappings.add(mapping);
+        return mapping;
+    }
+
+    public List<Mapping> getMappings(){
+        return mappings;
+    }
+
+    public void reset(){
+        if(mappings != null) mappings.clear();
+        length = 0;
+        name = null;
+        sequence = null;
+    }
+
+
+    class Mapping{
+        private List<Missmatch> missmatches;
+        private int quality;
+        private String name;
+
+        public void addMissmatch(int position, char genomicCharacter){
+            if(missmatches == null) missmatches = new ArrayList<Missmatch>();
+            missmatches.add(new Missmatch(position, genomicCharacter, getSequence().charAt(position-1)));
+        }
+
+        public List<Missmatch> getMissmatches() {
+            return missmatches;
+        }
+
+        public List<Character> getMissmatches(int position) {
+            if(missmatches == null || missmatches.size() == 0) return null;
+            ArrayList<Character> cc = new ArrayList<Character>();
+            for (Missmatch missmatch : missmatches) {
+                if(missmatch.getPosition() == position) cc.add(missmatch.getGenomicCharacter());
+            }
+            return cc.size() == 0 ? null : cc;
+        }
+
+        public void setQuality(int quality) {
+            this.quality = quality;
+        }
+
+        public int getQuality() {
+            return quality;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    class Missmatch{
+        private int position;
+        private char genomicCharacter;
+        private char readCharacter;
+
+        Missmatch(int position, char genomicCharacter, char readCharacter) {
+            this.position = position;
+            this.genomicCharacter = genomicCharacter;
+            this.readCharacter = readCharacter;
+        }
+
+        public int getPosition() {
+            return position;
+        }
+
+        public void setPosition(int position) {
+            this.position = position;
+        }
+
+        public char getGenomicCharacter() {
+            return genomicCharacter;
+        }
+
+        public void setGenomicCharacter(char genomicCharacter) {
+            this.genomicCharacter = genomicCharacter;
+        }
+
+        public char getReadCharacter() {
+            return readCharacter;
+        }
+
+        public void setReadCharacter(char readCharacter) {
+            this.readCharacter = readCharacter;
+        }
     }
 /*
     public void parseMissmatches(ByteArrayCharSequence line){

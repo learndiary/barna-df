@@ -37,5 +37,14 @@ abstract class Distribution {
         return b.toString();
     }
 
+    public double[][] getDistribution(){
+        double[][] d = new double[2][size];
+        for (int i = 0; i < size; i++) {
+            d[0][i] = i;
+            d[1][i] = getValue(i);
+        }
+        return d;
+    }
+
 
 }

@@ -9,6 +9,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Read .map files
@@ -16,6 +18,15 @@ import java.io.IOException;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 class MapFileReader {
+
+    /**
+     * Pattern no match missmatches in the .map file
+     */
+    private static final Pattern MISSMATCH_PATTERN= Pattern.compile("([A,C,G,T,N,a,c,g,t,n])(\\d{1,3}+)");
+    /**
+     * Match the quality string
+     */
+    private static final Pattern QUALITY_PATTERN= Pattern.compile("\\@(\\d+)/(\\d+)");
     /**
      * The input file
      */
@@ -56,11 +67,58 @@ class MapFileReader {
         if(skip) return read;
 
 
+        read.reset();
+
         // parse the line and
         String[] split = line.toString().split("\t");
         read.setName(split[0]);
         read.setSequence(split[1]);
+        // todo check what happens with files without any qualities
         String quals = split[2];
+        String mappings = split[3];
+        if(!mappings.equals("0:0:0")){
+
+            // extract all best mappings
+            String[] splitedMappings = mappings.split(":");
+
+            for (int i = 0; i < splitedMappings.length; i++) {
+                String splitedMapping = splitedMappings[i];
+                int n = Integer.parseInt(splitedMapping);
+                if(n > 0){
+                    // this is the best mapping with index n mappings and i missmatches
+
+                    String missmatches = split[4];
+                    String[] splittedMatches = missmatches.split(",");
+                    for (int j = 0; j < n && n<=splittedMatches.length; j++) {
+                        Read.Mapping mapping = read.addMapping();
+                        String splittedMatch = splittedMatches[j];
+                        Matcher matcher = MISSMATCH_PATTERN.matcher(splittedMatch);
+                        int missmatchStart = -1;
+                        while (matcher.find()){
+                            if(missmatchStart < 0) missmatchStart = matcher.start();
+                            mapping.addMissmatch(Integer.parseInt(matcher.group(2)), matcher.group(1).charAt(0));
+                        }
+
+                        Matcher qualityMatcher = QUALITY_PATTERN.matcher(splittedMatch);
+                        if(qualityMatcher.find()){
+                            if(missmatchStart < 0) missmatchStart = qualityMatcher.start();
+                            int avgQuality = Integer.parseInt(qualityMatcher.group(1));
+                            int num = Integer.parseInt(qualityMatcher.group(2));
+                            mapping.setQuality(avgQuality);
+                        }
+
+                        if(missmatchStart >= 0){
+                            // get the name
+                            mapping.setName(splittedMatch.substring(0, missmatchStart));
+                        }
+
+                    }
+
+                    break; // only best
+                }
+
+            }
+        }
 
 
         for (int i = 0; i < read.getLength(); i++) {
@@ -69,6 +127,12 @@ class MapFileReader {
         }
 
         return read;
+    }
+
+    public void close(){
+        if(io != null){
+            io.close();
+        }
     }
 
 
