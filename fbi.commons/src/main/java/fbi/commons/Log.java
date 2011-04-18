@@ -9,29 +9,39 @@ package fbi.commons;
  */
 public class Log {
     /**
-     * Debugging mode
+     * Log levels
      */
-    public static final byte VERBOSE_DEBUG = 3;
+    public static enum Level{
+        /**
+         * No logging
+         */
+        NONE(0),
+        /**
+         * Log only error messages
+         */
+        ERROR(100),
+        /**
+         * Log error and info messages
+         */
+        INFO(200),
+        /**
+         * Log debug messages
+         */
+        DEBUG(300);
+        /**
+         * Integer representation
+         */
+        int level;
+
+        Level(int level) {
+            this.level = level;
+        }
+    }
+
     /**
-     * Default log level
+     * the log level
      */
-    public static final byte VERBOSE_NORMAL = 2;
-    /**
-     * Show errors only
-     */
-    public static final byte VERBOSE_ERRORS = 1;
-    /**
-     * Quite log level
-     */
-    public static final byte VERBOSE_SHUTUP = 0; // todo: rename to "quiet"
-    /**
-     * String representations for logging levels
-     */
-    public static final String[] VERBOSE_KEYWORDS= new String[] {"SILENT", "VERBOSE", "ERRORS", "DEBUG"};
-    /**
-     * Current logging level
-     */
-    public static byte verboseLevel= VERBOSE_NORMAL; // todo: does this need to be public ?
+    private static Level logLevel = Level.INFO;
 
     /**
      * The console progress
@@ -39,22 +49,35 @@ public class Log {
     private static Progressable progress = new PrintstreamProgressable(System.err);
 
     /**
-     * Set logging level and returns true if the given string was a proper logging level, otherwise this returns false
-     * and the logging level is not changed
+     * Translates a string to the proper log level or throws an {@link IllegalArgumentException}
      *
-     * @param logLevel the current log level
-     * @return changed returns true if log level was applied successfully
+     * @param level the current log level
      */
-    public static final boolean setVerbose(String logLevel) {
-        //SILENT, VERBOSE, ERRORS, DEBUG
-        logLevel= logLevel.toUpperCase();
-        for (int i = 0; i < VERBOSE_KEYWORDS.length; i++){
-            if (logLevel.equals(VERBOSE_KEYWORDS[i])) {
-                verboseLevel= (byte) i;
-                return true;
-            }
+    public static void setLogLevel(String level) {
+        try{
+            logLevel = Level.valueOf(level.toUpperCase());
+        }catch(IllegalArgumentException e){
+            throw new IllegalArgumentException("Unknown log level " + level+". Must be one of NONE|INFO|ERROR|DEBUG" );
         }
-        return false;
+    }
+
+    /**
+     * Set the log level
+     *
+     * @param level the level
+     */
+    public static void setLogLevel(Level level){
+        if(level == null) throw new NullPointerException("Null LogLevel not permitted!");
+        logLevel = level;
+    }
+
+    /**
+     * Get the current log level
+     *
+     * @return level the log level
+     */
+    public static Level getLogLevel(){
+        return logLevel;
     }
 
 
@@ -64,8 +87,7 @@ public class Log {
      * @param message the message
      */
     public static void debug(String message){
-        if(verboseLevel >= VERBOSE_DEBUG)
-            System.err.println("[DEBUG] " + message);
+        debug(message,null);
     }
 
     /**
@@ -75,11 +97,31 @@ public class Log {
      * @param error the error
      */
     public static void debug(String message, Throwable error){
-        if(verboseLevel >= VERBOSE_DEBUG){
-            debug(message);
-            if(error != null)error.printStackTrace(System.err);
+        if(logLevel.level >= Log.Level.DEBUG.level){
+            System.err.println("[DEBUG] " + message);
+            if(error != null) error.printStackTrace(System.err);
         }
     }
+
+    /**
+     * Log an waring message
+     *
+     * @param message the message
+     */
+    public static void warn(String message){
+        warn("WARN", message);
+    }
+
+    /**
+     * Print a waring with a custom prefix
+     *
+     * @param prefix the prefix
+     * @param message the message
+     */
+    public static void warn(String prefix, String message){
+        info(prefix, message);
+    }
+
 
 
     /**
@@ -92,27 +134,12 @@ public class Log {
     }
 
     /**
-     * Log an waring message
-     *
-     * @param message the message
-     */
-    public static void warn(String message){
-        info("WARN", message);
-    }
-
-    public static void warn(String prefix, String message){
-        info("WARN", message);
-    }
-
-
-
-    /**
      * Log an info message using a given prefix
      *
      * @param message the message
      */
     public static void info(String prefix, String message){
-        if(verboseLevel >= VERBOSE_NORMAL){
+        if(logLevel.level >= Log.Level.INFO.level){
             if(prefix != null && !prefix.isEmpty()){
                 System.err.println("["+prefix+"] "+message);
             }else{
@@ -138,7 +165,7 @@ public class Log {
      * @param message the message
      */
     public static void error(String prefix, String message){
-        if(verboseLevel >= VERBOSE_ERRORS){
+        if(logLevel.level >= Log.Level.ERROR.level){
             if(prefix != null && prefix.length() > 0)
                 System.err.println("["+prefix+"]"+" "+message);
             else{
@@ -154,7 +181,7 @@ public class Log {
      * @param error the error
      */
     public static void error(String message, Throwable error){
-        if(verboseLevel >= VERBOSE_ERRORS){
+        if(logLevel.level >= Log.Level.ERROR.level){
             error(message);
             if(error != null)error.printStackTrace(System.err);
         }
@@ -168,7 +195,7 @@ public class Log {
      * @param message the message
      */
     public static void message(String message){
-        if(verboseLevel > VERBOSE_SHUTUP){
+        if(logLevel.level >= Log.Level.INFO.level){
             System.err.println(message);
         }
     }
@@ -179,14 +206,18 @@ public class Log {
      * @param message the message (null permitted)
      */
     public static void progressStart(String message) {
-        progress.start(message);
+        if(logLevel.level >= Log.Level.INFO.level){
+            progress.start(message);
+        }
     }
 
     /**
      * Do a progress step
      */
     public static void progress(){
-        progress.progress();
+        if(logLevel.level >= Log.Level.INFO.level){
+            progress.progress();
+        }
     }
     /**
      * Checks if the progress should be printed
@@ -195,9 +226,11 @@ public class Log {
      * @param maxValue the maximum value
      */
     public static void progress(long currentValue, long maxValue) {
-        int preStep = (int) Math.ceil((double) maxValue / progress.steps());
-        while(currentValue < maxValue && progress.currentStep() < progress.steps() && progress.currentStep() * preStep <= currentValue){
-            progress();
+        if(logLevel.level >= Log.Level.INFO.level){
+            int preStep = (int) Math.ceil((double) maxValue / progress.steps());
+            while(currentValue < maxValue && progress.currentStep() < progress.steps() && progress.currentStep() * preStep <= currentValue){
+                progress();
+            }
         }
     }
 
@@ -206,7 +239,9 @@ public class Log {
      * Finish the current progress
      */
     public static void progressFinish() {
-        progress.finish();
+        if(logLevel.level >= Log.Level.INFO.level){
+            progress.finish();
+        }
     }
 
     /**
@@ -216,7 +251,9 @@ public class Log {
      * @param time print the time
      */
     public static void progressFinish(String msg, boolean time) {
-        progress.finish(msg, time);
+        if(logLevel.level >= Log.Level.INFO.level){
+            progress.finish(msg, time);
+        }
     }
 
     /**
@@ -225,7 +262,9 @@ public class Log {
      * @param msg the message (null permitted)
      */
     public static void progressFailed(String msg) {
-        progress.failed(msg);
+        if(logLevel.level >= Log.Level.INFO.level){
+            progress.failed(msg);
+        }
     }
 
     /**

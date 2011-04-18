@@ -2,6 +2,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
 import fbi.commons.options.HelpPrinter;
+import org.cyclopsgroup.caff.ref.AccessFailureException;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -14,6 +15,7 @@ import org.reflections.util.ConfigurationBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +71,21 @@ public class FluxSimulator {
         // prepare the simulator
         FluxSimulator simulator = new FluxSimulator();
         ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(FluxSimulator.class);
-        fluxArguments.process(args, simulator);
+        try{
+            fluxArguments.process(args, simulator);
+        }catch (AccessFailureException ae){
+            Log.error("Error while processing arguments !");
+            if(ae.getCause() instanceof InvocationTargetException){
+                Log.error(((InvocationTargetException) (ae.getCause())).getTargetException().getMessage());
+            }else{
+                Log.error(ae.getCause().getMessage());
+            }
+            System.exit(-1);
+        }catch (Exception e){
+            Log.error("Error while processing arguments !");
+            Log.error(e.getMessage());
+            System.exit(-1);
+        }
 
 
         // prepare tools
@@ -244,6 +260,26 @@ public class FluxSimulator {
     public void setHelp(boolean help) {
         this.help = help;
     }
+
+    /**
+     * Set the log level. The Sting must be one of {@code NONE, INFO, ERROR, DEBUG}
+     *
+     * @param level the level
+     */
+    @Option(name = "", longName = "log", description = "Log level (NONE|INFO|ERROR|DEBUG)", defaultValue = "INFO", required = false)
+    public void setLogLevel(String level){
+        Log.setLogLevel(level);
+    }
+
+    /**
+     * Get the current log level
+     *
+     * @return level the log level
+     */
+    public String getLogLevel(){
+        return Log.getLogLevel().toString();
+    }
+
 
     /**
      * Read properties like version and build revision from jar file

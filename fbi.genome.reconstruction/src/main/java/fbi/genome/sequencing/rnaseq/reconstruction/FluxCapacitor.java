@@ -4880,7 +4880,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_HELP.toString(), CLI_LONG_PFX+ CLI_LONG_HELP},
 					"print help summary");
 			
-			m= FluxCapacitor.class.getDeclaredMethod("setVerbose", new Class[] {String.class});
+			m= FluxCapacitor.class.getDeclaredMethod("setLogLevel", new Class[] {String.class});
 			cliLongMap.put(CLI_LONG_VERBOSE, m);
 			cliShortMap.put(CLI_SHORT_VERBOSE, m);
 			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_VERBOSE.toString(), CLI_LONG_PFX+ CLI_LONG_VERBOSE},

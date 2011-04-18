@@ -26,7 +26,7 @@ public class CommandLine {
      * @return confirmed true if the user confirmed with yes
      */
     public static boolean confirm(String message) {
-        if (Log.verboseLevel== Log.VERBOSE_SHUTUP)
+        if (Log.getLogLevel() == Log.Level.NONE)
             return true;
 
         while (true) {
