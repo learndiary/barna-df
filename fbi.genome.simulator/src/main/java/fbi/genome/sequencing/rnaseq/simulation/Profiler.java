@@ -2,7 +2,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.file.ReverseFileReader;
 import fbi.commons.thread.StoppableRunnable;
@@ -351,7 +351,7 @@ public class Profiler implements StoppableRunnable {
 			}
 
 
-            Log.progressFinish(StringConstants.OK, false);
+            Log.progressFinish(StringUtils.OK, false);
 
 			if (!isStop()) {
 				Hashtable<CharSequence,Long> map= new Hashtable<CharSequence,Long>(settings.getProfiler().getMolecules().length);

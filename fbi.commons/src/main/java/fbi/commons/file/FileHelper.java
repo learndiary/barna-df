@@ -3,7 +3,7 @@ package fbi.commons.file;
 
 import fbi.commons.Log;
 import fbi.commons.MyFormatter;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -133,7 +133,7 @@ public class FileHelper {
 		in.close();
 		buffy.flush();
 		buffy.close();
-        Log.progressFinish(StringConstants.OK, true);
+        Log.progressFinish(StringUtils.OK, true);
 	}
 	
 	public static void deflate(File src, File dest, byte compression) throws Exception {
@@ -810,7 +810,7 @@ make sense
 				zos.closeEntry();
 				buffy.close();
 				if (depth== 0&& !silent) {
-                    Log.progressFinish(StringConstants.OK, true);
+                    Log.progressFinish(StringUtils.OK, true);
 				}
 				return true;
 			} catch (Exception e) {
@@ -906,5 +906,34 @@ make sense
 			return false;
 		}
 		return true;
-	}  
+	}
+
+    public static String append(String s, String sfx) {
+        return append(s, sfx, false, null);
+    }
+
+    public static String append(String s, String sfx, boolean stripSfx, String newSfx) {
+        if (newSfx== null)
+            newSfx= getExtension(s);
+        newSfx= '.'+ newSfx;
+        int p= s.lastIndexOf('.');
+        String nuFname= (p>= 0)?
+            s.substring(0, p)+ sfx+ (stripSfx?"":(newSfx== null? "": newSfx)):
+            s+ sfx+ newSfx;
+
+        return nuFname;
+    }
+
+    /**
+     * Creates a temp file using the name as prefix and appending an optional extension
+     *
+     * @param name the name
+     * @param ext the extension (null permitted)
+     * @return file temp file
+     * @throws IOException in case of any errors
+     */
+    public static File createTempFile(String name, String ext) throws IOException {
+        if(ext != null && ext.length() > 0 && !ext.startsWith(".")) ext = "."+ext;
+        return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "");
+    }
 }

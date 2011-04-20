@@ -9,8 +9,9 @@ package fbi.genome.model;
 //import gphase.NMDSimulator;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
-import fbi.genome.model.commons.MyArrays;
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.constants.Constants2;
 
 import java.io.*;
@@ -168,11 +169,14 @@ public class Graph implements Serializable {
 	}
 	
 	public Exon[] getExons(int region) {
-		Vector v= new Vector();
+		Vector<Exon> v= new Vector<Exon>();
 		Gene[] ge= getGenes();
-		for (int i = 0; i < ge.length; i++) 
-			v= (Vector) MyArrays.addAll(v, ge[i].getExons(region));
-		return (Exon[]) MyArrays.toField(v);
+		for (int i = 0; i < ge.length; i++){
+            //v= (Vector) ArrayUtils.addAll(v, ge[i].getExons(region));
+            Collections.addAll(v, ge[i].getExons(region));
+        }
+
+		return (Exon[]) ArrayUtils.toField(v);
 	}
 
 	public Species getSpeciesByEnsemblPrefix(String speciesPfx) {
@@ -287,7 +291,7 @@ public class Graph implements Serializable {
 				v.add(ex[i]);
 			}
 		}
-		return (Exon[]) MyArrays.toField(v);
+		return (Exon[]) ArrayUtils.toField(v);
 	}
 
 	/**
@@ -521,7 +525,7 @@ public class Graph implements Serializable {
 				if (seq.length- pos> rest)
 					s= s.substring(0, s.length()- ((seq.length- pos)- rest));
 				if (!forwardStrand) 
-					s= MyArrays.reverseComplement(s);
+					s= StringUtils.reverseComplement(s);
 				
 				if (pfx!= null) {
 					if (forwardStrand)

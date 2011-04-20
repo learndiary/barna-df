@@ -1,12 +1,12 @@
 package fbi.genome.io.gff;
 
 import fbi.commons.Log;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 import fbi.commons.thread.StoppableRunnable;
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.model.*;
 import fbi.genome.model.commons.IntVector;
-import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
 
@@ -379,7 +379,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 
 		System.gc();
 
-		return (Transcript[][]) MyArrays.toField(clusters);
+		return (Transcript[][]) ArrayUtils.toField(clusters);
 	}
 
 	static protected HashMap getGroups(String id, GFFObject[] obj) {
@@ -453,11 +453,11 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		Comparator compi = Collator.getInstance();
 		Vector vv = new Vector();
 		for (int i = 0; i < v.size(); i++) {
-			MyArrays.addUnique(vv, v.elementAt(i), compi);
+			ArrayUtils.addUniqueSorted(vv, v.elementAt(i), compi);
 		}
 		System.out.println("Found " + vv.size() + " gene ids for "
 				+ protIDs.length + " proteins.");
-		return (String[]) MyArrays.toField(vv);
+		return (String[]) ArrayUtils.toField(vv);
 	}
 
 	public void reset() {
@@ -590,7 +590,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		}
 		
 		boolean b= close();
-        Log.progressFinish(StringConstants.OK, true);
+        Log.progressFinish(StringUtils.OK, true);
 
 	}
 	
@@ -897,7 +897,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 				break;
 		}
 		if (readFeatures != null && x == readFeatures.length) {
-			skippedFeatures = MyArrays.addUnique(skippedFeatures, feature);
+			ArrayUtils.addUnique(skippedFeatures, feature);
 			return false;
 		}
 		return true;
@@ -1076,7 +1076,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 						}
 					}
 					if (i == reg.length)
-						reg = (DirectedRegion[]) MyArrays.add(reg, newReg);
+						reg = (DirectedRegion[]) ArrayUtils.add(reg, newReg);
 				}
 
 				trpt.addAttribute(regID, reg); // "domain",
@@ -1236,7 +1236,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 					if (lastChrID != null) { 						
 						if (!checkChromosome(chrID)) {
 								getReadChr().add(lastChrID);
-							MyArrays.addUnique(getSkippedChr(), chrID);
+							ArrayUtils.addUnique(getSkippedChr(), chrID);
 							buffy= skipToNextChromosome(buffy, size, chrID);
 							if (buffy== null)
 								break;
@@ -1404,7 +1404,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		
 			//
 		if (readGene&& geneV!= null) {	// happens on "empty lines" (pb with terminator, single line files)
-			this.genes = (Gene[]) MyArrays.toField(geneV); // doesnt matter which sorting, no?!
+			this.genes = (Gene[]) ArrayUtils.toField(geneV); // doesnt matter which sorting, no?!
 			if (this.genes!= null)
 				nrGenes+= this.genes.length;
 //			BufferedWriter www= new BufferedWriter(new FileWriter("N:\\txmap.reader", true));
@@ -1428,7 +1428,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 				clustered = false;
 		}
 		if (readGTF)
-			this.gtfObj = (GFFObject[]) MyArrays.toField(gtfV);
+			this.gtfObj = (GFFObject[]) ArrayUtils.toField(gtfV);
 
 //		if (bytesRead == size && Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 //			System.err.println();
@@ -1546,7 +1546,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 			i = j - 1;
 		}
 
-		return (Gene[]) MyArrays.toField(v);
+		return (Gene[]) ArrayUtils.toField(v);
 	}
 	
 	public int countTranscripts() {
@@ -1607,7 +1607,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 					vRest.add(geneReg[0][i]);
 			}
 			vRest.add(gene);
-			geneReg[0] = (Gene[]) MyArrays.toField(vRest);
+			geneReg[0] = (Gene[]) ArrayUtils.toField(vRest);
 			geneReg[1] = geneReg[0]; // not needed here, see efficient
 										// version..
 		}
@@ -1825,7 +1825,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	
 			buffy.close();
 
-            Log.progressFinish(StringConstants.OK, true);
+            Log.progressFinish(StringUtils.OK, true);
 
 		} catch (IOException e) {
             Log.progressFailed("ERROR");
@@ -2043,7 +2043,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 			if (cnt.intValue() == 0)
 				v.add(keys[i]);
 		}
-		return (String[]) MyArrays.toField(v);
+		return (String[]) ArrayUtils.toField(v);
 	}
 
 	public boolean isChromosomeWise() {

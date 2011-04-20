@@ -113,6 +113,7 @@ class SimpleIOHandler implements IOHandler{
         }
         for (OutputStream outputStream : outputStreams.values()) {
             try {
+                outputStream.flush();
                 outputStream.close();
             } catch (IOException e) {
                 // ignore this one
@@ -145,9 +146,10 @@ class SimpleIOHandler implements IOHandler{
         if(object == null) throw new NullPointerException();
         if(bufferSequence == null){
             bufferSequence = new ByteArrayCharSequence(object.toString());
+        }else{
+            bufferSequence.reset();
+            bufferSequence.append(object.toString());
         }
-        bufferSequence.reset();
-        bufferSequence.append(object.toString());
         writeLine(bufferSequence, out);
     }
 

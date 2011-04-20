@@ -1,6 +1,6 @@
 package fbi.genome.model;
 
-import fbi.genome.model.commons.MyArrays;
+import fbi.commons.tools.ArrayUtils;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -87,7 +87,7 @@ public class DirectedRegion extends DefaultRegion {
 					interV.add(dir1[i].intersect(dir2[j]));
 			}
 		}
-		return (DirectedRegion[]) MyArrays.toField(interV);
+		return (DirectedRegion[]) ArrayUtils.toField(interV);
 	}
 	
 	
@@ -106,10 +106,10 @@ public class DirectedRegion extends DefaultRegion {
 		Comparator compi= new AbstractSite.PositionComparator();
 		for (int i = 0; regs!= null&& i < regs.length; i++) {
 			AbstractSite[] as= contained(regs[i], s);
-			v= MyArrays.addUnique(v, as, compi);
+			ArrayUtils.addAllUniqueSorted(v, as, compi);
 		}
 		
-		return (AbstractSite[]) MyArrays.toField(v);
+		return (AbstractSite[]) ArrayUtils.toField(v);
 	}
 	
 	public static DirectedRegion getUnion(DirectedRegion[] regs) {
@@ -178,7 +178,7 @@ public class DirectedRegion extends DefaultRegion {
 		for (int j = 0; j < addV.size(); j++) 
 			keepV.add(addV.elementAt(j));
 		
-		return (DirectedRegion[]) MyArrays.toField(keepV);
+		return (DirectedRegion[]) ArrayUtils.toField(keepV);
 	}
 
 	public static DirectedRegion[] filterIdenticalRegions(DirectedRegion[] regs) {
@@ -200,7 +200,7 @@ public class DirectedRegion extends DefaultRegion {
 			if (j== remV.size())
 				keepV.add(regs[i]);
 		}
-		return (DirectedRegion[]) MyArrays.toField(keepV);
+		return (DirectedRegion[]) ArrayUtils.toField(keepV);
 	}
 	
 	public static DirectedRegion[] filterContainedRegions(DirectedRegion[] regs) {
@@ -225,7 +225,7 @@ public class DirectedRegion extends DefaultRegion {
 			if (j== remV.size())
 				keepV.add(regs[i]);
 		}
-		return (DirectedRegion[]) MyArrays.toField(keepV);
+		return (DirectedRegion[]) ArrayUtils.toField(keepV);
 	}
 	
 	public static DirectedRegion concatenate(DirectedRegion reg0, DirectedRegion reg1) {
@@ -245,7 +245,7 @@ public class DirectedRegion extends DefaultRegion {
 		for (int i = 0; i < s.length; i++) 
 			if (dir.contains(s[i]))
 				v.add(s[i]);
-		return (AbstractSite[]) MyArrays.toField(v);
+		return (AbstractSite[]) ArrayUtils.toField(v);
 	}
 	
 	public boolean contains(SpliceSite ss) {
@@ -303,7 +303,7 @@ public class DirectedRegion extends DefaultRegion {
 		for (; j < dir2.length; j++) 
 			interV.add(dir2[j]);
 		
-		return (DirectedRegion[]) MyArrays.toField(interV);
+		return (DirectedRegion[]) ArrayUtils.toField(interV);
 	}
 	
 	public char getWatsonCrickStrandSymbol() {
@@ -731,7 +731,7 @@ public class DirectedRegion extends DefaultRegion {
 		if (lastCluster!= null)
 			interV.add(lastCluster);
 		
-		return (DirectedRegion[]) MyArrays.toField(interV);
+		return (DirectedRegion[]) ArrayUtils.toField(interV);
 	}
 
 	// copy back to DirectedRegion some day

@@ -1,7 +1,7 @@
 package fbi.commons.gui;
 
 import fbi.commons.Progressable;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -96,7 +96,7 @@ public class MyProgressBar extends JPanel implements Progressable {
 	public void finish() {
 		bar.setVisible(false);
 		bar.setValue(bar.getMinimum());
-		lab.setText(StringConstants.SPACE);
+		lab.setText(StringUtils.SPACE);
 	}
 
     public void finish(String msg, boolean time) {

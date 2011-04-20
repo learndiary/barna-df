@@ -139,6 +139,20 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 		return (end - start);
 	}
 
+
+    /**
+     * Remove all white-spaces from start and end
+     */
+    public void trim() {
+        while ((start < end) && (a[start] <= ' ')) {
+            start++;
+        }
+        while ((start < end) && (a[end-1] <= ' ')) {
+            end--;
+        }
+    }
+
+
 	/**
 	 * The resulting CharSequence operates on the same byte[] !
 	 */
@@ -499,11 +513,12 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 	
 	@Override
 	public String toString() {
-		StringBuffer s= new StringBuffer(length());
-		for (int i = 0; i < length(); i++) 
-			s.append(charAt(i));
-
-		return s.toString();
+//		StringBuffer s= new StringBuffer(length());
+//		for (int i = 0; i < length(); i++)
+//			s.append(charAt(i));
+//
+        return new String(a, start, length());
+//		return s.toString();
 	}
 	
 	public char[] toCharArray() {

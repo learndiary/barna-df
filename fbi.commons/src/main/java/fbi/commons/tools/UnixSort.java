@@ -1,13 +1,8 @@
-package fbi.genome.io;
+package fbi.commons.tools;
 
-import fbi.genome.io.UnixSort.PriorityReaderThread.PriorityReaderThreadComparator;
-import fbi.genome.model.commons.MyArrays;
+import fbi.commons.tools.UnixSort.PriorityReaderThread.PriorityReaderThreadComparator;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.PriorityQueue;
@@ -395,7 +390,7 @@ public class UnixSort {
 			outFile.renameTo(rFile);
 			v.add(rFile);
 			
-			return (File[]) MyArrays.toField(v);
+			return (File[]) ArrayUtils.toField(v);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

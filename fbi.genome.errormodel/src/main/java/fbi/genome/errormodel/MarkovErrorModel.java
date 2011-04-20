@@ -1,7 +1,7 @@
 package fbi.genome.errormodel;
 
 import fbi.commons.Log;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 import fbi.commons.io.Serializer;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.Qualities;
@@ -241,7 +241,7 @@ public class MarkovErrorModel implements FluxTool{
 
             Log.progress(c++,limit);
         }
-        Log.progressFinish(StringConstants.OK, true);
+        Log.progressFinish(StringUtils.OK, true);
 
         Log.message("Writing model to " + getOutput().getAbsolutePath());
         FileOutputStream out = new FileOutputStream(getOutput());

@@ -6,7 +6,6 @@ import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.model.AnnotationObject;
 import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Graph;
-import fbi.genome.model.commons.MyArrays;
 
 import java.awt.*;
 import java.util.NoSuchElementException;
@@ -532,14 +531,6 @@ public class BEDobject extends AnnotationObject {
 			blockStarts= new ByteArrayCharSequence(Integer.toString(blockStart));
 		else 
 			blockStarts.append(COMMA+ Integer.toString(blockStart));
-	}
-	
-	public void addBlockStart(int blockStart, int blockSize) {
-		addBlockStart(blockStart);
-		addBlockSize(blockSize);
-		Vector v= new Vector();
-		v.add(blockSizes);
-		MyArrays.synchroneousSort((Object) getBlockStarts(), v);
 	}
 	
 

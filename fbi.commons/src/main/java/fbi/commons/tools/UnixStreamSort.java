@@ -1,15 +1,11 @@
-package fbi.genome.io;
-
-//import io.gff.GTFSorter;
-//import io.gff.ThreadedBufferedReader;
-//import io.gff.GTFSorter.ByteArrayCharSequence;
+package fbi.commons.tools;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
-import fbi.commons.StringConstants;
-import fbi.genome.model.commons.MyArrays;
-import fbi.genome.model.commons.MyFile;
-import fbi.genome.model.constants.Constants;
+import fbi.commons.StringUtils;
+import fbi.commons.file.FileHelper;
+import fbi.commons.io.IOHandler;
+import fbi.commons.io.IOHandlerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -43,13 +39,14 @@ public class UnixStreamSort extends Thread {
 	
 	
 	String lineSep= System.getProperty("line.separator");
+    private BufferedInputStream fileStream;
 	
 	public static File createFileSfxSorted(File original) {
-		return new File(MyFile.append(original.getAbsolutePath(), SFX_SORTED));
+		return new File(FileHelper.append(original.getAbsolutePath(), SFX_SORTED));
 	}
 	
 	public static File createFileSfxSorted(String path) {
-		return new File(MyFile.append(path, SFX_SORTED));
+		return new File(FileHelper.append(path, SFX_SORTED));
 	}
 	
 	static class DesignatedFieldsLine {
@@ -184,7 +181,7 @@ public class UnixStreamSort extends Thread {
 		public static final boolean debug= true;
 		public static final int READ_LINES_AHEAD_LIMIT= 1000;
 		int priority= -1;
-		ThreadedBufferedByteArrayStream buffy= null;
+		IOHandler buffy= null;
 		ArrayBlockingQueue<DesignatedFieldsLine> lineBuffer= null;
 		//CountingConcurrentLinkedQueue lineBuffer= null;
 		int readLinesAheadLimit= -1, minReadLinesAheadLimit= -1;
@@ -202,11 +199,18 @@ public class UnixStreamSort extends Thread {
 			sortedFile= file;
 			this.priority= priority;			
 			setName("Reader Thread, priority "+ priority+": "+file.getName());
-			this.buffy= new ThreadedBufferedByteArrayStream(10000,sortedFile, true);
+
+            try {
+                fileStream = new BufferedInputStream(new FileInputStream(file));
+                //this.buffy= new ThreadedBufferedByteArrayStream(10000,sortedFile, true);
+                buffy = IOHandlerFactory.createDefaultHandler();
+                buffy.addStream(fileStream);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
 			//System.out.println("cap "+lineBuffer.remainingCapacity());
 			cs= new ByteArrayCharSequence(10000);
-			
-
 			lineBuffer= new ArrayBlockingQueue<DesignatedFieldsLine>(10);
 		}
 		
@@ -238,9 +242,9 @@ public class UnixStreamSort extends Thread {
 		
 		private void fill() {
 			try {
-				ByteArrayCharSequence line = buffy.readLine(cs); 
-				if (line.end!= 0)
-					lineBuffer.add(new DesignatedFieldsLine(line.cloneCurrentSeq(), fNrs, fNum));
+				int read = buffy.readLine(fileStream, cs);
+				if (read >= 0)
+					lineBuffer.add(new DesignatedFieldsLine(cs.cloneCurrentSeq(), fNrs, fNum));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -539,23 +543,7 @@ public class UnixStreamSort extends Thread {
 		}
 	}
 
-	
-	public static void main(String[] args) {
-		long t0= System.currentTimeMillis();
-		File file1= new File("/home/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_UNSORT.gtf");
-//		UnixSort mySort1= new UnixSort(baseFile, 4, true);
-//		mySort1.setSilent(false);
-//		File file1= mySort1.sort();
-		UnixStreamSort mySort2= new UnixStreamSort(file1, 1, false);
-		mySort2.setSilent(false);
-		mySort2.debug= true;
-		mySort2.start();
-		
-		fbi.genome.model.commons.DevNullReaderThread dev0= new fbi.genome.model.commons.DevNullReaderThread();
-		dev0.setIn(mySort2.getOutInStream());
-		dev0.start();
-	}
-	
+
 	File mergefps() {
 		try {
 			long t0= System.currentTimeMillis();
@@ -610,7 +598,7 @@ public class UnixStreamSort extends Thread {
 				iter.next().close();
 			
 			if (!silent) {
-                Log.progressFinish(StringConstants.OK, true);
+                Log.progressFinish(StringUtils.OK, true);
 			}
 			
 			return outFile;
@@ -658,11 +646,9 @@ public class UnixStreamSort extends Thread {
 			if (tmpFileV.elementAt(i).delete())
 				++cnt;
 		}
-
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP&& !silent) {
-			System.err.println("\tcreated "+ctrTmpFiles+" temporary files, " +
-					"removed "+cnt+" files, failed to remove "+(tmpFileV.size()- cnt)+" files.");
-		}
+        if(!silent){
+            Log.message("\tcreated " + ctrTmpFiles + " temporary files, " + " removed " + cnt + " files, failed to remove " + (tmpFileV.size() - cnt) + " files.");
+        }
 	}
 	
 	public void setSilent(boolean silent) {
@@ -686,12 +672,15 @@ public class UnixStreamSort extends Thread {
                 Log.progressStart("dividing");
 			}
 
-			ThreadedBufferedByteArrayStream buffy= null;
+            IOHandler buffy = IOHandlerFactory.createDefaultHandler();
+            //ThreadedBufferedByteArrayStream buffy= null;
 			if (baseFile!= null) {
-				buffy= new ThreadedBufferedByteArrayStream(10000, baseFile, true);
+				//buffy= new ThreadedBufferedByteArrayStream(10000, baseFile, true);
+                buffy.addStream(fileStream);
 				id= baseFile.getName();
 			} else if (inStream!= null) {
-				buffy= new ThreadedBufferedByteArrayStream(10000, inStream, true);
+                // todo : reinit buffy with the right stream
+				//buffy= new ThreadedBufferedByteArrayStream(10000, inStream, true);
 				id= "stream";
 			}
 			
@@ -707,50 +696,52 @@ public class UnixStreamSort extends Thread {
 			long maxChunkSizeBytes= Math.min(sharedMemSize, MAX_FILE_SIZE_BYTES);
 			if(debug)
 				System.err.println("parallel "+multiProcessors+" x "+maxChunkSizeBytes);
-			for (ByteArrayCharSequence line = buffy.readLine(cs); line.end!= 0; line = buffy
-				.readLine(cs)) {
-				
-				bytesRead+= line.length()+ lineSep.length();
-				++lineCnt;
-				if (!silent && size> 0) {
-                    Log.progress(bytesRead, size);
-				}
-				
-				long currMem= Runtime.getRuntime().totalMemory(), currFreeMem= Runtime.getRuntime().freeMemory(); 
-				if (lineV!= null&& (bytes+ line.length()+lineSep.length()> maxChunkSizeBytes||
-						(currFreeMem< (currMem* 0.25)))) {	// 090522: deliberative mem bound, maxMem not well suited as it updates and size is not exactly related to Xmx
-
-					if (debug)
-						System.err.println("sorter started "+currFreeMem+" / "+currMem);
-					// substart sort
-					batchCtr++;
-					while (vt.size()== multiProcessors) {
-						vt.elementAt(0).join();
-						//tmpFileV.add(vt.elementAt(0).file);
-						vt.remove(0);
-					}
-					SortThread t= new SortThread();
-					t.setName("Sorter "+batchCtr);
-					t.lines= (DesignatedFieldsLine[]) MyArrays.toField(lineV.toArray());
-					//t.start();
-					t.run();	// // 090522: bound memory !!!!
-					vt.add(t);
-					
-					lineCtr= 0;
-					bytes= 0;
-					lineV.removeAllElements();
-					System.gc();
-				}
-				bytes+= line.length()+lineSep.length();
-				if (lineV== null) {
-					avgLineLen= line.length();
-					//System.err.println("avg line len "+avgLineLen);
-					lineV= new Vector<DesignatedFieldsLine>((int) ((float) maxChunkSizeBytes/ (avgLineLen+ lineSep.length())),
-							10);
-				}				
-				lineV.add(new DesignatedFieldsLine(line.cloneCurrentSeq(), fNrs, fNum)); 
-				++lineCtr;
-			}
+            int read = 0;
+            // todo reanable
+//			for (ByteArrayCharSequence line = buffy.readLine(cs); line.end!= 0; line = buffy
+//				.readLine(cs)) {
+//
+//				bytesRead+= line.length()+ lineSep.length();
+//				++lineCnt;
+//				if (!silent && size> 0) {
+//                    Log.progress(bytesRead, size);
+//				}
+//
+//				long currMem= Runtime.getRuntime().totalMemory(), currFreeMem= Runtime.getRuntime().freeMemory();
+//				if (lineV!= null&& (bytes+ line.length()+lineSep.length()> maxChunkSizeBytes||
+//						(currFreeMem< (currMem* 0.25)))) {	// 090522: deliberative mem bound, maxMem not well suited as it updates and size is not exactly related to Xmx
+//
+//					if (debug)
+//						System.err.println("sorter started "+currFreeMem+" / "+currMem);
+//					// substart sort
+//					batchCtr++;
+//					while (vt.size()== multiProcessors) {
+//						vt.elementAt(0).join();
+//						//tmpFileV.add(vt.elementAt(0).file);
+//						vt.remove(0);
+//					}
+//					SortThread t= new SortThread();
+//					t.setName("Sorter "+batchCtr);
+//					t.lines= (DesignatedFieldsLine[]) ArrayUtils.toField(lineV.toArray());
+//					//t.start();
+//					t.run();	// // 090522: bound memory !!!!
+//					vt.add(t);
+//
+//					lineCtr= 0;
+//					bytes= 0;
+//					lineV.removeAllElements();
+//					System.gc();
+//				}
+//				bytes+= line.length()+lineSep.length();
+//				if (lineV== null) {
+//					avgLineLen= line.length();
+//					//System.err.println("avg line len "+avgLineLen);
+//					lineV= new Vector<DesignatedFieldsLine>((int) ((float) maxChunkSizeBytes/ (avgLineLen+ lineSep.length())),
+//							10);
+//				}
+//				lineV.add(new DesignatedFieldsLine(line.cloneCurrentSeq(), fNrs, fNum));
+//				++lineCtr;
+//			}
 //			buffy.close();
 			
 			if (lineV.size()> 0) {
@@ -763,7 +754,7 @@ public class UnixStreamSort extends Thread {
 				}
 				SortThread t= new SortThread();
 				t.setName("Sorter "+batchCtr);
-				t.lines= (DesignatedFieldsLine[]) MyArrays.toField(lineV.toArray());
+				t.lines= (DesignatedFieldsLine[]) ArrayUtils.toField(lineV.toArray());
 				t.start();		
 				vt.add(t);			
 			}
@@ -775,7 +766,7 @@ public class UnixStreamSort extends Thread {
 			}
 			
 			if (!silent) {
-                Log.progressFinish(StringConstants.OK, true);
+                Log.progressFinish(StringUtils.OK, true);
 			}
 	
 		} catch (Exception e) {
@@ -787,7 +778,7 @@ public class UnixStreamSort extends Thread {
 	private String id= null;
 	private UnixStreamSort() {
 		setName("StreamSort "+hashCode());
-		id= Constants.getTimestampID();
+		id= StringUtils.getTimestampID();
 	}
 	public UnixStreamSort(File file) {
 		this();
@@ -803,17 +794,14 @@ public class UnixStreamSort extends Thread {
 	}
 
 	private File createTempFile(String name, String ext) {
-		File f= new File(System.getProperty(Constants.PROPERTY_TMPDIR)
-				+ File.separator
-				//+ (Constants.globalPfx== null? PFX_SORT: Constants.globalPfx+ "_"+ PFX_SORT)
-				+ Constants.getGlobalPfx()+ "_"+ PFX_SORT
-				+ "."
-				//+ this.id
-				+ Constants.getTimestampID()
-				+ "."+ name
-				+ (ext== null?"": "."+ ext));
-		f.deleteOnExit();
-		return f;
+        File tempFile = null;
+        try {
+            tempFile = FileHelper.createTempFile(name, ext);
+            tempFile.deleteOnExit();
+        } catch (IOException e) {
+            Log.error("Unable to create temp file : " + e.getMessage());
+        }
+        return tempFile;
 	}
 	public long getSize() {
 		return size;
@@ -909,7 +897,7 @@ public class UnixStreamSort extends Thread {
 					iter.next().close();
 				
 				if (!silent) {
-                    Log.progressFinish(StringConstants.OK, true);
+                    Log.progressFinish(StringUtils.OK, true);
 				}
 				
 				return outFile;

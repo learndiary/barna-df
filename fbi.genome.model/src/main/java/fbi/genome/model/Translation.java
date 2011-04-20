@@ -6,13 +6,14 @@
  */
 package fbi.genome.model;
 
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.commons.IntVector;
-import fbi.genome.model.commons.MyArrays;
-//import gphase.StopCodons;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
+
+//import gphase.StopCodons;
 
 /**
  * 
@@ -331,7 +332,7 @@ public class Translation extends DirectedRegion {
 		for (int i = start; i <= seq.length()- 3; i+= 3) 
 			codons.add(seq.substring(i, i+3));
 		
-		return (String[]) MyArrays.toField(codons);
+		return (String[]) ArrayUtils.toField(codons);
 	}
 	
 	public static int[] getCodonCount(String[] codons, String seq) {
@@ -437,7 +438,7 @@ public class Translation extends DirectedRegion {
 			reg.setSpecies(getSpecies());
 			regV.add(reg);
 		}
-		return (DirectedRegion[]) MyArrays.toField(regV);
+		return (DirectedRegion[]) ArrayUtils.toField(regV);
 	}
 	
 
@@ -473,13 +474,13 @@ public class Translation extends DirectedRegion {
 		
 		if (v.size()== 0)
 			return null;
-		return (String[]) MyArrays.toField(v);
+		return (String[]) ArrayUtils.toField(v);
 	}
 	
 	public String[] getProteinIDsAll() {
 		if (proteinIDs== null|| proteinIDs.size()== 0)
 			return null;
-		return (String[]) MyArrays.toField(proteinIDs);
+		return (String[]) ArrayUtils.toField(proteinIDs);
 	}
 	/**
 	 * @param translationID The translationID to set.
@@ -531,7 +532,7 @@ public class Translation extends DirectedRegion {
 				uOrfV.add(trns[i]);
 		}
 		
-		Translation[] uOrf= (Translation[]) MyArrays.toField(uOrfV);
+		Translation[] uOrf= (Translation[]) ArrayUtils.toField(uOrfV);
 		return uOrf;
 	}
 

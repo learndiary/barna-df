@@ -1,7 +1,7 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.Transcript;
-import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.splicegraph.Graph;
 
 import java.io.File;
@@ -55,7 +55,7 @@ public class TProfileFunction {
 	
 	public void finish() {
 		System.err.println("[ERROR] fatal call to finish()");
-		profis= (TProfile[]) MyArrays.toField(profiles);
+		profis= (TProfile[]) ArrayUtils.toField(profiles);
 		profiles= null;
 		System.gc();
 	}
@@ -80,7 +80,7 @@ public class TProfileFunction {
 	public TProfile[] getTProfiles() {
 		
 		if (profis == null) {
-			profis= (TProfile[]) MyArrays.toField(profiles);
+			profis= (TProfile[]) ArrayUtils.toField(profiles);
 			if (profis!= null)
 				Arrays.sort(profis, getDefaultTProfileByLengthComaparator());
 		}

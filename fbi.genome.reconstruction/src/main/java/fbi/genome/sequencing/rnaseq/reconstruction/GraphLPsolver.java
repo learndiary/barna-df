@@ -1,29 +1,19 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Vector;
-
-import lpsolve.LpSolve;
-import lpsolve.LpSolveException;
 import fbi.genome.model.SpliceSite;
 import fbi.genome.model.Transcript;
-import fbi.genome.model.Gene.StableIDComparator;
 import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.commons.IntVector;
-import fbi.genome.model.commons.MyInteger;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
+import lpsolve.LpSolve;
+import lpsolve.LpSolveException;
+
+import java.io.*;
+import java.util.*;
 //import gphase.solexa.simulation.one.RandomReadSimulator;
 
 /**

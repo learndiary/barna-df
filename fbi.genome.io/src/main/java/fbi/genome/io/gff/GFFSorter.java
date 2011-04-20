@@ -2,8 +2,8 @@ package fbi.genome.io.gff;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.file.FileHelper;
-import fbi.genome.io.UnixStreamSort;
-import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
+import fbi.commons.tools.UnixStreamSort;
+import fbi.commons.tools.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.model.commons.MyArrayHashMap;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;

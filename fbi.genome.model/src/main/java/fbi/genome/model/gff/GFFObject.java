@@ -6,21 +6,12 @@
  */
 package fbi.genome.model.gff;
 
+import fbi.commons.tools.ArrayUtils;
+import fbi.genome.model.*;
 import fbi.genome.model.bed.BEDobject;
-import fbi.genome.model.AbstractSite;
-import fbi.genome.model.DirectedRegion;
-import fbi.genome.model.Exon;
-import fbi.genome.model.Gene;
-import fbi.genome.model.SpliceSite;
-import fbi.genome.model.Transcript;
-import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.constants.Constants;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * see http://genes.cs.wustl.edu/GTF2.html for description
@@ -351,7 +342,7 @@ public class GFFObject {
 			gtfV.add(gtf);
 			createGTFObjectsAddAttributes(site.getAttributes(), gtf, gtfV, trpt);
 			
-			return (GFFObject[]) MyArrays.toField(gtfV);
+			return (GFFObject[]) ArrayUtils.toField(gtfV);
 		}
 
 	public static GFFObject[] createGTFObjects(SpliceSite site, Transcript trpt) {
@@ -376,7 +367,7 @@ public class GFFObject {
 		createGTFObjectsAddAttributes(site.getAttributes(), gtf, gtfV, trpt);
 		gtfV.add(gtf);
 		
-		return (GFFObject[]) MyArrays.toField(gtfV);
+		return (GFFObject[]) ArrayUtils.toField(gtfV);
 	}
 	
 	public static void createGTFObjectsAddAttributes(HashMap map, GFFObject baseObj, Vector v, Transcript trpt) {
@@ -387,9 +378,9 @@ public class GFFObject {
 		java.util.Arrays.sort(keys);
 		for (int i = 0; i < keys.length; i++) {
 			if (map.get(keys[i]) instanceof AbstractSite)
-				MyArrays.addAll(v, createGTFObjects((AbstractSite) map.get(keys[i]), trpt));
+				Collections.addAll(v, createGTFObjects((AbstractSite) map.get(keys[i]), trpt));
 			if (map.get(keys[i]) instanceof DirectedRegion)
-				MyArrays.addAll(v, createGTFObjects((DirectedRegion) map.get(keys[i]), trpt));
+				Collections.addAll(v, createGTFObjects((DirectedRegion) map.get(keys[i]), trpt));
 			else if (map.get(keys[i]) instanceof String&& keys[i] instanceof String)
 				baseObj.addAttribute((String) keys[i], (String) map.get(keys[i]));
 		}
@@ -582,7 +573,7 @@ public class GFFObject {
 		if (addObjV.size()== 0)
 			return new GFFObject[] {obj};
 		else
-			return (GFFObject[]) MyArrays.toField(addObjV);
+			return (GFFObject[]) ArrayUtils.toField(addObjV);
 	}
 
 	public static GFFObject[] createGTFObjects(DirectedRegion reg, Transcript trpt) {
@@ -603,7 +594,7 @@ public class GFFObject {
 		gtfV.add(obj);
 		
 		createGTFObjectsAddAttributes(reg.getAttributes(), obj, gtfV, trpt);
-		return (GFFObject[]) MyArrays.toField(gtfV);
+		return (GFFObject[]) ArrayUtils.toField(gtfV);
 	}
 
 	public static GFFObject createGTFObject(Exon exon, Transcript trpt) {
@@ -739,7 +730,7 @@ public class GFFObject {
 			}
 		}
 
-		return (GFFObject[]) MyArrays.toField(addObjV);
+		return (GFFObject[]) ArrayUtils.toField(addObjV);
 	}
 	
 	/**
@@ -784,7 +775,7 @@ public class GFFObject {
 			v.add(objs[i]);
 		}
 		
-		return (GFFObject[]) MyArrays.toField(v);
+		return (GFFObject[]) ArrayUtils.toField(v);
 	}
 	
 	public static GFFObject createGFFObject(SpliceSite site, String source) {

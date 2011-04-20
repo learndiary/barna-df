@@ -76,21 +76,21 @@ public class Distribution {
 			histogram= new HashMap();
 			for (int i = 0; arrayD!= null&& i < arrayD.length; i++) {
 				Double key= new Double(arrayD[i]);
-				MyInteger val= (MyInteger) histogram.get(key);
+				Integer val= (Integer) histogram.get(key);
 				if (val== null) 
-					val= new MyInteger(1);
+					val= new Integer(1);
 				else
-					val= new MyInteger(val.intValue()+ 1);
+					val= new Integer(val.intValue()+ 1);
 				histogram.put(key, val);
 			}
 			
 			for (int i = 0; arrayI!= null&& i < arrayI.length; i++) {
-				MyInteger key= new MyInteger(arrayI[i]);
-				MyInteger val= (MyInteger) histogram.get(key);
+				Integer key= new Integer(arrayI[i]);
+				Integer val= (Integer) histogram.get(key);
 				if (val== null) 
-					val= new MyInteger(1);
+					val= new Integer(1);
 				else
-					val= new MyInteger(val.intValue()+ 1);
+					val= new Integer(val.intValue()+ 1);
 				histogram.put(key, val);
 			}
 		}

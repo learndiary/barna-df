@@ -6,9 +6,8 @@
  */
 package fbi.genome.model;
 
-import fbi.genome.model.commons.MyArrays;
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.constants.Constants2;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -660,7 +659,7 @@ public class Species implements Serializable {
 				chrMap.put(ge[i].getChromosome(), ge[i].getChromosome());
 		}
 		
-		return (String[]) MyArrays.toField(chrMap.keySet());
+		return (String[]) ArrayUtils.toField(chrMap.keySet());
 	}
 
 	public boolean addGene(Gene newGene) {
@@ -738,7 +737,7 @@ public class Species implements Serializable {
 //			for (int j = 0; ssites!= null&& j < ssites.length; j++) 
 //				v.add(ssites[j]);
 //		}
-//		return (SpliceSite[]) MyArrays.toField(v);
+//		return (SpliceSite[]) ArrayUtils.toField(v);
 		return null;
 	}
 	/**
@@ -758,7 +757,7 @@ public class Species implements Serializable {
 				v.add(ex[i]);
 			}
 		}
-		return (Exon[]) MyArrays.toField(v);
+		return (Exon[]) ArrayUtils.toField(v);
 	}
 
 	/**

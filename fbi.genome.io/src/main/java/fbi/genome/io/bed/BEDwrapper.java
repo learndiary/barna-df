@@ -3,13 +3,14 @@ package fbi.genome.io.bed;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.Progressable;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 import fbi.commons.thread.SyncIOHandler2;
+import fbi.commons.tools.ArrayUtils;
+import fbi.commons.tools.UnixStreamSort;
+import fbi.commons.tools.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
-import fbi.genome.io.UnixStreamSort;
-import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.gff.GFFSorter.Cocs;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.io.rna.ReadDescriptor;
@@ -18,7 +19,6 @@ import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.MyArrayHashMap;
-import fbi.genome.model.commons.MyArrays;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
 
@@ -206,7 +206,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 		}
 		
 
-		beds= (BEDobject[]) MyArrays.toField(objV);
+		beds= (BEDobject[]) ArrayUtils.toField(objV);
 
 	}
 
@@ -659,7 +659,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					writer.close();
 			
 					pipe.join();
-                    Log.progressFinish(StringConstants.OK, true);
+                    Log.progressFinish(StringUtils.OK, true);
 					return outFile;
 			
 				} catch (Exception e) {

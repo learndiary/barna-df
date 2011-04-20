@@ -2,12 +2,12 @@ package fbi.genome.sequencing.rnaseq.reconstruction;
 
 import fbi.commons.Log;
 import fbi.commons.MyFormatter;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
-import fbi.genome.io.UnixStreamSort;
+import fbi.commons.tools.UnixStreamSort;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.ReadDescriptor;
@@ -4947,7 +4947,7 @@ public class FluxCapacitor implements ReadStatCalculator {
             Log.progressStart("copying");
 			FileHelper.fastChannelCopy(src, dest, false);
 
-			Log.progressFinish(StringConstants.OK, true);
+			Log.progressFinish(StringUtils.OK, true);
 			return true;
 		} catch (IOException e) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
@@ -5900,7 +5900,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			zos.flush();
 			fos.flush();
 			zos.close();
-            Log.progressFinish(StringConstants.OK, true );
+            Log.progressFinish(StringUtils.OK, true );
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -6001,7 +6001,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			zos.flush();
 			fos.flush();
 			zos.close();
-            Log.progressFinish(StringConstants.OK, true);
+            Log.progressFinish(StringUtils.OK, true);
 			return null;
 			
 		} catch (Exception e) {
@@ -6389,7 +6389,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				} catch (Exception e) {
 					; //:)
 				}
-            Log.progressFinish(StringConstants.OK, true);
+            Log.progressFinish(StringUtils.OK, true);
 			if (checkGTFscanExons> 0&& checkGTFscanExons!= getGTFreader().getNrExons())
 				System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ getGTFreader().getNrExons());
 			checkGTFscanExons= getGTFreader().getNrExons(); 

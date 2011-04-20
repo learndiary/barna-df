@@ -7,11 +7,11 @@ import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
 import fbi.commons.thread.ThreadedQWriter;
+import fbi.commons.tools.UnixStreamSort;
+import fbi.commons.tools.UnixStreamSort2;
+import fbi.commons.tools.UnixStreamSort2.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.Fasta;
-import fbi.genome.io.UnixStreamSort;
-import fbi.genome.io.UnixStreamSort2;
-import fbi.genome.io.UnixStreamSort2.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.model.*;
@@ -524,8 +524,8 @@ public class Sequencer implements StoppableRunnable {
 			PipedInputStream in = new PipedInputStream(out);
 			final BufferedWriter writer= new BufferedWriter(new OutputStreamWriter(
 					out));
-			fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator compi=
-				new fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator(3);
+			UnixStreamSort.DesignatedHierarchicalFieldComparator compi=
+				new UnixStreamSort.DesignatedHierarchicalFieldComparator(3);
 			final UnixStreamSort sorter= new UnixStreamSort(in, compi);
 			final byte[] bb= new byte[100];			
 			Thread t= new Thread("Sorted Writer") {

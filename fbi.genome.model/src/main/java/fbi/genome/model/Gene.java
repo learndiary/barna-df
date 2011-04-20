@@ -1,17 +1,15 @@
 package fbi.genome.model;
 
-import fbi.genome.model.commons.MyArrays;
+import fbi.commons.StringUtils;
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.commons.MyHashMap;
-//import gphase.graph.Tuple;
-// import genome.tools.MyArray;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+//import gphase.graph.Tuple;
+// import genome.tools.MyArray;
 
 /*
  * Created on Mar 3, 2005
@@ -99,7 +97,7 @@ public class Gene extends DirectedRegion {
 		if (v!= null)
 			clusters.add(v);
 		
-		return (Transcript[][]) MyArrays.toField(clusters);
+		return (Transcript[][]) ArrayUtils.toField(clusters);
 	}
 	
 	public DirectedRegion[] getCDSS() {
@@ -538,7 +536,7 @@ public class Gene extends DirectedRegion {
 			if (tln.get5PrimeEdge()== tlnInit)
 				v.add(getTranscripts()[i]);
 		}
-		return ((Transcript[]) MyArrays.toField(v));
+		return ((Transcript[]) ArrayUtils.toField(v));
 	}
 	
 	public int countCodingSpliceForms() {
@@ -554,7 +552,7 @@ public class Gene extends DirectedRegion {
 		for (int i = 0; i < getTranscripts().length; i++) 
 			if (getTranscripts()[i].isNonCoding())
 				v.add(getTranscripts()[i]);
-		return ((Transcript[]) MyArrays.toField(v));
+		return ((Transcript[]) ArrayUtils.toField(v));
 	}
 	
 	/**
@@ -582,7 +580,7 @@ public class Gene extends DirectedRegion {
 							vv= new Vector<Transcript>();
 							ssTrptHash.put(v.elementAt(i), vv);
 						}
-						MyArrays.addUnique(vv, trptV.toArray(), Transcript.getDefaultIDComparator());	// 080822: uniq add
+						ArrayUtils.addAllUniqueSorted(vv, trptV, Transcript.getDefaultIDComparator());	// 080822: uniq add
 						v.elementAt(i).setSourceType((byte) Math.min(v.elementAt(i).getSourceType(), ss.getSourceType())); 
 						return false;
 					} else { // replace old not real ss
@@ -590,7 +588,7 @@ public class Gene extends DirectedRegion {
 						Vector<Transcript> vv= ssTrptHash.remove(v.elementAt(i));	
 						if (vv== null) 
 							vv= new Vector<Transcript>();
-						MyArrays.addUnique(vv, trptV.toArray(), Transcript.getDefaultIDComparator());
+						ArrayUtils.addAllUniqueSorted(vv, trptV, Transcript.getDefaultIDComparator());
 						ssTrptHash.put(ss,vv);	// better not the other way, V reused in Transcript.addExon(), do not have to update spliceHash: pos-based
 						//ss.setSourceType((byte) Math.min(oldSrc, ss.getSourceType()));
 						//ss.setSourceType(ss.getSourceType());	// TODO eliminated 081212
@@ -604,7 +602,7 @@ public class Gene extends DirectedRegion {
 							Vector<Transcript> vv= ssTrptHash.remove(v.elementAt(i));
 							if (vv== null) 
 								vv= new Vector<Transcript>();
-							MyArrays.addUnique(vv, trptV.toArray(), Transcript.getDefaultIDComparator());
+							ArrayUtils.addAllUniqueSorted(vv, trptV, Transcript.getDefaultIDComparator());
 							ssTrptHash.put(ss,vv);	
 							v.set(i, ss);
 						} else
@@ -616,7 +614,7 @@ public class Gene extends DirectedRegion {
 						Vector<Transcript> vv= ssTrptHash.remove(v.elementAt(i));
 						if (vv== null) 
 							vv= new Vector<Transcript>();
-						MyArrays.addUnique(vv, trptV.toArray(), Transcript.getDefaultIDComparator());
+						ArrayUtils.addAllUniqueSorted(vv, trptV, Transcript.getDefaultIDComparator());
 						ssTrptHash.put(ss,vv);	// better not the other way, V reused in Transcript.addExon(), do not have to update spliceHash: pos-based
 						// quatsch: ss source immer < v.elementAt(i), weil ersteres hard und letzteres softedge
 						//ss.setSourceType((byte) Math.min(v.elementAt(i).getSourceType(), ss.getSourceType()));
@@ -628,7 +626,7 @@ public class Gene extends DirectedRegion {
 							vv= new Vector<Transcript>();
 							ssTrptHash.put(v.elementAt(i), vv);
 						}
-						MyArrays.addUnique(vv, trptV.toArray(), Transcript.getDefaultIDComparator());
+						ArrayUtils.addAllUniqueSorted(vv, trptV, Transcript.getDefaultIDComparator());
 						//v.elementAt(i).setSourceType((byte) Math.min(v.elementAt(i).getSourceType(), ss.getSourceType()));
 						//v.elementAt(i).setSourceType(v.elementAt(i).getSourceType());	// TODO eliminated 081212
 						return false;
@@ -637,7 +635,7 @@ public class Gene extends DirectedRegion {
 			}
 		}
 		Vector<Transcript> vv= new Vector<Transcript>(2,2);
-		MyArrays.addUnique(vv, trptV.toArray(), Transcript.getDefaultIDComparator());	//vv.addAll(trptV);
+		ArrayUtils.addAllUniqueSorted(vv, trptV, Transcript.getDefaultIDComparator());	//vv.addAll(trptV);
 		ssTrptHash.put(ss, vv);
 		v.add(ss);
 		return true;
@@ -746,7 +744,7 @@ public class Gene extends DirectedRegion {
 
 //		Vector v= new Vector();
 //		for (int i = 0; i < transcripts.length; i++) 
-//			v= (Vector) MyArrays.addUnique(v, transcripts[i].getExons());
+//			v= (Vector) ArrayUtils.addAllUniqueSorted(v, transcripts[i].getExons());
 //			
 //		Exon[] exons= new Exon[v.size()];
 //		for (int i = 0; i < v.size(); i++) 
@@ -765,7 +763,7 @@ public class Gene extends DirectedRegion {
 				addSpliceSite(v.elementAt(i), anotherGene.ssTrptHash.get(v.elementAt(i)));
 		}
 
-		//spliceSites= (SpliceSite[]) MyArrays.addAll(spliceSites, anotherGene.getSpliceSites());
+		//spliceSites= (SpliceSite[]) ArrayUtils.addAll(spliceSites, anotherGene.getSpliceSites());
 		for (int i = 0; i < anotherGene.getTranscripts().length; i++) 
 			addTranscript(anotherGene.getTranscripts()[i]);	// adds transcripts and exons
 		
@@ -788,7 +786,7 @@ public class Gene extends DirectedRegion {
 			String tmp= Graph.readSequence(getSpecies(), getChromosome(), isForward(),
 					Math.abs(superExons[i].getStart()), Math.abs(superExons[i].getEnd()));
 			if (!isForward())
-				tmp= MyArrays.reverseComplement(tmp);
+				tmp= StringUtils.reverseComplement(tmp);
 			result+= tmp;
 		}
 		return result;
@@ -901,7 +899,7 @@ public class Gene extends DirectedRegion {
 			if ((!completelyCoding)&& ex[i].overlapsCDS())
 				resEx.add(ex[i]);
 		}
-		return (Exon[]) MyArrays.toField(resEx);
+		return (Exon[]) ArrayUtils.toField(resEx);
 	}
 	
 	public int getTranscriptNbFromSource(String source) {
@@ -1465,7 +1463,7 @@ public class Gene extends DirectedRegion {
 		Vector v= new Vector();
 		Comparator compi= new DirectedRegion.PositionComparator();
 		for (int i = 0; i < transcripts.length; i++) 
-			v= (Vector) MyArrays.addUnique(v, transcripts[i].getExons(), compi);
+			ArrayUtils.addAllUniqueSorted(v, transcripts[i].getExons(), compi);
 			
 		DirectedRegion reg= getRegion(region);
 		if (reg== null)
@@ -1476,7 +1474,7 @@ public class Gene extends DirectedRegion {
 				break;
 			}
 		
-		return  (Exon[]) MyArrays.toField(v);
+		return  (Exon[]) ArrayUtils.toField(v);
 	}
 	
 	/**
@@ -1548,7 +1546,7 @@ public class Gene extends DirectedRegion {
 //			for (int j = 0; j < ss.length; j++) {
 //				int p= Arrays.binarySearch(spliceSites, ss[j], compi);
 //				if (p< 0)
-//					spliceSites= (SpliceSite[]) MyArrays.insert(spliceSites, ss[j], p);
+//					spliceSites= (SpliceSite[]) ArrayUtils.insert(spliceSites, ss[j], p);
 //				else
 //					spliceSites[p].addTranscript(getTranscripts()[i]);
 //			}

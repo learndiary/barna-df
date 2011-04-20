@@ -8,20 +8,20 @@ package fbi.genome.model;
 
 //import genome.NMDSimulator;
 //import genome.SpliceSiteConservationComparator;
-import fbi.genome.model.commons.MyArrays;
-import fbi.genome.model.constants.Constants;
-import fbi.genome.model.constants.Pedro;
-import fbi.genome.model.tools.NMDSimulator;
-//import genome.tools.MyArray;
-//import genome.tools.ENCODE;
 
-import java.awt.Color;
+import fbi.commons.tools.ArrayUtils;
+import fbi.genome.model.constants.Constants;
+import fbi.genome.model.tools.NMDSimulator;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+//import genome.tools.MyArray;
+//import genome.tools.ENCODE;
 
 /**
  * 
@@ -357,7 +357,7 @@ public class Transcript extends DirectedRegion {
 				dir.setChromosome(getChromosome());
 				v.add(dir);
 			}
-			return (DirectedRegion[]) MyArrays.toField(v);
+			return (DirectedRegion[]) ArrayUtils.toField(v);
 		}
 	}
 
@@ -672,7 +672,7 @@ public class Transcript extends DirectedRegion {
 				result.add(translations[i]);
 		}
 		
-		Object o= MyArrays.toField(result);
+		Object o= ArrayUtils.toField(result);
 		if (o== null|| result.size()< 1)
 			return null;
 		return (Translation[]) o;
@@ -953,7 +953,7 @@ public class Transcript extends DirectedRegion {
 				intron.setChromosome(getChromosome());
 				intronV.add(intron);
 			}
-			introns= (DirectedRegion[]) MyArrays.toField(intronV);
+			introns= (DirectedRegion[]) ArrayUtils.toField(intronV);
 		}
 		return introns;
 	}
@@ -1250,7 +1250,7 @@ public class Transcript extends DirectedRegion {
 				if (exons== null) 
 					exons= new Exon[] {newExon};
 				else
-					exons= (Exon[]) MyArrays.insert(this.exons, newExon, p);
+					exons= (Exon[]) ArrayUtils.insert(this.exons, newExon, p);
 				
 				updateBoundaries(newExon);
 				return true;
@@ -1430,7 +1430,7 @@ public class Transcript extends DirectedRegion {
 		if (tlnV.size()< 1)
 			return findLongestORF(tlns);
 		else
-			return findLongestORF(new Translation[][] {(Translation[]) MyArrays.toField(tlnV)});
+			return findLongestORF(new Translation[][] {(Translation[]) ArrayUtils.toField(tlnV)});
 	}
 	
 	public Translation findLongestORF() {
@@ -1460,7 +1460,7 @@ public class Transcript extends DirectedRegion {
 			for (int j = 0; predORFs[i]!= null&& j < predORFs[i].length; j++) 
 				allOrfV.add(predORFs[i][j]);
 		
-		Translation[] allORFs= (Translation[]) MyArrays.toField(allOrfV);
+		Translation[] allORFs= (Translation[]) ArrayUtils.toField(allOrfV);
 		return allORFs;
 	}
 	
@@ -1656,7 +1656,7 @@ public class Transcript extends DirectedRegion {
 			v.add(reg);
 		}
 		
-		DirectedRegion[] regs= (DirectedRegion[]) MyArrays.toField(v);
+		DirectedRegion[] regs= (DirectedRegion[]) ArrayUtils.toField(v);
 		// no longer necessary, stop in VEGA st included, st not
 		//regs[regs.length- 1].set3PrimeEdge(regs[regs.length- 1].get3PrimeEdge()+ 3);	// to include stop codon
 		return regs;

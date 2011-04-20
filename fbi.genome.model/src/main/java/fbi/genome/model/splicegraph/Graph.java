@@ -1,9 +1,13 @@
 package fbi.genome.model.splicegraph;
 
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.*;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.commons.*;
+import fbi.genome.model.commons.IntVector;
+import fbi.genome.model.commons.MyFile;
+import fbi.genome.model.commons.MyMath;
+import fbi.genome.model.commons.MyTime;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
 import fbi.genome.model.splicegraph.SuperEdge.EdgeTuple;
@@ -1362,7 +1366,7 @@ public class Graph {
 //					if (x== 1) {	// the last one from before
 						Node[] nn= removeEstChain(nextN, fromFront);
 						for (int j = 0; j < nn.length; j++) 
-							v= MyArrays.addUnique(v, nn[j]);
+							ArrayUtils.addUnique(v, nn[j]);
 //					}
 				}
 			}
@@ -2332,7 +2336,7 @@ public class Graph {
 			
 		}
 		
-		return (DirectedRegion[]) MyArrays.toField(v);
+		return (DirectedRegion[]) ArrayUtils.toField(v);
 	}
 	 
 	public Transcript[] decodeTset(long[] c) {

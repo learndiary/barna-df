@@ -1,8 +1,8 @@
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
+import fbi.commons.tools.UnixStreamSort;
+import fbi.commons.tools.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
-import fbi.genome.io.UnixStreamSort;
-import fbi.genome.io.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.gff.GFFSorter.Cocs;
 
 import java.io.*;

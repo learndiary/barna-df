@@ -1,10 +1,11 @@
 package fbi.genome.io.bed;
 
 //import gphase.LaVista;
+
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.gff.GFFReader;
-import fbi.genome.model.gff.GFFObject;
 import fbi.genome.model.bed.BEDobject;
-import fbi.genome.model.commons.MyArrays;
+import fbi.genome.model.gff.GFFObject;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -82,7 +83,7 @@ public class BedToGtfConverter {
 			}
 			
 			System.out.println("Writing..");
-			GFFObject[] gtfs= (GFFObject[]) MyArrays.toField(gtfV);
+			GFFObject[] gtfs= (GFFObject[]) ArrayUtils.toField(gtfV);
 			GFFReader writer= new GFFReader(outputFile.getAbsolutePath());
 			writer.setChromosomeWise(false);
 			// TODO rewrite

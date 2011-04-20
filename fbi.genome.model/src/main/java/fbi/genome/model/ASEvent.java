@@ -7,6 +7,7 @@
 package fbi.genome.model;
 
 import fbi.commons.MyFormatter;
+import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.tools.NMDSimulator;
 
@@ -1324,7 +1325,7 @@ public class ASEvent {
 				else if (spliceChains[i][j].getPos()>= leftFlankPos) {
 					DirectedRegion reg= new DirectedRegion(leftFlankPos, spliceChains[i][j].getPos(), getGene().getStrand());
 					reg.setChromosome(getGene().getChromosome());
-					v= fbi.genome.model.commons.MyArrays.addUnique(v, reg, DirectedRegion.getDefaultPositionComparator());	// for uniqueness, sorting according to pos
+					ArrayUtils.addUniqueSorted(v, reg, DirectedRegion.getDefaultPositionComparator());	// for uniqueness, sorting according to pos
 				}
 			}
 			if ((spliceChains[i].length== 0&& su[0].isRightFlank())|| 
@@ -1335,7 +1336,7 @@ public class ASEvent {
 					--rightFlankPos;
 				DirectedRegion reg= new DirectedRegion(leftFlankPos, rightFlankPos, getGene().getStrand());
 				reg.setChromosome(getGene().getChromosome());
-				v= fbi.genome.model.commons.MyArrays.addUnique(v, reg, DirectedRegion.getDefaultPositionComparator());		// for uniqueness, sorting according to pos
+				ArrayUtils.addUniqueSorted(v, reg, DirectedRegion.getDefaultPositionComparator());		// for uniqueness, sorting according to pos
 			}				
 		}
 		
@@ -1369,7 +1370,7 @@ public class ASEvent {
 					DirectedRegion reg= new DirectedRegion(leftFlankPos, rightFlankPos, getGene().getStrand());
 					reg.setChromosome(getGene().getChromosome());
 					// dont take that, we want the introns sorted to their occurence in the event
-					//v= gphase.tools.Arrays.addUnique(v, reg, DirectedRegion.getDefaultPositionComparator());
+					//v= gphase.tools.Arrays.addAllUniqueSorted(v, reg, DirectedRegion.getDefaultPositionComparator());
 					v.add(reg);
 				}
 			}
@@ -1389,7 +1390,7 @@ public class ASEvent {
 				DirectedRegion reg= new DirectedRegion(leftFlankPos, rightFlankPos, getGene().getStrand());
 				reg.setChromosome(getGene().getChromosome());
 				// dont take that, we want the introns sorted to their occurence in the event
-				//v= gphase.tools.Arrays.addUnique(v, reg, DirectedRegion.getDefaultPositionComparator());
+				//v= gphase.tools.Arrays.addAllUniqueSorted(v, reg, DirectedRegion.getDefaultPositionComparator());
 				v.add(reg);
 			}				
 		}

@@ -3,7 +3,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.MyFormatter;
-import fbi.commons.StringConstants;
+import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
@@ -3732,7 +3732,7 @@ public class Fragmenter implements StoppableRunnable {
 				plotter.setMolTot(molInit);
 			
 			//System.out.println("targets: "+tgtMols);
-            Log.progressFinish(StringConstants.OK, true);
+            Log.progressFinish(StringUtils.OK, true);
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t"+ cntMolInit+ " mol inited");
 			}
