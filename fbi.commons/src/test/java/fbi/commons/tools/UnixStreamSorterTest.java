@@ -2,7 +2,9 @@ package fbi.commons.tools;
 
 import org.junit.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
@@ -10,7 +12,7 @@ import static junit.framework.Assert.fail;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class UnixSortTest {
+public class UnixStreamSorterTest {
     private static final String SIMPLE_INPUT =
             "C\tY\t2\n" +
             "B\tZ\t1\n" +
@@ -30,7 +32,7 @@ public class UnixSortTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StreamSorter sorter = new UnixSort();
+        StreamSorter sorter = new UnixStreamSorter();
         try {
             sorter.sort(in, out, 0, false, "\t");
 
@@ -51,7 +53,7 @@ public class UnixSortTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StreamSorter sorter = new UnixSort();
+        StreamSorter sorter = new UnixStreamSorter();
         try {
             sorter.sort(in, out, 0, false, "\t");
 
@@ -75,7 +77,7 @@ public class UnixSortTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StreamSorter sorter = new UnixSort();
+        StreamSorter sorter = new UnixStreamSorter();
         try {
             sorter.sort(in, out, 2, true, "\t");
 
@@ -89,41 +91,5 @@ public class UnixSortTest {
             e.printStackTrace();
             fail();
         }
-    }
-
-
-    @Test
-    public void testrealWorld() throws FileNotFoundException {
-        FileInputStream in = new FileInputStream("/home/thasso/data/big.dat");
-        FileOutputStream out = new FileOutputStream("/home/thasso/data/big-java.dat");
-
-        StreamSorter sorter = new UnixSort(false);
-        try {
-            sorter.sort(in, out, -1, false, "\t");
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
-
-
-    public static void main(String[] args) throws FileNotFoundException {
-
-        try {
-            Thread.sleep(20000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        FileInputStream in = new FileInputStream("/home/thasso/data/big.dat");
-        FileOutputStream out = new FileOutputStream("/home/thasso/data/big-java.dat");
-
-        StreamSorter sorter = new UnixSort(false);
-        try {
-            sorter.sort(in, out, -1, false, "\t");
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail();
-        }
-
     }
 }

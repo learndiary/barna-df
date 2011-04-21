@@ -25,7 +25,7 @@ public class MemoryStreamSorter implements StreamSorter{
         io.addStream(input);
         io.addStream(output);
 
-        Comparator<String> comparator = new LineComparator(field, numeric, fieldSeparator);
+        Comparator<String> comparator = new LineComparator(numeric, fieldSeparator, field);
         try{
             // read and sort
             ByteArrayCharSequence line;

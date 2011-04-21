@@ -174,8 +174,8 @@ class SimpleIOHandler implements IOHandler{
         ByteArrayCharSequence old = cc.getSequence();
         cs.reset();
         cc.setSequence(cs);
-        cc.readLine();
+        int read = cc.readLine();
         cc.setSequence(old);
-        return cs.length();
+        return read;
     }
 }

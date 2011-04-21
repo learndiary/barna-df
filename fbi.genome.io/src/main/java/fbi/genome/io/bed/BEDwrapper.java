@@ -434,6 +434,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			PipedInputStream in = new PipedInputStream(out);
 			BufferedWriter tmpWriter= new BufferedWriter(new OutputStreamWriter(
 					out));
+
+
+
 			DesignatedHierarchicalFieldComparator comp = new UnixStreamSort.DesignatedHierarchicalFieldComparator(
 					1,false);
 			final UnixStreamSort sorter = new UnixStreamSort(in, comp);

@@ -73,6 +73,7 @@ public class PrintstreamProgressable implements Progressable {
             stream.print("\t ");
         }
         stream.flush();
+        currentStep = 0;
     }
 
     public void progress() {
@@ -90,6 +91,8 @@ public class PrintstreamProgressable implements Progressable {
         if(currentStep > 0){
 		    for (int i = currentStep; i < steps; i++)
 			    stream.print("*");
+
+            currentStep = 0;
         }
         /*
          * new line
@@ -108,6 +111,8 @@ public class PrintstreamProgressable implements Progressable {
         if(currentStep > 0){
 		    for (int i = currentStep; i < steps; i++)
 			    stream.print(progressChar);
+
+            currentStep = 0;
         }
 		
 		if (msg!= null) 

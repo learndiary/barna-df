@@ -1,6 +1,8 @@
 package fbi.commons.tools;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  *
@@ -23,41 +25,70 @@ class LineComparator implements Comparator<String>{
     private String separator = "\\t";
 
     /**
+     * Possible list of sub comparators that are used if
+     * this comparators result is 0
+     */
+    private List<Comparator<String>> subComparators;
+
+    /**
      * Create a new line comparator. If the given field is {@code < 0}, the line is not splitted. If numerical
      * is set, the field (or the complete line) is parsed to a number. The separator is used to split
      * the line. It is used as regular expression.
      *
-     * @param field the field (split using th separator as regular expression)
      * @param numerical numerical comparison
      * @param separator the separator used to split fields
+     * @param field the field (split using th separator as regular expression)
      */
-    LineComparator(int field, boolean numerical, String separator) {
+    LineComparator(boolean numerical, String separator, int field) {
         this.field = field;
         this.numerical = numerical;
         this.separator = separator;
     }
 
-    public int compare(String o1, String o2) {
+    /**
+     * Add a sub comparator that is used if this comparator would returns 0
+     *
+     * @param comparator the sub comparator
+     */
+    public void addComparator(Comparator<String> comparator){
+        if(comparator != null){
+            if(subComparators == null) subComparators = new ArrayList<Comparator<String>>();
+            subComparators.add(comparator);
+        }
+    }
+
+    public int compare(final String o1, final String o2) {
+        String s1 = o1;
+        String s2 = o2;
         if(field >= 0){
             // split fields
-            o1 = o1.split(separator)[field];
-            o2 = o2.split(separator)[field];
+            s1 = o1.split(separator)[field];
+            s2 = o2.split(separator)[field];
         }
 
-        // trim it
-        o1 = o1.trim();
-        o2 = o2.trim();
-
         // no field sep
+        int result = 0;
+
         if(numerical){
             try{
                 // try integer first
-                return Integer.parseInt(o1) - Integer.parseInt(o2);
+                result =  Integer.parseInt(o1) - Integer.parseInt(o2);
             }catch (NumberFormatException e){
                 // ok integer failed ... lets try double
-                return Double.compare(Double.parseDouble(o1),Double.parseDouble(o2));
+                result =  Double.compare(Double.parseDouble(o1),Double.parseDouble(o2));
+            }
+        }else{
+            result =  o1.compareTo(o2);
+        }
+        /*
+        If result is 0 check the sub comparators
+         */
+        if(result == 0 && subComparators != null){
+            for (Comparator<String> subComparator : subComparators) {
+                int sub = subComparator.compare(o1, o2);
+                if(sub != 0) return sub;
             }
         }
-        return o1.compareTo(o2);
+        return result;
     }
 }

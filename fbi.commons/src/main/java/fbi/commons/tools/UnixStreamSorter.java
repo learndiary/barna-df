@@ -16,7 +16,7 @@ import java.util.PriorityQueue;
  *
  * @author Thasso Griebel (thasso.griebel@googlemail.com)
  */
-public class UnixSort implements StreamSorter{
+public class UnixStreamSorter implements StreamSorter{
     /**
      * OS dependent line separator
      */
@@ -33,11 +33,15 @@ public class UnixSort implements StreamSorter{
      * Print status
      */
     private boolean silent = true;
+    /**
+     * The line Comparator
+     */
+    private LineComparator lineComparator;
 
     /**
      * Create a new sorter that uses a {@code ~25%} of heapspace as chunk size
      */
-    public UnixSort() {
+    public UnixStreamSorter() {
         this((long) (Runtime.getRuntime().maxMemory() * 0.25));
     }
 
@@ -46,7 +50,7 @@ public class UnixSort implements StreamSorter{
      *
      * @param silent be silent
      */
-    public UnixSort(boolean silent) {
+    public UnixStreamSorter(boolean silent) {
         this((long) (Runtime.getRuntime().maxMemory() * 0.25), silent);
     }
 
@@ -55,7 +59,7 @@ public class UnixSort implements StreamSorter{
      *
      * @param memoryBound the maximum chunk size in bytes
      */
-    public UnixSort(long memoryBound) {
+    public UnixStreamSorter(long memoryBound) {
         this(memoryBound, true);
     }
 
@@ -65,7 +69,7 @@ public class UnixSort implements StreamSorter{
      * @param memoryBound the memory bound (must be {@code > 0}
      * @param silent be silent
      */
-    public UnixSort(long memoryBound, boolean silent) {
+    public UnixStreamSorter(long memoryBound, boolean silent) {
         if(memoryBound <= 0) throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         this.memoryBound = memoryBound;
         this.silent = silent;
@@ -74,14 +78,17 @@ public class UnixSort implements StreamSorter{
     public void sort(InputStream input, OutputStream output, int field, boolean numeric, String fieldSeparator) throws IOException {
         if(!silent)
             Log.progressStart("Sorting");
-        LineComparator comparator = new LineComparator(field, numeric, fieldSeparator);
 
+        LineComparator comparator = getLineComparator();
+        if(comparator == null){
+            comparator = new LineComparator(numeric, fieldSeparator, field);
+        }
         List<File> files =  divide(input, comparator, memoryBound);
-
         /*
          * make sure we open at most SORT_CHUNK files in parallel
          */
         while(sortChunks >= 2 && files.size() > sortChunks){
+            Log.progressStart("Merging Chunk");
             // sort chunk
             ArrayList<File> chunks = new ArrayList<File>(files.subList(0, sortChunks));
 
@@ -94,7 +101,9 @@ public class UnixSort implements StreamSorter{
             // add chunk to list and remove the rest from the list
             files.add(chunk);
             files.removeAll(chunks);
+            Log.progressFinish("OK", true);
         }
+
 
         // final merge
         mergeFiles(files, output, comparator);
@@ -117,24 +126,23 @@ public class UnixSort implements StreamSorter{
      * @throws java.io.IOException in case of errors
      */
     private List<File> divide(InputStream input, LineComparator comparator, long memoryBound) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input), 10*1024);
         String line = null;
-        List<File> files= new ArrayList<File>();
+        final List<File> files= new ArrayList<File>();
         try {
-
             // counters
             int bytes =0;
-            List<String> lines = new ArrayList<String>();
+            int separatorLength = LINE_SEP.length();
+            List<String> lines = new ArrayList<String>((int) (memoryBound/512));
             while( (line = reader.readLine()) != null){
+
                 // add to list
                 lines.add(line);
-                bytes += line.length() + LINE_SEP.length();
+                bytes += line.length() + separatorLength;
                 // check memory
                 if(bytes >= memoryBound){
-                    // sort the chunk
-                    Collections.sort(lines, comparator);
                     // write sorted chunk to temp file and reset
-                    files.add(writeTempFile(lines));
+                    sortAndWriteTempFile(lines, comparator, files);
                     bytes = 0;
                     lines.clear();
                 }
@@ -142,9 +150,9 @@ public class UnixSort implements StreamSorter{
 
             // add the last file
             if(bytes > 0){
-                Collections.sort(lines, comparator);
-                files.add(writeTempFile(lines));
+                sortAndWriteTempFile(lines, comparator, files);
             }
+
 
         } catch (IOException e) {
             throw e;
@@ -160,20 +168,31 @@ public class UnixSort implements StreamSorter{
     /**
      * Write the given lines to a temp file and return the file
      *
+     *
      * @param lines the lines
-     * @return file the created file
+     * @param comparator the comparator
+     * @param files @return file the created file
      * @throws IOException in case of an error
      */
-    private File writeTempFile(List<String> lines) throws IOException {
+    private File sortAndWriteTempFile(List<String> lines, LineComparator comparator, final List<File> files) throws IOException {
+        // sort the chunk
+        Collections.sort(lines, comparator);
+
+        // write the file
         File file = FileHelper.createTempFile("sort", ".srt");
         file.deleteOnExit();
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10*1024);
         for (String line : lines) {
             writer.write(line);
             writer.write(LINE_SEP);
         }
         writer.flush();
         writer.close();
+
+
+        // add to list of files
+        files.add(file);
+
         return file;
     }
 
@@ -232,6 +251,24 @@ public class UnixSort implements StreamSorter{
             writer.close();
         }
 
+    }
+
+    /**
+     * Get the lie comparator or null
+     *
+     * @return comparator the line comparator or null
+     */
+    LineComparator getLineComparator() {
+        return lineComparator;
+    }
+
+    /**
+     * Set the line comparator
+     *
+     * @param lineComparator the line comparator
+     */
+    void setLineComparator(LineComparator lineComparator) {
+        this.lineComparator = lineComparator;
     }
 
     /**
@@ -346,6 +383,5 @@ public class UnixSort implements StreamSorter{
             return null;
 
         }
-
     }
 }
