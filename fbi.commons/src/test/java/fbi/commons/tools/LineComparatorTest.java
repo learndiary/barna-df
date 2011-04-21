@@ -36,5 +36,14 @@ public class LineComparatorTest {
         assertTrue(new LineComparator(1, false, "nnn").compare(l1, l2) > 0);
     }
 
+    @Test
+    public void testOrder(){
+        String s1 = "HWUSI-EAS1678:1:1:999:1021";
+        String s2 = "HWUSI-EAS1678:1:1:9999:3539";
+
+        assertTrue(new LineComparator(-1, false, "\t").compare(s1, s2) > 0);
+
+    }
+
 
 }

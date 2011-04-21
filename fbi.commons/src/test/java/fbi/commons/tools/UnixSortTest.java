@@ -94,10 +94,10 @@ public class UnixSortTest {
 
     @Test
     public void testrealWorld() throws FileNotFoundException {
-        FileInputStream in = new FileInputStream("/home/thasso/data/test.dat");
-        FileOutputStream out = new FileOutputStream("/home/thasso/data/test-out.dat");
+        FileInputStream in = new FileInputStream("/home/thasso/data/big.dat");
+        FileOutputStream out = new FileOutputStream("/home/thasso/data/big-java.dat");
 
-        StreamSorter sorter = new UnixSort(10000);
+        StreamSorter sorter = new UnixSort(false);
         try {
             sorter.sort(in, out, -1, false, "\t");
         } catch (IOException e) {
@@ -107,6 +107,23 @@ public class UnixSortTest {
     }
 
 
+    public static void main(String[] args) throws FileNotFoundException {
 
+        try {
+            Thread.sleep(20000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        FileInputStream in = new FileInputStream("/home/thasso/data/big.dat");
+        FileOutputStream out = new FileOutputStream("/home/thasso/data/big-java.dat");
 
+        StreamSorter sorter = new UnixSort(false);
+        try {
+            sorter.sort(in, out, -1, false, "\t");
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+    }
 }

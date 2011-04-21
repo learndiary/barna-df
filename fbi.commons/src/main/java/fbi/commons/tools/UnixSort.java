@@ -22,13 +22,17 @@ public class UnixSort implements StreamSorter{
      */
     private static final String LINE_SEP = System.getProperty("line.separator");
     /**
-     * Maxumim number of chunks that are sorted in one run
+     * Maximum number of chunks that are sorted in one run
      */
-    private static final int SORT_CHUNKS = 16;
+    private int sortChunks = 16;
     /**
      * Maximum memory to use per chunk
      */
     private long memoryBound;
+    /**
+     * Print status
+     */
+    private boolean silent = true;
 
     /**
      * Create a new sorter that uses a {@code ~25%} of heapspace as chunk size
@@ -38,17 +42,38 @@ public class UnixSort implements StreamSorter{
     }
 
     /**
+     * Create a new sorter and control if it should print status information
+     *
+     * @param silent be silent
+     */
+    public UnixSort(boolean silent) {
+        this((long) (Runtime.getRuntime().maxMemory() * 0.25), silent);
+    }
+
+    /**
      * Create a new sorter with given chunk size limit
      *
      * @param memoryBound the maximum chunk size in bytes
      */
     public UnixSort(long memoryBound) {
+        this(memoryBound, true);
+    }
+
+    /**
+     * Create a new sorter and control its memory bound and the if it should print status information
+     *
+     * @param memoryBound the memory bound (must be {@code > 0}
+     * @param silent be silent
+     */
+    public UnixSort(long memoryBound, boolean silent) {
         if(memoryBound <= 0) throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         this.memoryBound = memoryBound;
+        this.silent = silent;
     }
 
     public void sort(InputStream input, OutputStream output, int field, boolean numeric, String fieldSeparator) throws IOException {
-
+        if(!silent)
+            Log.progressStart("Sorting");
         LineComparator comparator = new LineComparator(field, numeric, fieldSeparator);
 
         List<File> files =  divide(input, comparator, memoryBound);
@@ -56,27 +81,19 @@ public class UnixSort implements StreamSorter{
         /*
          * make sure we open at most SORT_CHUNK files in parallel
          */
-        while(SORT_CHUNKS >= 2 && files.size() > SORT_CHUNKS){
+        while(sortChunks >= 2 && files.size() > sortChunks){
             // sort chunk
-            ArrayList<File> chunks = new ArrayList<File>(files.subList(0, SORT_CHUNKS));
+            ArrayList<File> chunks = new ArrayList<File>(files.subList(0, sortChunks));
 
             // create a temp file where we put the result of this chunk sort
-            try{
-                File chunk = FileHelper.createTempFile("chunk", ".srt");
-                //chunk.deleteOnExit();
-                FileOutputStream out = new FileOutputStream(chunk);
-                mergeFiles(chunks, out, comparator);
+            File chunk = FileHelper.createTempFile("chunk", ".srt");
+            chunk.deleteOnExit();
+            FileOutputStream out = new FileOutputStream(chunk);
+            mergeFiles(chunks, out, comparator);
 
-
-                // add chunk to list and remove the rest from the list
-                files.add(chunk);
-                files.removeAll(chunks);
-            }catch (IOException tooManyFiles){
-                if(tooManyFiles.getMessage().equals("Too many open files")){
-                    System.err.println("Too many open files at " + files.size());
-                    throw tooManyFiles;
-                }
-            }
+            // add chunk to list and remove the rest from the list
+            files.add(chunk);
+            files.removeAll(chunks);
         }
 
         // final merge
@@ -85,6 +102,8 @@ public class UnixSort implements StreamSorter{
         // make sure in and out are closed
         output.close();
         input.close();
+        if(!silent)
+            Log.progressFinish("Done", true);
     }
 
 
@@ -109,7 +128,7 @@ public class UnixSort implements StreamSorter{
             while( (line = reader.readLine()) != null){
                 // add to list
                 lines.add(line);
-                bytes += line.length() + LINE_SEP.length(); // assume one byte for separator
+                bytes += line.length() + LINE_SEP.length();
                 // check memory
                 if(bytes >= memoryBound){
                     // sort the chunk
@@ -122,13 +141,18 @@ public class UnixSort implements StreamSorter{
             }
 
             // add the last file
-            Collections.sort(lines, comparator);
-            files.add(writeTempFile(lines));
+            if(bytes > 0){
+                Collections.sort(lines, comparator);
+                files.add(writeTempFile(lines));
+            }
 
         } catch (IOException e) {
             throw e;
         }finally {
-            try {reader.close();} catch (IOException e) {}
+            try {
+                input.close();
+                reader.close();
+            } catch (IOException e) {}
         }
         return files;
     }
@@ -142,7 +166,7 @@ public class UnixSort implements StreamSorter{
      */
     private File writeTempFile(List<String> lines) throws IOException {
         File file = FileHelper.createTempFile("sort", ".srt");
-        //file.deleteOnExit();
+        file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         for (String line : lines) {
             writer.write(line);
@@ -173,33 +197,22 @@ public class UnixSort implements StreamSorter{
                 queue.add(cc);
             }
         }
-
-        BufferedWriter writer = null;
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(output));
 
         // now iterate until everything is written
         while(queue.size() > 0){
             CachedFileReader next = queue.poll();
-
             try {
-                if(writer == null){
-                    writer = new BufferedWriter(new OutputStreamWriter(output));
-                }
                 String line = next.pop();
-                if(line == null || line.isEmpty()){
-                    Log.error("Line is null or empty ?");
-                }
                 writer.write(line);
                 writer.write(LINE_SEP);
 
                 // check if there is more in this queue
-                if(next.peek() != null) queue.add(next);
-
+                if(next.peek() != null){
+                    queue.add(next);
+                }
             } catch (IOException e) {
                 Log.error("Error while sorting chunks : "  + e.getMessage(), e);
-
-                for (CachedFileReader reader : queue) {
-                    reader.close();
-                }
                 break;
             }
         }
@@ -208,12 +221,12 @@ public class UnixSort implements StreamSorter{
         for (CachedFileReader reader : queue) {
             reader.close();
         }
+        // delete the temp files
+        for (File file : files) {
+            file.delete();
+        }
 
-
-//        for (File file : files) {
-//            file.delete();
-//        }
-
+        // close the writer
         if(writer != null){
             writer.flush();
             writer.close();
@@ -229,6 +242,7 @@ public class UnixSort implements StreamSorter{
         private BufferedReader reader;
         private String currentLine = null;
         private LineComparator comparator;
+        private int read;
 
         /**
          * INTERNAL
@@ -260,16 +274,20 @@ public class UnixSort implements StreamSorter{
          */
         String pop(){
             if(currentLine == null){
-                // close
-                try {reader.close();} catch (IOException e1) {}
                 return null;
             }
+            read++;
             String last = currentLine;
             try {
                 currentLine = reader.readLine();
+
+                // close the reader if no more lines are available
+                if(currentLine == null){
+                    close();
+                }
             } catch (IOException e) {
+                close();
                 Log.error("Error reading line from chunk file while sorting : "+ e.getMessage(), e);
-                try {reader.close();} catch (IOException e1) {}
                 return null;
             }
             return last;
@@ -309,6 +327,7 @@ public class UnixSort implements StreamSorter{
             try {
                 reader = new BufferedReader(new FileReader(file));
             } catch (FileNotFoundException e) {
+                e.printStackTrace();
                 return null;
             }
 
