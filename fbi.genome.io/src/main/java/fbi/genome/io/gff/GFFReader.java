@@ -1616,8 +1616,11 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	}
 
 	public File createSortedFile() {
+        Log.progressStart("sorting GTF file");
 		File f= new File(getAbsFileName());
-		return GFFSorter.sort(f);
+        File sorted = GFFSorter.sort(f);
+        Log.progressFinish(StringUtils.OK, true);
+        return sorted;
 	}
 	
 	private int fieldTID= -1, fieldGID= -1;

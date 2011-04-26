@@ -28,6 +28,17 @@ public class LineComparatorTest {
         assertTrue(new LineComparator(false, "\\t", 1).compare(l1, l2) > 0);
     }
 
+
+
+    @Test
+    public void testFieldMergeComparison(){
+        String l1 = "A\tC";
+        String l2 = "A\tB";
+        assertTrue(new LineComparator("\\t", 0, 1).compare(l1, l2) > 0);
+        assertTrue(new LineComparator("\\t", 0).compare(l1, l2) == 0);
+    }
+
+
     @Test
     public void testSeparatorComparison(){
         String l1 = "AnnnB";

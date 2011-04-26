@@ -4,55 +4,186 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
- * Sorter
+ * The Sorter follows the Builder pattern. Use the {@link #create(java.io.InputStream, java.io.OutputStream, boolean)}
+ * method to get a new sorter instance. You can then call methods to configure the sorter. For example, call {@link #field(int, boolean)}
+ * to specify a field that is used for sorting. You can call the {@code field} methods multiple times to add fields
+ * to the consecutive sort order, i.e., if two values are equal in the first field, the next field is used.
+ * <p>
+ * You can start sorting by calling {@link #sort()}. To create a background task that performs sorting until
+ * no more data are available or it is canceled, use {@link #sortInBackground()}. The returned feature is already submitted
+ * and running. To wait until it is finished, call {@link java.util.concurrent.Future#get()}.
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class Sorter {
 
-    private InputStream in;
-    private OutputStream out;
-    private boolean silent;
-    private String separator = "\t";
-    private List<Integer> fields = new ArrayList<Integer>();
-    private List<Boolean> numerics = new ArrayList<Boolean>();
+    /**
+     * The thread executor
+     */
+    private static ExecutorService executor;
 
+    static{
+        /*
+        Initialize executor
+         */
+        executor = Executors.newCachedThreadPool();
+    }
+    /**
+     * The input stream
+     */
+    private InputStream in;
+    /**
+     * The output stream
+     */
+    private OutputStream out;
+    /**
+     * Be silent
+     */
+    private boolean silent;
+    /**
+     * The separator character
+     */
+    private String separator = "\t";
+    /**
+     * List of line comparators
+     */
+    private List<LineComparator> comparators = new ArrayList<LineComparator>();
+
+
+
+    /**
+     * INTERNAL : use the {@link #create(java.io.InputStream, java.io.OutputStream, boolean)} method
+     * to get an instance
+     *
+     * @param in the input stream
+     * @param out the output stream
+     * @param silent be silent
+     */
     private Sorter(InputStream in, OutputStream out, boolean silent) {
         this.in = in;
         this.out = out;
         this.silent = silent;
+
+
     }
 
+    /**
+     * Set the field separator
+     *
+     * @param separator field separator
+     * @return sorter this sorter
+     */
     public Sorter separator(String separator){
         this.separator = separator;
         return this;
     }
 
+    /**
+     * Sort by given field
+     *
+     * @param field the field index
+     * @param numeric is the field numeric
+     * @return sorter this sorter
+     */
     public Sorter field(int field, boolean numeric){
-        this.fields.add(field);
-        this.numerics.add(numeric);
+        comparators.add(new LineComparator(numeric, separator, field));
         return this;
     }
 
+    /**
+     * Sort by merged fields. All specified fields are merged and teh concatenated string is compared
+     *
+     * @param fields the fields
+     * @return sorter this sorter
+     */
+    public Sorter field(int...fields){
+        comparators.add(new LineComparator(separator, fields));
+        return this;
+    }
+
+    /**
+     * Use a custom comparator
+     *
+     * @param comparator the comparator
+     * @return sorter this sorter
+     */
+    public Sorter field(Comparator<String> comparator){
+        if(comparator == null) throw new NullPointerException("Null comparator is not permitted");
+        comparators.add(new LineComparator(comparator));
+        return this;
+    }
+
+    /**
+     * Perform the sort
+     *
+     * @throws IOException in case of any IO errors
+     */
     public void sort() throws IOException {
-        UnixStreamSorter s = new UnixStreamSorter(silent);
-        LineComparator comparator = new LineComparator(numerics.size() > 0 ? numerics.get(0) : false, separator, fields.size() > 0 ? fields.get(0) : -1);
-        if(fields.size() > 1){
-            for (int i = 1; i < fields.size(); i++) {
-                comparator.addComparator(new LineComparator(numerics.get(i), separator, fields.get(i)));
-            }
-        }
-        s.setLineComparator(comparator);
+        StreamSorter s = createSorter();
         s.sort(in, out, -1, false, separator);
     }
 
+    /**
+     * Submits a new background task and returns the created feature.
+     * This creates a background task that performs sorting until
+     * no more data are available or it is canceled, use {@link #sortInBackground()}.
+     * The returned feature is already submitted and running. To wait until it is finished,
+     * call {@link java.util.concurrent.Future#get()}, to cancel use {@link Future#cancel(boolean)}.
+     *
+     * @return feature the submitted feature
+     */
+    public Future sortInBackground(){
+        final StreamSorter s = createSorter();
+        final InputStream input = in;
+        final OutputStream output = out;
+        final String sep = separator;
+        return executor.submit(new Callable<Object>() {
+            public Object call() throws Exception {
+                s.sort(input, output, -1, false, sep);
+                return null;
+            }
+        });
+    }
 
-
+    /**
+     * Create a new sorter
+     *
+     * @param in the input stream
+     * @param out the output stream
+     * @param silent be silent
+     * @return sorter the sorter
+     */
     public static Sorter create(InputStream in, OutputStream out, boolean silent){
         return new Sorter(in, out, silent);
     }
+
+    /**
+     * Create an instance of the actual sorter implementation
+     *
+     * @return streamSorter the stream sorter
+     */
+    protected StreamSorter createSorter() {
+        UnixStreamSorter s = new UnixStreamSorter(silent);
+        LineComparator comparator = null;
+        if(comparators.size() == 0){
+            comparator = new LineComparator(false, separator, -1);
+        }else{
+            comparator = comparators.get(0);
+            for (int i = 1; i < comparators.size(); i++) {
+                  comparator.addComparator(comparators.get(i));
+            }
+        }
+        s.setLineComparator(comparator);
+        return s;
+    }
+
 
 }

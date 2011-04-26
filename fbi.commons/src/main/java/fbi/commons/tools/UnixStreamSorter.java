@@ -88,6 +88,7 @@ public class UnixStreamSorter implements StreamSorter{
          * make sure we open at most SORT_CHUNK files in parallel
          */
         while(sortChunks >= 2 && files.size() > sortChunks){
+            if(Thread.interrupted()) break;
             Log.progressStart("Merging Chunk");
             // sort chunk
             ArrayList<File> chunks = new ArrayList<File>(files.subList(0, sortChunks));
@@ -135,6 +136,7 @@ public class UnixStreamSorter implements StreamSorter{
             int separatorLength = LINE_SEP.length();
             List<String> lines = new ArrayList<String>((int) (memoryBound/512));
             while( (line = reader.readLine()) != null){
+                if(Thread.interrupted()) return null;
 
                 // add to list
                 lines.add(line);
@@ -152,10 +154,6 @@ public class UnixStreamSorter implements StreamSorter{
             if(bytes > 0){
                 sortAndWriteTempFile(lines, comparator, files);
             }
-
-
-        } catch (IOException e) {
-            throw e;
         }finally {
             try {
                 input.close();
@@ -172,6 +170,7 @@ public class UnixStreamSorter implements StreamSorter{
      * @param lines the lines
      * @param comparator the comparator
      * @param files @return file the created file
+     * @return file the file
      * @throws IOException in case of an error
      */
     private File sortAndWriteTempFile(List<String> lines, LineComparator comparator, final List<File> files) throws IOException {
@@ -183,6 +182,7 @@ public class UnixStreamSorter implements StreamSorter{
         file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10*1024);
         for (String line : lines) {
+            if(Thread.interrupted()) return null;
             writer.write(line);
             writer.write(LINE_SEP);
         }
@@ -220,6 +220,7 @@ public class UnixStreamSorter implements StreamSorter{
 
         // now iterate until everything is written
         while(queue.size() > 0){
+            if(Thread.interrupted()) break;
             CachedFileReader next = queue.poll();
             try {
                 String line = next.pop();

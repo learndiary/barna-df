@@ -11,7 +11,6 @@ import fbi.commons.tools.UnixStreamSort.DesignatedHierarchicalFieldComparator;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
-import fbi.genome.io.gff.GFFSorter.Cocs;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.io.rna.ReadDescriptor;
 import fbi.genome.io.rna.SolexaPairedEndDescriptor;
@@ -636,10 +635,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						outFile = File.createTempFile(f.getName() + "_", "_sorted");
 						outStr = new FileOutputStream(outFile);
 					}
-					Cocs pipe = new Cocs(sorter.getOutInStream(), outStr);
-					pipe.setSkipFields(new int[] {});
-					pipe.setSepChar("\t");
-					pipe.start();
+//					Cocs pipe = new Cocs(sorter.getOutInStream(), outStr);
+//					pipe.setSkipFields(new int[] {});
+//					pipe.setSepChar("\t");
+//					pipe.start();
 					sorter.start();
 					fieldNrs= new int[]{fieldNrs[0], fieldNrs[1]};
 					long bytesRead= 0;
@@ -661,7 +660,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					writer.flush();
 					writer.close();
 			
-					pipe.join();
+//					pipe.join();
                     Log.progressFinish(StringUtils.OK, true);
 					return outFile;
 			

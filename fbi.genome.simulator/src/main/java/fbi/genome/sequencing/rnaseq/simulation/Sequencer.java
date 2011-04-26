@@ -2,14 +2,13 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
+import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
 import fbi.commons.thread.ThreadedQWriter;
-import fbi.commons.tools.UnixStreamSort;
-import fbi.commons.tools.UnixStreamSort2;
-import fbi.commons.tools.UnixStreamSort2.DesignatedHierarchicalFieldComparator;
+import fbi.commons.tools.Sorter;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.Fasta;
 import fbi.genome.io.gff.GFFReader;
@@ -506,70 +505,7 @@ public class Sequencer implements StoppableRunnable {
 		}
 
 	}
-	
-	int writeInitialFileSort_old(ByteArrayCharSequence cs) {
-		// Sort
-		try {
-			String sss= "init sorting";
-            Log.progressStart(sss);
 
-			File inFile= settings.getFrgFile();
-			InputStream is= new FileInputStream(inFile);
-			File tmpOut= File.createTempFile("sim", "_sorted");
-			final OutputStream os= new FileOutputStream(tmpOut);
-			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
-			rw.addStream(is, 10* 1024);
-			rw.addStream(os, 10* 1024);
-			PipedOutputStream out = new PipedOutputStream();
-			PipedInputStream in = new PipedInputStream(out);
-			final BufferedWriter writer= new BufferedWriter(new OutputStreamWriter(
-					out));
-			UnixStreamSort.DesignatedHierarchicalFieldComparator compi=
-				new UnixStreamSort.DesignatedHierarchicalFieldComparator(3);
-			final UnixStreamSort sorter= new UnixStreamSort(in, compi);
-			final byte[] bb= new byte[100];			
-			Thread t= new Thread("Sorted Writer") {
-				public void run() {
-					while(!stop) {
-						try {
-							int len= sorter.getOutInStream().read(bb);
-							if (len== -1)
-								break;
-							else
-								rw.write(bb, 0, len, os);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				};
-			};
-			// rw.start();
-			
-			t.start();
-			sorter.start();
-			BufferedOutputStream bout= new BufferedOutputStream(out);
-			long totBytes= inFile.length(), currBytes= 0;
-			int lastPerc= 0, cnt= 0;
-			while(rw.readLine(is,cs)> 0) {
-				++cnt;
-				currBytes+= cs.length()+ 1;
-                Log.progress(currBytes, totBytes);
-				bout.write(cs.a, cs.start, cs.length());
-				bout.write(BYTE_NL);
-			}
-			bout.close();			
-			sorter.join();
-			t.join();
-			rw.close();
-			//rw.join();
-            Log.progressFinish();
-			return cnt;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return -1;
-		}
-	}
-	
 	int writeInitialFileZip(ByteArrayCharSequence cs, File in, File out) {
 		try {
 			String sss= "init zipping";
@@ -1759,119 +1695,62 @@ public class Sequencer implements StoppableRunnable {
 
 	int sortAndZip(ByteArrayCharSequence cs, File inFile, File outFile) {
 		// Sort
-		try {
-			String sss= "initing";
-            Log.progressStart(sss);
+        IOHandler io = IOHandlerFactory.createDefaultHandler();
+        File tempSorted = null;
+        OutputStream sortedOut = null;
+        ZipOutputStream zipOut = null;
 
-			// IO handler disk
-			InputStream istream= new FileInputStream(inFile);
-			OutputStream ostream= new FileOutputStream(outFile);
-			rw= IOHandlerFactory.getDefaultHandler();//new SyncIOHandler2(2);
-			rw.addStream(ostream, 10* 1024);
-			
-			// setup sorter / zipper pipes
-			PipedOutputStream pipeOut= null;
-			DesignatedHierarchicalFieldComparator compi= new DesignatedHierarchicalFieldComparator(3);
-			ZipperThread zipper= null;
-			UnixStreamSort2 sorter= null;
-			if (settings.getMaxThreads()== 1) {
-				sorter= new UnixStreamSort2(inFile, compi);
-				sorter.run();
-				
-				istream= new FileInputStream(sorter.getOutFile());
-				rw.addStream(istream, 10* 1024);
-				
-				
-			} else {
-				rw.addStream(istream, 10* 1024);
-				pipeOut= new PipedOutputStream();
-				PipedInputStream pipeIn = new PipedInputStream(pipeOut);
-				sorter= new UnixStreamSort2(pipeIn, compi);
-				sorter.setSilent(true);
-				zipper= new ZipperThread(
-						sorter.getOutInStream(), 
-						ostream,
-						100,
-						inFile.length()
-				);
-				sorter.start();
-				zipper.start();
-			}
-//			if (FluxSimulatorSettings.optDisk)
-//				rw.start();
+        try {
+            Log.progressStart("initialize and sort");
 
-			// feed sorter
-			OutputStream feedOut= pipeOut== null?new ZipOutputStream(ostream):new BufferedOutputStream(pipeOut);
-			int cnt= 0, perc= 0;
-			long totBytes= inFile.length(), currBytes= 0;
+			// source file
+			InputStream sourceIn= new BufferedInputStream(new FileInputStream(inFile));
+
+            // temporary sorted out file
+            tempSorted = FileHelper.createTempFile("sorted", "lib");
+            tempSorted.deleteOnExit();
+
+            sortedOut = new BufferedOutputStream(new FileOutputStream(tempSorted));
+
+            // sort
+            Sorter.create(sourceIn, sortedOut, true).field(2, false).sort();
+
+            Log.progressFinish(StringUtils.OK, true);
+
+            // read the sorted file and put it in a zip form
+            InputStream sortedIn = new FileInputStream(tempSorted);
+            io.addStream(sortedIn);
+
+
+            // the target stream
+            zipOut = new ZipOutputStream(new FileOutputStream(outFile));
+
+
+			long totBytes= tempSorted.length(), currBytes= 0;
 			ByteArrayCharSequence lastID= null;
 			int linesRec= 0;
-			while(rw.readLine(istream, cs)> 0&& !stop) {
-				currBytes+= cs.length()+ 1;				
-				++cnt;
-				//System.err.println(cnt+ "\t"+ currBytes);
+
+			while(io.readLine(sortedIn, cs) !=  -1) {
+				currBytes+= cs.length()+ 1;
+                linesRec++;
                 Log.progress(currBytes, totBytes);
-				//System.err.println("w: "+ cs.toString());
-				boolean closeAll= false;
-				try {  
-					if (zipper== null) {
-						lastID= writeOutZip(cs, (ZipOutputStream) feedOut, lastID);
-						++linesRec;
-					}
-					feedOut.write(cs.a, cs.start, cs.length());
-					feedOut.write(BYTE_NL);
-				} catch (InterruptedIOException ex) {
-					closeAll= true;
-				} catch (IOException ex) {
-					closeAll= true;
-				} catch (Exception ex) {
-					closeAll= true;
-				}
-				if (closeAll) {
-					assert(stop);
-					istream.close();
-					ostream.close();
-					break;
-				}
+                lastID = writeOutZip(cs, zipOut, lastID);
+                zipOut.write(cs.a, cs.start, cs.length());
+                zipOut.write(BYTE_NL);
 			}
+            zipOut.close();
 
-            Log.progressFinish();
-
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+ cnt+ " lines submitted");
-			}
-			
-			// wait for zipping
-			sss= "zipping";
-            Log.progressStart(sss);
-			feedOut.close();
-			if (sorter.isAlive())
-				sorter.join();			
-			if (zipper!= null) {
-				zipper.join();
-				linesRec= zipper.linesRec;
-			}
-			rw.close();
-//			if (rw.isAlive())
-//				rw.join();
-			ostream.close();
-			
-			assert(cnt== zipper.linesRec);
-			
-			// end
-			if (stop) 
-				return -1;
-
-            Log.progressFinish();
-		    Log.message("\t"+ linesRec+ " lines zipped");
-
-			return cnt;
+            Log.progressFinish(linesRec + " lines zipped", true);
+			return linesRec;
 			
 		} catch (Exception e) {
-			if (!(e instanceof InterruptedException)) {
-				e.printStackTrace();
-			}
+            Log.error("Error while sorting library : " + e.getMessage(), e);
 			return -1;
-		}
+		}finally {
+            io.close();
+            if(tempSorted != null) tempSorted.delete();
+            if(sortedOut != null) try {sortedOut.close();} catch (IOException e) {}
+            if(zipOut != null) try {zipOut.close();} catch (IOException e) {}
+        }
 	}	
 }
