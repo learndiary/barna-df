@@ -1,5 +1,7 @@
 package fbi.commons.tools;
 
+import fbi.commons.io.DevNullOutputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,7 +58,10 @@ public class Sorter {
      * List of line comparators
      */
     private List<LineComparator> comparators = new ArrayList<LineComparator>();
-
+    /**
+     * List of interceptors
+     */
+    private List<Interceptable.Interceptor<String>> interceptors;
 
 
     /**
@@ -71,6 +76,11 @@ public class Sorter {
         this.in = in;
         this.out = out;
         this.silent = silent;
+
+        if(this.out == null){
+            // create dev null output
+            this.out = new DevNullOutputStream();
+        }
 
 
     }
@@ -122,13 +132,27 @@ public class Sorter {
     }
 
     /**
+     * Add an interceptor to the sorter.
+     *
+     * @param interceptor the interceptor
+     * @return sorter this sorter
+     */
+    public Sorter addInterceptor(Interceptable.Interceptor<String> interceptor){
+        if(interceptor == null) throw new NullPointerException();
+        if(this.interceptors == null) this.interceptors = new ArrayList<Interceptable.Interceptor<String>>();
+        this.interceptors.add(interceptor);
+        return this;
+
+    }
+
+    /**
      * Perform the sort
      *
      * @throws IOException in case of any IO errors
      */
     public void sort() throws IOException {
         StreamSorter s = createSorter();
-        s.sort(in, out, -1, false, separator);
+        s.sort(in, out);
     }
 
     /**
@@ -147,7 +171,7 @@ public class Sorter {
         final String sep = separator;
         return executor.submit(new Callable<Object>() {
             public Object call() throws Exception {
-                s.sort(input, output, -1, false, sep);
+                s.sort(input, output);
                 return null;
             }
         });
@@ -171,7 +195,7 @@ public class Sorter {
      * @return streamSorter the stream sorter
      */
     protected StreamSorter createSorter() {
-        UnixStreamSorter s = new UnixStreamSorter(silent);
+        UnixStreamSorter s = new UnixStreamSorter(silent, -1, false, separator);
         LineComparator comparator = null;
         if(comparators.size() == 0){
             comparator = new LineComparator(false, separator, -1);
@@ -182,6 +206,12 @@ public class Sorter {
             }
         }
         s.setLineComparator(comparator);
+
+        if(interceptors != null){
+            for (Interceptable.Interceptor<String> interceptor : interceptors) {
+                s.addInterceptor(interceptor);
+            }
+        }
         return s;
     }
 

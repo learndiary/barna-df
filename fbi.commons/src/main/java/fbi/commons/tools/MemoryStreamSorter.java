@@ -17,8 +17,17 @@ import java.util.Comparator;
  */
 public class MemoryStreamSorter implements StreamSorter{
 
+    private int field;
+    private boolean numeric;
+    private String fieldSeparator;
 
-    public void sort(InputStream input, OutputStream output, int field, boolean numeric, String fieldSeparator) throws IOException {
+    public MemoryStreamSorter(int field, boolean numeric, String fieldSeparator) {
+        this.field = field;
+        this.numeric = numeric;
+        this.fieldSeparator = fieldSeparator;
+    }
+
+    public void sort(InputStream input, OutputStream output) throws IOException {
         ArrayList<String> lines = new ArrayList<String>();
 
         IOHandler io = IOHandlerFactory.createDefaultHandler();
@@ -43,8 +52,6 @@ public class MemoryStreamSorter implements StreamSorter{
         }finally {
             io.close();
         }
-
-
     }
 
 }

@@ -12,11 +12,12 @@ import java.util.PriorityQueue;
 
 /**
  * Implements an external R-Way merge sort by creating sorted chunks, writing them to disk and
- * then merge-sort the chunks.
+ * then merge-sort the chunks. This also supports intercepting lines and use the modified version
+ * of the line.
  *
  * @author Thasso Griebel (thasso.griebel@googlemail.com)
  */
-public class UnixStreamSorter implements StreamSorter{
+public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
     /**
      * OS dependent line separator
      */
@@ -37,12 +38,16 @@ public class UnixStreamSorter implements StreamSorter{
      * The line Comparator
      */
     private LineComparator lineComparator;
+    /**
+     * List of interceptors
+     */
+    private List<Interceptor<String>> interceptors;
 
     /**
      * Create a new sorter that uses a {@code ~25%} of heapspace as chunk size
      */
-    public UnixStreamSorter() {
-        this((long) (Runtime.getRuntime().maxMemory() * 0.25));
+    public UnixStreamSorter(int field, boolean numeric, String fieldSeparator) {
+        this((long) (Runtime.getRuntime().maxMemory() * 0.25), field, numeric, fieldSeparator);
     }
 
     /**
@@ -50,8 +55,8 @@ public class UnixStreamSorter implements StreamSorter{
      *
      * @param silent be silent
      */
-    public UnixStreamSorter(boolean silent) {
-        this((long) (Runtime.getRuntime().maxMemory() * 0.25), silent);
+    public UnixStreamSorter(boolean silent, int field, boolean numeric, String fieldSeparator) {
+        this((long) (Runtime.getRuntime().maxMemory() * 0.25), silent, field, numeric, fieldSeparator);
     }
 
     /**
@@ -59,8 +64,8 @@ public class UnixStreamSorter implements StreamSorter{
      *
      * @param memoryBound the maximum chunk size in bytes
      */
-    public UnixStreamSorter(long memoryBound) {
-        this(memoryBound, true);
+    public UnixStreamSorter(long memoryBound, int field, boolean numeric, String fieldSeparator) {
+        this(memoryBound, true, field, numeric, fieldSeparator);
     }
 
     /**
@@ -69,20 +74,18 @@ public class UnixStreamSorter implements StreamSorter{
      * @param memoryBound the memory bound (must be {@code > 0}
      * @param silent be silent
      */
-    public UnixStreamSorter(long memoryBound, boolean silent) {
+    public UnixStreamSorter(long memoryBound, boolean silent, int field, boolean numeric, String fieldSeparator) {
         if(memoryBound <= 0) throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         this.memoryBound = memoryBound;
         this.silent = silent;
+        lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
 
-    public void sort(InputStream input, OutputStream output, int field, boolean numeric, String fieldSeparator) throws IOException {
+    public void sort(InputStream input, OutputStream output) throws IOException {
         if(!silent)
             Log.progressStart("Sorting");
 
         LineComparator comparator = getLineComparator();
-        if(comparator == null){
-            comparator = new LineComparator(numeric, fieldSeparator, field);
-        }
         List<File> files =  divide(input, comparator, memoryBound);
         /*
          * make sure we open at most SORT_CHUNK files in parallel
@@ -224,6 +227,11 @@ public class UnixStreamSorter implements StreamSorter{
             CachedFileReader next = queue.poll();
             try {
                 String line = next.pop();
+                if(interceptors != null){
+                    for (Interceptor<String> interceptor : interceptors) {
+                        line = interceptor.intercept(line);
+                    }
+                }
                 writer.write(line);
                 writer.write(LINE_SEP);
 
@@ -270,6 +278,14 @@ public class UnixStreamSorter implements StreamSorter{
      */
     void setLineComparator(LineComparator lineComparator) {
         this.lineComparator = lineComparator;
+    }
+
+    public void addInterceptor(Interceptor<String> stringInterceptor) {
+        if(stringInterceptor == null) return;
+        if(interceptors == null) interceptors = new ArrayList<Interceptor<String>>();
+        if(!interceptors.contains(stringInterceptor))
+            interceptors.add(stringInterceptor);
+
     }
 
     /**

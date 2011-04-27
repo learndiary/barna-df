@@ -11,6 +11,6 @@ import java.io.OutputStream;
  */
 public interface StreamSorter {
 
-    void sort(InputStream input, OutputStream output, int field, boolean numeric, String fieldSeparator) throws IOException;
+    void sort(InputStream input, OutputStream output) throws IOException;
 
 }

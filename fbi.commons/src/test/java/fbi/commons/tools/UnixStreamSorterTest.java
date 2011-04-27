@@ -32,9 +32,9 @@ public class UnixStreamSorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StreamSorter sorter = new UnixStreamSorter();
+        StreamSorter sorter = new UnixStreamSorter(0, false, "\t");
         try {
-            sorter.sort(in, out, 0, false, "\t");
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -53,9 +53,9 @@ public class UnixStreamSorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StreamSorter sorter = new UnixStreamSorter();
+        StreamSorter sorter = new UnixStreamSorter(0, false, "\t");
         try {
-            sorter.sort(in, out, 0, false, "\t");
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -77,9 +77,9 @@ public class UnixStreamSorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        StreamSorter sorter = new UnixStreamSorter();
+        StreamSorter sorter = new UnixStreamSorter(2, true, "\t");
         try {
-            sorter.sort(in, out, 2, true, "\t");
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(

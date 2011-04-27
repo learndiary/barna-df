@@ -7,7 +7,6 @@ import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
-import fbi.commons.tools.UnixStreamSort;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.ReadDescriptor;
@@ -3999,14 +3998,14 @@ public class FluxCapacitor implements ReadStatCalculator {
 					File f= new File(dir+ File.separator+ fNames[i]);
 					if (fNames[i].contains(PFX_CAPACITOR))
 						v.add(f);
-					else if (fNames[i].contains(UnixStreamSort.PFX_SORT))
+					else if (fNames[i].contains("sort"))
 						vSort.add(f);
 				}
 				
 				if (v.size()> 0&& !myCapacitor.force) 
 					removeZombies(v, PFX_CAPACITOR);
 				if (vSort.size()> 0&& !myCapacitor.force) 
-					removeZombies(v, UnixStreamSort.PFX_SORT);
+					removeZombies(v, "sort");
 				
 			}
 			

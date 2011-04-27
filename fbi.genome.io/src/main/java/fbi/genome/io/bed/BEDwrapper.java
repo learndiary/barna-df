@@ -3,11 +3,11 @@ package fbi.genome.io.bed;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.Progressable;
-import fbi.commons.StringUtils;
+import fbi.commons.io.DevNullOutputStream;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.tools.ArrayUtils;
-import fbi.commons.tools.UnixStreamSort;
-import fbi.commons.tools.UnixStreamSort.DesignatedHierarchicalFieldComparator;
+import fbi.commons.tools.Interceptable;
+import fbi.commons.tools.Sorter;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
@@ -17,7 +17,6 @@ import fbi.genome.io.rna.SolexaPairedEndDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.commons.MyArrayHashMap;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
 
@@ -25,7 +24,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
-import java.util.regex.Pattern;
+import java.util.concurrent.Future;
 
 public class BEDwrapper extends DefaultIOWrapper {
 
@@ -412,67 +411,42 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	
 	private int scanFileReadLines= 0;
 	public boolean scanFile() {
+        BufferedReader buffy = null;
+        BufferedWriter tmpWriter = null;
+        PipedInputStream in = null;
+        PipedOutputStream out = null;
+        Future sorterFuture = null;
 		try {
 			scanFileReadLines= 0;
-            Log.progressStart("scanning");
 			countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
 			
 			File f= new File(this.fPath+MyFile.separator+this.fName);
-			BufferedReader buffy= new BufferedReader(new FileReader(f));
+			buffy= new BufferedReader(new FileReader(f));
 			int sepLen= guessFileSep().length();
 			long bRead= 0, bTot= f.length();
-			int perc= 0;
-			String lastChr= null;
-			HashMap<String, Integer> mapMates= null;	// pend
-			
-//			File scanFile= MyFile.append(System.getProperty(Constants.PROPERTY_TMPDIR)
-//								+ File.separator+ getFileName(), "_scanIDs");
-//			BufferedWriter tmpWriter= new BufferedWriter(new FileWriter(scanFile));
-			
-			PipedOutputStream out = new PipedOutputStream();
-			PipedInputStream in = new PipedInputStream(out);
-			BufferedWriter tmpWriter= new BufferedWriter(new OutputStreamWriter(
-					out));
 
+			out = new PipedOutputStream();
+			in = new PipedInputStream(out);
+			tmpWriter= new BufferedWriter(new OutputStreamWriter(out));
 
-
-			DesignatedHierarchicalFieldComparator comp = new UnixStreamSort.DesignatedHierarchicalFieldComparator(
-					1,false);
-			final UnixStreamSort sorter = new UnixStreamSort(in, comp);
-			sorter.setLineSep(guessFileSep());
-			sorter.setSilent(true);	// progress already here
-//			long sorterMemSize = (long) (Runtime.getRuntime().freeMemory() * 0.75);
-//			sorter.setMemSizeBytes(sorterMemSize);
-			sorter.setMultiProcessors(1);
-			
-			Thread thrCounter= new Thread(new Runnable(){
-				public void run() {
-					try {
-						BufferedReader buffy= new BufferedReader(new InputStreamReader(sorter.getOutInStream()));
-						String s= null, s2= null;
-						while ((s= buffy.readLine())!= null) {
-							//System.err.println(s);
-							if (s2== null|| !s.equals(s2))
-								++countReads;
-							s2= s;
-						}
-						buffy.close();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-				}
-			});
-			thrCounter.start();
-			sorter.start();
+            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true)
+                    .separator("\\s")
+                    .field(0, false)
+                    .addInterceptor(new Interceptable.Interceptor<String>() {
+                        String lastLine= null;
+                        public String intercept(String line) {
+                            if (lastLine== null|| !line.equals(lastLine))
+                                ++countReads;
+                            lastLine= line;
+                            return line;
+                        }
+                    })
+                    .sortInBackground();
 
 			final String COMA= ",";
-			for(String s; (s= buffy.readLine())!= null;++countAll,bRead+= s.length()+ sepLen) {
-
+			for(String s; (s= buffy.readLine())!= null;bRead+= s.length()+ sepLen) {
+                if(!s.isEmpty())++countAll;
 				++nrUniqueLinesRead;
-
-                Log.progress(bRead, bTot);
-
 				if (s.startsWith(BROWSER)|| s.startsWith(TRACK))
 					continue;
 				
@@ -482,8 +456,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				while (p> 0&& !Character.isWhitespace(s.charAt(--p)));
 				if (s.indexOf(COMA, p)>= 0)
 					++countSplit;
-				else
+				else if(p >= 0 && !s.isEmpty()){
 					++countEntire;
+                }
 
 				// get ID
 				p= 0;
@@ -491,15 +466,19 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				while(cnt< 3) {
 					while (p< s.length()&& Character.isWhitespace(s.charAt(p++)));
 					--p;
-					while (p< s.length()&& !Character.isWhitespace(s.charAt(p++)));
-					if (p< s.length())
-						++cnt;
-					else
-						break;
+                    if (p >= 0){
+                        while (p< s.length()&& !Character.isWhitespace(s.charAt(p++)));
+                        if (p< s.length())
+                            ++cnt;
+                        else
+                            break;
+                    }else{
+                        break;
+                    }
 				}
 				int from= (cnt== 3)? p: -1, to= -1;
-				while (p< s.length()&& Character.isWhitespace(s.charAt(p++)));
-				while (p< s.length()&& !Character.isWhitespace(s.charAt(p++)));
+				while (p >= 0 && p< s.length()&& Character.isWhitespace(s.charAt(p++)));
+				while (p >= 0 && p< s.length()&& !Character.isWhitespace(s.charAt(p++)));
 				--p;
 				if (p< s.length())
 					to= p;
@@ -510,21 +489,21 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					tmpWriter.write((int) '\n');
 				}
 			}
-			buffy.close();
-			tmpWriter.flush();
-			tmpWriter.close();
-			
-			thrCounter.join();
-
-            Log.progressFinish(Constants.OK, true);
-
+            tmpWriter.flush();
+            tmpWriter.close();
+            sorterFuture.get();
 			return true;
 			
 		} catch (Exception e) {
-			Log.progressFailed("ERROR");
-            Log.error("Error while scanning BED file!", e);
+            Log.error("Error while scanning BED file : " + e.getMessage(), e);
 			return false;
-		}
+		}finally {
+            if(buffy != null)try {buffy.close();} catch (IOException e) {}
+            if(tmpWriter != null)try {tmpWriter.flush();tmpWriter.close();} catch (IOException e) {}
+            if(in != null)try {in.close();} catch (IOException e) {}
+            if(out != null)try {out.close();} catch (IOException e) {}
+            if(sorterFuture != null)sorterFuture.cancel(true);
+        }
 	}
 	
 	
@@ -559,118 +538,28 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 
 	// not static for fileSep
 	public File sortBED(File f) {
-				try {
-                    Log.progressStart("Sorting File");
-					boolean silent= false;
-					char mapKeySepChar= '@';
-					String eol= "\n";
-					ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
-					Pattern patty= Pattern.compile("\\s");			
-					int[] fieldNrs= new int[]{1,2};
-					long t0 = System.currentTimeMillis();
-					long size = f.length();
-	//				if (!silent)
-	//					System.err.println("I am sorting the file now. "+silent);
-					long estLineCount = (size / 100);
-					int estIDCount = 0;
-					if (estLineCount <= 50000) // reference annotation
-						estIDCount = (int) (estLineCount / 40); // 10 exons per
-																// transcript, 2 for CDS
-																// and exon line
-					else if (estLineCount <= 500000) // mRNA collection
-						estIDCount = (int) (estLineCount / 6); // 7 exons per trpt, no
-																// CDS
-					else
-						// ESTs, 25 mio lines -> 4 mio IDs
-						estIDCount = (int) (estLineCount / 6);
-					int hashMapSize = (int) (estIDCount);
-					int incrSize = (int) (estIDCount * 0.3);
-					MyArrayHashMap<byte[], Integer> map = new MyArrayHashMap<byte[], Integer>(
-							1000);
-							//hashMapSize); // for reference annot
-					//map.setIncrementSize(incrSize);	// dangerous
-		//			if (!silent)
-		//				System.err.println("basehash created " + hashMapSize + ":"
-		//						+ incrSize);
-		//			if (debug)
-		//				System.in.read();
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            File outFile = File.createTempFile(f.getName() + "_", "_sorted");
+            in = new BufferedInputStream(new FileInputStream(f));
+            out = new BufferedOutputStream(new FileOutputStream(outFile));
+            Sorter.create(in, out, true)
+                    .separator("\\s")
+                    .field(0, false)
+                    .field(1, false)
+                    .sort();
+			return outFile;
 			
-					
-					// tpos tid $1 $2 ...
-					// sort chr, strand, tpos, tid, pos, (feat)
-					// sort 3, 9, 1num, 2, 6num, (5)
-		//			HierarchicalFieldComparator comp = new UnixStreamSort.HierarchicalFieldComparator(
-		//					3, false)
-		//					.setSubComparator(new UnixStreamSort.HierarchicalFieldComparator(
-		//							9, false)
-		//							.setSubComparator(new UnixStreamSort.HierarchicalFieldComparator(
-		//									1, true)
-		//									.setSubComparator(new UnixStreamSort.HierarchicalFieldComparator(
-		//											fieldNrs[2], false)
-		//											.setSubComparator(new UnixStreamSort.HierarchicalFieldComparator(
-		//													6, true)))));
-					DesignatedHierarchicalFieldComparator comp = new UnixStreamSort.DesignatedHierarchicalFieldComparator(
-							1,false)
-							.setSubComparator(new UnixStreamSort.DesignatedHierarchicalFieldComparator(
-									2,true));
-					
-			
-					ThreadedBufferedByteArrayStream buffy = new ThreadedBufferedByteArrayStream(10000, f, true);			
-					PipedOutputStream out = new PipedOutputStream();
-					PipedInputStream in = new PipedInputStream(out);
-					BufferedWriter writer= new BufferedWriter(new OutputStreamWriter(
-							out));
-					UnixStreamSort sorter = new UnixStreamSort(in, comp);
-					sorter.setLineSep(guessFileSep());
-					//sorter.setTidField(fieldNrs[2]+1);	// for add col
-					//sorter.setSize(size+ (long) (map.size() * (avgIDsize + avgPosSize + 2)));
-					sorter.setSilent(false);
-					long sorterMemSize = (long) (Runtime.getRuntime().freeMemory() * 0.75);
-					sorter.setMemSizeBytes(sorterMemSize);
-					sorter.setMultiProcessors(1);
-					
-					OutputStream outStr = System.err;
-					File outFile = null;
-					if (true) {
-						outFile = File.createTempFile(f.getName() + "_", "_sorted");
-						outStr = new FileOutputStream(outFile);
-					}
-//					Cocs pipe = new Cocs(sorter.getOutInStream(), outStr);
-//					pipe.setSkipFields(new int[] {});
-//					pipe.setSepChar("\t");
-//					pipe.start();
-					sorter.start();
-					fieldNrs= new int[]{fieldNrs[0], fieldNrs[1]};
-					long bytesRead= 0;
-					int lastPerc= 0, rowCtr= 0;
-					for (ByteArrayCharSequence line = buffy.readLine(cs); line.end!= 0; line = buffy
-							.readLine(cs)) {
-						++rowCtr;
-						bytesRead += line.length() + eol.length();
-                        if(!silent){
-                            Log.progress(bytesRead, size);
-                        }
-						writer.write(line.toString());
-						writer.write(eol);
-					}
-					nrUniqueLinesRead= rowCtr;
-					map= null;
-					System.gc();
-					Thread.currentThread().yield();
-					writer.flush();
-					writer.close();
-			
-//					pipe.join();
-                    Log.progressFinish(StringUtils.OK, true);
-					return outFile;
-			
-				} catch (Exception e) {
-                    Log.progressFailed("ERROR");
-                    Log.error("Error while sorting file!", e);
-				}
-			
-				return null;
-			}
+        } catch (Exception e) {
+            Log.progressFailed("ERROR");
+            Log.error("Error while sorting file!", e);
+        }finally {
+            if(in != null ) try {in.close();} catch (IOException e) {}
+            if(out != null ) try {out.close();} catch (IOException e) {}
+        }
+        return null;
+	}
 
 	public ByteArrayCharSequence sweepToChromosome(CharSequence chr) {
 		try {

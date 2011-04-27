@@ -32,9 +32,9 @@ public class MemoryStreamSorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        MemoryStreamSorter sorter = new MemoryStreamSorter();
+        MemoryStreamSorter sorter = new MemoryStreamSorter(0, false, "\t");
         try {
-            sorter.sort(in, out, 0, false, "\t");
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -53,9 +53,9 @@ public class MemoryStreamSorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        MemoryStreamSorter sorter = new MemoryStreamSorter();
+        MemoryStreamSorter sorter = new MemoryStreamSorter(0, false, "\t");
         try {
-            sorter.sort(in, out, 0, false, "\t");
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -77,9 +77,9 @@ public class MemoryStreamSorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        MemoryStreamSorter sorter = new MemoryStreamSorter();
+        MemoryStreamSorter sorter = new MemoryStreamSorter(2, true, "\t");
         try {
-            sorter.sort(in, out, 2, true, "\t");
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
