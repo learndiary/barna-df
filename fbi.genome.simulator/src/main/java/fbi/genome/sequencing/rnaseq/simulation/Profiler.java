@@ -759,4 +759,33 @@ public class Profiler implements StoppableRunnable {
 		
 		return cs;
 	}
+
+
+
+	public int getMaxMoleculeLength() {
+		int maxLen= -1;
+		for (int i = 0; i < len.length; i++) {
+			if (molecules[i]> 0&& len[i]> maxLen)
+				maxLen= len[i];
+		}
+		return maxLen;
+	}
+
+
+
+	public double getMedMoleculeLength() {
+		
+		int sumMol= 0;
+		for (int i = 0; i < molecules.length; i++) 
+			sumMol+= molecules[i];
+		IntVector v= new IntVector(sumMol);
+		for (int i = 0; i < molecules.length; i++) {
+			for (int j = 0; j < molecules[i]; j++) {
+				v.add(len[i]);
+			}
+		}
+		
+		Distribution dist= new Distribution(v.toIntArray());
+		return dist.getMedian();
+	}
 }

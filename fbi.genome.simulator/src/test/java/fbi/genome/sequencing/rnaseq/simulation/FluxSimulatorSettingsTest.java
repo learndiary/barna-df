@@ -71,14 +71,14 @@ public class FluxSimulatorSettingsTest {
         assertEquals(25.0, s1.getTssMean(), 0.000001);
         assertEquals(5.0, s1.getPolyAshape(), 0.000001);
         assertEquals(50.0, s1.getPolyAscale(), 0.000001);
-        assertEquals(500, s1.getMinRTLen(), 0.000001);
-        assertEquals(5500, s1.getMaxRTLen(), 0.000001);
+        assertEquals(500, s1.getRTminLen(), 0.000001);
+        assertEquals(5500, s1.getRTmaxLen(), 0.000001);
         assertEquals("RANDOM", s1.getRtMode());
         assertTrue(s1.isFragment());
         assertFalse(s1.isFragB4RT());
         assertEquals("PHYSICAL", s1.getFragMode());
-        assertEquals(900.0, s1.getLambda(), 0.000001); // FRAG LAMDA
-        assertEquals(0.05, s1.getSigma(), 0.000001); // FRAG SIGMA
+        assertEquals(900.0, s1.getFragNBlambda(), 0.000001); // FRAG LAMDA
+        assertEquals(0.05, s1.getFragNBsigma(), 0.000001); // FRAG SIGMA
         assertEquals(0.1, s1.getThold(), 0.000001); // FRAG THRESHOLD
         assertTrue(s1.isFilter());
         assertTrue(s1.isLoadCoding());
@@ -89,6 +89,6 @@ public class FluxSimulatorSettingsTest {
         assertEquals(36, s1.getReadLength());
         assertTrue(s1.isPairedEnd());
         assertTrue(s1.isFastQ());
-        assertEquals(5500, s1.getMaxRTLen());
+        assertEquals(5500, s1.getRTmaxLen());
     }
 }

@@ -29,29 +29,125 @@ public class FluxSimulatorSettings {
 	public static final String PAR_RUN_NAME = "RUN_NAME";
 	public static final String PAR_LOAD_CODING = "LOAD_CODING", PAR_LOAD_NONCODING= "LOAD_NONCODING";
 	public static final String PAR_YES = "YES", PAR_NO = "NO";
+	public static final String PAR_DNA= "DNA", PAR_RNA = "RNA";
 	public static final String PAR_SEQ_READ_LENGTH= "READ_LENGTH", PAR_SEQ_READ_NUMBER= "READ_NUMBER", PAR_SEQ_PEND= "PAIRED_END", PAR_SEQ_FASTQ= "FASTQ", PAR_SEQ_QTHOLD= "QTHOLD";
-	public static final String PAR_FRAG_LAMBDA = "FRAG_LAMBDA";
-	public static final String PAR_FRAG_SIGMA = "FRAG_SIGMA";
+	
+	/**
+	 * Parameter for the threshold on molecule length that cannot 
+	 * be broken by the shearfield during nebulization.
+	 */
+	public static final String PAR_FRAG_NB_LAMBDA = "FRAG_NB_LAMBDA";
+	/**
+	 * Parameter for providing the fraction of molecule that marks 
+	 * the standard deviation of the breakpoint in nebulization 
+	 * (mean=center of the molecule).
+	 */
+	public static final String PAR_FRAG_NB_SIGMA = "FRAG_NB_SIGMA";
+	/**
+	 * Parameter specifying the strength of the nebulization shearfield.
+	 */
+	public static final String PAR_FRAG_NB_M = "FRAG_NB_M";
+	
+	/**
+	 * Parameter denoting the threshold on molecule population still 
+	 * breaking when determing convergence of iterative nebulizaiton.
+	 */
+	public static final String PAR_FRAG_NB_THOLD = "FRAG_NB_THOLD";
+	
 	public static final String PAR_TSS_MEAN= "TSS_MEAN", PAR_POLYA_SHAPE= "POLYA_SHAPE", PAR_POLYA_SCALE= "POLYA_SCALE";
-	public static final String PAR_FRAG_THRESHOLD = "FRAG_THRESHOLD";
+	/**
+	 * Parameter to switch on/off Reverse Transcription.
+	 */
+	public static final String PAR_RT = "RTRANSCRIPTION";
 	public static final String PAR_RT_FALLOFF = "RT_FALLOFF";
 	public static final String PAR_RT_RANDOM = "RT_RANDOM";
-	public static final String PAR_FRAG_MODE= "FRAG_MODE", PAR_FRAG_MODE_PHYS= "PHYSICAL", PAR_FRAG_MODE_CHEM= "CHEMICAL";
+	
+	/**
+	 * Parameter specifying the substrate of fragmentation.
+	 * @deprecated
+	 */
+	public static final String PAR_FRAG_SUBSTRATE_DEPRECATED= "FRAG_B4_RT";
+
+	/**
+	 * Parameter specifying the substrate of fragmentation.
+	 */
+	public static final String PAR_FRAG_SUBSTRATE= "FRAG_SUBSTRATE";
+	
+	/**
+	 * Method applied for Fragmentation.
+	 * @deprecated
+	 */
+	public static final String PAR_FRAG_METHOD_DEPRECATED= "FRAG_MODE";
+	/**
+	 * Method applied for Fragmentation.
+	 */
+	public static final String PAR_FRAG_METHOD= "FRAG_METHOD";
+	
+	/**
+	 * Nebulization fragmentation method.
+	 * @deprecated 
+	 */
+	public static final String PAR_FRAG_METHOD_NB_DEPRECATED= "PHYSICAL";
+	
+	/**
+	 * Nebulization fragmentation method.
+	 */
+	public static final String PAR_FRAG_METHOD_NB= "NB";
+
+	/**
+	 * Uniformal random fragmentation method.
+	 * @deprecated
+	 */
+	public static final String PAR_FRAG_METHOD_UR_DEPRECATED= "CHEMICAL";
+	
+	/**
+	 * Uniformal random fragmentation method.
+	 */
+	public static final String PAR_FRAG_METHOD_UR= "UR";
+
+	/**
+	 * Enzymatic digestion as fragmentation method.
+	 */
+	public static final String PAR_FRAG_METHOD_EZ= "EZ";
+
+	/**
+	 * The motif description for enzymatic digestion.
+	 */
+	public static final String PAR_FRAG_EZ_MOTIF= "FRAG_EZ_MOTIF";
+
+
+	public static final String PAR_FRAG_UR_D0= "FRAG_UR_D0", PAR_FRAG_UR_DELTA= "FRAG_UR_DELTA", PAR_FRAG_UR_ETA= "FRAG_UR_ETA";
 	public static final String PAR_BP_DISTR= "BP_DISTR", PAR_BP_MOTIF= "BP_MOTIF";
-	public static final String PAR_RT_MODE= "RT_PRIMER", PAR_RT_MODE_POLY_DT = "POLY-DT", PAR_RT_MODE_RANDOM = "RANDOM", PAR_RT_MODE_NONE = "NONE"; 
-	public static final String PAR_RT_MIN= "RT_MIN", PAR_RT_MAX= "RT_MAX";
-	public static final String PAR_FRAG= "FRAGMENTATION", PAR_FILT= "FILTERING";
+	public static final String PAR_RT_MODE= "RT_PRIMER";
+	public static final String PAR_RT_MODE_POLY_DT = "PDT";
+	public static final String PAR_RT_MODE_RANDOM = "RH";
+	public static final String PAR_RT_MODE_NONE = "NONE"; 
+	public static final String PAR_RT_MIN= "RT_MIN";
+	public static final String PAR_RT_MAX= "RT_MAX";
+	public static final String PAR_RT_GC_LO= "RT_GC_LO";
+	public static final String PAR_RT_GC_HI= "RT_GC_HI";
+	
+	/**
+	 * Parameter to switch on/off fragmentation.
+	 */
+	public static final String PAR_FRAG= "FRAGMENTATION";
+	public static final String PAR_FILT= "FILTERING";
 	public static final String PAR_DEC_P1 = "EXPRESSION_X1";
 	public static final String PAR_EXPR_K = "EXPRESSION_K";
 	public static final String PAR_EXPR_X0 = "EXPRESSION_X0"; 
 	public static final String PAR_NB_CELLS = "NB_CELLS";
 	public static final String PAR_MAXTHREAD = "MAXTHREAD";
 	public static final String PAR_NB_MOLECULES = "NB_MOLECULES";
-	public static final String PAR_FILT_MIN= "FILT_MIN", PAR_FILT_MAX= "FILT_MAX", PAR_FILT_DISTR= "PAR_FILT_DISTR";
-	public static final String PAR_FRAG_B4_RT= "FRAG_B4_RT";
+	/**
+	 * @deprecated
+	 */
+	public static final String PAR_FILT_MIN= "FILT_MIN", PAR_FILT_MAX= "FILT_MAX";
+	public static final String PAR_FILTER_DISTRIBUTION= "SIZE_DISTRIBUTION";
+	public static final String PAR_FILTER_SAMPLING= "SIZE_SAMPLING";
+	public static final String PAR_SIZE_SELECTION= "SIZE_SELECTION", PAR_SIZE_DISTRIBUTION= "SIZE_DISTRIBUTION", PAR_SIZE_SAMPLING= "SIZE_SAMPLING";
 	public static final String PAR_GEN_DIR= "GEN_DIR";
 	public static String PRO_FILE_CR= "\n", PRO_FILE_TAB= "\t", PAR_COMMENT= "#", TMP_PFX= "sim";
-	public static String PAR_PWM_FRAG_SENSE= "PWM_FRAG_SENSE", PAR_PWM_FRAG_ASENSE= "PWM_FRAG_ASENSE", PAR_PWM_RT_ASENSE= "PWM_RT_ASENSE", PAR_PWM_RT_SENSE= "PWM_RT_SENSE";
+	public static String PAR_RT_MOTIF= "RT_MOTIF";
 
 	public static boolean optDisk= false;
 	public static final char SEP_LOC_TID= '@';
@@ -190,8 +286,8 @@ public class FluxSimulatorSettings {
 			}
 			
 			// fragmentation
-			writer.write(PAR_RT_MIN+ "\t"+ settings.getMinRTLen()+ "\n");
-			writer.write(PAR_RT_MAX+ "\t"+ settings.getMaxRTLen()+ "\n");
+			writer.write(PAR_RT_MIN+ "\t"+ settings.getRTminLen()+ "\n");
+			writer.write(PAR_RT_MAX+ "\t"+ settings.getRTmaxLen()+ "\n");
 			writer.write(PAR_RT_MODE+ "\t"+ settings.getRtMode()+ "\n");
 			//writer.write(PAR_RT_RANDOM+ "\t"+ settings.getRtRandom()+ "\n");
 			//writer.write(PAR_RT_FALLOFF+ "\t"+ settings.getRtFoff()+ "\n");
@@ -200,15 +296,15 @@ public class FluxSimulatorSettings {
 				writer.write(PAR_YES+ "\n");
 			else
 				writer.write(PAR_NO+ "\n");
-			writer.write(PAR_FRAG_B4_RT+ "\t");
+			writer.write(PAR_FRAG_SUBSTRATE_DEPRECATED+ "\t");
 			if (settings.isFragB4RT())
 				writer.write(PAR_YES+ "\n");
 			else
 				writer.write(PAR_NO+ "\n");
-			writer.write(PAR_FRAG_MODE+ "\t"+ settings.getFragMode()+ "\n");
-			writer.write(PAR_FRAG_LAMBDA+ "\t"+ settings.getLambda()+ "\n");
+			writer.write(PAR_FRAG_METHOD_DEPRECATED+ "\t"+ settings.getFragMode()+ "\n");
+			writer.write(PAR_FRAG_NB_LAMBDA+ "\t"+ settings.getFragNBlambda()+ "\n");
 			//writer.write(PAR_FRAG_SIGMA+ "\t"+ settings.getSigma()+ "\n");
-			writer.write(PAR_FRAG_THRESHOLD+ "\t"+ settings.getThold()+ "\n");
+			writer.write(PAR_FRAG_NB_THOLD+ "\t"+ settings.getThold()+ "\n");
 			writer.write(PAR_FILT+ "\t");
 			if (settings.isFilter())
 				writer.write(PAR_YES+ "\n");
@@ -260,8 +356,8 @@ public class FluxSimulatorSettings {
 	}
 	public static boolean appendProfile(FluxSimulatorSettings settings, int colNr, Hashtable<CharSequence,Long> mapFrags) {
 		try {
-            Log.progressStart("Updating .pro file ");
-
+			Log.progressStart("Updating .pro file ");
+			
 			long total= 0;
 			Iterator<Long> iter= mapFrags.values().iterator();
 			while(iter.hasNext())
@@ -277,9 +373,7 @@ public class FluxSimulatorSettings {
 			for (String s= null; (s= buffy.readLine())!= null;++lineCtr) {
 				
 				bytesRead+= s.length()+ PRO_FILE_CR.length();
-				if (lineCtr% 1000== 0) {
-                    Log.progress(bytesRead, bytesTotal);
-				}
+				Log.progress(bytesRead, bytesTotal);
 				
 				token= s.split(FluxSimulatorSettings.PRO_FILE_SEP);
 				if (token.length== colNr) {
@@ -293,7 +387,6 @@ public class FluxSimulatorSettings {
 				String id= token[0]+ "@"+ token[1];
 				if (mapFrags.containsKey(id)) {
 					long absCnt= mapFrags.get(id);
-
 					double relFreq= absCnt/ (double) total;
 					if (Double.isNaN(relFreq))
 						System.currentTimeMillis();
@@ -313,9 +406,8 @@ public class FluxSimulatorSettings {
 			
 			settings.proFile.delete();
 			FileHelper.move(tmpF, settings.proFile, null);
-			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" OK");
+
+			Log.progressFinish("OK", false);
 			return true;
 			
 		} catch (Exception e) {
@@ -327,14 +419,13 @@ public class FluxSimulatorSettings {
 	public static FluxSimulatorSettings createSettings(File f) {
 	try {
 			
-		if (f== null|| !f.exists() || f.isDirectory()) {
-            if (f== null)
-                Log.error("\t[UHOH] I have no parameter file and I want to scream!");
-            else if(f.isDirectory())
-                Log.error("\t[UHOH] parameter file is a directory: "+f.getCanonicalPath());
-            else
-                Log.error("\t[UHOH] parameter file does not exist: "+f.getCanonicalPath());
-
+		if (f== null|| !f.exists()) {
+			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+				if (f== null)
+					System.err.println("\t[UHOH] I have no parameter file and I want to scream!");
+				else
+					System.err.println("\t[UHOH] parameter file does not exist: "+f.getCanonicalPath());
+			}
 			return null;
 		} else {
 			f= new File(f.getCanonicalPath());	// kill Win32ShellFolder instances, they fuck up relative path conversion
@@ -355,20 +446,20 @@ public class FluxSimulatorSettings {
 			else if (s.startsWith(PAR_SEQ_READ_LENGTH)) 
 				settings.readLength= Integer.parseInt(s.substring(PAR_SEQ_READ_LENGTH.length()).trim());
 			else if (s.startsWith(PAR_PRO_FNAME)) 
-				proname= FileHelper.fromRelative(s.substring(PAR_PRO_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
+				proname= s.substring(PAR_PRO_FNAME.length()).trim();
 			else if (s.startsWith(PAR_REF_FNAME))
-				refname= FileHelper.fromRelative(s.substring(PAR_REF_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
+				refname= s.substring(PAR_REF_FNAME.length()).trim();
 			else if (s.startsWith(PAR_FRG_FNAME))
-				frgname= FileHelper.fromRelative(s.substring(PAR_FRG_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
+				frgname= s.substring(PAR_FRG_FNAME.length()).trim();
 			else if (s.startsWith(PAR_ERR_FNAME))
-				errname= FileHelper.fromRelative(s.substring(PAR_ERR_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
+				errname= s.substring(PAR_ERR_FNAME.length()).trim();
 			else if (s.startsWith(PAR_SEQ_FNAME))
-				seqname= FileHelper.fromRelative(s.substring(PAR_SEQ_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
+				seqname= s.substring(PAR_SEQ_FNAME.length()).trim();
 			else if (s.startsWith(PAR_TMP_FNAME)) {
-				tmpname= FileHelper.fromRelative(s.substring(PAR_TMP_FNAME.length()).trim(), f.getParentFile()).getAbsolutePath();
+				tmpname= s.substring(PAR_TMP_FNAME.length()).trim();
 				System.setProperty(Constants.PROPERTY_TMPDIR, tmpname);
 			} else if (s.startsWith(PAR_GEN_DIR))
-				genname= FileHelper.fromRelative(s.substring(PAR_GEN_DIR.length()).trim(), f.getParentFile()).getAbsolutePath();
+				genname= s.substring(PAR_GEN_DIR.length()).trim();
 			if (s.startsWith(PAR_COMMENT))
 				continue;
 			
@@ -452,37 +543,55 @@ public class FluxSimulatorSettings {
 			
 		
 				// RT / FRAGMENTER				
-			else if (s.startsWith(PAR_FRAG_LAMBDA))
+			else if (s.startsWith(PAR_FRAG_NB_LAMBDA))
 				try {
-					s= s.substring(PAR_FRAG_LAMBDA.length()).trim();
-					settings.lambda= Double.parseDouble(s);
+					s= s.substring(PAR_FRAG_NB_LAMBDA.length()).trim();
+					settings.fragNBlambda= Double.parseDouble(s);
 				} catch (NumberFormatException e) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-						System.err.println("\tNo valid value for "+PAR_FRAG_LAMBDA+": "+s);
+						System.err.println("\tNo valid value for "+PAR_FRAG_NB_LAMBDA+": "+s);
 					return null;
 				}
-			else if (s.startsWith(PAR_FRAG_SIGMA))
+			else if (s.startsWith(PAR_FRAG_NB_SIGMA))
 				try {
-					s= s.substring(PAR_FRAG_SIGMA.length()).trim();
-					settings.sigma= Double.parseDouble(s);
+					s= s.substring(PAR_FRAG_NB_SIGMA.length()).trim();
+					settings.fragNBsigma= Double.parseDouble(s);
 				} catch (NumberFormatException e) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-						System.err.println("\tNo valid value for "+PAR_FRAG_SIGMA+": "+s);
+						System.err.println("\tNo valid value for "+PAR_FRAG_NB_SIGMA+": "+s);
 					return null;
 				}				
-			else if (s.startsWith(PAR_FRAG_THRESHOLD))
+			else if (s.startsWith(PAR_FRAG_NB_LAMBDA))
 				try {
-					s= s.substring(PAR_FRAG_THRESHOLD.length()).trim();
-					settings.thold= Double.parseDouble(s);
+					s= s.substring(PAR_FRAG_NB_LAMBDA.length()).trim();
+					settings.fragNBlambda= Double.parseDouble(s);
 				} catch (NumberFormatException e) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-						System.err.println("\tNo valid value for "+PAR_FRAG_THRESHOLD+": "+s);
+						System.err.println("\tNo valid value for "+PAR_FRAG_NB_LAMBDA+": "+s);
+					return null;
+				}
+			else if (s.startsWith(PAR_FRAG_NB_M))
+				try {
+					s= s.substring(PAR_FRAG_NB_M.length()).trim();
+					settings.fragNBm= Double.parseDouble(s);
+				} catch (NumberFormatException e) {
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
+						System.err.println("\tNo valid value for "+PAR_FRAG_NB_M+": "+s);
+					return null;
+				}
+			else if (s.startsWith(PAR_FRAG_NB_THOLD))
+				try {
+					s= s.substring(PAR_FRAG_NB_THOLD.length()).trim();
+					settings.fragNBthold= Double.parseDouble(s);
+				} catch (NumberFormatException e) {
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
+						System.err.println("\tNo valid value for "+PAR_FRAG_NB_THOLD+": "+s);
 					return null;
 				}
 			else if (s.startsWith(PAR_RT_MIN))
 				try {
 					s= s.substring(PAR_RT_MIN.length()).trim();
-					settings.minRTLen= Integer.parseInt(s);
+					settings.rtMinLen= Integer.parseInt(s);
 				} catch (NumberFormatException e) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 						System.err.println("\tNo valid value for "+PAR_RT_MIN+": "+s);
@@ -491,15 +600,37 @@ public class FluxSimulatorSettings {
 			else if (s.startsWith(PAR_RT_MAX))
 				try {
 					s= s.substring(PAR_RT_MAX.length()).trim();
-					settings.maxRTLen= Integer.parseInt(s);
+					settings.rtMaxLen= Integer.parseInt(s);
 				} catch (NumberFormatException e) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 						System.err.println("\tNo valid value for "+PAR_RT_MAX+": "+s);
 					return null;
 				}				
-			else if (s.startsWith(PAR_FILT_DISTR)) {
-				s= s.substring(PAR_FILT_DISTR.length()).trim();
-				settings.fileFilterDistr= new File(s);
+			else if (s.startsWith(PAR_RT_GC_LO))
+				try {
+					s= s.substring(PAR_RT_GC_LO.length()).trim();
+					settings.rtMinGC= Float.parseFloat(s);
+				} catch (NumberFormatException e) {
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
+						System.err.println("\tNo valid value for "+PAR_RT_GC_LO+": "+s);
+					return null;
+				}				
+			else if (s.startsWith(PAR_RT_GC_HI))
+				try {
+					s= s.substring(PAR_RT_GC_HI.length()).trim();
+					settings.rtMaxGC= Float.parseFloat(s);
+				} catch (NumberFormatException e) {
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
+						System.err.println("\tNo valid value for "+PAR_RT_GC_HI+": "+s);
+					return null;
+				}				
+			else if (s.startsWith(PAR_FILTER_DISTRIBUTION)) {
+				s= s.substring(PAR_FILTER_DISTRIBUTION.length()).trim();
+				//settings.fileFilterDistr= new File(s);
+				settings.filterDistribution= s;
+			} else if (s.startsWith(PAR_FILTER_SAMPLING)) {
+				s= s.substring(PAR_FILTER_SAMPLING.length()).trim();
+				settings.filterSampling= s;
 			} else if (s.startsWith(PAR_FILT_MIN))
 				try {
 					s= s.substring(PAR_FILT_MIN.length()).trim();
@@ -518,23 +649,10 @@ public class FluxSimulatorSettings {
 						System.err.println("\tNo valid value for "+PAR_FILT_MAX+": "+s);
 					return null;
 				}
-			else if (s.startsWith(PAR_PWM_FRAG_SENSE)) {
-				s= s.substring(PAR_PWM_FRAG_SENSE.length()).trim();
-				settings.filePWMfragSense= new File(s);
+			else if (s.startsWith(PAR_RT_MOTIF)) {
+				s= s.substring(PAR_RT_MOTIF.length()).trim();
+				settings.rtMotif= new File(s);
 			}
-			else if (s.startsWith(PAR_PWM_FRAG_ASENSE)) {
-				s= s.substring(PAR_PWM_FRAG_ASENSE.length()).trim();
-				settings.filePWMfragAsense= new File(s);
-			}
-			else if (s.startsWith(PAR_PWM_RT_SENSE)) {
-				s= s.substring(PAR_PWM_RT_SENSE.length()).trim();
-				settings.filePWMrtSense= new File(s);
-			}
-			else if (s.startsWith(PAR_PWM_RT_ASENSE)) {
-				s= s.substring(PAR_PWM_RT_ASENSE.length()).trim();
-				settings.filePWMrtAsense= new File(s);
-			}
-				
 				
 				
 			else if (s.startsWith(PAR_LOAD_CODING)) {
@@ -547,6 +665,9 @@ public class FluxSimulatorSettings {
 			} else if (s.startsWith(PAR_FRAG)) {
 				s= s.substring(PAR_FRAG.length()).trim();
 				settings.setFragment(s.equals(PAR_YES));
+			} else if (s.startsWith(PAR_RT)) {
+				s= s.substring(PAR_RT.length()).trim();
+				settings.rt= (s.equals(PAR_YES));
 			} else if (s.startsWith(PAR_BP_DISTR)) {
 				s= s.substring(PAR_FILT.length()).trim();
 				
@@ -589,14 +710,17 @@ public class FluxSimulatorSettings {
 			} else if (s.startsWith(PAR_FILT)) {
 				s= s.substring(PAR_FILT.length()).trim();
 				settings.setFilter(s.equals(PAR_YES));
-			} else if (s.startsWith(PAR_FRAG_B4_RT)) {
-				s= s.substring(PAR_FRAG_B4_RT.length()).trim();
-				settings.setFragB4RT(s.equals(PAR_YES));
+			} else if (s.startsWith(PAR_FRAG_SUBSTRATE_DEPRECATED)) {
+				settings.setFragB4RT(s.split("\\s")[1].equals(PAR_YES));
+			} else if (s.startsWith(PAR_FRAG_SUBSTRATE)) {
+				settings.setFragB4RT(s.split("\\s")[1].equals(PAR_RNA));
+			} else if (s.startsWith(PAR_FRAG_EZ_MOTIF)) {
+				s= s.substring(PAR_FRAG_EZ_MOTIF.length()).trim();
+				settings.fragEZmotif= new File(s);
 			} else if (s.startsWith(PAR_TMP_FNAME))
 				settings.tmpDir= new File(s.substring(PAR_TMP_FNAME.length()).trim());
-			else if (s.startsWith(PAR_FRAG_MODE)) {
-				s= s.substring(PAR_FRAG_MODE.length()).trim();
-				settings.setFragMode(s);
+			else if (s.startsWith(PAR_FRAG_METHOD)) {
+				settings.setFragMode(s.substring(PAR_FRAG_METHOD.length()).trim());
 			} else if (s.startsWith(PAR_RT_MODE)) {
 				s= s.substring(PAR_RT_MODE.length()).trim();
 				settings.setRtMode(s);
@@ -729,10 +853,11 @@ public class FluxSimulatorSettings {
 				if (fx.exists()&& fx.isDirectory())
 					settings.genDir= fx;
 			}
+			
 			return settings;
 			
 		} catch (Exception e) {
-			Log.error("A problem occurred while reading the settings file : " + e.getMessage(), e);
+			e.printStackTrace();
 			return null;
 		}
 		
@@ -777,30 +902,30 @@ public class FluxSimulatorSettings {
 			//settings.rtMode= DEF_RT_MODE;
 			//sb.append("\n\t"+ PAR_RT_MODE+"   "+ DEF_RT_MODE);
 		}
-		if (settings.minRTLen< 0) {
-			settings.minRTLen= DEF_RT_MIN_LEN;
+		if (settings.rtMinLen< 0) {
+			settings.rtMinLen= DEF_RT_MIN_LEN;
 			sb.append("\n\t"+ PAR_RT_MIN+"   "+ DEF_RT_MIN_LEN);
 		}
-		if (settings.maxRTLen< 0) {
-			settings.maxRTLen= DEF_RT_MAX_LEN;
+		if (settings.rtMaxLen< 0) {
+			settings.rtMaxLen= DEF_RT_MAX_LEN;
 			sb.append("\n\t"+ PAR_RT_MAX+"   "+ DEF_RT_MAX_LEN);
 		}
 		if (settings.fragment) {
 			if (settings.fragMode== null) {
 				settings.fragMode= DEF_FRAG_MODE;
-				sb.append("\n\t"+ PAR_FRAG_MODE+"   "+ DEF_FRAG_MODE);
+				sb.append("\n\t"+ PAR_FRAG_METHOD_DEPRECATED+"   "+ DEF_FRAG_MODE);
 			}
-			if (Double.isNaN(settings.lambda)) {
-				settings.lambda= DEF_FRAG_LAMBDA;
-				sb.append("\n\t"+ PAR_FRAG_LAMBDA+"   "+ DEF_FRAG_LAMBDA);
+			if (Double.isNaN(settings.fragNBlambda)) {
+				settings.fragNBlambda= DEF_FRAG_LAMBDA;
+				sb.append("\n\t"+ PAR_FRAG_NB_LAMBDA+"   "+ DEF_FRAG_LAMBDA);
 			}
-			if (Double.isNaN(settings.sigma)) {
-				settings.sigma= DEF_FRAG_SIGMA;
-				sb.append("\n\t"+ PAR_FRAG_SIGMA+"   "+ DEF_FRAG_SIGMA);
+			if (Double.isNaN(settings.fragNBsigma)) {
+				settings.fragNBsigma= DEF_FRAG_SIGMA;
+				sb.append("\n\t"+ PAR_FRAG_NB_SIGMA+"   "+ DEF_FRAG_SIGMA);
 			}
-			if (Double.isNaN(settings.thold)) {
-				settings.thold= DEF_FRAG_THRESHOLD;
-				sb.append("\n\t"+ PAR_FRAG_THRESHOLD+"   "+ DEF_FRAG_THRESHOLD);
+			if (Double.isNaN(settings.fragNBthold)) {
+				settings.fragNBthold= DEF_FRAG_THRESHOLD;
+				sb.append("\n\t"+ PAR_FRAG_NB_THOLD+"   "+ DEF_FRAG_THRESHOLD);
 			}
 		}
 		if (settings.filter) {
@@ -843,7 +968,7 @@ public class FluxSimulatorSettings {
 	public static final long DEF_READ_NR= 5000000;
 	public static final String DEF_RT_MODE= PAR_RT_MODE_RANDOM;
 	public static final int DEF_RT_MIN_LEN= 500, DEF_RT_MAX_LEN= 5500;
-	public static final String DEF_FRAG_MODE= PAR_FRAG_MODE_PHYS;
+	public static final String DEF_FRAG_MODE= PAR_FRAG_METHOD_NB_DEPRECATED;
 	public static final long DEF_NB_CELLS= 50, DEF_NB_MOLECULES= 5000000;
 	public static final double DEF_TSS_MEAN= 25d, DEF_POLYA_SHAPE= 2d, DEF_POLYA_SCALE= 300d;
 	public static final boolean DEF_POLYA_VAR= true, DEF_TSS_VAR= true;
@@ -874,12 +999,12 @@ public class FluxSimulatorSettings {
 		settings.polyAscale= DEF_POLYA_SCALE;
 		
 		settings.rtMode= DEF_RT_MODE;
-		settings.minRTLen= DEF_RT_MIN_LEN;
-		settings.maxRTLen= DEF_RT_MAX_LEN;
+		settings.rtMinLen= DEF_RT_MIN_LEN;
+		settings.rtMaxLen= DEF_RT_MAX_LEN;
 		
-		settings.sigma= DEF_FRAG_SIGMA;
-		settings.lambda= DEF_FRAG_LAMBDA;
-		settings.thold= DEF_FRAG_THRESHOLD;
+		settings.fragNBsigma= DEF_FRAG_SIGMA;
+		settings.fragNBlambda= DEF_FRAG_LAMBDA;
+		settings.fragNBthold= DEF_FRAG_THRESHOLD;
 		settings.fragMode= DEF_FRAG_MODE;
 		
 		settings.filtMin= DEF_FILT_MIN;
@@ -894,31 +1019,145 @@ public class FluxSimulatorSettings {
 	}
 	
 
-	
+	/* FILE I/O */
 	File parFile, refFile, proFile, frgFile, seqFile, genDir, errFile;
-	File filePWMfragSense, filePWMfragAsense, filePWMrtSense, filePWMrtAsense;
 	File fileFilterDistr;
-	float qthold= Float.NaN;
-	int readLength= -1;
-	long readNr= -1;
+	File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+
+	/* CELL SIMULATION */
 	double decDistrP1 = Double.NaN;	// was: 0
 	double expDistrP1 = Double.NaN;
 	double expDistrP2 = Double.NaN;
 	long nbCells= -1;
 	long nbMolecules= -1;
-	int minRTLen= -1, maxRTLen= -1;
-	File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-	double thold = Double.NaN;
-	double sigma = Double.NaN;
-	double lambda= Double.NaN;
+
+	/* TX EXPRESSION */ 
 	double tssMean= Double.NaN, polyAshape= Double.NaN, polyAscale= Double.NaN;
-	String rtMode= null, fragMode= null;
-	int filtMin= -1, filtMax= -1;
+
+	/* REVERSE TRANSCRIPTION */
+	boolean rt= false;
+	String rtMode= null;
+	/**
+	 * File with a position weight matrix describing the selectivity
+	 * of the reverse transcription.
+	 */
+	File rtMotif;
+	/**
+	 * Minimum length observed after reverse transcription of full-length
+	 * transcripts.
+	 */
+	int rtMinLen= -1;
+	/**
+	 * Maximum length observed after reverse transcription of full-length
+	 * transcripts.
+	 */
+	int rtMaxLen= -1;
+	/**
+	 * Minimum GC content for RNA stretches to be successfully reversely 
+	 * transcribed.
+	 */
+	float rtMinGC= -1;
+	
+	public float getRTminGC() {
+		return rtMinGC;
+	}
+
+
+	/**
+	 * GC content where reverse transcription saturates.
+	 */
+	float rtMaxGC= -1;
+
+	
+	public float getRTmaxGC() { 
+		return rtMaxGC;
+	}
+
+
+	/* FRAGMENTATION */
+	String fragMode= null;
+
+	/* SEQUENCING */
+	int readLength= -1;
+	float qthold= Float.NaN;
+	long readNr= -1;
+
+	/**
+	 * The minimum of the filter range.
+	 * @deprecated as by version 1.0 replaced by <code>filterDistribution</code>. 
+	 */
+	int filtMin= -1;
+	/**
+	 * The maximum of the filter range.
+	 * @deprecated as by version 1.0 replaced by <code>filterDistribution</code>. 
+	 */
+	int filtMax= -1;
+	/**
+	 * Describes the distribution of fragments after filtering.
+	 * @see filterSampling
+	 */
+	String filterDistribution= null;
+	public String getFilterDistribution() {
+		return filterDistribution; 
+	}
+
+	public void setFilterDistribution(String filterDistribution) {
+		this.filterDistribution = filterDistribution;
+	}
+
+
+	/**
+	 * Describes the method for subsampling fragments in order to meet the characteristics 
+	 * of <code>filterDistribution</code>.
+	 * @see filterDistribution
+	 */
+	String filterSampling= null;
+	public String getFilterSampling() {
+		return filterSampling;
+	}
+
+	public void setFilterSampling(String filterSampling) {
+		this.filterSampling = filterSampling;
+	}
+
+
 	String name;
 	Profiler profiler= null;
 	boolean fragB4RT= DEF_FRAG_B4_RT;
+
+	File fragEZmotif= null;
+	/**
+	 * The fraction of molecule that marks 
+	 * the standard deviation of the breakpoint in nebulization 
+	 * (mean=center of the molecule).
+	 */
+	double fragNBsigma = Double.NaN;
+	/**
+	 * The threshold on molecule length that cannot 
+	 * be broken by the shearfield during nebulization.
+	 */
+	double fragNBlambda= Double.NaN;
+	/**
+	 * Parameter specifying the strength of the nebulization shearfield,
+	 * controls steepness of the slope.
+	 */
+	double fragNBm= Double.NaN;
+	/**
+	 * Threshold on molecule population still breaking when determing
+	 * convergence of iterative nebulizaiton.
+	 */
+	double fragNBthold = Double.NaN;
+	double fragURd0= 1d, fragURdelta= Double.NaN, fragUReta= Double.NaN;
+	
+	public File getFragEZmotif() {
+		return fragEZmotif;
+	}
+
+
 	boolean pairedEnd= DEF_PAIRED_END, fastQ= DEF_FASTQ;
-	boolean fragment= false, filter= false;	
+	boolean fragment= false;
+	boolean filter= false;
+
 	boolean loadCoding= true, loadNoncoding= true;
 	int maxThreads= 1;
 	byte bpDistr= DISTR_NI;
@@ -927,6 +1166,10 @@ public class FluxSimulatorSettings {
 	 * 
 	 */
 	File bpMotif= null;
+
+	/**
+	 * Strength of the shearing field for nebulization, controls steepness of the slope.
+	 */
 
 	public int getMaxThreads() {
 		return maxThreads;
@@ -1032,12 +1275,12 @@ public class FluxSimulatorSettings {
 
 
 	public double getThold() {
-		return thold;
+		return fragNBthold;
 	}
 
 
 	public void setThold(double thold) {
-		this.thold = thold;
+		this.fragNBthold = thold;
 	}
 
 
@@ -1045,23 +1288,23 @@ public class FluxSimulatorSettings {
 	 * @deprecated not used
 	 * @return
 	 */
-	public double getSigma() {
-		return sigma;
+	public double getFragNBsigma() {
+		return fragNBsigma;
 	}
 
 
 	public void setSigma(double sigma) {
-		this.sigma = sigma;
+		this.fragNBsigma = sigma;
 	}
 
 
-	public double getLambda() {
-		return lambda;
+	public double getFragNBlambda() {
+		return fragNBlambda;
 	}
 
 
 	public void setLambda(double lambda) {
-		this.lambda = lambda;
+		this.fragNBlambda = lambda;
 	}
 
 
@@ -1179,20 +1422,20 @@ public class FluxSimulatorSettings {
 		this.parFile = parFile;
 	}
 
-	public int getMinRTLen() {
-		return minRTLen;
+	public int getRTminLen() {
+		return rtMinLen;
 	}
 
-	public void setMinRTLen(int minRTLen) {
-		this.minRTLen = minRTLen;
+	public void setRTminLen(int minRTLen) {
+		this.rtMinLen = minRTLen;
 	}
 
-	public int getMaxRTLen() {
-		return maxRTLen;
+	public int getRTmaxLen() {
+		return rtMaxLen;
 	}
 
-	public void setMaxRTLen(int maxRTLen) {
-		this.maxRTLen = maxRTLen;
+	public void setRTmaxLen(int maxRTLen) {
+		this.rtMaxLen = maxRTLen;
 	}
 
 	public boolean isFragment() {
@@ -1300,11 +1543,11 @@ public class FluxSimulatorSettings {
 		settings.fragMode= fragMode;
 		settings.frgFile= frgFile;
 		settings.genDir= genDir;
-		settings.lambda= lambda;
+		settings.fragNBlambda= fragNBlambda;
 		settings.loadCoding= loadCoding;
 		settings.loadNoncoding= loadNoncoding;
-		settings.maxRTLen= maxRTLen;
-		settings.minRTLen= minRTLen;
+		settings.rtMaxLen= rtMaxLen;
+		settings.rtMinLen= rtMinLen;
 		settings.name= name;
 		settings.nbCells= nbCells;
 		settings.nbMolecules= nbMolecules;
@@ -1320,8 +1563,8 @@ public class FluxSimulatorSettings {
 		settings.refFile= refFile;
 		settings.rtMode= rtMode;
 		settings.seqFile= seqFile;
-		settings.sigma= sigma;
-		settings.thold= thold;
+		settings.fragNBsigma= fragNBsigma;
+		settings.fragNBthold= fragNBthold;
 		settings.tmpDir= tmpDir;
 		settings.tssMean= tssMean;
 		
@@ -1348,12 +1591,8 @@ public class FluxSimulatorSettings {
 		}
 	}
 
-	public File getFilePWMfragSense() {
-		return filePWMfragSense;
-	}
- 
-	public File getFilePWMrtSense() {
-		return filePWMrtSense;
+	public File getRTmotif() {
+		return rtMotif;
 	}
 
 	public byte getBpDistr() {
@@ -1372,30 +1611,6 @@ public class FluxSimulatorSettings {
 		this.bpDistrPar = bpDistrPar;
 	}
 
-	public File getFilePWMfragAsense() {
-		return filePWMfragAsense;
-	}
-
-	public void setFilePWMfragAsense(File filePWMfragAsense) {
-		this.filePWMfragAsense = filePWMfragAsense;
-	}
-
-	public File getFilePWMrtAsense() {
-		return filePWMrtAsense;
-	}
-
-	public void setFilePWMrtAsense(File filePWMrtAsense) {
-		this.filePWMrtAsense = filePWMrtAsense;
-	}
-
-	public void setFilePWMfragSense(File filePWMfragSense) {
-		this.filePWMfragSense = filePWMfragSense;
-	}
-
-	public void setFilePWMrtSense(File filePWMrtSense) {
-		this.filePWMrtSense = filePWMrtSense;
-	}
-
 	public File getFileFilterDistr() {
 		return fileFilterDistr;
 	}
@@ -1404,7 +1619,39 @@ public class FluxSimulatorSettings {
 		this.fileFilterDistr = fileFilterDistr;
 	}
 
-    /**
+	public double getFragNBm() {
+		return fragNBm;
+	}
+
+	public double getFragURd0() {
+		return fragURd0;
+	}
+
+	public void setFragURd0(double fragURd0) {
+		this.fragURd0 = fragURd0;
+	}
+
+	public double getFragURdelta() {
+		return fragURdelta;
+	}
+
+	public void setFragURdelta(double fragURdelta) {
+		this.fragURdelta = fragURdelta;
+	}
+
+	public double getFragUReta() {
+		return fragUReta;
+	}
+
+	public void setFragUReta(double fragUReta) {
+		this.fragUReta = fragUReta;
+	}
+
+	public boolean isRT() {
+		return rt;
+	}
+
+	/**
      * Verify the current settings and return null if everything is fine. Otherwise return an error message
      *
      * @return message the error message or null if everything is fine

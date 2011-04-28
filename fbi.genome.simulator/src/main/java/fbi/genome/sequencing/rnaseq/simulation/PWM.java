@@ -22,6 +22,47 @@ public class PWM implements WeightMatrix {
 	
 	static final int MIN_DEFAULT= Integer.MAX_VALUE, MAX_DEFAULT= Integer.MIN_VALUE;
 	
+	public static PWM create2(File f) throws Exception{
+		BufferedReader buffy= new BufferedReader(new FileReader(f));
+		Vector<String> v= new Vector<String>();		
+		for (String s= null; (s= buffy.readLine())!= null;) {
+			s= s.trim();
+			if (s.length()== 0|| s.startsWith("#"))
+				continue;
+			v.add(s);
+		}
+		if (v.size()== 0)
+			return null;
+		
+		// positions
+		String[] ss= v.elementAt(0).split("\\s");
+		int[] pos;
+		if (ss.length== 1&& ss[0].contains(";")) {	// min, max
+			int p= ss[0].indexOf(";");
+			int min= Integer.parseInt(ss[0].substring(0, p)), max= Integer.parseInt(ss[0].substring(p+1));
+			pos= new int[max- min+ 1];
+			for (int i = min; i <= max; i++) 
+				pos[i- min]= i;
+		} else {
+			pos= new int[ss.length];
+			for (int i = 0; i < pos.length; i++) 
+				pos[i]= Integer.parseInt(ss[i]);
+		}
+		
+		// matrix
+		CharSequence[] kmers= new CharSequence[v.size()- 1];
+		double[][] a= new double[v.size()- 1][];
+		for (int i = 1; i < v.size(); i++) {
+			ss= v.elementAt(i).split("\\s");
+			assert(ss.length- 1== pos.length);
+			a[i-1]= new double[ss.length- 1];
+			kmers[i-1]= ss[0];
+			for (int k = 1; k < ss.length; k++) 
+				a[i-1][k- 1]= Double.parseDouble(ss[k]);
+		}
+		
+		return new PWM(kmers, pos, a);
+	}
 	public static PWM create(File f) throws Exception{
 		BufferedReader buffy= new BufferedReader(new FileReader(f));
 		Vector<String> v= new Vector<String>();		
@@ -81,13 +122,25 @@ public class PWM implements WeightMatrix {
 		this.to= pwm.length- 1;
 	}
 	
+	CharSequence[] kmers;
+	int kmerLen= 0;
+	public PWM(CharSequence[] kmers, int[] pos, double[][] pwm) {
+		//set(pos, pwm);
+		this.kmers= kmers;
+		kmerLen= kmers[0].length();
+		this.pos= pos;
+		this.pwm= pwm;
+		sortKmers();
+		sortPositions();
+	}
+	
 	public void set(int[] pos2, double[][] pwm2) {
 		this.pos= new int[pos2.length];
 		System.arraycopy(pos2, 0, pos, 0, pos2.length);
 		Arrays.sort(pos);
 		this.pwm= new double[pwm2.length][];
 		
-		for (int i = 0; i < pos2.length; i++) {
+		for (int i = 0; i < pwm2.length; i++) {
 			int p= Arrays.binarySearch(pos, pos2[i]);
 			pwm[p]= pwm2[i];
 		}
@@ -115,6 +168,9 @@ public class PWM implements WeightMatrix {
 		
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public float[] apply(CharSequence s) {
 		if (pwm== null|| ((min== MIN_DEFAULT|| max== MAX_DEFAULT)&& pos== null)) 
 			throw new RuntimeException("[PWM] Position-weight matrix not initialized.");
@@ -439,8 +495,121 @@ public class PWM implements WeightMatrix {
 		}
 	}
 	
+	private void sortKmers() {
+		CharSequence[] kmers2= kmers.clone();
+		Arrays.sort(kmers2);
+		
+		for (int i = 0; i < kmers.length; i++) {
+			int p= Arrays.binarySearch(kmers2, kmers[i]);
+			if (p== i)
+				continue;
+			assert(p>= 0);
+			
+			double[] h= pwm[p];
+			pwm[p]= pwm[i];
+			pwm[i]= h;
+			CharSequence c= kmers[p];
+			kmers[p]= kmers[i];
+			kmers[i]= c;
+			
+			--i;
+		}
+	}
+	
+	private void sortPositions() {
+		int[] pos2= pos.clone();
+		Arrays.sort(pos2);
+		
+		for (int i = 0; i < pos.length; i++) {
+			int p= Arrays.binarySearch(pos2, pos[i]);
+			if (p== i)
+				continue;
+			assert(p>= 0);
+			
+			for (int j = 0; j < pwm.length; j++) {	// all kmers
+				double h= pwm[j][p];
+				pwm[j][p]= pwm[j][i];
+				pwm[j][i]= h;
+			}
+			int d= pos[p];
+			pos[p]= pos[i];
+			pos[i]= d;
+			
+			--i;
+		}
+	}
+	
+	public void invert() {
+		for (int i = 0; i < pos.length; i++) 
+			pos[i]= -pos[i]- (kmerLen- 1);
+		sortPositions();
+		for (int i = 0; i < kmers.length; i++) 
+			kmers[i]= Graph.invertSequence(kmers[i].toString());// TODO work on charsequence
+		sortKmers();
+	}
+	
+	public void multiply() {
+
+		for (int j = 0; j < pwm[0].length; ++j) {	// positions
+			for (int i = 0; i < pwm.length; ++i) {	// kmers
+				if (pwm[i][j]< 1)
+					pwm[i][j]= -Math.log(pwm[i][j])*2;
+				else
+					pwm[i][j]*= 2;
+			}
+		}
+	}
+	
+	public void makePDF() {
+		for (int j = 0; j < pwm[0].length; ++j) {	// positions
+			double colSum= 0d;
+			for (int i = 0; i < pwm.length; ++i) 	// kmers
+				colSum+= pwm[i][j];
+			//assert(colSum!= 0);
+			if (colSum== 0)
+				return; // throw some runtime exception
+			for (int i = 0; i < pwm.length; ++i) 
+				pwm[i][j]/= colSum;
+		}
+	}
 	
 	
+	/**
+	 * 
+	 * @param ci s encoded as colnr of letter
+	 * @param p position in s
+	 * @return
+	 */
+	public double apply(CharSequence s, int p) {
+		
+		double w= 0; // sum logs, numerical stability
+			// 1; for multiplying probabilities
+		int c= 0;
+		for (int i = 0; i < pos.length; i++) {
+			int pp= p+ pos[i];
+			if (pp< 0) 
+				continue;
+			if (pp+ kmerLen>= s.length()) 
+				break;
+			
+			++c;
+			CharSequence seq= s.subSequence(pp, pp+ kmerLen);
+			int kmerPos= Arrays.binarySearch(kmers, seq);
+			
+			w+= Math.log(pwm[kmerPos][i]);
+			//w*= pwm[i][kmerPos];
+		}
+		if (c== 0) 
+			return 0;	// avoid NaN
+		
+		// weight by information
+		w= Math.exp(w/ c);
+		//w= Math.pow(w, 1d/ c);
+
+		assert(!(Double.isNaN(w)|| Double.isInfinite(w)|| w< 0));			
+		return w;
+	}
+
 	/**
 	 * @deprecated TO DO
 	 * @param fileGTF
@@ -602,5 +771,26 @@ public class PWM implements WeightMatrix {
 			
 			return ref;
 		}
+	
+	/**
+	 * Returns the maximum product of the matrix
+	 * @return
+	 */
+	double maxP= -1;
+	public double getMaximumP() {
+		if (maxP < 0) {
+			maxP= 1d;
+			for (int i = 0; i < pwm[0].length; i++) {
+				double maxT= -1;
+				for (int j = 0; j < pwm.length; j++) {
+					if (pwm[j][i]> maxT)
+						maxT= pwm[j][i];
+				}
+				maxP*= maxT;
+			}
+		}
+
+		return maxP;
+	}
 	
 }
