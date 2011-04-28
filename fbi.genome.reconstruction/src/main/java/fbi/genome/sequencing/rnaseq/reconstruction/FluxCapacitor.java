@@ -1,7 +1,6 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
 import fbi.commons.Log;
-import fbi.commons.MyFormatter;
 import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
@@ -6665,7 +6664,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			sb.append(" \""+VALUE_NA+ "\";" );
 		} else {
 			val= val/ (val+ readCount);
-			sb.append(MyFormatter.fprint(val,2));
+			sb.append(StringUtils.fprint(val, 2));
 			sb.append("\";");
 		}
 		

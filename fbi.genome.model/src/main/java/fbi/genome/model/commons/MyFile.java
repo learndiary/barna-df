@@ -1,7 +1,7 @@
 package fbi.genome.model.commons;
 
 
-import fbi.commons.MyFormatter;
+import fbi.commons.StringUtils;
 
 import java.io.PrintStream;
 
@@ -24,7 +24,7 @@ public class MyFile extends java.io.File {
 			}
 		}
 		if (frac< 10)
-			return MyFormatter.fprint(frac, 1)+ dimC[i];
+			return StringUtils.fprint(frac, 1)+ dimC[i];
 		else
 			return Integer.toString(Math.round(frac))+ dimC[i];
 	}

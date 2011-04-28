@@ -7,7 +7,6 @@ package fbi.genome.sequencing.rnaseq.reconstructionew;
 //import io.Sammy;
 
 import fbi.commons.Log;
-import fbi.commons.MyFormatter;
 import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
@@ -2617,7 +2616,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					sb.append("C");
 					sb.append(w.get(i));
 					sb.append("\t");
-					sb.append(MyFormatter.fprint(c, 3));
+					sb.append(StringUtils.fprint(c, 3));
 					sb.append("\n");
 				}
 				//costs[i]= 1d+ Math.log(x+ 1);
@@ -2966,7 +2965,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				sb.append("C");
 				sb.append(Integer.toString(i- restrNr));
 				sb.append("\t");
-				sb.append(MyFormatter.fprint(result[i], 2));
+				sb.append(StringUtils.fprint(result[i], 2));
 				sumChanges+= result[i];
 				sb.append("\t");
 				int pos= Arrays.binarySearch(costIdx, (i- restrNr));
@@ -2974,17 +2973,17 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					sb.append(".\t.\n");
 					continue;
 				}
-				sb.append(MyFormatter.fprint(costVal[pos], 2));
+				sb.append(StringUtils.fprint(costVal[pos], 2));
 				sb.append("\t");
 				double costs= costVal[pos]* result[i];
 				sumCosts+= costs;
-				sb.append(MyFormatter.fprint(costVal[pos]* result[i], 2));
+				sb.append(StringUtils.fprint(costVal[pos] * result[i], 2));
 				sb.append("\n");
 			}
 			sb.append("OF\t");
-			sb.append(MyFormatter.fprint(sumChanges, 2));
+			sb.append(StringUtils.fprint(sumChanges, 2));
 			sb.append("\t.\t");
-			sb.append(MyFormatter.fprint(sumCosts, 2));
+			sb.append(StringUtils.fprint(sumCosts, 2));
 			sb.append("\n");
 			p.println(sb.toString());
 		}
@@ -3478,7 +3477,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 							sb.append("C");
 							sb.append(w.get(i));
 							sb.append("\t");
-							sb.append(MyFormatter.fprint(c, 3));
+							sb.append(StringUtils.fprint(c, 3));
 							sb.append("\n");
 						}
 						//costs[i]= 1d+ Math.log(x+ 1);
@@ -3788,7 +3787,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 							sb.append("C");
 							sb.append(w.get(i));
 							sb.append("\t");
-							sb.append(MyFormatter.fprint(c, 3));
+							sb.append(StringUtils.fprint(c, 3));
 							sb.append("\n");
 						}
 						//costs[i]= 1d+ Math.log(x+ 1);
@@ -5564,7 +5563,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				double res= result[restrNr+ idx[i]];
 				double var= val[i]* res;				
 				sb.append(var> 0?"+":(var< 0? "-": (val[i]>= 0? "+": "-")));
-				sb.append(Math.abs(var)== 1?"": MyFormatter.fprint(Math.abs(var), 2));
+				sb.append(Math.abs(var)== 1?"": StringUtils.fprint(Math.abs(var), 2));
 //				sb.append("C");
 //				sb.append(idx[i]);
 				sb.append(" ");
@@ -5572,9 +5571,9 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				int pos= Arrays.binarySearch(costIdx, idx[i]);
 				if (pos>= 0) {
 					sb.append("(*");
-					sb.append(MyFormatter.fprint(costVal[pos], 2));
+					sb.append(StringUtils.fprint(costVal[pos], 2));
 					sb.append("= ");
-					sb.append(MyFormatter.fprint(costVal[pos]* res, 2));
+					sb.append(StringUtils.fprint(costVal[pos] * res, 2));
 					sb.append(") ");
 				}
 			}
@@ -8468,7 +8467,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					sb.append("C");
 					sb.append(Integer.toString(i- restrNr));
 					sb.append("\t");
-					sb.append(MyFormatter.fprint(result[i], 2));
+					sb.append(StringUtils.fprint(result[i], 2));
 					sumChanges+= result[i];
 					sb.append("\t");
 					int pos= Arrays.binarySearch(costIdx, (i- restrNr));
@@ -8476,17 +8475,17 @@ public class FluxCapacitorNew extends FluxCapacitor {
 						sb.append(".\t.\n");
 						continue;
 					}
-					sb.append(MyFormatter.fprint(costVal[pos], 2));
+					sb.append(StringUtils.fprint(costVal[pos], 2));
 					sb.append("\t");
 					double costs= costVal[pos]* result[i];
 					sumCosts+= costs;
-					sb.append(MyFormatter.fprint(costVal[pos]* result[i], 2));
+					sb.append(StringUtils.fprint(costVal[pos] * result[i], 2));
 					sb.append("\n");
 				}
 				sb.append("OF\t");
-				sb.append(MyFormatter.fprint(sumChanges, 2));
+				sb.append(StringUtils.fprint(sumChanges, 2));
 				sb.append("\t.\t");
-				sb.append(MyFormatter.fprint(sumCosts, 2));
+				sb.append(StringUtils.fprint(sumCosts, 2));
 				sb.append("\n");
 				p.println(sb.toString());
 			}
@@ -9013,7 +9012,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 								sb.append("C");
 								sb.append(w.get(i));
 								sb.append("\t");
-								sb.append(MyFormatter.fprint(c, 3));
+								sb.append(StringUtils.fprint(c, 3));
 								sb.append("\n");
 							}
 							//costs[i]= 1d+ Math.log(x+ 1);
@@ -9789,7 +9788,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					double res= result[restrNr+ idx[i]];
 					double var= val[i]* res;				
 					sb.append(var> 0?"+":(var< 0? "-": (val[i]>= 0? "+": "-")));
-					sb.append(Math.abs(var)== 1?"": MyFormatter.fprint(Math.abs(var), 2));
+					sb.append(Math.abs(var)== 1?"": StringUtils.fprint(Math.abs(var), 2));
 	//				sb.append("C");
 	//				sb.append(idx[i]);
 					sb.append(" ");
@@ -9797,9 +9796,9 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					int pos= Arrays.binarySearch(costIdx, idx[i]);
 					if (pos>= 0) {
 						sb.append("(*");
-						sb.append(MyFormatter.fprint(costVal[pos], 2));
+						sb.append(StringUtils.fprint(costVal[pos], 2));
 						sb.append("= ");
-						sb.append(MyFormatter.fprint(costVal[pos]* res, 2));
+						sb.append(StringUtils.fprint(costVal[pos] * res, 2));
 						sb.append(") ");
 					}
 				}
@@ -12802,10 +12801,10 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			DecimalFormat fmt = new DecimalFormat("###,###,###");
 			String allStr = fmt.format(all);
 			p.println("\treconstruction finished .. took "+(time/ 1000)+ " sec.\n\n");
-			p.println("\t"+ allStr+ " ("+MyFormatter.append(' ', MyFormatter.fprint(all* 100f/ all, 2), 6, true)
+			p.println("\t"+ allStr+ " ("+ StringUtils.append(' ', StringUtils.fprint(all * 100f / all, 2), 6, true)
 					+ "%) mappings in file");
-			p.println("\t"+ MyFormatter.append(' ', fmt.format(allMapped), allStr.length(), true)
-					+ " ("+ MyFormatter.append(' ', MyFormatter.fprint(allMapped* 100f/ all, 2), 6, true)
+			p.println("\t"+ StringUtils.append(' ', fmt.format(allMapped), allStr.length(), true)
+					+ " ("+ StringUtils.append(' ', StringUtils.fprint(allMapped * 100f / all, 2), 6, true)
 					+ "%) mappings to annotation");
 			if (Constants.verboseLevel> Constants.VERBOSE_NORMAL) {
 				p.println("\t\tW "+ fmt.format(allWatson)+ "; C "+ fmt.format(allCrick)
@@ -12813,8 +12812,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				p.println("\t\tWS "+ fmt.format(allWS)+ "; WA "+ fmt.format(allWA)+ "; CS "+ fmt.format(allCS)+ "; CA "+ fmt.format(allCA));
 			}
 			if (stranded&& (allWrongStrand)> 0) {
-				p.println("\t"+ MyFormatter.append(' ', fmt.format(allWrongStrand), allStr.length(), true)
-						+" ("+ MyFormatter.append(' ', MyFormatter.fprint((allWrongStrand)* 100f/ all, 2), 6, true)+ "%) mappings with wrong strand");
+				p.println("\t"+ StringUtils.append(' ', fmt.format(allWrongStrand), allStr.length(), true)
+						+" ("+ StringUtils.append(' ', StringUtils.fprint((allWrongStrand) * 100f / all, 2), 6, true)+ "%) mappings with wrong strand");
 				if (Constants.verboseLevel> Constants.VERBOSE_NORMAL) {
 					p.println("\t\tW "+ fmt.format(nrMappingsWrongStrandWSt+ nrMappingsWrongStrandWAt+ nrMappingsWrongStrandWSg+ nrMappingsWrongStrandWAg)+ "; C "+ fmt.format(nrMappingsWrongStrandCSt+ nrMappingsWrongStrandCAt+ nrMappingsWrongStrandCSg+ nrMappingsWrongStrandCAg)
 							+ "; S "+ fmt.format(nrMappingsWrongStrandWSt+ nrMappingsWrongStrandCSt+ nrMappingsWrongStrandWSg+ nrMappingsWrongStrandCSg)+ "; A "+ fmt.format(nrMappingsWrongStrandWAt+ nrMappingsWrongStrandCAt+ nrMappingsWrongStrandWAg+ nrMappingsWrongStrandCAg));
@@ -12831,8 +12830,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			if (pairedEnd) {
 				int allWrongOrientation= nrMappingsPairsWrongOrientationWt+ nrMappingsPairsWrongOrientationCt+ nrMappingsPairsWrongOrientationWg+ nrMappingsPairsWrongOrientationCg;
 				if (allWrongOrientation> 0) {
-					p.println("\t"+ MyFormatter.append(' ', fmt.format(allWrongOrientation), allStr.length(), true)
-							+ " ("+ MyFormatter.append(' ', MyFormatter.fprint(allWrongOrientation* 100f/ all, 2), 6, true)+"%) mappings show wrong pair orientation");
+					p.println("\t"+ StringUtils.append(' ', fmt.format(allWrongOrientation), allStr.length(), true)
+							+ " ("+ StringUtils.append(' ', StringUtils.fprint(allWrongOrientation * 100f / all, 2), 6, true)+"%) mappings show wrong pair orientation");
 					if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)  {
 						p.println("\t\tW "+ fmt.format(nrMappingsPairsWrongOrientationWt+ nrMappingsPairsWrongOrientationWg)+ "; C "+ fmt.format(nrMappingsPairsWrongOrientationCt+ nrMappingsPairsWrongOrientationCg));
 						p.println("\t\tTW "+ fmt.format(nrMappingsPairsWrongOrientationWt)+ "; TC "+ fmt.format(nrMappingsPairsWrongOrientationCt));
@@ -12841,8 +12840,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				}
 				int allPairsWoTx= nrMappingsPairsWoTxEvidenceWt+ nrMappingsPairsWoTxEvidenceCt+ nrMappingsPairsWoTxEvidenceWg+ nrMappingsPairsWoTxEvidenceCg; 
 				if (allPairsWoTx> 0) {
-					p.println("\t"+ MyFormatter.append(' ', fmt.format(allPairsWoTx), allStr.length(), true)
-							+ " ("+ MyFormatter.append(' ', MyFormatter.fprint(allPairsWoTx* 100f/ all, 2), 6, true)+ "%) mappings without support for pair");
+					p.println("\t"+ StringUtils.append(' ', fmt.format(allPairsWoTx), allStr.length(), true)
+							+ " ("+ StringUtils.append(' ', StringUtils.fprint(allPairsWoTx * 100f / all, 2), 6, true)+ "%) mappings without support for pair");
 					if (Constants.verboseLevel> Constants.VERBOSE_NORMAL) {
 						p.println("\t\tW "+ fmt.format(nrMappingsPairsWoTxEvidenceWt+ nrMappingsPairsWoTxEvidenceWg)+ "; C "+ fmt.format(nrMappingsPairsWoTxEvidenceCt+ nrMappingsPairsWoTxEvidenceCg));
 						p.println("\t\tTW "+ fmt.format(nrMappingsPairsWoTxEvidenceWt)+ "; TC "+ fmt.format(nrMappingsPairsWoTxEvidenceCt));
@@ -12852,8 +12851,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 				int allSingle= nrMappingsSingleWSt+ nrMappingsSingleWAt+ nrMappingsSingleCSt+ nrMappingsSingleCAt+
 								nrMappingsSingleWSg+ nrMappingsSingleWAg+ nrMappingsSingleCSg+ nrMappingsSingleCAg;
 				if (allSingle> 0) {
-					p.println("\t"+ MyFormatter.append(' ', fmt.format(allSingle), allStr.length(), true)
-							+ " ("+ MyFormatter.append(' ', MyFormatter.fprint(allSingle* 100f/ all, 2), 6, true)+ "%) mappings without mate");
+					p.println("\t"+ StringUtils.append(' ', fmt.format(allSingle), allStr.length(), true)
+							+ " ("+ StringUtils.append(' ', StringUtils.fprint(allSingle * 100f / all, 2), 6, true)+ "%) mappings without mate");
 					if (Constants.verboseLevel> Constants.VERBOSE_NORMAL) {
 						p.println("\t\tW "+ fmt.format(nrMappingsSingleWSt+ nrMappingsSingleWAt+ nrMappingsSingleWSg+ nrMappingsSingleWAg)+ "; C "+ fmt.format(nrMappingsSingleCSt+ nrMappingsSingleCAt+ nrMappingsSingleCSg+ nrMappingsSingleCAg)
 								+ "; S "+ fmt.format(nrMappingsSingleWSt+ nrMappingsSingleCSt+ nrMappingsSingleWSg+ nrMappingsSingleCSg)+ "; A "+ fmt.format(nrMappingsSingleWAt+ nrMappingsSingleCAt+ nrMappingsSingleWAg+ nrMappingsSingleCAg));
@@ -12863,8 +12862,8 @@ public class FluxCapacitorNew extends FluxCapacitor {
 					}
 				}
 				int allPairs= nrMappingsPairsMappedWt+ nrMappingsPairsMappedCt+ nrMappingsPairsMappedWg+ nrMappingsPairsMappedCg;
-				p.println("\t"+ MyFormatter.append(' ', fmt.format(allPairs), allStr.length(), true)
-						+" ("+ MyFormatter.append(' ', MyFormatter.fprint(allPairs* 100f/ all, 2), 6, true)+ "%) mappings correctly mapped");
+				p.println("\t"+ StringUtils.append(' ', fmt.format(allPairs), allStr.length(), true)
+						+" ("+ StringUtils.append(' ', StringUtils.fprint(allPairs * 100f / all, 2), 6, true)+ "%) mappings correctly mapped");
 				if (Constants.verboseLevel> Constants.VERBOSE_NORMAL) {
 					p.println("\t\tW "+ fmt.format(nrMappingsPairsMappedWt+ nrMappingsPairsMappedWg)+ "; C "+ fmt.format(nrMappingsPairsMappedCt+ nrMappingsPairsMappedCg));
 					p.println("\t\tTW "+ fmt.format(nrMappingsPairsMappedWt)+ "; TC "+ fmt.format(nrMappingsPairsMappedCt));
@@ -13035,7 +13034,7 @@ public class FluxCapacitorNew extends FluxCapacitor {
 			sb.append(" \""+VALUE_NA+ "\";" );
 		} else {
 			val= val/ (val+ readCount);
-			sb.append(MyFormatter.fprint(val,2));
+			sb.append(StringUtils.fprint(val, 2));
 			sb.append("\";");
 		}
 		

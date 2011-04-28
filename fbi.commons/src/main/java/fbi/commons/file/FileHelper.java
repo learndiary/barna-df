@@ -2,7 +2,6 @@ package fbi.commons.file;
 
 
 import fbi.commons.Log;
-import fbi.commons.MyFormatter;
 import fbi.commons.StringUtils;
 
 import java.io.*;
@@ -493,7 +492,7 @@ public class FileHelper {
 			for (int c= 0, nb= 0; (nb= buffy.read(cbuf))>= 0; ++c) {
 				bytesRead+= nb;
 				if (!silent)
-					MyFormatter.printPercentage(perc, bytesRead, bytesTotal, System.err);
+					StringUtils.printPercentage(perc, bytesRead, bytesTotal, System.err);
 				wright.write(cbuf, 0, nb);
 				if (c% 10== 0)
 					wright.flush();

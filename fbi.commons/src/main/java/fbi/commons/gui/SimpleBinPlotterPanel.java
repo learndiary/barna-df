@@ -1,7 +1,7 @@
 package fbi.commons.gui;
 
-import fbi.commons.MyArrays;
-import fbi.commons.MyFormatter;
+
+import fbi.commons.StringUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -213,11 +213,11 @@ public class SimpleBinPlotterPanel extends JPanel {
 				gi.drawLine(tickPosInt, h, tickPosInt, h+ 5);
 				String label= null;
 				if (log== 2)
-					label= MyFormatter.fprint((binNr* (maxXY[0]/ bins.length))+ minXoffset,2);
+					label= StringUtils.fprint((binNr * (maxXY[0] / bins.length)) + minXoffset, 2);
 				else
 					label= Integer.toString((int) ((binNr* (maxXY[0]/ bins.length))+ minXoffset)); // +"-"+ Integer.toString((int) ((binNr+ 1)* (maxXY[0]/ bins.length)))
 				if (maxXY[0]== 1)
-					label= MyFormatter.fprint((binNr* (maxXY[0]/ bins.length)), 2);
+					label= StringUtils.fprint((binNr * (maxXY[0] / bins.length)), 2);
 				Rectangle2D labelDim= gi.getFontMetrics().getStringBounds(label, gi);
 				gi.drawString(label, 
 						(int) (tickPosInt), 
@@ -643,6 +643,46 @@ public class SimpleBinPlotterPanel extends JPanel {
 		}
 		public void setMinXoffset(double minXoffset) {
 			this.minXoffset = minXoffset;
-		} 
+		}
+
+
+ protected class MyArrays {
+	int[] ia; long[] la; double[] da; float[] fa; byte[] ba;
+	int len;
+	public MyArrays(Object array) {
+		if (array instanceof int[]) {
+			ia= (int[]) array;
+			len= ia.length;
+		} else if (array instanceof long[]) {
+			la= (long[]) array;
+			len= la.length;
+		} else if (array instanceof double[]) {
+			da= (double[]) array;
+			len= da.length;
+		} else if (array instanceof float[]) {
+			fa= (float[]) array;
+			len= fa.length;
+		} else if (array instanceof byte[]) {
+			ba= (byte[]) array;
+			len= ba.length;
+		}
+	}
+	public int length() {
+		return len;
+	}
+	public Number elementAt(int pos) {
+		if (ia!= null)
+			return ia[pos];
+		if (la!= null)
+			return la[pos];
+		if (da!= null)
+			return da[pos];
+		if (ba!= null)
+			return ba[pos];
+		//if (fa!= null)
+		return fa[pos];
+	}
+}
+
 		
 }

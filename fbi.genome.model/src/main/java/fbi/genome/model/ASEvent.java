@@ -6,7 +6,7 @@
  */
 package fbi.genome.model;
 
-import fbi.commons.MyFormatter;
+import fbi.commons.StringUtils;
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.tools.NMDSimulator;
@@ -553,7 +553,7 @@ public class ASEvent {
 		if (score== -1f)
 			result.append(".");
 		else
-			result.append(MyFormatter.fprint(getScore(), 5));
+			result.append(StringUtils.fprint(getScore(), 5));
 		result.append('\t');
 		
 		if (strand> 0)

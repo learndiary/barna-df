@@ -1,6 +1,6 @@
 package fbi.genome.model;
 
-import fbi.commons.MyFormatter;
+import fbi.commons.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class CDSEvent extends ASEvent {
 			if (score== -1f)
 				result.append(".");
 			else
-				result.append(MyFormatter.fprint(getScore(), 5));
+				result.append(StringUtils.fprint(getScore(), 5));
 			result.append('\t');
 			
 			if (strand> 0)

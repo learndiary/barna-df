@@ -1,5 +1,6 @@
 package fbi.commons;
 
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -86,4 +87,64 @@ public class StringUtils {
 		}
 		return buffy.toString();
 	}
+
+    /**
+     * Returns the String representation for a double using the specified number of
+     * decimal positions.
+     *
+     * @param value the value
+     * @param dec decimal
+     * @return string string representation
+     */
+    public static String fprint(double value, int dec) {
+        String s= Double.toString(value);
+        int p= s.lastIndexOf(".");
+        if (p< 0) {
+            s+= ".";
+            for (int i = 0; i < dec; i++)
+                s+= "0";
+        } else {
+            int q= s.indexOf("E");
+            String exp= "";
+            if (q>= 0)
+                exp= s.substring(q);
+            int end= p+ dec+ 1;
+            if (end< s.length())
+                s= s.substring(0, end);
+            else
+                for (int i = s.length(); i < end; i++)
+                    s+= "0";
+            s+= exp;
+        }
+
+
+        return s;
+    }
+
+    public static int printPercentage(int perc, double val, double base, PrintStream stream) {
+        int currPerc= (int) Math.round(val*10d/ base);
+        if (currPerc> perc) {
+            if (perc== 4|| perc== 9)
+                stream.print("+");
+            else
+                stream.print("*");
+            stream.flush();
+            ++perc;
+        }
+        return perc;
+    }
+
+    public static String append(char c, String s, int len, boolean leading) {
+        if (s.length()>= len)
+            return s;
+        StringBuilder sb= new StringBuilder(s);
+        for (int i = s.length(); i < len; ++i) {
+            if (leading)
+                sb.insert(0, c);
+            else
+                sb.append(c);
+        }
+
+        return sb.toString();
+    }
 }

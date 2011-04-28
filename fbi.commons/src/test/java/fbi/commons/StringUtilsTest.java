@@ -37,4 +37,11 @@ public class StringUtilsTest {
             // ignore
         }
     }
+
+    @Test
+    public void testFPrint(){
+        assertEquals("10.00000", StringUtils.fprint(10, 5));
+        assertEquals("10.30000", StringUtils.fprint(10.3, 5));
+        assertEquals("10.00000", StringUtils.fprint(10.00000000000000000000000000003, 5));
+    }
 }

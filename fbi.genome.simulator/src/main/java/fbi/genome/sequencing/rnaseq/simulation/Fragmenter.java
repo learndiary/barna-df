@@ -2,7 +2,6 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
-import fbi.commons.MyFormatter;
 import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
@@ -3570,7 +3569,7 @@ public class Fragmenter implements StoppableRunnable {
 				
 				bytesRead+= s.length()+ FluxSimulatorSettings.PRO_FILE_CR.length();
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					perc= MyFormatter.printPercentage(perc, bytesRead, bytesTotal, System.err);
+					perc= StringUtils.printPercentage(perc, bytesRead, bytesTotal, System.err);
 				
 				token= s.split(FluxSimulatorSettings.PRO_FILE_TAB);
 				wright.write(s);
