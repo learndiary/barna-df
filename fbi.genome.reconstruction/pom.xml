@@ -8,6 +8,18 @@
     <artifactId>fbi.genome.reconstruction</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+
+    <scm>
+        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</url>
+        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</connection>
+        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+
     <dependencies>
         <dependency>
             <groupId>fbi</groupId>
@@ -51,9 +63,9 @@
 
     <repositories>
         <repository>
-            <id>ThinkCentre-M58e</id>
-            <name>ThinkCentre-M58e-releases</name>
-            <url>http://ThinkCentre-M58e.ti00a1.pcb.ub.es:8080/artifactory/repo</url>
+            <id>Fernis</id>
+            <name>Fernis</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
         </repository>
     </repositories>
 
