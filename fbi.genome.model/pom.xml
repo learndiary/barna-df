@@ -27,18 +27,11 @@
         </dependency>
     </dependencies>
 
-    <!-- Deployment information -->
-    <distributionManagement>
+    <repositories>
         <repository>
-            <id>fbi</id>
-            <name>fbi-releases</name>
-            <url>http://ThinkCentre-M58e.ti00a1.pcb.ub.es:8080/artifactory/libs-release-local</url>
+            <id>Fernis</id>
+            <name>Fernis</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
         </repository>
-        <snapshotRepository>
-            <id>fbi</id>
-            <name>fbi-snapshots</name>
-            <url>http://ThinkCentre-M58e.ti00a1.pcb.ub.es:8080/artifactory/libs-snapshot-local</url>
-            <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-    </distributionManagement>
+    </repositories>
 </project>
