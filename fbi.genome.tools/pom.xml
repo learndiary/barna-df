@@ -32,4 +32,13 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
+    
+     <repositories>
+        <repository>
+            <id>Fernis</id>
+            <name>Fernis</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
+        </repository>
+    </repositories>
+    
 </project>
