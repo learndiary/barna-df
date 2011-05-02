@@ -12,15 +12,19 @@ public class Parameters {
     }
 
     public static Parameter<String> stringParameter(String name, String description){
-        return stringParameter(name, description, null);
+        return stringParameter(name, description, null, null, (String[])null);
     }
 
-    public static Parameter<String> stringParameter(String name, String description, String defaultValue){
-        return stringParameter(name, description, defaultValue, null);
+    public static Parameter<String> stringParameter(String name, String description, String defaultValue, ParameterValidator validator){
+        return stringParameter(name, description, defaultValue, validator, (String[])null);
     }
 
     public static Parameter<String> stringParameter(String name, String description, String defaultValue, String...values){
-        return new StringParameter(name, description, defaultValue, Arrays.asList(values));
+        return stringParameter(name, description, defaultValue, null, values);
+    }
+
+    public static Parameter<String> stringParameter(String name, String description, String defaultValue,ParameterValidator validator, String...values){
+        return new StringParameter(name, description, defaultValue, Arrays.asList(values), validator);
     }
 
     public static Parameter<Boolean> booleanParameter(String name){
@@ -28,11 +32,11 @@ public class Parameters {
     }
 
     public static Parameter<Boolean> booleanParameter(String name, String description){
-        return booleanParameter(name, description, false);
+        return booleanParameter(name, description, false, null);
     }
 
-    public static Parameter<Boolean> booleanParameter(String name, String description, boolean defautlValue){
-        return new BooleanParameter(name, description, defautlValue);
+    public static Parameter<Boolean> booleanParameter(String name, String description, boolean defautlValue, ParameterValidator validator){
+        return new BooleanParameter(name, description, defautlValue, validator);
     }
 
     public static Parameter<Double> doubleParameter(String name){
@@ -40,15 +44,15 @@ public class Parameters {
         }
 
     public static Parameter<Double> doubleParameter(String name, String description){
-        return doubleParameter(name, description, 0d);
+        return doubleParameter(name, description, 0d, null);
     }
 
-    public static Parameter<Double> doubleParameter(String name, String description, double defaultValue){
-        return new DoubleParameter(name, description, defaultValue, null, null);
+    public static Parameter<Double> doubleParameter(String name, String description, double defaultValue, ParameterValidator validator){
+        return new DoubleParameter(name, description, defaultValue, null, null, validator);
     }
 
-    public static Parameter<Double> doubleParameter(String name, String description, double defaultValue, double min, double max){
-        return new DoubleParameter(name, description, defaultValue, min, max);
+    public static Parameter<Double> doubleParameter(String name, String description, double defaultValue, double min, double max, ParameterValidator validator){
+        return new DoubleParameter(name, description, defaultValue, min, max, validator);
     }
 
 
@@ -59,14 +63,14 @@ public class Parameters {
     }
 
     public static Parameter<Integer> intParameter(String name, String description){
-        return intParameter(name, description, 0);
+        return intParameter(name, description, 0, null);
     }
 
-    public static Parameter<Integer> intParameter(String name, String description, int defaultValue){
-        return new IntegerParameter(name, description, defaultValue, null, null);
+    public static Parameter<Integer> intParameter(String name, String description, int defaultValue,ParameterValidator validator){
+        return new IntegerParameter(name, description, defaultValue, null, null, validator);
     }
 
-    public static Parameter<Integer> intParameter(String name, String description, int defaultValue, int min, int max){
-        return new IntegerParameter(name, description, defaultValue, min, max);
+    public static Parameter<Integer> intParameter(String name, String description, int defaultValue, int min, int max, ParameterValidator validator){
+        return new IntegerParameter(name, description, defaultValue, min, max, validator);
     }
 }

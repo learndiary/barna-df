@@ -35,8 +35,58 @@ public class ParameterSchemaTest {
         }catch (IllegalArgumentException e){
             assertEquals("Unknown parameter 'Unknown'", e.getMessage());
         }
-
     }
+
+    @Test
+    public void testParse(){
+        SimpleParameterSchema schema = new SimpleParameterSchema();
+
+        // parameters
+        java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream(
+                ("" +
+                        "# Comment\n" +
+                        "STRING1 B\n"+
+                        "BOOLEAN\tyes\n"+
+                        "INT\t20\n"+
+                        "DOUBLE\t5.8\n"+
+                "").getBytes());
+
+        try {
+            schema.parse(in);
+
+            assertEquals("B",schema.get(SimpleParameterSchema.STRING1));
+            assertEquals(20, (int) schema.get(SimpleParameterSchema.INT1)  );
+            assertEquals(5.8d, schema.get(SimpleParameterSchema.DOUBLE1), 0.000001 );
+            assertTrue(schema.get(SimpleParameterSchema.BOOLEAN1));
+
+        } catch (ParameterException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
+    public void testParseErrorValue(){
+        SimpleParameterSchema schema = new SimpleParameterSchema();
+
+        // parameters
+        java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream(
+                ("" +
+                        "# Comment\n" +
+                        "STRING1 B\n"+
+                        "BOOLEAN\tyes\n"+
+                        "INT\t20\n"+
+                        "DOUBLE\t5.8sa\n"+
+                "").getBytes());
+
+        try {
+            schema.parse(in);
+            fail();
+        } catch (ParameterException e) {
+            assertEquals("Error while parsing line 5. Unable to parse parameter DOUBLE with value 5.8sa", e.getMessage());
+        }
+    }
+
 
 
 

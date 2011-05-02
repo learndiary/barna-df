@@ -24,9 +24,14 @@ class StringParameter extends Parameter<String>{
     }
 
     public StringParameter(String name, String description, String defaultValue, List<String> values) {
-        super(name, description, defaultValue, String.class);
+        this(name, description, defaultValue, values, null);
+    }
+
+    public StringParameter(String name, String description, String defaultValue, List<String> values, ParameterValidator validator) {
+        super(name, description, defaultValue, String.class, validator);
         this.values = values;
     }
+
 
     public List<String> getValues() {
         return Collections.unmodifiableList(values);
@@ -37,10 +42,18 @@ class StringParameter extends Parameter<String>{
     }
 
     void parse(String value) throws ParameterException{
-        // if values are available, check that this is valid
-        if(values != null && values.size() > 0){
-            if(!values.contains(value)) throw new ParameterException(this, value);
-        }
         this.value = value;
+    }
+
+    @Override
+    void validate(ParameterSchema schema) throws ParameterException {
+        if(getValidator() == null){
+            // if values are available, check that this is valid
+            if(values != null && values.size() > 0){
+                if(!values.contains(value)) throw new ParameterException(this, value, "Parameter " + this + " must be one of " + values);
+            }
+        }else{
+            super.validate(schema);
+        }
     }
 }

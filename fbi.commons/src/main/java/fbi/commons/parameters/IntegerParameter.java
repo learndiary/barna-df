@@ -1,5 +1,7 @@
 package fbi.commons.parameters;
 
+import java.math.BigDecimal;
+
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -16,6 +18,19 @@ class IntegerParameter extends NumberParameter<Integer>{
         this(name, description, defaultValue, null, null);
     }
     public IntegerParameter(String name, String description, Integer defaultValue, Integer minimumValue, Integer maximumValue) {
-        super(name, description, defaultValue, minimumValue, maximumValue, Integer.class);
+        this(name, description, defaultValue, minimumValue, maximumValue, null);
     }
+    public IntegerParameter(String name, String description, Integer defaultValue, Integer minimumValue, Integer maximumValue, ParameterValidator validator) {
+        super(name, description, defaultValue, minimumValue, maximumValue, Integer.class, validator);
+    }
+    @Override
+    void parse(String value) throws ParameterException {
+        try{
+            this.value = new BigDecimal(value).intValue();
+            return;
+        }catch (Exception e){
+        }
+        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value "+value);
+    }
+
 }
