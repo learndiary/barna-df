@@ -12,8 +12,13 @@ import java.util.Iterator;
 public class FluxSimulatorSettings {
 
 	public static final String TMP_SFX= ".tmp";
-	
 	public static final String NA= "NA";
+
+    /**
+     * Available distributions
+     */
+    public static enum Distributions{UNIFORM, NORMAL, GAUSS, POISSON, WEIBULL};
+
 	
 	public static byte DISTR_NI= -1, DISTR_UNIFORM= 0, DISTR_NORMAL= 1, DISTR_GAUSS= 2, DISTR_POISSON= 3;
 	public static int[] DISTR_NR_PAR= new int[] {0,0,2,1};

@@ -1,5 +1,6 @@
 package fbi.commons.parameters;
 
+import java.io.File;
 import java.util.Arrays;
 
 /**
@@ -73,4 +74,23 @@ public class Parameters {
     public static Parameter<Integer> intParameter(String name, String description, int defaultValue, int min, int max, ParameterValidator validator){
         return new IntegerParameter(name, description, defaultValue, min, max, validator);
     }
+
+
+
+    public static Parameter<File> fileParameter(String name){
+        return fileParameter(name, "");
+    }
+
+    public static Parameter<File> fileParameter(String name, String description){
+        return fileParameter(name, description, new File("."));
+    }
+
+    public static Parameter<File> fileParameter(String name, String description, File file){
+        return fileParameter(name, description, file, null);
+    }
+
+    public static Parameter<File> fileParameter(String name, String description, File file, ParameterValidator validator){
+        return new FileParameter(name, description, file, validator);
+    }
+
 }
