@@ -21,6 +21,20 @@ public class FluxSimulatorSettingsTest {
     }
 
     @Test
+    public void testMinimal(){
+        try {
+            FluxSimulatorSettings s1 = FluxSimulatorSettings.createSettings(new File(FluxSimulatorTest.class.getResource("/minimal.par").getFile()));
+            assertTrue(s1.get(FluxSimulatorSettings.LOAD_CODING));
+            assertTrue(s1.get(FluxSimulatorSettings.LOAD_NONCODING));
+            assertEquals(2.0d, s1.get(FluxSimulatorSettings.POLYA_SHAPE), 0.00001);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
     public void testPar1(){
         try {
             FluxSimulatorSettings s1 = FluxSimulatorSettings.createSettings(par1);

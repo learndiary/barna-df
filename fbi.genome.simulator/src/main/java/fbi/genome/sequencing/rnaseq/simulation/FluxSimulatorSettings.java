@@ -116,15 +116,25 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
     Expression parameters
      */
-    public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING", "", true);
-    public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING", "", true);
+    public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING", "", true, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            if(!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) throw new ParameterException("Sorry, but either LOAD_CODING or LOAD_NONCODING has to be enabled !");
+        }
+    });
+    public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING", "", true, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            if(!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) throw new ParameterException("Sorry, but either LOAD_CODING or LOAD_NONCODING has to be enabled !");
+        }
+    });
     public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "", 5000000);
     public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "", -0.6);
     public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "", 50000000);
     public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "", 9500);
     public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "", 25d);
-    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "", 2d);
-    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "", 300d);
+    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "", 2d, 0.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "", 300d, 0.0, Double.MAX_VALUE, null);
 
     /*
     Fragementation
@@ -187,18 +197,55 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION", "Switch on/off Reverse Transcription", true);// todo : default ?
     public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "", RtranscriptionMode.RH);
     public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN", "Minimum length observed after " +
-            "reverse transcription of full-length transcripts.", 500);
+            "reverse transcription of full-length transcripts.", 500, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            int min = schema.get(RT_MIN);
+            int max = schema.get(RT_MAX);
+            if(min > max) throw new ParameterException("RT_MIN must me <= RT_MAX");
+        }
+    });
     public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX", "Maximum length observed after " +
-            "reverse transcription of full-length transcripts.", 5500); // todo : make sure min <= max
+            "reverse transcription of full-length transcripts.", 5500,  new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            int min = schema.get(RT_MIN);
+            int max = schema.get(RT_MAX);
+            if(min > max) throw new ParameterException("RT_MIN must me <= RT_MAX");
+        }
+    });
     public static final Parameter<Double> RT_GC_LO = Parameters.doubleParameter("RT_GC_LO", "Minimum GC content for RNA " +
-            "stretches to be successfully reversely transcribed.", -1); // todo : check min max values !
-    public static final Parameter<Double> RT_GC_HI = Parameters.doubleParameter("RT_GC_HI", " GC content where reverse transcription saturates", -1); // todo : check min max values !
+            "stretches to be successfully reversely transcribed.", 0.4, 0.0, 1.0, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            double lo = schema.get(RT_GC_LO);
+            double hi = schema.get(RT_GC_HI);
+            if(lo > hi) throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
+        }
+    });
+    public static final Parameter<Double> RT_GC_HI = Parameters.doubleParameter("RT_GC_HI",
+            "GC content where reverse transcription saturates", 0.7, 0.0, 1.0, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            double lo = schema.get(RT_GC_LO);
+            double hi = schema.get(RT_GC_HI);
+            if(lo > hi) throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
+        }
+    });
     public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "", relativePathParser);
 
     /*
     Size Selection
      */
-    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "", false);
+    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "", false, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            if(schema.get(FILTERING)){
+                File dist = schema.get(SIZE_DISTRIBUTION);
+                if(dist == null || !dist.canRead()) throw new ParameterException("Sorry, but with FILTERING turned on, you have to specify a distribution file using SIZE_DISTRIBUTION");
+            }
+        }
+    });
     public static final Parameter<File> SIZE_DISTRIBUTION = Parameters.fileParameter("SIZE_DISTRIBUTION", "Describes " +
             "the distribution of fragments after filtering", relativePathParser);
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",

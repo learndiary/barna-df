@@ -398,15 +398,19 @@ public class Fragmenter implements StoppableRunnable {
 				if (r< 0.5)
 					start= -start;
 			}
-            if (!(Double.isNaN(settings.get(FluxSimulatorSettings.POLYA_SHAPE))|| Double.isNaN(settings.get(FluxSimulatorSettings.POLYA_SCALE)))) {
+            Double polya_scale = settings.get(FluxSimulatorSettings.POLYA_SCALE);
+            Double polya_shape = settings.get(FluxSimulatorSettings.POLYA_SHAPE);
+            if (!(Double.isNaN(polya_shape)|| Double.isNaN(polya_scale))) {
 				int pAtail= 301;
 				while (pAtail> 300)
-                    pAtail= (int) Math.round(sampleWeibull(rndPA, settings.get(FluxSimulatorSettings.POLYA_SCALE), settings.get(FluxSimulatorSettings.POLYA_SHAPE)));	// 300d, 2d
+                    pAtail= (int) Math.round(sampleWeibull(rndPA, polya_scale, polya_shape));	// 300d, 2d
 				end= origLen+ pAtail; 
-			}
+			}else{
+                end = origLen;
+            }
 			if (end< origLen) {
-				if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-					System.err.println("[ERROR] end < length in Fragmenter$Processor.processInitial(): "+ end+ "<"+ origLen);
+                Log.error("[ERROR] end < length in Fragmenter$Processor.processInitial(): "+ end+ "<"+ origLen);
+                throw new RuntimeException("[ERROR] end < length in Fragmenter$Processor.processInitial(): "+ end+ "<"+ origLen);
 			}
 
 			int newLen= end- start+ 1;
@@ -1844,7 +1848,7 @@ public class Fragmenter implements StoppableRunnable {
 			
 		// start with RT
 		} else {
-            if ((boolean) settings.get(FluxSimulatorSettings.RTRANSCRIPTION)) {
+            if (settings.get(FluxSimulatorSettings.RTRANSCRIPTION)) {
                 initRTpar(gc_lo, gc_high);
                 if (settings.get(FluxSimulatorSettings.RT_MOTIF) != null) {
 					getMapTxSeq();
@@ -3162,25 +3166,28 @@ profiler.getMaxMoleculeLength()
 			double n1= Double.NaN, n2= Double.NaN;
 			int txLen= -1, howmany= -1;
         if (settings.get(FluxSimulatorSettings.RT_MOTIF) == null) {
-                if (settings.get(FluxSimulatorSettings.RT_PRIMER) == FluxSimulatorSettings.RtranscriptionMode.PDT) {
-					txLen= profiler.getLength(id);
-					if (end< txLen- 1)	// 0-based coordinates
-						return;
-					else
-						howmany= getRTeventNr(txLen- end);
-				} else 
-					howmany= getRTeventNr(len);
-			} else {
-				howmany= getRTeventNr(len);
-				wAsense= mapWeightAsense.get(id);
-				n2= toCDF(wAsense, start, end);
-				wSense= mapWeightSense.get(id);
-				n1= toCDF(wSense, start, end);
-			}
-			if (howmany== 0)
-				return;
-			//processFragNot(start, end, len, id);
+            if (settings.get(FluxSimulatorSettings.RT_PRIMER) == FluxSimulatorSettings.RtranscriptionMode.PDT) {
+                txLen = profiler.getLength(id);
+                if (end < txLen - 1)    // 0-based coordinates
+                    return;
+                else
+                    howmany = getRTeventNr(txLen - end);
+            } else
+                howmany = getRTeventNr(len);
+            howmany = Math.min(howmany, index1.length);
+        } else {
+            howmany = getRTeventNr(len);
+            howmany = Math.min(howmany, index1.length);
+            wAsense = mapWeightAsense.get(id);
+            n2 = toCDF(wAsense, start, end);
+            wSense = mapWeightSense.get(id);
+            n1 = toCDF(wSense, start, end);
+        }
+        if (howmany == 0)
+            return;
 
+
+        //processFragNot(start, end, len, id);
 			// choose new 3' end(s)
 			for (int i = 0; i < howmany; i++) {
 				int p;
@@ -3299,13 +3306,19 @@ profiler.getMaxMoleculeLength()
 		CharSequence seq= getMapTxSeq().get(id);
 		int g= 0, n= 0;
 		for (int k = i; k <= j; ++k) {
-			char c= seq.charAt(k);
-			if (c== 'G'|| c=='C')
-				++g;
-			else if (c!= 'N')
-				++n;
+            // todo: assume gc content before transcription start
+            if(k >= seq.length()) n++;
+            else if(k>=0){
+                char c= seq.charAt(k);
+                if (c== 'G'|| c=='C')
+                    ++g;
+                else if (c!= 'N')
+                    ++n;
+            }
 		}
-		
+		if(n+g == 0){
+            return 0;
+        }
 		return (g/ (double) (n+ g));
 	}
 
@@ -3411,7 +3424,7 @@ profiler.getMaxMoleculeLength()
 	 * @return a value representing the sum of the values that have been turned into a CDF
 	 */
 	public static double toCDF(double[] a, int start, int end) {
-
+        end = Math.min(a.length-1, end);
 		for (int i = start+ 1; i <= end; i++) 
 			a[i]+= a[i- 1];
 		double sum= a[end];
@@ -3426,6 +3439,7 @@ profiler.getMaxMoleculeLength()
 	}
 
 	public static void toPDF(double[] a, int start, int end, double sum) {
+        end = Math.min(a.length-1, end);
 		if (sum== 0)
 			return;
 		for (int i = start; i <= end; i++) 
@@ -3544,6 +3558,7 @@ profiler.getMaxMoleculeLength()
 	
 		if (nebuRecursionDepth< 1) {
 			rw.writeLine(cs, fos);	// no breakage
+            ++cntLinesWr;
 			return;
 		}
 		
@@ -3602,6 +3617,7 @@ profiler.getMaxMoleculeLength()
 			start+= index1[j];
 			cs.replace(1, start- 1);
 			rw.writeLine(cs, fos);	// id is invalid now
+            ++cntLinesWr;
 			
 			// update stats
 			incLinesWrote();

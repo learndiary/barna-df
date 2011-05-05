@@ -134,7 +134,7 @@ public class SimulationPipeline implements FluxTool<Void> {
             try {
                 settings= FluxSimulatorSettings.createSettings(file);
             } catch (Exception e) {
-                throw new RuntimeException("Unable to load settings from " + file +" : " +e.getMessage(), e);
+                throw new RuntimeException("Unable to load settings from " + file +"\n\n " +e.getMessage(), e);
             }
         }
         return settings;

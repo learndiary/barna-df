@@ -21,6 +21,7 @@ class BooleanParameter extends Parameter<Boolean>{
     }
     protected BooleanParameter(String name, String description, boolean defaultValue, ParameterValidator validator) {
         super(name, description, defaultValue, Boolean.class, validator);
+        value = defaultValue;
     }
 
     @Override

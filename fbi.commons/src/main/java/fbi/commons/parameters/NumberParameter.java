@@ -30,21 +30,25 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
 
     @Override
     void validate(ParameterSchema schema) throws ParameterException {
-        if(getValidator() == null && minimumValue != null || maximumValue != null){
-            if(minimumValue != null){
-                if(new BigDecimal(value.toString()).compareTo(new BigDecimal(minimumValue.toString())) < 0){
-                    throw new ParameterException(this, value.toString(), "Parameter " + this+ " value must be >= "+ minimumValue);
-                }
+        if(minimumValue != null || maximumValue != null){
+            if(value == null){
+                value = getDefault();
             }
+            if(value != null && !value.equals(Double.NaN)){
+                if(minimumValue != null){
+                    if(new BigDecimal(value.toString()).compareTo(new BigDecimal(minimumValue.toString())) < 0){
+                        throw new ParameterException(this, value.toString(), "Parameter " + this+ " value must be >= "+ minimumValue);
+                    }
+                }
 
-            if(maximumValue != null){
-                if(new BigDecimal(value.toString()).compareTo(new BigDecimal(maximumValue.toString())) > 0){
-                    throw new ParameterException(this, value.toString(), "Parameter " + this+ " value must be <= "+ maximumValue);
+                if(maximumValue != null){
+                    if(new BigDecimal(value.toString()).compareTo(new BigDecimal(maximumValue.toString())) > 0){
+                        throw new ParameterException(this, value.toString(), "Parameter " + this+ " value must be <= "+ maximumValue);
+                    }
                 }
             }
-        }else{
-            super.validate(schema);
         }
+        super.validate(schema);
     }
 
     @Override
