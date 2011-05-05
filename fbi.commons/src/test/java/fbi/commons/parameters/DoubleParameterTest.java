@@ -43,6 +43,17 @@ public class DoubleParameterTest {
             fail();
         }
 
+        //5.0E7
+        try {
+            test.parse("5.0E7");
+            test.validate(null);
+            assertEquals(50000000, test.get(), 0.000001);
+        } catch (ParameterException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+
 
 
         try {

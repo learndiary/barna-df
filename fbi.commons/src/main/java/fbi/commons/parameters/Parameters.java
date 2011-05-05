@@ -36,6 +36,10 @@ public class Parameters {
         return booleanParameter(name, description, false, null);
     }
 
+    public static Parameter<Boolean> booleanParameter(String name, String description, boolean defaultValue){
+        return booleanParameter(name, description, defaultValue, null);
+    }
+
     public static Parameter<Boolean> booleanParameter(String name, String description, boolean defautlValue, ParameterValidator validator){
         return new BooleanParameter(name, description, defautlValue, validator);
     }
@@ -46,6 +50,9 @@ public class Parameters {
 
     public static Parameter<Double> doubleParameter(String name, String description){
         return doubleParameter(name, description, 0d, null);
+    }
+    public static Parameter<Double> doubleParameter(String name, String description, double defaultValue){
+        return doubleParameter(name, description, defaultValue, null);
     }
 
     public static Parameter<Double> doubleParameter(String name, String description, double defaultValue, ParameterValidator validator){
@@ -67,6 +74,11 @@ public class Parameters {
         return intParameter(name, description, 0, null);
     }
 
+    public static Parameter<Integer> intParameter(String name, String description, int defaultValue){
+        return intParameter(name, description, defaultValue, null);
+    }
+
+
     public static Parameter<Integer> intParameter(String name, String description, int defaultValue,ParameterValidator validator){
         return new IntegerParameter(name, description, defaultValue, null, null, validator);
     }
@@ -74,6 +86,29 @@ public class Parameters {
     public static Parameter<Integer> intParameter(String name, String description, int defaultValue, int min, int max, ParameterValidator validator){
         return new IntegerParameter(name, description, defaultValue, min, max, validator);
     }
+
+
+    public static Parameter<Long> longParameter(String name){
+        return longParameter(name, "");
+    }
+
+    public static Parameter<Long> longParameter(String name, String description){
+        return longParameter(name, description, 0l, null);
+    }
+
+    public static Parameter<Long> longParameter(String name, String description, long defaultValue){
+        return longParameter(name, description, defaultValue, null);
+    }
+
+
+    public static Parameter<Long> longParameter(String name, String description, long defaultValue,ParameterValidator validator){
+        return new LongParameter(name, description, defaultValue, null, null, validator);
+    }
+
+    public static Parameter<Long> longParameter(String name, String description, long defaultValue, long min, long max, ParameterValidator validator){
+        return new LongParameter(name, description, defaultValue, min, max, validator);
+    }
+
 
 
 
@@ -85,12 +120,33 @@ public class Parameters {
         return fileParameter(name, description, new File("."));
     }
 
-    public static Parameter<File> fileParameter(String name, String description, File file){
-        return fileParameter(name, description, file, null);
+    public static Parameter<File> fileParameter(String name, String description, FileNameParser parser){
+        return fileParameter(name, description, null, null, parser);
     }
+
+    public static Parameter<File> fileParameter(String name, String description, File file){
+        return fileParameter(name, description, file, null, null);
+    }
+
+
+
+    public static Parameter<File> fileParameter(String name, String description, File file, FileNameParser parser){
+        return fileParameter(name, description, file, null, parser);
+    }
+
 
     public static Parameter<File> fileParameter(String name, String description, File file, ParameterValidator validator){
         return new FileParameter(name, description, file, validator);
+    }
+
+    public static Parameter<File> fileParameter(String name, String description, File file, ParameterValidator validator, FileNameParser parser){
+        return new FileParameter(name, description, file, validator, parser);
+    }
+
+
+
+    public static <E extends Enum<E>> Parameter<E> enumParameter(String name, String description, E value){
+        return new EnumParameter<E>(name, description, value);
     }
 
 }

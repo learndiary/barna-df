@@ -23,6 +23,11 @@ public class FileHelper {
 	public static final byte COMPRESSION_NONE= 0, COMPRESSION_ZIP= 1, COMPRESSION_GZIP= 2;
 
     /**
+     * Custom temp directory
+     */
+    public static File tempDirectory;
+
+    /**
      * Reads the file until the first new line character appears. This looks for
      * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
      *
@@ -933,6 +938,10 @@ make sense
      */
     public static File createTempFile(String name, String ext) throws IOException {
         if(ext != null && ext.length() > 0 && !ext.startsWith(".")) ext = "."+ext;
-        return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "");
+        if(tempDirectory == null)
+            return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "");
+        else{
+            return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "", tempDirectory);
+        }
     }
 }

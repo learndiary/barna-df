@@ -4,8 +4,6 @@ import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
-import fbi.commons.io.IOHandler;
-import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
@@ -16,11 +14,9 @@ import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.constants.Constants;
-
 import genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
 import genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
 import genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
-
 import org.apache.commons.math.random.RandomDataImpl;
 import org.apache.commons.math.special.Gamma;
 
@@ -35,8 +31,17 @@ public class Fragmenter implements StoppableRunnable {
 	private static int processorID= 0;
 	private static char CHAR_TAB= '\t';
 	private static byte BYTE_NL= (byte) '\n';
-	
-	public static double[] toCDF(double[] b) {
+    public static boolean optDisk= false;
+    /**
+     * Default temp file suffix
+     */
+    public static final String TMP_SFX= ".tmp";
+    /**
+     * The profiler
+     */
+    private Profiler profiler;
+
+    public static double[] toCDF(double[] b) {
 		
 		double sum= 0f;
 		for (int i = 0; i < b.length; ++i) 
@@ -129,7 +134,7 @@ public class Fragmenter implements StoppableRunnable {
 			int len= end- start+ 1;
 //			if (processFragDiss(len))
 //				return;
-			if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				++tgtMols;
 
 			ByteArrayCharSequence id= cs.getToken(2);
@@ -177,181 +182,8 @@ public class Fragmenter implements StoppableRunnable {
 
 		}
 		
-		void processNebu_v10(int start, int end, int len, ByteArrayCharSequence id) {
-			int bp= (int) nextGaussianDouble(rndNebu, start+1, end);	//	Math.ceil() f* slow 
-			int len2= Math.min(bp- start, end- bp+ 1);	// shorter
-			int len1=(bp-start==len2)?end-bp+1:bp-start;	// longer
-//			double val= Math.exp((-1d)* Math.pow(len2- settings.lambda, 2)/ 
-//					Math.pow(settings.sigma* settings.lambda, 2));	// either len or len2
-//			double val= Math.exp((-1d)* Math.pow(Math.max(len- settings.lambda,0), 2)/ 
-//					Math.pow(settings.lambda, 2));	// TODO either len or len2
-//			double val= Math.exp((-1d)* (len/ settings.lambda));	
-//			double val= Math.exp((-1d)* Math.pow(Math.max(0,len- settings.getLambda()),2));	// gives only 0 or 1 :s
-			
-			double val= Math.exp((-1d)* Math.pow(len2/ settings.fragNBlambda,2));	// TODO either len or len2
-			val= 1- val;	// 0 f. len -> settings.lamda
-			double r= rndBreak.nextDouble();
-				
-			if (r> val) {	// does not break (!)
-				++lenNb;
-				increaseFragCount(id);
-				
-				// plot
-				if (Fragmenter.this.plotter!= null)
-					Fragmenter.this.plotter.plot(start, end, -1, id);
-				if (len>= Fragmenter.this.settings.getFiltMin()&&
-						len<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-				
-				// write
-				rw.writeLine(cs, fos);
-				
-			} else {
-				++newMols;
-				lenSum+= len1;
-				lenSum+= len2;
-				lenNb+= 2;
-				maxLen= Math.max(maxLen,len1);
-				maxLen= Math.max(maxLen,len2);
-				minLen= Math.min(minLen,len1);
-				minLen= Math.min(minLen,len2);
-				if (len1>= Fragmenter.this.settings.getFiltMin()&&
-						len1<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-				if (len2>= Fragmenter.this.settings.getFiltMin()&&
-						len2<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
 
-				// plot
-				if (Fragmenter.this.plotter!= null) {
-					Fragmenter.this.plotter.plot(start, bp-1, -1, id);
-					Fragmenter.this.plotter.plot(bp, end, -1, id);
-				}
-				
-				// write
-				ByteArrayCharSequence cs2= cs.cloneCurrentSeq();
-				assert(bp-1>= start);
-				cs2.replace(1, bp- 1);
-				rw.writeLine(cs2, fos);	// getNebuLine(start,bp-1,id)+"\n"
-				assert(bp<= end);
-				cs.replace(0, bp);	// no longer needed
-				rw.writeLine(cs, fos);	// getNebuLine(bp,end,id)+"\n"
-				// id is invalid now !
-			}
-				
-			
-		}
-		
-		void processFrag_old(int start, int end, int len, ByteArrayCharSequence id) {
-            double k= 3.4;	// 4
-            
-            // weibull random sampling ?
-            // mean= la* (ln(2))^(1/k)
-            // double la= (len/2d)/ Math.pow(Math.log(2), (1d/k)); 
-            // start+ Math.round(sampleWeibull(rndFrag, la,k))
-            
-            int bp= -1; 
-            while (bp> end|| bp< start)
-                bp=start+ rndBP.nextInt(end-start+1);	
 
-            // quatsch, f. hydrolyse nur abh. von Gesamtlaenge
-            int len2= Math.min(bp- start, end- bp+ 1);
-            int len1=(bp-start==len2)?end-bp+1:bp-start;
-            // double val= Math.exp((-1d)* Math.pow(Math.max(0,len- settings.lambda),2));    // TODO either len or len2
-            double val= 1d;
-            if (len2> settings.getFragNBlambda())	// 
-                val= Math.pow(len2- settings.getFragNBlambda(), -2);    // 0 f. len -> settings.lamda 
-            val= 1-val;
-            double r= rndBreak.nextDouble();
-                
-            if (r> val) {    // does not break (!)
-            	lenSum+= len;                            	
-            	++lenNb;
-				maxLen= Math.max(maxLen,len);
-				minLen= Math.min(minLen,len);
-				rw.writeLine(cs, fos);
-				increaseFragCount(id);
-				if (Fragmenter.this.plotter!= null)
-					Fragmenter.this.plotter.plot(start, end, -1, id);
-				if (len>= Fragmenter.this.settings.getFiltMin()&&
-						len<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-			} else {
-				++newMols;
-				//lengthV.add(end- bp+ 1);
-				//lengthV.add(bp- start);
-				lenSum+= len1;
-				lenSum+= len2;
-				lenNb+= 2;
-				maxLen= Math.max(maxLen,len1);
-				maxLen= Math.max(maxLen,len2);
-				minLen= Math.min(minLen,len1);
-				minLen= Math.min(minLen,len2);
-
-				// plot
-				if (len1>= Fragmenter.this.settings.getFiltMin()&&
-						len1<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-				if (len2>= Fragmenter.this.settings.getFiltMin()&&
-						len2<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-				//setFragCount(token[2], 2l);
-				if (Fragmenter.this.plotter!= null) {
-					Fragmenter.this.plotter.plot(start, bp-1, -1, id);
-					Fragmenter.this.plotter.plot(bp, end, -1, id);
-				}
-
-				// write
-//					writer.write(getNebuLine(start,bp-1,id)+"\n");
-//					writer.write(getNebuLine(bp,end,id)+"\n");
-				ByteArrayCharSequence cs2= cs.cloneCurrentSeq();
-				cs2.replace(1, bp- 1);
-				//writer.write(cs2.a, cs2.start, cs2.end);	// getNebuLine(start,bp-1,id)+"\n"
-				rw.writeLine(cs2, fos);
-				cs.replace(0, bp);	// no longer needed
-				//writer.write(cs.a, cs.start, cs.end);	// getNebuLine(bp,end,id)+"\n"
-				rw.writeLine(cs, fos);
-				// id is invalid now
-			}						
-			
-			// so nicht
-//			IntVector vec= new IntVector();
-//			int bp= start;
-//			while (bp< end) {
-//				int i= (int) Math.round(rdi.nextUniform(settings.getFiltMin(), settings.getFiltMax()));
-//				vec.addElement(i);
-//				bp+= i;
-//			}
-//			bp-= vec.elementAt(vec.size()-1);
-//			vec.removeElement(vec.size()-1);
-//			
-//			try {
-//				if (vec.size()== 0) {
-//					writer.write(s+"\n");
-//					if (Fragmenter.this.plotter!= null)
-//						Fragmenter.this.plotter.plot(start, end, token[2]);
-//					if (len>= Fragmenter.this.settings.filtMin&&
-//							len<= Fragmenter.this.settings.filtMax)
-//						++Fragmenter.this.tgtMols;
-//				} else {
-//					--newMols;
-//					int offs= (int) Math.round((len- bp)/ 2d);
-//					for (int i = 0; i < vec.size(); offs+= vec.elementAt(i), i++) {
-//						++newMols;
-//						int newEnd= offs+vec.elementAt(i)-1;
-//						writer.write(getNebuLine(offs,newEnd,token[2])+"\n");
-//						if (Fragmenter.this.plotter!= null) 
-//							Fragmenter.this.plotter.plot(offs, newEnd, token[2]);
-//					}
-//					Fragmenter.this.tgtMols+= vec.size();
-//				}
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-			
-		
-		}
-		
 		private int[] where= new int[10], starts= new int[10];
 		void processRT(int start, int end, int len, ByteArrayCharSequence id) {
 
@@ -395,9 +227,9 @@ public class Fragmenter implements StoppableRunnable {
 			incLinesWrote();
 			++newMols;
 			rw.writeLine(cs, fos);	// id is invalid now
-			if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				++tgtMols;
-			if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				--tgtMols;
 
 		}
@@ -431,143 +263,6 @@ public class Fragmenter implements StoppableRunnable {
 		}
 
 		RandomDataImpl rndImpl= new RandomDataImpl(); // DEBUG
-		void processFrag_curr(int start, int end, int len, ByteArrayCharSequence id) {
-            
-			double lambda= settings.getFragNBlambda();
-/*			if (len<= lambda) {	// does not break
-				processFragNot(start, end, len, id);
-				return;
-			}
-*/			
-			
-			
-			// first check whether frag gets broken
-			//double lfac= len/ (double) lambda;	// len > lambda
-			//double val= 1d- Math.exp((lambda- len)/ lambda);	// len> lambda, P(b)
-			double val= 
-				// linear
-				// lambda/ len;
-				//(len- lambda)/ lambda;
-				//(len- lambda)/ (2* lambda);
-				
-				// polynomial
-				//Math.pow((len- lambda)/ lambda, 2d);	// len> lambda, P(b)
-			
-			
-				// exponential
-				//1d- Math.exp((lambda- len)/ lambda);	// len> lambda, P(b)
-				//1d- Math.exp(-Math.pow(len/ lambda, 2d));	// len> lambda, P(b)
-				//1d- (1d/ Math.pow(len- lambda, 2d));	// len> lambda, P(b)
-				//1d- Math.pow(lambda/ len, 2);
-				//1d- Math.exp(-Math.pow(len/ lambda, 2));
-				//1d- (1d/ len);
-				1d;
-			
-				//1d- Math.pow(Math.exp(-(len/ lambda)), 2d);	// len> lambda, P(b)
-				
-			if (val< 1d) {
-	            double r= rndBreak.nextDouble();
-	            if (r> val) {   // does not break (!)
-	            	processFragNot(start, end, len, id);
-	            	return;
-	            }
-			}
-            
-            // else
-			int howMany= (int) rndHowMany.nextPoisson(Math.pow(len/ lambda, 2d)); // len > lambda, nr events
-			if (howMany== 0) {
-//				howMany= 1;
-				processFragNot(start, end, len, id);
-				return;
-			}
-			if (howMany>= where.length)
-				howMany= where.length- 1;
-			//howMany= 1;	// DEBUG
-			//double mid= len/ 2d;
-			for (int i = 0; i < howMany; i++) {
-				where[i]= 
-//				where[i]= start+ (int) rndHowMany.nextGaussian(len/ 2d, len/ 4d);
-//				if (where[i]< start|| where[i]> end)
-//					--i;
-				//start+ rndFrag.nextInt(len);	// bp, len exclusive
-					
-				//start+ (len/ 2);
-				(int) nextGaussianDouble(rndBP, start, end);
-//				start+ (int) (rndImpl.nextGaussian(mid, mid/ 2));
-//				while (where[i]< start|| where[i]> end)
-//					where[i]= start+ (int) (rndImpl.nextGaussian(mid, mid/ 2));
-			}
-			// DEBUG
-			int len1= where[0]- start;
-			int len2= end- where[0]+ 1;
-			if (len1< len2) {
-				int h= len1;
-				len1= len2;
-				len2= h;
-			}
-			
-/*			if (len2<= lambda) {	// does not break
-				processFragNot(start, end, len, id);
-				return;
-			}
-*/			
-/*			double val= 
-				//1d- Math.exp(-Math.pow(len2/(double) lambda, 2d));
-				 //(len2/ lambda);	// len> lambda, P(b)
-				1d- (1/ (1+ Math.exp(-Math.pow(len2/(double) lambda, 2d))));
-			double r= rndBreak.nextDouble();
-			if (r> val) {
-				processFragNot(start, end, len, id);
-				return;
-			}
-*/			
-			
-			if (howMany> 1) 
-				Arrays.sort(where, 0, howMany);
-			int lastVal= start;
-			if (howMany> 1)
-				id= id.cloneCurrentSeq();	// gets invalid with replace
-			int nowStart= start, nowEnd= end;
-			
-			for (int i = 0; i < howMany; i++) {
-				if (where[i]== lastVal)
-					continue;	// 0-length frag, 2x hydrolized at same point
-				++newMols;
-				int nuLen= where[i]- lastVal;	// (lastVal- 1)+ 1
-				lenSum+= nuLen;
-				++lenNb;
-				if (nuLen>= Fragmenter.this.settings.getFiltMin()&&
-						nuLen<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-				
-				// plot
-				int nuEnd= where[i]- 1;	// floor(bp)
-				if (Fragmenter.this.plotter!= null) 
-					Fragmenter.this.plotter.plot(lastVal, nuEnd, -1, id);
-
-				// write
-				if (lastVal!= nowStart) {
-					cs.replace(0, lastVal);
-					nowStart= lastVal;
-				}
-				if (nuEnd!= nowEnd) {
-					cs.replace(1, nuEnd);
-					nowEnd= nuEnd;
-				}
-				assert(lastVal<= nuEnd);
-				rw.writeLine(cs, fos);	// id is invalid now
-				lastVal= where[i];
-			}
-			// last one, always-even if lastVal== end
-			if (howMany> 0) {
-				if (where[howMany- 1]!= nowStart) 
-					cs.replace(0, where[howMany- 1]);
-				if (nowEnd!= end) 
-					cs.replace(1, end);
-				assert(where[howMany- 1]<= end);
-				rw.writeLine(cs, fos);	// id is invalid now
-			}
-		}
 
 		private void processFragNot(int start, int end, int len,
 				ByteArrayCharSequence id) {
@@ -583,128 +278,8 @@ public class Fragmenter implements StoppableRunnable {
 		}
 
 		private boolean multiBreaks= false; 
-		/**
-		 * @deprecated not in use
-		 * @param start
-		 * @param end
-		 * @param len
-		 * @param id
-		 */
-		void processNebu(int start, int end, int len, ByteArrayCharSequence id) {
-		            
-					// fragment breaks dependent on bp
-					double lambda= settings.getFragNBlambda()/ 2d;
-					
-					int howMany= 1;
-					if (multiBreaks) {
-						howMany= (int) rndHowMany.nextPoisson(len/ lambda); // len > lambda, nr events
-						if (howMany== 0)
-							howMany= 1;	// assure one
-						else if (howMany>= where.length)
-							howMany= where.length- 1;	// lim mem
-					}
-					for (int i = 0; i < howMany; i++) {
-						where[i]= 
-						(int) nextGaussianDouble(rndNebu, start, end);
-						if (i> 1&& where[i]- where[i- 1]+ 1< minLen)
-							minLen= where[i]- where[i- 1]+ 1;
-					}
-					
-					// break condition
-					int minLen= Math.min(where[0]- start+ 1, end- where[0]+ 1);
-					double val= 
-						//1d- Math.exp(-Math.pow(minLen/(double) lambda, 2d));
-						1d- Math.exp(-Math.pow(minLen/ lambda, 2d));	// len> lambda, P(b)
-					double r= rndBreak.nextDouble();
-					if (r> val) {
-						processFragNot(start, end, len, id);
-						return;
-					}
-					
-					
-					if (howMany> 1) 
-						Arrays.sort(where, 0, howMany);
-					int lastVal= start;
-					if (howMany> 1)
-						id= id.cloneCurrentSeq();	// gets invalid with replace
-					int nowStart= start, nowEnd= end;
-					addFragCount(id, (long) (howMany));
-					for (int i = 0; i < howMany; i++) {
-						if (where[i]== lastVal)
-							continue;	// 0-length frag, 2x hydrolized at same point
-						++newMols;
-						int nuLen= where[i]- lastVal;	// (lastVal- 1)+ 1
-						lenSum+= nuLen;
-						++lenNb;
-						if (nuLen>= Fragmenter.this.settings.getFiltMin()&&
-								nuLen<= Fragmenter.this.settings.getFiltMax())
-							++Fragmenter.this.tgtMols;
-						
-						// plot
-						int nuEnd= where[i]- 1;	// floor(bp)
-						if (Fragmenter.this.plotter!= null) 
-							Fragmenter.this.plotter.plot(lastVal, nuEnd, -1, id);
-		
-						// write
-						if (lastVal!= nowStart) {
-							cs.replace(0, lastVal);
-							nowStart= lastVal;
-						}
-						if (nuEnd!= nowEnd) {
-							cs.replace(1, nuEnd);
-							nowEnd= nuEnd;
-						}
-						assert(lastVal<= nuEnd);
-						rw.writeLine(cs, fos);	// id is invalid now
-						lastVal= where[i];
-					}
-					// last one, always-even if lastVal== end
-					if (where[howMany- 1]!= nowStart) 
-						cs.replace(0, where[howMany- 1]);
-					if (nowEnd!= end) 
-						cs.replace(1, end);
-					assert(where[howMany- 1]<= end);
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (end- where[howMany- 1]+ 1<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-				}
 
-		void processFragUniform_save(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-			
-			double lambda= settings.getFragNBlambda();
-			double val= 
-				Math.log10(len/ (lambda/ 5d));	//len> lambda must be able to not break
-				//Math.log10(len/ (lambda/ 2d));
-				
-			if (val< 1d) {
-		        double r= rndBreak.nextDouble();
-		        if (r> val) {   // does not break (!)
-		        	processFragNot(start, end, len, id);
-		        	return;
-		        }
-			} 
-			
-			double r= rndBP.nextDouble();
-			int bp= (int) (len* r);
-		
-			++newMols;
-			if (bp<= Fragmenter.this.settings.getFragNBlambda())
-				++Fragmenter.this.tgtMols;
-			cs.replace(1, start+ bp);
-			incLinesWrote();
-			rw.writeLine(cs, fos);	// id is invalid now
-				
-			++newMols;
-			if (len- bp<= Fragmenter.this.settings.getFragNBlambda())
-				++Fragmenter.this.tgtMols;
-			cs.replace(0, start+ bp);
-			cs.replace(1, end);
-			incLinesWrote();
-			rw.writeLine(cs, fos);	// id is invalid now
-		}
-		
+
 		private int selectRTSite(ByteArrayCharSequence id, int start, int end, boolean firstStrand) {
 		
 			float[] a= (firstStrand? mapPWMasense.get(id): mapPWMsense.get(id));
@@ -749,7 +324,7 @@ public class Fragmenter implements StoppableRunnable {
 		private boolean processFragDiss(int nuLen) {
 			if (true)
 				return false;
-			double term= Math.pow(nuLen/ (settings.getFragNBlambda()/ 5d), 2d);	// lambda/ 5d ?
+            double term= Math.pow(nuLen/ (settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA) / 5d), 2d);	// lambda/ 5d ?
 			double val= 
 				// Math.exp(-Math.pow(Math.log10(nuLen),2d));
 				Math.exp(-term);
@@ -814,18 +389,19 @@ public class Fragmenter implements StoppableRunnable {
 			// transcript variation
 			int start= 0;
 			int end= origLen- 1;
-			if (!Double.isNaN(settings.getTssMean())) {
+            Double tssMean = settings.get(FluxSimulatorSettings.TSS_MEAN);
+            if (!Double.isNaN(tssMean) && tssMean > 0) {
 				start= origLen;
 				while (start>= Math.min(100, origLen))
-					start= (int) Math.round(rndTSS.nextExponential(Math.min(settings.getTssMean(),origLen/4)));	// exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
+                    start= (int) Math.round(rndTSS.nextExponential(Math.min(tssMean,origLen/4)));	// exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
 				double r= rndPlusMinus.nextDouble();
 				if (r< 0.5)
 					start= -start;
 			}
-			if (!(Double.isNaN(settings.getPolyAshape())|| Double.isNaN(settings.getPolyAscale()))) {
+            if (!(Double.isNaN(settings.get(FluxSimulatorSettings.POLYA_SHAPE))|| Double.isNaN(settings.get(FluxSimulatorSettings.POLYA_SCALE)))) {
 				int pAtail= 301;
 				while (pAtail> 300)
-					pAtail= (int) Math.round(sampleWeibull(rndPA, settings.getPolyAscale(), settings.getPolyAshape()));	// 300d, 2d
+                    pAtail= (int) Math.round(sampleWeibull(rndPA, settings.get(FluxSimulatorSettings.POLYA_SCALE), settings.get(FluxSimulatorSettings.POLYA_SHAPE)));	// 300d, 2d
 				end= origLen+ pAtail; 
 			}
 			if (end< origLen) {
@@ -883,8 +459,8 @@ public class Fragmenter implements StoppableRunnable {
     	}
 
 		void processFrag_110108(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-				            
-							double lambda= nebu? settings.getFragNBlambda():settings.getFragNBlambda();	// nebu / 2d
+
+            double lambda= nebu? (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA) : (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA);	// nebu / 2d
 		
 							if (!nebu) {
 								// first check whether frag gets broken
@@ -1020,7 +596,7 @@ public class Fragmenter implements StoppableRunnable {
 								++newMols;
 								lenSum+= nuLen;
 								++lenNb;
-								if (nuLen<= Fragmenter.this.settings.getFragNBlambda())
+                                if (nuLen<= Fragmenter.this.settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 									++Fragmenter.this.tgtMols;
 								
 								// plot
@@ -1055,9 +631,9 @@ public class Fragmenter implements StoppableRunnable {
 							assert(where[howMany- 1]<= end);
 							incLinesWrote();
 							rw.writeLine(cs, fos);	// id is invalid now
-							if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 								++tgtMols;
-							if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 								--tgtMols;
 						}
 
@@ -1107,57 +683,6 @@ public class Fragmenter implements StoppableRunnable {
 				
 		}
 
-		private void determineBPos(ByteArrayCharSequence id, int start, int end, int[] where, int howMany, boolean nebu) {
-			
-			float[] b= null;
-			if (mapPWMsense!= null) {
-				float[] a= mapPWMsense.get(id);
-				b= new float[end- start+ 1];
-				//int len= Math.min(b.length, a.length- start);
-				System.arraycopy(a, start, b, 0, b.length);
-				//if (b.length> len)
-				//	Arrays.fill(b, len, b.length- len, (byte) 'A');
-			}
-			
-			int len= end- start+ 1;
-			for (int i = 0; i < howMany; i++) {
-				where[i]= start- 1;
-				while (where[i]< start|| where[i]> end) {
-					
-					if (b== null) {
-						where[i]= //(int) nextGaussianDouble(rndBP, start, end);	// bp
-							(int) 
-							(nebu? 
-							(start+ rdiNebuBP.nextGaussian(len/ 2d, len/ 4d))	// bp
-							
-							:nextGaussianDouble(rndBP, start, end))
-							;
-					} else {
-						if (settings.getBpDistr()== FluxSimulatorSettings.DISTR_NORMAL) {							
-							for (int j = 0; j < b.length; j++) {
-								double x= ((j* TWICE_CUT_OFF_GAUSSIAN_VAL)/ len)- CUT_OFF_GAUSSIAN_VAL;
-								b[j]= (float) (NORM_FACTOR* Math.pow(E_POW_12, x* x));
-							}
-						} else if (settings.getBpDistr()== FluxSimulatorSettings.DISTR_GAUSS) {
-							double mu= len/ settings.getBpDistrPar()[0], 
-									si= len/ settings.getBpDistrPar()[1];
-							for (int j = 0; j < b.length; j++) {
-								double d= j- mu;
-								b[j]= (float) (NORM_FACTOR* (1d/ si)* Math.exp((d*d)/(-2* si* si)));
-							}
-						}
-						b= toCDF(b);
-						float r= rndBP.nextFloat();
-						int p= Arrays.binarySearch(b, r);
-						if (p< 0) 
-							p= -(p+ 1);
-						where[i]= start+ p;
-					}
-					
-					
-				}
-			}
-		}
 
 		private float[] toPDF(float[] b) {
 			
@@ -1233,14 +758,14 @@ public class Fragmenter implements StoppableRunnable {
 	        }
 			
 			++newMols;
-			if (bp<= Fragmenter.this.settings.getFragNBlambda())
+            if (bp<= Fragmenter.this.settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				++Fragmenter.this.tgtMols;
 			cs.replace(1, start+ bp);
 			incLinesWrote();
 			rw.writeLine(cs, fos);	// id is invalid now
 				
 			++newMols;
-			if (len- bp<= Fragmenter.this.settings.getFragNBlambda())
+            if (len- bp<= Fragmenter.this.settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				++Fragmenter.this.tgtMols;
 			cs.replace(0, start+ bp);
 			cs.replace(1, end);
@@ -1248,168 +773,6 @@ public class Fragmenter implements StoppableRunnable {
 			rw.writeLine(cs, fos);	// id is invalid now
 		}
 
-		void processFilter_110210(int start, int end, int len, ByteArrayCharSequence id) {
-					//RandomDataImpl rndGel= new RandomDataImpl();
-					//rndGel.nextGaussian(mu, sigma);
-					//rndGel.nextPoisson(mean)
-					//if (len>= getDeltaFiltMin()&& len<= getDeltaFiltMax()) {
-						int segLen= getSegregatedLength(len, true);
-						if (segLen>= Fragmenter.this.settings.getFiltMin()&&
-								segLen<= Fragmenter.this.settings.getFiltMax()) {
-							incLinesWrote();
-							rw.writeLine(cs, fos);
-							if (Fragmenter.this.plotter!= null) {
-								Fragmenter.this.plotter.plot(start, end, segLen, id);
-			//					if (!Fragmenter.this.plotter.plot(start, end, segLen, id))
-			//						Fragmenter.this.plotter.plot(start, end, segLen, id);
-							}
-							
-							addFragCount(id, 1l);
-						} else
-							--newMols;
-		//			} else
-		//				--newMols;
-					// increaseFragCount(token[2]);
-						
-		
-				}
-
-		void processFragPaolo(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-            
-			// Paolos version
-			int nr= (int) Math.round(rdiNebuBP.nextUniform(1, 5));
-			nr= 7;
-			
-			for (int i = 0; i < nr; i++) {
-			
-				if (len< 2)
-					continue;
-				
-				// calc cdf
-				double[] cdf= new double[len- 1];
-				try {
-//					PrintWriter pp= new PrintWriter("test_cdf");
-					for (int j = 0; j < cdf.length; ++j) {
-						double p= getWeibullProb(j, 200, 2);
-						p+= (j== 0? 0: cdf[j- 1]);
-						cdf[j]= p;
-//						pp.println(j+"\t"+cdf[j]);
-					}
-//					pp.flush();
-//					pp.close();
-					System.currentTimeMillis();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				// "extract" length (Palo's language)
-				double r= rndBP.nextDouble()* cdf[cdf.length- 1];
-				int bp= Arrays.binarySearch(cdf, r);
-				if (bp< 0)
-					bp= -(bp+ 1);
-				//bp= 200;
-				//bp= Math.max(bp, len- bp);
-				
-				if (bp<= 0|| bp+ 1>= len) {
-					System.currentTimeMillis();
-					continue;
-				}
-				//boolean ff= rndBreak.nextBoolean();
-				double ff= 1d- rndBreak.nextDouble();
-				if (ff>= 0.5) {
-					int nuLen= bp- start+ 1;
-					updateMedian(nuLen);
-					cs.replace(0, start);
-					cs.replace(1, start+ bp);
-					cumuLen+= nuLen;
-					incLinesWrote();
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-					start= start+ bp+ 1;
-					len= end- start+ 1;
-					
-				} else {
-					int nuLen= end- bp;
-					updateMedian(nuLen);
-					cs.replace(0, end- bp);
-					cs.replace(1, end);
-					cumuLen+= nuLen;
-					incLinesWrote();
-					++newMols;
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-					end= end- bp- 1;
-					len= end- start+ 1;
-				}
-				
-				if (len== 0)
-					System.currentTimeMillis();
-			}
-			
-		}				
-			
-
-		
-		
-		void processFragBreakNDeg(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-				            
-			double lambda= nebu? settings.getFragNBlambda():settings.getFragNBlambda();	// nebu / 2d
-
-			if (len<= 10) {
-				cumuLen+= len;
-				updateMedian(len);
-				processFragNot(start, end, len, id);
-				return;
-			}
-				
-			
-			int bp= -1;
-			while (bp< start|| bp >= end)
-				//bp= (int) nextGaussianDouble(rndBP, start, end);
-				bp= (int) rdiNebuBP.nextGaussian(start+ (len/ 2d), 70);
-/*			double pp= rndBP.nextDouble();
-			
-			bp= (int) ((len/2d)+ (Math.sqrt(Math.abs(pp- 0.5d))* (Math.sqrt(0.5)* len/ 2d)));
-			double pp2= (0.5d- (-2d* (pp- 0.5d)* (pp- 0.5d)));
-			bp= (int) (len* pp2);
-			bp= (pp> 0.5? len- bp: bp);
-*/			
-			// bp= (int) (pp* len); // uniform
-			int min= Math.min(bp- start+ 1, end- bp);
-			int max= len- min;
-//			bp+= start;
-
-			double p= 1d- Math.exp(-Math.pow(len/ 700d, 2d));
-			if (p< 1d) {
-	            double r= rndBreak.nextDouble();
-	            if (r> p) {   // does not break (!)
-	            	bp= end;
-	            }	            
-			} else 
-				bp= end;
-			
-			--newMols;
-			if(bp> len/ 2d) {
-				if (bp< end) {
-					processFragDeg(start, bp, id, 2);
-					processFragDeg(bp+1, end, id, 3);
-				} else
-					processFragDeg(start, bp, id, 0);
-			} else {
-				if (bp< end) {
-					processFragDeg(start, bp, id, 3);
-					processFragDeg(bp+1, end, id, 1);
-				} else
-					processFragDeg(start, bp, id, 0);
-			}
-			
-		}
 
 		private void processFragDeg(int start, int end, ByteArrayCharSequence id, int mod) {
         	
@@ -1423,9 +786,9 @@ public class Fragmenter implements StoppableRunnable {
 				cumuLen+= len;
 				incLinesWrote();
 				rw.writeLine(cs, fos);	// id is invalid now
-				if (len<= settings.getFragNBlambda())
+                if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 					++tgtMols;
-				if (len<= settings.getFragNBlambda())
+                if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 					--tgtMols;
 				return;
 			}
@@ -1471,9 +834,9 @@ public class Fragmenter implements StoppableRunnable {
 			incLinesWrote();
 			++newMols;
 			rw.writeLine(cs, fos);	// id is invalid now
-			if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				++tgtMols;
-			if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				--tgtMols;
 
 		}
@@ -1506,8 +869,8 @@ public class Fragmenter implements StoppableRunnable {
 		}
 
 		void processFragDeg(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-						            
-					double lambda= nebu? settings.getFragNBlambda():settings.getFragNBlambda();	// nebu / 2d
+
+            double lambda= nebu? (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA) : (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA);	// nebu / 2d
 		
 					int bp= -1;
 					while (bp< start|| bp >= end)
@@ -1562,9 +925,9 @@ public class Fragmenter implements StoppableRunnable {
 					cumuLen+= nuLen;
 					incLinesWrote();
 					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
-					if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						--tgtMols;
 					
 					nuLen= end- bp;
@@ -1575,17 +938,17 @@ public class Fragmenter implements StoppableRunnable {
 					incLinesWrote();
 					++newMols;
 					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
-					if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						--tgtMols;
 						
 					
 				}
 
 		void processFrag110214(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-						            
-					double lambda= nebu? settings.getFragNBlambda():settings.getFragNBlambda();	// nebu / 2d
+
+            double lambda= nebu? (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA) : (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA);	// nebu / 2d
 		
 		        	double deg= len;
 		        	while(deg>= len- 1)
@@ -1634,9 +997,9 @@ public class Fragmenter implements StoppableRunnable {
 					cumuLen+= nuLen;
 					incLinesWrote();
 					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
-					if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						--tgtMols;
 					
 					nuLen= end- bp;
@@ -1647,9 +1010,9 @@ public class Fragmenter implements StoppableRunnable {
 					incLinesWrote();
 					++newMols;
 					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
-					if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						--tgtMols;
 						
 					
@@ -1698,9 +1061,9 @@ public class Fragmenter implements StoppableRunnable {
 					incLinesWrote();
 					//++newMols;	// one is the currMol
 					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
-					if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						--tgtMols;
 					
 					nuLen= end- bp;
@@ -1714,451 +1077,16 @@ public class Fragmenter implements StoppableRunnable {
 					incLinesWrote();
 					++newMols;
 					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
+            if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
-					if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						--tgtMols;
 					
 				}
 
-		void processRT110217(int start, int end, int len, ByteArrayCharSequence id) {
-		
-					int howmany= 0;
-					if (Fragmenter.this.settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_RANDOM)) {
-						double poissonMean= (len* 2d)/ (settings.getRTmaxLen()+ settings.getRTminLen()); 
-							// (len/ (double) medLen);
-						//poissonMean*= 1000;
-						if (poissonMean> 0) {
-							try {
-								howmany= (int) Math.round(rndHowMany.nextPoisson(poissonMean));	// TODO Poisson..
-								//System.err.println("OK: mean "+ poissonMean+ ", howmany "+ howmany);
-							} catch (Exception e) {
-								System.err.println("mean "+ poissonMean+ ", howmany "+ howmany);
-								e.printStackTrace();
-							}
-						}
-						if (howmany== 0)
-							++howmany;	// guarantee one priming event
-						if (howmany> where.length)
-							howmany= where.length;
-						for (int i = 0; i < howmany; i++) {
-							// add weighted biases here 
-							/*if (mapTxPosition!= null) {						
-								double[] fragCDF= getCDF(mapTxPosition.get(id), start, end);
-								double r= rtRndWhere.nextDouble();
-								int p= Arrays.binarySearch(fragCDF, r);
-								if (p< 0)
-									p= -(p+1);
-								where[i]= p;
-							} else
-							*/
-								where[i]= 
-								//start+ (int) (rtRndWhere.nextDouble()* len);	// skip Math.round() and -1
-								//end- (int) Math.exp(-(rtRndWhere.nextDouble()* len));
-								end- (int) Math.sqrt(rtRndWhere.nextDouble()* len);
-						}
-						Arrays.sort(where,0,howmany);
-						
-					} else if (Fragmenter.this.settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_POLY_DT)) {
-						howmany= 1;
-						int truLen= 0;
-		//				int p= ByteArrayCharSequence.indexOf(id, (char) BYTE_SEP_LC_TX, 0, id.length());
-		//				ByteArrayCharSequence tid= id.subSequence(p, id.length());
-						truLen= settings.getProfiler().getLength(id);	// tid
-						int lenPA= end- truLen;
-						// rtRndWhere.nextDouble()* len
-						if (lenPA< 0) // TODO kill after chr@tid introduced
-							where[0]= end;
-						else 
-							where[0]= truLen+ (int) (rtRndWhere.nextDouble()* lenPA)- 1;	// Math.round() f* slow
-		//				if (where[0]< start)
-		//					System.currentTimeMillis();
-					}
-		
-					// fall-off
-					int lastLo= Integer.MAX_VALUE;
-					int lastInt= -1;
-					for (int i = howmany-1; i >= 0; --i) {
-						
-						if (where[i]>= lastLo) {
-							double r= fiftyFiftyRnd.nextDouble();
-							int dist= Math.min(where[i]- start, where[lastInt]-where[i]);								
-							// 500= length that is unlikely to be unwound
-							double val=  Math.exp((-1d)*dist/ settings.getRTminLen());
-							if (r< val) {	// can unwind, settings.getMaxRTLen()
-								where[i]= Integer.MIN_VALUE;
-								continue;
-							} else 
-								starts[lastInt]= where[i];
-						}
-						
-						int diff= settings.getRTmaxLen()- settings.getRTminLen();
-						int foffPos= settings.getRTminLen();
-						if (diff!= 0)
-							foffPos+= rndPolPt.nextInt(diff); 
-						
-						//foffPos= Math.min(where[i]- start+ 1,foffPos);	
-						starts[i]= Math.max(where[i]- foffPos+ 1, start);
-						lastLo= starts[i];
-						lastInt= i;
-					}
-					
-					//int[] myWhere= where, myStarts= starts;
-					--newMols;	// substract the original one	
-					
-					id= id.cloneCurrentSeq();	// id invalid after replace operation !
-					addFragCount(id, (long) (howmany));
-					int nowStart= start, nowEnd= end;
-					for (int i = 0; i < howmany; i++) {
-						if (where[i]== Integer.MIN_VALUE)// || where[i]- starts[i]< settings.getMinRTLen())	// || where[i]- starts[i]< settings.getMinRTLen()
-							continue;
-						++newMols;
-						int nuStart= starts[i], nuEnd= where[i]; 
-		//				if (nuStart< start|| nuEnd> end)
-		//					System.currentTimeMillis();
-						assert(nuStart>= start&& nuEnd<= end);
-		//				int len1= where[i]- starts[i]+ 1;
-						
-						// plot
-						if (Fragmenter.this.plotter!= null)
-							Fragmenter.this.plotter.plot(nuStart, nuEnd, 0, id);	
-						
-		//				if (nuStart> nuEnd)
-		//					System.currentTimeMillis();
-						assert(nuStart<= nuEnd);
-						
-						// write ! may be iterated multiple times due to howmany
-						if (nuStart!= nowStart) {
-							cs.replace(0, nuStart);
-							nowStart= nuStart;
-						}
-						if (nuEnd!= nowEnd) {
-							cs.replace(1, nuEnd);
-							nowEnd= nuEnd;
-						}
-						incLinesWrote();
-						rw.writeLine(cs, fos);
-					}
-				}
 
-		void processFrag110223_Weibull(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-		            
-					// 110223_dynamicWeibull
-			
-					//double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
-					
-					if (len<= 1) {	// does not break
-						updateMedian(len);
-		    			cumuLen+= len;
-		    			cs.replace(0, start);
-		    			cs.replace(1, end);
-		            	processFragNot(start, end, len, id);
-						return;
-					}
-			
-			
-					// dynamic weibull
-					double scale= 200d; 	//avgLength/ 2;
-					double shape= 2d; // 5d- roundCtr;
-					
-					int bp= 
-						//(int) Math.round((len- 2)* rndBP.nextDouble());	// avoid border pos
-						(int) sampleWeibull(rndBP, scale, shape);
-					
-		//			double pb= 
-		//				1d- getWeibullProb(len, 300d, 2);
-						//1d- (200d/ len);
-					
-					if (bp+ 1> len- 1|| bp< 0) {
-						System.currentTimeMillis();
-						updateMedian(len);
-		    			cumuLen+= len;
-		    			cs.replace(0, start);
-		    			cs.replace(1, end);
-		            	processFragNot(start, end, len, id);
-						return;
-					}
-					
-/*					double p0= getWeibullProb(len, scale, shape);
-					double p1= getWeibullProb(bp+ 1, scale, shape);
-					double p2= getWeibullProb(len-bp, scale, shape);
-					double pb= Math.min(p1, p2)/ p0;
-					double r= rndBreak.nextDouble();
-					if (r> pb) {	// does not break
-						updateMedian(len);
-		    			cumuLen+= len;
-		    			cs.replace(0, start);
-		    			cs.replace(1, end);
-		            	processFragNot(start, end, len, id);
-						return;
-					}
-*/			
-					double ff= rndBreak.nextDouble();
-					if (ff>= 0.5)
-						bp= len- bp- 2;
-					
-					bp+= start;
-					int nuLen= bp- start+ 1;
-					updateMedian(nuLen);
-					if (start< 0|| start> bp)
-						System.currentTimeMillis();
-					cs.replace(0, start);
-					cs.replace(1, bp);
-					cumuLen+= nuLen;
-					incLinesWrote();
-					//++newMols;	// one is the currMol
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-					
-					nuLen= end- bp;
-					updateMedian(nuLen);
-					if (bp+ 1< 0|| bp+ 1> end)
-						System.currentTimeMillis();
-					cs.replace(0, bp+ 1);
-					cs.replace(1, end);
-					cumuLen+= nuLen;
-					incLinesWrote();
-					++newMols;
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-					
-				}
 
-		void processFrag110225delta(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-		            
-					//double lambda= nebu? settings.getLambda():settings.getLambda();	// nebu / 2d
-		
-					// x ~ C (d-d_0)^delta
-					double pb= Math.pow(Math.max(len- 100d, 0), 3d) / (double) lastMaxLen;
-					
-					
-					double r= rndBreak.nextDouble();
-					if (r> pb) {	// does not break
-						updateMedian(len);
-		    			cumuLen+= len;
-		    			maxLen= Math.max(maxLen, len);
-		    			cs.replace(0, start);
-		    			cs.replace(1, end);
-		            	processFragNot(start, end, len, id);
-						return;
-					}
-					
-					int bp= 
-						(int) Math.round((len- 2)* rndBP.nextDouble());	// avoid border pos
-						//(int) sampleWeibull(rndBP, scale, shape);
-					
-		//			double pb= 
-		//				1d- getWeibullProb(len, 300d, 2);
-						//1d- (200d/ len);
-			
-					if (bp+ 1> len- 1|| bp< 0)
-						System.currentTimeMillis();
-		
-					bp+= start;
-					int nuLen= bp- start+ 1;
-					updateMedian(nuLen);
-					if (start< 0|| start> bp)
-						System.currentTimeMillis();
-					cs.replace(0, start);
-					cs.replace(1, bp);
-					cumuLen+= nuLen;
-					maxLen= Math.max(nuLen, maxLen);
-					incLinesWrote();
-					//++newMols;	// one is the currMol
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-					
-					nuLen= end- bp;
-					updateMedian(nuLen);
-					if (bp+ 1< 0|| bp+ 1> end)
-						System.currentTimeMillis();
-					cs.replace(0, bp+ 1);
-					cs.replace(1, end);
-					cumuLen+= nuLen;
-					maxLen= Math.max(nuLen, maxLen);
-					incLinesWrote();
-					++newMols;
-					rw.writeLine(cs, fos);	// id is invalid now
-					if (nuLen<= settings.getFragNBlambda())
-						++tgtMols;
-					if (len<= settings.getFragNBlambda())
-						--tgtMols;
-					
-				}
 
-		void processFrag110211(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
-				            
-							double lambda= nebu? settings.getFragNBlambda():settings.getFragNBlambda();	// nebu / 2d
-		
-							if (!nebu) {
-								// first check whether frag gets broken
-								//double val= 
-									// linear
-									// lambda/ len;
-									//(len- lambda)/ lambda;
-									//(len- lambda)/ (2* lambda);
-									
-									// polynomial
-									//Math.pow((len- lambda)/ lambda, 2d);	// len> lambda, P(b)
-								
-								
-									// exponential
-									//1d- Math.exp((lambda- len)/ lambda);	// len> lambda, P(b)
-									//1d- Math.exp(-Math.pow(len/ lambda, 2d));	// len> lambda, P(b)
-									//1d- Math.pow(Math.exp(-(len/ lambda)), 2d);	// len> lambda, P(b)
-									
-									//1d- Math.pow(len/ lambda, -0.5d);
-									//Math.log(1d+ Math.pow(len/ lambda, 0.5));
-									//Math.sqrt(Math.log(1d+len/ lambda));
-									//Math.log(Math.sqrt(1d+ len/lambda));
-									//1d- Math.exp(-len);
-									//1d- (1d/ Math.pow(len, len/lambda));
-									
-									//1d- (lambda/ Math.pow(len, 1));	// friday
-									
-		//							double val= 1d;
-		//							if (len< lambda)
-		//								val= 1d/ Math.log10(lambda- len);
-								
-								double val= 
-									Math.log10(len/ (lambda));	//len> lambda must be able to not break
-									//Math.log10(len/ (lambda/ 2d));
-									
-								if (val< 1d) {
-						            double r= rndBreak.nextDouble();
-						            if (r> val) {   // does not break (!)
-						            	processFragNot(start, end, len, id);
-						            	return;
-						            }
-								} 
-									
-							}
-							
-				            
-				            // else
-							int howMany= (len> 1?1:0);
-							if (multiBreaks) {
-								howMany= (int) rndHowMany.nextPoisson(len/ lambda); // nr events
-								if (howMany== 0&& len> 1)
-									howMany= 1;
-								else if (howMany>= where.length)
-									howMany= where.length- 1;
-							}
-							if (howMany== 0) {
-								processFragNot(start, end, len, id);
-								return;
-							}
-							
-							determineBPos(id, start, end, where, howMany, nebu);
-							
-							// determine len_min, len_max
-							int minLen= Integer.MAX_VALUE, maxLen= Integer.MIN_VALUE;
-							for (int i = 0; i < howMany; i++) {
-								int nuLen= where[i]- (i== 0? start: where[i- 1])+ 1;
-								if (nuLen< minLen)
-									minLen= nuLen;
-								if (nuLen> maxLen)
-									maxLen= nuLen;
-							}
-							int lastLen= end- where[howMany- 1]+ 1;
-							if (lastLen< minLen)
-								minLen= lastLen;
-							if (lastLen> maxLen)
-								maxLen= lastLen;
-		
-							// nebu break condition, after bp has been choosen
-							if (nebu) {
-								double val= 
-									//1d- Math.exp(-Math.pow(minLen/(double) lambda, 2d));
-									// nebu
-									//1d- Math.exp(-Math.pow(minLen/ lambda, 2d));	// len> lambda, P(b)
-									1d- Math.exp(-(minLen/ lambda));	// len> lambda, P(b)
-								
-								
-									//1d- (lambda/ (2* Math.pow(maxLen, 2)));
-									//1d- ((lambda/ 2d)/ maxLen);
-									
-									//1d- Math.pow(maxLen, -(len/ lambda));
-									//Math.log10(lambda)/ Math.log10(len);
-									//Math.exp(-Math.pow(maxLen/ lambda, 2d));
-									//Math.pow()
-								double r= rndBreak.nextDouble();
-								if (r> val) {
-									processFragNot(start, end, len, id);
-									return;
-								}
-							}
-		
-							
-							if (howMany> 1) 
-								Arrays.sort(where, 0, howMany);
-							int lastVal= start;
-							if (howMany> 1)
-								id= id.cloneCurrentSeq();	// gets invalid with replace
-							int nowStart= start, nowEnd= end;
-							addFragCount(id, (long) (howMany));
-							tstNewMols+= howMany;
-							for (int i = 0; i < howMany; i++) {
-								if (where[i]== lastVal)
-									continue;	// 0-length frag, 2x hydrolized at same point
-								int nuLen= where[i]- lastVal;	// (lastVal- 1)+ 1
-								if (processFragDiss(nuLen))
-									continue;
-		
-								++newMols;
-								lenSum+= nuLen;
-								++lenNb;
-								if (nuLen<= Fragmenter.this.settings.getFragNBlambda())
-									++Fragmenter.this.tgtMols;
-								
-								// plot
-								int nuEnd= where[i]- 1;	// floor(bp)
-								if (Fragmenter.this.plotter!= null) 
-									Fragmenter.this.plotter.plot(lastVal, nuEnd, -1, id);
-				
-								// write
-								if (lastVal!= nowStart) {
-									cs.replace(0, lastVal);
-									nowStart= lastVal;
-								}
-								if (nuEnd!= nowEnd) {
-									cs.replace(1, nuEnd);
-									nowEnd= nuEnd;
-								}
-								cumuLen+= nowEnd- nowStart+ 1;
-								assert(lastVal<= nuEnd);
-								incLinesWrote();
-								rw.writeLine(cs, fos);	// id is invalid now
-								lastVal= where[i];
-							}
-							// last one, always-even if lastVal== end
-							int nuLen= end- where[howMany- 1]+ 1;
-							if (processFragDiss(nuLen))
-								return;
-							if (where[howMany- 1]!= nowStart) 
-								cs.replace(0, where[howMany- 1]);
-							if (nowEnd!= end) 
-								cs.replace(1, end);
-		//					if (where[howMany- 1]> end)
-		//						System.currentTimeMillis();
-							assert(where[howMany- 1]<= end);
-							cumuLen+= nuLen;
-							incLinesWrote();
-							rw.writeLine(cs, fos);	// id is invalid now
-							if (nuLen<= settings.getFragNBlambda())
-								++tgtMols;
-							if (len<= settings.getFragNBlambda())
-								--tgtMols;
-						}
 
 		boolean out1= true, out2= true, out3= true;
 		
@@ -2175,7 +1103,7 @@ public class Fragmenter implements StoppableRunnable {
 		void processFrag(boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
 				            
 			// get parameters
-			double d0= settings.getFragURd0();
+            double d0= settings.get(FluxSimulatorSettings.FRAG_UR_D0);
 			assert(d0>= 1); // problem with integer breakpoints, when fragment size << 1 !
 			double delta= getFragURdelta(len);  
 			double eta= getFragUReta();
@@ -2452,9 +1380,8 @@ public class Fragmenter implements StoppableRunnable {
 			// parameters:
 			// pb: M, lambda, len
 			// bp: Sigma, length
-			double lambda= Fragmenter.this.settings.getFragNBlambda();
-			double sigma= Fragmenter.this.settings.getFragNBsigma();
-			double M= Fragmenter.this.settings.getFragNBm();
+            double lambda= Fragmenter.this.settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA);
+            double M= Fragmenter.this.settings.get(FluxSimulatorSettings.FRAG_NB_M);
 			int recDepth= Fragmenter.this.nebuRecursionDepth;
 			double C= Fragmenter.this.nebuC;
 			if (fragments== null)
@@ -2471,10 +1398,9 @@ public class Fragmenter implements StoppableRunnable {
 					// N(length/2,sigma)= (N(0,1)*sigma*(length/2)+ length/2
 					int L= fragments[j]; 
 					double rr= rndBP.nextGaussian();
-					int bp= (int) ((rr* sigma
-							* ((L-1)/2d))+ (L-1)/2d);	// bp index [0;L[						
+					//int bp= (int) ((rr* sigma * ((L-1)/2d))+ (L-1)/2d);	// bp index [0;L[
 					//bp= (int) rdiNebuBP.nextGaussian(len/ 2d, len/ 4d);
-					bp= (int) nextGaussianDouble(rndBP, 0, L- 1);
+					int bp= (int) nextGaussianDouble(rndBP, 0, L- 1);
 					
 					// breaking probability (pb)
 					// pb= 1- exp^(-((x-C)/lambda)^M)
@@ -2509,9 +1435,9 @@ public class Fragmenter implements StoppableRunnable {
 				
 				// update stats
 				incLinesWrote();
-				if (fragments[j]<= settings.getFragNBlambda())
+                if (fragments[j]<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 					++tgtMols;
-				if (len<= settings.getFragNBlambda())
+                if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 					--tgtMols;
 			}
 			assert(start== len);
@@ -2599,18 +1525,16 @@ public class Fragmenter implements StoppableRunnable {
 	
 	/**
 	 * Parses command line string and returns corresponding subsampling mode identifier.
-	 * @param s string that describes sampling method
+	 * @param s the sampling method
 	 * @return sampling mode identifier
 	 */
-	public static byte parseFilterSampling(String s) {
-		s= s.toUpperCase();
-		if (s.equals(PAR_SAMPLE_REJECTION))
-			return MODE_FILT_REJ;
-		if (s.equals(PAR_SAMPLE_ACCEPTANCE))
-			return MODE_FILT_ACC;
-		if (s.equals(PAR_SAMPLE_MH))
-			return MODE_FILT_MH;
-		return MODE_NOT_INITED;
+	public static byte parseFilterSampling(FluxSimulatorSettings.SizeSamplingModes s) {
+        switch (s){
+            case RJ: return MODE_FILT_REJ;
+            case AC: return MODE_FILT_ACC;
+            case MH: return MODE_FILT_MH;
+            default: return MODE_NOT_INITED;
+        }
 	}
 	
 	/**
@@ -2818,9 +1742,9 @@ public class Fragmenter implements StoppableRunnable {
 		this.settings= settings;
 	}
 
-	public Fragmenter(FluxSimulatorSettings settings, byte mode) {
+	public Fragmenter(FluxSimulatorSettings settings, Profiler profiler) {
 		this(settings);
-		this.mode= mode;
+		this.profiler = profiler;
 	}
 
 	static RandomDataImpl rndImplGelLen= new RandomDataImpl();
@@ -2843,37 +1767,21 @@ public class Fragmenter implements StoppableRunnable {
 		return len;
 	}
 	
-	int deltaFiltMin= -1, deltaFiltMax= -1;
-	public int getDeltaFiltMin() {
-		if (deltaFiltMin< 0) 
-			initDeltaRange();
 
-		return deltaFiltMin;
-	}
-	public int getDeltaFiltMax() {
-		if (deltaFiltMax< 0) 
-			initDeltaRange();
 
-		return deltaFiltMax;
-	}
-	private void initDeltaRange() {
-		if (settings.isFilter()) {
-			int irange= (int) ((settings.getFiltMax()- settings.getFiltMin()+ 1)* 1.5d);
-			deltaFiltMin= Math.max(settings.getFiltMin()- irange, 0);
-			deltaFiltMax= settings.getFiltMax()+ irange;
-		}
-	}
-	
+
 	public void run() {
 		
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 			System.err.println("[LIBRARY] creating the cDNA libary");
-		
-		// TODO adapt init() and check whether all parameters are ok
-//		if (!init())
-//			throw new RuntimeException();
-		
-		if (settings.getFrgFile().exists()&& checkFrgFile())
+
+        try {
+            init();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (settings.get(FluxSimulatorSettings.LIB_FILE).exists()&& checkFrgFile())
 			return;
 		
 		// REUSE frg file
@@ -2887,16 +1795,20 @@ public class Fragmenter implements StoppableRunnable {
 
 			
 		// do it
-		if (settings.isFragB4RT()) {
+        double gc_lo = settings.get(FluxSimulatorSettings.RT_GC_LO);
+        double gc_high = settings.get(FluxSimulatorSettings.RT_GC_HI);
+        FluxSimulatorSettings.Substrate substrate = settings.get(FluxSimulatorSettings.FRAG_SUBSTRATE);
+
+
+        FluxSimulatorSettings.FragmentationMethod fragMode = settings.get(FluxSimulatorSettings.FRAG_METHOD);
+        if (substrate == FluxSimulatorSettings.Substrate.RNA) {
 			rndBreak= new Random();
-			if (settings.isFragment()) {
+            if ((boolean) settings.get(FluxSimulatorSettings.FRAGMENTATION)) {
 				byte mode= MODE_NOT_INITED;
-				if (settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_NB_DEPRECATED)
-						|| settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_NB)) {
+				if (fragMode == FluxSimulatorSettings.FragmentationMethod.NB) {
 					mode= MODE_NEBU;
 					rdiNebuBP= new RandomDataImpl();
-				} else if (settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_UR_DEPRECATED)
-						|| settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_UR)) {
+				} else if (fragMode == FluxSimulatorSettings.FragmentationMethod.UR) {
 					mode= MODE_FRAG;
 					rdiNebuBP= new RandomDataImpl();
 					rndBP= new Random();
@@ -2906,13 +1818,13 @@ public class Fragmenter implements StoppableRunnable {
 					return;
 				}
 			}
-			if (settings.isRT()) {
-				initRTpar(settings.getRTminGC(), settings.getRTmaxGC());
-				if (settings.getRTmotif()!= null) { 
+            if ((boolean) settings.get(FluxSimulatorSettings.RTRANSCRIPTION)) {
+                initRTpar(gc_lo, gc_high);
+                if (settings.get(FluxSimulatorSettings.RT_MOTIF) != null) {
 					getMapTxSeq();
 					//getWeights(settings.getRTmotif());
 					try {
-						pwmSense= PWM.create2(settings.getRTmotif());
+                        pwmSense= PWM.create2(settings.get(FluxSimulatorSettings.RT_MOTIF));
 						for (int i = 0; i < 100; i++) 
 							pwmSense.multiply();
 						pwmSense.makePDF();
@@ -2932,35 +1844,33 @@ public class Fragmenter implements StoppableRunnable {
 			
 		// start with RT
 		} else {
-			if (settings.isRT()) {
-				initRTpar(settings.getRTminGC(), settings.getRTmaxGC());
-				if (settings.getRTmotif()!= null) {
+            if ((boolean) settings.get(FluxSimulatorSettings.RTRANSCRIPTION)) {
+                initRTpar(gc_lo, gc_high);
+                if (settings.get(FluxSimulatorSettings.RT_MOTIF) != null) {
 					getMapTxSeq();
-					getWeights(settings.getRTmotif());
+                    getWeights(settings.get(FluxSimulatorSettings.RT_MOTIF));
 				}
 				if (!process(MODE_RT)) {
 					return;
 				}
 			}
 			rndBreak= new Random();
-			if (settings.isFragment()) {
+            if ((boolean) settings.get(FluxSimulatorSettings.FRAGMENTATION)) {
 				byte mode= MODE_NOT_INITED;
-				if (settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_NB_DEPRECATED)
-						|| settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_NB)) {
+				if (fragMode == FluxSimulatorSettings.FragmentationMethod.NB) {
 					mode= MODE_NEBU;
 					rdiNebuBP= new RandomDataImpl();
-				} else if (settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_UR_DEPRECATED)
-						|| settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_UR)) {
+				} else if (fragMode == FluxSimulatorSettings.FragmentationMethod.UR) {
 					mode= MODE_FRAG;
 					rndBP= new Random();
-				} else if (settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_EZ)) {
+				} else if (fragMode == FluxSimulatorSettings.FragmentationMethod.EZ) {
 					mode= MODE_FRAG_EZ;
 					rnd1= new Random();
 					rnd2= new Random();
 					rnd3= new Random();
 					try {
 						getMapTxSeq();
-						pwmSense= PWM.create2(settings.getFragEZmotif());
+                        pwmSense= PWM.create2(settings.get(FluxSimulatorSettings.FRAG_EZ_MOTIF));
 						mapWeightSense= getMapWeight(getMapTxSeq(), pwmSense);
 						pwmSense.invert();
 						pwmAsense= pwmSense;
@@ -2978,14 +1888,14 @@ public class Fragmenter implements StoppableRunnable {
 		
 		
 		// size selection
-		if (settings.isFilter()) {
+        if ((boolean) settings.get(FluxSimulatorSettings.FILTERING)) {
 			
 			//if (settings.getFileFilterDistr()!= null) {
 			//	initGelBins(new File(settings.getFilterDistribution()));
 			//}
 			System.err.println("Initializing Selected Size distribution");
 			//Log.progressStart("Initializing Selected Size distribution");
-			filterDist= parseFilterDistribution(settings.getFilterDistribution(), Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, false);
+            filterDist= parseFilterDistribution(settings.get(FluxSimulatorSettings.SIZE_DISTRIBUTION).getAbsolutePath(), Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, false);
 			//Log.progressFinish();
 			EmpiricalDistribution eDist= ((EmpiricalDistribution) filterDist[0]); 			
 			
@@ -2999,8 +1909,8 @@ public class Fragmenter implements StoppableRunnable {
 				
 				eDist.normalizeToPrior((EmpiricalDistribution) originalDist);
 			}
-			
-			byte mode= parseFilterSampling(settings.getFilterSampling());
+
+            byte mode= parseFilterSampling(settings.get(FluxSimulatorSettings.SIZE_SAMPLING));
 			if ((!process(mode))) {
 				stopProcessors();
 				return;
@@ -3021,24 +1931,25 @@ public class Fragmenter implements StoppableRunnable {
 			stopProcessors();
 			return;
 		}
-		if (!FluxSimulatorSettings.appendProfile(settings, FluxSimulatorSettings.PRO_COL_NR_FRG, mapFrags))	// writeProFile()
+		if (!ProfilerFile.appendProfile(settings, ProfilerFile.PRO_COL_NR_FRG, mapFrags))	// writeProFile()
 			throw new RuntimeException();
 		stopProcessors();
 	}
 
 	private GFFReader getGFFReader() {
-		GFFReader gffReader = new GFFReader(settings.getRefFile().getAbsolutePath());	
+        File ref_file = settings.get(FluxSimulatorSettings.REF_FILE);
+        GFFReader gffReader = new GFFReader(ref_file.getAbsolutePath());
 		try {
 			if (!gffReader.isApplicable()) {
 				File refFile= gffReader.createSortedFile();
 				if (refFile== null)
 					return null;
-				settings.setRefFile(new File(settings.getProFile().getParent()+ File.separator+ refFile.getName()));
-				if (!refFile.equals(settings.getRefFile())) {
-					if (!FileHelper.move(refFile, settings.getRefFile(), null))
+                settings.setRefFile(new File(settings.get(FluxSimulatorSettings.PRO_FILE).getParent()+ File.separator+ refFile.getName()));
+                if (!refFile.equals(ref_file)) {
+                    if (!FileHelper.move(refFile, ref_file, null))
 						settings.setRefFile(refFile);
 				}
-				gffReader= new GFFReader(settings.getRefFile().getAbsolutePath());
+                gffReader= new GFFReader(ref_file.getAbsolutePath());
 			}
 			gffReader.setSilent(true);
 			gffReader.setStars(true);
@@ -3072,9 +1983,9 @@ public class Fragmenter implements StoppableRunnable {
 
 		if (mapTxSeq == null) {
 			mapTxSeq= new HashMap<CharSequence, CharSequence>(10000);
-			GFFReader reader= getGFFReader();		
-			if (settings.genDir!= null)
-				Graph.overrideSequenceDirPath= settings.genDir.getAbsolutePath();
+			GFFReader reader= getGFFReader();
+            if (settings.get(FluxSimulatorSettings.GEN_DIR) != null)
+                Graph.overrideSequenceDirPath= settings.get(FluxSimulatorSettings.GEN_DIR).getAbsolutePath();
 			try {
 				reader.read();
 				for (Gene[] g; (!stop)&& (g= reader.getGenes())!= null; reader.read()) {				
@@ -3115,14 +2026,14 @@ public class Fragmenter implements StoppableRunnable {
 		
 		Log.progressStart("Copying results");
 
-		if (FileHelper.move(tmpFile, settings.getFrgFile(), null)) 
+        if (FileHelper.move(tmpFile, settings.get(FluxSimulatorSettings.LIB_FILE), null))
 			return true;
 		return false;
 	}
 
 	private boolean checkFrgFile() {
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			System.err.print("\tchecking file "+settings.getFrgFile().getAbsolutePath()+" ");
+            System.err.print("\tchecking file "+ settings.get(FluxSimulatorSettings.LIB_FILE).getAbsolutePath()+" ");
 			System.err.flush();
 		}
 		
@@ -3133,96 +2044,15 @@ public class Fragmenter implements StoppableRunnable {
 	}
 	
 
-	boolean init() {
-		
-		if (settings.getProFile()== null) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t[OOPS] no input for nebulizing");
-			return false;
-		} else {
-			int nbTx= 0;
-			try {
-				FileHelper.countLines(settings.getProFile().getCanonicalPath());
-			} catch (IOException e) {
-				if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-					e.printStackTrace();
-				return false;
-			}
-			mapFrags= new Hashtable<CharSequence,Long>(nbTx, 1f);
-		}
-		
-		if (settings.getTmpDir()== null) {
-			settings.setTmpDir(new File(System.getProperty("java.io.tmpdir")));
-		}
-		if ((!settings.getTmpDir().exists())|| (!settings.getTmpDir().canWrite())) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t[UHUPS] there is something wrong with the scratch directory:");
-				try {
-					System.err.println("\t"+settings.getTmpDir().getCanonicalPath());
-				} catch (IOException e) {
-					if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS) 
-						e.printStackTrace();
-				}
-			}
-			return false;
-		} else {
-			try {
-				tmpFile= File.createTempFile(FluxSimulatorSettings.TMP_PFX, FluxSimulatorSettings.TMP_SFX);
-				tmpWriteFile= File.createTempFile(FluxSimulatorSettings.TMP_PFX, FluxSimulatorSettings.TMP_SFX);
-			} catch (IOException e) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\t[NOFILE] problems creating temporary files");
-				if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS) 
-					e.printStackTrace();
-				return false;
-			}
-
-		}
-		
-		if (	settings.getFragNBlambda()< 0|| Double.isNaN(settings.getFragNBlambda())
-				|| (settings.getFragMode().equals(FluxSimulatorSettings.PAR_FRAG_METHOD_NB_DEPRECATED)&& (settings.getThold()< 0|| Double.isNaN(settings.getThold())))
-				// || settings.getSigma()< 0
-				//|| (!settings.getProFile().getParentFile().canWrite()) // killed: NPException when run on file without leading path
-				) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.print("\t[TOOLITTLE] there are parameters missing: ");
-//				if (settings.getSigma()< 0)
-//					System.err.print(settings.PAR_FRAG_SIGMA+" ");
-				if (settings.getFragNBlambda()< 0)
-					System.err.print(settings.PAR_FRAG_NB_LAMBDA+" ");
-				if (settings.getThold()< 0)
-					System.err.print(settings.PAR_FRAG_NB_THOLD+" ");
-				System.err.println("\n");
-			}
-			return false;
-			
-		} else {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+settings.PAR_FRAG_NB_LAMBDA+"\t"+settings.getFragNBlambda());
-				// System.err.println("\t"+settings.PAR_FRAG_SIGMA+"\t"+settings.getSigma());
-				System.err.println("\t"+settings.PAR_FRAG_NB_THOLD+"\t"+settings.getThold());
-				System.err.println("\t"+settings.PAR_FRAG_SUBSTRATE_DEPRECATED+"\t"+settings.isFragB4RT());
-				System.err.println("\t"+settings.PAR_RT_MIN+"\t"+settings.getRTminLen());
-				System.err.println("\t"+settings.PAR_RT_MAX+"\t"+settings.getRTmaxLen());
-				System.err.println("\t"+settings.PAR_RT_MODE+"\t"+settings.getRtMode());
-				System.err.println("\t"+settings.PAR_FILT+"\t"+settings.isFilter());
-				System.err.println("\t"+settings.PAR_FILT_MIN+"\t"+settings.getFiltMin());
-				System.err.println("\t"+settings.PAR_FILT_MAX+"\t"+settings.getFiltMax());
-
-				try {
-					System.err.println("\t"+FluxSimulatorSettings.PAR_PRO_FNAME+"\t"+settings.getProFile().getCanonicalPath());
-					System.err.println("\t"+FluxSimulatorSettings.PAR_TMP_FNAME+"\t"+settings.getTmpDir().getCanonicalPath());
-				} catch (IOException e) {
-					;	// :)
-				}
-				System.err.println();
-			}
-		}
-		
+	boolean init() throws Exception{
+	    int nbTx  = FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
+    	mapFrags= new Hashtable<CharSequence,Long>(nbTx, 1f);
+    	tmpFile= File.createTempFile("Framgmenter-tmp", ".tmp");
+		tmpWriteFile= File.createTempFile("Framgmenter-write", ".tmp");
 		return true;
 	}
-	
-	Random rndBreak; 
+
+	Random rndBreak;
 	Random rndBP= new Random();
 	Random rndNebu= new Random();
 	Random rndDisappear= new Random();
@@ -3262,9 +2092,9 @@ public class Fragmenter implements StoppableRunnable {
 		
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 			System.err.print("\tnebulizing +");
-			System.err.println("lamda "+settings.getFragNBlambda()
+            System.err.println("lamda "+ (double) settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA)
 					//+", sigma "+settings.getSigma()
-					+", thold "+settings.getThold());
+					+", thold "+ (double) settings.get(FluxSimulatorSettings.FRAG_NB_THOLD));
 		}
 		
 		return process(MODE_NEBU);
@@ -3641,20 +2471,20 @@ public class Fragmenter implements StoppableRunnable {
 			double thrTgt= 0.95;
 			double tgtFrac= 0d;
 			cumuLen= 0;
-			int[] allLength= settings.getProfiler().getLen();
-			long[] allMos= settings.getProfiler().getMolecules();
+			int[] allLength= profiler.getLen();
+			long[] allMos= profiler.getMolecules();
 			for (int i = 0; i < allLength.length; i++) {
 				cumuLen+= allMos[i]* allLength[i];
 				prevMols+= allMos[i];
 			}
 			
-			if (mode== MODE_NEBU) 
-				initNebulizationParameters(
-						settings.getFragNBlambda(),
-						settings.getFragNBm(),
-						settings.getThold(),
-						settings.getProfiler().getMaxMoleculeLength()
-				);
+			if (mode== MODE_NEBU)
+                initNebulizationParameters(
+                        settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA),
+                        settings.get(FluxSimulatorSettings.FRAG_NB_M),
+settings.get(FluxSimulatorSettings.FRAG_NB_THOLD),
+profiler.getMaxMoleculeLength()
+);
 			
 			// TODO estimate required disk space
 			
@@ -3718,7 +2548,7 @@ public class Fragmenter implements StoppableRunnable {
 				rw.addStream(fos, 10* 1024);				
 				for (int i = 0; i < processorPool.length; i++) 
 					processorPool[i].setFos(fos);
-				if (FluxSimulatorSettings.optDisk) 
+				if (optDisk)
 					rw.start();
 				
 				ByteArrayCharSequence cs= new ByteArrayCharSequence(100);
@@ -3740,7 +2570,7 @@ public class Fragmenter implements StoppableRunnable {
 					int len= end- start+ 1;
 //					if (processFragDiss(len))
 //						return;
-					if (len<= settings.getFragNBlambda())
+                    if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 						++tgtMols;
 
 					ByteArrayCharSequence id= cs.getToken(2);
@@ -3776,7 +2606,7 @@ public class Fragmenter implements StoppableRunnable {
 				}
 				
 				rw.close();
-				if (FluxSimulatorSettings.optDisk) 
+				if (optDisk)
 					rw.join();
 				
 				//fis.close();
@@ -3937,11 +2767,11 @@ public class Fragmenter implements StoppableRunnable {
 	}
 	
 	private double getFragURdelta(double len) {
-		
-		if (Double.isNaN(settings.getFragURdelta()))
+
+        if (Double.isNaN(settings.get(FluxSimulatorSettings.FRAG_UR_DELTA)))
 			return Math.max(Math.log10(len), 1);
-		return settings.getFragURdelta();
-	}
+        return settings.get(FluxSimulatorSettings.FRAG_UR_DELTA);
+    }
 	
 	/**
 	 * Provides eta ("intensity of fragmentation") of the uniform random fragmentation process;
@@ -3951,20 +2781,20 @@ public class Fragmenter implements StoppableRunnable {
 	 * @return
 	 */
 	private double getFragUReta() {
-		
-		if (Double.isNaN(settings.getFragUReta())) {
-			double medLen= settings.getProfiler().getMedMoleculeLength();
+
+        if (Double.isNaN(settings.get(FluxSimulatorSettings.FRAG_UR_ETA))) {
+			double medLen= profiler.getMedMoleculeLength();
 			double medDelta= getFragURdelta(medLen);
-			double d0= settings.getFragURd0();
-			double medFilt= DEFAULT_MED_SIZE; 
-			if (settings.isFilter())
+            double d0= settings.get(FluxSimulatorSettings.FRAG_UR_D0);
+			double medFilt= DEFAULT_MED_SIZE;
+            if ((boolean) settings.get(FluxSimulatorSettings.FILTERING))
 				medFilt= 170; //getFiltMedian();
 			
 			settings.setFragUReta((medFilt- d0)/ Math.exp(Gamma.logGamma(1d+ 1d/medDelta)));
 		}
 
-		return settings.getFragUReta();
-	}
+        return settings.get(FluxSimulatorSettings.FRAG_UR_ETA);
+    }
 
 
 	Processor[] processorPool;
@@ -3976,31 +2806,31 @@ public class Fragmenter implements StoppableRunnable {
 		try {
 			System.err.print("\tupdating PROfile ");
 			System.err.flush();
-			BufferedReader buffy= new BufferedReader(new FileReader(settings.getProFile()));
-			BufferedWriter wright= new BufferedWriter(new FileWriter(settings.getTmpDir()+File.separator+settings.getProFile().getName()+FluxSimulatorSettings.TMP_SFX));
+            BufferedReader buffy= new BufferedReader(new FileReader(settings.get(FluxSimulatorSettings.PRO_FILE)));
+            BufferedWriter wright= new BufferedWriter(new FileWriter(settings.get(FluxSimulatorSettings.TMP_DIR) +File.separator+ settings.get(FluxSimulatorSettings.PRO_FILE).getName()+ TMP_SFX));
 			String[] token;
-			long bytesRead= 0, bytesTotal= settings.getProFile().length();
+            long bytesRead= 0, bytesTotal= settings.get(FluxSimulatorSettings.PRO_FILE).length();
 			int perc= 0, lineCtr= 0;
-			String nullStr= Double.toString(0d)+FluxSimulatorSettings.PRO_FILE_TAB+Long.toString(0);
+			String nullStr= Double.toString(0d)+ ProfilerFile.PRO_FILE_TAB+Long.toString(0);
 			for (String s= null; (s= buffy.readLine())!= null;++lineCtr) {
 				
-				bytesRead+= s.length()+ FluxSimulatorSettings.PRO_FILE_CR.length();
+				bytesRead+= s.length()+ ProfilerFile.PRO_FILE_CR.length();
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 					perc= StringUtils.printPercentage(perc, bytesRead, bytesTotal, System.err);
 				
-				token= s.split(FluxSimulatorSettings.PRO_FILE_TAB);
+				token= s.split(ProfilerFile.PRO_FILE_TAB);
 				wright.write(s);
-				wright.write(FluxSimulatorSettings.PRO_FILE_TAB);
+				wright.write(ProfilerFile.PRO_FILE_TAB);
 				if (mapFrags.containsKey(token[0])) {
 					long absCnt= mapFrags.get(token[0]);
 					double relFreq= absCnt/ (double) currMols;
 					wright.write(Double.toString(relFreq));
-					wright.write(FluxSimulatorSettings.PRO_FILE_TAB);
+					wright.write(ProfilerFile.PRO_FILE_TAB);
 					wright.write(Long.toString(absCnt));
 				} else 
 					wright.write(nullStr);
 				
-				wright.write(FluxSimulatorSettings.PRO_FILE_CR);
+				wright.write(ProfilerFile.PRO_FILE_CR);
 				if (lineCtr%1000== 0)
 					wright.flush();
 			}
@@ -4098,24 +2928,20 @@ public class Fragmenter implements StoppableRunnable {
 			rw.addStream(fos, 10* 1024);
 //			if (FluxSimulatorSettings.optDisk)  
 //				rw.start();
-			Profiler profiler= settings.getProfiler();
 			Processor[] processors= getProcessorPool(MODE_WRITE_INITIAL, Math.min(settings.getMaxThreads(), 4));
 			for (int i = 0; i < processors.length; i++) 
 				processors[i].setFos(fos);
 			int perc= 0; molInit= 0; medLen= 0; minLen= Integer.MAX_VALUE; maxLen= Integer.MIN_VALUE;
-			for (int i = 0; (!isStop())&& i < settings.getProfiler().getMolecules().length; i++) {
+			for (int i = 0; (!isStop())&& i < profiler.getMolecules().length; i++) {
 				
-				Log.progress(i, settings.getProfiler().getMolecules().length);
+				Log.progress(i, profiler.getMolecules().length);
 
-				if (profiler.getLen()[i]>= Fragmenter.this.settings.getFiltMin()&&
-						settings.getProfiler().getLen()[i]<= Fragmenter.this.settings.getFiltMax())
-					++Fragmenter.this.tgtMols;
-				if (plotter!= null) 
-					plotter.addBase(settings.getProfiler().getCombinedID(i), 
-							settings.getProfiler().getLen()[i], 
-							(int) settings.getProfiler().getMolecules()[i]);
+				if (plotter!= null)
+					plotter.addBase(profiler.getCombinedID(i),
+							profiler.getLen()[i],
+							(int) profiler.getMolecules()[i]);
 				
-				int origLen= settings.getProfiler().getLen()[i];
+				int origLen= profiler.getLen()[i];
 				StringBuilder compID= new StringBuilder(profiler.getLocIDs()[i]);
 				compID.append(FluxSimulatorSettings.SEP_LOC_TID);
 				compID.append(profiler.getIds()[i]);
@@ -4124,7 +2950,7 @@ public class Fragmenter implements StoppableRunnable {
 //					if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
 //						System.err.println("[ERROR] TID is null in Fragmenter.writeInitialFile()");
 //				}
-				for (int x = 0; (!isStop())&& x < settings.getProfiler().getMolecules()[i]; x++) {
+				for (int x = 0; (!isStop())&& x < profiler.getMolecules()[i]; x++) {
 
 					++cntMolInit;
 					if (processors.length== 1) {
@@ -4152,9 +2978,9 @@ public class Fragmenter implements StoppableRunnable {
 					}
 
 					
-						//getNebuLine(start,end,settings.getProfiler().getIds()[i])+"\n";
+						//getNebuLine(start,end,profiler.getIds()[i])+"\n";
 				}
-				molInit+= settings.getProfiler().getMolecules()[i];
+				molInit+= profiler.getMolecules()[i];
 			}
 			for (int i = 0; i < processors.length; i++) {
 				processors[i].close();	// 20101205: combine control flow to Processor.stop
@@ -4167,7 +2993,7 @@ public class Fragmenter implements StoppableRunnable {
 			this.processorPool= null;
 			
 			rw.close();
-			if (FluxSimulatorSettings.optDisk) 
+			if (optDisk)
 				rw.join();
 
 			prevMols= molInit;
@@ -4198,7 +3024,7 @@ public class Fragmenter implements StoppableRunnable {
 		return getNebuLine(Integer.toString(start), Integer.toString(end), ancestor);
 	}
 	public static String getNebuLine(String start, String end, String ancestor) {
-		return start+ FluxSimulatorSettings.PRO_FILE_TAB+ end+ FluxSimulatorSettings.PRO_FILE_TAB+ ancestor;
+		return start+ ProfilerFile.PRO_FILE_TAB+ end+ ProfilerFile.PRO_FILE_TAB+ ancestor;
 	}
 
 	public boolean isStop() {
@@ -4227,14 +3053,14 @@ public class Fragmenter implements StoppableRunnable {
      */
 	public String isReady() {
         if(settings == null) return "No Setting specified!";
-        if(settings.getProfiler() == null) return "Profiler is not initialized!";
-        if(settings.getProfiler().getMolecules() == null) return "Profiler has no molecules!";
-        if(settings.getFrgFile() == null) return "No fragmentation file specified!";
+        if(profiler == null) return "Profiler is not initialized!";
+        if(profiler.getMolecules() == null) return "Profiler has no molecules!";
+        if(settings.get(FluxSimulatorSettings.LIB_FILE) == null) return "No fragmentation file specified!";
 		return null;
 	}
 	
 	public boolean isFinished() {
-		if (settings.getFrgFile()!= null&& settings.getFrgFile().exists()&& settings.getFrgFile().length()!= 0)
+        if (settings.get(FluxSimulatorSettings.LIB_FILE) != null&& settings.get(FluxSimulatorSettings.LIB_FILE).exists()&& settings.get(FluxSimulatorSettings.LIB_FILE).length()!= 0)
 			return true;
 		return false;
 	}
@@ -4243,16 +3069,16 @@ public class Fragmenter implements StoppableRunnable {
 		try {
 			Log.progressStart("initializing library");
 			molInit= 0;			
-			for (int i = 0; (!isStop())&& i < settings.getProfiler().getMolecules().length; i++) 
-				molInit+= settings.getProfiler().getMolecules()[i];
+			for (int i = 0; (!isStop())&& i < profiler.getMolecules().length; i++)
+				molInit+= profiler.getMolecules()[i];
 			if (plotter!= null)
 				plotter.setMolTot(molInit);
 			//BufferedReader buffy= new BufferedReader(new FileReader(settings.getFrgFile()));
-			BufferedByteArrayReader buffy= new BufferedByteArrayReader();			
-			FileInputStream fos= new FileInputStream(settings.getFrgFile());
+			BufferedByteArrayReader buffy= new BufferedByteArrayReader();
+            FileInputStream fos= new FileInputStream(settings.get(FluxSimulatorSettings.LIB_FILE));
 			String[] token= null;
 			//String s;
-			long totBytes= settings.getFrgFile().length(), bytesRead= 0l;
+            long totBytes= settings.get(FluxSimulatorSettings.LIB_FILE).length(), bytesRead= 0l;
 			int perc= 0;
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(50);
 			for (currMols= 0, newMols= 0; (!isStop())&& (buffy.readLine(fos, cs).length()> 0)/*(s= buffy.readLine())!= null*/; ++currMols) {
@@ -4324,637 +3150,20 @@ public class Fragmenter implements StoppableRunnable {
 		return processorPool;
 	}
 
-		
-	boolean process_110407(byte mode) {
-			
-			if (tmpFile== null)
-				return false;
-			
-			try {
-				long t0= System.currentTimeMillis();
-				double breakRatio= 1;
-				Long longNull= new Long(0);
-				double thrTgt= 0.95;
-				double tgtFrac= 0d;
-				cumuLen= 0;
-				int[] allLength= settings.getProfiler().getLen();
-				long[] allMos= settings.getProfiler().getMolecules();
-				for (int i = 0; i < allLength.length; i++) {
-					cumuLen+= allMos[i]* allLength[i];
-					prevMols+= allMos[i];
-				}
-				
-				if (mode== MODE_NEBU) 
-					initNebulizationParameters(
-							settings.getFragNBlambda(),
-							settings.getFragNBm(),
-							settings.getThold(),
-							settings.getProfiler().getMaxMoleculeLength()
-					);
-				
-				// TODO estimate required disk space
-				Processor[] processors= getProcessorPool(mode, Math.min(settings.getMaxThreads(), 1));			
-				for (roundCtr= 0;(!isStop()) 
-						&& (mode== MODE_FRAG&& roundCtr< 1)
-							|| ((mode== MODE_FILT_REJ|| mode==MODE_RT)&& roundCtr< 1)
-	//					((mode== MODE_NEBU&& breakRatio> settings.getThold())	// && breakRatio> settings.getThold()
-	//							|| (mode== MODE_FRAG&& ((cumuLen== -1|| (cumuLen/ (float) currMols)> 400)))		// && roundCtr< 4, tgtFrac< thrTgt||	 
-	//							|| ((mode== MODE_RT|| mode== MODE_FILT)&& roundCtr< 1))
-						; ++roundCtr, mode= getMode()) {
-					
-					avgLength= cumuLen/ (double) prevMols; 
-					
-					//lengthV= new IntVector();
-					lastMaxLen= maxLen;
-					maxLen= 0;
-					cumuLen= 0;
-					lenSum= 0l;
-					lenNb= 0;
-					minLen= 0; maxLen= 0;
-					if (mapFrags!= null) 
-						mapFrags.clear();	// 20101215 re-init
-									
-					String msg= null;
-					if (mode== MODE_RT)
-						msg= MODE_RT_MESSAGE;
-					else if (mode== MODE_NEBU) {
-						msg= MODE_NEBU_MESSAGE+"-"+Integer.toString(roundCtr+1);
-						//rndNebu= new GaussianRndThread(100);
-						//rndNebu.start();
-					} else if (mode== MODE_FILT_REJ) {
-						msg= MODE_FILT_MESSAGE;
-						filtSigSquare= ((settings.getFiltMax()- settings.getFiltMin())/ 2d);
-						filtMu= settings.getFiltMin()+ filtSigSquare;
-						filtFac= 1d/ Math.sqrt(2d* Math.PI* filtSigSquare);
-						
-					} else if (mode== MODE_FRAG)
-						msg= MODE_FRAG_MESSAGE+"-"+Integer.toString(roundCtr+1);
-					if (plotter!= null) {
-						plotter.reset(msg);
-					}
-					Log.progressStart(msg);
-	
-					Object[] keys= mapFrags.keySet().toArray();
-					for (int i = 0; i < keys.length; i++) 
-						mapFrags.put((CharSequence) keys[i], longNull);	// 20101205: changed from cast to string, ClassCastException for ByteArrayCharSequence
-					
-					currMols= 0; newMols= 0; tgtMols= 0;
-					tstNewMols= 0; tstCurrMols= 0;
-					cntLinesWr= 0;
-					for (int i = 0; i < med.length; i++) 
-						med[i]= 0;
-					
-					// IO 
-	//				BufferedReader buffy= new BufferedReader(new FileReader(tmpFile));
-	//				ThreadedQWriter qwriter= getQWriter();
-	//				qwriter.init();
-	//				qwriter.start();
-	//				ThreadedBufferedByteArrayStream buffy= 
-	//					new ThreadedBufferedByteArrayStream(10* 1024* 1024, fis, true, false);
-					//BufferedOutputStream outStream
-					//writer= new BufferedOutputStream(new FileOutputStream(tmpWriteFile), 1024* 1024);
-					//ThreadedBufferedByteArrayStream inBacs= null;
-					FileInputStream fis= new FileInputStream(tmpFile);
-					FileOutputStream fos= new FileOutputStream(tmpWriteFile);
-					rw= new SyncIOHandler2(2);
-					rw.addStream(fis, 10* 1024);
-					rw.addStream(fos, 10* 1024);
-					for (int i = 0; i < processorPool.length; i++) 
-						processorPool[i].setFos(fos);
-					if (FluxSimulatorSettings.optDisk) 
-						rw.start();
-					
-					ByteArrayCharSequence cs= new ByteArrayCharSequence(100);
-					
-					int perc= 0;
-					long byteTot= tmpFile.length(), byteNow= 0l;
-					//for (String s; (!isStop())&& (s= buffy.readLine())!= null;/*++currMols*/) {
-					//for (buffy.readLine(cs); cs.end> 0; buffy.readLine(cs)) {
-					while((!isStop())&& rw.readLine(fis, cs)> 0) {
-						byteNow+= cs.length()+ 1;	// TODO fs length
-						Log.progress(byteNow, byteTot);
-						++currMols;
-						if (processors.length== 1) {
-							ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
-							processors[0].cs= ccs;
-							processors[0].run();
-						} else {
-							boolean searching= true;
-							while (searching && !stop) {
-								for (int i = 0; (!stop)&& i < processors.length; i++) {
-									// 100330: took into sync block
-		//							if (processors[i].ready()) {
-		//								ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
-		//								processors[i].cs= ccs; 	// not in same line !
-									// deadlocks :(
-									synchronized (processors[i].lock) { 
-										if (processors[i].ready()) {
-											ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
-											processors[i].cs= ccs;
-											processors[i].lock.notifyAll();
-											searching= false;
-										}
-										//System.err.println("notify "+ccs);
-									}
-		//								//processors[i].interrupt();
-									break;
-								}
-		/*						if (searching)
-									try {
-										Thread.currentThread().sleep(10);
-									} catch (InterruptedException e) {
-										; // :)
-									}
-								else
-									break;
-		*/												
-							}
-						}
-					}
-					
-					rw.close();
-					if (FluxSimulatorSettings.optDisk) 
-						rw.join();
-					
-					//fis.close();
-					//writer.flush();
-					//writer.close();
-					
-					//buffy.close();
-	/*				if (isStop())
-						qwriter.close();
-					qwriter.flush();
-					qwriter.close();
-	*/				
-	/*				if (mode== MODE_NEBU) {					
-						rndNebu.setStop();
-						rndNebu.interrupt();
-					}
-	*/				
-	/*				while (qwriter.isAlive()) // while deadlocks
-						try {
-							qwriter.join();
-						} catch (InterruptedException e) {
-							qwriter.close(); // ?? Thread.currentThread().interrupt();
-						}
-	*/
-					//Distribution dist= new Distribution(lengthV.toIntArray());
-					medLen= lenSum/ (double) lenNb;
-					lastMaxLen= maxLen;
-					lastMinLen= minLen;
-					//lengthV= null;
-					
-					if (isStop())
-						break;
-					
-					breakRatio= newMols/ (2d* currMols);
-					tgtFrac= ((double) tgtMols)/ (currMols+ newMols);
-	/*				if (mode== MODE_NEBU|| mode== MODE_FRAG)
-						System.out.println("bratio "+Double.toString(breakRatio)
-								+ ", all "+ (currMols+newMols)
-								+ ", in "+ currMols
-								+ ", new "+ newMols
-								+ ", tgt "+ tgtMols
-								+ ", trat "+ tgtFrac
-						);
-	*/					
-					//DEBUG
-	/*								File save= new File("N:\\tmp\\round_"+roundCtr);
-									if (save.exists())
-										save.delete();									
-									FileHelper.copy(tmpFile, save);
-	*/								
-									
-					boolean b= tmpFile.delete();
-					if (!b)
-						throw new IOException("Couldn't delete source");
-					b= tmpWriteFile.renameTo(tmpFile);
-					if (!b)
-						throw new IOException("Couldn't move file");;
-									
-					Log.progressFinish(null, true);
-					long total= 0;
-					Iterator iter= mapFrags.keySet().iterator();
-					while(iter.hasNext()) {
-						Long val= mapFrags.get(iter.next());
-						if (val!= null)
-							total+= val;
-					}
-					if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) 
-						System.err.println("\t\t"+(currMols+ newMols)+ " mol, "+total+": "+currMols+","+tstCurrMols+" "+newMols+","+tstNewMols);
-					if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) {
-						System.err.println("\t\t"+(currMols+ newMols)+ " mol: in "+ currMols+ ", new "+ newMols+ ", out "+ cntLinesWr);
-						System.err.println("\t\tavg Len "+ (cumuLen/ (float) currMols)+ ", maxLen "+ maxLen);
-						System.err.println("tgt frac "+tgtFrac);
-					}
-					if (plotter!= null) {
-						plotter.paint();
-						plotter.setMolTot(currMols+ newMols);
-					}
-					prevMols= currMols+ newMols;
-	
-				}
-	
-				if (!isStop()) {
-					/*for (int i = 0; i < processors.length; i++) {
-						if (processors[i]== null)
-							continue;
-						while (processors[i].isAlive()) {
-							synchronized (processors[i].lock) { 
-								if (processors[i].ready()) {
-									processors[i].stop= true;
-									//processors[i].interrupt();
-									processors[i].lock.notifyAll();
-								}
-							}
-							if (processors[i].stop)
-								try {
-									processors[i].join();
-								} catch (InterruptedException e) {
-									; // :)
-								}
-						}
-					}
-	*/				
-					if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-						System.err.println(" OK");
-					System.gc();
-					return true;
-				}
-				
-			} catch (Exception e) {
-				if (Constants.verboseLevel>= Constants.VERBOSE_SHUTUP)
-					e.printStackTrace();
-			}
-	
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				if (isStop())
-					System.err.print(" FAILED");
-				else
-					System.err.print(" STOPPED");
-	
-			return false;
-	
-		}
-
-	protected void initGelBins(File f) {
-		try {
-	
-			HashMap<Integer, DoubleVector> map2D= new HashMap<Integer, DoubleVector>();
-			BufferedReader buffy= new BufferedReader(new FileReader((f)));
-			int total= 0; String[] ss;
-			for (String s= null; (s= buffy.readLine())!= null;++total) {
-				ss= s.split("\\s");
-				int len= Integer.parseInt(ss[0]);
-				if (len< gelSizeMin)
-					gelSizeMin= len;
-				if (len> gelSizeMax)
-					gelSizeMax= len;
-				DoubleVector vGC= map2D.get(len);
-				if (vGC== null) {
-					vGC= new DoubleVector(1);
-					map2D.put(len, vGC);
-				}
-				if (ss.length> 1) {
-					double gc= Double.parseDouble(ss[1]);
-					if (gc< gelGCMin)
-						gelGCMin= gc;
-					if (gc> gelGCMax)
-						gelGCMax= gc;
-					vGC.add(gc);
-				} else
-					vGC.add(-1d);
-			}
-			buffy.close();
-			GEL_NB_BINS_LENGTH= gelSizeMax- gelSizeMin+ 1;
-			
-			// init bin values
-			gelSizeBin= (gelSizeMax- gelSizeMin)/ GEL_NB_BINS_LENGTH;
-			if (gelGCMax> 0) 
-				gelGCbin= (gelGCMax- gelGCMin)/ GEL_NB_BINS_GC;
-			
-			// binning 
-			gelProb= new double[GEL_NB_BINS_LENGTH* (gelGCMax> 0? GEL_NB_BINS_GC: 1)];
-			Iterator<Integer> iter= map2D.keySet().iterator();
-			int debug43= 0;
-			while(iter.hasNext()) {
-				int len= iter.next();
-				int p= getBin(len);
-				DoubleVector vGC= map2D.get(len);
-				double pLen= vGC.size()/ (double) total;
-				gelProb[p]+= pLen; // come in unsorted
-				if (p== 56)
-					++debug43;
-			}
-			if (gelGCMax> 0) {
-				iter= map2D.keySet().iterator();
-				double frac= 1d/ total;
-				while (iter.hasNext()) {
-					int len= iter.next();
-					int bin= getBin(len);
-					double pLenFrac= gelProb[bin]* frac;
-					gelProb[bin]= 0;
-					DoubleVector vGC= map2D.get(len);
-					for (int i = 0; i < vGC.size(); i++) {
-						int bin2= getBin(vGC.get(i));
-						gelProb[bin+ bin2]+= pLenFrac;
-					} 
-				}
-			}
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	boolean collectOutputDistribution;
 	
-	boolean processNew(InputStream in, byte mode) {
-			
-			if (tmpFile== null)
-				return false;
-			
-			try {
-				long t0= System.currentTimeMillis();
-				double breakRatio= 1;
-				Long longNull= new Long(0);
-				double thrTgt= 0.95;
-				double tgtFrac= 0d;
-				cumuLen= 0;
-				int[] allLength= settings.getProfiler().getLen();
-				long[] allMos= settings.getProfiler().getMolecules();
-				for (int i = 0; i < allLength.length; i++) {
-					cumuLen+= allMos[i]* allLength[i];
-					prevMols+= allMos[i];
-				}
-				
-				if (mode== MODE_NEBU) 
-					initNebulizationParameters(
-							settings.getFragNBlambda(),
-							settings.getFragNBm(),
-							settings.getThold(),
-							settings.getProfiler().getMaxMoleculeLength()
-					);
-				
-				// TODO estimate required disk space
-				
-				Processor[] processors= getProcessorPool(mode, Math.min(settings.getMaxThreads(), 1));
-				
-				for (roundCtr= 0;(!isStop())&& roundCtr< 1; ++roundCtr, mode= getMode()) {
-					
-					avgLength= cumuLen/ (double) prevMols; 
-					
-					//lengthV= new IntVector();
-					lastMaxLen= maxLen;
-					maxLen= 0;
-					cumuLen= 0;
-					lenSum= 0l;
-					lenNb= 0;
-					minLen= 0; maxLen= 0;
-					if (mapFrags!= null) 
-						mapFrags.clear();	// 20101215 re-init
-									
-					String msg= null;
-					if (mode== MODE_RT)
-						msg= MODE_RT_MESSAGE;
-					else if (mode== MODE_NEBU) {
-						msg= MODE_NEBU_MESSAGE+"-"+Integer.toString(roundCtr+1);
-						//rndNebu= new GaussianRndThread(100);
-						//rndNebu.start();
-					} else if (mode== MODE_FILT_REJ) {
-						msg= MODE_FILT_MESSAGE;
-						filtSigSquare= ((settings.getFiltMax()- settings.getFiltMin())/ 2d);
-						filtMu= settings.getFiltMin()+ filtSigSquare;
-						filtFac= 1d/ Math.sqrt(2d* Math.PI* filtSigSquare);
-						//oriMin= 15; oriMax= 1500;
-						//oriProb= new double[100];
-						oriMin= gelSizeMin; oriMax= gelSizeMax;
-						oriProb= new double[gelProb.length];
-						initBins(tmpFile, oriProb, oriMin, oriMax);
-						deconvolve(oriProb, gelProb);
-					} else if (mode== MODE_FRAG)
-						msg= MODE_FRAG_MESSAGE+"-"+Integer.toString(roundCtr+1);
-					if (plotter!= null) {
-						plotter.reset(msg);
-					}
-					Log.progressStart(msg);
-	
-					Object[] keys= mapFrags.keySet().toArray();
-					for (int i = 0; i < keys.length; i++) 
-						mapFrags.put((CharSequence) keys[i], longNull);	// 20101205: changed from cast to string, ClassCastException for ByteArrayCharSequence
-					
-					currMols= 0; newMols= 0; tgtMols= 0;
-					tstNewMols= 0; tstCurrMols= 0;
-					cntLinesWr= 0;
-					for (int i = 0; i < med.length; i++) 
-						med[i]= 0;
-					
-					// IO 
-	//				BufferedReader buffy= new BufferedReader(new FileReader(tmpFile));
-	//				ThreadedQWriter qwriter= getQWriter();
-	//				qwriter.init();
-	//				qwriter.start();
-	//				ThreadedBufferedByteArrayStream buffy= 
-	//					new ThreadedBufferedByteArrayStream(10* 1024* 1024, fis, true, false);
-					//BufferedOutputStream outStream
-					//writer= new BufferedOutputStream(new FileOutputStream(tmpWriteFile), 1024* 1024);
-					//ThreadedBufferedByteArrayStream inBacs= null;
-					FileInputStream fis= new FileInputStream(tmpFile);
-					FileOutputStream fos= new FileOutputStream(tmpWriteFile);
-					rw= new SyncIOHandler2(2);
-					rw.addStream(fis, 10* 1024);
-					rw.addStream(fos, 10* 1024);
-					for (int i = 0; i < processorPool.length; i++) 
-						processorPool[i].setFos(fos);
-					if (FluxSimulatorSettings.optDisk) 
-						rw.start();
-					
-					ByteArrayCharSequence cs= new ByteArrayCharSequence(100);
-					
-					int perc= 0;
-					long byteTot= tmpFile.length(), byteNow= 0l;
-					//for (String s; (!isStop())&& (s= buffy.readLine())!= null;/*++currMols*/) {
-					//for (buffy.readLine(cs); cs.end> 0; buffy.readLine(cs)) {
-					while((!isStop())&& rw.readLine(fis, cs)> 0) {
-						byteNow+= cs.length()+ 1;	// TODO fs length
-						Log.progress(byteNow, byteTot);
-						
-						//qwriter.add(s);
-						////qwriter.writeAll();
-						++currMols;
-						if (processors.length== 1) {
-							ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
-							processors[0].cs= ccs;
-							processors[0].run();
-						} else {
-							boolean searching= true;
-							while (searching && !stop) {
-								for (int i = 0; (!stop)&& i < processors.length; i++) {
-									// 100330: took into sync block
-		//							if (processors[i].ready()) {
-		//								ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
-		//								processors[i].cs= ccs; 	// not in same line !
-									// deadlocks :(
-									synchronized (processors[i].lock) { 
-										if (processors[i].ready()) {
-											ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
-											processors[i].cs= ccs;
-											processors[i].lock.notifyAll();
-											searching= false;
-										}
-										//System.err.println("notify "+ccs);
-									}
-		//								//processors[i].interrupt();
-									break;
-								}
-		/*						if (searching)
-									try {
-										Thread.currentThread().sleep(10);
-									} catch (InterruptedException e) {
-										; // :)
-									}
-								else
-									break;
-		*/												
-							}
-						}
-					}
-					
-					rw.close();
-					if (FluxSimulatorSettings.optDisk) 
-						rw.join();
-					
-					//fis.close();
-					//writer.flush();
-					//writer.close();
-					
-					//buffy.close();
-	/*				if (isStop())
-						qwriter.close();
-					qwriter.flush();
-					qwriter.close();
-	*/				
-	/*				if (mode== MODE_NEBU) {					
-						rndNebu.setStop();
-						rndNebu.interrupt();
-					}
-	*/				
-	/*				while (qwriter.isAlive()) // while deadlocks
-						try {
-							qwriter.join();
-						} catch (InterruptedException e) {
-							qwriter.close(); // ?? Thread.currentThread().interrupt();
-						}
-	*/
-					//Distribution dist= new Distribution(lengthV.toIntArray());
-					medLen= lenSum/ (double) lenNb;
-					lastMaxLen= maxLen;
-					lastMinLen= minLen;
-					//lengthV= null;
-					
-					if (isStop())
-						break;
-					
-					breakRatio= newMols/ (2d* currMols);
-					tgtFrac= ((double) tgtMols)/ (currMols+ newMols);
-	/*				if (mode== MODE_NEBU|| mode== MODE_FRAG)
-						System.out.println("bratio "+Double.toString(breakRatio)
-								+ ", all "+ (currMols+newMols)
-								+ ", in "+ currMols
-								+ ", new "+ newMols
-								+ ", tgt "+ tgtMols
-								+ ", trat "+ tgtFrac
-						);
-	*/					
-					//DEBUG
-	/*								File save= new File("N:\\tmp\\round_"+roundCtr);
-									if (save.exists())
-										save.delete();									
-									FileHelper.copy(tmpFile, save);
-	*/								
-									
-					boolean b= tmpFile.delete();
-					if (!b)
-						throw new IOException("Couldn't delete source");
-					b= tmpWriteFile.renameTo(tmpFile);
-					if (!b)
-						throw new IOException("Couldn't move file");;
-									
-					Log.progressFinish(null, true);
-					long total= 0;
-					Iterator iter= mapFrags.keySet().iterator();
-					while(iter.hasNext()) {
-						Long val= mapFrags.get(iter.next());
-						if (val!= null)
-							total+= val;
-					}
-					if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) 
-						System.err.println("\t\t"+(currMols+ newMols)+ " mol, "+total+": "+currMols+","+tstCurrMols+" "+newMols+","+tstNewMols);
-					if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) {
-						System.err.println("\t\t"+(currMols+ newMols)+ " mol: in "+ currMols+ ", new "+ newMols+ ", out "+ cntLinesWr);
-						System.err.println("\t\tavg Len "+ (cumuLen/ (float) currMols)+ ", maxLen "+ maxLen);
-						System.err.println("tgt frac "+tgtFrac);
-					}
-					if (plotter!= null) {
-						plotter.paint();
-						plotter.setMolTot(currMols+ newMols);
-					}
-					prevMols= currMols+ newMols;
-	
-				}
-	
-				if (!isStop()) {
-					/*for (int i = 0; i < processors.length; i++) {
-						if (processors[i]== null)
-							continue;
-						while (processors[i].isAlive()) {
-							synchronized (processors[i].lock) { 
-								if (processors[i].ready()) {
-									processors[i].stop= true;
-									//processors[i].interrupt();
-									processors[i].lock.notifyAll();
-								}
-							}
-							if (processors[i].stop)
-								try {
-									processors[i].join();
-								} catch (InterruptedException e) {
-									; // :)
-								}
-						}
-					}
-	*/				
-					if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-						System.err.println(" OK");
-					System.gc();
-					return true;
-				}
-				
-			} catch (Exception e) {
-				if (Constants.verboseLevel>= Constants.VERBOSE_SHUTUP)
-					e.printStackTrace();
-			}
-	
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				if (isStop())
-					System.err.print(" FAILED");
-				else
-					System.err.print(" STOPPED");
-	
-			return false;
-	
-		}
 
 	void processRT(ByteArrayCharSequence cs, int start, int end, int len, ByteArrayCharSequence id) {
 			
 			if (index1== null) 
-				index1= new int[getRTeventNr(settings.getProfiler().getMaxMoleculeLength())];
+				index1= new int[getRTeventNr(profiler.getMaxMoleculeLength())];
 			double[] wSense= null, wAsense= null;
 			double n1= Double.NaN, n2= Double.NaN;
 			int txLen= -1, howmany= -1;
-			if (settings.getRTmotif()== null) {
-				if (settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_POLY_DT)) {
-					txLen= settings.getProfiler().getLength(id);
+        if (settings.get(FluxSimulatorSettings.RT_MOTIF) == null) {
+                if (settings.get(FluxSimulatorSettings.RT_PRIMER) == FluxSimulatorSettings.RtranscriptionMode.PDT) {
+					txLen= profiler.getLength(id);
 					if (end< txLen- 1)	// 0-based coordinates
 						return;
 					else
@@ -4976,10 +3185,10 @@ public class Fragmenter implements StoppableRunnable {
 			for (int i = 0; i < howmany; i++) {
 				int p;
 				if (wAsense== null) {
-					if (settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_POLY_DT)) {
+                    if (settings.get(FluxSimulatorSettings.RT_PRIMER) == FluxSimulatorSettings.RtranscriptionMode.PDT) {
 						p= end+ (int) Math.floor(rtRndWhere.nextDouble()* (txLen- end));
 					} else {
-						assert(settings.getRtMode().equals(FluxSimulatorSettings.PAR_RT_MODE_RANDOM));
+                        assert(settings.get(FluxSimulatorSettings.RT_PRIMER) == FluxSimulatorSettings.RtranscriptionMode.RH);
 						p= start+ (int) Math.round(rtRndWhere.nextDouble()* (len- 1));
 					}
 				} else {
@@ -5000,12 +3209,13 @@ public class Fragmenter implements StoppableRunnable {
 			for (int i = howmany- 1; i >= 0; --i) {
 				if (index1[i]< 0)
 					continue; // got displaced
-				int ext= settings.getRTminLen()+ (int) rnd2.nextDouble()* (settings.getRTmaxLen()- settings.getRTminLen());
+                int ext= settings.get(FluxSimulatorSettings.RT_MIN) + (int) rnd2.nextDouble()* ((int) settings.get(FluxSimulatorSettings.RT_MAX) - settings.get(FluxSimulatorSettings.RT_MIN));
 				int to= Math.max(index1[i]- ext, start);
 				// check GC
 				double gc= getGCcontent(id, to, index1[i]- 1);	// bp is first nt of next fragment
-				double pg= gc< rtC? 0d: 1d- Math.exp(- (gc- rtC)/settings.getRTminGC());
-				Math.exp((-1d)*(gc- settings.getRTminGC())/ settings.getRTminGC());
+                double gc_lo = settings.get(FluxSimulatorSettings.RT_GC_LO);
+                double pg= gc< rtC? 0d: 1d- Math.exp(- (gc- rtC)/ gc_lo);
+                Math.exp((-1d) * (gc - gc_lo) / gc_lo);
 				if (pg> 1|| rnd1.nextDouble()> pg) {
 					index1[i]= -1;
 					continue;
@@ -5020,8 +3230,8 @@ public class Fragmenter implements StoppableRunnable {
 						break;
 					double f;
 					if (wAsense== null) {	// displacement function of distance
-						int dist= Math.min(index1[i]- index1[j], index1[j]- start);								
-						f=  Math.exp((-1d)*dist/ settings.getRTminLen());
+						int dist= Math.min(index1[i]- index1[j], index1[j]- start);
+                        f=  Math.exp((-1d)*dist/ settings.get(FluxSimulatorSettings.RT_MIN));
 					} else {	// displacement is a function of motifs
 						double mi= wAsense[index1[i]- 1]- (index1[i]== 1? 0: wAsense[index1[i]- 2]);	// (-1) as cut after asense 0-pos
 						double mj= wAsense[index1[j]- 1]- (index1[j]== 1? 0: wAsense[index1[j]- 2]);
@@ -5063,15 +3273,15 @@ public class Fragmenter implements StoppableRunnable {
 				incLinesWrote();
 				++newMols;
 				rw.writeLine(cs, fos);	// id is invalid now
-				if (nuLen<= settings.getFragNBlambda())
+                if (nuLen<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 					++tgtMols;
-				if (len<= settings.getFragNBlambda())
+                if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 					--tgtMols;
 
 			}
 			
 			// re-normalize
-			if (settings.getRTmotif()!= null) {
+        if (settings.get(FluxSimulatorSettings.RT_MOTIF) != null) {
 				toPDF(wAsense, start, end, n2);
 				toPDF(wSense, start, end, n1);				
 			}
@@ -5240,7 +3450,7 @@ public class Fragmenter implements StoppableRunnable {
 	void processFrag(ByteArrayCharSequence cs, boolean nebu, int start, int end, int len, ByteArrayCharSequence id) {
 			            
 		// get parameters
-		double d0= settings.getFragURd0();
+        double d0= settings.get(FluxSimulatorSettings.FRAG_UR_D0);
 		assert(d0>= 1); // problem with integer breakpoints, when fragment size << 1 !
 		double delta= getFragURdelta(len);  
 		double eta= getFragUReta();
@@ -5340,9 +3550,8 @@ public class Fragmenter implements StoppableRunnable {
 		// parameters:
 		// pb: M, lambda, len
 		// bp: Sigma, length
-		double lambda= Fragmenter.this.settings.getFragNBlambda();
-		double sigma= Fragmenter.this.settings.getFragNBsigma();
-		double M= Fragmenter.this.settings.getFragNBm();
+        double lambda= this.settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA);
+        double M= this.settings.get(FluxSimulatorSettings.FRAG_NB_M);
 		int recDepth= Fragmenter.this.nebuRecursionDepth;
 		double C= Fragmenter.this.nebuC;
 		if (index1== null)
@@ -5396,9 +3605,9 @@ public class Fragmenter implements StoppableRunnable {
 			
 			// update stats
 			incLinesWrote();
-			if (index1[j]<= settings.getFragNBlambda())
+            if (index1[j]<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				++tgtMols;
-			if (len<= settings.getFragNBlambda())
+            if (len<= settings.get(FluxSimulatorSettings.FRAG_NB_LAMBDA))
 				--tgtMols;
 		}
 		assert(start== len);
@@ -5514,18 +3723,18 @@ public class Fragmenter implements StoppableRunnable {
 				// transcript variation
 				int start= 0;
 				int end= origLen- 1;
-				if (!Double.isNaN(settings.getTssMean())) {
+        if (!Double.isNaN(settings.get(FluxSimulatorSettings.TSS_MEAN))) {
 					start= origLen;
 					while (start>= Math.min(100, origLen))
-						start= (int) Math.round(rndTSS.nextExponential(Math.min(settings.getTssMean(),origLen/4)));	// exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
+                        start= (int) Math.round(rndTSS.nextExponential(Math.min(settings.get(FluxSimulatorSettings.TSS_MEAN),origLen/4)));	// exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
 					double r= rndPlusMinus.nextDouble();
 					if (r< 0.5)
 						start= -start;
 				}
-				if (!(Double.isNaN(settings.getPolyAshape())|| Double.isNaN(settings.getPolyAscale()))) {
+        if (!(Double.isNaN(settings.get(FluxSimulatorSettings.POLYA_SHAPE))|| Double.isNaN(settings.get(FluxSimulatorSettings.POLYA_SCALE)))) {
 					int pAtail= 301;
 					while (pAtail> 300)
-						pAtail= (int) Math.round(sampleWeibull(rndPA, settings.getPolyAscale(), settings.getPolyAshape()));	// 300d, 2d
+                        pAtail= (int) Math.round(sampleWeibull(rndPA, settings.get(FluxSimulatorSettings.POLYA_SCALE), settings.get(FluxSimulatorSettings.POLYA_SHAPE)));	// 300d, 2d
 					end= origLen+ pAtail; 
 				}
 				if (end< origLen) {
@@ -5542,7 +3751,7 @@ public class Fragmenter implements StoppableRunnable {
 				minLen= Math.min(minLen,newLen);
 				
 				
-				//String line= start+ TAB+ end+ TAB+ settings.getProfiler().getIds()[i]+"\n";
+				//String line= start+ TAB+ end+ TAB+ profiler.getIds()[i]+"\n";
 				//ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
 				cs.replace(0, start);
 				cs.replace(1, end);

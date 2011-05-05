@@ -8,6 +8,7 @@ package fbi.commons;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class Log {
+
     /**
      * Log levels
      */
@@ -47,6 +48,11 @@ public class Log {
      * The console progress
      */
     private static Progressable progress = new PrintstreamProgressable(System.err);
+
+    /**
+     * Is the logger interactive
+     */
+    private static boolean interactive = true;
 
     /**
      * Translates a string to the proper log level or throws an {@link IllegalArgumentException}
@@ -274,5 +280,24 @@ public class Log {
      */
     public static int progressSteps() {
         return progress.steps();
+    }
+
+    /**
+     * Returns true if this logger is interactive and user can input things
+     *
+     * @return interactive interactive
+     *
+     */
+    public static boolean isInteractive() {
+        return interactive;
+    }
+
+    /**
+     * Set this logger interactive. If true, the user can input things
+     *
+     * @param interactive interactive
+     */
+    public static void setInteractive(boolean interactive) {
+        Log.interactive = interactive;
     }
 }

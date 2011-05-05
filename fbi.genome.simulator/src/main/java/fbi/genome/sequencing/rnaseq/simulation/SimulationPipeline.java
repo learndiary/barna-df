@@ -131,9 +131,11 @@ public class SimulationPipeline implements FluxTool<Void> {
     public FluxSimulatorSettings getSettings() {
         if(settings == null){
             // init
-            settings= FluxSimulatorSettings.createSettings(file);
-            if (settings== null)
-                throw new RuntimeException("Unable to load settings from " + file);
+            try {
+                settings= FluxSimulatorSettings.createSettings(file);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to load settings from " + file +" : " +e.getMessage(), e);
+            }
         }
         return settings;
     }
@@ -146,7 +148,6 @@ public class SimulationPipeline implements FluxTool<Void> {
     public Profiler getProfiler() {
         if(profiler == null){
             profiler= new Profiler(getSettings());
-            getSettings().setProfiler(profiler);
         }
         return profiler;
     }
@@ -158,7 +159,7 @@ public class SimulationPipeline implements FluxTool<Void> {
      */
     public Fragmenter getFragmenter() {
         if(fragmenter == null){
-            fragmenter = new Fragmenter(getSettings());
+            fragmenter = new Fragmenter(getSettings(), getProfiler());
         }
         return fragmenter;
     }
@@ -170,7 +171,7 @@ public class SimulationPipeline implements FluxTool<Void> {
      */
     public Sequencer getSequencer() {
         if(sequencer == null){
-            sequencer = new Sequencer(getSettings());
+            sequencer = new Sequencer(getSettings(), getProfiler());
         }
         return sequencer;
     }
@@ -218,50 +219,42 @@ public class SimulationPipeline implements FluxTool<Void> {
             Log.error("No settings available");
             return null;
         }
-        // validate the settings
-        String message = settings.validate();
-        if(message != null){
-            Log.error("Unable to verify settings: " + message);
-            return null;
-        }
 
-
-        if (settings.getProFile()!= null&& settings.getProFile().exists()&& settings.getProFile().canRead()) {
+        if (settings.get(FluxSimulatorSettings.PRO_FILE).exists()) {
             getProfiler().loadStats();
             if (isExpression() && getProfiler().isFinishedExpression()) {
-                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file "+settings.getProFile().getName()+", please confirm:\n\t(Yes,No,Don't know)"))
+                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file "+ settings.get(FluxSimulatorSettings.PRO_FILE).getName()+", please confirm:\n\t(Yes,No,Don't know)"))
                     return null;
                 else {
-                    boolean b= settings.getProFile().delete();	// TODO maybe only remove rfreqs..
-                    if (settings.getProfiler()!= null)
-                        settings.getProfiler().status= -1;
+                    boolean b= settings.get(FluxSimulatorSettings.PRO_FILE).delete();	// TODO maybe only remove rfreqs..
+                    if (getProfiler()!= null)
+                        getProfiler().status= -1;
                 }
             }
             Log.message("");
         }
 
 
-
-        if (settings.getFrgFile()!= null&& settings.getFrgFile().exists()&& settings.getFrgFile().canRead()) {
+        if (settings.get(FluxSimulatorSettings.LIB_FILE) != null&& settings.get(FluxSimulatorSettings.LIB_FILE).exists()&& settings.get(FluxSimulatorSettings.LIB_FILE).canRead()) {
             if (isExpression() || isLibrary()) {
-                Log.info("Removing existing fragmentation file " + settings.getFrgFile().getAbsolutePath());
-                settings.getFrgFile().delete();
+                Log.info("Removing existing fragmentation file " + settings.get(FluxSimulatorSettings.LIB_FILE).getAbsolutePath());
+                settings.get(FluxSimulatorSettings.LIB_FILE).delete();
             } else{
-                Log.info("Loading Fragmentation from " + settings.getFrgFile());
+                Log.info("Loading Fragmentation from " + settings.get(FluxSimulatorSettings.LIB_FILE));
                 getFragmenter().loadStats();
             }
         }
 
-        if (settings.getErrFile()!= null&& !getSequencer().loadErrors())
+        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null&& !getSequencer().loadErrors())
             throw new RuntimeException("The sequencer produced errors !"); // todo: describe the problem
 
-        if (settings.getSeqFile()!= null&& settings.getSeqFile().exists()&& settings.getSeqFile().canRead()) {
+        if (settings.get(FluxSimulatorSettings.SEQ_FILE) != null&& settings.get(FluxSimulatorSettings.SEQ_FILE).exists()&& settings.get(FluxSimulatorSettings.SEQ_FILE).canRead()) {
             if (isSequence()) {
-                if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file " + settings.getSeqFile().getName() + ", please confirm:\n\t(Yes,No,Don't know)"))
+                if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file " + settings.get(FluxSimulatorSettings.SEQ_FILE).getName() + ", please confirm:\n\t(Yes,No,Don't know)"))
                     return null;
-                settings.getSeqFile().delete();
+                settings.get(FluxSimulatorSettings.SEQ_FILE).delete();
             } else{
-                Log.info("Loading sequencing file " + settings.getSeqFile().getAbsolutePath());
+                Log.info("Loading sequencing file " + settings.get(FluxSimulatorSettings.SEQ_FILE).getAbsolutePath());
                 getSequencer().loadStats();
             }
             Log.message("");
@@ -279,7 +272,7 @@ public class SimulationPipeline implements FluxTool<Void> {
 
 
         if (isLibrary()){
-            message = getFragmenter().isReady();
+            String message = getFragmenter().isReady();
             if (message != null) {
                 throw new RuntimeException(message);
             }
@@ -291,7 +284,7 @@ public class SimulationPipeline implements FluxTool<Void> {
 
 
         if (isSequence()){
-            message = getSequencer().isReady();
+            String message = getSequencer().isReady();
             if (message != null) {
                 throw new RuntimeException(message);
             }

@@ -18,6 +18,11 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
     }
 
     @Override
+    void set(T value) {
+        this.value = value;
+    }
+
+    @Override
     T get() {
         if(value == null) return getDefault();
         return value;
@@ -40,5 +45,17 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
         }else{
             super.validate(schema);
         }
+    }
+
+    @Override
+    public String getValuesString() {
+        if (minimumValue != null && maximumValue != null){
+            return minimumValue +"<= number <= "+maximumValue;
+        }else if(minimumValue != null){
+            return minimumValue +"<= number";
+        }else if(maximumValue != null){
+            return "number <= "+maximumValue;
+        }
+        return "number";
     }
 }

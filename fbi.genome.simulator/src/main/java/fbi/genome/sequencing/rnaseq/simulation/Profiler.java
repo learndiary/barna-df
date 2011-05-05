@@ -71,22 +71,22 @@ public class Profiler implements StoppableRunnable {
 	public boolean isReady() {
 		
 		// TODO make cells -> dec_par, nb_molecules
-		if (settings== null|| Double.isNaN(settings.getExpDistrP1())|| Double.isNaN(settings.getExpDistrP2())|| Double.isNaN(settings.getDecDistrP1())|| settings.getNbMolecules()<= 0|| 
-				settings.getProFile()== null) {	// || (!settings.getProFile().canWrite()) // fails on winOS
+        if (settings== null|| Double.isNaN(settings.get(FluxSimulatorSettings.EXPRESSION_K))|| Double.isNaN(settings.get(FluxSimulatorSettings.EXPRESSION_X0))|| Double.isNaN(settings.get(FluxSimulatorSettings.EXPRESSION_X1))|| settings.get(FluxSimulatorSettings.NB_MOLECULES) <= 0||
+				settings.get(FluxSimulatorSettings.PRO_FILE) == null) {	// || (!settings.getProFile().canWrite()) // fails on winOS
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				if (settings== null) 
 					System.err.println("\t[NOPARAMS] I have no parameters!");
 				else {
 					System.err.print("\t[TOOLITTLE] there are parameters missing: ");
-					if (Double.isNaN(settings.getExpDistrP1()))
-						System.err.print(settings.PAR_EXPR_K+" ");
-					if (Double.isNaN(settings.getExpDistrP2()))
-						System.err.print(settings.PAR_EXPR_X0+" ");
-					if (Double.isNaN(settings.getDecDistrP1()))
-						System.err.print(settings.PAR_DEC_P1+" ");
-					if (settings.getNbMolecules()<= 0)
-						System.err.print(settings.PAR_NB_MOLECULES+" ");
-					if ((settings.getProFile()== null)|| (!FileHelper.canWrite(settings.getProFile())))
+                    if (Double.isNaN(settings.get(FluxSimulatorSettings.EXPRESSION_K)))
+						System.err.print(FluxSimulatorSettings.EXPRESSION_K+" ");
+                    if (Double.isNaN(settings.get(FluxSimulatorSettings.EXPRESSION_X0)))
+						System.err.print(FluxSimulatorSettings.EXPRESSION_X0+" ");
+                    if (Double.isNaN(settings.get(FluxSimulatorSettings.EXPRESSION_X1)))
+						System.err.print(FluxSimulatorSettings.EXPRESSION_X1+" ");
+                    if (settings.get(FluxSimulatorSettings.NB_MOLECULES) <= 0)
+						System.err.print(FluxSimulatorSettings.NB_MOLECULES+" ");
+                    if ((settings.get(FluxSimulatorSettings.PRO_FILE) == null)|| (!FileHelper.canWrite(settings.get(FluxSimulatorSettings.PRO_FILE))))
 						System.err.print("valid workfile ");
 					System.err.println("\n");
 				}
@@ -94,14 +94,12 @@ public class Profiler implements StoppableRunnable {
 			return false;
 		} else {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (settings.getNbCells()> 0)
-					System.err.println("\t"+settings.PAR_NB_CELLS+"\t"+settings.getNbCells());
-				System.err.println("\t"+settings.PAR_NB_MOLECULES+"\t"+settings.getNbMolecules());
-				System.err.println("\t"+settings.PAR_EXPR_K+"\t"+settings.getExpDistrP1());
-				System.err.println("\t"+settings.PAR_EXPR_X0+"\t"+settings.getExpDistrP2());
-				System.err.println("\t"+settings.PAR_DEC_P1+"\t"+settings.getDecDistrP1());
+                System.err.println("\t"+FluxSimulatorSettings.NB_MOLECULES+"\t"+ (long) settings.get(FluxSimulatorSettings.NB_MOLECULES));
+                System.err.println("\t"+FluxSimulatorSettings.EXPRESSION_K+"\t"+ (double) settings.get(FluxSimulatorSettings.EXPRESSION_K));
+                System.err.println("\t"+FluxSimulatorSettings.EXPRESSION_X0+"\t"+ (double) settings.get(FluxSimulatorSettings.EXPRESSION_X0));
+                System.err.println("\t"+FluxSimulatorSettings.EXPRESSION_X1+"\t"+ (double) settings.get(FluxSimulatorSettings.EXPRESSION_X1));
 				try {
-					System.err.println("\t"+FluxSimulatorSettings.PAR_PRO_FNAME+"\t"+settings.getProFile().getCanonicalPath());
+                    System.err.println("\t"+FluxSimulatorSettings.PRO_FILE+"\t"+ settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
 				} catch (IOException e) {
 					;	// :)
 				}
@@ -111,12 +109,12 @@ public class Profiler implements StoppableRunnable {
 	}
 	
 	byte getStatus() {
-		
-		if (settings.getProFile()== null|| !settings.getProFile().exists())
+
+        if (settings.get(FluxSimulatorSettings.PRO_FILE) == null|| !settings.get(FluxSimulatorSettings.PRO_FILE).exists())
 			return STAT_NONE;
 		
 		try {
-			ReverseFileReader rreader= new ReverseFileReader(settings.getProFile().getCanonicalPath());
+            ReverseFileReader rreader= new ReverseFileReader(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
 			String s= rreader.readLine();
 			if (s== null)
 				return STAT_NONE;
@@ -153,10 +151,10 @@ public class Profiler implements StoppableRunnable {
 					++cntLoci;
 					int cntTrpt= 0;
 					for (int j = 0; (!stop)&& j < g[i].getTranscripts().length; j++) {
-						
-						if (g[i].getTranscripts()[j].isCoding()&& (!settings.isLoadCoding()))
+
+                        if (g[i].getTranscripts()[j].isCoding()&& (!(boolean) settings.get(FluxSimulatorSettings.LOAD_CODING)))
 							continue;
-						if ((!g[i].getTranscripts()[j].isCoding())&& (!settings.isLoadNoncoding()))
+                        if ((!g[i].getTranscripts()[j].isCoding())&& (!(boolean) settings.get(FluxSimulatorSettings.LOAD_NONCODING)))
 							continue;
 						if (g[i].getTranscripts()[j].isCoding())
 							vBoo.add(true);
@@ -217,13 +215,13 @@ public class Profiler implements StoppableRunnable {
 		try {
 //			if (settings.getProFile().exists())
 //				return false;
-			BufferedWriter writer= new BufferedWriter(new FileWriter(settings.getProFile()));
+            BufferedWriter writer= new BufferedWriter(new FileWriter(settings.get(FluxSimulatorSettings.PRO_FILE)));
 			for (int i = 0; i < ids.length; i++) {
 				int x= i;
 //				if (FluxSimulator.c)
 //					x= ids.length- 1- i;
-				writer.write(locIDs[x]+ settings.PRO_FILE_SEP+ ids[x]+ settings.PRO_FILE_SEP+ (cds[x]?settings.PRO_FILE_CDS:settings.PRO_FILE_NC)
-						+settings.PRO_FILE_SEP+ Integer.toString(len[x])+ "\n");
+				writer.write(locIDs[x]+ ProfilerFile.PRO_FILE_SEP+ ids[x]+ ProfilerFile.PRO_FILE_SEP+ (cds[x]? ProfilerFile.PRO_FILE_CDS: ProfilerFile.PRO_FILE_NC)
+						+ ProfilerFile.PRO_FILE_SEP+ Integer.toString(len[x])+ "\n");
 			}
 			writer.flush();
 			writer.close();
@@ -280,7 +278,7 @@ public class Profiler implements StoppableRunnable {
 
 	private GFFReader getGFFReader() {
 //		if (gffReader == null) {
-			gffReader = new GFFReader(settings.getRefFile().getAbsolutePath());	
+        gffReader = new GFFReader(settings.get(FluxSimulatorSettings.REF_FILE).getAbsolutePath());
 			if (gffReader== null)
 				return null;
 			try {
@@ -288,12 +286,12 @@ public class Profiler implements StoppableRunnable {
 					File refFile= gffReader.createSortedFile();
 					if (refFile== null)
 						return null;
-					settings.setRefFile(new File(settings.getProFile().getParent()+ File.separator+ refFile.getName()));
-					if (!refFile.equals(settings.getRefFile())) {
-						if (!FileHelper.move(refFile, settings.getRefFile()))
+                    settings.setRefFile(new File(settings.get(FluxSimulatorSettings.PRO_FILE).getParent()+ File.separator+ refFile.getName()));
+                    if (!refFile.equals(settings.get(FluxSimulatorSettings.REF_FILE))) {
+                        if (!FileHelper.move(refFile, settings.get(FluxSimulatorSettings.REF_FILE)))
 							settings.setRefFile(refFile);
 					}
-					gffReader= new GFFReader(settings.getRefFile().getAbsolutePath());
+                    gffReader= new GFFReader(settings.get(FluxSimulatorSettings.REF_FILE).getAbsolutePath());
 				}
 				annotationChecked= true;
 				gffReader.setSilent(true);
@@ -315,7 +313,7 @@ public class Profiler implements StoppableRunnable {
 
 		try {
 			if (ids== null) {
-				ids= new ByteArrayCharSequence[FileHelper.countLines(settings.getProFile().getCanonicalPath())];
+                ids= new ByteArrayCharSequence[FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath())];
 				len= new int[ids.length];
 			}
 			double sumRF= 0; sumMol= 0;
@@ -338,13 +336,13 @@ public class Profiler implements StoppableRunnable {
 				
 				relFreq= new double[ids.length];
 				for (int i = 0; (!stop)&& i < relFreq.length; i++) {
-					double par= pareto(molecules[i], settings.getExpDistrP1(), settings.getExpDistrP2());
-					double exp= exponential(molecules[i], settings.getDecDistrP1());
+                    double par= pareto(molecules[i], settings.get(FluxSimulatorSettings.EXPRESSION_K), settings.get(FluxSimulatorSettings.EXPRESSION_X0));
+                    double exp= exponential(molecules[i], settings.get(FluxSimulatorSettings.EXPRESSION_X1));
 					sumRF+= (relFreq[i]= par* exp);
 				}
 				for (int i = 0; (!stop)&& i < relFreq.length; ++i) {	// normalize
 					relFreq[i]/= sumRF;
-					sumMol+= (molecules[i]= Math.round(relFreq[i]* settings.getNbMolecules()));
+                    sumMol+= (molecules[i]= Math.round(relFreq[i]* settings.get(FluxSimulatorSettings.NB_MOLECULES)));
 					if (molecules[i]> 0)
 						mapLenExp.put(getCombinedID(i), new int[] {len[i], (int) molecules[i]});
 				}
@@ -354,16 +352,15 @@ public class Profiler implements StoppableRunnable {
             Log.progressFinish(StringUtils.OK, false);
 
 			if (!isStop()) {
-				Hashtable<CharSequence,Long> map= new Hashtable<CharSequence,Long>(settings.getProfiler().getMolecules().length);
-				for (int i = 0; i < settings.getProfiler().getMolecules().length; i++)
-					if (settings.getProfiler().getMolecules()[i]!= 0) {
-						ByteArrayCharSequence locNtid= settings.getProfiler().getLocIDs()[i].cloneCurrentSeq();
+				Hashtable<CharSequence,Long> map= new Hashtable<CharSequence,Long>(getMolecules().length);
+				for (int i = 0; i < getMolecules().length; i++)
+					if (getMolecules()[i]!= 0) {
+						ByteArrayCharSequence locNtid= getLocIDs()[i].cloneCurrentSeq();
 						locNtid.append(Character.toString(FluxSimulatorSettings.SEP_LOC_TID));
-						locNtid.append(settings.getProfiler().getIds()[i]);
-						map.put(locNtid,
-								settings.getProfiler().getMolecules()[i]);
+						locNtid.append(getIds()[i]);
+						map.put(locNtid,getMolecules()[i]);
 					}
-				if (!FluxSimulatorSettings.appendProfile(settings, FluxSimulatorSettings.PRO_COL_NR_MOL, map))
+				if (!ProfilerFile.appendProfile(settings, ProfilerFile.PRO_COL_NR_MOL, map))
 					return false;
 			}
 			
@@ -534,59 +531,15 @@ public class Profiler implements StoppableRunnable {
 	}
 
 
-	boolean createXPRmaps() {
-		if (molecules== null|| ids== null)
-			return false;
-		sfHi= new HashSet<CharSequence>();
-		sfMed= new HashSet<CharSequence>();
-		sfLo= new HashSet<CharSequence>();
-		for (int i = 0; i < molecules.length; i++) {
-			if (Math.ceil(molecules[i]/ (double) settings.getNbCells())>= FluxSimulatorSettings.SF_CELL_HI)
-				sfHi.add(ids[i]);
-			else if (Math.ceil(molecules[i]/ (double) settings.getNbCells())>= FluxSimulatorSettings.SF_CELL_MED)
-				sfMed.add(ids[i]);
-			else if (molecules[i]> 0)
-				sfLo.add(ids[i]);
-		}
-		return true;
-	}
 
-	public HashSet<CharSequence> getSfHi() {
-		if (sfHi == null) {
-			createXPRmaps();
-		}
-
-		return sfHi;
-	}
-
-
-
-	public HashSet<CharSequence> getSfMed() {
-		if (sfMed == null) {
-			createXPRmaps();
-		}
-
-		return sfMed;
-	}
-
-
-
-	public HashSet<CharSequence> getSfLo() {
-		if (sfLo == null) {
-			createXPRmaps();
-		}
-
-		return sfLo;
-	}
-	
 	public boolean loadStats() {
-		if (settings.getProFile()== null|| (!settings.getProFile().exists()))
+        if (settings.get(FluxSimulatorSettings.PRO_FILE) == null|| (!settings.get(FluxSimulatorSettings.PRO_FILE).exists()))
 			return false;
 
 		int lim= Integer.MAX_VALUE;	// last working token
 		try {
             Log.progressStart("initializing profiler ");
-			int lines= FileHelper.countLines(settings.getProFile().getAbsolutePath());
+            int lines= FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getAbsolutePath());
 			//String lineSep= FileHelper.getLineSeparator() // TODO
 			ids= new ByteArrayCharSequence[lines]; 
 			locIDs= new ByteArrayCharSequence[lines]; 
@@ -596,10 +549,10 @@ public class Profiler implements StoppableRunnable {
 			HashMap<ByteArrayCharSequence,ByteArrayCharSequence> locIDset= 
 				new HashMap<ByteArrayCharSequence,ByteArrayCharSequence>();	// TODO MyHashSet.get(Object o)
 			int ptr= -1, perc= 0;
-			long bytesRead= 0, bytesTot= settings.getProFile().length();
+            long bytesRead= 0, bytesTot= settings.get(FluxSimulatorSettings.PRO_FILE).length();
 			mapLenExp= new Hashtable<ByteArrayCharSequence, int[]>();
-			
-			BufferedInputStream istream= new BufferedInputStream(new FileInputStream(settings.getProFile()));
+
+            BufferedInputStream istream= new BufferedInputStream(new FileInputStream(settings.get(FluxSimulatorSettings.PRO_FILE)));
 			ThreadedBufferedByteArrayStream buffy= 
 				new ThreadedBufferedByteArrayStream(10* 1024, istream, true, false);
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(1024);
@@ -644,9 +597,9 @@ public class Profiler implements StoppableRunnable {
 					lim= tok- 2;
 					continue;
 				} else {
-					if (x.equals(FluxSimulatorSettings.PRO_FILE_CDS))
+					if (x.equals(ProfilerFile.PRO_FILE_CDS))
 						cds[ptr]= true;
-					else if (x.equals(FluxSimulatorSettings.PRO_FILE_NC))
+					else if (x.equals(ProfilerFile.PRO_FILE_NC))
 						cds[ptr]= false;
 					else {
 						lim= 1;

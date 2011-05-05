@@ -1,9 +1,6 @@
 ## File locations
-REF_FILE_NAME   /Users/micha/annotation/spike_sequences.gtf	
-PRO_FILE_NAME	/Users/micha/tmp/simtst/tst_SRR037945.pro
-LIB_FILE_NAME	/Users/micha/tmp/simtst/tst_SRR037945.lib
-SEQ_FILE_NAME	/Users/micha/tmp/simtst/tst_SRR037945.bed
-GEN_DIR         /Users/micha/genomes/spikes
+REF_FILE_NAME   spike_sequences.gtf
+GEN_DIR         genome_Spikes
 
 #ERR_FILE_NAME	/Users/micha/tmp/simtst/tstpwm.err
 #PWM_RT_SENSE	/Users/micha/projects/simulator/data/wold10/readData/SRR037945.bed_sorted_sense_kmat.norm
@@ -13,7 +10,7 @@ GEN_DIR         /Users/micha/genomes/spikes
 ## Expression
 LOAD_CODING     YES
 LOAD_NONCODING  YES
-NB_MOLECULES	1000000
+NB_MOLECULES	10000
 EXPRESSION_K	-0.6
 EXPRESSION_X0	5.0E7
 EXPRESSION_X1	9500.0
@@ -51,14 +48,12 @@ RT_MIN	500
 RT_MAX	5500
 RT_GC_LO	0.32
 RT_GC_HI	0.45
-RT_MOTIF	/Users/micha/tmp/simtst/motif_1mer_0-5.pwm
+RT_MOTIF	motif_1mer_0-5.pwm
 
 ## Size Selection
 FILTERING	YES
-SIZE_DISTRIBUTION	/Users/micha/projects/simulator/data/wold10/expAll.isizes
+SIZE_DISTRIBUTION	expAll.isizes
 SIZE_SAMPLING	AC
-FILT_MIN	150
-FILT_MAX	250
 
 ## Sequencing
 READ_NUMBER	700176

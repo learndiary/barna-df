@@ -8,6 +8,7 @@ import java.io.File;
 class FileParameter extends Parameter<File>{
 
     private File value;
+    private FileNameParser nameParser;
 
     public FileParameter(String name) {
         this(name, "",  null);
@@ -22,15 +23,29 @@ class FileParameter extends Parameter<File>{
     }
 
     public FileParameter(String name, String description, File defaultValue, ParameterValidator validator) {
-        super(name, description, defaultValue, File.class, validator);
+        this(name, description, defaultValue, validator, null);
     }
 
+    public FileParameter(String name, String description, File defaultValue, ParameterValidator validator, FileNameParser nameParser) {
+        super(name, description, defaultValue, File.class, validator);
+        this.nameParser = nameParser;
+    }
+
+
+    @Override
+    void set(File value) {
+        this.value = value;
+    }
 
     File get() {
         return value == null ? getDefault() : value;
     }
 
     void parse(String value) throws ParameterException{
-        this.value = new File(value);
+        if(nameParser != null){
+            this.value = nameParser.parse(value);
+        }else{
+            this.value = new File(value);
+        }
     }
 }

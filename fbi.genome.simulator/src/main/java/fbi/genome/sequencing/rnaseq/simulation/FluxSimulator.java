@@ -280,6 +280,25 @@ public class FluxSimulator {
         return Log.getLogLevel().toString();
     }
 
+    /**
+     * Disable interactivity
+     *
+     * @param detached detache
+     */
+    @Option(name = "", longName = "detached", description = "Disable interactivity. No questions will be asked", required = false)
+    public void setDetached(boolean detached){
+        Log.setInteractive(!detached);
+    }
+
+    /**
+     * Returns true if interactivity is disabled
+     *
+     * @return detached true if interactivity is disabled
+     */
+    public boolean isDetached(){
+        return !Log.isInteractive();
+    }
+
 
     /**
      * Read properties like version and build revision from jar file

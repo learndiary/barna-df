@@ -2,10 +2,7 @@ package fbi.commons.parameters;
 
 import fbi.commons.Log;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,12 +29,6 @@ public abstract class ParameterSchema {
         for (Field field : fields) {
             if(Parameter.class.isAssignableFrom(field.getType())){
                 try {
-                    if(!field.isAccessible()){
-                        Log.warn("Parameter field " + field.getName() + " in " + clazz.getName() + " is not accessible!\n" +
-                                "You can not access the parameter in a typesafe way outside of your parameter class.\nThis" +
-                                " is probably not what you want! Use public static final for your parameter fields and make\n" +
-                                "sure your Parameter class is accessible.");
-                    }
                     field.setAccessible(true);
                     Parameter p = (Parameter) field.get(null);
                     if(p != null){
@@ -80,6 +71,39 @@ public abstract class ParameterSchema {
         return (T)local.get();
     }
 
+    public <T> void set(Parameter<T> parameter, T value){
+        Parameter local = parameters.get(parameter.getName().toUpperCase());
+        if(local == null){
+            throw new IllegalArgumentException("Unknown parameter '" + parameter.getName()+"'");
+        }
+        local.set(value);
+    }
+
+    public void write(OutputStream out){
+        BufferedWriter writer = null;
+        try{
+            writer = new BufferedWriter(new OutputStreamWriter(out));
+
+
+            for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
+                Parameter p = entry.getValue();
+                String name = entry.getKey();
+                if(p.getDescription() != null){
+                    writer.write("# " +cleanDescription(p.getDescription())+"\n");
+                }
+                writer.write("#\n");
+                String valuesString = p.getValuesString();
+                if(valuesString != null && !valuesString.isEmpty()){
+                    writer.write("# " + cleanDescription(valuesString)+" default: " + (p.getDefault() != null ? p.getDefault():"") +"\n");
+                }
+                Object o = get(p);
+                writer.write(name+"\t"+ (o != null ? o : "")+"\n");
+            }
+        }catch(IOException e){
+            try {writer.close();} catch (IOException e1) {}
+        }
+    }
+
     public void parse(InputStream input) throws ParameterException {
         BufferedReader reader = null;
         try{
@@ -100,8 +124,8 @@ public abstract class ParameterSchema {
                     throw new ParameterException("Error while parsing line " + lineCounter+": " + line);
                 }
 
-                String name = matcher.group(1).toUpperCase();
-                String value = matcher.group(2);
+                String name = matcher.group(1).toUpperCase().trim();
+                String value = matcher.group(2).trim();
 
                 if(!parameters.containsKey(name)){
                     throw new ParameterException("Error while parsing line "+lineCounter + ". Parameter " + name + " not found. Check the spelling!");
@@ -118,6 +142,15 @@ public abstract class ParameterSchema {
         }finally {
             if(reader != null) try {reader.close();} catch (IOException e) {}
         }
+    }
 
+    /**
+     * Replace all newlines with \n# to stay in comment mode
+     *
+     * @param s the source
+     * @return clean cleaned description
+     */
+    private static String cleanDescription(String s){
+        return s.replaceAll("\n", "\n# ");
     }
 }

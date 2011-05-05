@@ -273,7 +273,7 @@ public class ModelPool {
 						if (ss.length> 4)
 							qual= true;
 						int len= Integer.parseInt(ss[2]);
-						if (len!= settings.getReadLength()) {
+                        if (len!= settings.get(FluxSimulatorSettings.READ_LENGTH)) {
 							settings.setReadLength(len);
 						}
 						babe= new ModelPool(len, qual);

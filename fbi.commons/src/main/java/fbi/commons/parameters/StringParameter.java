@@ -37,6 +37,13 @@ class StringParameter extends Parameter<String>{
         return Collections.unmodifiableList(values);
     }
 
+    @Override
+    void set(String value) {
+        if(values != null && !values.contains(value))
+            throw new IllegalArgumentException("Unknown value " + value + ". Must be one of "+ values);
+        this.value = value;
+    }
+
     String get() {
         return value == null ? getDefault() : value;
     }
@@ -55,5 +62,13 @@ class StringParameter extends Parameter<String>{
         }else{
             super.validate(schema);
         }
+    }
+
+    @Override
+    public String getValuesString() {
+        if(values != null){
+            return values.toString();
+        }
+        return "text";
     }
 }

@@ -7,10 +7,8 @@ import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
-import fbi.commons.thread.ThreadedQWriter;
 import fbi.commons.tools.Sorter;
 import fbi.genome.io.BufferedBACSReader;
-import fbi.genome.io.Fasta;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.model.*;
@@ -36,8 +34,13 @@ public class Sequencer implements StoppableRunnable {
 	static final byte[] DAVID_CORRECT= {40,40,40,40,40,40,40,40,40,40,40,40,39,38,37,36,36,35,34,33},
 		DAVID_WRONG= {40,38,36,34,32,30,28,26,24,22,20,18,16,14,12,10,8,6,4,2};
 	public static final String TAG_LID= "l", TAG_TID= "t", TAG_MOL= "m", TAG_READ= "r", TAG_FRAGLENGTH= "f", TAG_SEP=";", TAG_EQ= "=";
-	FluxSimulatorSettings settings;
-	boolean stop= false;
+    /**
+     * flux molecule identifier
+     */
+	public static final char DELIM_FMOLI= ':';
+    FluxSimulatorSettings settings;
+    private Profiler profiler;
+    boolean stop= false;
 	long totalReads= -1, nrOfFrags= 0;
 	int cntLoci, cntTrpts, cntExons;
 	Hashtable<String,int[][]> mapFrags;
@@ -47,9 +50,10 @@ public class Sequencer implements StoppableRunnable {
 	IOHandler rw;
 	int cntPlus, cntMinus;
 	
-    public Sequencer(FluxSimulatorSettings settings) {
+    public Sequencer(FluxSimulatorSettings settings, Profiler profiler) {
 		this.settings= settings;
-	}
+        this.profiler = profiler;
+    }
 
     class ZipperThread extends Thread {
     	
@@ -191,11 +195,11 @@ public class Sequencer implements StoppableRunnable {
 							if (r< p) { 
 								double q= rndFiftyFifty.nextDouble();
 								obj.reset();
-								if (settings.isPairedEnd()|| q< 0.5) {
+                                if (settings.get(FluxSimulatorSettings.PAIRED_END) || q< 0.5) {
 									process(true, t, fstart, fend, k);
 									++cntPlus;
 								}
-								if (settings.isPairedEnd()|| q> 0.5) {									
+                                if (settings.get(FluxSimulatorSettings.PAIRED_END) || q> 0.5) {
 									process(false, t, fstart, fend, k);
 									++cntMinus;
 								}
@@ -220,7 +224,7 @@ public class Sequencer implements StoppableRunnable {
 			
 			byte absDir= (byte) (t.getStrand()>= 0?1: -1),
 				antiDir= (byte) (t.getStrand()>= 0?-1: 1);
-			int rLen= settings.getReadLength();
+            int rLen= settings.get(FluxSimulatorSettings.READ_LENGTH);
 			int flen= fend- fstart+ 1;
 			
 			 ++totalReads;
@@ -235,13 +239,13 @@ public class Sequencer implements StoppableRunnable {
 			 
 			 // bed object
 			 if (left) {
-				 createRead(obj, 
-						 fstart, Math.min(fstart+ settings.getReadLength()- 1, fend), 	// start, end
+                 createRead(obj,
+						 fstart, Math.min(fstart+ settings.get(FluxSimulatorSettings.READ_LENGTH) - 1, fend), 	// start, end
 						 t, null, k, absDir, 
 						 fstart, fend, left);
 			 } else {
-				 createRead(obj, 
-						 Math.max(fend- settings.getReadLength()+ 1, fstart), fend, 	// start, end
+                 createRead(obj,
+						 Math.max(fend- settings.get(FluxSimulatorSettings.READ_LENGTH) + 1, fstart), fend, 	// start, end
 						 t, null, k, antiDir, 
 						 fstart, fend, left);
 			 }
@@ -257,7 +261,7 @@ public class Sequencer implements StoppableRunnable {
 			 
 			 
 			 // fasta seq
-			 if (settings.isFastQ()&& Graph.overrideSequenceDirPath!= null) {
+            if (settings.get(FluxSimulatorSettings.FASTQ) && Graph.overrideSequenceDirPath!= null) {
 				 if (left) 
 					 createQname(obj, cs, t, null, k, absDir, fstart, fend,
 							 fstart,Math.min(fstart+ rLen- 1, fend));
@@ -291,51 +295,51 @@ public class Sequencer implements StoppableRunnable {
 	}
 	
 	boolean init() {
-		
-		if (settings.getProFile()== null) {
+
+        if (settings.get(FluxSimulatorSettings.PRO_FILE) == null) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println("\t[OOPS] no input for sequencing");
 			return false;
-		} 
-		if (settings.getSeqFile()== null) {
+		}
+        if (settings.get(FluxSimulatorSettings.SEQ_FILE) == null) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println("\t[AIAIAI] no output for sequencing");
 			return false;
 		}
-		if (settings.getSeqFile().exists()) {
+        if (settings.get(FluxSimulatorSettings.SEQ_FILE).exists()) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (!FileHelper.checkForOverwrite(System.err, settings.getSeqFile()))
+                if (!FileHelper.checkForOverwrite(System.err, settings.get(FluxSimulatorSettings.SEQ_FILE)))
 					return false;
 			} else {
-				settings.getSeqFile().delete();
+                settings.get(FluxSimulatorSettings.SEQ_FILE).delete();
 			}			
 		}
-		
-		
-		if (settings.getReadLength()<= 0|| settings.getReadNr()<= 0
-				|| (!settings.getProFile().exists())
-				|| (!settings.getProFile().canRead())
+
+
+        if (settings.get(FluxSimulatorSettings.READ_LENGTH) <= 0|| settings.get(FluxSimulatorSettings.READ_NUMBER) <= 0
+				|| (!settings.get(FluxSimulatorSettings.PRO_FILE).exists())
+				|| (!settings.get(FluxSimulatorSettings.PRO_FILE).canRead())
 				//|| (!settings.getSeqFile().getParentFile().canWrite()) // NPException for .pro file without path
 				) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t[TOOLITTLE] there are parameters missing: ");
-				if ((!settings.getProFile().exists())|| (!settings.getProFile().canRead()))
-					System.err.println("\t"+settings.getProFile().getAbsolutePath());
-				if (!settings.getSeqFile().canWrite())
-					System.err.println("\t"+settings.getSeqFile().getAbsolutePath());
-				if (settings.getReadLength()<= 0)
-					System.err.println("\t"+settings.PAR_SEQ_READ_LENGTH+" ");
-				if (settings.getReadNr()<= 0)
-					System.err.println("\t"+settings.PAR_SEQ_READ_NUMBER+" ");
+                if ((!settings.get(FluxSimulatorSettings.PRO_FILE).exists())|| (!settings.get(FluxSimulatorSettings.PRO_FILE).canRead()))
+                    System.err.println("\t"+ settings.get(FluxSimulatorSettings.PRO_FILE).getAbsolutePath());
+                if (!settings.get(FluxSimulatorSettings.SEQ_FILE).canWrite())
+                    System.err.println("\t"+ settings.get(FluxSimulatorSettings.SEQ_FILE).getAbsolutePath());
+                if (settings.get(FluxSimulatorSettings.READ_LENGTH) <= 0)
+					System.err.println("\t"+FluxSimulatorSettings.READ_LENGTH+" ");
+                if (settings.get(FluxSimulatorSettings.READ_NUMBER) <= 0)
+					System.err.println("\t"+FluxSimulatorSettings.READ_NUMBER+" ");
 				System.err.println("\n");
 			}
 			return false;
 		} else {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+settings.PAR_PRO_FNAME+"\t"+settings.getProFile().getAbsolutePath());
-				System.err.println("\t"+settings.PAR_SEQ_FNAME+"\t"+settings.getSeqFile().getAbsolutePath());
-				System.err.println("\t"+settings.PAR_SEQ_READ_LENGTH+"\t"+settings.getReadLength());
-				System.err.println("\t"+settings.PAR_SEQ_READ_NUMBER+"\t"+settings.getReadNr());
+                System.err.println("\t"+FluxSimulatorSettings.PRO_FILE+"\t"+ settings.get(FluxSimulatorSettings.PRO_FILE).getAbsolutePath());
+                System.err.println("\t"+FluxSimulatorSettings.SEQ_FILE+"\t"+ settings.get(FluxSimulatorSettings.SEQ_FILE).getAbsolutePath());
+                System.err.println("\t"+FluxSimulatorSettings.READ_LENGTH+"\t"+ (int) settings.get(FluxSimulatorSettings.READ_LENGTH));
+                System.err.println("\t"+FluxSimulatorSettings.READ_NUMBER+"\t"+ (long) settings.get(FluxSimulatorSettings.READ_NUMBER));
 			}
 		}
 		return true;
@@ -360,16 +364,16 @@ public class Sequencer implements StoppableRunnable {
 	public boolean loadErrors() {
 		
 		// load model
-		if (settings.getErrFile()!= null) {
+        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null) {
 //			String s= settings.getErrFile().getAbsolutePath();
-			babes= ModelPool.read(settings.getErrFile(), settings);
+            babes= ModelPool.read(settings.get(FluxSimulatorSettings.ERR_FILE), settings);
 			if (babes== null)
 				return false;
 
             // check qualities for issued #48
-            if(!babes.hasQualities() && settings.isFastQ()){
-                settings.setFastQ(false);
+            if(!babes.hasQualities() && settings.get(FluxSimulatorSettings.FASTQ)){
                 Log.warn("FastQ output requested, but the model does not support qualities. Disabled FastQ output!");
+                settings.set(FluxSimulatorSettings.FASTQ, false);
             }
 			return true; 
 		} 
@@ -385,7 +389,7 @@ public class Sequencer implements StoppableRunnable {
             String s= "initializing sequencer ";
             Log.progressStart(s);
 
-			totalReads= FileHelper.countLines(settings.getSeqFile().getAbsolutePath());
+            totalReads= FileHelper.countLines(settings.get(FluxSimulatorSettings.SEQ_FILE).getAbsolutePath());
 			
 			
 			// TODO OutOfMemoryError, do something else
@@ -457,10 +461,10 @@ public class Sequencer implements StoppableRunnable {
 			String sss= "sequencing init";
             Log.progressStart(sss);
 
-			BufferedReader buffy= new BufferedReader(new FileReader(settings.getFrgFile()));
-			long bytesRead= 0, totBytes= settings.getFrgFile().length();			
+            BufferedReader buffy= new BufferedReader(new FileReader(settings.get(FluxSimulatorSettings.LIB_FILE)));
+            long bytesRead= 0, totBytes= settings.get(FluxSimulatorSettings.LIB_FILE).length();
 			int cnt= 0, perc= 0;
-			mapFrags= new Hashtable<String,int[][]>(settings.getProfiler().getIds().length);
+			mapFrags= new Hashtable<String,int[][]>(profiler.getIds().length);
 			Vector<int[]> v= new Vector<int[]>();
 			String[] token;
 			String currentID= null;
@@ -489,7 +493,7 @@ public class Sequencer implements StoppableRunnable {
 			buffy.close();
 			
 			nrOfFrags= cnt;
-			p= settings.getReadNr()/ (double) cnt;
+            p= settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) cnt;
 
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println();
@@ -563,14 +567,14 @@ public class Sequencer implements StoppableRunnable {
 				zipFile= File.createTempFile("sim", "master.gz");
 			
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(100);
-			File inFile= settings.getFrgFile();
+            File inFile= settings.get(FluxSimulatorSettings.LIB_FILE);
 			nrOfFrags= sortAndZip(cs, inFile, zipFile);
 			
 			// create ZIP
 			// hash entries
 			if (zipFile== null|| !zipFile.exists())
 				return false;
-			zipHash= new Hashtable<CharSequence, ZipEntry>(settings.getProfiler().getIds().length);
+			zipHash= new Hashtable<CharSequence, ZipEntry>(profiler.getIds().length);
 			ZipFile zFile= new ZipFile(zipFile);
 			Enumeration e= zFile.entries();
 			ZipEntry ze;
@@ -597,7 +601,7 @@ public class Sequencer implements StoppableRunnable {
 			zFile.close();
 			
 			// stats
-			p= settings.getReadNr()/ (double) nrOfFrags;
+            p= settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) nrOfFrags;
 
 			return true;
 			
@@ -633,7 +637,7 @@ public class Sequencer implements StoppableRunnable {
 			String sss= "sequencing";
             Log.progressStart(sss);
 
-			GFFReader reader= new GFFReader(settings.getRefFile().getCanonicalPath());
+            GFFReader reader= new GFFReader(settings.get(FluxSimulatorSettings.REF_FILE).getCanonicalPath());
 			reader.setReadAheadLimit(500);
 			reader.setSilent(true);
 			reader.setStars(true);
@@ -656,12 +660,12 @@ public class Sequencer implements StoppableRunnable {
 			hashLoc= new HashSet<String>();
 //			ThreadedQWriter qwriter= null, qfasta= null;
 //			BufferedWriter bwriter= null, bfasta= null;
-			File tmpFile= File.createTempFile("flux",NAME_SEQ,settings.getTmpDir()), tmpFasta= null;
+            File tmpFile= File.createTempFile("flux",NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR)), tmpFasta= null;
 //			if (!multiThread)
 //				bwriter= new BufferedWriter(new FileWriter(tmpFile));
-			if (settings.isFastQ()&& settings.getGenDir()!= null) {
-				tmpFasta= File.createTempFile("flux",NAME_SEQ,settings.getTmpDir());
-				Graph.overrideSequenceDirPath= settings.getGenDir().getAbsolutePath();
+            if (settings.get(FluxSimulatorSettings.FASTQ) && settings.get(FluxSimulatorSettings.GEN_DIR) != null) {
+                tmpFasta= File.createTempFile("flux",NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
+                Graph.overrideSequenceDirPath= settings.get(FluxSimulatorSettings.GEN_DIR).getAbsolutePath();
 //				if (!multiThread)
 //					bfasta= new BufferedWriter(new FileWriter(tmpFasta));
 			}
@@ -679,10 +683,10 @@ public class Sequencer implements StoppableRunnable {
 
 			// probability for fragment selection
 			p= 1;
-			if (settings.getReadNr()< nrOfFrags)
-				p= settings.getReadNr()/ (double) nrOfFrags;	
+            if (settings.get(FluxSimulatorSettings.READ_NUMBER) < nrOfFrags)
+                p= settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) nrOfFrags;
 			//System.err.println(settings.readNr+" reads, "+nrOfFrags+ " frags, p= "+p);
-			map= new Hashtable<CharSequence,Long>(settings.getProfiler().getMolecules().length);
+			map= new Hashtable<CharSequence,Long>(profiler.getMolecules().length);
 			
 			// init IO
 			zzFile= new ZipFile(zipFile);
@@ -775,7 +779,7 @@ public class Sequencer implements StoppableRunnable {
 			
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 				
 				System.err.println("\n\tMoving temporary BED file");
-			FileHelper.move(tmpFile, settings.getSeqFile());
+            FileHelper.move(tmpFile, settings.get(FluxSimulatorSettings.SEQ_FILE));
             Log.progressFinish();
 
 			if (tmpFasta!= null) {
@@ -787,7 +791,7 @@ public class Sequencer implements StoppableRunnable {
 			}
 			
 			if (!stop) 
-				FluxSimulatorSettings.appendProfile(settings, FluxSimulatorSettings.PRO_COL_NR_SEQ, map);
+				ProfilerFile.appendProfile(settings, ProfilerFile.PRO_COL_NR_SEQ, map);
 		
 			zipFile.delete();
 			zipFile= null;
@@ -811,7 +815,7 @@ public class Sequencer implements StoppableRunnable {
 	}
 	
 	private File getFASTAfile() {
-		return FileHelper.replaceSfx(settings.getSeqFile(), "."+ (hasQualities()? SFX_FASTQ: SFX_FASTA));
+        return FileHelper.replaceSfx(settings.get(FluxSimulatorSettings.SEQ_FILE), "."+ (hasQualities()? SFX_FASTQ: SFX_FASTA));
 	}
 
 	/**
@@ -903,26 +907,26 @@ public class Sequencer implements StoppableRunnable {
 			sb.append(createReadName(t, t2, molNr, absDir, fragStart, fragEnd, readStart, readEnd));
 			sb.append(FMRD.DELIM_FMRD[0]);
 			sb.append(obj.getChrom());
-			sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+			sb.append(DELIM_FMOLI);
 			sb.append(DOT);
-			sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+			sb.append(DELIM_FMOLI);
 			sb.append(DOT);
-			sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+			sb.append(DELIM_FMOLI);
 			sb.append(absDir> 0?PLUS: MINUS); 
 		} else { 
 			sb.append(obj.getName());
 			sb.append(FMRD.DELIM_FMRD[0]);
 			sb.append(obj.getChrom());
-			sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+			sb.append(DELIM_FMOLI);
 			sb.append(Integer.toString(obj.getAbsoluteStart()));
-			sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+			sb.append(DELIM_FMOLI);
 			sb.append(Integer.toString(obj.getAbsoluteEnd()));
-			sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+			sb.append(DELIM_FMOLI);
 			sb.append(absDir> 0?PLUS: MINUS); 
 			if (obj.getBlockCount()> 1) {
-				sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+				sb.append(DELIM_FMOLI);
 				sb.append(obj.getBlockSizes().toString());
-				sb.append(FluxSimulatorSettings.DELIM_FMOLI);
+				sb.append(DELIM_FMOLI);
 				sb.append(obj.getBlockStarts().toString());
 			}
 		}
@@ -1012,14 +1016,14 @@ public class Sequencer implements StoppableRunnable {
 			long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd) {
 		
 		// FURI
-		String s= t.getGene().getGeneID()+ FluxSimulatorSettings.DELIM_FMOLI
-			+ (t2== null? t.getTranscriptID(): t2.getTranscriptID())+ FluxSimulatorSettings.DELIM_FMOLI
-			+ Long.toString(molNr+1)+ FluxSimulatorSettings.DELIM_FMOLI+ 
-			+ (t2== null? t.getExonicLength(): t2.getExonicLength())+ FluxSimulatorSettings.DELIM_FMOLI
-			+ Integer.toString(fragStart)+ FluxSimulatorSettings.DELIM_FMOLI+ Integer.toString(fragEnd)+ FluxSimulatorSettings.DELIM_FMOLI
-			+ Integer.toString(readStart)+ FluxSimulatorSettings.DELIM_FMOLI+ Integer.toString(readEnd);
-		
-		if (settings.isPairedEnd()) { 
+		String s= t.getGene().getGeneID()+ DELIM_FMOLI
+			+ (t2== null? t.getTranscriptID(): t2.getTranscriptID())+ DELIM_FMOLI
+			+ Long.toString(molNr+1)+ DELIM_FMOLI+
+			+ (t2== null? t.getExonicLength(): t2.getExonicLength())+ DELIM_FMOLI
+			+ Integer.toString(fragStart)+ DELIM_FMOLI+ Integer.toString(fragEnd)+ DELIM_FMOLI
+			+ Integer.toString(readStart)+ DELIM_FMOLI+ Integer.toString(readEnd);
+
+        if ((boolean) settings.get(FluxSimulatorSettings.PAIRED_END)) {
 			s+= Character.toString(FMRD.DELIM_FMRD[0])+ FMRD.ID_PE+ (absDir== t.getStrand()?FMRD.PE_OPT[0]:FMRD.PE_OPT[1]);
 		}
 		
@@ -1055,7 +1059,7 @@ public class Sequencer implements StoppableRunnable {
 		obj.append(BYTE_TAB);
 		obj.append(end- start);
 		obj.append(BYTE_TAB);
-		FMRD.appendReadName(obj, t, t2, molNr, absDir, fragStart, fragEnd, start, end, settings.isPairedEnd());
+        FMRD.appendReadName(obj, t, t2, molNr, absDir, fragStart, fragEnd, start, end, settings.get(FluxSimulatorSettings.PAIRED_END));
 		obj.append(BYTE_TAB);
 		obj.append(BYTE_0);
 		obj.append(BYTE_TAB);
@@ -1133,9 +1137,9 @@ public class Sequencer implements StoppableRunnable {
 		obj.append(BYTE_TAB);
 		obj.append(bedEnd);
 		obj.append(BYTE_TAB);
-		FMRD.appendReadName(obj, t, t2, 
+        FMRD.appendReadName(obj, t, t2,
 				molNr, absDir, fragStart, fragEnd, 
-				start, end, settings.isPairedEnd());
+				start, end, settings.get(FluxSimulatorSettings.PAIRED_END));
 		obj.append(BYTE_TAB);
 		obj.append(BYTE_0);
 		obj.append(BYTE_TAB);
@@ -1213,16 +1217,16 @@ public class Sequencer implements StoppableRunnable {
      */
 	public String isReady() {
         if(settings == null) return "No Setting specified!";
-        File file = settings.getFrgFile();
+        File file = settings.get(FluxSimulatorSettings.LIB_FILE);
         if(file == null || !file.exists()){
             if(file == null)return "No Fragmentation file specified! Check your parameters file!";
-            if(!file.exists() || settings.getFrgFile().length() == 0) return "Fragmentation file " + file.getAbsolutePath() + " not found or empty. Make sure fragmentation was done !";
+            if(!file.exists() || settings.get(FluxSimulatorSettings.LIB_FILE).length() == 0) return "Fragmentation file " + file.getAbsolutePath() + " not found or empty. Make sure fragmentation was done !";
         }
 		return null;
 	}
 	
 	public boolean isFinished() {
-		if (settings!= null&& settings.getSeqFile()!= null&& settings.getSeqFile().exists()&& settings.getSeqFile().length()> 0)
+        if (settings!= null&& settings.get(FluxSimulatorSettings.SEQ_FILE) != null&& settings.get(FluxSimulatorSettings.SEQ_FILE).exists()&& settings.get(FluxSimulatorSettings.SEQ_FILE).length()> 0)
 			return true;
 		return false;
 	}
@@ -1262,8 +1266,8 @@ public class Sequencer implements StoppableRunnable {
 	public boolean isBabeCompatible() {
 		if (babes== null) 
 			return true;
-		
-		if (babes.getReadLength()!= settings.getReadLength())
+
+        if (babes.getReadLength()!= settings.get(FluxSimulatorSettings.READ_LENGTH))
 			return false;
 		return true;
 	}
@@ -1316,257 +1320,6 @@ public class Sequencer implements StoppableRunnable {
 	}
 
 	Random rndQual= new Random();
-	boolean sequence_old() { 
-			try {
-				String sss= "sequencing";
-                Log.progressStart(sss);
-
-				GFFReader reader= new GFFReader(settings.getRefFile().getCanonicalPath());
-				reader.setReadAheadLimit(500);
-				reader.setSilent(true);
-				reader.setStars(true);
-				Gene[] g;
-				ThreadedFragFileReader fragReader= new ThreadedFragFileReader(new FileReader(settings.getFrgFile().getAbsolutePath()));
-				fragReader.read();	// thread killed, currently intransparent
-				BEDobject obj;
-				totalReads= 0;
-				long totalMols= 0, totalFrags= 0;
-				Iterator<int[][]> iter= mapFrags.values().iterator();
-				while(iter.hasNext())
-					totalMols+= iter.next().length;
-				for (int i = 0; i < settings.getProfiler().getMolecules().length; i++) 
-					totalMols+= settings.getProfiler().getMolecules()[i];
-				HashSet<String> hashTrp= new HashSet<String>(), hashLoc= new HashSet<String>();
-				ThreadedQWriter qwriter= null, qfasta= null;
-				BufferedWriter bwriter= null, bfasta= null;
-				File tmpFile= File.createTempFile("flux",NAME_SEQ,settings.getTmpDir()), tmpFasta= null;
-				if (!multiThread)
-					bwriter= new BufferedWriter(new FileWriter(tmpFile));
-				if (settings.isFastQ()&& settings.getGenDir()!= null) {
-					tmpFasta= File.createTempFile("flux",NAME_SEQ,settings.getTmpDir());
-					Graph.overrideSequenceDirPath= settings.getGenDir().getAbsolutePath();
-					if (!multiThread)
-						bfasta= new BufferedWriter(new FileWriter(tmpFasta));
-				}
-				char[] seq= new char[settings.getReadLength()];
-				final char[] pA= new char[settings.getReadLength()], pT= new char[settings.getReadLength()];
-				for (int i = 0; i < pT.length; i++) {
-					pA[i]= 'a';
-					pT[i]= 't';
-				}
-				//final String polyA= new String(pA), polyT= new String(pT);
-				byte[] sequals= null;
-				if (babes!= null) 
-					sequals= new byte[settings.getReadLength()];		
-	
-				// probability for fragment selection
-				p= 1;
-				if (settings.getReadNr()< nrOfFrags)
-					p= settings.getReadNr()/ (double) nrOfFrags;	
-				//System.err.println(settings.readNr+" reads, "+nrOfFrags+ " frags, p= "+p);
-				Hashtable<CharSequence,Long> map= new Hashtable<CharSequence,Long>(settings.getProfiler().getMolecules().length);
-				Long long0= new Long(1);
-
-				
-				for (reader.read(); !stop&& (g= reader.getGenes())!= null; reader.read()) {
-					
-					if (multiThread) {
-						if (qwriter!= null) {
-							qwriter.flush();
-							qwriter.close();
-							try {
-								qwriter.join();
-							} catch (InterruptedException shit) {
-								qwriter.setStop();
-							}
-						}
-						if (qfasta!= null) {
-							qfasta.flush();
-							qfasta.close();
-							try {
-								qfasta.join();
-							} catch (InterruptedException shit) {
-								qfasta.setStop();
-							}
-						}
-						qwriter= new ThreadedQWriter(tmpFile);
-						qwriter.setAppend(true);
-						qwriter.init();
-						qwriter.start();
-						if (tmpFasta!= null) {
-							qfasta= new ThreadedQWriter(tmpFasta);
-							qfasta.setAppend(true);
-							qfasta.init();
-							qfasta.start();
-						}
-					}
-					
-					for (int i = 0; (!isStop())&& i < g.length; i++) {
-						for (int j = 0; (!isStop())&& j < g[i].getTranscripts().length; j++) {
-							Transcript t= g[i].getTranscripts()[j];
-							Transcript t2= null;
-							int[][] m= mapFrags.remove(t.getTranscriptID());
-							if (m!= null) {
-								 for (int k = 0; k < m.length; k++, ++totalFrags) {
-									 double r= rnd.nextDouble();
-									 if (r< p) { 
-										 hashTrp.add(t.getTranscriptID());
-										 hashLoc.add(t.getGene().getGeneID());
-	//									 if (totalReads% 1000== 0&& (totalReads* 10d/ settings.readNr> perc)) {
-	//										 ++perc;
-	//										 if (Constants.progress!= null)
-	//											 Constants.progress.setValue(perc);
-	//									 }
-										 
-										 double q= rndFiftyFifty.nextDouble();
-										 int fragLen= (m[k][1]-m[k][0]+1);
-										 if (settings.isPairedEnd()|| q< 0.5) {
-											 byte absDir= (byte) (t.getStrand()> 0?1: -1);
-											 ++totalReads;
-											 if (map.containsKey(t.getTranscriptID()))
-												 map.put(t.getTranscriptID(), map.get(t.getTranscriptID())+ 1);
-											 else 
-												 map.put(t.getTranscriptID(), long0);
-											 obj= createRead(m[k][0],Math.min(m[k][0]+ settings.getReadLength()- 1, m[k][1]), t, t2, k, absDir, 
-													 m[k][0], m[k][1]);
-											 if (multiThread)
-												 qwriter.add(obj);
-											 else
-												 bwriter.write(obj.toString()+"\n");
-											 if (settings.isFastQ()) {
-												 String qname= createQname(obj,t,t2,k,absDir,m[k][0],m[k][1],
-														 m[k][0],Math.min(m[k][0]+ settings.getReadLength()- 1, m[k][1])), 
-												 	qseq= createQSeq(obj, absDir, t.getStrand(), seq, sequals);
-												 if (multiThread) {
-													 qfasta.add(qname);
-													 qfasta.add(qseq);
-												 } else {
-													 bfasta.write(qname+ "\n");
-													 bfasta.write(qseq+ "\n");
-												 }
-												 if (sequals!= null&& babes.hasQualities()) {
-													 if (multiThread) {
-														 qfasta.add(Fasta.QFASTA_PLUS);
-														 qfasta.add(createQual(rndQual, seq, sequals));
-													 } else {
-														 bfasta.write(Fasta.QFASTA_PLUS+ "\n");
-														 bfasta.write(createQual(rndQual, seq, sequals)+ "\n");
-													 }
-												 }
-											 } 
-										 }
-									 	 if (settings.isPairedEnd()|| q> 0.5) {
-											 byte absDir= (byte) (t.getStrand()> 0?-1:1);
-											 ++totalReads;
-											 if (map.containsKey(t.getTranscriptID()))
-												 map.put(t.getTranscriptID(), map.get(t.getTranscriptID())+ 1);
-											 else 
-												 map.put(t.getTranscriptID(), long0);
-											 
-											 obj= createRead(Math.max(m[k][1]- settings.getReadLength()+ 1, m[k][0]),m[k][1], t, t2, k, absDir,
-													 m[k][0],m[k][1]);
-											 if (multiThread)
-												 qwriter.add(obj);
-											 else
-												 bwriter.write(obj+ "\n");
-											 if (settings.isFastQ()) {
-												 String qname= createQname(obj,t,t2,k,absDir,m[k][0],m[k][1], Math.max(m[k][1]- settings.getReadLength()+ 1, m[k][0]),m[k][1]), 
-												 	qseq= createQSeq(obj,absDir, t.getStrand(), seq, sequals);
-												 if (multiThread) {
-													 qfasta.add(qname);
-													 qfasta.add(qseq);
-												 } else {
-													 bfasta.write(qname+ "\n");
-													 bfasta.write(qseq+ "\n");
-												 }
-												 if (sequals!= null&& babes.hasQualities()) {
-													 if (multiThread) {
-														 qfasta.add(Fasta.QFASTA_PLUS);
-														 qfasta.add(createQual(rndQual, seq, sequals));
-													 } else {
-														 bfasta.write(Fasta.QFASTA_PLUS+ "\n");
-														 bfasta.write(createQual(rndQual, seq, sequals)+ "\n");
-													 }
-												 }
-											 }
-											 
-									 	 }
-									 } 
-								 }
-								 
-								 if (mapFrags.size()== 0) {
-									 fragReader.read();
-									 mapFrags= fragReader.getMapFrags();
-									 i= -1;
-									 break;
-								 }
-							}
-						}
-						if (mapFrags== null)
-							break;
-					}
-					
-				}
-				fragReader.close();
-				cntLoci= hashLoc.size();
-				cntTrpts= hashTrp.size();
-				hashLoc= null;
-				hashTrp= null;
-				System.gc();
-				if (multiThread) {
-					if (qwriter!= null) {
-						qwriter.flush();
-						qwriter.close();
-						try {
-							qwriter.join();
-						} catch (Exception e) {
-							qwriter.setStop();
-						}
-					}
-					if (qfasta!= null) {
-						qfasta.flush();
-						qfasta.close();
-						try {
-							qfasta.join();
-						} catch (InterruptedException shit) {
-							qfasta.setStop();
-						}
-					}
-				} else {
-					bwriter.flush();
-					bwriter.close();
-					if (bfasta!= null) {
-						bfasta.flush();
-						bfasta.close();
-					}
-				}
-				
-
-                Log.progressStart("Moving temporary BED file");
-				FileHelper.move(tmpFile, settings.getSeqFile());
-                Log.progressFinish();
-
-				if (tmpFasta!= null) {
-                    Log.progressStart("Copying qFasta file");
-					File fileFASTA= getFASTAfile();
-					FileHelper.move(tmpFasta, fileFASTA);
-                    Log.progressFinish();
-				}
-				
-				if (!stop) {
-					FluxSimulatorSettings.appendProfile(settings, FluxSimulatorSettings.PRO_COL_NR_SEQ, map);
-				}
-				
-				return true;
-				
-			} catch (Exception e) {
-				//if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-					e.printStackTrace();
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println(" FAILED");
-				return false;
-			}
-		}
 
 	/**
 	 * @deprecated

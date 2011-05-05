@@ -24,6 +24,11 @@ class BooleanParameter extends Parameter<Boolean>{
     }
 
     @Override
+    void set(Boolean value) {
+        this.value = value;
+    }
+
+    @Override
     Boolean get() {
         return value;
     }
@@ -45,5 +50,10 @@ class BooleanParameter extends Parameter<Boolean>{
             }
         }
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value '"+value + "'. Possible values are: [YES,NO]");
+    }
+
+    @Override
+    public String getValuesString() {
+        return "true|false or yes|no";
     }
 }
