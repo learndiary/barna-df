@@ -189,7 +189,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA", "", Double.NaN);
     public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA", "", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0", "", Double.NaN);
+    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0", "", 1.0, 1.0, Double.MAX_VALUE, null);
 
     /*
      Reverse Transcription
