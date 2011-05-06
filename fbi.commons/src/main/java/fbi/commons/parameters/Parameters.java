@@ -24,7 +24,7 @@ public class Parameters {
         return stringParameter(name, description, defaultValue, null, values);
     }
 
-    public static Parameter<String> stringParameter(String name, String description, String defaultValue,ParameterValidator validator, String...values){
+    public static Parameter<String> stringParameter(String name, String description, String defaultValue, ParameterValidator validator, String...values){
         return new StringParameter(name, description, defaultValue, Arrays.asList(values), validator);
     }
 

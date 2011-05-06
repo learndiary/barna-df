@@ -29,6 +29,7 @@ class StringParameter extends Parameter<String>{
 
     public StringParameter(String name, String description, String defaultValue, List<String> values, ParameterValidator validator) {
         super(name, description, defaultValue, String.class, validator);
+        this.value = defaultValue;
         this.values = values;
     }
 
