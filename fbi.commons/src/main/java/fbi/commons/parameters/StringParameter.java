@@ -72,4 +72,11 @@ class StringParameter extends Parameter<String>{
         }
         return "text";
     }
+
+    @Override
+    public Parameter copy() {
+        StringParameter stringParameter = new StringParameter(getName(), getDescription(), getDefault(), getValues(), getValidator());
+        stringParameter.set(get());
+        return stringParameter;
+    }
 }

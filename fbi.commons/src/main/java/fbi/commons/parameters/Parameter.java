@@ -57,4 +57,11 @@ public abstract class Parameter<T> {
     public String getValuesString(){
         return null;
     }
+
+    /**
+     * Clone this parameter
+     *
+     * @return parameter copy of this parameter
+     */
+    public abstract Parameter copy();
 }

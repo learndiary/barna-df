@@ -33,4 +33,11 @@ class IntegerParameter extends NumberParameter<Integer>{
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value "+value);
     }
 
+    @Override
+    public Parameter copy() {
+        IntegerParameter intparameter = new IntegerParameter(getName(), getDescription(), getDefault(), minimumValue, maximumValue, getValidator());
+        intparameter.set(get());
+        return intparameter;
+    }
+
 }

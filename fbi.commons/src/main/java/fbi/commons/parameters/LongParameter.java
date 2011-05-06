@@ -33,4 +33,12 @@ class LongParameter extends NumberParameter<Long>{
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value "+value);
     }
 
+    @Override
+    public Parameter copy() {
+        LongParameter longParameter = new LongParameter(getName(), getDescription(), getDefault(), minimumValue, maximumValue, getValidator());
+        longParameter.set(get());
+        return longParameter;
+    }
+
+
 }

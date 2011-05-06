@@ -32,7 +32,7 @@ public abstract class ParameterSchema {
                     field.setAccessible(true);
                     Parameter p = (Parameter) field.get(null);
                     if(p != null){
-                        register(p);
+                        register(p.copy());
                     }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Unable to access parameter field " + field.getName() + " in " + clazz.getName());

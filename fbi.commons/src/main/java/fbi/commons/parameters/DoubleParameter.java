@@ -41,4 +41,10 @@ class DoubleParameter extends NumberParameter<Double>{
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value "+value);
     }
 
+    @Override
+    public Parameter copy() {
+        DoubleParameter doubleParameter = new DoubleParameter(getName(), getDescription(), getDefault(), minimumValue, maximumValue, getValidator());
+        doubleParameter.set(get());
+        return doubleParameter;
+    }
 }

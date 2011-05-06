@@ -57,4 +57,11 @@ class BooleanParameter extends Parameter<Boolean>{
     public String getValuesString() {
         return "true|false or yes|no";
     }
+
+    @Override
+    public Parameter copy() {
+        BooleanParameter booleanParameter = new BooleanParameter(getName(), getDescription(), getDefault(), getValidator());
+        booleanParameter.set(get());
+        return booleanParameter;
+    }
 }

@@ -17,15 +17,6 @@ public class ParameterSchemaTest {
 
 
     @Test
-    public void testDefaultAccess(){
-        SimpleParameterSchema schema = new SimpleParameterSchema();
-        assertEquals("A", schema.get(SimpleParameterSchema.STRING1));
-        assertFalse(schema.get(SimpleParameterSchema.BOOLEAN1));
-        assertEquals(0, (int)schema.get(SimpleParameterSchema.INT1));
-        assertEquals(0d, schema.get(SimpleParameterSchema.DOUBLE1), 0.00001);
-    }
-
-    @Test
     public void testUnknownParameter(){
         SimpleParameterSchema schema = new SimpleParameterSchema();
 
@@ -86,7 +77,14 @@ public class ParameterSchemaTest {
             assertEquals("Error while parsing line 5. Unable to parse parameter DOUBLE with value 5.8sa", e.getMessage());
         }
     }
-
+    @Test
+    public void testDefaultAccess(){
+        SimpleParameterSchema schema = new SimpleParameterSchema();
+        assertEquals("A", schema.get(SimpleParameterSchema.STRING1));
+        assertFalse(schema.get(SimpleParameterSchema.BOOLEAN1));
+        assertEquals(0, (int)schema.get(SimpleParameterSchema.INT1));
+        assertEquals(0d, schema.get(SimpleParameterSchema.DOUBLE1), 0.00001);
+    }
 
 
 

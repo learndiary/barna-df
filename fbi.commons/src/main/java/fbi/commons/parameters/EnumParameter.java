@@ -47,4 +47,10 @@ class EnumParameter<E extends Enum<E>> extends Parameter<E>{
         return values.toString();
     }
 
+    @Override
+    public Parameter copy() {
+        EnumParameter enumParameter = new EnumParameter(getName(), getDescription(), getDefault(), getType(), getValidator());
+        enumParameter.set(get());
+        return enumParameter;
+    }
 }
