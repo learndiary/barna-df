@@ -11,12 +11,12 @@ public class ParameterException extends Exception {
     }
 
     public ParameterException(Parameter parameter, String value) {
-        super("Invalid Parameter " + parameter.getName() + " with value "+ value );
+        super("Invalid Parameter " + parameter.getName() + " with value " + value);
         this.parameter = parameter;
     }
 
     public ParameterException(Parameter parameter, String value, String message) {
-        super(message );
+        super(message);
         this.parameter = parameter;
     }
 

@@ -5,13 +5,13 @@ import java.io.File;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class FileParameter extends Parameter<File>{
+class FileParameter extends Parameter<File> {
 
     private File value;
     private FileNameParser nameParser;
 
     public FileParameter(String name) {
-        this(name, "",  null);
+        this(name, "", null);
     }
 
     public FileParameter(String name, String description) {
@@ -41,10 +41,10 @@ class FileParameter extends Parameter<File>{
         return value == null ? getDefault() : value;
     }
 
-    void parse(String value) throws ParameterException{
-        if(nameParser != null){
+    void parse(String value) throws ParameterException {
+        if (nameParser != null) {
             this.value = nameParser.parse(value);
-        }else{
+        } else {
             this.value = new File(value);
         }
     }

@@ -14,7 +14,7 @@ public interface Interceptable<T> {
      * Interceptors catch object from the Interceptable. They can return a changed version of the
      * line, but it is up to the Intercaptable to accept the change.
      */
-    public static interface Interceptor<T>{
+    public static interface Interceptor<T> {
         /**
          * Intercepts an object. Implementations can return a changed version but it is up to the
          * interceptable to accept the change

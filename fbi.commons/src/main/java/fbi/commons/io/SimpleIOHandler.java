@@ -13,7 +13,7 @@ import java.util.Map;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class SimpleIOHandler implements IOHandler{
+class SimpleIOHandler implements IOHandler {
     /**
      * Force that only buffered streams are used
      */
@@ -25,7 +25,7 @@ class SimpleIOHandler implements IOHandler{
     /**
      * The list of managed output streams
      */
-    private Map<OutputStream,OutputStream> outputStreams;
+    private Map<OutputStream, OutputStream> outputStreams;
 
     /**
      * Cached input streams that are used to quickly fill the byte arrays char seqs
@@ -65,37 +65,37 @@ class SimpleIOHandler implements IOHandler{
     }
 
     public void addStream(Object stream, int bufferSize) {
-        if(stream == null) throw new NullPointerException();
-        if (bufferSize <=0) throw new IllegalArgumentException("Stream buffer size must be > 0");
-        if(stream instanceof InputStream){
-            if(!inputStreams.contains(stream)){
+        if (stream == null) throw new NullPointerException();
+        if (bufferSize <= 0) throw new IllegalArgumentException("Stream buffer size must be > 0");
+        if (stream instanceof InputStream) {
+            if (!inputStreams.contains(stream)) {
 
                 InputStream toAdd = (InputStream) stream;
-                if(FORCE_BUFFERED_STREAMS && ! (stream instanceof BufferedInputStream)){
+                if (FORCE_BUFFERED_STREAMS && !(stream instanceof BufferedInputStream)) {
                     toAdd = new BufferedInputStream((InputStream) stream, IOHandler.DEFAULT_BUFFER_SIZE);
                 }
                 inputStreams.add((InputStream) stream);
                 cachedStreams.put((InputStream) stream, new ByteArrayInputStream(new ByteArrayCharSequence(bufferSize), toAdd));
             }
-        }else if(stream instanceof OutputStream){
-            if(!outputStreams.containsKey(stream)){
+        } else if (stream instanceof OutputStream) {
+            if (!outputStreams.containsKey(stream)) {
                 OutputStream toAdd = (OutputStream) stream;
-                if(FORCE_BUFFERED_STREAMS && ! (stream instanceof BufferedOutputStream)){
+                if (FORCE_BUFFERED_STREAMS && !(stream instanceof BufferedOutputStream)) {
                     toAdd = new BufferedOutputStream((OutputStream) stream);
                 }
                 outputStreams.put((OutputStream) stream, toAdd);
             }
-        }else{
+        } else {
             throw new IllegalArgumentException("The given Object is neither an InputStream or an OutputStream");
         }
     }
 
     public void removeStream(Object stream) {
-        if(stream == null) return;
-        if(stream instanceof InputStream){
+        if (stream == null) return;
+        if (stream instanceof InputStream) {
             inputStreams.remove(stream);
             cachedStreams.remove(stream);
-        }else if(stream instanceof OutputStream){
+        } else if (stream instanceof OutputStream) {
             outputStreams.remove(stream);
         }
     }
@@ -105,7 +105,7 @@ class SimpleIOHandler implements IOHandler{
         for (InputStream inputStream : inputStreams) {
             try {
                 ByteArrayInputStream cc = cachedStreams.get(inputStream);
-                if(cc != null)cc.close();
+                if (cc != null) cc.close();
                 else inputStream.close();
             } catch (IOException e) {
                 // ignore this one
@@ -125,16 +125,16 @@ class SimpleIOHandler implements IOHandler{
     public void write(byte[] source, int position, int length, OutputStream stream) throws IOException {
         // get the stream
         OutputStream outputStream = outputStreams.get(stream);
-        if (outputStream == null){
+        if (outputStream == null) {
             throw new IllegalArgumentException("The stream was not registered with this handler or it was removed. Pleas ensure you call addStream before you try to write!");
         }
         outputStream.write(source, position, length);
     }
 
 
-    public void writeLine(ByteArrayCharSequence cs, OutputStream out) throws IOException{
+    public void writeLine(ByteArrayCharSequence cs, OutputStream out) throws IOException {
         OutputStream outputStream = outputStreams.get(out);
-        if (outputStream == null){
+        if (outputStream == null) {
             throw new IllegalArgumentException("The stream was not registered with this handler or it was removed. Pleas ensure you call addStream before you try to write!");
         }
 
@@ -143,10 +143,10 @@ class SimpleIOHandler implements IOHandler{
     }
 
     public void writeLine(Object object, OutputStream out) throws IOException {
-        if(object == null) throw new NullPointerException();
-        if(bufferSequence == null){
+        if (object == null) throw new NullPointerException();
+        if (bufferSequence == null) {
             bufferSequence = new ByteArrayCharSequence(object.toString());
-        }else{
+        } else {
             bufferSequence.reset();
             bufferSequence.append(object.toString());
         }
@@ -155,20 +155,20 @@ class SimpleIOHandler implements IOHandler{
 
     public ByteArrayCharSequence readLine(InputStream stream) throws IOException {
         ByteArrayInputStream cc = cachedStreams.get(stream);
-        if(cc== null){
+        if (cc == null) {
             throw new IllegalArgumentException("The stream was not registered with this handler or it was removed. Pleas ensure you call addStream before you try to read!");
         }
 
         // reset the sequence
         cc.getSequence().reset();
         int read = cc.readLine();
-        if(read < 0) return null;
+        if (read < 0) return null;
         return cc.getSequence();
     }
 
     public int readLine(InputStream in, ByteArrayCharSequence cs) throws IOException {
         ByteArrayInputStream cc = cachedStreams.get(in);
-        if(cc== null){
+        if (cc == null) {
             throw new IllegalArgumentException("The stream was not registered with this handler or it was removed. Pleas ensure you call addStream before you try to read!");
         }
         ByteArrayCharSequence old = cc.getSequence();

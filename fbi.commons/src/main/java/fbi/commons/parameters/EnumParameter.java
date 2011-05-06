@@ -3,11 +3,10 @@ package fbi.commons.parameters;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class EnumParameter<E extends Enum<E>> extends Parameter<E>{
+class EnumParameter<E extends Enum<E>> extends Parameter<E> {
 
     private E[] values;
     private E value;
-
 
 
     public EnumParameter(String name, String description, E defaultValue) {
@@ -17,6 +16,7 @@ class EnumParameter<E extends Enum<E>> extends Parameter<E>{
     public EnumParameter(String name, String description, E defaultValue, ParameterValidator validator) {
         this(name, description, defaultValue, defaultValue.getDeclaringClass(), validator);
     }
+
     public EnumParameter(String name, String description, E defaultValue, Class<E> values, ParameterValidator validator) {
         super(name, description, defaultValue, values, validator);
         this.values = values.getEnumConstants();
@@ -32,14 +32,14 @@ class EnumParameter<E extends Enum<E>> extends Parameter<E>{
         return value == null ? getDefault() : value;
     }
 
-    void parse(String value) throws ParameterException{
+    void parse(String value) throws ParameterException {
         for (E e : values) {
-            if(e.name().equalsIgnoreCase(value)){
+            if (e.name().equalsIgnoreCase(value)) {
                 this.value = e;
                 return;
             }
         }
-        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value "+value);
+        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
     }
 
     @Override

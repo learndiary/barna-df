@@ -27,11 +27,11 @@ public abstract class ParameterSchema {
         Class<? extends ParameterSchema> clazz = getClass();
         Field[] fields = clazz.getFields();
         for (Field field : fields) {
-            if(Parameter.class.isAssignableFrom(field.getType())){
+            if (Parameter.class.isAssignableFrom(field.getType())) {
                 try {
                     field.setAccessible(true);
                     Parameter p = (Parameter) field.get(null);
-                    if(p != null){
+                    if (p != null) {
                         register(p.copy());
                     }
                 } catch (IllegalAccessException e) {
@@ -50,8 +50,9 @@ public abstract class ParameterSchema {
         return parameters.size();
     }
 
-    public void register(Parameter parameter){
-        if (parameters.containsKey(parameter.getName())) throw new IllegalArgumentException("Paramter "+ parameter.getName() + " already exists !");
+    public void register(Parameter parameter) {
+        if (parameters.containsKey(parameter.getName()))
+            throw new IllegalArgumentException("Paramter " + parameter.getName() + " already exists !");
         this.parameters.put(parameter.getName().toUpperCase(), parameter);
     }
 
@@ -62,85 +63,91 @@ public abstract class ParameterSchema {
     }
 
 
-    public <T> T get(Parameter<T> parameter){
+    public <T> T get(Parameter<T> parameter) {
         // find the parameter
         Parameter local = parameters.get(parameter.getName().toUpperCase());
-        if(local == null){
-            throw new IllegalArgumentException("Unknown parameter '" + parameter.getName()+"'");
+        if (local == null) {
+            throw new IllegalArgumentException("Unknown parameter '" + parameter.getName() + "'");
         }
-        return (T)local.get();
+        return (T) local.get();
     }
 
-    public <T> void set(Parameter<T> parameter, T value){
+    public <T> void set(Parameter<T> parameter, T value) {
         Parameter local = parameters.get(parameter.getName().toUpperCase());
-        if(local == null){
-            throw new IllegalArgumentException("Unknown parameter '" + parameter.getName()+"'");
+        if (local == null) {
+            throw new IllegalArgumentException("Unknown parameter '" + parameter.getName() + "'");
         }
         local.set(value);
     }
 
-    public void write(OutputStream out){
+    public void write(OutputStream out) {
         BufferedWriter writer = null;
-        try{
+        try {
             writer = new BufferedWriter(new OutputStreamWriter(out));
 
 
             for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
                 Parameter p = entry.getValue();
                 String name = entry.getKey();
-                if(p.getDescription() != null){
-                    writer.write("# " +cleanDescription(p.getDescription())+"\n");
+                if (p.getDescription() != null) {
+                    writer.write("# " + cleanDescription(p.getDescription()) + "\n");
                 }
                 writer.write("#\n");
                 String valuesString = p.getValuesString();
-                if(valuesString != null && !valuesString.isEmpty()){
-                    writer.write("# " + cleanDescription(valuesString)+" default: " + (p.getDefault() != null ? p.getDefault():"") +"\n");
+                if (valuesString != null && !valuesString.isEmpty()) {
+                    writer.write("# " + cleanDescription(valuesString) + " default: " + (p.getDefault() != null ? p.getDefault() : "") + "\n");
                 }
                 Object o = get(p);
-                writer.write(name+"\t"+ (o != null ? o : "")+"\n");
+                writer.write(name + "\t" + (o != null ? o : "") + "\n");
             }
-        }catch(IOException e){
-            try {writer.close();} catch (IOException e1) {}
+        } catch (IOException e) {
+            try {
+                writer.close();
+            } catch (IOException e1) {
+            }
         }
     }
 
     public void parse(InputStream input) throws ParameterException {
         BufferedReader reader = null;
-        try{
+        try {
             reader = new BufferedReader(new InputStreamReader(input));
 
             int lineCounter = 0;
             String line = null;
 
-            while((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 lineCounter++;
-                if(line.isEmpty()) continue;
-                if(line.startsWith("#")) continue;
+                if (line.isEmpty()) continue;
+                if (line.startsWith("#")) continue;
 
 
                 Matcher matcher = PROPERTY_PATTERN.matcher(line);
-                if(!matcher.find() || matcher.groupCount() != 2){
-                    throw new ParameterException("Error while parsing line " + lineCounter+": " + line);
+                if (!matcher.find() || matcher.groupCount() != 2) {
+                    throw new ParameterException("Error while parsing line " + lineCounter + ": " + line);
                 }
 
                 String name = matcher.group(1).toUpperCase().trim();
                 String value = matcher.group(2).trim();
 
-                if(!parameters.containsKey(name)){
-                    throw new ParameterException("Error while parsing line "+lineCounter + ". Parameter " + name + " not found. Check the spelling!");
+                if (!parameters.containsKey(name)) {
+                    throw new ParameterException("Error while parsing line " + lineCounter + ". Parameter " + name + " not found. Check the spelling!");
                 }
-                try{
+                try {
                     parameters.get(name).parse(value);
-                }catch (ParameterException p){
-                    throw new ParameterException("Error while parsing line "+lineCounter+ ". "+p.getMessage());
+                } catch (ParameterException p) {
+                    throw new ParameterException("Error while parsing line " + lineCounter + ". " + p.getMessage());
                 }
             }
 
-        }catch (IOException io){
+        } catch (IOException io) {
             Log.error("Error while reading parameter file : " + io.getMessage(), io);
-        }finally {
-            if(reader != null) try {reader.close();} catch (IOException e) {}
+        } finally {
+            if (reader != null) try {
+                reader.close();
+            } catch (IOException e) {
+            }
         }
     }
 
@@ -150,7 +157,7 @@ public abstract class ParameterSchema {
      * @param s the source
      * @return clean cleaned description
      */
-    private static String cleanDescription(String s){
+    private static String cleanDescription(String s) {
         return s.replaceAll("\n", "\n# ");
     }
 }

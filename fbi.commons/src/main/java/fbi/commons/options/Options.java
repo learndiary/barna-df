@@ -15,10 +15,10 @@ import java.util.Map;
 
 /**
  * Command line options class.
- * <P>
+ * <p/>
  * Command line options can have an arbitrary number of names and must have a description.
  * They are mapped to method names for a given object. The methods are then called using reflection API.
- * <p>
+ * <p/>
  * You can use @link{#addOption} to add a boolean parameter or @link{#addParameter} to map a method
  * that evaluates the given parameter string.
  *
@@ -28,11 +28,11 @@ public class Options {
     /**
      * The long option prefix
      */
-    private static final String CLI_PAR_LONG= "--";
+    private static final String CLI_PAR_LONG = "--";
     /**
      * The short option prefix
      */
-    private static final String CLI_PAR_SHORT= "-";
+    private static final String CLI_PAR_SHORT = "-";
     /**
      * The target class
      */
@@ -73,16 +73,16 @@ public class Options {
     /**
      * Add a parameter option. The method that is mapped by the given options must take a single String as parameter!
      *
-     * @param method the method to map to
+     * @param method      the method to map to
      * @param description the description
      * @param shortOption the short option (null permitted)
      * @param longOptions the long options (null permitted)
-     *
      * @throws RuntimeException in case the method can not be found or a mapping for the method already exists
      */
-    public void addParameter(String method, String description, Character shortOption, String...longOptions){
-        if(description == null) throw new NullPointerException("You have to specify a description for option " + shortOption + " " + Arrays.toString(longOptions));
-        if(shortOption == null && (longOptions == null || longOptions.length == 0) ){
+    public void addParameter(String method, String description, Character shortOption, String... longOptions) {
+        if (description == null)
+            throw new NullPointerException("You have to specify a description for option " + shortOption + " " + Arrays.toString(longOptions));
+        if (shortOption == null && (longOptions == null || longOptions.length == 0)) {
             throw new IllegalArgumentException("You have to specify at least one option");
         }
 
@@ -100,22 +100,22 @@ public class Options {
      * Add an option. An option is a boolean switch that takes no parameters.
      * The method that is mapped by the given options must either tak eno parameters or a single boolean parameter.
      *
-     * @param method the method to map to
+     * @param method      the method to map to
      * @param description the description
      * @param shortOption the short option (null permitted)
      * @param longOptions the long options (null permitted)
-     *
      * @throws RuntimeException in case the method can not be found or a mapping for the method already exists
      */
-    public void addOption(String method, String description, Character shortOption, String...longOptions){
-        if(description == null) throw new NullPointerException("You have to specify a description for option " + shortOption + " " + Arrays.toString(longOptions));
-        if(shortOption == null && (longOptions == null || longOptions.length == 0) ){
+    public void addOption(String method, String description, Character shortOption, String... longOptions) {
+        if (description == null)
+            throw new NullPointerException("You have to specify a description for option " + shortOption + " " + Arrays.toString(longOptions));
+        if (shortOption == null && (longOptions == null || longOptions.length == 0)) {
             throw new IllegalArgumentException("You have to specify at least one option");
         }
 
         // find the method
         try {
-            Method m = targetClass.getDeclaredMethod(method, (Class[])null);
+            Method m = targetClass.getDeclaredMethod(method, (Class[]) null);
             addMapping(m, description, shortOption, longOptions);
         } catch (NoSuchMethodException e) {
             // check if we find one that takes a boolean
@@ -133,26 +133,26 @@ public class Options {
     /**
      * Checks that no mapping exists for the given method and then adds the parameters
      *
-     * @param method the method
+     * @param method      the method
      * @param description the description
      * @param shortOption the short parameter
      * @param longOptions the long parameter
      */
     protected void addMapping(Method method, String description, Character shortOption, String[] longOptions) {
-        if(method == null) throw new NullPointerException();
+        if (method == null) throw new NullPointerException();
 
         // check that no mapping exists !
-        if(descriptions.containsKey(method)){
+        if (descriptions.containsKey(method)) {
             throw new IllegalArgumentException("A parameter mapping for the method " + method + " already exists!");
         }
 
         descriptions.put(method, description);
-        if(shortOption != null){
+        if (shortOption != null) {
             shortOptions.put(shortOption, method);
         }
-        if(longOptions != null){
+        if (longOptions != null) {
             for (String longOption : longOptions) {
-                if(longOption != null){
+                if (longOption != null) {
                     this.longOptions.put(longOption, method);
                 }
             }
@@ -166,22 +166,22 @@ public class Options {
      * @return valid returns true if all parameters could be parsed
      */
     public boolean parse(String[] parameters) throws Exception {
-        for (int i = 0; parameters!= null&& i < parameters.length; i++) {
+        for (int i = 0; parameters != null && i < parameters.length; i++) {
             if (parameters[i].startsWith(CLI_PAR_LONG)) {
                 Method method = longOptions.get(parameters[i].substring(CLI_PAR_LONG.length()));
-                if(method==null) return false;
-                i= setParameter(method, parameters, i);
-            }else if (parameters[i].startsWith(CLI_PAR_SHORT)) {
-                Method m= shortOptions.get(parameters[i].substring(CLI_PAR_SHORT.length()).charAt(0));
-                if(m == null){
+                if (method == null) return false;
+                i = setParameter(method, parameters, i);
+            } else if (parameters[i].startsWith(CLI_PAR_SHORT)) {
+                Method m = shortOptions.get(parameters[i].substring(CLI_PAR_SHORT.length()).charAt(0));
+                if (m == null) {
                     // see if we find it in long options
                     m = longOptions.get(parameters[i].substring(CLI_PAR_SHORT.length()));
-                    if(m == null)
+                    if (m == null)
                         return false;
                 }
-                i= setParameter(m, parameters, i);
+                i = setParameter(m, parameters, i);
             } else {
-                Log.error("What do you mean by "+ parameters[i]+ "?\nRunaway argument or bad monday?");
+                Log.error("What do you mean by " + parameters[i] + "?\nRunaway argument or bad monday?");
                 return false;
             }
         }
@@ -191,34 +191,33 @@ public class Options {
     /**
      * Apply the parameter
      *
-     * @param m the method
+     * @param m    the method
      * @param args all arguments
-     * @param i the index of the parameters
+     * @param i    the index of the parameters
      * @return index next index to use
      * @throws Exception in case the method could not me called
      */
     protected int setParameter(Method m, String[] args, int i) throws Exception {
-        int l =m.getParameterTypes().length;
+        int l = m.getParameterTypes().length;
         boolean isBoolean = false;
-        if(l == 1 && m.getParameterTypes()[0] == boolean.class){
+        if (l == 1 && m.getParameterTypes()[0] == boolean.class) {
             l = 0;
             isBoolean = true;
         }
 
-		String[] cc= new String[l];
-		if (cc.length+ i>= args.length) {
-		    throw new RuntimeException("Missing arguments for parameter "+args[i]+"!");
-		}
-		for (int j = 0; j < cc.length; j++)
-			cc[j]= args[i+ 1+ j];
-        if (!isBoolean){
-	        m.invoke(target, cc);
-        }else{
+        String[] cc = new String[l];
+        if (cc.length + i >= args.length) {
+            throw new RuntimeException("Missing arguments for parameter " + args[i] + "!");
+        }
+        for (int j = 0; j < cc.length; j++)
+            cc[j] = args[i + 1 + j];
+        if (!isBoolean) {
+            m.invoke(target, cc);
+        } else {
             m.invoke(target, true);
         }
-		return (i+ cc.length);
-	}
-
+        return (i + cc.length);
+    }
 
 
     /**
@@ -226,28 +225,28 @@ public class Options {
      *
      * @param out the output writer
      */
-    public void printUsage(PrintStream out){
-        TableFormatter tf= new TableFormatter(3);
+    public void printUsage(PrintStream out) {
+        TableFormatter tf = new TableFormatter(3);
         tf.setTabRow(true);
-        tf.add(new String[] {"Parameter", "Argument", "Description"});
-        Iterator<Method> it= descriptions.keySet().iterator();
+        tf.add(new String[]{"Parameter", "Argument", "Description"});
+        Iterator<Method> it = descriptions.keySet().iterator();
         while (it.hasNext()) {
-            Method m= it.next();
-            StringBuilder sb= new StringBuilder("[");
-            Object[] oo= shortOptions.entrySet().toArray();
+            Method m = it.next();
+            StringBuilder sb = new StringBuilder("[");
+            Object[] oo = shortOptions.entrySet().toArray();
             for (int i = 0; i < oo.length; i++) {
-                Map.Entry<Character, Method> en= (Map.Entry<Character, Method>) oo[i];
+                Map.Entry<Character, Method> en = (Map.Entry<Character, Method>) oo[i];
                 if (en.getValue().equals(m)) {
                     sb.append(CLI_PAR_SHORT);
                     sb.append(en.getKey());
                     break;
                 }
             }
-            oo= longOptions.entrySet().toArray();
+            oo = longOptions.entrySet().toArray();
             for (int i = 0; i < oo.length; i++) {
-                Map.Entry<String, Method> en= (Map.Entry<String, Method>) oo[i];
+                Map.Entry<String, Method> en = (Map.Entry<String, Method>) oo[i];
                 if (en.getValue().equals(m)) {
-                    if (sb.length()> 1)
+                    if (sb.length() > 1)
                         sb.append("|");
                     sb.append(CLI_PAR_SHORT);
                     sb.append(en.getKey());
@@ -255,20 +254,20 @@ public class Options {
                 }
             }
             sb.append("]");
-            String s1= sb.toString();
+            String s1 = sb.toString();
 
-            sb= new StringBuilder();
-            if (m.getParameterTypes()!= null&& m.getParameterTypes().length> 0) {
+            sb = new StringBuilder();
+            if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
                 for (int i = 0; i < m.getParameterTypes().length; i++) {
                     sb.append(m.getParameterTypes()[i].getSimpleName().toString());
                     sb.append(",");
                 }
-                sb.deleteCharAt(sb.length()- 1);
+                sb.deleteCharAt(sb.length() - 1);
             }
-            String s2= sb.toString();
-            String s3= descriptions.get(m);
+            String s2 = sb.toString();
+            String s3 = descriptions.get(m);
 
-            tf.add(new String[] {s1,s2,s3});
+            tf.add(new String[]{s1, s2, s3});
         }
         out.println(tf.toString());
     }

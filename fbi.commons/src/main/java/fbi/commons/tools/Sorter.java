@@ -18,7 +18,7 @@ import java.util.concurrent.Future;
  * method to get a new sorter instance. You can then call methods to configure the sorter. For example, call {@link #field(int, boolean)}
  * to specify a field that is used for sorting. You can call the {@code field} methods multiple times to add fields
  * to the consecutive sort order, i.e., if two values are equal in the first field, the next field is used.
- * <p>
+ * <p/>
  * You can start sorting by calling {@link #sort()}. To create a background task that performs sorting until
  * no more data are available or it is canceled, use {@link #sortInBackground()}. The returned feature is already submitted
  * and running. To wait until it is finished, call {@link java.util.concurrent.Future#get()}.
@@ -32,12 +32,13 @@ public class Sorter {
      */
     private static ExecutorService executor;
 
-    static{
+    static {
         /*
         Initialize executor
          */
         executor = Executors.newCachedThreadPool();
     }
+
     /**
      * The input stream
      */
@@ -68,8 +69,8 @@ public class Sorter {
      * INTERNAL : use the {@link #create(java.io.InputStream, java.io.OutputStream, boolean)} method
      * to get an instance
      *
-     * @param in the input stream
-     * @param out the output stream
+     * @param in     the input stream
+     * @param out    the output stream
      * @param silent be silent
      */
     private Sorter(InputStream in, OutputStream out, boolean silent) {
@@ -77,7 +78,7 @@ public class Sorter {
         this.out = out;
         this.silent = silent;
 
-        if(this.out == null){
+        if (this.out == null) {
             // create dev null output
             this.out = new DevNullOutputStream();
         }
@@ -91,7 +92,7 @@ public class Sorter {
      * @param separator field separator
      * @return sorter this sorter
      */
-    public Sorter separator(String separator){
+    public Sorter separator(String separator) {
         this.separator = separator;
         return this;
     }
@@ -99,11 +100,11 @@ public class Sorter {
     /**
      * Sort by given field
      *
-     * @param field the field index
+     * @param field   the field index
      * @param numeric is the field numeric
      * @return sorter this sorter
      */
-    public Sorter field(int field, boolean numeric){
+    public Sorter field(int field, boolean numeric) {
         comparators.add(new LineComparator(numeric, separator, field));
         return this;
     }
@@ -114,7 +115,7 @@ public class Sorter {
      * @param fields the fields
      * @return sorter this sorter
      */
-    public Sorter field(int...fields){
+    public Sorter field(int... fields) {
         comparators.add(new LineComparator(separator, fields));
         return this;
     }
@@ -125,8 +126,8 @@ public class Sorter {
      * @param comparator the comparator
      * @return sorter this sorter
      */
-    public Sorter field(Comparator<String> comparator){
-        if(comparator == null) throw new NullPointerException("Null comparator is not permitted");
+    public Sorter field(Comparator<String> comparator) {
+        if (comparator == null) throw new NullPointerException("Null comparator is not permitted");
         comparators.add(new LineComparator(comparator));
         return this;
     }
@@ -137,9 +138,9 @@ public class Sorter {
      * @param interceptor the interceptor
      * @return sorter this sorter
      */
-    public Sorter addInterceptor(Interceptable.Interceptor<String> interceptor){
-        if(interceptor == null) throw new NullPointerException();
-        if(this.interceptors == null) this.interceptors = new ArrayList<Interceptable.Interceptor<String>>();
+    public Sorter addInterceptor(Interceptable.Interceptor<String> interceptor) {
+        if (interceptor == null) throw new NullPointerException();
+        if (this.interceptors == null) this.interceptors = new ArrayList<Interceptable.Interceptor<String>>();
         this.interceptors.add(interceptor);
         return this;
 
@@ -164,7 +165,7 @@ public class Sorter {
      *
      * @return feature the submitted feature
      */
-    public Future sortInBackground(){
+    public Future sortInBackground() {
         final StreamSorter s = createSorter();
         final InputStream input = in;
         final OutputStream output = out;
@@ -180,12 +181,12 @@ public class Sorter {
     /**
      * Create a new sorter
      *
-     * @param in the input stream
-     * @param out the output stream
+     * @param in     the input stream
+     * @param out    the output stream
      * @param silent be silent
      * @return sorter the sorter
      */
-    public static Sorter create(InputStream in, OutputStream out, boolean silent){
+    public static Sorter create(InputStream in, OutputStream out, boolean silent) {
         return new Sorter(in, out, silent);
     }
 
@@ -197,17 +198,17 @@ public class Sorter {
     protected StreamSorter createSorter() {
         UnixStreamSorter s = new UnixStreamSorter(silent, -1, false, separator);
         LineComparator comparator = null;
-        if(comparators.size() == 0){
+        if (comparators.size() == 0) {
             comparator = new LineComparator(false, separator, -1);
-        }else{
+        } else {
             comparator = comparators.get(0);
             for (int i = 1; i < comparators.size(); i++) {
-                  comparator.addComparator(comparators.get(i));
+                comparator.addComparator(comparators.get(i));
             }
         }
         s.setLineComparator(comparator);
 
-        if(interceptors != null){
+        if (interceptors != null) {
             for (Interceptable.Interceptor<String> interceptor : interceptors) {
                 s.addInterceptor(interceptor);
             }

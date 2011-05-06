@@ -17,7 +17,7 @@ import java.util.PriorityQueue;
  *
  * @author Thasso Griebel (thasso.griebel@googlemail.com)
  */
-public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
+public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
     /**
      * OS dependent line separator
      */
@@ -72,26 +72,26 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
      * Create a new sorter and control its memory bound and the if it should print status information
      *
      * @param memoryBound the memory bound (must be {@code > 0}
-     * @param silent be silent
+     * @param silent      be silent
      */
     public UnixStreamSorter(long memoryBound, boolean silent, int field, boolean numeric, String fieldSeparator) {
-        if(memoryBound <= 0) throw new IllegalArgumentException("You have to allow memory chunk size > 0");
+        if (memoryBound <= 0) throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         this.memoryBound = memoryBound;
         this.silent = silent;
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
 
     public void sort(InputStream input, OutputStream output) throws IOException {
-        if(!silent)
+        if (!silent)
             Log.progressStart("Sorting");
 
         LineComparator comparator = getLineComparator();
-        List<File> files =  divide(input, comparator, memoryBound);
+        List<File> files = divide(input, comparator, memoryBound);
         /*
          * make sure we open at most SORT_CHUNK files in parallel
          */
-        while(sortChunks >= 2 && files.size() > sortChunks){
-            if(Thread.interrupted()) break;
+        while (sortChunks >= 2 && files.size() > sortChunks) {
+            if (Thread.interrupted()) break;
             Log.progressStart("Merging Chunk");
             // sort chunk
             ArrayList<File> chunks = new ArrayList<File>(files.subList(0, sortChunks));
@@ -115,7 +115,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
         // make sure in and out are closed
         output.close();
         input.close();
-        if(!silent)
+        if (!silent)
             Log.progressFinish("Done", true);
     }
 
@@ -123,29 +123,29 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
     /**
      * Divide the input stream content into sorted chunks.
      *
-     * @param input the input
-     * @param comparator the comparator
+     * @param input       the input
+     * @param comparator  the comparator
      * @param memoryBound upper bound for memory per chunk
      * @return files files create by the divider
      * @throws java.io.IOException in case of errors
      */
     private List<File> divide(InputStream input, LineComparator comparator, long memoryBound) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input), 10*1024);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(input), 10 * 1024);
         String line = null;
-        final List<File> files= new ArrayList<File>();
+        final List<File> files = new ArrayList<File>();
         try {
             // counters
-            int bytes =0;
+            int bytes = 0;
             int separatorLength = LINE_SEP.length();
-            List<String> lines = new ArrayList<String>((int) (memoryBound/512));
-            while( (line = reader.readLine()) != null){
-                if(Thread.interrupted()) return null;
+            List<String> lines = new ArrayList<String>((int) (memoryBound / 512));
+            while ((line = reader.readLine()) != null) {
+                if (Thread.interrupted()) return null;
 
                 // add to list
                 lines.add(line);
                 bytes += line.length() + separatorLength;
                 // check memory
-                if(bytes >= memoryBound){
+                if (bytes >= memoryBound) {
                     // write sorted chunk to temp file and reset
                     sortAndWriteTempFile(lines, comparator, files);
                     bytes = 0;
@@ -154,14 +154,15 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
             }
 
             // add the last file
-            if(bytes > 0){
+            if (bytes > 0) {
                 sortAndWriteTempFile(lines, comparator, files);
             }
-        }finally {
+        } finally {
             try {
                 input.close();
                 reader.close();
-            } catch (IOException e) {}
+            } catch (IOException e) {
+            }
         }
         return files;
     }
@@ -169,10 +170,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
     /**
      * Write the given lines to a temp file and return the file
      *
-     *
-     * @param lines the lines
+     * @param lines      the lines
      * @param comparator the comparator
-     * @param files @return file the created file
+     * @param files      @return file the created file
      * @return file the file
      * @throws IOException in case of an error
      */
@@ -183,9 +183,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
         // write the file
         File file = FileHelper.createTempFile("sort", ".srt");
         file.deleteOnExit();
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10*1024);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10 * 1024);
         for (String line : lines) {
-            if(Thread.interrupted()) return null;
+            if (Thread.interrupted()) return null;
             writer.write(line);
             writer.write(LINE_SEP);
         }
@@ -204,8 +204,8 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
      * The key assumption is that the file contents are sorted already, so this is essentially a
      * merge sort step. NOTE: this deletes the given files aver the merge !
      *
-     * @param files the files
-     * @param output the output stream
+     * @param files      the files
+     * @param output     the output stream
      * @param comparator the comparator
      * @throws IOException in case of any errors
      */
@@ -215,19 +215,19 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
         // add files
         for (File file : files) {
             CachedFileReader cc = CachedFileReader.create(file, comparator);
-            if(cc != null){
+            if (cc != null) {
                 queue.add(cc);
             }
         }
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(output));
 
         // now iterate until everything is written
-        while(queue.size() > 0){
-            if(Thread.interrupted()) break;
+        while (queue.size() > 0) {
+            if (Thread.interrupted()) break;
             CachedFileReader next = queue.poll();
             try {
                 String line = next.pop();
-                if(interceptors != null){
+                if (interceptors != null) {
                     for (Interceptor<String> interceptor : interceptors) {
                         line = interceptor.intercept(line);
                     }
@@ -236,11 +236,11 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
                 writer.write(LINE_SEP);
 
                 // check if there is more in this queue
-                if(next.peek() != null){
+                if (next.peek() != null) {
                     queue.add(next);
                 }
             } catch (IOException e) {
-                Log.error("Error while sorting chunks : "  + e.getMessage(), e);
+                Log.error("Error while sorting chunks : " + e.getMessage(), e);
                 break;
             }
         }
@@ -255,7 +255,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
         }
 
         // close the writer
-        if(writer != null){
+        if (writer != null) {
             writer.flush();
             writer.close();
         }
@@ -281,9 +281,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
     }
 
     public void addInterceptor(Interceptor<String> stringInterceptor) {
-        if(stringInterceptor == null) return;
-        if(interceptors == null) interceptors = new ArrayList<Interceptor<String>>();
-        if(!interceptors.contains(stringInterceptor))
+        if (stringInterceptor == null) return;
+        if (interceptors == null) interceptors = new ArrayList<Interceptor<String>>();
+        if (!interceptors.contains(stringInterceptor))
             interceptors.add(stringInterceptor);
 
     }
@@ -292,7 +292,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
      * Helper class that caches the first line of a file and is able to continue reading if
      * the line is popped. Used during the merge step.
      */
-    static class CachedFileReader implements Comparable<CachedFileReader>{
+    static class CachedFileReader implements Comparable<CachedFileReader> {
         private BufferedReader reader;
         private String currentLine = null;
         private LineComparator comparator;
@@ -301,8 +301,8 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
         /**
          * INTERNAL
          *
-         * @param reader the reader
-         * @param firstLine the first line
+         * @param reader     the reader
+         * @param firstLine  the first line
          * @param comparator the comparator
          */
         private CachedFileReader(BufferedReader reader, String firstLine, LineComparator comparator) {
@@ -316,7 +316,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
          *
          * @return line the current line
          */
-        String peek(){
+        String peek() {
             return currentLine;
         }
 
@@ -326,8 +326,8 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
          *
          * @return line current line or null
          */
-        String pop(){
-            if(currentLine == null){
+        String pop() {
+            if (currentLine == null) {
                 return null;
             }
             read++;
@@ -336,12 +336,12 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
                 currentLine = reader.readLine();
 
                 // close the reader if no more lines are available
-                if(currentLine == null){
+                if (currentLine == null) {
                     close();
                 }
             } catch (IOException e) {
                 close();
-                Log.error("Error reading line from chunk file while sorting : "+ e.getMessage(), e);
+                Log.error("Error reading line from chunk file while sorting : " + e.getMessage(), e);
                 return null;
             }
             return last;
@@ -372,11 +372,11 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
         /**
          * Create a CachedFileReader for the given file iff the file has content
          *
-         * @param file the file
+         * @param file       the file
          * @param comparator the comparator
          * @return reader the reader or null if the file does not exist or has no content
          */
-        static CachedFileReader create(File file, LineComparator comparator){
+        static CachedFileReader create(File file, LineComparator comparator) {
             BufferedReader reader = null;
             try {
                 reader = new BufferedReader(new FileReader(file));
@@ -388,14 +388,20 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String>{
             // read first line
             try {
                 String currentLine = reader.readLine();
-                if(currentLine == null){
-                    try {reader.close();} catch (IOException e1) {}
+                if (currentLine == null) {
+                    try {
+                        reader.close();
+                    } catch (IOException e1) {
+                    }
                     return null;
                 }
                 return new CachedFileReader(reader, currentLine, comparator);
             } catch (IOException e) {
                 Log.error("Error while reading sort chunk : " + e.getMessage(), e);
-                try {reader.close();} catch (IOException e1) {}
+                try {
+                    reader.close();
+                } catch (IOException e1) {
+                }
             }
             return null;
 

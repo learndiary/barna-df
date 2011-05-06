@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class IntegerParameter extends NumberParameter<Integer>{
+class IntegerParameter extends NumberParameter<Integer> {
     public IntegerParameter(String name) {
         this(name, "");
     }
@@ -17,20 +17,23 @@ class IntegerParameter extends NumberParameter<Integer>{
     public IntegerParameter(String name, String description, Integer defaultValue) {
         this(name, description, defaultValue, null, null);
     }
+
     public IntegerParameter(String name, String description, Integer defaultValue, Integer minimumValue, Integer maximumValue) {
         this(name, description, defaultValue, minimumValue, maximumValue, null);
     }
+
     public IntegerParameter(String name, String description, Integer defaultValue, Integer minimumValue, Integer maximumValue, ParameterValidator validator) {
         super(name, description, defaultValue, minimumValue, maximumValue, Integer.class, validator);
     }
+
     @Override
     void parse(String value) throws ParameterException {
-        try{
+        try {
             this.value = new BigDecimal(value).intValue();
             return;
-        }catch (Exception e){
+        } catch (Exception e) {
         }
-        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value "+value);
+        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
     }
 
     @Override

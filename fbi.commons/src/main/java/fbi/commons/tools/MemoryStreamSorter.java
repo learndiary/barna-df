@@ -15,7 +15,7 @@ import java.util.Comparator;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class MemoryStreamSorter implements StreamSorter{
+public class MemoryStreamSorter implements StreamSorter {
 
     private int field;
     private boolean numeric;
@@ -35,21 +35,21 @@ public class MemoryStreamSorter implements StreamSorter{
         io.addStream(output);
 
         Comparator<String> comparator = new LineComparator(numeric, fieldSeparator, field);
-        try{
+        try {
             // read and sort
             ByteArrayCharSequence line;
-            while( (line = io.readLine(input)) != null){
+            while ((line = io.readLine(input)) != null) {
                 ArrayUtils.addSorted(lines, line.toString(), comparator);
             }
             // write
             for (String l : lines) {
                 io.writeLine(l, output);
             }
-        }catch (IOException e){
+        } catch (IOException e) {
             throw e;
-        }catch(Exception error ){
+        } catch (Exception error) {
             throw new RuntimeException("Error while sorting : " + error.getMessage(), error);
-        }finally {
+        } finally {
             io.close();
         }
     }

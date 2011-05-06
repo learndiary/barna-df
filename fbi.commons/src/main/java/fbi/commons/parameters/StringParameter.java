@@ -6,13 +6,13 @@ import java.util.List;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class StringParameter extends Parameter<String>{
+class StringParameter extends Parameter<String> {
 
     private List<String> values;
     private String value;
 
     public StringParameter(String name) {
-        this(name, "",  null);
+        this(name, "", null);
     }
 
     public StringParameter(String name, String description) {
@@ -40,8 +40,8 @@ class StringParameter extends Parameter<String>{
 
     @Override
     void set(String value) {
-        if(values != null && !values.contains(value))
-            throw new IllegalArgumentException("Unknown value " + value + ". Must be one of "+ values);
+        if (values != null && !values.contains(value))
+            throw new IllegalArgumentException("Unknown value " + value + ". Must be one of " + values);
         this.value = value;
     }
 
@@ -49,25 +49,26 @@ class StringParameter extends Parameter<String>{
         return value == null ? getDefault() : value;
     }
 
-    void parse(String value) throws ParameterException{
+    void parse(String value) throws ParameterException {
         this.value = value;
     }
 
     @Override
     void validate(ParameterSchema schema) throws ParameterException {
-        if(getValidator() == null){
+        if (getValidator() == null) {
             // if values are available, check that this is valid
-            if(values != null && values.size() > 0){
-                if(!values.contains(value)) throw new ParameterException(this, value, "Parameter " + this + " must be one of " + values);
+            if (values != null && values.size() > 0) {
+                if (!values.contains(value))
+                    throw new ParameterException(this, value, "Parameter " + this + " must be one of " + values);
             }
-        }else{
+        } else {
             super.validate(schema);
         }
     }
 
     @Override
     public String getValuesString() {
-        if(values != null){
+        if (values != null) {
             return values.toString();
         }
         return "text";

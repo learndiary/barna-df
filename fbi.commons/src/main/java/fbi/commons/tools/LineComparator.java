@@ -5,12 +5,11 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- *
  * Compares strings and supports field splitting and number parsing.
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class LineComparator implements Comparator<String>{
+class LineComparator implements Comparator<String> {
     /**
      * The fields to use for comparison
      */
@@ -41,7 +40,7 @@ class LineComparator implements Comparator<String>{
      *
      * @param numerical numerical comparison
      * @param separator the separator used to split fields
-     * @param field the field (split using th separator as regular expression)
+     * @param field     the field (split using th separator as regular expression)
      */
     LineComparator(boolean numerical, String separator, int field) {
         this.field = new int[]{field};
@@ -54,7 +53,7 @@ class LineComparator implements Comparator<String>{
      * in comparison
      *
      * @param separator the separator used to split fields
-     * @param fields the fields (split using th separator as regular expression)
+     * @param fields    the fields (split using th separator as regular expression)
      */
     LineComparator(String separator, int... fields) {
         this.field = fields;
@@ -67,7 +66,7 @@ class LineComparator implements Comparator<String>{
      * in comparison
      *
      * @param separator the separator used to split fields
-     * @param fields the fields (split using th separator as regular expression)
+     * @param fields    the fields (split using th separator as regular expression)
      */
     LineComparator(String separator, Integer[] fields) {
         this.field = new int[fields.length];
@@ -93,29 +92,29 @@ class LineComparator implements Comparator<String>{
      *
      * @param comparator the sub comparator
      */
-    public void addComparator(Comparator<String> comparator){
-        if(comparator != null){
-            if(subComparators == null) subComparators = new ArrayList<Comparator<String>>();
+    public void addComparator(Comparator<String> comparator) {
+        if (comparator != null) {
+            if (subComparators == null) subComparators = new ArrayList<Comparator<String>>();
             subComparators.add(comparator);
         }
     }
 
     public int compare(final String o1, final String o2) {
         // check for empty string
-        if(o1.length() == 0 || o2.length() == 0){
+        if (o1.length() == 0 || o2.length() == 0) {
             return o1.compareTo(o2);
         }
         int result = 0;
-        if(parent == null){
+        if (parent == null) {
             String s1 = o1;
             String s2 = o2;
 
             // one field specified
-            if(field.length == 1 && field[0] >= 0){
+            if (field.length == 1 && field[0] >= 0) {
                 // split fields
                 s1 = o1.split(separator)[field[0]];
                 s2 = o2.split(separator)[field[0]];
-            }else if(field.length > 1){
+            } else if (field.length > 1) {
                 // merge multiple fields
                 // merge o1 fields
                 String[] o1_split = o1.split(separator);
@@ -129,27 +128,27 @@ class LineComparator implements Comparator<String>{
                 }
             }
 
-            if(numerical){
-                try{
+            if (numerical) {
+                try {
                     // try integer first
-                    result =  Integer.parseInt(s1) - Integer.parseInt(s2);
-                }catch (NumberFormatException e){
+                    result = Integer.parseInt(s1) - Integer.parseInt(s2);
+                } catch (NumberFormatException e) {
                     // ok integer failed ... lets try double
-                    result =  Double.compare(Double.parseDouble(s1),Double.parseDouble(s2));
+                    result = Double.compare(Double.parseDouble(s1), Double.parseDouble(s2));
                 }
-            }else{
-                result =  s1.compareTo(s2);
+            } else {
+                result = s1.compareTo(s2);
             }
-        }else{
-            result = parent.compare(o1,o2);
+        } else {
+            result = parent.compare(o1, o2);
         }
         /*
         If result is 0 check the sub comparators
          */
-        if(result == 0 && subComparators != null){
+        if (result == 0 && subComparators != null) {
             for (Comparator<String> subComparator : subComparators) {
                 int sub = subComparator.compare(o1, o2);
-                if(sub != 0) return sub;
+                if (sub != 0) return sub;
             }
         }
         return result;

@@ -14,7 +14,7 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
         super(name, description, defaultValue, type, validator);
         this.minimumValue = minimumValue;
         this.maximumValue = maximumValue;
-        if(defaultValue == null) throw new NullPointerException();
+        if (defaultValue == null) throw new NullPointerException();
     }
 
     @Override
@@ -24,26 +24,26 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
 
     @Override
     T get() {
-        if(value == null) return getDefault();
+        if (value == null) return getDefault();
         return value;
     }
 
     @Override
     void validate(ParameterSchema schema) throws ParameterException {
-        if(minimumValue != null || maximumValue != null){
-            if(value == null){
+        if (minimumValue != null || maximumValue != null) {
+            if (value == null) {
                 value = getDefault();
             }
-            if(value != null && !value.equals(Double.NaN)){
-                if(minimumValue != null){
-                    if(new BigDecimal(value.toString()).compareTo(new BigDecimal(minimumValue.toString())) < 0){
-                        throw new ParameterException(this, value.toString(), "Parameter " + this+ " value must be >= "+ minimumValue);
+            if (value != null && !value.equals(Double.NaN)) {
+                if (minimumValue != null) {
+                    if (new BigDecimal(value.toString()).compareTo(new BigDecimal(minimumValue.toString())) < 0) {
+                        throw new ParameterException(this, value.toString(), "Parameter " + this + " value must be >= " + minimumValue);
                     }
                 }
 
-                if(maximumValue != null){
-                    if(new BigDecimal(value.toString()).compareTo(new BigDecimal(maximumValue.toString())) > 0){
-                        throw new ParameterException(this, value.toString(), "Parameter " + this+ " value must be <= "+ maximumValue);
+                if (maximumValue != null) {
+                    if (new BigDecimal(value.toString()).compareTo(new BigDecimal(maximumValue.toString())) > 0) {
+                        throw new ParameterException(this, value.toString(), "Parameter " + this + " value must be <= " + maximumValue);
                     }
                 }
             }
@@ -53,12 +53,12 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
 
     @Override
     public String getValuesString() {
-        if (minimumValue != null && maximumValue != null){
-            return minimumValue +"<= number <= "+maximumValue;
-        }else if(minimumValue != null){
-            return minimumValue +"<= number";
-        }else if(maximumValue != null){
-            return "number <= "+maximumValue;
+        if (minimumValue != null && maximumValue != null) {
+            return minimumValue + "<= number <= " + maximumValue;
+        } else if (minimumValue != null) {
+            return minimumValue + "<= number";
+        } else if (maximumValue != null) {
+            return "number <= " + maximumValue;
         }
         return "number";
     }

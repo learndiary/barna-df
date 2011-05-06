@@ -10,11 +10,11 @@ public class PrintstreamProgressable implements Progressable {
     /**
      * The progress character
      */
-	private char progressChar;
+    private char progressChar;
     /**
      * The stream
      */
-	private PrintStream stream;
+    private PrintStream stream;
     /**
      * The maximum value
      */
@@ -44,7 +44,7 @@ public class PrintstreamProgressable implements Progressable {
      * is 9.
      *
      * @param progressChar the character
-     * @param stream the stream
+     * @param stream       the stream
      */
     public PrintstreamProgressable(char progressChar, PrintStream stream) {
         this(progressChar, stream, 10);
@@ -55,11 +55,11 @@ public class PrintstreamProgressable implements Progressable {
      * the given stream and is limited by the given min and max values
      *
      * @param progressChar the progress character
-     * @param stream the stream to print to
-     * @param steps the maximum value
+     * @param stream       the stream to print to
+     * @param steps        the maximum value
      */
     public PrintstreamProgressable(char progressChar, PrintStream stream, int steps) {
-        if(stream == null) throw new NullPointerException("Null stream not permitted");
+        if (stream == null) throw new NullPointerException("Null stream not permitted");
         this.progressChar = progressChar;
         this.stream = stream;
         this.steps = steps;
@@ -67,9 +67,9 @@ public class PrintstreamProgressable implements Progressable {
 
     public void start(String message) {
         startTime = System.currentTimeMillis();
-        if(message != null)
-            stream.print("\t"+message+" ");
-        else{
+        if (message != null)
+            stream.print("\t" + message + " ");
+        else {
             stream.print("\t ");
         }
         stream.flush();
@@ -77,70 +77,70 @@ public class PrintstreamProgressable implements Progressable {
     }
 
     public void progress() {
-        if(currentStep < steps){
-		    stream.print(progressChar);
-		    stream.flush();
-		    ++currentStep;
+        if (currentStep < steps) {
+            stream.print(progressChar);
+            stream.flush();
+            ++currentStep;
         }
-	}
-	
-	public void finish() {
+    }
+
+    public void finish() {
         /*
          * Print the progress if progress already started
          */
-        if(currentStep > 0){
-		    for (int i = currentStep; i < steps; i++)
-			    stream.print("*");
+        if (currentStep > 0) {
+            for (int i = currentStep; i < steps; i++)
+                stream.print("*");
 
             currentStep = 0;
         }
         /*
          * new line
          */
-		stream.println();
+        stream.println();
         stream.flush();
-	}
+    }
 
 
-	public void finish(String msg, boolean printTime) {
+    public void finish(String msg, boolean printTime) {
 
         long time = 0;
-        if(printTime){
-            time = System.currentTimeMillis()-startTime;
+        if (printTime) {
+            time = System.currentTimeMillis() - startTime;
         }
-        if(currentStep > 0){
-		    for (int i = currentStep; i < steps; i++)
-			    stream.print(progressChar);
+        if (currentStep > 0) {
+            for (int i = currentStep; i < steps; i++)
+                stream.print(progressChar);
 
             currentStep = 0;
         }
-		
-		if (msg!= null) 
-			stream.print(" "+ msg);
-		
-		if (time>= 0) {
-			int hh= (int) (time/ 3600000);
-			if (hh> 0)
-				time%= (hh* 3600000);
-			int mm= (int) (time/ 60000);
-			if (mm> 0)
-				time%= (mm* 60000);
-			int ss= (int) (time/ 1000);
-			if (ss> 0)
-				time%= (ss* 1000);
-			String s= hh< 10? "0"+ Integer.toString(hh): Integer.toString(hh);
-			s+= ":";
-			s+= mm< 10? "0"+ Integer.toString(mm): Integer.toString(mm);
-			s+= ":";
-			s+= ss< 10? "0"+ Long.toString(ss): Long.toString(ss);
-			stream.print(" ("+ s+ ")");
-		}
-		stream.println();
+
+        if (msg != null)
+            stream.print(" " + msg);
+
+        if (time >= 0) {
+            int hh = (int) (time / 3600000);
+            if (hh > 0)
+                time %= (hh * 3600000);
+            int mm = (int) (time / 60000);
+            if (mm > 0)
+                time %= (mm * 60000);
+            int ss = (int) (time / 1000);
+            if (ss > 0)
+                time %= (ss * 1000);
+            String s = hh < 10 ? "0" + Integer.toString(hh) : Integer.toString(hh);
+            s += ":";
+            s += mm < 10 ? "0" + Integer.toString(mm) : Integer.toString(mm);
+            s += ":";
+            s += ss < 10 ? "0" + Long.toString(ss) : Long.toString(ss);
+            stream.print(" (" + s + ")");
+        }
+        stream.println();
         stream.flush();
-	}
+    }
 
     public void failed(String msg) {
-        if(msg != null){
+        if (msg != null) {
             stream.print(" " + msg);
         }
         currentStep = 0;

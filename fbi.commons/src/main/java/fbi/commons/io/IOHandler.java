@@ -16,15 +16,15 @@ public interface IOHandler {
     /**
      * New line
      */
-	static final byte BYTE_NL= '\n';
+    static final byte BYTE_NL = '\n';
     /**
      * Windows new line
      */
-    static byte BYTE_CR= '\r';
+    static byte BYTE_CR = '\r';
     /**
      * The default buffer size
      */
-	static final int DEFAULT_BUFFER_SIZE = 10* 1024;
+    static final int DEFAULT_BUFFER_SIZE = 10 * 1024;
 
 
     /**
@@ -33,11 +33,12 @@ public interface IOHandler {
      * @param stream the stream
      */
     public void addStream(Object stream);
+
     /**
      * Add an {@link InputStream} or {@link OutputStream} to the list of managed streams using
      * the given buffer size to cache data
      *
-     * @param stream the stream
+     * @param stream     the stream
      * @param bufferSize the buffer size
      */
     public void addStream(Object stream, int bufferSize);
@@ -59,10 +60,10 @@ public interface IOHandler {
     /**
      * Write bytes to the given stream
      *
-     * @param source the bytes
+     * @param source   the bytes
      * @param position the start index in the byte[]
-     * @param length the length of the bytes
-     * @param stream the target stream
+     * @param length   the length of the bytes
+     * @param stream   the target stream
      * @throws IOException in case of a problem while writing to the stream
      */
     public void write(byte[] source, int position, int length, OutputStream stream) throws IOException;
@@ -70,7 +71,7 @@ public interface IOHandler {
     /**
      * Write the given character sequence as line
      *
-     * @param cs the line to write
+     * @param cs  the line to write
      * @param out the line content
      * @throws IOException in case of an error
      */
@@ -80,7 +81,7 @@ public interface IOHandler {
      * Write the given character sequence as line
      *
      * @param object the line to write
-     * @param out the line content
+     * @param out    the line content
      * @throws IOException in case of an error
      */
     public void writeLine(Object object, OutputStream out) throws IOException;

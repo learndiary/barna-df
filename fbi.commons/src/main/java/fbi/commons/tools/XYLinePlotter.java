@@ -72,12 +72,13 @@ public class XYLinePlotter {
      * Add data. Note that the {@code xs.length() == ys.length()} must always be true.
      *
      * @param name the name
-     * @param xs the x data
-     * @param ys the y date
+     * @param xs   the x data
+     * @param ys   the y date
      * @return plotter the plotter
      */
-    public XYLinePlotter dataset(String name, double[] xs, double[] ys){
-        if (xs.length != ys.length) throw new RuntimeException("xs.lengh != ys.length - You always have to provide x and y data of the same length!");
+    public XYLinePlotter dataset(String name, double[] xs, double[] ys) {
+        if (xs.length != ys.length)
+            throw new RuntimeException("xs.lengh != ys.length - You always have to provide x and y data of the same length!");
         XYSeries xySeries = new XYSeries(name, true, false);
         for (int i = 0; i < xs.length; i++) {
             xySeries.add(xs[i], ys[i]);
@@ -94,7 +95,7 @@ public class XYLinePlotter {
      * @param data the data
      * @return plotter the plotter
      */
-    public XYLinePlotter dataset(String name, double[][] data){
+    public XYLinePlotter dataset(String name, double[][] data) {
         return dataset(name, data[0], data[1]);
     }
 
@@ -102,13 +103,13 @@ public class XYLinePlotter {
      * Add a subtitle
      *
      * @param subTitle the subtitle
-     * @param font the font (null permitted)
+     * @param font     the font (null permitted)
      * @return plotter the plotter
      */
-    public XYLinePlotter subtitle(String subTitle, Font font){
-        if(font != null)
+    public XYLinePlotter subtitle(String subTitle, Font font) {
+        if (font != null)
             jfreechart.addSubtitle(new TextTitle(subTitle, font));
-        else{
+        else {
             jfreechart.addSubtitle(new TextTitle(subTitle));
         }
         return this;
@@ -121,12 +122,13 @@ public class XYLinePlotter {
      * @param max the upper bound
      * @return plotter the plotter
      */
-    public XYLinePlotter xBounds(double min, double max){
-        if(min > max) throw new RuntimeException("Lower bound > upper bound");
+    public XYLinePlotter xBounds(double min, double max) {
+        if (min > max) throw new RuntimeException("Lower bound > upper bound");
         this.xLowerBound = min;
         this.xUpperBound = max;
         return this;
     }
+
     /**
      * Set the Y axis range. If {@code min == max}, auto-range is used
      *
@@ -134,7 +136,7 @@ public class XYLinePlotter {
      * @param max the upper bound
      * @return plotter the plotter
      */
-    public XYLinePlotter yBounds(double min, double max){
+    public XYLinePlotter yBounds(double min, double max) {
         this.yLowerBound = min;
         this.yUpperBound = max;
         return this;
@@ -145,17 +147,17 @@ public class XYLinePlotter {
      *
      * @return plot the plot
      */
-    protected XYPlot plot(){
+    protected XYPlot plot() {
         XYPlot plot = jfreechart.getXYPlot();
 
-        if(xLowerBound != xUpperBound){
-            NumberAxis xaxis = (NumberAxis)plot.getDomainAxis();    // xaxis
+        if (xLowerBound != xUpperBound) {
+            NumberAxis xaxis = (NumberAxis) plot.getDomainAxis();    // xaxis
             xaxis.setLowerBound(xLowerBound);
             xaxis.setUpperBound(xUpperBound);
         }
 
-        if(yLowerBound != yUpperBound){
-            NumberAxis yaxis = (NumberAxis)plot.getRangeAxis();
+        if (yLowerBound != yUpperBound) {
+            NumberAxis yaxis = (NumberAxis) plot.getRangeAxis();
             yaxis.setLowerBound(yLowerBound);
             yaxis.setUpperBound(yUpperBound);
         }
@@ -165,25 +167,25 @@ public class XYLinePlotter {
     /**
      * Create a PDF document for this plot.
      *
-     * @param file the file
-     * @param width the width
+     * @param file   the file
+     * @param width  the width
      * @param height the height
      * @throws Exception in case of any errors
      */
-    public void pdf(File file, int width, int height) throws Exception{
+    public void pdf(File file, int width, int height) throws Exception {
         plot();
         OutputStream os = new BufferedOutputStream(new FileOutputStream(file));
-        Rectangle pageSize = new Rectangle(width,height);
-        Document doc = new Document(pageSize, 25, 25, 50,50);
-        PdfWriter writer = PdfWriter.getInstance(doc,os);
+        Rectangle pageSize = new Rectangle(width, height);
+        Document doc = new Document(pageSize, 25, 25, 50, 50);
+        PdfWriter writer = PdfWriter.getInstance(doc, os);
         doc.open();
         PdfContentByte contentByte = writer.getDirectContent();
-        PdfTemplate temp = contentByte.createTemplate(width,height);
-        Graphics2D g2d = temp.createGraphics(width,height, new DefaultFontMapper());
-        Rectangle2D r2d = new Rectangle2D.Double(0,0,width,height);
-        jfreechart.setPadding(new RectangleInsets(0,0,0,20));
+        PdfTemplate temp = contentByte.createTemplate(width, height);
+        Graphics2D g2d = temp.createGraphics(width, height, new DefaultFontMapper());
+        Rectangle2D r2d = new Rectangle2D.Double(0, 0, width, height);
+        jfreechart.setPadding(new RectangleInsets(0, 0, 0, 20));
         jfreechart.setBackgroundPaint(Color.WHITE);
-        jfreechart.draw(g2d,r2d);
+        jfreechart.draw(g2d, r2d);
         g2d.dispose();
         contentByte.addTemplate(temp, 0f, 0f);
         doc.close();

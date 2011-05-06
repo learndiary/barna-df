@@ -10,7 +10,8 @@ public class IOHandlerFactory {
     /**
      * No instances allowed
      */
-    private IOHandlerFactory(){}
+    private IOHandlerFactory() {
+    }
 
     /**
      * THe default handler
@@ -22,8 +23,8 @@ public class IOHandlerFactory {
      *
      * @return ioHandler the default handler
      */
-    public static IOHandler getDefaultHandler(){
-        if(defaultHandler == null){
+    public static IOHandler getDefaultHandler() {
+        if (defaultHandler == null) {
             defaultHandler = new SimpleIOHandler();
         }
         return defaultHandler;
@@ -34,7 +35,7 @@ public class IOHandlerFactory {
      *
      * @return handler new instance of the default handler
      */
-    public static IOHandler createDefaultHandler(){
+    public static IOHandler createDefaultHandler() {
         return new SimpleIOHandler();
     }
 }

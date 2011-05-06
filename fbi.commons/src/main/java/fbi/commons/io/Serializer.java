@@ -17,7 +17,7 @@ import java.io.OutputStream;
  */
 public class Serializer {
 
-    private Serializer(){
+    private Serializer() {
         // hide the class
     }
 
@@ -25,11 +25,11 @@ public class Serializer {
      * Save the given object to the given stream
      *
      * @param object the object
-     * @param out the output stream
+     * @param out    the output stream
      */
-    public static void save(Object object, OutputStream out){
+    public static void save(Object object, OutputStream out) {
         XStream stream = createXStream();
-        stream.toXML(object,  out);
+        stream.toXML(object, out);
     }
 
     /**
@@ -38,7 +38,7 @@ public class Serializer {
      * @param in the input stream
      * @return object the object loaded from the stream
      */
-    public static Object load(InputStream in){
+    public static Object load(InputStream in) {
         XStream stream = createXStream();
         return stream.fromXML(in);
     }
@@ -50,45 +50,44 @@ public class Serializer {
     }
 
 
-
-    private static class ArrayConverter implements Converter{
+    private static class ArrayConverter implements Converter {
         public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext context) {
             Class type = o.getClass().getComponentType();
             writer.startNode(type.getName());
             StringBuffer b = new StringBuffer();
 
-            if(type == int.class){
+            if (type == int.class) {
                 for (int o1 : (int[]) o) {
                     b.append(o1).append("\t");
                 }
-            }else if(type == byte.class){
+            } else if (type == byte.class) {
                 for (byte o1 : (byte[]) o) {
                     b.append(o1).append("\t");
                 }
-            }else if(type == short.class){
+            } else if (type == short.class) {
                 for (short o1 : (short[]) o) {
                     b.append(o1).append("\t");
                 }
-            }else if(type == long.class){
+            } else if (type == long.class) {
                 for (long o1 : (long[]) o) {
                     b.append(o1).append("\t");
                 }
-            }else if(type == double.class){
+            } else if (type == double.class) {
                 for (double o1 : (double[]) o) {
                     b.append(o1).append("\t");
                 }
-            }else if(type == float.class){
+            } else if (type == float.class) {
                 for (float o1 : (float[]) o) {
                     b.append(o1).append("\t");
                 }
-            }else if(type == char.class){
+            } else if (type == char.class) {
                 for (char o1 : (char[]) o) {
                     b.append(o1).append("\t");
                 }
             }
 
-            if(b.length() > 0){
-                b.deleteCharAt(b.length()-1);
+            if (b.length() > 0) {
+                b.deleteCharAt(b.length() - 1);
             }
             writer.setValue(b.toString());
 
@@ -100,43 +99,43 @@ public class Serializer {
             String name = reader.getNodeName();
             String value = reader.getValue();
             String[] split = value.split("\t");
-            if(name.equals("int")){
+            if (name.equals("int")) {
                 int[] ii = new int[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = Integer.parseInt(split[i]);
                 }
                 return ii;
-            }else if(name.equals("byte")){
+            } else if (name.equals("byte")) {
                 byte[] ii = new byte[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = Byte.parseByte(split[i]);
                 }
                 return ii;
-            }else if(name.equals("short")){
+            } else if (name.equals("short")) {
                 short[] ii = new short[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = Short.parseShort(split[i]);
                 }
                 return ii;
-            }else if(name.equals("long")){
+            } else if (name.equals("long")) {
                 long[] ii = new long[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = Long.parseLong(split[i]);
                 }
                 return ii;
-            }else if(name.equals("double")){
+            } else if (name.equals("double")) {
                 double[] ii = new double[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = Double.parseDouble(split[i]);
                 }
                 return ii;
-            }else if(name.equals("float")){
+            } else if (name.equals("float")) {
                 float[] ii = new float[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = Float.parseFloat(split[i]);
                 }
                 return ii;
-            }else if(name.equals("char")){
+            } else if (name.equals("char")) {
                 char[] ii = new char[split.length];
                 for (int i = 0; i < split.length; i++) {
                     ii[i] = split[i].charAt(0);
@@ -147,7 +146,7 @@ public class Serializer {
         }
 
         public boolean canConvert(Class aClass) {
-            if(aClass.isArray()){
+            if (aClass.isArray()) {
                 Class type = aClass.getComponentType();
                 return type.isPrimitive();
             }

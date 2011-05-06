@@ -12,7 +12,7 @@ public class Log {
     /**
      * Log levels
      */
-    public static enum Level{
+    public static enum Level {
         /**
          * No logging
          */
@@ -60,10 +60,10 @@ public class Log {
      * @param level the current log level
      */
     public static void setLogLevel(String level) {
-        try{
+        try {
             logLevel = Level.valueOf(level.toUpperCase());
-        }catch(IllegalArgumentException e){
-            throw new IllegalArgumentException("Unknown log level " + level+". Must be one of NONE|INFO|ERROR|DEBUG" );
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown log level " + level + ". Must be one of NONE|INFO|ERROR|DEBUG");
         }
     }
 
@@ -72,8 +72,8 @@ public class Log {
      *
      * @param level the level
      */
-    public static void setLogLevel(Level level){
-        if(level == null) throw new NullPointerException("Null LogLevel not permitted!");
+    public static void setLogLevel(Level level) {
+        if (level == null) throw new NullPointerException("Null LogLevel not permitted!");
         logLevel = level;
     }
 
@@ -82,7 +82,7 @@ public class Log {
      *
      * @return level the log level
      */
-    public static Level getLogLevel(){
+    public static Level getLogLevel() {
         return logLevel;
     }
 
@@ -92,20 +92,20 @@ public class Log {
      *
      * @param message the message
      */
-    public static void debug(String message){
-        debug(message,null);
+    public static void debug(String message) {
+        debug(message, null);
     }
 
     /**
      * Log a debug message and print the stacktrace of the error
      *
      * @param message the message
-     * @param error the error
+     * @param error   the error
      */
-    public static void debug(String message, Throwable error){
-        if(logLevel.level >= Log.Level.DEBUG.level){
+    public static void debug(String message, Throwable error) {
+        if (logLevel.level >= Log.Level.DEBUG.level) {
             System.err.println("[DEBUG] " + message);
-            if(error != null) error.printStackTrace(System.err);
+            if (error != null) error.printStackTrace(System.err);
         }
     }
 
@@ -114,20 +114,19 @@ public class Log {
      *
      * @param message the message
      */
-    public static void warn(String message){
+    public static void warn(String message) {
         warn("WARN", message);
     }
 
     /**
      * Print a waring with a custom prefix
      *
-     * @param prefix the prefix
+     * @param prefix  the prefix
      * @param message the message
      */
-    public static void warn(String prefix, String message){
+    public static void warn(String prefix, String message) {
         info(prefix, message);
     }
-
 
 
     /**
@@ -135,7 +134,7 @@ public class Log {
      *
      * @param message the message
      */
-    public static void info(String message){
+    public static void info(String message) {
         info("INFO", message);
     }
 
@@ -144,11 +143,11 @@ public class Log {
      *
      * @param message the message
      */
-    public static void info(String prefix, String message){
-        if(logLevel.level >= Log.Level.INFO.level){
-            if(prefix != null && !prefix.isEmpty()){
-                System.err.println("["+prefix+"] "+message);
-            }else{
+    public static void info(String prefix, String message) {
+        if (logLevel.level >= Log.Level.INFO.level) {
+            if (prefix != null && !prefix.isEmpty()) {
+                System.err.println("[" + prefix + "] " + message);
+            } else {
                 System.err.println(message);
             }
         }
@@ -160,21 +159,21 @@ public class Log {
      *
      * @param message the message
      */
-    public static void error(String message){
+    public static void error(String message) {
         error("ERROR", message);
     }
 
     /**
      * Log an error message with a custom error prefix
      *
-     * @param prefix the error prefix (null permitted)
+     * @param prefix  the error prefix (null permitted)
      * @param message the message
      */
-    public static void error(String prefix, String message){
-        if(logLevel.level >= Log.Level.ERROR.level){
-            if(prefix != null && prefix.length() > 0)
-                System.err.println("["+prefix+"]"+" "+message);
-            else{
+    public static void error(String prefix, String message) {
+        if (logLevel.level >= Log.Level.ERROR.level) {
+            if (prefix != null && prefix.length() > 0)
+                System.err.println("[" + prefix + "]" + " " + message);
+            else {
                 System.err.println(message);
             }
         }
@@ -184,12 +183,12 @@ public class Log {
      * Log an error message and print the stacktrace of the error
      *
      * @param message the message
-     * @param error the error
+     * @param error   the error
      */
-    public static void error(String message, Throwable error){
-        if(logLevel.level >= Log.Level.ERROR.level){
+    public static void error(String message, Throwable error) {
+        if (logLevel.level >= Log.Level.ERROR.level) {
             error(message);
-            if(error != null)error.printStackTrace(System.err);
+            if (error != null) error.printStackTrace(System.err);
         }
     }
 
@@ -200,8 +199,8 @@ public class Log {
      *
      * @param message the message
      */
-    public static void message(String message){
-        if(logLevel.level >= Log.Level.INFO.level){
+    public static void message(String message) {
+        if (logLevel.level >= Log.Level.INFO.level) {
             System.err.println(message);
         }
     }
@@ -212,7 +211,7 @@ public class Log {
      * @param message the message (null permitted)
      */
     public static void progressStart(String message) {
-        if(logLevel.level >= Log.Level.INFO.level){
+        if (logLevel.level >= Log.Level.INFO.level) {
             progress.start(message);
         }
     }
@@ -220,21 +219,22 @@ public class Log {
     /**
      * Do a progress step
      */
-    public static void progress(){
-        if(logLevel.level >= Log.Level.INFO.level){
+    public static void progress() {
+        if (logLevel.level >= Log.Level.INFO.level) {
             progress.progress();
         }
     }
+
     /**
      * Checks if the progress should be printed
      *
      * @param currentValue the current value
-     * @param maxValue the maximum value
+     * @param maxValue     the maximum value
      */
     public static void progress(long currentValue, long maxValue) {
-        if(logLevel.level >= Log.Level.INFO.level){
+        if (logLevel.level >= Log.Level.INFO.level) {
             int preStep = (int) Math.ceil((double) maxValue / progress.steps());
-            while(currentValue < maxValue && progress.currentStep() < progress.steps() && progress.currentStep() * preStep <= currentValue){
+            while (currentValue < maxValue && progress.currentStep() < progress.steps() && progress.currentStep() * preStep <= currentValue) {
                 progress();
             }
         }
@@ -245,7 +245,7 @@ public class Log {
      * Finish the current progress
      */
     public static void progressFinish() {
-        if(logLevel.level >= Log.Level.INFO.level){
+        if (logLevel.level >= Log.Level.INFO.level) {
             progress.finish();
         }
     }
@@ -253,11 +253,11 @@ public class Log {
     /**
      * Finish the current progress with an optional message and optionally print the time
      *
-     * @param msg the message (null permitted)
+     * @param msg  the message (null permitted)
      * @param time print the time
      */
     public static void progressFinish(String msg, boolean time) {
-        if(logLevel.level >= Log.Level.INFO.level){
+        if (logLevel.level >= Log.Level.INFO.level) {
             progress.finish(msg, time);
         }
     }
@@ -268,7 +268,7 @@ public class Log {
      * @param msg the message (null permitted)
      */
     public static void progressFailed(String msg) {
-        if(logLevel.level >= Log.Level.INFO.level){
+        if (logLevel.level >= Log.Level.INFO.level) {
             progress.failed(msg);
         }
     }
@@ -286,7 +286,6 @@ public class Log {
      * Returns true if this logger is interactive and user can input things
      *
      * @return interactive interactive
-     *
      */
     public static boolean isInteractive() {
         return interactive;

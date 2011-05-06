@@ -5,18 +5,17 @@ import fbi.commons.Log;
 /**
  * Static helper methods for command line tools
  *
- *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class CommandLine {
     /**
      * Yes options for user confirmation
      */
-    public static final String[] user_yes= new String[] {"yes", "y", "si", "yo", "ja", "ok"};
+    public static final String[] user_yes = new String[]{"yes", "y", "si", "yo", "ja", "ok"};
     /**
      * No options for user confirmation
      */
-    public static final String[] user_no= new String[] {"no", "n", "nein", "nope", "nix", "noe"};
+    public static final String[] user_no = new String[]{"no", "n", "nein", "nope", "nix", "noe"};
 
 
     /**
@@ -30,22 +29,22 @@ public class CommandLine {
             return true;
 
         while (true) {
-            StringBuffer sb= new StringBuffer();
+            StringBuffer sb = new StringBuffer();
             int in;
 
-            if (message!= null) {
-                System.err.print(message+" ");
+            if (message != null) {
+                System.err.print(message + " ");
                 System.err.flush();
             }
 
             try {
-                while((in= System.in.read())!= '\n')
+                while ((in = System.in.read()) != '\n')
                     sb.append((char) in);
             } catch (Exception e) {
                 ; // :)
             }
 
-            String s= sb.toString().toLowerCase().trim();
+            String s = sb.toString().toLowerCase().trim();
             for (int i = 0; i < user_yes.length; i++)
                 if (s.equals(user_yes[i]))
                     return true;

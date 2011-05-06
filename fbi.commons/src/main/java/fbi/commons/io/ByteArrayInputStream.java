@@ -27,7 +27,7 @@ public class ByteArrayInputStream extends InputStream {
     }
 
     public ByteArrayInputStream(ByteArrayCharSequence seq, InputStream inputStream) {
-        if(seq== null || inputStream == null) throw new NullPointerException();
+        if (seq == null || inputStream == null) throw new NullPointerException();
         this.seq = seq;
         this.inputStream = inputStream;
     }
@@ -35,8 +35,8 @@ public class ByteArrayInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         int r = this.inputStream.read();
-        if(r >= 0){
-            seq.append((byte)r);
+        if (r >= 0) {
+            seq.append((byte) r);
         }
         return r;
     }
@@ -51,16 +51,16 @@ public class ByteArrayInputStream extends InputStream {
     public int readLine() throws IOException {
 
         int c = read();
-        if(c <0) return -1;
+        if (c < 0) return -1;
         int l = 0;
-        while (c >= 0 && c != '\n'){
+        while (c >= 0 && c != '\n') {
             l++;
             c = read();
         }
-        if(c == '\n'){
+        if (c == '\n') {
             // last character was a newline
             // remove this from the sequence
-            seq.end = seq.end-1;
+            seq.end = seq.end - 1;
         }
         return l;
     }
@@ -111,8 +111,8 @@ public class ByteArrayInputStream extends InputStream {
      *
      * @param sequence the sequence
      */
-    public void setSequence(ByteArrayCharSequence sequence){
-        if(sequence == null) throw new NullPointerException("Null sequence is not permitted!");
+    public void setSequence(ByteArrayCharSequence sequence) {
+        if (sequence == null) throw new NullPointerException("Null sequence is not permitted!");
         this.seq = sequence;
     }
 }

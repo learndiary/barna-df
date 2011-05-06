@@ -45,7 +45,7 @@ public class HelpPrinter {
      *
      * @param processor the processor
      */
-    public void print(ArgumentProcessor processor){
+    public void print(ArgumentProcessor processor) {
         ParsingContext context = processor.createParsingContext();
 
         Cli cli = context.cli();
@@ -53,8 +53,8 @@ public class HelpPrinter {
         List<Option> options = new ArrayList<Option>(context.options());
         Collections.sort(options, new Comparator<Option>() {
             public int compare(Option o1, Option o2) {
-                if(o1.isRequired() && !o2.isRequired()) return -1;
-                if(!o1.isRequired() && o2.isRequired()) return 1;
+                if (o1.isRequired() && !o2.isRequired()) return -1;
+                if (!o1.isRequired() && o2.isRequired()) return 1;
                 return o1.getName().compareTo(o2.getName());
             }
         });
@@ -63,25 +63,25 @@ public class HelpPrinter {
         // print general command information
         out.println("[USAGE]");
         out.print(" " + cli.getName());
-        if(cli.getNote() != null && !cli.getNote().isEmpty()){
+        if (cli.getNote() != null && !cli.getNote().isEmpty()) {
             out.print(" " + cli.getNote());
-        }else{
+        } else {
             // print options
             out.print(" ");
             for (Option option : options) {
-                if(!option.isRequired()){
+                if (!option.isRequired()) {
                     out.print("[");
                 }
-                if(option.getName().length() > 0)
-                    out.print("-"+option.getName());
-                else{
-                    out.print("--"+option.getLongName());
+                if (option.getName().length() > 0)
+                    out.print("-" + option.getName());
+                else {
+                    out.print("--" + option.getLongName());
                 }
-                if(!option.isFlag()){
+                if (!option.isFlag()) {
                     out.print(" <" + option.getDisplayName() + ">");
                 }
 
-                if(!option.isRequired()){
+                if (!option.isRequired()) {
                     out.print("]");
                 }
                 out.print(" ");
@@ -90,14 +90,14 @@ public class HelpPrinter {
         out.println();
 
         // print description
-        if(cli.getDescription() != null && !cli.getDescription().isEmpty()){
+        if (cli.getDescription() != null && !cli.getDescription().isEmpty()) {
             out.println();
             out.println("[DESCRIPTION]");
-            out.println(" "+cli.getDescription());
+            out.println(" " + cli.getDescription());
         }
 
         // print options
-        if(options.size() > 0){
+        if (options.size() > 0) {
             out.println();
             out.println("[OPTIONS]");
             TableFormatter table = new TableFormatter(4);
@@ -106,16 +106,16 @@ public class HelpPrinter {
 
                 // defaults
                 cols[0] = "";
-                cols[1]  = "";
+                cols[1] = "";
 
-                if(option.getName().length() > 0)
-                    cols[0] = "-"+option.getName();
-                if(option.getLongName().length() > 0)
-                    cols[1] = "--"+option.getLongName();
+                if (option.getName().length() > 0)
+                    cols[0] = "-" + option.getName();
+                if (option.getLongName().length() > 0)
+                    cols[1] = "--" + option.getLongName();
 
-                if(!option.isFlag()){
-                    cols[2] = "<"+option.getDisplayName()+">";
-                }else{
+                if (!option.isFlag()) {
+                    cols[2] = "<" + option.getDisplayName() + ">";
+                } else {
                     cols[2] = "";
                 }
                 cols[3] = option.getDescription();

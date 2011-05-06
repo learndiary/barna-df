@@ -41,10 +41,13 @@ public abstract class Parameter<T> {
     }
 
     abstract T get();
+
     abstract void set(T value);
+
     abstract void parse(String value) throws ParameterException;
+
     void validate(ParameterSchema schema) throws ParameterException {
-        if(validator != null){
+        if (validator != null) {
             validator.validate(schema, this);
         }
     }
@@ -54,7 +57,7 @@ public abstract class Parameter<T> {
         return name;
     }
 
-    public String getValuesString(){
+    public String getValuesString() {
         return null;
     }
 

@@ -3,7 +3,7 @@ package fbi.commons.parameters;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class BooleanParameter extends Parameter<Boolean>{
+class BooleanParameter extends Parameter<Boolean> {
     private static final String[] TRUE = {"yes", "1", "true"};
     private static final String[] FALSE = {"no", "0", "false"};
     private boolean value;
@@ -19,6 +19,7 @@ class BooleanParameter extends Parameter<Boolean>{
     protected BooleanParameter(String name, String description, boolean defaultValue) {
         this(name, description, defaultValue, null);
     }
+
     protected BooleanParameter(String name, String description, boolean defaultValue, ParameterValidator validator) {
         super(name, description, defaultValue, Boolean.class, validator);
         value = defaultValue;
@@ -38,19 +39,19 @@ class BooleanParameter extends Parameter<Boolean>{
     void parse(String value) throws ParameterException {
         String l = value.toLowerCase();
         for (String s : TRUE) {
-            if(l.equals(s)){
+            if (l.equals(s)) {
                 this.value = true;
                 return;
             }
         }
 
         for (String s : FALSE) {
-            if(l.equals(s)){
+            if (l.equals(s)) {
                 this.value = false;
                 return;
             }
         }
-        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value '"+value + "'. Possible values are: [YES,NO]");
+        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value '" + value + "'. Possible values are: [YES,NO]");
     }
 
     @Override

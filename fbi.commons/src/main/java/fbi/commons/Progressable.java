@@ -18,20 +18,20 @@ public interface Progressable {
     /**
      * Do one progress step if more steps are available
      */
-	public void progress();
+    public void progress();
 
     /**
      * Finish the progress. This print the rest of the available steps and then ends the progress
      */
-	public void finish();
+    public void finish();
 
     /**
      * Finish the progress and print the optional message
      *
-     * @param msg the message (null permitted)
+     * @param msg  the message (null permitted)
      * @param time print the running time
      */
-	public void finish(String msg, boolean time);
+    public void finish(String msg, boolean time);
 
     /**
      * Progress process failed. This ends the progress and prints the (optional) message
