@@ -94,7 +94,9 @@ class LineComparator implements Comparator<String> {
      */
     public void addComparator(Comparator<String> comparator) {
         if (comparator != null) {
-            if (subComparators == null) subComparators = new ArrayList<Comparator<String>>();
+            if (subComparators == null) {
+                subComparators = new ArrayList<Comparator<String>>();
+            }
             subComparators.add(comparator);
         }
     }
@@ -148,7 +150,9 @@ class LineComparator implements Comparator<String> {
         if (result == 0 && subComparators != null) {
             for (Comparator<String> subComparator : subComparators) {
                 int sub = subComparator.compare(o1, o2);
-                if (sub != 0) return sub;
+                if (sub != 0) {
+                    return sub;
+                }
             }
         }
         return result;

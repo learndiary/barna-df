@@ -70,24 +70,27 @@ class ThreadedIOHandler extends Thread implements IOHandler {
         synchronized (reuseVec) {
 //			System.err.print("locked..");
 //			System.err.flush();
-            if (reusePos > 0 && reuseVec[reusePos - 1].length >= bufSize)
+            if (reusePos > 0 && reuseVec[reusePos - 1].length >= bufSize) {
                 buf = reuseVec[--reusePos];
+            }
         }
 //		System.err.println("free.");
 
-        if (buf == null)
+        if (buf == null) {
             buf = new byte[bufSize];    // no init
+        }
 //		System.err.print("add() locking buf#..");
 //		System.err.flush();
         synchronized (bufHash) {
 //			System.err.print("locked..");
 //			System.err.flush();
-            while (bufHash.size() >= maxStreamCap)
+            while (bufHash.size() >= maxStreamCap) {
                 try {
                     bufHash.wait();
                 } catch (InterruptedException e) {
                     ; // :)
                 }
+            }
             bufHash.put(stream, buf);
             posHash.put(stream, 0);
         }
@@ -106,19 +109,20 @@ class ThreadedIOHandler extends Thread implements IOHandler {
         byte[] b = null;
         if (stream instanceof InputStream) {
             synchronized (closedHash) {
-                while (!closedHash.contains(stream))
+                while (!closedHash.contains(stream)) {
                     try {
                         closedHash.wait();
                     } catch (InterruptedException e) {
                         ; // :)
                     }
+                }
             }
         }
 
         synchronized (bufHash) {
             b = bufHash.get(stream);
             int p = posHash.get(stream);
-            while (p > 0)
+            while (p > 0) {
                 synchronized (b) {
                     try {
                         b.wait();
@@ -126,13 +130,15 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                         ; // :)
                     }
                 }
+            }
             bufHash.remove(stream);
             posHash.remove(stream);
             bufHash.notifyAll();
         }
         synchronized (reuseVec) {
-            if (reusePos < reuseVec.length)
+            if (reusePos < reuseVec.length) {
                 reuseVec[reusePos++] = b;
+            }
             reuseVec.notify();
         }
         synchronized (closedHash) {
@@ -147,8 +153,9 @@ class ThreadedIOHandler extends Thread implements IOHandler {
     public void run() {
 
         t0 = System.currentTimeMillis();
-        if (monitor)
+        if (monitor) {
             getMonitor().start();
+        }
         int x;
         byte[] b;
         float thr;
@@ -167,10 +174,14 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                     int curr = -1;
                     if (a[i] instanceof InputStream) {
                         if (!closedHash.contains(a[i]))    // not closed
+                        {
                             curr = bufHash.get(a[i]).length
                                     - posHash.get(a[i]);
+                        }
                     } else //if (a[i] instanceof OutputStream)
+                    {
                         curr = posHash.get(a[i]);
+                    }
 
                     if (curr > minVol && curr > max) {
                         max = curr;
@@ -197,12 +208,13 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                 if (a[x] instanceof InputStream) {
                     //System.err.println("filling "+ bufHash.get(a[x]).length+ " - "+ posHash.get(a[x]));
                     fill((InputStream) a[x]);
-                } else if (a[x] instanceof OutputStream)
+                } else if (a[x] instanceof OutputStream) {
                     try {
                         flush((OutputStream) a[x]);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
+                }
 
             }
 //			System.err.println("free.");
@@ -220,12 +232,13 @@ class ThreadedIOHandler extends Thread implements IOHandler {
 
     public boolean close() {
         stop = true;
-        while (isAlive())
+        while (isAlive()) {
             try {
                 this.join();
             } catch (InterruptedException e) {
                 ; // :)
             }
+        }
 
         int n = -1;
         synchronized (posHash) {
@@ -264,15 +277,16 @@ class ThreadedIOHandler extends Thread implements IOHandler {
 //			System.err.flush();
             int pos = posHash.get(in);
             while (pos < minVol && !closedHash.contains(in)) {
-                if (isAlive())
+                if (isAlive()) {
                     try {
                         interrupt();
                         b.wait(10);
                     } catch (InterruptedException e) {
                         ; // :)
                     }
-                else
+                } else {
                     fill(in);
+                }
                 pos = posHash.get(in);
             }
             int p = pos;
@@ -281,16 +295,21 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                 return -1;
             }
             i = 0;
-            for (; i < p && b[i] != n; ++i) ;    // find lsep
+            for (; i < p && b[i] != n; ++i) {
+                ;    // find lsep
+            }
 
-            if (i > 0 && b[i - 1] == r)
+            if (i > 0 && b[i - 1] == r) {
                 --i;
+            }
             //bb= new byte[i];
             System.arraycopy(b, 0, cs.a, 0, i);
             cs.start = 0;
             cs.end = i;
 
-            while (++i < p && (b[i] == r || b[i] == n)) ;
+            while (++i < p && (b[i] == r || b[i] == n)) {
+                ;
+            }
 //			if (i< 0|| p> b.length)
 //				System.currentTimeMillis();
             if (p - i > 0) {
@@ -344,7 +363,9 @@ class ThreadedIOHandler extends Thread implements IOHandler {
     }
 
     public void writeLine(Object object, OutputStream out) throws IOException {
-        if (object == null) throw new NullPointerException();
+        if (object == null) {
+            throw new NullPointerException();
+        }
         if (bufferSequence == null) {
             bufferSequence = new ByteArrayCharSequence(object.toString());
         }
@@ -365,15 +386,16 @@ class ThreadedIOHandler extends Thread implements IOHandler {
             int pos = posHash.get(out);
             while (pos + len + 1 > b.length) {
                 //flush(idx);
-                if (isAlive())
+                if (isAlive()) {
                     try {
                         interrupt();
                         b.wait(10);
                     } catch (InterruptedException e) {
                         ; // :)
                     }
-                else
+                } else {
                     flush(out);
+                }
                 pos = posHash.get(out);
             }
             System.arraycopy(cs.a, cs.start, b, pos, len);
@@ -449,7 +471,9 @@ class ThreadedIOHandler extends Thread implements IOHandler {
         if (1 == 1) {
             ByteArrayCharSequence cs = new ByteArrayCharSequence(IOHandler.DEFAULT_BUFFER_SIZE);
             int i = readLine(idx, cs);
-            if (i < 0) return null;
+            if (i < 0) {
+                return null;
+            }
             return cs;
         }
 
@@ -479,24 +503,31 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                 return null;
             }
             int i = 0;
-            for (; i < p && b[i] != n; ++i) ;    // find lsep
+            for (; i < p && b[i] != n; ++i) {
+                ;    // find lsep
+            }
 
             assert (i != p || idx == null);
-            if (i > 0 && b[i - 1] == r)
+            if (i > 0 && b[i - 1] == r) {
                 --i;
+            }
             bb = new byte[i];
             System.arraycopy(b, 0, bb, 0, i);
 
-            while (++i < p && (b[i] == r || b[i] == n)) ;
+            while (++i < p && (b[i] == r || b[i] == n)) {
+                ;
+            }
             System.arraycopy(b, i, b, 0, p - i);
             posHash.put(idx, pos - i);
         }
-        if (bb == null)
+        if (bb == null) {
             return null;
+        }
         //System.err.println("got "+bb.length);
         ByteArrayCharSequence cs = new ByteArrayCharSequence(bb);
-        if (cs.length() == 0)
+        if (cs.length() == 0) {
             System.currentTimeMillis();
+        }
         return cs;
     }
 

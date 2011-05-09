@@ -80,8 +80,9 @@ public class Options {
      * @throws RuntimeException in case the method can not be found or a mapping for the method already exists
      */
     public void addParameter(String method, String description, Character shortOption, String... longOptions) {
-        if (description == null)
+        if (description == null) {
             throw new NullPointerException("You have to specify a description for option " + shortOption + " " + Arrays.toString(longOptions));
+        }
         if (shortOption == null && (longOptions == null || longOptions.length == 0)) {
             throw new IllegalArgumentException("You have to specify at least one option");
         }
@@ -107,8 +108,9 @@ public class Options {
      * @throws RuntimeException in case the method can not be found or a mapping for the method already exists
      */
     public void addOption(String method, String description, Character shortOption, String... longOptions) {
-        if (description == null)
+        if (description == null) {
             throw new NullPointerException("You have to specify a description for option " + shortOption + " " + Arrays.toString(longOptions));
+        }
         if (shortOption == null && (longOptions == null || longOptions.length == 0)) {
             throw new IllegalArgumentException("You have to specify at least one option");
         }
@@ -139,7 +141,9 @@ public class Options {
      * @param longOptions the long parameter
      */
     protected void addMapping(Method method, String description, Character shortOption, String[] longOptions) {
-        if (method == null) throw new NullPointerException();
+        if (method == null) {
+            throw new NullPointerException();
+        }
 
         // check that no mapping exists !
         if (descriptions.containsKey(method)) {
@@ -169,15 +173,18 @@ public class Options {
         for (int i = 0; parameters != null && i < parameters.length; i++) {
             if (parameters[i].startsWith(CLI_PAR_LONG)) {
                 Method method = longOptions.get(parameters[i].substring(CLI_PAR_LONG.length()));
-                if (method == null) return false;
+                if (method == null) {
+                    return false;
+                }
                 i = setParameter(method, parameters, i);
             } else if (parameters[i].startsWith(CLI_PAR_SHORT)) {
                 Method m = shortOptions.get(parameters[i].substring(CLI_PAR_SHORT.length()).charAt(0));
                 if (m == null) {
                     // see if we find it in long options
                     m = longOptions.get(parameters[i].substring(CLI_PAR_SHORT.length()));
-                    if (m == null)
+                    if (m == null) {
                         return false;
+                    }
                 }
                 i = setParameter(m, parameters, i);
             } else {
@@ -209,8 +216,9 @@ public class Options {
         if (cc.length + i >= args.length) {
             throw new RuntimeException("Missing arguments for parameter " + args[i] + "!");
         }
-        for (int j = 0; j < cc.length; j++)
+        for (int j = 0; j < cc.length; j++) {
             cc[j] = args[i + 1 + j];
+        }
         if (!isBoolean) {
             m.invoke(target, cc);
         } else {
@@ -246,8 +254,9 @@ public class Options {
             for (int i = 0; i < oo.length; i++) {
                 Map.Entry<String, Method> en = (Map.Entry<String, Method>) oo[i];
                 if (en.getValue().equals(m)) {
-                    if (sb.length() > 1)
+                    if (sb.length() > 1) {
                         sb.append("|");
+                    }
                     sb.append(CLI_PAR_SHORT);
                     sb.append(en.getKey());
                     break;

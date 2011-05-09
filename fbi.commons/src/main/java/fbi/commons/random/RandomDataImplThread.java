@@ -22,26 +22,31 @@ public class RandomDataImplThread extends Thread {
 
     void fill() {
         synchronized (data) {
-            while (pos < data.length)
+            while (pos < data.length) {
                 data[pos++] = nextVal();
+            }
         }
     }
 
     double nextVal() {
-        if (mode == MODE_UNIF)
+        if (mode == MODE_UNIF) {
             return rnd.nextUniform(p1, p2);
-        if (mode == MODE_GAUSS)
+        }
+        if (mode == MODE_GAUSS) {
             return rnd.nextGaussian(p1, p2);
-        if (mode == MODE_POISS)
+        }
+        if (mode == MODE_POISS) {
             return rnd.nextPoisson(p1);
+        }
         return 0d;
     }
 
     @Override
     public void run() {
         while (!stop) {
-            if (pos < data.length)
+            if (pos < data.length) {
                 fill();
+            }
             try {
                 sleep(10);
             } catch (InterruptedException e) {

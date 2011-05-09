@@ -43,8 +43,9 @@ public class MultiMemberGZIPInputStream extends GZIPInputStream {
         if (eos) {
             return -1;
         }
-        if (this.child != null)
+        if (this.child != null) {
             return this.child.read(inputBuffer, inputBufferOffset, inputBufferLen);
+        }
 
         int charsRead = super.read(inputBuffer, inputBufferOffset, inputBufferLen);
         if (charsRead == -1) {
@@ -69,18 +70,21 @@ public class MultiMemberGZIPInputStream extends GZIPInputStream {
                 if (ret == -1) {
                     eos = true;
                     return -1;
-                } else
+                } else {
                     ((PushbackInputStream) this.in).unread(b, 0, 1);
+                }
             }
 
             MultiMemberGZIPInputStream child;
-            if (this.size == -1)
+            if (this.size == -1) {
                 child = new MultiMemberGZIPInputStream(this);
-            else
+            } else {
                 child = new MultiMemberGZIPInputStream(this, this.size);
+            }
             return child.read(inputBuffer, inputBufferOffset, inputBufferLen);
-        } else
+        } else {
             return charsRead;
+        }
     }
 
 }

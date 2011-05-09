@@ -17,8 +17,9 @@ public class SyncIOHandler extends Thread {
             tst.start();
 
             ByteArrayCharSequence cs = new ByteArrayCharSequence(128);
-            while ((cs = tst.readLine(0)) != null)
+            while ((cs = tst.readLine(0)) != null) {
                 tst.writeLine(cs, 1);
+            }
             tst.close();
 
         } catch (Exception e) {
@@ -67,19 +68,22 @@ public class SyncIOHandler extends Thread {
         this.readers = readers;
         this.writers = writers;
         buf = new byte[readers.length + writers.length][];
-        for (int i = 0; i < buf.length; i++)
+        for (int i = 0; i < buf.length; i++) {
             buf[i] = new byte[bufSize];
+        }
         pos = new int[buf.length];
-        for (int i = 0; i < pos.length; i++)
+        for (int i = 0; i < pos.length; i++) {
             pos[i] = 0;
+        }
     }
 
     @Override
     public void run() {
 
         t0 = System.currentTimeMillis();
-        if (monitor)
+        if (monitor) {
             getMonitor().start();
+        }
         int x;
         byte[] b;
         float thr;
@@ -117,25 +121,29 @@ public class SyncIOHandler extends Thread {
             for (int i = 0; i < pos.length; i++) {
                 int curr;
                 if (i < readers.length) {
-                    if (readers[i] == null)
+                    if (readers[i] == null) {
                         continue;
+                    }
                     curr = buf[i].length - pos[i];
-                } else
+                } else {
                     curr = pos[i];
+                }
 
                 if (curr > minVol && curr > max) {
                     max = curr;
                     x = i;
                 }
             }
-            if (x < 0)
+            if (x < 0) {
                 continue;
+            }
             b = buf[x];
             synchronized (b) {
-                if (x < readers.length)
+                if (x < readers.length) {
                     fill(x);
-                else
+                } else {
                     flush(x);
+                }
 
             }
 
@@ -152,15 +160,17 @@ public class SyncIOHandler extends Thread {
 
     public void close() {
         stop = true;
-        while (isAlive())
+        while (isAlive()) {
             try {
                 this.join();
             } catch (InterruptedException e) {
                 ; // :)
             }
+        }
         for (int i = 0; i < readers.length; i++) {
-            if (readers[i] == null)
+            if (readers[i] == null) {
                 continue;
+            }
             try {
                 readers[i].close();
             } catch (IOException e) {
@@ -186,29 +196,35 @@ public class SyncIOHandler extends Thread {
         synchronized (b) {
 //			while (pos[idx]== 0) 
 //				fill(idx);
-            while (pos[idx] < minVol && readers[idx] != null)
+            while (pos[idx] < minVol && readers[idx] != null) {
                 try {
                     b.wait();
                 } catch (InterruptedException e) {
                     ; // :)
                 }
+            }
             int p = pos[idx];
             if (p == 0) {
                 assert (readers[idx] == null);
                 return null;
             }
             int i = 0;
-            for (; i < p && b[i] != n; ++i) ;    // find lsep
+            for (; i < p && b[i] != n; ++i) {
+                ;    // find lsep
+            }
 
             assert (i != p || readers[idx] == null);
-            if (i > 0 && b[i - 1] == r)
+            if (i > 0 && b[i - 1] == r) {
                 --i;
+            }
             //bb= new byte[i];
             System.arraycopy(b, 0, cs.a, 0, i);
             cs.start = 0;
             cs.end = i;
 
-            while (++i < p && b[i] == r || b[i] == n) ;
+            while (++i < p && b[i] == r || b[i] == n) {
+                ;
+            }
             System.arraycopy(b, i, b, 0, p - i);
             pos[idx] -= i;
         }
@@ -253,12 +269,14 @@ public class SyncIOHandler extends Thread {
         byte[] b = buf[idx];
         synchronized (b) {
             while (pos[idx] + len + 1 > b.length)
-                //flush(idx);
+            //flush(idx);
+            {
                 try {
                     b.wait();
                 } catch (InterruptedException e) {
                     ; // :)
                 }
+            }
             System.arraycopy(cs.a, cs.start, b, pos[idx], len);
             pos[idx] += len;
             b[pos[idx]++] = BYTE_NL;
@@ -307,38 +325,47 @@ public class SyncIOHandler extends Thread {
         synchronized (b) {
             //			while (pos[idx]== 0)
             //				fill(idx);
-            while (pos[idx] < minVol && readers[idx] != null)
+            while (pos[idx] < minVol && readers[idx] != null) {
                 try {
                     b.wait();
                 } catch (InterruptedException e) {
                     ; // :)
                 }
+            }
             int p = pos[idx];
             if (p == 0) {
                 assert (readers[idx] == null);
                 return null;
             }
             int i = 0;
-            for (; i < p && b[i] != n; ++i) ;    // find lsep
+            for (; i < p && b[i] != n; ++i) {
+                ;    // find lsep
+            }
 
             assert (i != p || readers[idx] == null);
-            if (i > 0 && b[i - 1] == r)
+            if (i > 0 && b[i - 1] == r) {
                 --i;
-            if (i == 0)
+            }
+            if (i == 0) {
                 System.currentTimeMillis();
+            }
             bb = new byte[i];
             System.arraycopy(b, 0, bb, 0, i);
 
-            while (++i < p && (b[i] == r || b[i] == n)) ;
+            while (++i < p && (b[i] == r || b[i] == n)) {
+                ;
+            }
             System.arraycopy(b, i, b, 0, p - i);
             pos[idx] -= i;
         }
-        if (bb == null)
+        if (bb == null) {
             return null;
+        }
         //System.err.println("got "+bb.length);
         ByteArrayCharSequence cs = new ByteArrayCharSequence(bb);
-        if (cs.length() == 0)
+        if (cs.length() == 0) {
             System.currentTimeMillis();
+        }
         return cs;
     }
 

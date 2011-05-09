@@ -23,8 +23,9 @@ public class SimpleBinPlotterPanel extends JPanel {
         Random rnd = new Random();
         for (int i = 0; i < a.length; i++) {
             a[i] = rnd.nextInt(8000);
-            if (a[i] == 0)
+            if (a[i] == 0) {
                 --i;
+            }
         }
         JFrame frame = new JFrame();
         frame.setLayout(new BorderLayout());
@@ -107,12 +108,15 @@ public class SimpleBinPlotterPanel extends JPanel {
      */
     public void paintOSIdownscale(long[] a) {
         double maxY = Double.MIN_VALUE;
-        for (int i = 0; i < a.length; i++)
-            if (a[i] > maxY)
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] > maxY) {
                 maxY = a[i];
+            }
+        }
 
-        if (log >= 1)
+        if (log >= 1) {
             maxY = Math.log10(maxY);
+        }
         double scX = a.length / (double) (getWidth() - (axesDim.left + axesDim.right)), scY = maxY / (getHeight() - (axesDim.top + axesDim.bottom));
 
         offScrImg = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_BYTE_BINARY);
@@ -125,13 +129,15 @@ public class SimpleBinPlotterPanel extends JPanel {
         gi.fillRect(0, 0, offScrImg.getWidth(), offScrImg.getHeight());
         for (int i = 14000; i < a.length; i++) {
             float y = 0;
-            if (log >= 1)
+            if (log >= 1) {
                 y = (float) (eleH * Math.log10(a[i]));
-            else
+            } else {
                 y = (float) (eleH * a[i]);
+            }
             int posX = (int) (axesDim.left + 1 * (i - 14000));
-            if (posX > offScrImg.getWidth() - axesDim.right)
+            if (posX > offScrImg.getWidth() - axesDim.right) {
                 return;
+            }
 
             int posY = (int) (offScrImg.getHeight() - axesDim.bottom - y);
             if (posY < axesDim.top * scY) {
@@ -157,23 +163,26 @@ public class SimpleBinPlotterPanel extends JPanel {
 
     protected void paintOSIhisto(Graphics gi, double[] bins, double[] maxXY) {
 
-        if (bins == null)
+        if (bins == null) {
             return;
+        }
 
         int w = offScrImg.getWidth() - axesDim.left - axesDim.right, h = offScrImg.getHeight() - axesDim.bottom;    // h includes upper border
         float binWidth = 1;
-        if (paintMode == MODE_LINE)
+        if (paintMode == MODE_LINE) {
             binWidth = w / (float) bins.length;    // (getWidth()- axesDim.left)
+        }
 
         float eleHeight = (float) ((h - axesDim.top) / maxXY[1]);
 
         // bars
         gi.setColor(plotFg);
         for (int i = 0; maxXY[1] >= 1 && i < bins.length; i++) {    // 100421: changed from maxXY[1]>= 1
-            if (paintMode == MODE_LINE)
+            if (paintMode == MODE_LINE) {
                 paintOSIValline(gi, bins, i, binWidth, eleHeight);
-            else
+            } else {
                 paintOSIValhisto(gi, bins, i, binWidth, eleHeight);
+            }
         }
 
         // axes and legends
@@ -210,17 +219,20 @@ public class SimpleBinPlotterPanel extends JPanel {
             for (int i = 0; i < tickNoXnow; i++) {
                 float tickPos = ((float) tickWX * i) / (tickNoXnow);
                 int binNr = 0 + ((paintMode == MODE_LINE) ? 1 : 0);
-                if (i > 0)
+                if (i > 0) {
                     binNr = i * bins.length / tickNoXnow + ((paintMode == MODE_LINE) ? 1 : 0);
+                }
                 int tickPosInt = (int) (axesDim.left + tickPos);
                 gi.drawLine(tickPosInt, h, tickPosInt, h + 5);
                 String label = null;
-                if (log == 2)
+                if (log == 2) {
                     label = StringUtils.fprint((binNr * (maxXY[0] / bins.length)) + minXoffset, 2);
-                else
+                } else {
                     label = Integer.toString((int) ((binNr * (maxXY[0] / bins.length)) + minXoffset)); // +"-"+ Integer.toString((int) ((binNr+ 1)* (maxXY[0]/ bins.length)))
-                if (maxXY[0] == 1)
+                }
+                if (maxXY[0] == 1) {
                     label = StringUtils.fprint((binNr * (maxXY[0] / bins.length)), 2);
+                }
                 Rectangle2D labelDim = gi.getFontMetrics().getStringBounds(label, gi);
                 gi.drawString(label,
                         (int) (tickPosInt),
@@ -235,8 +247,9 @@ public class SimpleBinPlotterPanel extends JPanel {
         if (this.title != null) {
             gi.setColor(plotFg);
             title = this.title;
-            if (globalCntVals > 0)
+            if (globalCntVals > 0) {
                 title += " " + Long.toString(globalCntVals);
+            }
             Rectangle2D dim = gi.getFontMetrics().getStringBounds(title, gi);
             gi.drawString(title, (int) (getWidth() - dim.getWidth()), axesDim.top);
         }
@@ -246,9 +259,9 @@ public class SimpleBinPlotterPanel extends JPanel {
     protected void paintComponent(Graphics g) {
 
         super.paintComponent(g);
-        if (offScrImg != null)
+        if (offScrImg != null) {
             g.drawImage(offScrImg, getInsets().left, getInsets().top, null);
-        else {
+        } else {
             int w = getWidth(), h = getHeight();
             g.setColor(plotBg);
             g.fillRect(getInsets().left, getInsets().top,
@@ -266,21 +279,25 @@ public class SimpleBinPlotterPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
         //Dimension dim= super.getPreferredSize();	// 10x10
-        if (offScrImg != null)
+        if (offScrImg != null) {
             return new Dimension(offScrImg.getWidth(), offScrImg.getHeight());
-        if (paintMode == MODE_GEL)
+        }
+        if (paintMode == MODE_GEL) {
             return new Dimension(getInsets().left + getInsets().right +
                     2 * 30 + 3 * 10, Integer.MAX_VALUE);
-        if (paintMode == MODE_HISTO)
+        }
+        if (paintMode == MODE_HISTO) {
             return new Dimension(getInsets().left + getInsets().right + axesDim.left + 200,
                     getInsets().top + getInsets().bottom + axesDim.top + axesDim.bottom + 200);
+        }
         return new Dimension(100, 100);    // something, boxlayout does not like Integer.MAX
     }
 
     @Override
     public Dimension getMinimumSize() {
-        if (offScrImg != null)
+        if (offScrImg != null) {
             return new Dimension(offScrImg.getWidth(), offScrImg.getHeight());
+        }
         return new Dimension(1, 1);
     }
 
@@ -307,8 +324,9 @@ public class SimpleBinPlotterPanel extends JPanel {
 */
         this.globalCntVals = 0;
         this.globalMaxXY = new double[]{maxX, Double.MIN_VALUE, 1};
-        if (paintMode == MODE_GEL)
+        if (paintMode == MODE_GEL) {
             globalMaxXY[0] = 10000;    // max frag length
+        }
 /*		if (offScrImg== null) {
 			offScrImg= new BufferedImage(getWidth()- getInsets().left- getInsets().right,
 					getHeight()-getInsets().top-getInsets().bottom, 
@@ -329,18 +347,22 @@ public class SimpleBinPlotterPanel extends JPanel {
                 }
                 globalBins = new double[nr];
             }
-        } else
-            for (int i = 0; i < globalBins.length; i++)
+        } else {
+            for (int i = 0; i < globalBins.length; i++) {
                 globalBins[i] = 0;
+            }
+        }
 
     }
 
     public void addVal(double dd) {
-        if (thrUp >= 0 && dd > thrUp)
+        if (thrUp >= 0 && dd > thrUp) {
             return;
+        }
         int pos = (int) (dd * (globalBins.length - 1) / globalMaxXY[0]);    // Math.round() f* slow
-        if (pos >= globalBins.length || pos < 0)
+        if (pos >= globalBins.length || pos < 0) {
             return;    // skip out of zoom
+        }
 
         ++globalBins[pos];
         ++this.globalCntVals;
@@ -348,13 +370,16 @@ public class SimpleBinPlotterPanel extends JPanel {
         double newMax = 0;
         if (modeY == NORMAL) {
             if (pos != 0 && pos != globalBins.length - 1)    // TODO first currently disregarded for max
+            {
                 newMax = globalBins[pos];
+            }
         } else if (modeY == LOGN) {
             newMax = Math.log(globalBins[pos]);
         } else if (modeY == LOG2) {
             newMax = Math.log(globalBins[pos]) / log2transf;
-        } else if (modeY == LOG10)
+        } else if (modeY == LOG10) {
             newMax = Math.log10(globalBins[pos]);
+        }
 
         if (newMax > globalMaxXY[1]) {
             globalMaxXY[1] = newMax;
@@ -385,17 +410,20 @@ public class SimpleBinPlotterPanel extends JPanel {
                                   float w, float h) {
         float y = 0;
         if (log >= 1) {
-            if (modeY == LOGN)
+            if (modeY == LOGN) {
                 y = (float) (h * Math.log(bins[pos]));
-            else if (modeY == LOG2)
+            } else if (modeY == LOG2) {
                 y = (float) (h * Math.log(bins[pos] / log2transf));    // Math.log(x)/Math.log(2)
-            else if (modeY == LOG10)
+            } else if (modeY == LOG10) {
                 y = (float) (h * Math.log10(bins[pos]));    // Math.log(x)/Math.log(2)
-        } else
+            }
+        } else {
             y = (float) (h * bins[pos]);
+        }
         int posX = (int) (axesDim.left + w * pos);
-        if (posX > offScrImg.getWidth())
+        if (posX > offScrImg.getWidth()) {
             return;
+        }
 
         int posY = (int) (offScrImg.getHeight() - axesDim.bottom - y);
         if (posY < axesDim.top) {
@@ -424,27 +452,33 @@ public class SimpleBinPlotterPanel extends JPanel {
         } else {
             for (int i = 0; i < data.length(); i++) {
                 double dd = data.elementAt(i).doubleValue();
-                if (thrUp >= 0 && dd > thrUp)
+                if (thrUp >= 0 && dd > thrUp) {
                     continue;
-                if (dd > maxX)
+                }
+                if (dd > maxX) {
                     maxX = dd;
-                if (dd < minX)
+                }
+                if (dd < minX) {
                     minX = dd;
+                }
             }
         }
         if (log == 2) {
             if (modeY == LOGN) {
                 maxX = Math.log(maxX);
-                if (minX != 0)
+                if (minX != 0) {
                     minX = Math.log(minX);
+                }
             } else if (modeY == LOG2) {
                 maxX = Math.log(maxX) / log2transf;
-                if (minX != 0)
+                if (minX != 0) {
                     minX = Math.log(minX) / log2transf;
+                }
             } else if (modeY == LOG10) {
                 maxX = Math.log10(maxX);
-                if (minX != 0)
+                if (minX != 0) {
                     minX = Math.log10(minX);
+                }
             }
         }
 //			if (paintMode== MODE_LINE&& lastXY!= null) {
@@ -469,58 +503,68 @@ public class SimpleBinPlotterPanel extends JPanel {
             nrBins = dataRef;
         }
         double[] bins = new double[nrBins];
-        for (int i = 0; i < bins.length; i++)
+        for (int i = 0; i < bins.length; i++) {
             bins[i] = 0;
+        }
 
         // do binning
         double maxY = 0l;
         for (int i = 0; i < data.length(); i++) {
             double dd = data.elementAt(i).doubleValue();
-            if (thrUp >= 0 && dd > thrUp)
+            if (thrUp >= 0 && dd > thrUp) {
                 continue;
+            }
             int pos = 0;
             if (paintMode == MODE_BARPLOT || paintMode == MODE_LINE) {
                 if (log == 2) {
-                    if (modeY == LOGN)
+                    if (modeY == LOGN) {
                         pos = (int) (Math.log(1 + i) * binSpan);
-                    else if (modeY == LOG2)
+                    } else if (modeY == LOG2) {
                         pos = (int) (Math.log(1 + i) * binSpan / log2transf);
-                    else if (modeY == LOG10)
+                    } else if (modeY == LOG10) {
                         pos = (int) (Math.log10(1 + i) * binSpan);
-                } else
+                    }
+                } else {
                     pos = (int) (i / binSpan);
-                if (pos >= bins.length)
+                }
+                if (pos >= bins.length) {
                     continue; // TODO
+                }
                 bins[pos] += dd;
             } else {
                 pos = (int) ((dd * (bins.length - 1) / maxX));
-                if (pos >= bins.length)
+                if (pos >= bins.length) {
                     continue;    // skip out of zoom
+                }
                 ++bins[pos];
             }
-            if (bins[pos] > maxY)
+            if (bins[pos] > maxY) {
                 maxY = bins[pos];
+            }
         }
         if (log >= 1) {
-            if (modeY == LOGN)
+            if (modeY == LOGN) {
                 maxY = Math.log(maxY);
-            else if (modeY == LOG2)
+            } else if (modeY == LOG2) {
                 maxY = Math.log(maxY) / log2transf;
-            else if (modeY == LOG10)
+            } else if (modeY == LOG10) {
                 maxY = Math.log10(maxY);
+            }
 
         }
 
         maxXY[0] = maxX;
         maxXY[1] = maxY;
-        if (maxXY.length > 2)
+        if (maxXY.length > 2) {
             maxXY[2] = minX;
+        }
 
         // common scale for lines
-        if (paintMode == MODE_LINE && lastXY != null)
+        if (paintMode == MODE_LINE && lastXY != null) {
             maxXY[1] = lastXY[1];
-        else
+        } else {
             lastXY = maxXY;
+        }
 
         return bins;
     }
@@ -595,8 +639,9 @@ public class SimpleBinPlotterPanel extends JPanel {
     private void paintOSIValline(Graphics gi, double[] bins, int pos,
                                  float w, float h) {
 
-        if (pos == 0)
+        if (pos == 0) {
             return;
+        }
 
         float y = 0, y1 = 0;
         if (log >= 1) {
@@ -616,8 +661,9 @@ public class SimpleBinPlotterPanel extends JPanel {
         }
         int posX = (int) (axesDim.left + w * pos);
         int posX1 = (int) (axesDim.left + w * (pos - 1));
-        if (posX > offScrImg.getWidth())
+        if (posX > offScrImg.getWidth()) {
             return;
+        }
 
         int posY = (int) (offScrImg.getHeight() - axesDim.bottom - y);
         int posY1 = (int) (offScrImg.getHeight() - axesDim.bottom - y1);
@@ -645,8 +691,9 @@ public class SimpleBinPlotterPanel extends JPanel {
 
     public void setPaintAxisX(boolean paintAxisX) {
         this.paintAxisX = paintAxisX;
-        if (!paintAxisX)
+        if (!paintAxisX) {
             axesDim.bottom = 1;
+        }
     }
 
     public boolean isPaintAxisY() {
@@ -655,8 +702,9 @@ public class SimpleBinPlotterPanel extends JPanel {
 
     public void setPaintAxisY(boolean paintAxisY) {
         this.paintAxisY = paintAxisY;
-        if (!paintAxisY)
+        if (!paintAxisY) {
             axesDim.left = 1;
+        }
     }
 
     public double getMinXoffset() {
@@ -700,14 +748,18 @@ public class SimpleBinPlotterPanel extends JPanel {
         }
 
         public Number elementAt(int pos) {
-            if (ia != null)
+            if (ia != null) {
                 return ia[pos];
-            if (la != null)
+            }
+            if (la != null) {
                 return la[pos];
-            if (da != null)
+            }
+            if (da != null) {
                 return da[pos];
-            if (ba != null)
+            }
+            if (ba != null) {
                 return ba[pos];
+            }
             //if (fa!= null)
             return fa[pos];
         }

@@ -326,17 +326,22 @@ public class SystemInspector {
 
             if (osName.contains(OS_FRAG_WINXP) ||
                     osName.contains(OS_FRAG_WINNT) ||
-                    osName.contains(OS_FRAG_WIN2K))
+                    osName.contains(OS_FRAG_WIN2K)) {
                 return (osGroup = OS_GROUP_WINNT);
+            }
 
             // unite all *NIX clones
             if (osName.contains(OS_FRAG_SUNOS1) ||
                     osName.contains(OS_FRAG_SUNOS2) ||
                     osName.contains(OS_FRAG_LINUX))     // startsWith()
+            {
                 return (osGroup = OS_GROUP_UNIX);
+            }
 
             if (osName.contains(OS_FRAG_MACOSX))         // startsWith()
+            {
                 return (osGroup = OS_GROUP_MACOSX);
+            }
 
 //			if (osName.contains(OS_FRAG_WIN9X) ||
 //					osName.contains(OS_FRAG_WINME)|| 
@@ -436,18 +441,21 @@ public class SystemInspector {
             String aName = getArchName().toLowerCase();
 
             for (int i = 0; i < ARCH_FRAG_SPARC.length; i++) {
-                if (aName.contains(ARCH_FRAG_SPARC[i]))
+                if (aName.contains(ARCH_FRAG_SPARC[i])) {
                     return (archGroup = ARCH_GROUP_SPARC);
+                }
             }
 
             for (int i = 0; i < ARCH_FRAG_PPC.length; i++) {
-                if (aName.contains(ARCH_FRAG_PPC[i]))
+                if (aName.contains(ARCH_FRAG_PPC[i])) {
                     return (archGroup = ARCH_GROUP_PPC);
+                }
             }
 
             for (int i = 0; i < ARCH_FRAG_X86.length; i++) {
-                if (aName.contains(ARCH_FRAG_X86[i]))
+                if (aName.contains(ARCH_FRAG_X86[i])) {
                     return (archGroup = ARCH_GROUP_X86);
+                }
             }
 
             archGroup = ARCH_GROUP_OTHER;

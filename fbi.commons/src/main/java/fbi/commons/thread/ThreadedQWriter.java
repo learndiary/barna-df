@@ -34,8 +34,9 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
         try {
             this.writer = new BufferedWriter(new FileWriter(file, append));
         } catch (IOException e) {
-            if (!silent)
+            if (!silent) {
                 e.printStackTrace();
+            }
             return false;
         }
 
@@ -45,12 +46,13 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
     @Override
     public void run() {
 
-        if (writer == null)
+        if (writer == null) {
             init();
+        }
         while (!closed) {
-            if (stop)
+            if (stop) {
                 break;
-            else {
+            } else {
                 writeAll();
                 try {
                     sleep(100);
@@ -59,13 +61,16 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
                 }
             }
         }
-        if (stop || closed)
-            while (!q.isEmpty())
+        if (stop || closed) {
+            while (!q.isEmpty()) {
                 writeAll();     // q.poll();
+            }
+        }
         try {
             writer.flush();
-            if (file != null)
+            if (file != null) {
                 writer.close();
+            }
         } catch (IOException e) {
             ; // :)
         }
@@ -73,12 +78,13 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
 
     public void flush() {
         interrupt();    // let only the writer thread modify the queue !!
-        while (!q.isEmpty())
+        while (!q.isEmpty()) {
             try {
                 Thread.sleep(100);
             } catch (Exception e) {
                 ; // :)
             }
+        }
     }
 
     public void writeAll() {
@@ -102,8 +108,9 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
     int added = 0;
 
     public void add(Object o) {
-        if (o == null)
+        if (o == null) {
             return;
+        }
         q.add(o);
         ++added;
         if (added > maxSize) {    // q.size()> ... f* slow
@@ -115,8 +122,9 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
     protected long bytes = 0, limitBytes = -1;
 
     public void addString(Object o) {
-        if (o == null)
+        if (o == null) {
             return;
+        }
         String s = o.toString();
         q.add(s);
         bytes += s.length();
@@ -129,8 +137,9 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
                     ; // :)
                 }
             }
-        } else if (q.size() > maxSize)
+        } else if (q.size() > maxSize) {
             interrupt();
+        }
     }
 
     public void close() {
@@ -176,9 +185,9 @@ public class ThreadedQWriter extends Thread implements StoppableRunnable {
     }
 
     public boolean setStop(boolean stop) {
-        if (stop)
+        if (stop) {
             return setStop();
-        else {
+        } else {
             this.stop = stop;
             return true;
         }

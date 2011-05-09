@@ -29,14 +29,16 @@ public class GaussianRndThread extends Thread {
                     p2 -= p1;
                 }
             }
-            while (p2 - p1 < cap && p2 < rnds.length)
+            while (p2 - p1 < cap && p2 < rnds.length) {
                 rnds[p2++] = rnd.nextGaussian();
-            if (p1 == 0)
+            }
+            if (p1 == 0) {
                 try {
                     sleep(10);
                 } catch (InterruptedException e) {
                     ; //;
                 }
+            }
         }
     }
 

@@ -65,8 +65,12 @@ class SimpleIOHandler implements IOHandler {
     }
 
     public void addStream(Object stream, int bufferSize) {
-        if (stream == null) throw new NullPointerException();
-        if (bufferSize <= 0) throw new IllegalArgumentException("Stream buffer size must be > 0");
+        if (stream == null) {
+            throw new NullPointerException();
+        }
+        if (bufferSize <= 0) {
+            throw new IllegalArgumentException("Stream buffer size must be > 0");
+        }
         if (stream instanceof InputStream) {
             if (!inputStreams.contains(stream)) {
 
@@ -91,7 +95,9 @@ class SimpleIOHandler implements IOHandler {
     }
 
     public void removeStream(Object stream) {
-        if (stream == null) return;
+        if (stream == null) {
+            return;
+        }
         if (stream instanceof InputStream) {
             inputStreams.remove(stream);
             cachedStreams.remove(stream);
@@ -105,8 +111,11 @@ class SimpleIOHandler implements IOHandler {
         for (InputStream inputStream : inputStreams) {
             try {
                 ByteArrayInputStream cc = cachedStreams.get(inputStream);
-                if (cc != null) cc.close();
-                else inputStream.close();
+                if (cc != null) {
+                    cc.close();
+                } else {
+                    inputStream.close();
+                }
             } catch (IOException e) {
                 // ignore this one
             }
@@ -143,7 +152,9 @@ class SimpleIOHandler implements IOHandler {
     }
 
     public void writeLine(Object object, OutputStream out) throws IOException {
-        if (object == null) throw new NullPointerException();
+        if (object == null) {
+            throw new NullPointerException();
+        }
         if (bufferSequence == null) {
             bufferSequence = new ByteArrayCharSequence(object.toString());
         } else {
@@ -162,7 +173,9 @@ class SimpleIOHandler implements IOHandler {
         // reset the sequence
         cc.getSequence().reset();
         int read = cc.readLine();
-        if (read < 0) return null;
+        if (read < 0) {
+            return null;
+        }
         return cc.getSequence();
     }
 

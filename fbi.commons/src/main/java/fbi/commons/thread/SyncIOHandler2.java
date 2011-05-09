@@ -35,8 +35,9 @@ public class SyncIOHandler2 extends Thread {
             tst.start();
 
             ByteArrayCharSequence cs = new ByteArrayCharSequence(128);
-            while ((cs = tst.readLine(fis)) != null)
+            while ((cs = tst.readLine(fis)) != null) {
                 tst.writeLine(cs, fos);
+            }
             tst.close();
 
         } catch (Exception e) {
@@ -104,24 +105,27 @@ public class SyncIOHandler2 extends Thread {
         synchronized (reuseVec) {
 //			System.err.print("locked..");
 //			System.err.flush();
-            if (reusePos > 0 && reuseVec[reusePos - 1].length >= bufSize)
+            if (reusePos > 0 && reuseVec[reusePos - 1].length >= bufSize) {
                 buf = reuseVec[--reusePos];
+            }
         }
 //		System.err.println("free.");
 
-        if (buf == null)
+        if (buf == null) {
             buf = new byte[bufSize];    // no init
+        }
 //		System.err.print("add() locking buf#..");
 //		System.err.flush();
         synchronized (bufHash) {
 //			System.err.print("locked..");
 //			System.err.flush();
-            while (bufHash.size() >= maxStreamCap)
+            while (bufHash.size() >= maxStreamCap) {
                 try {
                     bufHash.wait();
                 } catch (InterruptedException e) {
                     ; // :)
                 }
+            }
             bufHash.put(stream, buf);
             posHash.put(stream, 0);
         }
@@ -140,19 +144,20 @@ public class SyncIOHandler2 extends Thread {
         byte[] b = null;
         if (stream instanceof InputStream) {
             synchronized (closedHash) {
-                while (!closedHash.contains(stream))
+                while (!closedHash.contains(stream)) {
                     try {
                         closedHash.wait();
                     } catch (InterruptedException e) {
                         ; // :)
                     }
+                }
             }
         }
 
         synchronized (bufHash) {
             b = bufHash.get(stream);
             int p = posHash.get(stream);
-            while (p > 0)
+            while (p > 0) {
                 synchronized (b) {
                     try {
                         b.wait();
@@ -160,13 +165,15 @@ public class SyncIOHandler2 extends Thread {
                         ; // :)
                     }
                 }
+            }
             bufHash.remove(stream);
             posHash.remove(stream);
             bufHash.notifyAll();
         }
         synchronized (reuseVec) {
-            if (reusePos < reuseVec.length)
+            if (reusePos < reuseVec.length) {
                 reuseVec[reusePos++] = b;
+            }
             reuseVec.notify();
         }
         synchronized (closedHash) {
@@ -181,8 +188,9 @@ public class SyncIOHandler2 extends Thread {
     public void run() {
 
         t0 = System.currentTimeMillis();
-        if (monitor)
+        if (monitor) {
             getMonitor().start();
+        }
         int x;
         byte[] b;
         float thr;
@@ -201,10 +209,14 @@ public class SyncIOHandler2 extends Thread {
                     int curr = -1;
                     if (a[i] instanceof InputStream) {
                         if (!closedHash.contains(a[i]))    // not closed
+                        {
                             curr = bufHash.get(a[i]).length
                                     - posHash.get(a[i]);
+                        }
                     } else //if (a[i] instanceof OutputStream)
+                    {
                         curr = posHash.get(a[i]);
+                    }
 
                     if (curr > minVol && curr > max) {
                         max = curr;
@@ -231,8 +243,9 @@ public class SyncIOHandler2 extends Thread {
                 if (a[x] instanceof InputStream) {
                     //System.err.println("filling "+ bufHash.get(a[x]).length+ " - "+ posHash.get(a[x]));
                     fill((InputStream) a[x]);
-                } else if (a[x] instanceof OutputStream)
+                } else if (a[x] instanceof OutputStream) {
                     flush((OutputStream) a[x]);
+                }
 
             }
 //			System.err.println("free.");
@@ -250,12 +263,13 @@ public class SyncIOHandler2 extends Thread {
 
     public void close() {
         stop = true;
-        while (isAlive())
+        while (isAlive()) {
             try {
                 this.join();
             } catch (InterruptedException e) {
                 ; // :)
             }
+        }
 
         int n = -1;
         synchronized (posHash) {
@@ -293,15 +307,16 @@ public class SyncIOHandler2 extends Thread {
 //			System.err.flush();
             int pos = posHash.get(in);
             while (pos < minVol && !closedHash.contains(in)) {
-                if (isAlive())
+                if (isAlive()) {
                     try {
                         interrupt();
                         b.wait(10);
                     } catch (InterruptedException e) {
                         ; // :)
                     }
-                else
+                } else {
                     fill(in);
+                }
                 pos = posHash.get(in);
             }
             int p = pos;
@@ -310,17 +325,22 @@ public class SyncIOHandler2 extends Thread {
                 return -1;
             }
             i = 0;
-            for (; i < p && b[i] != n; ++i) ;    // find lsep
+            for (; i < p && b[i] != n; ++i) {
+                ;    // find lsep
+            }
 
 
-            if (i > 0 && b[i - 1] == r)
+            if (i > 0 && b[i - 1] == r) {
                 --i;
+            }
             //bb= new byte[i];
             System.arraycopy(b, 0, cs.a, 0, i);
             cs.start = 0;
             cs.end = i;
 
-            while (++i < p && (b[i] == r || b[i] == n)) ;
+            while (++i < p && (b[i] == r || b[i] == n)) {
+                ;
+            }
 //			if (i< 0|| p> b.length)
 //				System.currentTimeMillis();
             if (p - i > 0) {
@@ -384,15 +404,16 @@ public class SyncIOHandler2 extends Thread {
             int pos = posHash.get(out);
             while (pos + len + 1 > b.length) {
                 //flush(idx);
-                if (isAlive())
+                if (isAlive()) {
                     try {
                         interrupt();
                         b.wait(10);
                     } catch (InterruptedException e) {
                         ; // :)
                     }
-                else
+                } else {
                     flush(out);
+                }
                 pos = posHash.get(out);
             }
             System.arraycopy(cs.a, cs.start, b, pos, len);
@@ -490,24 +511,31 @@ public class SyncIOHandler2 extends Thread {
                 return null;
             }
             int i = 0;
-            for (; i < p && b[i] != n; ++i) ;    // find lsep
+            for (; i < p && b[i] != n; ++i) {
+                ;    // find lsep
+            }
 
             assert (i != p || idx == null);
-            if (i > 0 && b[i - 1] == r)
+            if (i > 0 && b[i - 1] == r) {
                 --i;
+            }
             bb = new byte[i];
             System.arraycopy(b, 0, bb, 0, i);
 
-            while (++i < p && (b[i] == r || b[i] == n)) ;
+            while (++i < p && (b[i] == r || b[i] == n)) {
+                ;
+            }
             System.arraycopy(b, i, b, 0, p - i);
             posHash.put(idx, pos - i);
         }
-        if (bb == null)
+        if (bb == null) {
             return null;
+        }
         //System.err.println("got "+bb.length);
         ByteArrayCharSequence cs = new ByteArrayCharSequence(bb);
-        if (cs.length() == 0)
+        if (cs.length() == 0) {
             System.currentTimeMillis();
+        }
         return cs;
     }
 

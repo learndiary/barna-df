@@ -75,15 +75,18 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
      * @param silent      be silent
      */
     public UnixStreamSorter(long memoryBound, boolean silent, int field, boolean numeric, String fieldSeparator) {
-        if (memoryBound <= 0) throw new IllegalArgumentException("You have to allow memory chunk size > 0");
+        if (memoryBound <= 0) {
+            throw new IllegalArgumentException("You have to allow memory chunk size > 0");
+        }
         this.memoryBound = memoryBound;
         this.silent = silent;
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
 
     public void sort(InputStream input, OutputStream output) throws IOException {
-        if (!silent)
+        if (!silent) {
             Log.progressStart("Sorting");
+        }
 
         LineComparator comparator = getLineComparator();
         List<File> files = divide(input, comparator, memoryBound);
@@ -91,7 +94,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
          * make sure we open at most SORT_CHUNK files in parallel
          */
         while (sortChunks >= 2 && files.size() > sortChunks) {
-            if (Thread.interrupted()) break;
+            if (Thread.interrupted()) {
+                break;
+            }
             Log.progressStart("Merging Chunk");
             // sort chunk
             ArrayList<File> chunks = new ArrayList<File>(files.subList(0, sortChunks));
@@ -115,8 +120,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         // make sure in and out are closed
         output.close();
         input.close();
-        if (!silent)
+        if (!silent) {
             Log.progressFinish("Done", true);
+        }
     }
 
 
@@ -139,7 +145,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             int separatorLength = LINE_SEP.length();
             List<String> lines = new ArrayList<String>((int) (memoryBound / 512));
             while ((line = reader.readLine()) != null) {
-                if (Thread.interrupted()) return null;
+                if (Thread.interrupted()) {
+                    return null;
+                }
 
                 // add to list
                 lines.add(line);
@@ -185,7 +193,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10 * 1024);
         for (String line : lines) {
-            if (Thread.interrupted()) return null;
+            if (Thread.interrupted()) {
+                return null;
+            }
             writer.write(line);
             writer.write(LINE_SEP);
         }
@@ -223,7 +233,9 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
 
         // now iterate until everything is written
         while (queue.size() > 0) {
-            if (Thread.interrupted()) break;
+            if (Thread.interrupted()) {
+                break;
+            }
             CachedFileReader next = queue.poll();
             try {
                 String line = next.pop();
@@ -281,10 +293,15 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
     }
 
     public void addInterceptor(Interceptor<String> stringInterceptor) {
-        if (stringInterceptor == null) return;
-        if (interceptors == null) interceptors = new ArrayList<Interceptor<String>>();
-        if (!interceptors.contains(stringInterceptor))
+        if (stringInterceptor == null) {
+            return;
+        }
+        if (interceptors == null) {
+            interceptors = new ArrayList<Interceptor<String>>();
+        }
+        if (!interceptors.contains(stringInterceptor)) {
             interceptors.add(stringInterceptor);
+        }
 
     }
 

@@ -127,7 +127,9 @@ public class Sorter {
      * @return sorter this sorter
      */
     public Sorter field(Comparator<String> comparator) {
-        if (comparator == null) throw new NullPointerException("Null comparator is not permitted");
+        if (comparator == null) {
+            throw new NullPointerException("Null comparator is not permitted");
+        }
         comparators.add(new LineComparator(comparator));
         return this;
     }
@@ -139,8 +141,12 @@ public class Sorter {
      * @return sorter this sorter
      */
     public Sorter addInterceptor(Interceptable.Interceptor<String> interceptor) {
-        if (interceptor == null) throw new NullPointerException();
-        if (this.interceptors == null) this.interceptors = new ArrayList<Interceptable.Interceptor<String>>();
+        if (interceptor == null) {
+            throw new NullPointerException();
+        }
+        if (this.interceptors == null) {
+            this.interceptors = new ArrayList<Interceptable.Interceptor<String>>();
+        }
         this.interceptors.add(interceptor);
         return this;
 

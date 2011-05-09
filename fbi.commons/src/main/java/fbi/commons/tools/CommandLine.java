@@ -25,8 +25,9 @@ public class CommandLine {
      * @return confirmed true if the user confirmed with yes
      */
     public static boolean confirm(String message) {
-        if (Log.getLogLevel() == Log.Level.NONE || !Log.isInteractive())
+        if (Log.getLogLevel() == Log.Level.NONE || !Log.isInteractive()) {
             return true;
+        }
 
         while (true) {
             StringBuffer sb = new StringBuffer();
@@ -38,19 +39,24 @@ public class CommandLine {
             }
 
             try {
-                while ((in = System.in.read()) != '\n')
+                while ((in = System.in.read()) != '\n') {
                     sb.append((char) in);
+                }
             } catch (Exception e) {
                 ; // :)
             }
 
             String s = sb.toString().toLowerCase().trim();
-            for (int i = 0; i < user_yes.length; i++)
-                if (s.equals(user_yes[i]))
+            for (int i = 0; i < user_yes.length; i++) {
+                if (s.equals(user_yes[i])) {
                     return true;
-            for (int i = 0; i < user_no.length; i++)
-                if (s.equals(user_no[i]))
+                }
+            }
+            for (int i = 0; i < user_no.length; i++) {
+                if (s.equals(user_no[i])) {
                     return false;
+                }
+            }
         }
     }
 

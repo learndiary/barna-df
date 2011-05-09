@@ -15,8 +15,9 @@ public class SamplingTools {
 
     public static double samplePareto(RandomDataImpl rnd, double par1) {
         double d = 0;
-        while (d == 0)
+        while (d == 0) {
             d = rnd.nextUniform(0, 1);
+        }
         double val = (1 / Math.pow(d, (1d / par1)));
         return val;
     }
@@ -53,8 +54,9 @@ public class SamplingTools {
         double max = Math.sqrt(2 / a);
         r /= max;
         r *= len;
-        if (more5)
+        if (more5) {
             r = len - r;
+        }
 
 //		if (true/*new Double(r).equals(Double.NaN)*/) {
 //			double x1= Math.pow(b/a, 2);
@@ -166,8 +168,9 @@ public class SamplingTools {
 
     public static double nextGaussianBetween(Random random, double min, double max) {
         double rdm = 3d;    // gaussian value, stddev 1
-        while (rdm < -CUT_OFF_GAUSSIAN_VAL || rdm > CUT_OFF_GAUSSIAN_VAL)
+        while (rdm < -CUT_OFF_GAUSSIAN_VAL || rdm > CUT_OFF_GAUSSIAN_VAL) {
             rdm = random.nextGaussian();
+        }
         double mid = ((double) min) + (max - min) / 2f;
         double realValue = mid + (rdm * (max - mid) / CUT_OFF_GAUSSIAN_VAL);
         return realValue;

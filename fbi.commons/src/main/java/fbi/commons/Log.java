@@ -73,7 +73,9 @@ public class Log {
      * @param level the level
      */
     public static void setLogLevel(Level level) {
-        if (level == null) throw new NullPointerException("Null LogLevel not permitted!");
+        if (level == null) {
+            throw new NullPointerException("Null LogLevel not permitted!");
+        }
         logLevel = level;
     }
 
@@ -105,7 +107,9 @@ public class Log {
     public static void debug(String message, Throwable error) {
         if (logLevel.level >= Log.Level.DEBUG.level) {
             System.err.println("[DEBUG] " + message);
-            if (error != null) error.printStackTrace(System.err);
+            if (error != null) {
+                error.printStackTrace(System.err);
+            }
         }
     }
 
@@ -171,9 +175,9 @@ public class Log {
      */
     public static void error(String prefix, String message) {
         if (logLevel.level >= Log.Level.ERROR.level) {
-            if (prefix != null && prefix.length() > 0)
+            if (prefix != null && prefix.length() > 0) {
                 System.err.println("[" + prefix + "]" + " " + message);
-            else {
+            } else {
                 System.err.println(message);
             }
         }
@@ -188,7 +192,9 @@ public class Log {
     public static void error(String message, Throwable error) {
         if (logLevel.level >= Log.Level.ERROR.level) {
             error(message);
-            if (error != null) error.printStackTrace(System.err);
+            if (error != null) {
+                error.printStackTrace(System.err);
+            }
         }
     }
 

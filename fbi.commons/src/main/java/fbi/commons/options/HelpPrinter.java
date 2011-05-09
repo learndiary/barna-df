@@ -53,8 +53,12 @@ public class HelpPrinter {
         List<Option> options = new ArrayList<Option>(context.options());
         Collections.sort(options, new Comparator<Option>() {
             public int compare(Option o1, Option o2) {
-                if (o1.isRequired() && !o2.isRequired()) return -1;
-                if (!o1.isRequired() && o2.isRequired()) return 1;
+                if (o1.isRequired() && !o2.isRequired()) {
+                    return -1;
+                }
+                if (!o1.isRequired() && o2.isRequired()) {
+                    return 1;
+                }
                 return o1.getName().compareTo(o2.getName());
             }
         });
@@ -72,9 +76,9 @@ public class HelpPrinter {
                 if (!option.isRequired()) {
                     out.print("[");
                 }
-                if (option.getName().length() > 0)
+                if (option.getName().length() > 0) {
                     out.print("-" + option.getName());
-                else {
+                } else {
                     out.print("--" + option.getLongName());
                 }
                 if (!option.isFlag()) {
@@ -108,10 +112,12 @@ public class HelpPrinter {
                 cols[0] = "";
                 cols[1] = "";
 
-                if (option.getName().length() > 0)
+                if (option.getName().length() > 0) {
                     cols[0] = "-" + option.getName();
-                if (option.getLongName().length() > 0)
+                }
+                if (option.getLongName().length() > 0) {
                     cols[1] = "--" + option.getLongName();
+                }
 
                 if (!option.isFlag()) {
                     cols[2] = "<" + option.getDisplayName() + ">";

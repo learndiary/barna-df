@@ -48,15 +48,16 @@ public class MyProgressBar extends JPanel implements Progressable {
     }
 
     private void runFromEverywhere(Runnable runner) {
-        if (EventQueue.isDispatchThread())
+        if (EventQueue.isDispatchThread()) {
             runner.run();
-        else
+        } else {
             try {
                 SwingUtilities.invokeAndWait(runner);
             } catch (Exception e) {
                 //System.err.println("everywhere disrupt");
                 System.currentTimeMillis(); // :)
             }
+        }
     }
 
     public void setString(String value) {
@@ -80,9 +81,9 @@ public class MyProgressBar extends JPanel implements Progressable {
         Runnable runner = new Runnable() {
             public void run() {
                 //System.out.println("set val "+newValue);
-                if (newValue < 0)
+                if (newValue < 0) {
                     bar.setVisible(false);
-                else {
+                } else {
                     bar.setValue(newValue);
                     bar.setVisible(true);
                     bar.paintImmediately(bar.getVisibleRect());

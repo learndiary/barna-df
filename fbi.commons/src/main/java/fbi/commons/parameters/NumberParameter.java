@@ -14,7 +14,9 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
         super(name, description, defaultValue, type, validator);
         this.minimumValue = minimumValue;
         this.maximumValue = maximumValue;
-        if (defaultValue == null) throw new NullPointerException();
+        if (defaultValue == null) {
+            throw new NullPointerException();
+        }
     }
 
     @Override
@@ -24,7 +26,9 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
 
     @Override
     T get() {
-        if (value == null) return getDefault();
+        if (value == null) {
+            return getDefault();
+        }
         return value;
     }
 

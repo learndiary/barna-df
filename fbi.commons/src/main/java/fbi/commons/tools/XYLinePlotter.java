@@ -77,8 +77,9 @@ public class XYLinePlotter {
      * @return plotter the plotter
      */
     public XYLinePlotter dataset(String name, double[] xs, double[] ys) {
-        if (xs.length != ys.length)
+        if (xs.length != ys.length) {
             throw new RuntimeException("xs.lengh != ys.length - You always have to provide x and y data of the same length!");
+        }
         XYSeries xySeries = new XYSeries(name, true, false);
         for (int i = 0; i < xs.length; i++) {
             xySeries.add(xs[i], ys[i]);
@@ -107,9 +108,9 @@ public class XYLinePlotter {
      * @return plotter the plotter
      */
     public XYLinePlotter subtitle(String subTitle, Font font) {
-        if (font != null)
+        if (font != null) {
             jfreechart.addSubtitle(new TextTitle(subTitle, font));
-        else {
+        } else {
             jfreechart.addSubtitle(new TextTitle(subTitle));
         }
         return this;
@@ -123,7 +124,9 @@ public class XYLinePlotter {
      * @return plotter the plotter
      */
     public XYLinePlotter xBounds(double min, double max) {
-        if (min > max) throw new RuntimeException("Lower bound > upper bound");
+        if (min > max) {
+            throw new RuntimeException("Lower bound > upper bound");
+        }
         this.xLowerBound = min;
         this.xUpperBound = max;
         return this;

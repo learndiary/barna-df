@@ -51,8 +51,9 @@ public abstract class ParameterSchema {
     }
 
     public void register(Parameter parameter) {
-        if (parameters.containsKey(parameter.getName()))
+        if (parameters.containsKey(parameter.getName())) {
             throw new IllegalArgumentException("Paramter " + parameter.getName() + " already exists !");
+        }
         this.parameters.put(parameter.getName().toUpperCase(), parameter);
     }
 
@@ -119,8 +120,12 @@ public abstract class ParameterSchema {
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 lineCounter++;
-                if (line.isEmpty()) continue;
-                if (line.startsWith("#")) continue;
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (line.startsWith("#")) {
+                    continue;
+                }
 
 
                 Matcher matcher = PROPERTY_PATTERN.matcher(line);
@@ -144,9 +149,11 @@ public abstract class ParameterSchema {
         } catch (IOException io) {
             Log.error("Error while reading parameter file : " + io.getMessage(), io);
         } finally {
-            if (reader != null) try {
-                reader.close();
-            } catch (IOException e) {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
             }
         }
     }

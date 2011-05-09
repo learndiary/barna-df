@@ -40,8 +40,9 @@ class StringParameter extends Parameter<String> {
 
     @Override
     void set(String value) {
-        if (values != null && !values.contains(value))
+        if (values != null && !values.contains(value)) {
             throw new IllegalArgumentException("Unknown value " + value + ". Must be one of " + values);
+        }
         this.value = value;
     }
 
@@ -58,8 +59,9 @@ class StringParameter extends Parameter<String> {
         if (getValidator() == null) {
             // if values are available, check that this is valid
             if (values != null && values.size() > 0) {
-                if (!values.contains(value))
+                if (!values.contains(value)) {
                     throw new ParameterException(this, value, "Parameter " + this + " must be one of " + values);
+                }
             }
         } else {
             super.validate(schema);

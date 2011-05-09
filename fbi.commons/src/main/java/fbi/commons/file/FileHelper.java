@@ -47,8 +47,9 @@ public class FileHelper {
                     // check if this is followed by another new line \r or \n
                     if (buffy.read(b) != -1) {
                         if (b[0] == '\n' || b[0] == '\r') {
-                            if (first == '\r' || b[0] == '\r')
+                            if (first == '\r' || b[0] == '\r') {
                                 fileSep += b[0];
+                            }
                         }
                     }
                     //return fileSep;
@@ -88,30 +89,37 @@ public class FileHelper {
 
     public static byte getCompression(String compression) {
         compression = compression.toLowerCase();
-        for (int i = 0; i < COMPRESSION_KEYWORDS.length; i++)
-            if (compression.equals(COMPRESSION_KEYWORDS[i]))
+        for (int i = 0; i < COMPRESSION_KEYWORDS.length; i++) {
+            if (compression.equals(COMPRESSION_KEYWORDS[i])) {
                 return (byte) i;
+            }
+        }
         return COMPRESSION_NONE;
     }
 
     public static String getCompressionString(byte compression) {
-        if (compression == COMPRESSION_NONE)
+        if (compression == COMPRESSION_NONE) {
             return "none";
-        if (compression == COMPRESSION_ZIP)
+        }
+        if (compression == COMPRESSION_ZIP) {
             return SFX_ZIP;
-        if (compression == COMPRESSION_GZIP)
+        }
+        if (compression == COMPRESSION_GZIP) {
             return SFX_GZIP;
+        }
         return "";
     }
 
     public static void inflate(File src, File dest, byte compression) throws Exception {
         InflaterInputStream in = null;
-        if (compression == COMPRESSION_ZIP)
+        if (compression == COMPRESSION_ZIP) {
             in = new ZipInputStream(new FileInputStream(src));
-        else if (compression == COMPRESSION_GZIP)
+        } else if (compression == COMPRESSION_GZIP) {
             in = new MultiMemberGZIPInputStream(new FileInputStream(src)); // GZIPInputStream
-        if (in == null)
+        }
+        if (in == null) {
             return;
+        }
 
         int bufSize = 65536;
         BufferedOutputStream buffy = new BufferedOutputStream(new FileOutputStream(dest), bufSize);
@@ -131,8 +139,9 @@ public class FileHelper {
 //			}
             read += rec;
             Log.progress(read, max);
-            if (rec > 0)
+            if (rec > 0) {
                 buffy.write(buf, 0, rec);
+            }
         }
         in.close();
         buffy.flush();
@@ -146,10 +155,12 @@ public class FileHelper {
             ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(dest));
             zout.putNextEntry(new ZipEntry(src.getName()));
             out = zout;
-        } else if (compression == COMPRESSION_GZIP)
+        } else if (compression == COMPRESSION_GZIP) {
             out = new GZIPOutputStream(new FileOutputStream(dest));
-        if (out == null)
+        }
+        if (out == null) {
             return;
+        }
 
         int bufSize = 65536;
         BufferedInputStream buffy = new BufferedInputStream(new FileInputStream(src), bufSize);
@@ -164,8 +175,9 @@ public class FileHelper {
             out.write(buf, 0, rec);
         }
         buffy.close();
-        if (out instanceof ZipOutputStream)
+        if (out instanceof ZipOutputStream) {
             ((ZipOutputStream) out).closeEntry();
+        }
         out.flush();
         out.close();
         Log.progressFinish();
@@ -199,11 +211,13 @@ public class FileHelper {
                 p = i;
                 break;
             }
-            if (s.charAt(i) == File.separatorChar)
+            if (s.charAt(i) == File.separatorChar) {
                 break;
+            }
         }
-        if (p < 0)
+        if (p < 0) {
             return "";
+        }
         return s.substring(p + 1);
     }
 
@@ -240,8 +254,9 @@ public class FileHelper {
 
 
     public static boolean canWrite(File f) {
-        if (f == null)
+        if (f == null) {
             return false;
+        }
         if (!f.exists()) {
             f = f.getParentFile();
             if (f == null || !f.exists()) {
@@ -249,9 +264,9 @@ public class FileHelper {
             }
             return canWriteToDir(f);
         } else {
-            if (f.isDirectory())
+            if (f.isDirectory()) {
                 return canWriteToDir(f);
-            else {
+            } else {
                 try {
                     System.getSecurityManager().checkWrite(f.getAbsolutePath());
                     return true;
@@ -266,9 +281,9 @@ public class FileHelper {
     }
 
     public static boolean canWriteToDir(File f) {
-        if (f.canWrite())
+        if (f.canWrite()) {
             return true;
-        else {
+        } else {
             /*	Bug ID:   	 4939819
                 *  When I investigated this more closely, it turns out
                 *  those two directories had "read-only" attribute bit set,
@@ -380,16 +395,17 @@ public class FileHelper {
             for (int x; (x = buffy.read(cbuf)) != -1;) {
                 for (int i = 0; i < x; i++) {
                     if (delim.indexOf(cbuf[i]) >= 0) {
-                        if (i == 0 && endNL)
+                        if (i == 0 && endNL) {
                             endNL = false;
-                        else {
+                        } else {
                             ++cntLines;
-                            if (i == x - 1)
+                            if (i == x - 1) {
                                 endNL = true;
-                            else {
+                            } else {
                                 endNL = false;
-                                if (delim.indexOf(cbuf[i + 1]) >= 0)
+                                if (delim.indexOf(cbuf[i + 1]) >= 0) {
                                     ++i;
+                                }
                             }
                         }
                     }
@@ -415,7 +431,9 @@ public class FileHelper {
         try {
             int cntLines = 0;
             buffy = new BufferedReader(new FileReader(file));
-            for (String s; (s = buffy.readLine()) != null; ++cntLines) ;
+            for (String s; (s = buffy.readLine()) != null; ++cntLines) {
+                ;
+            }
             return cntLines;
         } catch (Exception e) {
             ; // :)
@@ -458,12 +476,14 @@ public class FileHelper {
 
         Log.progressStart(msg != null ? msg : "moving");
 
-        if (to.exists())
+        if (to.exists()) {
             to.delete();
+        }
 
         boolean ok = from.renameTo(to);
-        if (ok)
+        if (ok) {
             return true;
+        }
         try {
             fastChannelCopy(from, to, false);
         } catch (Exception e) {
@@ -483,11 +503,13 @@ public class FileHelper {
             int perc = 0;
             for (int c = 0, nb = 0; (nb = buffy.read(cbuf)) >= 0; ++c) {
                 bytesRead += nb;
-                if (!silent)
+                if (!silent) {
                     StringUtils.printPercentage(perc, bytesRead, bytesTotal, System.err);
+                }
                 wright.write(cbuf, 0, nb);
-                if (c % 10 == 0)
+                if (c % 10 == 0) {
                     wright.flush();
+                }
             }
             buffy.close();
             wright.flush();
@@ -506,14 +528,16 @@ public class FileHelper {
     public static File replaceSfx(File org, String newSfx) {
         String s = org.getAbsolutePath();
         int p = s.lastIndexOf('.');
-        if (p < 0)
+        if (p < 0) {
             return new File(s + newSfx);
+        }
         return new File(s.substring(0, p) + newSfx);
     }
 
     public static boolean checkForOverwrite(PrintStream p, File f) {
-        if (!f.exists())
+        if (!f.exists()) {
             return true;
+        }
         p.println("Confirm overwriting file " + f + " (y/n)");
         int b = 'n';
         try {
@@ -523,10 +547,11 @@ public class FileHelper {
             return false;    // eg, no stdin available
         }
         if (b == 'y' || b == 'Y') {
-            if (f.isDirectory())
+            if (f.isDirectory()) {
                 rmDir(f);
-            else
+            } else {
                 f.delete();
+            }
             return true;
         }
         return false;
@@ -536,8 +561,9 @@ public class FileHelper {
         boolean success = true;
         if (dir.isDirectory()) {
             String[] files = dir.list();
-            for (int i = 0; i < files.length; i++)
+            for (int i = 0; i < files.length; i++) {
                 success &= rmDir(new File(dir.getAbsolutePath() + File.separator + files[i]));
+            }
         }
         success &= dir.delete();
         return success;
@@ -656,7 +682,9 @@ public class FileHelper {
      * @return file referenced by the relative path
      */
     public static File fromRelative(String rel, File dir) {
-        if (isAbsolute(rel)) return new File(rel);
+        if (isAbsolute(rel)) {
+            return new File(rel);
+        }
 
         // find the right splitter
         String sep = System.getProperty("file.separator");
@@ -681,8 +709,12 @@ public class FileHelper {
      * @return absolute true if path is absolute
      */
     public static boolean isAbsolute(String path) {
-        if (path.startsWith("/")) return true;
-        if (path.matches("^.:\\\\.*")) return true;
+        if (path.startsWith("/")) {
+            return true;
+        }
+        if (path.matches("^.:\\\\.*")) {
+            return true;
+        }
         return false;
     }
 
@@ -726,26 +758,30 @@ public class FileHelper {
                               String sfx, PrintStream stream) {
 
         File dir = new File(nameDir);
-        if ((!dir.exists()) || (!dir.isDirectory()))
+        if ((!dir.exists()) || (!dir.isDirectory())) {
             return -1;
+        }
 
-        if (stream != null)
+        if (stream != null) {
             System.err.println("[MRPROPER] cleaning all files " +
                     (pfx == null ? "" : "with prefix " + pfx) +
                     (sfx == null ? "" : "with suffix " + sfx) +
                     " in folder:\n\t" + nameDir);
+        }
         String[] fNames = dir.list();
         int cnt = 0, cntFail = 0;
         for (int i = 0; i < fNames.length; i++) {
             if ((pfx != null && !fNames[i].startsWith(pfx))
-                    || (sfx != null && !fNames[i].endsWith(sfx)))
+                    || (sfx != null && !fNames[i].endsWith(sfx))) {
                 continue;
+            }
             File f = new File(dir + File.separator + fNames[i]);
             //System.err.println(f.getName());
             boolean failed = false;
             if (f.isDirectory()) {
-                if (!rmDir(f))
+                if (!rmDir(f)) {
                     failed = true;
+                }
             } else if (!f.delete()) {
                 failed = true;
             }
@@ -759,9 +795,10 @@ public class FileHelper {
 //					System.err.println("\tremoved "+fNames[i]);
             }
         }
-        if (stream != null)
+        if (stream != null) {
             System.err.println("\tremoved " + cnt + " files, failed to remove " +
                     cntFail + " files.");
+        }
 
         return cntFail;
     }
@@ -780,8 +817,9 @@ public class FileHelper {
                 if (depth == 0 && !silent) {
                     Log.progress(i, files.length);
                 }
-                if (!zipRecursive(zos, pfx, files[i], depth + 1))
+                if (!zipRecursive(zos, pfx, files[i], depth + 1)) {
                     return false;
+                }
             }
             return true;
         } else {
@@ -814,8 +852,9 @@ public class FileHelper {
 
     public static boolean zip(File in, File out) {
 
-        if (in == null || !in.exists())
+        if (in == null || !in.exists()) {
             return false;
+        }
 
         boolean returnVal = true;
         try {
@@ -835,12 +874,15 @@ public class FileHelper {
     public static final String SFX_ZIP = "zip", SFX_GZIP = "gz";
 
     public static String getCompressionExtension(byte compression) {
-        if (compression == COMPRESSION_NONE)
+        if (compression == COMPRESSION_NONE) {
             return null;
-        if (compression == COMPRESSION_ZIP)
+        }
+        if (compression == COMPRESSION_ZIP) {
             return SFX_ZIP;
-        if (compression == COMPRESSION_GZIP)
+        }
+        if (compression == COMPRESSION_GZIP) {
             return SFX_GZIP;
+        }
         return null;
     }
 
@@ -858,9 +900,11 @@ public class FileHelper {
                 if (!silent) {
                     Log.progress(i, ff.length);
                 }
-                if (ff[i].isDirectory())
-                    if (!zipRecursive(zos, null, ff[i], 0))
+                if (ff[i].isDirectory()) {
+                    if (!zipRecursive(zos, null, ff[i], 0)) {
                         return false;
+                    }
+                }
                 String name = ff[i].getName();
                 zos.putNextEntry(new ZipEntry(name));
                 BufferedReader buffy = new BufferedReader(new FileReader(ff[i]));
@@ -907,8 +951,9 @@ public class FileHelper {
     }
 
     public static String append(String s, String sfx, boolean stripSfx, String newSfx) {
-        if (newSfx == null)
+        if (newSfx == null) {
             newSfx = getExtension(s);
+        }
         newSfx = '.' + newSfx;
         int p = s.lastIndexOf('.');
         String nuFname = (p >= 0) ?
@@ -927,10 +972,12 @@ public class FileHelper {
      * @throws IOException in case of any errors
      */
     public static File createTempFile(String name, String ext) throws IOException {
-        if (ext != null && ext.length() > 0 && !ext.startsWith(".")) ext = "." + ext;
-        if (tempDirectory == null)
+        if (ext != null && ext.length() > 0 && !ext.startsWith(".")) {
+            ext = "." + ext;
+        }
+        if (tempDirectory == null) {
             return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "");
-        else {
+        } else {
             return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "", tempDirectory);
         }
     }

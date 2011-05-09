@@ -131,8 +131,9 @@ public class MyStringTokenizer implements Enumeration<Object> {
                 c = delimiters.codePointAt(i);
                 hasSurrogates = true;
             }
-            if (m < c)
+            if (m < c) {
                 m = c;
+            }
             count++;
         }
         maxDelimCodePoint = m;
@@ -219,15 +220,17 @@ public class MyStringTokenizer implements Enumeration<Object> {
      * after startPos. If retDelims is true, startPos is returned.
      */
     private int skipDelimiters(int startPos) {
-        if (delimiters == null)
+        if (delimiters == null) {
             throw new NullPointerException();
+        }
 
         int position = startPos;
         while (!retDelims && position < maxPosition) {
             if (!hasSurrogates) {
                 char c = str.charAt(position);
-                if ((c > maxDelimCodePoint) || (delimiters.indexOf(c) < 0))
+                if ((c > maxDelimCodePoint) || (delimiters.indexOf(c) < 0)) {
                     break;
+                }
                 position++;
             } else {
                 int c = str.charAt(position);    // TODO: Unicode from Character str.codePointAt(position);
@@ -249,25 +252,29 @@ public class MyStringTokenizer implements Enumeration<Object> {
         while (position < maxPosition) {
             if (!hasSurrogates) {
                 char c = str.charAt(position);
-                if ((c <= maxDelimCodePoint) && (delimiters.indexOf(c) >= 0))
+                if ((c <= maxDelimCodePoint) && (delimiters.indexOf(c) >= 0)) {
                     break;
+                }
                 position++;
             } else {
                 int c = str.charAt(position);    // TODO: Unicode from Character str.codePointAt(position);
-                if ((c <= maxDelimCodePoint) && isDelimiter(c))
+                if ((c <= maxDelimCodePoint) && isDelimiter(c)) {
                     break;
+                }
                 position += Character.charCount(c);
             }
         }
         if (retDelims && (startPos == position)) {
             if (!hasSurrogates) {
                 char c = str.charAt(position);
-                if ((c <= maxDelimCodePoint) && (delimiters.indexOf(c) >= 0))
+                if ((c <= maxDelimCodePoint) && (delimiters.indexOf(c) >= 0)) {
                     position++;
+                }
             } else {
                 int c = str.charAt(position);    // TODO: Unicode from Character str.codePointAt(position);
-                if ((c <= maxDelimCodePoint) && isDelimiter(c))
+                if ((c <= maxDelimCodePoint) && isDelimiter(c)) {
                     position += Character.charCount(c);
+                }
             }
         }
         return position;
@@ -322,8 +329,9 @@ public class MyStringTokenizer implements Enumeration<Object> {
         delimsChanged = false;
         newPosition = -1;
 
-        if (currentPosition >= maxPosition)
+        if (currentPosition >= maxPosition) {
             throw new NoSuchElementException();
+        }
         int start = currentPosition;
         currentPosition = scanToken(currentPosition);
         return str.subSequence(start, currentPosition);
@@ -398,8 +406,9 @@ public class MyStringTokenizer implements Enumeration<Object> {
         int currpos = currentPosition;
         while (currpos < maxPosition) {
             currpos = skipDelimiters(currpos);
-            if (currpos >= maxPosition)
+            if (currpos >= maxPosition) {
                 break;
+            }
             currpos = scanToken(currpos);
             count++;
         }

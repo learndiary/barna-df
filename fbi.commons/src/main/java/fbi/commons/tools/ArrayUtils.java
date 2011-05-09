@@ -92,9 +92,13 @@ public class ArrayUtils {
      * @return success true if ALL elements were add successfully
      */
     public static <T> boolean addAllUniqueSorted(List<T> list, T[] elements, Comparator<T> comparator) {
-        if (elements == null || elements.length == 0) return true;
+        if (elements == null || elements.length == 0) {
+            return true;
+        }
         boolean success = true;
-        for (T element : elements) success &= addUniqueSorted(list, element, comparator);
+        for (T element : elements) {
+            success &= addUniqueSorted(list, element, comparator);
+        }
         return success;
     }
 
@@ -109,7 +113,9 @@ public class ArrayUtils {
      * @return success true if all elements were successfully added
      */
     public static <T> boolean addAllUniqueSorted(List<T> list, Iterable<T> elements, Comparator<T> comparator) {
-        if (elements == null) return true;
+        if (elements == null) {
+            return true;
+        }
         boolean success = true;
         for (T t : elements) {
             success &= addUniqueSorted(list, t, comparator);
@@ -155,10 +161,13 @@ public class ArrayUtils {
             return newA;
         }
 
-        if (position < 0)
+        if (position < 0) {
             position = -(position + 1);
+        }
 
-        if (position > array.length) position = array.length;
+        if (position > array.length) {
+            position = array.length;
+        }
 
         // get the array type
         Class arrayClass = array.getClass().getComponentType();
@@ -189,10 +198,11 @@ public class ArrayUtils {
      * @return array the extended array
      */
     public static Object[] add(Object[] array, Object element) {
-        if (array == null)
+        if (array == null) {
             return insert(array, element, 0);
-        else
+        } else {
             return insert(array, element, array.length);
+        }
     }
 
 
@@ -209,29 +219,36 @@ public class ArrayUtils {
         }
 
         Object[] o = null;
-        if (base instanceof Collection)
+        if (base instanceof Collection) {
             o = ((Collection) base).toArray();
-        else                         // (base instanceof Object[])
+        } else                         // (base instanceof Object[])
+        {
             o = ((Object[]) base);
+        }
 
         if (o.length < 1)    // empty array
+        {
             return null; //cannot guess the basic class for vectors anyway
+        }
 
         Object r = null;    // find reference
         //int x= 0;
         //while (r== null&& x< o.length) {
         for (int x = 0; x < o.length; x++) {
             Object ro = toField(o[x]);
-            if (ro == null)
+            if (ro == null) {
                 continue;
-            if (r == null || ro.getClass().isAssignableFrom(r.getClass()))
+            }
+            if (r == null || ro.getClass().isAssignableFrom(r.getClass())) {
                 r = ro;
+            }
         }
         Object[] result = null;
         if (r != null) {
             result = (Object[]) Array.newInstance(r.getClass(), o.length);
-            for (int i = 0; i < o.length; i++)
+            for (int i = 0; i < o.length; i++) {
                 result[i] = toField(o[i]);
+            }
         }
 
         return result;

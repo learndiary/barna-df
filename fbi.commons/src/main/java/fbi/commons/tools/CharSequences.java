@@ -11,8 +11,9 @@ public class CharSequences {
      * @return
      */
     public static CharSequence getToken(CharSequence cs, int nr, char[] fs) {
-        if (nr == 0)
+        if (nr == 0) {
             return null;
+        }
         int last = 0, now = 0, cnt = 0;
         for (int i = 0; cnt < nr && i < cs.length(); i++) {
             for (int j = 0; j < fs.length; j++) {
@@ -25,20 +26,25 @@ public class CharSequences {
             }
         }
 
-        if (last > 0)
+        if (last > 0) {
             ++last;
+        }
         if (cnt < nr) {
             if (cnt == nr - 1) {
-                if (now + 1 == cs.length())
+                if (now + 1 == cs.length()) {
                     return null;
-                else
+                } else {
                     return cs.subSequence(now + 1, cs.length());
-            } else return null;
+                }
+            } else {
+                return null;
+            }
         }
-        if (last == now)
+        if (last == now) {
             return null;
-        else
+        } else {
             return cs.subSequence(last, now);
+        }
     }
 
 
@@ -62,8 +68,9 @@ public class CharSequences {
 
     public static int parseInt(CharSequence cs) {
         int val = 0;
-        for (int i = cs.length() - 1, pow = 1; i >= 0; --i, pow *= 10)
+        for (int i = cs.length() - 1, pow = 1; i >= 0; --i, pow *= 10) {
             val += (((byte) cs.charAt(i)) - 48) * pow;
+        }
         return val;
     }
 }

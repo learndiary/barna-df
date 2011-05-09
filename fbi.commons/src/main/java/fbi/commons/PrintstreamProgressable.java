@@ -59,7 +59,9 @@ public class PrintstreamProgressable implements Progressable {
      * @param steps        the maximum value
      */
     public PrintstreamProgressable(char progressChar, PrintStream stream, int steps) {
-        if (stream == null) throw new NullPointerException("Null stream not permitted");
+        if (stream == null) {
+            throw new NullPointerException("Null stream not permitted");
+        }
         this.progressChar = progressChar;
         this.stream = stream;
         this.steps = steps;
@@ -67,9 +69,9 @@ public class PrintstreamProgressable implements Progressable {
 
     public void start(String message) {
         startTime = System.currentTimeMillis();
-        if (message != null)
+        if (message != null) {
             stream.print("\t" + message + " ");
-        else {
+        } else {
             stream.print("\t ");
         }
         stream.flush();
@@ -89,8 +91,9 @@ public class PrintstreamProgressable implements Progressable {
          * Print the progress if progress already started
          */
         if (currentStep > 0) {
-            for (int i = currentStep; i < steps; i++)
+            for (int i = currentStep; i < steps; i++) {
                 stream.print("*");
+            }
 
             currentStep = 0;
         }
@@ -109,25 +112,30 @@ public class PrintstreamProgressable implements Progressable {
             time = System.currentTimeMillis() - startTime;
         }
         if (currentStep > 0) {
-            for (int i = currentStep; i < steps; i++)
+            for (int i = currentStep; i < steps; i++) {
                 stream.print(progressChar);
+            }
 
             currentStep = 0;
         }
 
-        if (msg != null)
+        if (msg != null) {
             stream.print(" " + msg);
+        }
 
         if (time >= 0) {
             int hh = (int) (time / 3600000);
-            if (hh > 0)
+            if (hh > 0) {
                 time %= (hh * 3600000);
+            }
             int mm = (int) (time / 60000);
-            if (mm > 0)
+            if (mm > 0) {
                 time %= (mm * 60000);
+            }
             int ss = (int) (time / 1000);
-            if (ss > 0)
+            if (ss > 0) {
                 time %= (ss * 1000);
+            }
             String s = hh < 10 ? "0" + Integer.toString(hh) : Integer.toString(hh);
             s += ":";
             s += mm < 10 ? "0" + Integer.toString(mm) : Integer.toString(mm);
