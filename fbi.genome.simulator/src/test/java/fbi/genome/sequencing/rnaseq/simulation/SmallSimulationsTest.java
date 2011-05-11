@@ -38,6 +38,30 @@ public class SmallSimulationsTest {
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
     }
 
+    @Test
+    public void testMinimalProfile(){
+        // disable any questions
+        Log.setInteractive(false);
+        // the setting file
+        File settings = new File(getClass().getResource("/minimal.par").getFile());
+
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(false);
+        pipeline.setSequence(false);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // sum can vara
+        //assertEquals(10000, pipeline.getProfiler().getSumMol());
+    }
+
 
     @Test
     public void testMinimal(){

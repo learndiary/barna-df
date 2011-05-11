@@ -81,6 +81,16 @@ public abstract class ParameterSchema {
         local.set(value);
     }
 
+    /**
+     * Return the {@code key-> value} string for the given parameter. This prints the current value.
+     *
+     * @param parameter the parameter
+     * @return string string consisting of {@code PARAMETERNAME VALUE}
+     */
+    public String toString(Parameter parameter){
+        return parameter.getName() +"\t" +get(parameter);
+    }
+
     public void write(OutputStream out) {
         BufferedWriter writer = null;
         try {

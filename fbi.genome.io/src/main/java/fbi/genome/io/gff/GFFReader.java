@@ -1657,30 +1657,36 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		
 	}
 
-	
+    /**
+     * Checks that the current file is a valid GTF file and checks
+     * that the file is sorted!
+     *
+     * @return sorted true if file is valid and sorted
+     * @throws RuntimeException in case the file is not valid
+     */
 	public boolean isApplicable() {
-	
-		long t0= System.currentTimeMillis();
 		reset();
 		BufferedReader buffy = null;
-		File f = new File(fPath + File.separator + fName);
-		//sweepToChromosome("chr6");
-		if (fPath != null && fName != null)
-			try {
-				inputStream = new FileInputStream(f);
-				inputStream.skip(bytesRead);
-				buffy = new BufferedReader(new InputStreamReader(inputStream));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		else
-			buffy = new BufferedReader(new InputStreamReader(inputStream));
+
+        File f = null;
+		if (fPath != null && fName != null){
+            f = new File(fPath + File.separator + fName);
+            try {
+                buffy = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
+            } catch (FileNotFoundException e) {
+                Log.error("Unable to open file " + f.getAbsolutePath(), e);
+            }
+        }else {
+            throw new RuntimeException("No GTF file specified!");
+        }
+
 
         Log.progressStart("checking");
 
 		long bytesRead = 0l;
 		long size = f.length();
-		int perc = 0;
+
+
 		String lastChrID = null, lastGID = null, lastTID = null, lastStrand = null;
 		HashMap<String, String> chrMap = new HashMap<String, String>(25, 1f), 
 			tidMap = new HashMap<String, String>(), gidMap = new HashMap<String, String>();
@@ -1714,11 +1720,7 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 				}
 				
 				if (tokens.length < 8) {
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-						System.err.println("Error line " + lineCtr
-								+ " - less than 8 tokens.");
-					buffy.close();
-					return false;
+				    throw new RuntimeException("GTF Error line " + lineCtr+ " - less than 8 tokens.");
 				}
 	
 				// changes chr or strand
@@ -1726,11 +1728,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 						|| (!tokens[6].equals(lastStrand))) {
 					String chrStrand = tokens[0] + tokens[6];
 					if (chrMap.get(chrStrand) != null) {
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-							System.err.println("Unsorted in line " + lineCtr
+							Log.warn("Unsorted in line " + lineCtr
 									+ " - chr/strand " + tokens[0] + " "
 									+ tokens[6] + " already read.");
-						buffy.close();
 						return false;
 					}
 					chrMap.put(chrStrand, chrStrand);
@@ -1758,29 +1758,22 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 						}
 					}
 					if (tidField < 0) {
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-							System.err.println("Error line " + lineCtr
-									+ " - no TID:\n"+line);
-						//System.exit(1); // return false;
-						continue;
+                        throw new RuntimeException("Error line " + lineCtr+ " - no TID:\n"+line);
 					}
 				}
 				if (tidField>= 0&& !tokens[tidField].equals(lastTID)) {
 					if (tidMap.get(tokens[tidField]) != null) {
-						if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-							System.err.println("Unsorted in line " + lineCtr
+							Log.warn("Unsorted in line " + lineCtr
 									+ " transcript id " + tokens[tidField]
 									+ " used twice, on: " + tokens[0] + ","
 									+ tidMap.get(tokens[tidField]));
-						buffy.close();
-						return false;
+                        return false;
 					}
 					tidMap.put(tokens[tidField], tokens[0]);
 					if (lastTID != null && clusterGenes) {
 						int newStart = Integer.parseInt(tokens[3]);
 						if (lastStart > newStart) {
-							if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-								System.err.println("Unsorted in line " + lineCtr
+								Log.warn("Unsorted in line " + lineCtr
 										+ " - cannot perform gene clustering: "
 										+ tokens[0] + " " + tokens[6] + " "
 										+ tokens[tidField] + " @ " + tokens[3]
@@ -1808,16 +1801,13 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 						}
 						if (tidField < 0) {
 							if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-								System.err.println("Error line " + lineCtr
-										+ " - no GID.");
-							buffy.close();
+								throw new RuntimeException("Error line " + lineCtr+ " - no GID.");
 							return false;
 						}
 					}
-					if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS&& !tokens[gidField].equals(lastGID)) {
+					if (!tokens[gidField].equals(lastGID)) {
 						if (gidMap.get(tokens[gidField]) != null&& !silent)
-							System.err.println("Warning line " + lineCtr
-									+ " gene id " + tokens[gidField]
+							Log.warn("Warning line " + lineCtr+ " gene id " + tokens[gidField]
 									+ " used twice, on: " + tokens[0] + ","
 									+ gidMap.get(tokens[gidField]));
 						gidMap.put(tokens[gidField], tokens[0]);
@@ -1833,168 +1823,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		} catch (IOException e) {
             Log.progressFailed("ERROR");
             Log.error("Error while checking GTF file!", e);
-		}
-
-		return true;
-	}
-
-	public boolean isApplicable_old() {
-
-		BufferedReader buffy = null;
-		File f = new File(fPath + File.separator + fName);
-		//sweepToChromosome("chr6");
-		if (fPath != null && fName != null)
-			try {
-				inputStream = new FileInputStream(f);
-				inputStream.skip(bytesRead);
-				buffy = new BufferedReader(new InputStreamReader(inputStream));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		else
-			buffy = new BufferedReader(new InputStreamReader(inputStream));
-
-		System.out
-				.print("Checking format of file " + f.getAbsolutePath() + " ");
-		System.out.flush();
-		long bytesRead = 0l;
-		long size = f.length();
-		int perc = 0;
-		String lastChrID = null, lastGID = null, lastTID = null, lastStrand = null;
-		HashMap<String, String> chrMap = new HashMap<String, String>(25, 1f), tidMap = new HashMap<String, String>(), gidMap = new HashMap<String, String>();
-		int tidField = -1, gidField = -1, lastStart = -1;
-		try {
-			String line;
-			int lineCtr = 0;
-			while (buffy.ready()) {
-
-				line = buffy.readLine();
-				if (line == null)
-					break;
-
-				++lineCtr;
-				bytesRead += line.length() + 1;
-				if (bytesRead * 10 / size > perc) {
-					System.out.print("*");
-					System.out.flush();
-					++perc;
-				}
-				String[] tokens = line.split("\\s"); // must be tab, see
-														// specification
-				for (int i = 0; i < tokens.length; i++) {
-					if (tokens[i].endsWith(";")) {
-						if (tokens[i].startsWith("\""))
-							tokens[i] = tokens[i].substring(1, tokens[i]
-									.length() - 2);
-						else
-							tokens[i] = tokens[i].substring(0, tokens[i]
-									.length() - 1);
-					}
-				}
-				if (tokens.length < 8) {
-					System.err.println("Error line " + lineCtr
-							+ " - less than 8 tokens.");
-					return false;
-				}
-
-				// changes chr or strand
-				if ((!tokens[0].equals(lastChrID))
-						|| (!tokens[6].equals(lastStrand))) {
-					String chrStrand = tokens[0] + tokens[6];
-					if (chrMap.get(chrStrand) != null) {
-						System.err.println("Error line " + lineCtr
-								+ " - chr/strand " + tokens[0] + " "
-								+ tokens[6] + " already read.");
-						return false;
-					}
-					chrMap.put(chrStrand, chrStrand);
-					lastChrID = tokens[0];
-					lastStrand = tokens[6];
-					tidMap = new HashMap<String, String>(); 
-					gidMap = new HashMap<String, String>();
-					lastTID= null;
-					lastGID= null;
-					lastStart= -1;
-					continue;
-				} else {
-					tokens[0]= lastChrID;
-					tokens[6]= lastStrand;
-				}
-
-				// changes transcript ID
-				if (tidField < 0
-						|| (!tokens[tidField - 1]
-								.equals(GFFObject.TRANSCRIPT_ID_TAG))) {
-					for (int i = 8; i < tokens.length; i++) {
-						if (tokens[i].equals(GFFObject.TRANSCRIPT_ID_TAG)) {
-							tidField = i + 1;
-							break;
-						}
-					}
-					if (tidField < 0) {
-						System.out.println("Error line " + lineCtr
-								+ " - no TID.");
-						return false;
-					}
-				}
-				if (!tokens[tidField].equals(lastTID)) {
-					if (outputWarnings&& tidMap.get(tokens[tidField]) != null)
-						System.out.println("Warning line " + lineCtr
-								+ " transcript id " + tokens[tidField]
-								+ " used twice, on: " + tokens[0] + ","
-								+ tidMap.get(tokens[tidField]));
-					tidMap.put(tokens[tidField], tokens[0]);
-					if (lastTID != null && clusterGenes) {
-						int newStart = Integer.parseInt(tokens[3]);
-						if (lastStart > newStart) {
-							System.out.println("Error line " + lineCtr
-									+ " - cannot perform gene clustering: "
-									+ tokens[0] + " " + tokens[6] + " "
-									+ tokens[tidField] + " @ " + tokens[3]
-									+ " after " + lastTID + " @ " + lastStart);
-							return false;
-						}
-						lastStart = newStart;
-					}
-					lastTID = tokens[tidField];
-				} else {
-					tokens[tidField]= lastTID;
-				}
-
-				// changes in gene ID
-				if (!clusterGenes) {
-					if (gidField < 0
-							|| (!tokens[gidField - 1]
-									.equals(GFFObject.GENE_ID_TAG))) {
-						for (int i = 8; i < tokens.length; i++) {
-							if (tokens[i].equals(GFFObject.GENE_ID_TAG)) {
-								gidField = i + 1;
-								break;
-							}
-						}
-						if (tidField < 0) {
-							System.out.println("Error line " + lineCtr
-									+ " - no GID.");
-							return false;
-						}
-					}
-					if (outputWarnings&& !tokens[gidField].equals(lastGID)) {
-						if (gidMap.get(tokens[gidField]) != null)
-							System.out.println("Warning line " + lineCtr
-									+ " gene id " + tokens[gidField]
-									+ " used twice, on: " + tokens[0] + ","
-									+ gidMap.get(tokens[gidField]));
-						gidMap.put(tokens[gidField], tokens[0]);
-						lastGID = tokens[gidField];
-					}
-				}
-			}
-
-			buffy.close();
-			System.out.println("\tok.");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		}finally {
+            if(buffy != null) try {buffy.close();} catch (IOException e) {}
+        }
 
 		return true;
 	}

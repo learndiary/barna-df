@@ -28,18 +28,6 @@ import java.util.concurrent.Future;
 public class Sorter {
 
     /**
-     * The thread executor
-     */
-    private static ExecutorService executor;
-
-    static {
-        /*
-        Initialize executor
-         */
-        executor = Executors.newCachedThreadPool();
-    }
-
-    /**
      * The input stream
      */
     private InputStream in;
@@ -176,12 +164,16 @@ public class Sorter {
         final InputStream input = in;
         final OutputStream output = out;
         final String sep = separator;
-        return executor.submit(new Callable<Object>() {
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Future<Object> job = executor.submit(new Callable<Object>() {
             public Object call() throws Exception {
                 s.sort(input, output);
                 return null;
             }
         });
+        executor.shutdown();
+        return job;
     }
 
     /**

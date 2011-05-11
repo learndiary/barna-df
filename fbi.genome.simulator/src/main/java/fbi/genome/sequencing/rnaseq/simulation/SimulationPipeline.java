@@ -265,7 +265,7 @@ public class SimulationPipeline implements FluxTool<Void> {
         long t0= System.currentTimeMillis();
 
         if (isExpression())
-            getProfiler().run();
+            getProfiler().call();
         else{
             Log.info("you did not ask for expression, I skip it.\n");
         }

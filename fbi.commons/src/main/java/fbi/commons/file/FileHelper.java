@@ -474,7 +474,9 @@ public class FileHelper {
      */
     public static boolean move(File from, File to, String msg) {
 
-        Log.progressStart(msg != null ? msg : "moving");
+        if(msg != null){
+            Log.progressStart(msg);
+        }
 
         if (to.exists()) {
             to.delete();
@@ -490,7 +492,9 @@ public class FileHelper {
             Log.error("[FATAL] couldn't copy: " + e.getMessage(), e);
             return false;
         }
-        Log.progressFinish();
+        if(msg != null){
+            Log.progressFinish();
+        }
         return from.delete();
     }
 
