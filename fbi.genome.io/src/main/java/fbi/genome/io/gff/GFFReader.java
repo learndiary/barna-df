@@ -562,7 +562,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	IntVector txPerLocus= null, txLengths= null;
 	public void scanFile() {
 
-        Log.progressStart("scanning");
+        if(!silent && stars){
+            Log.progressStart("scanning");
+        }
 		reset();
 		
 		setReadGTF(false);
@@ -590,7 +592,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 		}
 		
 		boolean b= close();
-        Log.progressFinish(StringUtils.OK, true);
+        if(!silent && stars){
+            Log.progressFinish(StringUtils.OK, true);
+        }
 
 	}
 	
@@ -720,7 +724,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 			int lastPerc = (int) ((bytesRead * 10d) / size);
 			// long t0= System.currentTimeMillis();
 			while (true) {
-                Log.progress(bytesRead, size);
+                if(!silent && stars){
+                    Log.progress(bytesRead, size);
+                }
 
 				// buffy.mark(MAX_GTF_LINE_LENGTH); // does not work as planned, see reset() below
 				long saveBytesRead= bytesRead;
@@ -1189,8 +1195,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 							vLines.add(line);
 						++nrLinesRead;
 						bytesRead += line.length() + fileSep.length();				
-
-                        Log.progress(bytesRead, size);
+                        if(!silent && stars){
+                            Log.progress(bytesRead, size);
+                        }
 					}
 				}
 				
@@ -1358,8 +1365,11 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 								else
 									newGene= true;
 							} else {
-								if (trpt.getGene().getAttribute(GFFObject.GENE_ID_TAG).
-										equals(geneV.elementAt(geneV.size()-1).getAttribute(GFFObject.GENE_ID_TAG)))
+//                                Object a1 = trpt.getGene().getAttribute(GFFObject.GENE_ID_TAG);
+//                                Object a2 = geneV.elementAt(geneV.size() - 1).getAttribute(GFFObject.GENE_ID_TAG);
+                                Object a1 = trpt.getGene().getGeneID();
+                                Object a2 = geneV.elementAt(geneV.size() - 1).getGeneID();
+                                if (a1.equals(a2))
 									geneV.elementAt(geneV.size()-1).merge(trpt.getGene());
 								else
 									newGene= true;
@@ -1616,10 +1626,14 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	}
 
 	public File createSortedFile() {
-        Log.progressStart("sorting GTF file");
+        if(!silent && stars){
+            Log.progressStart("sorting GTF file");
+        }
 		File f= new File(getAbsFileName());
         File sorted = GFFSorter.sort(f);
-        Log.progressFinish(StringUtils.OK, true);
+        if(!silent && stars){
+            Log.progressFinish(StringUtils.OK, true);
+        }
         return sorted;
 	}
 	
@@ -1680,8 +1694,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
             throw new RuntimeException("No GTF file specified!");
         }
 
-
-        Log.progressStart("checking");
+        if(!silent && stars){
+            Log.progressStart("checking");
+        }
 
 		long bytesRead = 0l;
 		long size = f.length();
@@ -1703,8 +1718,9 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	
 				++lineCtr;
 				bytesRead += line.length() + 1;
-
-                Log.progress(bytesRead, size);
+                if(!silent && stars){
+                    Log.progress(bytesRead, size);
+                }
 				String[] tokens = line.split("\\s");
 														
 					// trim attribute strings
@@ -1818,10 +1834,14 @@ public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
 	
 			buffy.close();
 
-            Log.progressFinish(StringUtils.OK, true);
+            if(!silent && stars){
+                Log.progressFinish(StringUtils.OK, true);
+            }
 
 		} catch (IOException e) {
-            Log.progressFailed("ERROR");
+            if(!silent && stars){
+                Log.progressFailed("ERROR");
+            }
             Log.error("Error while checking GTF file!", e);
 		}finally {
             if(buffy != null) try {buffy.close();} catch (IOException e) {}

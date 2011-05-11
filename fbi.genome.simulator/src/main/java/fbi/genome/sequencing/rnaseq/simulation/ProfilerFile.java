@@ -35,7 +35,7 @@ public class ProfilerFile {
             BufferedReader buffy= new BufferedReader(new FileReader(proFile));
             File tmpF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ File.separator+ proFile.getName()+ Fragmenter.TMP_SFX);
             BufferedWriter wright= new BufferedWriter(new FileWriter(tmpF));
-            String[] token;
+            String[] token = new String[0];
             long bytesRead= 0, bytesTotal= proFile.length();
             int perc= 0, lineCtr= 0;
             String nullStr= Double.toString(0d)+ PRO_FILE_TAB+Long.toString(0);
@@ -43,7 +43,6 @@ public class ProfilerFile {
 
                 bytesRead+= s.length()+ PRO_FILE_CR.length();
                 Log.progress(bytesRead, bytesTotal);
-
                 token= s.split(PRO_FILE_SEP);
                 if (token.length== colNr) {
                     wright.write(s);

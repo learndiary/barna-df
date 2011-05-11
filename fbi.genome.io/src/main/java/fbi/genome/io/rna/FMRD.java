@@ -1,7 +1,7 @@
 package fbi.genome.io.rna;
 
-import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.Transcript;
+import fbi.genome.model.bed.BEDobject2;
 
 import java.util.regex.Pattern;
 
@@ -25,37 +25,10 @@ public class FMRD implements ReadDescriptor {
 	public static final Pattern pattPE= Pattern.compile("^[P,p][1,2]");
 	public static final Pattern pattMM= Pattern.compile("^M\\d$");	//"^M\\d{}$" 
 
-	// from Sequencer
-	public static void addReadName(BEDobject2 obj, Transcript t, Transcript t2, 
-			long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean pend) {
-		
-		// FURI
-		obj.replace(BEDobject2.FN_NAME, t.getGene().getGeneID());
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField(t.getTranscriptID());
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField((int) (molNr+1));
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField(t.getExonicLength());
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField(fragStart);
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField(fragEnd);
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField(readStart);
-		obj.appendCurrField(BYTE_DELIM_FMOLI);
-		obj.appendCurrField(readEnd);
-		if (pend) {
-			obj.appendCurrField(FMRD.DELIM_FMRD[0]);
-			obj.appendCurrField(FMRD.ID_PE);
-			obj.appendCurrField(absDir== t.getStrand()? PE_OPT[0]: PE_OPT[1]);
-		}
-		
-	}
-
 	public static void appendReadName(BEDobject2 obj, Transcript t, Transcript t2, 
-			long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean pend) {
-		
+			long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean pend, boolean sense) {
+
+
 		// FURI
 		obj.append(t.getGene().getGeneID());
 		obj.append(BYTE_DELIM_FMOLI);
@@ -69,14 +42,49 @@ public class FMRD implements ReadDescriptor {
 		obj.append(BYTE_DELIM_FMOLI);
 		obj.append(fragEnd);
 		obj.append(BYTE_DELIM_FMOLI);
-		obj.append(readStart);
-		obj.append(BYTE_DELIM_FMOLI);
-		obj.append(readEnd);
-		if (pend) {
+        obj.append(sense ? fragStart : fragEnd);
+        obj.append(BYTE_DELIM_FMOLI);
+        if(t.isForward()){ // read direction
+            obj.append(sense ? "S" : "A");
+        }else{
+
+            obj.append(sense ? "A" : "S");
+        }
+        //obj.append(BYTE_DELIM_FMOLI);
+		//obj.append(readStart);
+		//obj.append(BYTE_DELIM_FMOLI);
+		//obj.append(readEnd);
+
+
+        if (pend) {
 			obj.append((byte) BYTE_DELIM_BARNA);
 			//obj.append((byte) FMRD.ID_PE);
 			obj.append((byte) (absDir== t.getStrand()? PE_OPT[0]: PE_OPT[1]));
 		}
+
+
+
+//		// FURI
+//		obj.append(t.getGene().getGeneID());
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append(t.getTranscriptID());
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append((int) (molNr+1));
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append(t.getExonicLength());
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append(fragStart);
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append(fragEnd);
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append(readStart);
+//		obj.append(BYTE_DELIM_FMOLI);
+//		obj.append(readEnd);
+//		if (pend) {
+//			obj.append((byte) BYTE_DELIM_BARNA);
+//			//obj.append((byte) FMRD.ID_PE);
+//			obj.append((byte) (absDir== t.getStrand()? PE_OPT[0]: PE_OPT[1]));
+//		}
 		
 	}
 	

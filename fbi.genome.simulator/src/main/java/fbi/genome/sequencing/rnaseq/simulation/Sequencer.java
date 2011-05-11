@@ -1042,7 +1042,7 @@ public class Sequencer implements StoppableRunnable {
 	private static final ByteArrayCharSequence CHR_POLYA= new ByteArrayCharSequence("polyA");
 	
 	private BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, Transcript t2, 
-			long molNr, byte absDir, int fragStart, int fragEnd) {
+			long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
 		
 		obj.reset();
 		
@@ -1059,7 +1059,7 @@ public class Sequencer implements StoppableRunnable {
 		obj.append(BYTE_TAB);
 		obj.append(end- start);
 		obj.append(BYTE_TAB);
-        FMRD.appendReadName(obj, t, t2, molNr, absDir, fragStart, fragEnd, start, end, settings.get(FluxSimulatorSettings.PAIRED_END));
+        FMRD.appendReadName(obj, t, t2, molNr, absDir, fragStart, fragEnd, start, end, settings.get(FluxSimulatorSettings.PAIRED_END), left);
 		obj.append(BYTE_TAB);
 		obj.append(BYTE_0);
 		obj.append(BYTE_TAB);
@@ -1088,11 +1088,14 @@ public class Sequencer implements StoppableRunnable {
 	                         
 	private BEDobject2 createRead(BEDobject2 obj, int start, int end, Transcript t, Transcript t2, 
 			long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
-		
+
+
+        int originalStart = start;
+        int originalEnd = end;
 		int tlen= t.getExonicLength();
 		if (start> tlen) {
 			++cntPolyA;
-			return createReadPolyA(obj, start, end, t, t2, molNr, absDir, fragStart, fragEnd);	// read in polyA tail
+			return createReadPolyA(obj, start, end, t, t2, molNr, absDir, fragStart, fragEnd, left);	// read in polyA tail
 		}
 		int offsStart= 0, offsEnd= 0;
 		if (start< 1) {
@@ -1139,7 +1142,7 @@ public class Sequencer implements StoppableRunnable {
 		obj.append(BYTE_TAB);
         FMRD.appendReadName(obj, t, t2,
 				molNr, absDir, fragStart, fragEnd, 
-				start, end, settings.get(FluxSimulatorSettings.PAIRED_END));
+				originalStart, originalEnd, settings.get(FluxSimulatorSettings.PAIRED_END), left);
 		obj.append(BYTE_TAB);
 		obj.append(BYTE_0);
 		obj.append(BYTE_TAB);
