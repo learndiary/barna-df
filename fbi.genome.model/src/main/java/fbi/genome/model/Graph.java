@@ -966,6 +966,21 @@ public class Graph implements Serializable {
 					}
 				fName= dirPath+ File.separator+ chrFile;
 			}
+
+            if (!new File(fName).exists()) {	// still no match ... check if there is just a single file
+                File[] list= new File(dirPath).listFiles();
+                if(list.length == 1){
+                    fName = list[0].getAbsolutePath();
+                }
+            }
+
+            if (!new File(fName).exists()) {	// still nothig ... repoert error...
+                throw new RuntimeException("Chromosome file not found! The genome hast to be split into chromosome fasta files, i.e. Chr1.fa. \n" +
+                        "I was looking for "+chromosome+ Constants2.CHROMOSOME_EXT);
+            }
+
+
+
 			File f= new File(fName);
 			fileSep= FileHelper.guessFileSep(f);
 			try {

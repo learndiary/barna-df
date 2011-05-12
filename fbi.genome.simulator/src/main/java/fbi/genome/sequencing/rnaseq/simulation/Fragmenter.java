@@ -1828,7 +1828,7 @@ public class Fragmenter implements StoppableRunnable {
 					getMapTxSeq();
 					//getWeights(settings.getRTmotif());
 					try {
-                        pwmSense= PWM.create2(settings.get(FluxSimulatorSettings.RT_MOTIF));
+                        pwmSense= PWM.create(settings.get(FluxSimulatorSettings.RT_MOTIF));
 						for (int i = 0; i < 100; i++) 
 							pwmSense.multiply();
 						pwmSense.makePDF();
@@ -1874,7 +1874,7 @@ public class Fragmenter implements StoppableRunnable {
 					rnd3= new Random();
 					try {
 						getMapTxSeq();
-                        pwmSense= PWM.create2(settings.get(FluxSimulatorSettings.FRAG_EZ_MOTIF));
+                        pwmSense= PWM.create(settings.get(FluxSimulatorSettings.FRAG_EZ_MOTIF));
 						mapWeightSense= getMapWeight(getMapTxSeq(), pwmSense);
 						pwmSense.invert();
 						pwmAsense= pwmSense;
@@ -2014,7 +2014,7 @@ public class Fragmenter implements StoppableRunnable {
 	
 	private void getWeights(File filePWM) {
 		try {
-			pwmSense= PWM.create2(filePWM);
+			pwmSense= PWM.create(filePWM);
 			mapWeightSense= getMapWeight(getMapTxSeq(), pwmSense);
 			pwmSense.invert();
 			pwmAsense= pwmSense;

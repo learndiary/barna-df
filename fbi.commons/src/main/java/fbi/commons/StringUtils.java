@@ -25,11 +25,11 @@ public class StringUtils {
     /**
      * Biological characters as spotted in refseq intron annotation of human
      */
-    private static final String BIOLOGICAL_CHARS = "ACGTN-acgtnMmKkXxRr";
+    private static final String BIOLOGICAL_CHARS = "ACGTN-acgtnMmKkXxRrYyWwSsBbVvHhDd";
     /**
      * The complements for biological chars
      */
-    private static final String COMPLEMENT_CHARS = "TGCAN-tgcanKkMmXxYy";
+    private static final String COMPLEMENT_CHARS = "TGCAN-tgcanKkMmXxYyRrSsWwVvBbDdHh";
 
 
     /**

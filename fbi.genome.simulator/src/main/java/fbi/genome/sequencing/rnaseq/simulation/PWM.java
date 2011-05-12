@@ -22,7 +22,7 @@ public class PWM implements WeightMatrix {
 	
 	static final int MIN_DEFAULT= Integer.MAX_VALUE, MAX_DEFAULT= Integer.MIN_VALUE;
 	
-	public static PWM create2(File f) throws Exception{
+	public static PWM create(File f) throws Exception{
 		BufferedReader buffy= new BufferedReader(new FileReader(f));
 		Vector<String> v= new Vector<String>();		
 		for (String s= null; (s= buffy.readLine())!= null;) {
@@ -63,53 +63,7 @@ public class PWM implements WeightMatrix {
 		
 		return new PWM(kmers, pos, a);
 	}
-	public static PWM create(File f) throws Exception{
-		BufferedReader buffy= new BufferedReader(new FileReader(f));
-		Vector<String> v= new Vector<String>();		
-		for (String s= null; (s= buffy.readLine())!= null;) {
-			s= s.trim();
-			if (s.length()== 0|| s.startsWith("#"))
-				continue;
-			v.add(s);
-		}
-		if (v.size()== 0)
-			return null;
-		
-		String[] ss= v.elementAt(0).split("\\s");
-		if (ss.length< 2)
-			return null;
-		if (ss.length== 2) {	// min, max
-			int min= Integer.parseInt(ss[0]), max= Integer.parseInt(ss[1]);
-			double[][] a= new double[v.size()- 1][];
-			for (int i = 1; i < v.size(); i++) {
-				int j= i+ 1;
-				a[j]= new double[4];
-				ss= v.elementAt(i).split("\\s");
-				if (ss.length!= 4)
-					return null;
-				for (int k = 0; k < ss.length; k++) 
-					a[j][k]= Double.parseDouble(ss[k]);
-			}
-			return new PWM(min, max, a);
-			
-		} else {
-			int[] pos= new int[v.size()];
-			double[][] a= new double[v.size()][];
-			for (int i = 0; i < v.size(); i++) {
-				a[i]= new double[4];
-				ss= v.elementAt(i).split("\\s");
-				if (ss.length!= 5)
-					return null;
-				pos[i]= Integer.parseInt(ss[0]);
-				if (pos[i]> 0)
-					--pos[i];
-				for (int k = 1; k < ss.length; k++) 
-					a[i][k- 1]= Double.parseDouble(ss[k]);
-			}
-			return new PWM(pos, a);
-		}
-	}
-	
+
 	public PWM(int min, int max, double[][] pwm) {
 		this.min= min;
 		this.max= max;
