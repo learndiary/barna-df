@@ -1,5 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation.tools;
 
+import fbi.commons.Log;
+import fbi.commons.StringUtils;
 import fbi.commons.options.HelpPrinter;
 import fbi.genome.io.gff.GFFSorter;
 import fbi.genome.sequencing.rnaseq.simulation.FluxTool;
@@ -52,7 +54,9 @@ public class GTFSorterTool implements FluxTool {
 
     @Override
     public Object call() throws Exception {
+        Log.progressStart("Sorting " + getIntFile().getName());
         GFFSorter.sort(intFile, outFile);
+        Log.progressFinish(StringUtils.OK, true);
         return null;
     }
 }

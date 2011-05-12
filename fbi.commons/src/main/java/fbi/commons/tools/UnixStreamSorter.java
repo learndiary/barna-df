@@ -97,7 +97,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             if (Thread.interrupted()) {
                 break;
             }
-            Log.progressStart("Merging Chunk");
             // sort chunk
             ArrayList<File> chunks = new ArrayList<File>(files.subList(0, sortChunks));
 
@@ -110,7 +109,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             // add chunk to list and remove the rest from the list
             files.add(chunk);
             files.removeAll(chunks);
-            Log.progressFinish("OK", true);
         }
 
 
