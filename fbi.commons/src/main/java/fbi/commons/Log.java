@@ -212,6 +212,25 @@ public class Log {
     }
 
     /**
+     * Print to the default output directly. This does not check any log levels and always prints
+     *
+     * @param message the message
+     */
+    public static void println(String message) {
+        System.out.println(message);
+    }
+
+    /**
+     * Print to the default output directly. This does not check any log levels and always prints
+     *
+     * @param message the message
+     */
+    public static void print(String message) {
+        System.out.print(message);
+    }
+
+
+    /**
      * Start a new progress
      *
      * @param message the message (null permitted)

@@ -142,6 +142,7 @@ public class FluxSimulator {
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
             toolArguments.process(args, tool);
             if(!tool.validateParameters(printer, toolArguments)){
+                out.flush();
                 System.exit(-1);
             }
 
