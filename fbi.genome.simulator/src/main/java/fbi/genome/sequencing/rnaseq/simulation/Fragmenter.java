@@ -3324,7 +3324,7 @@ profiler.getMaxMoleculeLength()
 
 	private int getRTeventNr(int len) {
 		
-		int howmany= (int) Math.ceil(len/ (double) 100);	//  settings.getRTPrimerPerNucleotides() 
+		int howmany= (int) Math.ceil(Math.abs(len)/ (double) 100);	//  settings.getRTPrimerPerNucleotides()
 //		howmany= (int) Math.round(rndHowMany.nextPoisson(((new3Prime- start)+1)/ 50d));	// TODO Poisson..;
 		return howmany;
 	}
