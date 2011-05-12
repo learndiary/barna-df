@@ -144,8 +144,17 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "Method applied for Fragmentation\n" +
             "[NB] Nebulization fragmentation method.\n" +
             "[UR] Uniformal random fragmentation method.\n" +
-            "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.NB);
-    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", " Parameter specifying the substrate of fragmentation.", Substrate.DNA);
+            "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.NB, new ParameterValidator() {
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+            if(schema.get(FRAG_METHOD) == FragmentationMethod.EZ){
+                if(schema.get(FRAG_EZ_MOTIF) == null || !schema.get(FRAG_EZ_MOTIF).canRead()){
+                    throw new ParameterException("You have to specify FRAG_EZ_MOTIF in order ot use Enzymatic digestion");
+                }
+            }
+        }
+    });
+    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", " Parameter specifying the substrate of fragmentation.", Substrate.DNA, null);
 
     /*
     Enzymatic
@@ -195,7 +204,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      Reverse Transcription
      */
     public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION", "Switch on/off Reverse Transcription", true);// todo : default ?
-    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "", RtranscriptionMode.RH);
+    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "", RtranscriptionMode.RH, null);
     public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN", "Minimum length observed after " +
             "reverse transcription of full-length transcripts.", 500, new ParameterValidator() {
         @Override
@@ -250,7 +259,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "the distribution of fragments after filtering", relativePathParser);
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
             "Describes the method for subsampling fragments in order to meet the characteristics " +
-                    "of the filter Distribution (see SIZE_DISTRIBUTION)", SizeSamplingModes.AC);
+                    "of the filter Distribution (see SIZE_DISTRIBUTION)", SizeSamplingModes.AC, null);
 
     /*
       Sequencing

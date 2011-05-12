@@ -144,4 +144,8 @@ public class Parameters {
         return new EnumParameter<E>(name, description, value);
     }
 
+    public static <E extends Enum<E>> Parameter<E> enumParameter(String name, String description, E value, final ParameterValidator validator) {
+        return new EnumParameter<E>(name, description, value, validator);
+    }
+
 }
