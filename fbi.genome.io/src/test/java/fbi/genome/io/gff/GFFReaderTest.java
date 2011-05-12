@@ -49,7 +49,7 @@ public class GFFReaderTest {
 
                         if(id.toString().equals("YAL068W-A")){
                             assertEquals(255, exonicLength);
-                            assertEquals("chrI:538-792W",locName.toString());
+                            assertEquals("chrI:335-792W",locName.toString());
                         }
 
                     }
