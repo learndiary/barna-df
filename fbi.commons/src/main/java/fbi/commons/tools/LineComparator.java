@@ -36,6 +36,31 @@ public class LineComparator implements Comparator<String> {
      */
     private Map<String, Object> splitCache = new HashMap<String, Object>();
 
+
+    /**
+     * Copy constructor
+     *
+     * @param copy the source
+     */
+    public LineComparator(LineComparator copy){
+        super();
+        this.field = new int[copy.field.length];
+        System.arraycopy(copy.field, 0, this.field,0, copy.field.length);
+
+        this.separator = copy.separator;
+        if(copy.subComparators != null){
+            this.subComparators = new ArrayList<Comparator<String>>();
+            for (Comparator<String> cc : copy.subComparators) {
+                if(cc instanceof LineComparator){
+                    this.subComparators.add(new LineComparator((LineComparator)cc));
+                }else{
+                    this.subComparators.add(cc);
+                }
+            }
+        }
+        this.parent = copy.parent;
+    }
+
     /**
      * Create a new line comparator. If the given field is {@code < 0}, the line is not splitted. If numerical
      * is set, the field (or the complete line) is parsed to a number. The separator is used to split
