@@ -1,15 +1,13 @@
 package fbi.commons.tools;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Compares strings and supports field splitting and number parsing.
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class LineComparator implements Comparator<String> {
+public class LineComparator implements Comparator<String> {
     /**
      * The fields to use for comparison
      */
@@ -34,6 +32,11 @@ class LineComparator implements Comparator<String> {
     private Comparator<String> parent;
 
     /**
+     * Cache separator splits
+     */
+    private Map<String, Object> splitCache = new HashMap<String, Object>();
+
+    /**
      * Create a new line comparator. If the given field is {@code < 0}, the line is not splitted. If numerical
      * is set, the field (or the complete line) is parsed to a number. The separator is used to split
      * the line. It is used as regular expression.
@@ -42,7 +45,7 @@ class LineComparator implements Comparator<String> {
      * @param separator the separator used to split fields
      * @param field     the field (split using th separator as regular expression)
      */
-    LineComparator(boolean numerical, String separator, int field) {
+    public LineComparator(boolean numerical, String separator, int field) {
         this.field = new int[]{field};
         this.numerical = numerical;
         this.separator = separator;
@@ -55,7 +58,7 @@ class LineComparator implements Comparator<String> {
      * @param separator the separator used to split fields
      * @param fields    the fields (split using th separator as regular expression)
      */
-    LineComparator(String separator, int... fields) {
+    public LineComparator(String separator, int... fields) {
         this.field = fields;
         this.numerical = false;
         this.separator = separator;
@@ -68,7 +71,7 @@ class LineComparator implements Comparator<String> {
      * @param separator the separator used to split fields
      * @param fields    the fields (split using th separator as regular expression)
      */
-    LineComparator(String separator, Integer[] fields) {
+    public LineComparator(String separator, Integer[] fields) {
         this.field = new int[fields.length];
         for (int i = 0; i < fields.length; i++) {
             this.field[i] = fields[i];
@@ -82,7 +85,7 @@ class LineComparator implements Comparator<String> {
      *
      * @param comparator parent comparator
      */
-    LineComparator(Comparator<String> comparator) {
+    public LineComparator(Comparator<String> comparator) {
         this.parent = comparator;
     }
 
@@ -101,6 +104,7 @@ class LineComparator implements Comparator<String> {
         }
     }
 
+
     public int compare(final String o1, final String o2) {
         // check for empty string
         if (o1.length() == 0 || o2.length() == 0) {
@@ -111,35 +115,72 @@ class LineComparator implements Comparator<String> {
             String s1 = o1;
             String s2 = o2;
 
-            // one field specified
-            if (field.length == 1 && field[0] >= 0) {
-                // split fields
-                s1 = o1.split(separator)[field[0]];
-                s2 = o2.split(separator)[field[0]];
-            } else if (field.length > 1) {
-                // merge multiple fields
-                // merge o1 fields
-                String[] o1_split = o1.split(separator);
-                for (int i : field) {
-                    s1 += o1_split[i];
-                }
-                // merge o2 fields
-                String[] o2_split = o2.split(separator);
-                for (int i : field) {
-                    s2 += o2_split[i];
-                }
+            Object c1 = splitCache.get(o1);
+            Object c2 = splitCache.get(o2);
+
+            boolean gotResult = false;
+            if(numerical && c1 != null && c2 != null){
+                result = Double.compare((Double)c1, (Double)c2);
+                gotResult = true;
+            }else{
+                if(c1 != null) s1 = c1.toString();
+                if(c2 != null) s2 = c2.toString();
             }
 
-            if (numerical) {
-                try {
-                    // try integer first
-                    result = Integer.parseInt(s1) - Integer.parseInt(s2);
-                } catch (NumberFormatException e) {
-                    // ok integer failed ... lets try double
-                    result = Double.compare(Double.parseDouble(s1), Double.parseDouble(s2));
+
+            if(!gotResult){
+                // one field specified
+                if (field.length == 1 && field[0] >= 0) {
+                    // split fields
+                    if(c1 == null){
+                        s1 = o1.split(separator)[field[0]];
+                        splitCache.put(o1, s1);
+                    }
+                    if(c2 == null){
+                        s2 = o2.split(separator)[field[0]];
+                        splitCache.put(o2, s2);
+                    }
+                } else if (field.length > 1) {
+                    // merge multiple fields
+                    // merge o1 fields
+                    if(c1 == null){
+                        String[] o1_split = o1.split(separator);
+                        for (int i : field) {
+                            s1 += o1_split[i];
+                        }
+                        splitCache.put(o1, s1);
+                    }
+
+                    if(c2 == null){
+                        // merge o2 fields
+                        String[] o2_split = o2.split(separator);
+                        for (int i : field) {
+                            s2 += o2_split[i];
+                        }
+                        splitCache.put(o2, s2);
+                    }
                 }
-            } else {
-                result = s1.compareTo(s2);
+
+
+                if (numerical) {
+                    try {
+                        // try integer first
+                        int i1 = Integer.parseInt(s1);
+                        int i2 = Integer.parseInt(s2);
+                        splitCache.put(o1, new Double(i1));
+                        splitCache.put(o2, new Double(i2));
+                        result = i1 - i2;
+                    } catch (NumberFormatException e) {
+                        // ok integer failed ... lets try double
+                        double d1 = Double.parseDouble(s1);
+                        double d2 = Double.parseDouble(s2);
+                        splitCache.put(o1, new Double(d1));
+                        splitCache.put(o2, new Double(d2));
+                        result = Double.compare(d1, d2);
+                    }
+                } else {
+                    result = s1.compareTo(s2);
+                }
             }
         } else {
             result = parent.compare(o1, o2);
@@ -156,6 +197,17 @@ class LineComparator implements Comparator<String> {
             }
         }
         return result;
+    }
+
+    public void reset(){
+        splitCache.clear();
+        if(subComparators != null){
+            for (Comparator<String> subComparator : subComparators) {
+                if(subComparator instanceof LineComparator){
+                    ((LineComparator)subComparator).reset();
+                }
+            }
+        }
     }
 }
 

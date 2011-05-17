@@ -32,6 +32,12 @@ public class Fragmenter implements StoppableRunnable {
 	private static char CHAR_TAB= '\t';
 	private static byte BYTE_NL= (byte) '\n';
     public static boolean optDisk= false;
+	// 2.85 - <0.5%
+	private static final double CUT_OFF_GAUSSIAN_VAL= 2.85f, TWICE_CUT_OFF_GAUSSIAN_VAL= 2* CUT_OFF_GAUSSIAN_VAL, NORM_FACTOR= 1d/ Math.sqrt(2d* Math.PI), E_POW_12= Math.exp(-1d/ 2d);
+
+	public static final String PAR_SAMPLE_REJECTION= "RJ", PAR_SAMPLE_ACCEPTANCE= "AC", PAR_SAMPLE_MH= "MH";
+	public static final char FILTER_DISTRIBUTION_NORMAL= 'N', FILTER_DISTRIBUTION_UNIFORM= 'U', FILTER_DISTRIBUTION_WEIBULL= 'W';
+
     /**
      * Default temp file suffix
      */
@@ -420,27 +426,10 @@ public class Fragmenter implements StoppableRunnable {
 			++lenNb;
 			maxLen= Math.max(maxLen,newLen);
 			minLen= Math.min(minLen,newLen);
-			
-			
-			//String line= start+ TAB+ end+ TAB+ settings.getProfiler().getIds()[i]+"\n";
-			//ByteArrayCharSequence ccs= cs.cloneCurrentSeq();
+
 			cs.replace(0, start);
 			cs.replace(1, end);
 			cs.replace(2, locID);
-			
-			// RFU: chr_tid separated
-/*			int p= 0;
-			while(locID.charAt(++p)!= ':');
-			cs.end= cs.p2;
-			cs.ensureLength(cs.end, p);
-			byte[] a= cs.a;
-			for (int j = 0; j < p; j++) 
-				a[cs.end++]= (byte) locID.charAt(j); 
-			cs.append(BYTE_SEP_LC_TX);
-			cs.append(locID);
-*/			
-			
-
 		}
 
 		public FileOutputStream getFos() {
@@ -1521,12 +1510,7 @@ public class Fragmenter implements StoppableRunnable {
 	}
 	
 	
-	// 2.85 - <0.5% 
-	private static final double CUT_OFF_GAUSSIAN_VAL= 2.85f, TWICE_CUT_OFF_GAUSSIAN_VAL= 2* CUT_OFF_GAUSSIAN_VAL, NORM_FACTOR= 1d/ Math.sqrt(2d* Math.PI), E_POW_12= Math.exp(-1d/ 2d);
-	
-	public static final String PAR_SAMPLE_REJECTION= "RJ", PAR_SAMPLE_ACCEPTANCE= "AC", PAR_SAMPLE_MH= "MH";
-	public static final char FILTER_DISTRIBUTION_NORMAL= 'N', FILTER_DISTRIBUTION_UNIFORM= 'U', FILTER_DISTRIBUTION_WEIBULL= 'W';
-	
+
 	/**
 	 * Parses command line string and returns corresponding subsampling mode identifier.
 	 * @param s the sampling method
@@ -1618,22 +1602,7 @@ public class Fragmenter implements StoppableRunnable {
 		assert(realValue>= min&& realValue<= max);
 		return realValue;
 	}
-	
-	public static void main(String[] args) {
-		try {
-			Random rnd= new Random();
-			PrintWriter p= new PrintWriter("testWeibull.txt");
-			for (int i = 0; i < 1000; i++) {
-				double x= sampleWeibull(rnd, 200d, 2);
-				p.println(x);
-			}
-			p.flush();
-			p.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
+
 	/**
 	 * 
 	 * @param rnd
@@ -1775,27 +1744,21 @@ public class Fragmenter implements StoppableRunnable {
 
 
 	public void run() {
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println("[LIBRARY] creating the cDNA libary");
-
+		Log.message("[LIBRARY] creating the cDNA libary");
         try {
             init();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        if (settings.get(FluxSimulatorSettings.LIB_FILE).exists()&& checkFrgFile())
+        if (settings.get(FluxSimulatorSettings.LIB_FILE).exists()){
+            Log.message("[LIBRARY] Library file exists, skipping...");
 			return;
+        }
 		
-		// REUSE frg file
-		//if (settings.getFrgFile().exists()) {
-			//FileHelper.move(settings.getFrgFile(), tmpFile, null);
-		//} else {
-			tmpFile= writeInitialFile();
-			if (tmpFile== null)
-				return; // FluxSimulator.exit(-1);
-		//}
+		tmpFile= writeInitialFile();
+	    if (tmpFile== null)
+            return;
 
 			
 		// do it
@@ -2035,18 +1998,7 @@ public class Fragmenter implements StoppableRunnable {
 		return false;
 	}
 
-	private boolean checkFrgFile() {
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-            System.err.print("\tchecking file "+ settings.get(FluxSimulatorSettings.LIB_FILE).getAbsolutePath()+" ");
-			System.err.flush();
-		}
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println(" OK");
-		
-		return false;
-	}
-	
+
 
 	boolean init() throws Exception{
 	    int nbTx  = FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
@@ -2891,6 +2843,8 @@ profiler.getMaxMoleculeLength()
 	RandomDataImpl rndTSS;
 	Random rndPA, rndPlusMinus;
 	int cntMolInit= 0;
+
+
 	private File writeInitialFile() {
 		rndTSS= new RandomDataImpl();
 		rndPA= new Random();
@@ -2898,48 +2852,17 @@ profiler.getMaxMoleculeLength()
 		lenSum= 0;	// for RT priming length, here with median
 		lenNb= 0;
 		cntMolInit= 0;
-		long t0= System.currentTimeMillis();
 		try {
-			//if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				//System.err.print("\tiniting fragments +");
 			Log.progressStart("Initializing Fragmentation File");
-
-			//BufferedReader buffy= new BufferedReader(new FileReader(settings.proFile));
-			//String[] token;
-			//int lineCtr= 0;
-			//long bytesRead= 0, totalBytes= settings.proFile.length();
-//			for (String s; (!stop)&& (s= buffy.readLine())!= null; ++lineCtr) {
-//				bytesRead+= s.length()+ 1;	// line.separator
-//				
-//				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-//					// perc= MyFormatter.printPercentage(perc, bytesRead, totalBytes, System.err);
-//					int frac= (int) (bytesRead* 10d/ totalBytes);
-//					if (frac> perc) {
-//						perc= frac;
-//						Constants.progress.setValue(perc);
-//					}
-//				}
-//				token= s.split("\\s");
-//				int nb= Integer.parseInt(token[3]);
-//				int len= Integer.parseInt(token[1]);
-//				if (lineCtr% 1000== 0)
-//					writer.flush();
-//			}
-//			buffy.close();
-			
-			FileOutputStream fos= new FileOutputStream(tmpFile);	
+			FileOutputStream fos= new FileOutputStream(tmpFile);
 			rw= new SyncIOHandler2(1);
 			rw.addStream(fos, 10* 1024);
-//			if (FluxSimulatorSettings.optDisk)  
-//				rw.start();
 			Processor[] processors= getProcessorPool(MODE_WRITE_INITIAL, Math.min(settings.getMaxThreads(), 4));
 			for (int i = 0; i < processors.length; i++) 
 				processors[i].setFos(fos);
 			int perc= 0; molInit= 0; medLen= 0; minLen= Integer.MAX_VALUE; maxLen= Integer.MIN_VALUE;
 			for (int i = 0; (!isStop())&& i < profiler.getMolecules().length; i++) {
-				
 				Log.progress(i, profiler.getMolecules().length);
-
 				if (plotter!= null)
 					plotter.addBase(profiler.getCombinedID(i),
 							profiler.getLen()[i],
@@ -2950,12 +2873,7 @@ profiler.getMaxMoleculeLength()
 				compID.append(FluxSimulatorSettings.SEP_LOC_TID);
 				compID.append(profiler.getIds()[i]);
 				String compIDstring= compID.toString();
-//				if (tid== null) {
-//					if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-//						System.err.println("[ERROR] TID is null in Fragmenter.writeInitialFile()");
-//				}
 				for (int x = 0; (!isStop())&& x < profiler.getMolecules()[i]; x++) {
-
 					++cntMolInit;
 					if (processors.length== 1) {
 						processors[0].origLen= origLen;
@@ -3006,19 +2924,16 @@ profiler.getMaxMoleculeLength()
 			
 			//System.out.println("targets: "+tgtMols);
 			Log.progressFinish("OK", true);
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+ cntMolInit+ " mol inited");
-			}
+			Log.message("\t"+ cntMolInit+ " mol inited");
+
 			
 			medLen= lenSum/ (double) lenNb;		
 			lastMinLen= minLen;
 			lastMaxLen= maxLen;
 			return tmpFile;
 		} catch (Exception e) {
-			if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-				e.printStackTrace();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" FAILED");
+            Log.progressFailed(" FAILED");
+            Log.error("Error while creating initial fragmentation: "+e.getMessage(), e);
 			return null;
 		}		
 		

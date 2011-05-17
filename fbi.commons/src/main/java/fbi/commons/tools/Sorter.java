@@ -146,9 +146,20 @@ public class Sorter {
      * @throws IOException in case of any IO errors
      */
     public void sort() throws IOException {
-        StreamSorter s = createSorter();
+        StreamSorter s = createSorter(-1);
         s.sort(in, out);
     }
+
+    /**
+     * Perform the sort
+     *
+     * @throws IOException in case of any IO errors
+     */
+    public void sort(long fileSize) throws IOException {
+        StreamSorter s = createSorter(fileSize);
+        s.sort(in, out);
+    }
+
 
     /**
      * Submits a new background task and returns the created feature.
@@ -160,7 +171,7 @@ public class Sorter {
      * @return feature the submitted feature
      */
     public Future sortInBackground() {
-        final StreamSorter s = createSorter();
+        final StreamSorter s = createSorter(-1);
         final InputStream input = in;
         final OutputStream output = out;
         final String sep = separator;
@@ -191,10 +202,12 @@ public class Sorter {
     /**
      * Create an instance of the actual sorter implementation
      *
+     * @param fileSize optional current file size
      * @return streamSorter the stream sorter
      */
-    protected StreamSorter createSorter() {
+    protected StreamSorter createSorter(long fileSize) {
         UnixStreamSorter s = new UnixStreamSorter(silent, -1, false, separator);
+        s.setFileSize(fileSize);
         LineComparator comparator = null;
         if (comparators.size() == 0) {
             comparator = new LineComparator(false, separator, -1);

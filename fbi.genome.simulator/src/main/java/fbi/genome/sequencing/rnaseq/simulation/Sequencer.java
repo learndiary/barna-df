@@ -2,11 +2,11 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
-import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.thread.StoppableRunnable;
+import fbi.commons.tools.LineComparator;
 import fbi.commons.tools.Sorter;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.gff.GFFReader;
@@ -1457,21 +1457,43 @@ public class Sequencer implements StoppableRunnable {
         ZipOutputStream zipOut = null;
 
         try {
-            Log.progressStart("initialize and sort");
+            Log.message("\tinitialize and sort");
 
-			// source file
-			InputStream sourceIn= new BufferedInputStream(new FileInputStream(inFile));
+            // check if its sorted
+            Log.progressStart("Checking sort order");
+            BufferedReader reader = new BufferedReader(new FileReader(inFile));
+            // check if we really have to sort the file
+            boolean doSort = false;
+            LineComparator comparator = new LineComparator(false, "\\t", 2);
+            String l = null;
+            String last = null;
+            while(!doSort && ((l = reader.readLine())) != null){
+                if(last != null){
+                    int compare = comparator.compare(l, last);
+                    System.out.println("Compared : \n" + l + "\n" + last  + "\n" + compare);
+                    if(compare < 0) {
+                        doSort = true;
+                        break;
+                    }
+                }
+                last = l;
+            }
+            reader.close();
+            Log.progressFinish(doSort ? "unsorted" : "sorted", true);
 
-            // temporary sorted out file
-            tempSorted = FileHelper.createTempFile("sorted", "lib");
-            tempSorted.deleteOnExit();
+            if(doSort){
+                Log.message("\tsorting " + inFile.getAbsolutePath());
+    			// source file
+                tempSorted = FileHelper.createTempFile("sorted", "lib");
+                tempSorted.deleteOnExit();
+    			BufferedInputStream sourceIn= new BufferedInputStream(new FileInputStream(inFile));
+                sortedOut = new BufferedOutputStream(new FileOutputStream(tempSorted));
+                Sorter.create(sourceIn, sortedOut, false).field(2, false).sort(inFile.length());
+            }else{
+                tempSorted = inFile;
+            }
 
-            sortedOut = new BufferedOutputStream(new FileOutputStream(tempSorted));
-
-            // sort
-            Sorter.create(sourceIn, sortedOut, true).field(2, false).sort();
-
-            Log.progressFinish(StringUtils.OK, true);
+            Log.progressStart("zipping");
 
             // read the sorted file and put it in a zip form
             InputStream sortedIn = new FileInputStream(tempSorted);
