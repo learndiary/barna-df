@@ -1,5 +1,6 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.options.HelpPrinter;
 import org.cyclopsgroup.caff.ref.AccessFailureException;
@@ -50,6 +51,11 @@ public class FluxSimulator {
      * Show help message
      */
     private boolean help;
+
+    /**
+     * Number of executor threads
+     */
+    private int threads = 2;
 
 
     /**
@@ -137,6 +143,8 @@ public class FluxSimulator {
             // exit after printing help
             System.exit(-1);
         }
+
+
         if(tool != null){
             // execute the tool
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
@@ -147,6 +155,9 @@ public class FluxSimulator {
             }
 
             try {
+                // configure the executor
+                Execute.initialize(simulator.getThreads());
+
                 tool.call();
             }catch (IOException ioError){
                 // check for some specific errors
@@ -158,6 +169,9 @@ public class FluxSimulator {
             }catch (Exception e) {
                 Log.error(e.getMessage(), e);
                 Log.debug("Error while executing "+ tool.getClass(), e);
+            }finally {
+                // shutdown the executor
+                Execute.shutdown();
             }
         }else{
             if(simulator.getToolName() == null || simulator.getToolName().isEmpty()){
@@ -300,6 +314,24 @@ public class FluxSimulator {
         return !Log.isInteractive();
     }
 
+    /**
+     * Returns the number of available background threads
+     *
+     * @return threads the number of background threads
+     */
+    public int getThreads() {
+        return threads;
+    }
+
+    /**
+     * Set the number of background threads
+     *
+     * @param threads number of background threads
+     */
+    @Option(name = "", longName = "threads", description = "Number of threads, default is 2", required = false, defaultValue = "2")
+    public void setThreads(final int threads) {
+        this.threads = threads;
+    }
 
     /**
      * Read properties like version and build revision from jar file

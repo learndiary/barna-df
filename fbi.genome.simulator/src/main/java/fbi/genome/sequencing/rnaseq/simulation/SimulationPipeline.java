@@ -220,15 +220,15 @@ public class SimulationPipeline implements FluxTool<Void> {
             return null;
         }
 
-        if (settings.get(FluxSimulatorSettings.PRO_FILE).exists()) {
-            getProfiler().loadStats();
+        File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
+        if (profilerFile.exists()) {
+            // initialize the profiler
+            getProfiler().initializeProfiler(profilerFile);
             if (isExpression() && getProfiler().isFinishedExpression()) {
-                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file "+ settings.get(FluxSimulatorSettings.PRO_FILE).getName()+", please confirm:\n\t(Yes,No,Don't know)"))
+                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file "+ profilerFile.getName()+", please confirm:\n\t(Yes,No,Don't know)"))
                     return null;
                 else {
-                    boolean b= settings.get(FluxSimulatorSettings.PRO_FILE).delete();	// TODO maybe only remove rfreqs..
-                    if (getProfiler()!= null)
-                        getProfiler().status= -1;
+                    getProfiler().resetProfile();
                 }
             }
             Log.message("");

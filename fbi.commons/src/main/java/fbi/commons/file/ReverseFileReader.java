@@ -10,34 +10,73 @@ package fbi.commons.file;
  *						Does not support unicode!
  *******************************************************************/
 
+import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 
+/**
+ * Read a file reverse, line by line. Note that this wil not work properly for non ASCII characters
+ */
 public class ReverseFileReader {
-    private String filename;
+    /**
+     * The file reader
+     */
     private RandomAccessFile randomfile;
+    /**
+     * Current position
+     */
     private long position;
+    /**
+     * The file
+     */
+    private File file;
 
-    public ReverseFileReader(String filename) throws Exception {
-        // Open up a random access file
-        this.randomfile = new RandomAccessFile(filename, "r");
-        // Set our seek position to the end of the file
-        this.position = this.randomfile.length();
-
-        // Seek to the end of the file
-        this.randomfile.seek(this.position);
-
-        //Move our pointer to the first valid position at the end of the file.
-        String thisLine = this.randomfile.readLine();
-        while (thisLine == null || thisLine.equals("")) {
-            this.position--;
-            this.randomfile.seek(this.position);
-            thisLine = this.randomfile.readLine();
-            this.randomfile.seek(this.position);
-        }
+    /**
+     * Create the reader
+     *
+     * @param filename the filename
+     */
+    public ReverseFileReader(String filename) {
+        this(new File(filename));
     }
 
-    // Read one line from the current position towards the beginning
-    public String readLine() throws Exception {
+    /**
+     * The file
+     *
+     * @param file the file
+     */
+    public ReverseFileReader(File file) {
+        if(file == null) throw new NullPointerException();
+        this.file = file;
+    }
+
+    /**
+     * Reads the next line
+     *
+     * @return line the next line
+     * @throws Exception in case of any errors
+     */
+    public String readLine() throws IOException {
+        if(randomfile==null){
+            // initialize
+            // Open up a random access file
+            this.randomfile = new RandomAccessFile(file, "r");
+            // Set our seek position to the end of the file
+            this.position = this.randomfile.length();
+
+            // Seek to the end of the file
+            this.randomfile.seek(this.position);
+
+            //Move our pointer to the first valid position at the end of the file.
+            String thisLine = this.randomfile.readLine();
+            while (thisLine == null || thisLine.equals("")) {
+                this.position--;
+                this.randomfile.seek(this.position);
+                thisLine = this.randomfile.readLine();
+                this.randomfile.seek(this.position);
+            }
+        }
+
         int thisCode;
         char thisChar;
         String finalLine = "";
@@ -59,10 +98,11 @@ public class ReverseFileReader {
             // Read the data at this position
             thisCode = this.randomfile.readByte();
             thisChar = (char) thisCode;
-            // TODO A little warning: the code posted there encodes bytes to chars by simply casting them.
+
+
+            // A little warning: the code posted there encodes bytes to chars by simply casting them.
             // This should work correctly if the encoding of the file is ISO-8859-1.
             // If it's something else, the non-ASCII chars will be mangled. As the author says, works fine for him.
-
             // If this is a line break or carrige return, stop looking
             if (thisCode == 13 || thisCode == 10) {
                 // See if the previous character is also a line break character.
@@ -85,5 +125,18 @@ public class ReverseFileReader {
         }
         // return the line
         return finalLine;
+    }
+
+    /**
+     * Close the reader
+     */
+    public void close(){
+        if(randomfile != null){
+            try {
+                randomfile.close();
+            } catch (IOException ignored) {
+                // ignore
+            }
+        }
     }
 }

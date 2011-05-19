@@ -454,7 +454,6 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
     @Override
     public int hashCode() {
-
         int h = 0, len = length();
 
         for (int i = 0; i < len; i++) {

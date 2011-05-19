@@ -2,7 +2,6 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
-import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.thread.StoppableRunnable;
 import fbi.commons.thread.SyncIOHandler2;
@@ -1634,7 +1633,7 @@ public class Fragmenter implements StoppableRunnable {
 	boolean stop= false;
 	long molInit, molRT, molFrag, molFilt;
 	FluxSimulatorSettings settings;
-	Hashtable<CharSequence,Long> mapFrags;
+	Hashtable<ByteArrayCharSequence,Long> mapFrags;
 	ProgressablePlotter plotter;
 	HashMap<CharSequence, double[]> mapWeightSense= null, mapWeightAsense= null;
 	
@@ -1898,7 +1897,8 @@ public class Fragmenter implements StoppableRunnable {
 			stopProcessors();
 			return;
 		}
-		if (!ProfilerFile.appendProfile(settings, ProfilerFile.PRO_COL_NR_FRG, mapFrags))	// writeProFile()
+        File proFile = settings.get(FluxSimulatorSettings.PRO_FILE);
+        if (!ProfilerFile.appendProfile(proFile, ProfilerFile.PRO_COL_NR_FRG, mapFrags))	// writeProFile()
 			throw new RuntimeException();
 		stopProcessors();
 	}
@@ -2002,7 +2002,7 @@ public class Fragmenter implements StoppableRunnable {
 
 	boolean init() throws Exception{
 	    int nbTx  = FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
-    	mapFrags= new Hashtable<CharSequence,Long>(nbTx, 1f);
+    	mapFrags= new Hashtable<ByteArrayCharSequence,Long>(nbTx, 1f);
     	tmpFile= File.createTempFile("Framgmenter-tmp", ".tmp");
 		tmpWriteFile= File.createTempFile("Framgmenter-write", ".tmp");
 		return true;
@@ -2427,11 +2427,10 @@ public class Fragmenter implements StoppableRunnable {
 			double thrTgt= 0.95;
 			double tgtFrac= 0d;
 			cumuLen= 0;
-			int[] allLength= profiler.getLen();
-			long[] allMos= profiler.getMolecules();
-			for (int i = 0; i < allLength.length; i++) {
-				cumuLen+= allMos[i]* allLength[i];
-				prevMols+= allMos[i];
+			for (int i = 0; i < profiler.size(); i++) {
+                long molecules = profiler.getMolecules(i);
+                cumuLen+= molecules * profiler.getLength(i);
+				prevMols+= molecules;
 			}
 			
 			if (mode== MODE_NEBU)
@@ -2479,7 +2478,7 @@ profiler.getMaxMoleculeLength()
 
 				Object[] keys= mapFrags.keySet().toArray();
 				for (int i = 0; i < keys.length; i++) 
-					mapFrags.put((CharSequence) keys[i], longNull);	// 20101205: changed from cast to string, ClassCastException for ByteArrayCharSequence
+					mapFrags.put((ByteArrayCharSequence) keys[i], longNull);	// 20101205: changed from cast to string, ClassCastException for ByteArrayCharSequence
 				
 				currMols= 0; newMols= 0; tgtMols= 0;
 				tstNewMols= 0; tstCurrMols= 0;
@@ -2754,77 +2753,24 @@ profiler.getMaxMoleculeLength()
 
 
 	Processor[] processorPool;
-	/**
-	 * @deprecated use Settings
-	 * @return
-	 */
-	private boolean writeProFile() {
-		try {
-			System.err.print("\tupdating PROfile ");
-			System.err.flush();
-            BufferedReader buffy= new BufferedReader(new FileReader(settings.get(FluxSimulatorSettings.PRO_FILE)));
-            BufferedWriter wright= new BufferedWriter(new FileWriter(settings.get(FluxSimulatorSettings.TMP_DIR) +File.separator+ settings.get(FluxSimulatorSettings.PRO_FILE).getName()+ TMP_SFX));
-			String[] token;
-            long bytesRead= 0, bytesTotal= settings.get(FluxSimulatorSettings.PRO_FILE).length();
-			int perc= 0, lineCtr= 0;
-			String nullStr= Double.toString(0d)+ ProfilerFile.PRO_FILE_TAB+Long.toString(0);
-			for (String s= null; (s= buffy.readLine())!= null;++lineCtr) {
-				
-				bytesRead+= s.length()+ ProfilerFile.PRO_FILE_CR.length();
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					perc= StringUtils.printPercentage(perc, bytesRead, bytesTotal, System.err);
-				
-				token= s.split(ProfilerFile.PRO_FILE_TAB);
-				wright.write(s);
-				wright.write(ProfilerFile.PRO_FILE_TAB);
-				if (mapFrags.containsKey(token[0])) {
-					long absCnt= mapFrags.get(token[0]);
-					double relFreq= absCnt/ (double) currMols;
-					wright.write(Double.toString(relFreq));
-					wright.write(ProfilerFile.PRO_FILE_TAB);
-					wright.write(Long.toString(absCnt));
-				} else 
-					wright.write(nullStr);
-				
-				wright.write(ProfilerFile.PRO_FILE_CR);
-				if (lineCtr%1000== 0)
-					wright.flush();
-			}
-			buffy.close();
-			wright.flush();
-			wright.close();
-			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" OK");
-			return true;
-			
-		} catch (Exception e) {
-			if (Constants.verboseLevel>= Constants.VERBOSE_ERRORS)
-				e.printStackTrace();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println(" FAILED");
-			return false;
-		}
-		
-	}
-	
+
 	private void updateStats(int start, int end, int len, ByteArrayCharSequence id) {
 		cumuLen+= len;
 		maxLen= Math.max(maxLen, len);
 	}
 	
-	private void increaseFragCount(CharSequence string) {
+	private void increaseFragCount(ByteArrayCharSequence string) {
 		addFragCount(string, 1l);
 	}
-	private synchronized void addFragCount(CharSequence string, Long i) {
+	private synchronized void addFragCount(ByteArrayCharSequence string, Long i) {
 //		if (1== 1)
 //			return;
 		if (mapFrags.containsKey(string)) {
 			long otherVal= mapFrags.get(string)+ i;	// 20101215: whyever, dont use in put clause
 													// see tstCurMol and tstNewMol divergence
-			mapFrags.put(string, otherVal);
+			mapFrags.put(string.cloneCurrentSeq(), otherVal);
 		} else
-			mapFrags.put(string, i);
+			mapFrags.put(string.cloneCurrentSeq(), i);
 		
 	}
 	
@@ -2861,19 +2807,19 @@ profiler.getMaxMoleculeLength()
 			for (int i = 0; i < processors.length; i++) 
 				processors[i].setFos(fos);
 			int perc= 0; molInit= 0; medLen= 0; minLen= Integer.MAX_VALUE; maxLen= Integer.MIN_VALUE;
-			for (int i = 0; (!isStop())&& i < profiler.getMolecules().length; i++) {
-				Log.progress(i, profiler.getMolecules().length);
-				if (plotter!= null)
-					plotter.addBase(profiler.getCombinedID(i),
-							profiler.getLen()[i],
-							(int) profiler.getMolecules()[i]);
+			for (int i = 0; (!isStop())&& i < profiler.size(); i++) {
+				Log.progress(i, profiler.size());
+//				if (plotter!= null)
+//					plotter.addBase(profiler.getCombinedID(i),
+//							profiler.getLen()[i],
+//							(int) profiler.getMolecules()[i]);
 				
-				int origLen= profiler.getLen()[i];
-				StringBuilder compID= new StringBuilder(profiler.getLocIDs()[i]);
+				int origLen= profiler.getLength(i);
+				StringBuilder compID= new StringBuilder(profiler.getLociId(i));
 				compID.append(FluxSimulatorSettings.SEP_LOC_TID);
-				compID.append(profiler.getIds()[i]);
+				compID.append(profiler.getId(i));
 				String compIDstring= compID.toString();
-				for (int x = 0; (!isStop())&& x < profiler.getMolecules()[i]; x++) {
+				for (int x = 0; (!isStop())&& x < profiler.getMolecules(i); x++) {
 					++cntMolInit;
 					if (processors.length== 1) {
 						processors[0].origLen= origLen;
@@ -2902,7 +2848,7 @@ profiler.getMaxMoleculeLength()
 					
 						//getNebuLine(start,end,profiler.getIds()[i])+"\n";
 				}
-				molInit+= profiler.getMolecules()[i];
+				molInit+= profiler.getMolecules(i);
 			}
 			for (int i = 0; i < processors.length; i++) {
 				processors[i].close();	// 20101205: combine control flow to Processor.stop
@@ -2943,7 +2889,7 @@ profiler.getMaxMoleculeLength()
 		return getNebuLine(Integer.toString(start), Integer.toString(end), ancestor);
 	}
 	public static String getNebuLine(String start, String end, String ancestor) {
-		return start+ ProfilerFile.PRO_FILE_TAB+ end+ ProfilerFile.PRO_FILE_TAB+ ancestor;
+		return start+ ProfilerFile.PRO_FILE_SEP+ end+ ProfilerFile.PRO_FILE_SEP+ ancestor;
 	}
 
 	public boolean isStop() {
@@ -2973,7 +2919,7 @@ profiler.getMaxMoleculeLength()
 	public String isReady() {
         if(settings == null) return "No Setting specified!";
         if(profiler == null) return "Profiler is not initialized!";
-        if(profiler.getMolecules() == null) return "Profiler has no molecules!";
+        if(profiler.size() == 0) return "Profiler has no molecules!";
         if(settings.get(FluxSimulatorSettings.LIB_FILE) == null) return "No fragmentation file specified!";
 		return null;
 	}
@@ -2988,8 +2934,8 @@ profiler.getMaxMoleculeLength()
 		try {
 			Log.progressStart("initializing library");
 			molInit= 0;			
-			for (int i = 0; (!isStop())&& i < profiler.getMolecules().length; i++)
-				molInit+= profiler.getMolecules()[i];
+			for (int i = 0; (!isStop())&& i < profiler.size(); i++)
+				molInit+= profiler.getMolecules(i);
 			if (plotter!= null)
 				plotter.setMolTot(molInit);
 			//BufferedReader buffy= new BufferedReader(new FileReader(settings.getFrgFile()));

@@ -18,6 +18,5 @@ public class ByteArrayCharSequenceTest {
         ss = new ByteArrayCharSequence("   abc  \t ");
         ss.trim();
         assertEquals("abc", ss.toString());
-
     }
 }

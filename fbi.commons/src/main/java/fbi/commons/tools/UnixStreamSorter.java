@@ -1,12 +1,16 @@
 package fbi.commons.tools;
 
 
+import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Implements an external R-Way merge sort by creating sorted chunks, writing them to disk and
@@ -122,8 +126,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         }
         int currentMerges = 0;
         totalLines = c * totalLines;
-        ExecutorService exec = Executors.newFixedThreadPool(4);
-
 
         if(!silent){
             Log.progressStart("\tmerging ~" + files.size() + " blocks");
@@ -138,11 +140,11 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             try {
                 if(files.size() <= sortChunks){
                     // final run
-                    mergeFiles(files, exec, output, totalLines, currentMerges);
+                    mergeFiles(files, Execute.getExecutor(), output, totalLines, currentMerges);
                     files.clear();
                 }else{
                     // intermediate run
-                    List<SorterFile> next = mergeFiles(files, exec, null, totalLines, currentMerges);
+                    List<SorterFile> next = mergeFiles(files, Execute.getExecutor(), null, totalLines, currentMerges);
                     for (SorterFile sorterFile : next) {
                         currentMerges += sorterFile.getLines();
                     }
@@ -154,7 +156,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             }
 
         }
-        exec.shutdownNow();
 
         // make sure in and out are closed
         output.close();
@@ -231,7 +232,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             Log.progressStart("\tdividing input to ~"+blocks + " blocks ");
         }
 
-        ExecutorService exec = Executors.newFixedThreadPool(4);
         try {
             // counters
             int bytes = 0;
@@ -258,12 +258,12 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
 
                     final ArrayList<String> jobLines = new ArrayList<String>(lines);
                     final LineComparator jobComparator = new LineComparator(comparator);
-                    jobs.add(exec.submit(new Callable<SorterFile>() {
+                    jobs.add(Execute.getExecutor().submit(new Callable<SorterFile>() {
                         @Override
                         public SorterFile call() throws Exception {
                             SorterFile sorterFile = sortAndWriteTempFile(jobLines, jobComparator);
                             jobComparator.reset();
-                            synchronized (jobs){
+                            synchronized (jobs) {
                                 jobs.notifyAll();
                             }
                             return sorterFile;
@@ -328,7 +328,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             try {
                 input.close();
                 reader.close();
-                exec.shutdownNow();
             } catch (IOException e) {
             }
         }

@@ -230,7 +230,7 @@ public class Sequencer implements StoppableRunnable {
 			 ++totalReads;
 			 if (flen< rLen)
 				 ++cntTruncReads;
-			 String id= t.getGene().getGeneID()+ FluxSimulatorSettings.SEP_LOC_TID+ t.getTranscriptID();
+			 ByteArrayCharSequence id= new ByteArrayCharSequence(t.getGene().getGeneID()+ FluxSimulatorSettings.SEP_LOC_TID+ t.getTranscriptID());
 			 if (map.containsKey(id))
 				 map.put(id, map.get(id)+ 1);
 			 else 
@@ -442,7 +442,7 @@ public class Sequencer implements StoppableRunnable {
 	}
 	
 	Random rnd= new Random(), rndFiftyFifty= new Random();
-	Hashtable<CharSequence,Long> map;
+	Hashtable<ByteArrayCharSequence,Long> map;
 	private synchronized void incrementFragCtr(Transcript t) {
 		++totalFrags;
 		//hashTrp.add(t.getTranscriptID());
@@ -456,59 +456,6 @@ public class Sequencer implements StoppableRunnable {
 	File zipFile= null; //new File("N:\\tmp\\master.zip");
 	ZipFile zzFile;
 	Hashtable<CharSequence, ZipEntry> zipHash;
-	void writeInitialFile_old() {
-		try {
-			String sss= "sequencing init";
-            Log.progressStart(sss);
-
-            BufferedReader buffy= new BufferedReader(new FileReader(settings.get(FluxSimulatorSettings.LIB_FILE)));
-            long bytesRead= 0, totBytes= settings.get(FluxSimulatorSettings.LIB_FILE).length();
-			int cnt= 0, perc= 0;
-			mapFrags= new Hashtable<String,int[][]>(profiler.getIds().length);
-			Vector<int[]> v= new Vector<int[]>();
-			String[] token;
-			String currentID= null;
-			for (String s; 
-				!stop&& (s= buffy.readLine())!= null; 
-				++cnt, bytesRead+= s.length()+ System.getProperty("line.separator").length()) {
-                Log.progress(bytesRead, totBytes);
-				token= s.split(Fragmenter.FRG_FILE_TAB);
-				
-				if (!token[2].equals(currentID)) {
-					if (v.size()> 0) {
-						int[][] m= new int[v.size()][];
-						for (int i = 0; i < m.length; i++) 
-							m[i]= v.elementAt(i);
-						v.removeAllElements();
-						mapFrags.put(currentID, m);
-					}
-					currentID= token[2];
-				}
-				
-				int[] p= new int[2];
-				p[0]= Integer.parseInt(token[0]);
-				p[1]= Integer.parseInt(token[1]);
-				v.add(p);
-			}
-			buffy.close();
-			
-			nrOfFrags= cnt;
-            p= settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) cnt;
-
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println();
-			
-			if (!stop) {
-				sequence();
-			}
-			
-			//convertToSAM();
-			
-		} catch (Exception e) {
-			return;
-		}
-
-	}
 
 	int writeInitialFileZip(ByteArrayCharSequence cs, File in, File out) {
 		try {
@@ -574,7 +521,7 @@ public class Sequencer implements StoppableRunnable {
 			// hash entries
 			if (zipFile== null|| !zipFile.exists())
 				return false;
-			zipHash= new Hashtable<CharSequence, ZipEntry>(profiler.getIds().length);
+			zipHash= new Hashtable<CharSequence, ZipEntry>(profiler.size());
 			ZipFile zFile= new ZipFile(zipFile);
 			Enumeration e= zFile.entries();
 			ZipEntry ze;
@@ -686,7 +633,7 @@ public class Sequencer implements StoppableRunnable {
             if (settings.get(FluxSimulatorSettings.READ_NUMBER) < nrOfFrags)
                 p= settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) nrOfFrags;
 			//System.err.println(settings.readNr+" reads, "+nrOfFrags+ " frags, p= "+p);
-			map= new Hashtable<CharSequence,Long>(profiler.getMolecules().length);
+			map= new Hashtable<ByteArrayCharSequence,Long>(profiler.size());
 			
 			// init IO
 			zzFile= new ZipFile(zipFile);
@@ -791,7 +738,7 @@ public class Sequencer implements StoppableRunnable {
 			}
 			
 			if (!stop) 
-				ProfilerFile.appendProfile(settings, ProfilerFile.PRO_COL_NR_SEQ, map);
+				ProfilerFile.appendProfile(settings.get(FluxSimulatorSettings.PRO_FILE), ProfilerFile.PRO_COL_NR_SEQ, map);
 		
 			zipFile.delete();
 			zipFile= null;

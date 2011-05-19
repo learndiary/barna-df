@@ -11,24 +11,67 @@ import fbi.genome.model.Gene;
 import fbi.genome.model.commons.Distribution;
 import fbi.genome.model.commons.IntVector;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+
+/**
+ * Simulator profiler. Manages and creates the expression profile
+ *
+ */
 public class Profiler implements Callable<Void> {
 
-    public static final byte STAT_NONE = 0, STAT_ANN = 4, STAT_RELFREQ = 5, STAT_MOL = 6;
-    FluxSimulatorSettings settings;
-    byte status = -1;
-    ByteArrayCharSequence[] ids = null, locIDs;
-    int[] len = null;
-    long[] molecules = null;
-    boolean[] cds = null;
-    int cntLoci = -1;
-    float txLocAvg = -1, txLocMed = -1, txLoc1Q = -1, txLoc3Q = -1, txLocSTD = -1, lenMed = -1, lenAvg = -1, lenSTD = -1, len1Q = -1, len3Q = -1, lenMin = -1, lenMax = -1;
-    HashSet<CharSequence> sfHi, sfMed, sfLo;
-    Hashtable<ByteArrayCharSequence, int[]> mapLenExp;
-    long sumMol = 0;
+    /**
+     * Status: no profile available
+     */
+    private static final byte STAT_NONE = 0;
+    /**
+     * Status: annotations available
+     */
+    private static final byte STAT_ANN = 4;
+    /**
+     * Status: relative frequencies available
+     */
+    private static final byte STAT_RELFREQ = 5;
+
+    /**
+     * The setting
+     */
+    private FluxSimulatorSettings settings;
+    /**
+     * Current state
+     */
+    private byte status = -1;
+    /**
+     * Transcript ids, i.e. NM_009826
+     */
+    private ByteArrayCharSequence[] ids = null;
+    /**
+     * Locus ids based on chromosome and position, i.e., chr1:6204743-6266185W
+     */
+    private ByteArrayCharSequence[] locIDs;
+    /**
+     * Lengths
+     */
+    private int[] len = null;
+    /**
+     * Molecules
+     */
+    private long[] molecules = null;
+    /**
+     * Cds
+     */
+    private boolean[] cds = null;
+
+    /**
+     * Stores a mapping from the global ID (chromosome+position+transcriptID) to an array
+     * where a[0] contains the length and int[1] contains the absolute number of molecules
+     */
+    private Map<ByteArrayCharSequence, int[]> mapLenExp;
 
     /**
      * Create a new new profiler
@@ -40,14 +83,21 @@ public class Profiler implements Callable<Void> {
         this.settings = settings;
     }
 
-
+    /**
+     * Start profiling
+     *
+     * @return null always returns null
+     * @throws Exception in case of any errors
+     */
     public Void call() throws Exception {
         Log.info("PROFILING", "I am assigning the expression profile");
-        status = getStatus();
-        if (status == STAT_NONE) {
+        status = readStatus();
+
+        if (status == STAT_NONE || ! isFinishedReadAnnotation()) {
+            // read annotation and write initial profile file without expression
             readAnnotation();
             status = STAT_ANN;
-            writeProfile();
+            ProfilerFile.writeProfile(this, settings.get(FluxSimulatorSettings.PRO_FILE));
         }
 
         // write some info
@@ -59,45 +109,66 @@ public class Profiler implements Callable<Void> {
         Log.message("\t" + settings.toString(FluxSimulatorSettings.PRO_FILE));
         Log.message("");
 
-        profile();
+        long sumMol = profile();
         Log.message("\tmolecules\t" + sumMol);
         Log.message("");
         return null;
     }
 
+    /**
+     * Returns true if the profile contains transcripts with length information, loci ID and transcript id
+     *
+     * @return annotations true if profile contains transcripts
+     */
     public boolean isFinishedReadAnnotation() {
         return (locIDs != null && ids != null && ids.length > 0 && cds != null && len != null &&
                 ids.length == len.length && ids.length == locIDs.length && ids.length == cds.length);
     }
 
+    /**
+     * Returns true if transcripts and an expression profile exists
+     *
+     * @return expression true if expression profile exists
+     */
     public boolean isFinishedExpression() {
         return (isFinishedReadAnnotation() && molecules != null && ids.length == molecules.length);
     }
 
-    byte getStatus() {
+    /**
+     * Read the profiler file and find out the status based on the number of columns
+     *
+     * @return status the current status
+     */
+    byte readStatus() {
 
-        if (settings.get(FluxSimulatorSettings.PRO_FILE) == null || !settings.get(FluxSimulatorSettings.PRO_FILE).exists()) {
+        File profileFile = settings.get(FluxSimulatorSettings.PRO_FILE);
+        if (profileFile == null || !profileFile.exists()) {
             return STAT_NONE;
         }
 
         try {
-            ReverseFileReader rreader = new ReverseFileReader(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
+            ReverseFileReader rreader = new ReverseFileReader(profileFile.getCanonicalPath());
             String s = rreader.readLine();
+            rreader.close();
+
             if (s == null) {
                 return STAT_NONE;
             }
 
             String[] tokens = s.split("\\s");
             return (byte) tokens.length;
-
         } catch (Exception e) {
-            //e.printStackTrace();
+            // ignore the exception
             return STAT_NONE;
         }
 
     }
 
-
+    /**
+     * Read transcript information from GTF annotations
+     *
+     * @throws Exception in case of any errors
+     */
     private void readAnnotation() throws Exception {
         GFFReader reader = createGTFReader();
 
@@ -113,29 +184,30 @@ public class Profiler implements Callable<Void> {
         mapLenExp = new Hashtable<ByteArrayCharSequence, int[]>();
         boolean loadCoding = settings.get(FluxSimulatorSettings.LOAD_CODING);
         boolean loadNonCoding = settings.get(FluxSimulatorSettings.LOAD_NONCODING);
+        long totalBytes = settings.get(FluxSimulatorSettings.REF_FILE).length();
         for (Gene[] g; (g = reader.getGenes()) != null; reader.read()) {
-            for (int i = 0; i < g.length; i++) {
-                ++cntLoci;
-                for (int j = 0; j < g[i].getTranscripts().length; j++) {
+            Log.progress(reader.getBytesRead(), totalBytes);
+            for (Gene aG : g) {
+                for (int j = 0; j < aG.getTranscripts().length; j++) {
 
 
-                    if (g[i].getTranscripts()[j].isCoding() && (!loadCoding)) {
+                    if (aG.getTranscripts()[j].isCoding() && (!loadCoding)) {
                         continue;
                     }
 
-                    if ((!g[i].getTranscripts()[j].isCoding()) && (!loadNonCoding)) {
+                    if ((!aG.getTranscripts()[j].isCoding()) && (!loadNonCoding)) {
                         continue;
                     }
-                    if (g[i].getTranscripts()[j].isCoding()) {
+                    if (aG.getTranscripts()[j].isCoding()) {
                         vBoo.add(true);
                     } else {
                         vBoo.add(false);
                     }
-                    v.add(new ByteArrayCharSequence(g[i].getTranscripts()[j].getTranscriptID()));
-                    ByteArrayCharSequence locName = new ByteArrayCharSequence(g[i].getGeneID());
+                    v.add(new ByteArrayCharSequence(aG.getTranscripts()[j].getTranscriptID()));
+                    ByteArrayCharSequence locName = new ByteArrayCharSequence(aG.getGeneID());
                     vLoc.add(locName);
                     int[] a = new int[2];
-                    a[0] = g[i].getTranscripts()[j].getExonicLength();
+                    a[0] = aG.getTranscripts()[j].getExonicLength();
                     lenV.add(a[0]);
                 }
             }
@@ -158,8 +230,8 @@ public class Profiler implements Callable<Void> {
 
 
         len = lenV.toIntArray();
-        calcStats();
 
+        Log.progressFinish(StringUtils.OK, true);
         Log.message("\tfound " + ids.length + " transcripts\n");
 
         v = null;
@@ -170,66 +242,448 @@ public class Profiler implements Callable<Void> {
 
     }
 
-    private void writeProfile() throws IOException {
-        BufferedWriter writer = null;
+
+
+
+
+
+    /**
+     * Get the transcript length distribution
+     *
+     * @return lengthDistribution length distribution
+     */
+    public Distribution getLengthDistribution(){
+        return new Distribution(len.clone());
+    }
+    /**
+     * Get the distributions of transcripts per loci
+     *
+     * @return transcriptDistribution
+     */
+    public Distribution getTranscriptDistribution(){
+        if(locIDs == null) throw new RuntimeException("No profile loaded!");
+        CharSequence lastLocID = null;
+        int asCtr = 1;
+        IntVector asV = new IntVector();
+        for (ByteArrayCharSequence locID : locIDs) {
+            if ((!locID.equals(lastLocID))) {
+                if (lastLocID != null) {
+                    asV.add(asCtr);
+                    asCtr = 1;
+                }
+                lastLocID = locID;
+            } else {
+                ++asCtr;
+            }
+        }
+        return new Distribution(asV.toIntArray());
+    }
+
+
+    /**
+     * Do the profiling. This assumes that annotations are read and exist
+     *
+     * @return molecules number of expressed molecules
+     */
+    protected long profile() {
+        Log.progressStart("profiling");
         try {
-            writer = new BufferedWriter(new FileWriter(settings.get(FluxSimulatorSettings.PRO_FILE)));
-            for (int i = 0; i < ids.length; i++) {
-                writer.write(locIDs[i] + ProfilerFile.PRO_FILE_SEP + ids[i] + ProfilerFile.PRO_FILE_SEP + (cds[i] ? ProfilerFile.PRO_FILE_CDS : ProfilerFile.PRO_FILE_NC)
-                        + ProfilerFile.PRO_FILE_SEP + Integer.toString(len[i]) + "\n");
+            if (ids == null) {
+                ids = new ByteArrayCharSequence[FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath())];
+                len = new int[ids.length];
             }
-            writer.flush();
-            writer.close();
-        }finally {
-            if(writer != null){
-                try {writer.close();} catch (IOException e) {}
+            double sumRF = 0;
+            long sumMol = 0;
+            molecules = new long[ids.length];
+            double[] relFreq = new double[ids.length];
+
+            if (status < STAT_RELFREQ) {
+                double expressionK = settings.get(FluxSimulatorSettings.EXPRESSION_K);
+                double expression_x0 = settings.get(FluxSimulatorSettings.EXPRESSION_X0);
+                double expression_x1 = settings.get(FluxSimulatorSettings.EXPRESSION_X1);
+                long nb_molecules = settings.get(FluxSimulatorSettings.NB_MOLECULES);
+                // generate random permutation of ranks
+                Random r = new Random();
+                for (int i = 0; i < molecules.length; i++) {
+                    molecules[i] = 1 + r.nextInt(molecules.length - 1);
+                }
+                /*
+                Expressions
+                 */
+                for (int i = 0; i < relFreq.length; i++) {
+                    double par = pareto(molecules[i], expressionK, expression_x0);
+                    double exp = exponential(molecules[i], expression_x1);
+                    sumRF += (relFreq[i] = par * exp);
+                }
+                /*
+                Normalize
+                 */
+                for (int i = 0; i < relFreq.length; ++i) {
+                    relFreq[i] /= sumRF;
+                    sumMol += (molecules[i] = Math.round(relFreq[i] * nb_molecules));
+                    if (molecules[i] > 0) {
+                        mapLenExp.put(getCombinedID(i), new int[]{len[i], (int) molecules[i]});
+                    }
+                    Log.progress(i, relFreq.length);
+                }
             }
+            Log.progressFinish(StringUtils.OK, false);
+
+
+            /*
+            Append expression information to profile file
+             */
+            Map<ByteArrayCharSequence, Long> map = new HashMap<ByteArrayCharSequence, Long>(size());
+            for (int i = 0; i < size(); i++) {
+                if (molecules[i] != 0) {
+                    ByteArrayCharSequence locNtid = locIDs[i].cloneCurrentSeq();
+                    locNtid.append(Character.toString(FluxSimulatorSettings.SEP_LOC_TID));
+                    locNtid.append(ids[i]);
+                    map.put(locNtid, molecules[i]);
+                }
+            }
+            if (!ProfilerFile.appendProfile(settings.get(FluxSimulatorSettings.PRO_FILE), ProfilerFile.PRO_COL_NR_MOL, map)) {
+                throw new RuntimeException("Unable to append data to profile file!");
+            }
+            return sumMol;
+        } catch (Exception e) {
+            Log.progressFailed("FAILED");
+            throw new RuntimeException("Error while profiling :" + e.getMessage(), e);
         }
     }
 
+    /**
+     * Returns the number of transcripts in the profiler. You
+     * can use this, for example, to iterate over all entries.
+     *
+     * @return size the number of transcripts
+     */
+    public int size(){
+        return ids != null ? ids.length : 0;
+    }
+
+    /**
+     * Get the transcript IDs at the i'the position
+     *
+     * @param i the entry position
+     * @return id transcript id at the i'th position
+     */
+    public ByteArrayCharSequence getId(int i) {
+        return ids[i];
+    }
+
+    /**
+     * The the transcript lengths of the i'th entry
+     *
+     * @param i entry index
+     * @return lengths of the i'th entry
+     */
+    public int getLength(int i) {
+        return len[i];
+    }
+
+    /**
+     * Returns the length of the transcript based on the given global ID
+     *
+     * @param id the global ID
+     * @return length transcript length
+     */
     public int getLength(ByteArrayCharSequence id) {
         return mapLenExp.get(id)[0];
     }
 
 
-    private void calcStats() {
+    /**
+     * Get the number of molecules for the i'th transcript
+     *
+     * @param i the entry
+     * @return molecules number of molecules for the i'th transcript
+     */
+    public long getMolecules(int i) {
+        return molecules[i];
+    }
 
-        CharSequence lastLocID = null;
-        int asCtr = 1;
-        IntVector asV = new IntVector();
-        cntLoci = 0;
-        for (int i = 0; i < locIDs.length; i++) {
-            if ((!locIDs[i].equals(lastLocID))) {
-                ++cntLoci;
-                if (lastLocID != null) {
-                    asV.add(asCtr);
-                    asCtr = 1;
+    /**
+     * Returns true if the entry at the i'th position is of type CDS
+     *
+     * @param i the entry
+     * @return cds true if CDS
+     */
+    public boolean isCds(int i){
+        return cds[i];
+    }
+
+    /**
+     * Load profile from existing profiler file
+     *
+     * @param profileFile the profiler file
+     * @return success true if profile loaded successfully, false otherwise
+     */
+    public boolean initializeProfiler(File profileFile) {
+        if (profileFile == null || (!profileFile.exists()) || !profileFile.canRead()) {
+            return false;
+        }
+
+        int lim = Integer.MAX_VALUE;    // last working token
+        BufferedInputStream istream = null;
+        ThreadedBufferedByteArrayStream buffy = null;
+        try {
+            Log.progressStart("initializing profiler ");
+            int lines = FileHelper.countLines(profileFile);
+            int separatorLength = Math.min(1, FileHelper.guessFileSep(profileFile).length());
+
+            /*
+            Initialize data structures
+             */
+            ids = new ByteArrayCharSequence[lines];
+            locIDs = new ByteArrayCharSequence[lines];
+            len = new int[lines];
+            molecules = new long[lines];
+            cds = new boolean[lines];
+            /**
+             * Cache to identify duplicated IDs and always use the
+             * same object for them
+             */
+            Map<ByteArrayCharSequence, ByteArrayCharSequence> locIDset = new HashMap<ByteArrayCharSequence, ByteArrayCharSequence>();
+            int ptr = -1;
+            long bytesRead = 0, bytesTot = profileFile.length();
+            mapLenExp = new Hashtable<ByteArrayCharSequence, int[]>();
+
+            // read
+            istream = new BufferedInputStream(new FileInputStream(profileFile));
+            buffy = new ThreadedBufferedByteArrayStream(10 * 1024, istream, true, false);
+
+            // cache
+            ByteArrayCharSequence cs = new ByteArrayCharSequence(1024);
+            for (buffy.readLine(cs); cs.end > 0; buffy.readLine(cs)) {
+                // reset cache find
+                cs.resetFind();
+                bytesRead += cs.length() + separatorLength;
+
+                // report progress every 1000 lines
+                if (ptr % 1000 == 0) {
+                    Log.progress(bytesRead, bytesTot);
                 }
-                lastLocID = locIDs[i];
-            } else {
-                ++asCtr;
+                // increase the line counter / array pointer
+                ++ptr;
+
+
+
+                /*
+                 Read Token 0:
+                   chromosome and position, i.e.,   chr1:4797974-4836816W
+                */
+                ByteArrayCharSequence x = cs.getToken(0);
+                if (x == null) {
+                    // no ID found
+                    lim = -1;
+                    break;
+                } else {
+                    // check if we have found this already
+                    // if so, use existing id instance
+                    // else add a new one
+                    ByteArrayCharSequence id = locIDset.get(x);
+                    if (id != null) {
+                        locIDs[ptr] = id;
+                    } else {
+                        // create a new object, note that x is only a view on
+                        // the char[], we have to clone here to get a copy that
+                        // stays and only represents the id
+                        locIDs[ptr] = x.cloneCurrentSeq();
+                        locIDset.put(locIDs[ptr], locIDs[ptr]);
+                    }
+                }
+                /*
+                Read Token 1:
+                    transcript ID, i.e., YAL056W
+                 */
+                x = cs.getToken(1);
+                if (x == null) {
+                    // no transcript ID found !
+                    lim = 0;
+                    break;
+                } else {
+                    // store the transcript ID
+                    ids[ptr] = x.cloneCurrentSeq();
+                }
+
+                /*
+                 Read Token 3
+                    Type, either CDS or NC
+                 */
+                x = cs.getToken(2);
+                if (x == null) {
+                    // no type defined
+                    lim = 1;
+                    break;
+                } else {
+                    // check type
+                    if (x.equals(ProfilerFile.PRO_FILE_CDS)) {
+                        cds[ptr] = true;
+                    } else if (x.equals(ProfilerFile.PRO_FILE_NC)) {
+                        cds[ptr] = false;
+                    } else {
+                        lim = -1;
+                        break;
+                    }
+                }
+
+                /*
+                read Token 3
+                    Length
+                 */
+                int y = cs.getTokenInt(3);
+                if (y == Integer.MIN_VALUE) {
+                    lim = 2;
+                    continue;
+                } else {
+                    len[ptr] = y;
+                }
+
+                if (lim < 3 ) {
+                    continue;
+                }
+
+                // skip the relative number and
+                // read the absolute number of molecules
+                y = cs.getTokenInt(5);
+                if (y == Integer.MIN_VALUE) {
+                    // not found
+                    lim = 3;
+                } else {
+                    molecules[ptr] = y;
+                    if (y > 0) {
+                        mapLenExp.put(getCombinedID(ptr),    // Issue32: ids[ptr]
+                                new int[]{len[ptr], y});
+                    }
+                }
+            }
+        } catch (Exception e) {
+            lim = -1;
+            Log.progressFailed("ERROR");
+            Log.error("Error while loading stats: " + e.getMessage(), e);
+            return false;
+        }finally {
+            if(istream != null){
+                try {istream.close();} catch (IOException ignore) {}
+            }
+            if(buffy != null){
+                buffy.close();
+            }
+
+        }
+
+        // forget everything that
+        // we do not have for all the entries
+        if (lim < 4) {
+            molecules = null;
+            mapLenExp.clear();
+            mapLenExp = null;
+        }
+        if (lim < 3) {
+            len = null;
+        }
+        if (lim < 2) {
+            ids = null;
+            locIDs = null;
+        }
+        Log.progressFinish();
+        return true;
+    }
+
+    /**
+     * Access the loci ID ath the i'th position
+     *
+     * @param i the entry
+     * @return lociId loci id at the i'th position
+     */
+    public ByteArrayCharSequence getLociId(int i) {
+        return locIDs[i];
+    }
+
+    /**
+     * Create the global ID for entry i. Global ID consists of
+     * chromosome, position, and the transcript ID
+     *
+     * @param i the entry index
+     * @return globalID the global ID
+     */
+    public ByteArrayCharSequence getCombinedID(int i) {
+        if (i < 0 || i >= size()) {
+            return null;
+        }
+        ByteArrayCharSequence locID = locIDs[i];
+        ByteArrayCharSequence tID = ids[i];
+
+        ByteArrayCharSequence cs = new ByteArrayCharSequence(locID.length() + tID.length() + 1);
+        System.arraycopy(locID.a, locID.start, cs.a, cs.end, locID.length());
+        cs.end += locID.length();
+        cs.a[cs.end++] = FluxSimulatorSettings.SEP_LOC_TID;
+        System.arraycopy(tID.a, tID.start, cs.a, cs.end, tID.length());
+        cs.end += tID.length();
+
+        return cs;
+    }
+
+    /**
+     * Compute the maximal molecule length. Note that this is NOT cached
+     * and iterates over all molecules
+     *
+     * @return maxLength max molecule length
+     */
+    public int getMaxMoleculeLength() {
+        int maxLen = -1;
+        for (int i = 0; i < len.length; i++) {
+            if (molecules[i] > 0 && len[i] > maxLen) {
+                maxLen = len[i];
+            }
+        }
+        return maxLen;
+    }
+
+    /**
+     * Compute the median molecule length. Note that the value is not cached
+     * and computed each time.
+     *
+     * @return medianLength median molecule length
+     */
+    public double getMedMoleculeLength() {
+        int sumMol = 0;
+        for (long molecule : molecules) {
+            sumMol += molecule;
+        }
+        IntVector v = new IntVector(sumMol);
+        for (int i = 0; i < molecules.length; i++) {
+            for (int j = 0; j < molecules[i]; j++) {
+                v.add(len[i]);
             }
         }
 
-        int[] as = asV.toIntArray();
-        Arrays.sort(as);
-        Distribution dist = new Distribution(as);
-        txLocMed = (float) dist.getMedian();
-        txLocAvg = (float) dist.getMean();
-        txLocSTD = (float) dist.getStandardDeviation();
-        txLoc1Q = (float) dist.get1stQuart();
-        txLoc3Q = (float) dist.get3rdQuart();
-        as = null;
-        dist = new Distribution(len.clone());
-        System.gc();
+        Distribution dist = new Distribution(v.toIntArray());
+        return dist.getMedian();
+    }
 
-        lenMin = (float) dist.getMin();
-        lenMax = (float) dist.getMax();
-        lenAvg = (float) dist.getMean();
-        lenMed = (float) dist.getMedian();
-        len1Q = (float) dist.get1stQuart();
-        len3Q = (float) dist.get3rdQuart();
-        lenSTD = (float) dist.getStandardDeviation();
+    /**
+     * Delete existing profiles and reset status
+     */
+    public void resetProfile() {
+        ids = null;
+        molecules = null;
+        locIDs = null;
+        cds = null;
+        if(mapLenExp != null)
+            mapLenExp.clear();
+        mapLenExp = null;
+        len = null;
+
+        File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
+        if(profilerFile.exists()){
+            boolean b= profilerFile.delete();
+            if(!b){
+                Log.error("PROFILER", "Unable to delete profile!");
+            }
+            status = STAT_NONE;
+        }
     }
 
     /**
@@ -260,405 +714,12 @@ public class Profiler implements Callable<Void> {
 
 
 
-    public boolean profile() {
-
-        Log.progressStart("profiling");
-
-        try {
-            if (ids == null) {
-                ids = new ByteArrayCharSequence[FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath())];
-                len = new int[ids.length];
-            }
-            double sumRF = 0;
-            sumMol = 0;
-            sfHi = null;
-            sfMed = null;
-            sfLo = null;
-            molecules = new long[ids.length];
-            double[] relFreq = new double[ids.length];
-
-            if (status < STAT_RELFREQ) {    // generate ranks
-
-                // generate random permutation of ranks
-                Random r = new Random();
-                for (int i = 0; i < molecules.length; i++) {
-                    molecules[i] = 1 + r.nextInt(molecules.length - 1); //i+1;	// ranks
-                }
-//				for (int k = molecules.length - 1; k > 0; k--) {
-//				    int w = (int) Math.floor(r.nextDouble() * (k+1));
-//				    long temp = molecules[w];
-//				    molecules[w] = molecules[k];
-//				    molecules[k] = temp;
-//				}
-
-                relFreq = new double[ids.length];
-                for (int i = 0; i < relFreq.length; i++) {
-                    double par = pareto(molecules[i], settings.get(FluxSimulatorSettings.EXPRESSION_K), settings.get(FluxSimulatorSettings.EXPRESSION_X0));
-                    double exp = exponential(molecules[i], settings.get(FluxSimulatorSettings.EXPRESSION_X1));
-                    sumRF += (relFreq[i] = par * exp);
-                }
-                for (int i = 0; i < relFreq.length; ++i) {    // normalize
-                    relFreq[i] /= sumRF;
-                    sumMol += (molecules[i] = Math.round(relFreq[i] * settings.get(FluxSimulatorSettings.NB_MOLECULES)));
-                    if (molecules[i] > 0) {
-                        mapLenExp.put(getCombinedID(i), new int[]{len[i], (int) molecules[i]});
-                    }
-                    Log.progress(i, relFreq.length);
-                }
-            }
-
-
-            Log.progressFinish(StringUtils.OK, false);
-            Hashtable<CharSequence, Long> map = new Hashtable<CharSequence, Long>(getMolecules().length);
-            for (int i = 0; i < getMolecules().length; i++) {
-                if (getMolecules()[i] != 0) {
-                    ByteArrayCharSequence locNtid = getLocIDs()[i].cloneCurrentSeq();
-                    locNtid.append(Character.toString(FluxSimulatorSettings.SEP_LOC_TID));
-                    locNtid.append(getIds()[i]);
-                    map.put(locNtid, getMolecules()[i]);
-                }
-            }
-            if (!ProfilerFile.appendProfile(settings, ProfilerFile.PRO_COL_NR_MOL, map)) {
-                return false;
-            }
-            return true;
-
-        } catch (Exception e) {
-            Log.progressFailed("FAILED");
-            Log.error("Error while profiling :" + e.getMessage(), e);
-            return false;
-        }
+    private static double exponential(double rank, double par1) {
+        return Math.exp(-(Math.pow(rank / par1, 2))- (rank / par1));
     }
 
-    public static double exponential(double rank, double par1) {
-        //		double val= Math.exp(- (Math.pow(rank, 2)/ Math.pow(par1, 2))
-        //				- (rank/par1));
-        double val = Math.exp(-(Math.pow(rank / par1, 2))    // / 122000000
-                - (rank / par1));    // 7000
-
-        return val;
+    private static double pareto(double rank, double par1, double par2) {
+        return Math.pow(rank / par2, par1);
     }
 
-    public static double pareto(double rank, double par1, double par2) {
-        //		double val= par2/ Math.pow(rank, par1)
-        //			* Math.exp(- (Math.pow(rank, 2)/ 122000000)
-        //					- (rank/7000));
-        double val = Math.pow(rank / par2, par1)/* 2731598d*/;    // par1= 0,6  par2= (41627d/ 2731598d)
-        return val;
-    }
-
-
-    public ByteArrayCharSequence[] getIds() {
-        return ids;
-    }
-
-    public int[] getLen() {
-        return len;
-    }
-
-    public long[] getMolecules() {
-        return molecules;
-    }
-
-    public long getSumMol() {
-        return sumMol;
-    }
-
-
-    public float getTxLocAvg() {
-        return txLocAvg;
-    }
-
-
-    public void setTxLocAvg(float txLocAvg) {
-        this.txLocAvg = txLocAvg;
-    }
-
-
-    public float getTxLocMed() {
-        return txLocMed;
-    }
-
-
-    public void setTxLocMed(float txLocMed) {
-        this.txLocMed = txLocMed;
-    }
-
-
-    public float getTxLoc1Q() {
-        return txLoc1Q;
-    }
-
-
-    public void setTxLoc1Q(float txLoc1Q) {
-        this.txLoc1Q = txLoc1Q;
-    }
-
-
-    public float getTxLoc3Q() {
-        return txLoc3Q;
-    }
-
-
-    public void setTxLoc3Q(float txLoc3Q) {
-        this.txLoc3Q = txLoc3Q;
-    }
-
-
-    public float getTxLocSTD() {
-        return txLocSTD;
-    }
-
-
-    public void setTxLocSTD(float txLocSTD) {
-        this.txLocSTD = txLocSTD;
-    }
-
-
-    public float getLenMed() {
-        return lenMed;
-    }
-
-
-    public float getLenAvg() {
-        return lenAvg;
-    }
-
-
-    public float getLenSTD() {
-        return lenSTD;
-    }
-
-
-    public float getLen1Q() {
-        return len1Q;
-    }
-
-
-    public float getLen3Q() {
-        return len3Q;
-    }
-
-
-    public float getLenMin() {
-        return lenMin;
-    }
-
-
-    public float getLenMax() {
-        return lenMax;
-    }
-
-
-    public int getCntLoci() {
-        return cntLoci;
-    }
-
-
-    public boolean loadStats() {
-        if (settings.get(FluxSimulatorSettings.PRO_FILE) == null || (!settings.get(FluxSimulatorSettings.PRO_FILE).exists())) {
-            return false;
-        }
-
-        int lim = Integer.MAX_VALUE;    // last working token
-        try {
-            Log.progressStart("initializing profiler ");
-            int lines = FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getAbsolutePath());
-            //String lineSep= FileHelper.getLineSeparator() // TODO
-            ids = new ByteArrayCharSequence[lines];
-            locIDs = new ByteArrayCharSequence[lines];
-            len = new int[lines];
-            molecules = new long[lines];
-            cds = new boolean[lines];
-            HashMap<ByteArrayCharSequence, ByteArrayCharSequence> locIDset =
-                    new HashMap<ByteArrayCharSequence, ByteArrayCharSequence>();    // TODO MyHashSet.get(Object o)
-            int ptr = -1, perc = 0;
-            long bytesRead = 0, bytesTot = settings.get(FluxSimulatorSettings.PRO_FILE).length();
-            mapLenExp = new Hashtable<ByteArrayCharSequence, int[]>();
-
-            BufferedInputStream istream = new BufferedInputStream(new FileInputStream(settings.get(FluxSimulatorSettings.PRO_FILE)));
-            ThreadedBufferedByteArrayStream buffy =
-                    new ThreadedBufferedByteArrayStream(10 * 1024, istream, true, false);
-            ByteArrayCharSequence cs = new ByteArrayCharSequence(1024);
-            for (buffy.readLine(cs); cs.end > 0; buffy.readLine(cs)) {
-
-                cs.resetFind();
-                bytesRead += cs.length() + 1;    // TODO fs
-                if (ptr % 1000 == 0) {
-                    Log.progress(bytesRead, bytesTot);
-                }
-                if (lim < 3) {
-                    break;    // give up
-                }
-
-                ++ptr;
-                int tok = 0;
-                ByteArrayCharSequence x = cs.getToken(tok++);
-                if (x == null) {
-                    lim = tok - 2;
-                    continue;
-                } else {
-                    if (locIDset.containsKey(x)) {
-                        locIDs[ptr] = locIDset.get(x);
-                    } else {
-                        locIDs[ptr] = x.cloneCurrentSeq();
-                        locIDset.put(locIDs[ptr], locIDs[ptr]);
-                    }
-                }
-
-                if (lim < tok) {
-                    continue;
-                }
-                x = cs.getToken(tok++);
-                if (x == null) {
-                    lim = tok - 2;
-                    continue;
-                } else {
-                    ids[ptr] = x.cloneCurrentSeq();
-                }
-
-                if (lim < tok) {
-                    continue;
-                }
-                x = cs.getToken(tok++);
-                if (x == null) {
-                    lim = tok - 2;
-                    continue;
-                } else {
-                    if (x.equals(ProfilerFile.PRO_FILE_CDS)) {
-                        cds[ptr] = true;
-                    } else if (x.equals(ProfilerFile.PRO_FILE_NC)) {
-                        cds[ptr] = false;
-                    } else {
-                        lim = 1;
-                        continue;
-                    }
-                }
-
-                if (lim < tok) {
-                    continue;
-                }
-                int y = cs.getTokenInt(tok++);
-                if (y == Integer.MIN_VALUE) {
-                    lim = tok - 2;
-                    continue;
-                } else {
-                    len[ptr] = y;
-                }
-
-                tok++;    // perc
-
-                if (lim < tok) {
-                    continue;
-                }
-                y = cs.getTokenInt(tok++);
-                if (y == Integer.MIN_VALUE) {
-                    lim = tok - 3;
-                } else {
-                    molecules[ptr] = y;
-                    if (molecules[ptr] > 0) {
-                        mapLenExp.put(getCombinedID(ptr),    // Issue32: ids[ptr]
-                                new int[]{len[ptr], (int) molecules[ptr]});
-                    }
-                    lim = tok - 1;
-                }
-            }
-            istream.close();
-            buffy.close();
-        } catch (Exception e) {
-            lim = -1; // :)
-            Log.progressFailed("ERROR");
-            Log.error("Error while loading stats: " + e.getMessage(), e);
-            return false;
-        }
-
-        if (lim < 4) {
-            molecules = null;
-        }
-        if (lim < 3) {
-            len = null;
-        }
-        if (lim < 2) {
-            ids = null;
-            locIDs = null;
-        } else {
-            calcStats();
-        }
-
-
-        Log.progressFinish();
-        return true;
-    }
-
-
-    public ByteArrayCharSequence[] getLocIDs() {
-        return locIDs;
-    }
-
-
-    public void setLocIDs(ByteArrayCharSequence[] locIDs) {
-        this.locIDs = locIDs;
-    }
-
-
-    public boolean[] getCds() {
-        return cds;
-    }
-
-
-    public void setCds(boolean[] cds) {
-        this.cds = cds;
-    }
-
-
-    public void setMolecules(long[] molecules) {
-        this.molecules = molecules;
-    }
-
-
-    public ByteArrayCharSequence getCombinedID(int i) {
-        if (i < 0 || i >= getIds().length) {
-            return null;
-        }
-        ByteArrayCharSequence locID = getLocIDs()[i];
-        ByteArrayCharSequence tID = getIds()[i];
-
-        ByteArrayCharSequence cs = new ByteArrayCharSequence(locID.length() + tID.length() + 1);
-        System.arraycopy(locID.a, locID.start, cs.a, cs.end, locID.length());
-        cs.end += locID.length();
-        cs.a[cs.end++] = FluxSimulatorSettings.SEP_LOC_TID;
-        System.arraycopy(tID.a, tID.start, cs.a, cs.end, tID.length());
-        cs.end += tID.length();
-
-        return cs;
-    }
-
-
-    public int getMaxMoleculeLength() {
-        int maxLen = -1;
-        for (int i = 0; i < len.length; i++) {
-            if (molecules[i] > 0 && len[i] > maxLen) {
-                maxLen = len[i];
-            }
-        }
-        return maxLen;
-    }
-
-
-    public double getMedMoleculeLength() {
-
-        int sumMol = 0;
-        for (int i = 0; i < molecules.length; i++) {
-            sumMol += molecules[i];
-        }
-        IntVector v = new IntVector(sumMol);
-        for (int i = 0; i < molecules.length; i++) {
-            for (int j = 0; j < molecules[i]; j++) {
-                v.add(len[i]);
-            }
-        }
-
-        Distribution dist = new Distribution(v.toIntArray());
-        return dist.getMedian();
-    }
 }
