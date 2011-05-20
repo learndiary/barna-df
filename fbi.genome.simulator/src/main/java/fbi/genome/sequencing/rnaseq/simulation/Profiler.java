@@ -624,6 +624,25 @@ public class Profiler implements Callable<Void> {
 
         return cs;
     }
+    /**
+     * Create the global ID for entry i. Global ID consists of
+     * chromosome, position, and the transcript ID.
+     *
+     * @param i the entry index
+     * @return globalID the global ID
+     */
+    public String getGlobalID(int i) {
+        if (i < 0 || i >= size()) {
+            return null;
+        }
+
+        StringBuilder bb = new StringBuilder(getLociId(i));
+        bb.append(FluxSimulatorSettings.SEP_LOC_TID);
+        bb.append(getId(i));
+        return bb.toString();
+    }
+
+
 
     /**
      * Compute the maximal molecule length. Note that this is NOT cached

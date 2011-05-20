@@ -20,7 +20,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Loci separator
      */
-    public static final char SEP_LOC_TID = '@';
+    public static final char SEP_LOC_TID = '@'; // todo refactor this to profiler and use the profilers getGlobalID where possible
 
     /**
      * Helper to parse relative filenames
