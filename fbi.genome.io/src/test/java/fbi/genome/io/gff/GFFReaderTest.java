@@ -1,8 +1,11 @@
 package fbi.genome.io.gff;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Execute;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -14,6 +17,17 @@ import static org.junit.Assert.fail;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class GFFReaderTest {
+
+
+    @BeforeClass
+    public static void setUp(){
+        Execute.initialize(4);
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        Execute.shutdown();
+    }
 
     @Test
     public void testReadCorrectTranscriptStart(){

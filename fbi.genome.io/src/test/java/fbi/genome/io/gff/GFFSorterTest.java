@@ -1,5 +1,7 @@
 package fbi.genome.io.gff;
 
+import fbi.commons.Execute;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -22,8 +24,13 @@ public class GFFSorterTest {
     public static void setUp(){
         unsorted = new File(GFFSorterTest.class.getResource("/testGtfSort.gtf").getFile());
         sorted = new File(GFFSorterTest.class.getResource("/testGtfSort.gtf.sorted").getFile());
+        Execute.initialize(4);
     }
 
+    @AfterClass
+    public static void tearDown() throws Exception {
+        Execute.shutdown();
+    }
 
     @Test
     public void testGFFSort() throws IOException {

@@ -1,5 +1,7 @@
 package fbi.genome.io.bed;
 
+import fbi.commons.Execute;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -17,7 +19,14 @@ public class BEDwrapperTest {
     @BeforeClass
     public static void setUp(){
         testfile = new File(BEDwrapperTest.class.getResource("/test.bed").getFile());
+        Execute.initialize(4);
     }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        Execute.shutdown();
+    }
+
 
     @Test
     public void testScanFile(){
