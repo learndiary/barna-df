@@ -43,12 +43,17 @@ public class FMRD implements ReadDescriptor {
 		obj.append(BYTE_DELIM_FMOLI);
         obj.append(sense ? fragStart : fragEnd);
         obj.append(BYTE_DELIM_FMOLI);
-        if(t.isForward()){ // read direction
-            obj.append(sense ? "S" : "A");
-        }else{
 
-            obj.append(sense ? "A" : "S");
-        }
+        //if(t.isForward()){ // read direction
+        //if(absDir >= 0){ // read direction
+
+        // assuming illumina
+            obj.append(sense ? "S" : "A");
+        //}else{
+
+        //    obj.append(sense ? "A" : "S");
+        //}
+
         //obj.append(BYTE_DELIM_FMOLI);
 		//obj.append(readStart);
 		//obj.append(BYTE_DELIM_FMOLI);

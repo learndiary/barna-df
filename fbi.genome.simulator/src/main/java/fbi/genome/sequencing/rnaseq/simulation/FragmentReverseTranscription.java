@@ -184,12 +184,12 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             // check GC
             double gc = getGCcontent(id, from, index1[i] - 1);    // bp is first nt of next fragment
 
-            double pg = gc < rtC ? 0d : 1d - Math.exp(-(gc - rtC) / gc_lo);
-            Math.exp((-1d) * (gc - gc_lo) / gc_lo);
-            if (pg > 1 || rnd1.nextDouble() > pg) {
-                index1[i] = -1;
-                continue;
-            }
+            //double pg = gc < rtC ? 0d : 1d - Math.exp(-(gc - rtC) / gc_lo);
+            //Math.exp((-1d) * (gc - gc_lo) / gc_lo);
+            //if (pg > 1 || rnd1.nextDouble() > pg) {
+            //    index1[i] = -1;
+            //    continue;
+            //}
 
             // resolve displacements
             boolean displaced = false;
@@ -273,7 +273,6 @@ public class FragmentReverseTranscription implements FragmentProcessor{
      * @return gc gc content
      */
     private double getGCcontent(ByteArrayCharSequence id, int i, int j) {
-
         CharSequence seq = mapTxSeq.get(id);
         int g = 0, n = 0;
         for (int k = i; k <= j; ++k) {

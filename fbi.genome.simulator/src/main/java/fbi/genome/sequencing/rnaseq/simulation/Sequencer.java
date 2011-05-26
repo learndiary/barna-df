@@ -621,11 +621,11 @@ public class Sequencer implements Callable<Void> {
                         if (r < p) {
                             double q = rndFiftyFifty.nextDouble();
                             if (pairedEnd || q < 0.5) {
-                                writer.writeTranscript(true, t, fstart, fend, k);
+                                writer.writeRead(true, t, fstart, fend, k);
                                 ++cntPlus;
                             }
                             if (pairedEnd || q > 0.5) {
-                                writer.writeTranscript(false, t, fstart, fend, k);
+                                writer.writeRead(false, t, fstart, fend, k);
                                 ++cntMinus;
                             }
                         }
@@ -714,7 +714,7 @@ public class Sequencer implements Callable<Void> {
          * @param k the molecule number
          * @throws IOException in case of any errors
          */
-        public void writeTranscript(boolean left, Transcript t, int fstart, int fend, int k) throws IOException {
+        public void writeRead(boolean left, Transcript t, int fstart, int fend, int k) throws IOException {
             byte absDir = (byte) (t.getStrand() >= 0 ? 1 : -1);
             byte antiDir = (byte) (t.getStrand() >= 0 ? -1 : 1);
 
