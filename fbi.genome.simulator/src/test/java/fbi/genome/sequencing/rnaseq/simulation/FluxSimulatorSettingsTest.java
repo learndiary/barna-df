@@ -51,7 +51,7 @@ public class FluxSimulatorSettingsTest {
             assertNotNull(s1.get(FluxSimulatorSettings.LIB_FILE));
             assertEquals("simulator_v10.lib", s1.get(FluxSimulatorSettings.LIB_FILE).getName());
 
-            assertEquals(0d, s1.get(FluxSimulatorSettings.TSS_MEAN), 0.000001);
+            assertEquals(25d, s1.get(FluxSimulatorSettings.TSS_MEAN), 0.000001);
 
         } catch (Exception e) {
             e.printStackTrace();
