@@ -1,5 +1,8 @@
 package fbi.commons.tools;
 
+import fbi.commons.Execute;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +31,16 @@ public class SorterTest {
             "\n" +
             "A\tX\t3\n";
 
+
+    @Before
+    public void setUp() throws Exception {
+        Execute.initialize(4);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Execute.shutdown();
+    }
 
     @Test
     public void testSmallSort(){

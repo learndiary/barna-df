@@ -441,18 +441,24 @@ public class Graph implements Serializable {
 		}
 		return sb.toString();
 	}
-	
+
+    public static String readSequence(Species spe, CharSequence chromosome, boolean forwardStrand,
+            long start, long end){
+        return readSequence(spe, chromosome, forwardStrand, start, end, false);
+    }
+
 	/**
 	 * 
 	 * @param spe
 	 * @param chromosome
 	 * @param forwardStrand
 	 * @param start 1st position to be read
-	 * @param end	1st position not to be read
+	 * @param end	1st position to be read
+     * @param isCircular circular chromosome
 	 * @return
 	 */
 	public static String readSequence(Species spe, CharSequence chromosome, boolean forwardStrand, 
-			long start, long end) 
+			long start, long end, boolean isCircular)
 				throws RuntimeException {
 			
 			if (!forwardStrand) {	// WAS: (start< 0), neg strand genes
@@ -464,8 +470,14 @@ public class Graph implements Serializable {
 					end= h;
 				}
 			}
-		
-			start--;	// this is ok
+            /*
+            Thasso: 25.5.11 reset start if we are outside of the bounds
+             */
+		    if(start < 0){
+                start = 0;
+            }else{
+			    start--;	// this is ok
+            }
 			byte[] seq= new byte[(int) (end- start)];
 			String s= null;
 			long p= -1;
@@ -504,7 +516,7 @@ public class Graph implements Serializable {
 					nextN= lineLen;
 				}
 				int a= seq.length- pos;
-				int b= (int) (raf.length()- p- pos- 1);
+				int b= (int) (raf.length()- p- pos- 2);
 				int rest= Math.min(a, b);	// catch EOF (when reading range larger than file)
 				if (a < 0)
 					rest= b;
@@ -513,27 +525,30 @@ public class Graph implements Serializable {
 				if (a< 0&& b< 0)
 					rest= 0;
 				try {
-					raf.readFully(seq,pos,rest);	// read start of last line
+                    if(pos+p < raf.length())
+					    raf.readFully(seq,pos,rest);	// read start of last line
 				} catch (Exception e) {	//EOFException, IndexOutOfBoundsException
 					System.err.println("Problems reading "+chromosome+": "+(p+pos)+", "+rest+"> "+raf.length()+" into "+seq.length+": "+e.getMessage());
 					System.err.println("check for the right species/genome version!");
 					e.printStackTrace();
 					return s;
-				}				
-				
+				}
+
 				s= new String(seq);
 				if (seq.length- pos> rest)
 					s= s.substring(0, s.length()- ((seq.length- pos)- rest));
 				if (!forwardStrand) 
 					s= StringUtils.reverseComplement(s);
+
+                s = s.trim();
 				
-				if (pfx!= null) {
+				if (isCircular && pfx!= null) {
 					if (forwardStrand)
 						s= pfx+ s;
 					else
 						s+= pfx;
 				}
-				if (sfx!= null) { 
+				if (isCircular && sfx!= null) {
 					if (forwardStrand)
 						s+= sfx;
 					else
