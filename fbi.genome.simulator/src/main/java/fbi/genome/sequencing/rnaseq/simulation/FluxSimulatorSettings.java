@@ -132,7 +132,14 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "", -0.6);
     public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "", 50000000);
     public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "", 9500);
-    public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "", 25d);
+    public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "", 25d, new ParameterValidator() {
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+            if(schema.get(TSS_MEAN) <= 0){
+                throw new ParameterException("TSS_MEAN must be > 0");
+            }
+        }
+    });
     public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "", 2d, 0.0, Double.MAX_VALUE, null);
     public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "", 300d, 0.0, Double.MAX_VALUE, null);
 
@@ -148,6 +155,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             if(schema.get(FRAG_METHOD) == FragmentationMethod.EZ){
+                if(schema.get(FRAG_SUBSTRATE) == Substrate.RNA){
+                    throw new ParameterException("Enzymatic digestion is not supported for RNA substrate!");
+                }
                 if(schema.get(FRAG_EZ_MOTIF) == null || !schema.get(FRAG_EZ_MOTIF).canRead()){
                     throw new ParameterException("You have to specify FRAG_EZ_MOTIF in order ot use Enzymatic digestion");
                 }

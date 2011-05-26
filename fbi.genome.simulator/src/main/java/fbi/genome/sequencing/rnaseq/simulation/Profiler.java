@@ -203,7 +203,8 @@ public class Profiler implements Callable<Void> {
                     } else {
                         vBoo.add(false);
                     }
-                    v.add(new ByteArrayCharSequence(aG.getTranscripts()[j].getTranscriptID()));
+                    String transcriptID = aG.getTranscripts()[j].getTranscriptID();
+                    v.add(new ByteArrayCharSequence(transcriptID));
                     ByteArrayCharSequence locName = new ByteArrayCharSequence(aG.getGeneID());
                     vLoc.add(locName);
                     int[] a = new int[2];
@@ -715,16 +716,8 @@ public class Profiler implements Callable<Void> {
         GFFReader gffReader = new GFFReader(currentRefFile.getAbsolutePath());
         // make sure the gtf is valid and sorted
         if (!gffReader.isApplicable()) {
-            File refFile = gffReader.createSortedFile();
-            File target = new File(settings.get(FluxSimulatorSettings.PRO_FILE).getParent() + File.separator + refFile.getName());
-            settings.setRefFile(target);
-            if (!refFile.equals(currentRefFile)) {
-                if (!FileHelper.move(refFile, target)) {
-                    settings.setRefFile(refFile);
-                }
-            }
-            currentRefFile = settings.get(FluxSimulatorSettings.REF_FILE);
-            gffReader = new GFFReader(currentRefFile.getAbsolutePath());
+            gffReader.close();
+            throw new RuntimeException("The reference annotation GTF is not sorted!");
         }
         gffReader.setSilent(true);
         gffReader.setStars(true);

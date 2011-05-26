@@ -549,8 +549,10 @@ public class PWM implements WeightMatrix {
 			++c;
 			CharSequence seq= s.subSequence(pp, pp+ kmerLen);
 			int kmerPos= Arrays.binarySearch(kmers, seq);
-			
-			w+= Math.log(pwm[kmerPos][i]);
+
+            if(kmerPos >= 0){
+			    w+= Math.log(pwm[kmerPos][i]);
+            }
 			//w*= pwm[i][kmerPos];
 		}
 		if (c== 0) 

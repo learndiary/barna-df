@@ -3,6 +3,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 import fbi.commons.Log;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.CommandLine;
+import fbi.genome.io.gff.GFFReader;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -241,7 +242,7 @@ public class SimulationPipeline implements FluxTool<Void> {
                 settings.get(FluxSimulatorSettings.LIB_FILE).delete();
             } else{
                 Log.info("Loading Fragmentation from " + settings.get(FluxSimulatorSettings.LIB_FILE));
-                getFragmenter().loadStats();
+                getFragmenter().loadStats(settings.get(FluxSimulatorSettings.LIB_FILE));
             }
         }
 
@@ -253,13 +254,13 @@ public class SimulationPipeline implements FluxTool<Void> {
                 if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file " + settings.get(FluxSimulatorSettings.SEQ_FILE).getName() + ", please confirm:\n\t(Yes,No,Don't know)"))
                     return null;
                 settings.get(FluxSimulatorSettings.SEQ_FILE).delete();
-            } else{
-                Log.info("Loading sequencing file " + settings.get(FluxSimulatorSettings.SEQ_FILE).getAbsolutePath());
-                getSequencer().loadStats();
             }
             Log.message("");
         }
         Log.message("");
+
+        // sort the GTF file
+        sortGTFReference();
 
         // now start the pipeline
         long t0= System.currentTimeMillis();
@@ -276,7 +277,7 @@ public class SimulationPipeline implements FluxTool<Void> {
             if (message != null) {
                 throw new RuntimeException(message);
             }
-            getFragmenter().run();
+            getFragmenter().call();
         }else{
             Log.info("you did not want me to construct the library, I skip it.\n");
         }
@@ -288,7 +289,7 @@ public class SimulationPipeline implements FluxTool<Void> {
             if (message != null) {
                 throw new RuntimeException(message);
             }
-            getSequencer().run();
+            getSequencer().call();
         }else {
             Log.info("sequencing has not been demanded, skipped.\n");
         }
@@ -297,5 +298,54 @@ public class SimulationPipeline implements FluxTool<Void> {
         Log.message("\n[END] I finished, took me " + (System.currentTimeMillis() - t0) / 1000 + " sec.");
         return null;
     }
+
+
+    /**
+     * Ensure that we are working on a sorted GTF file. If the file is not sorted,
+     * it will be and the file in the settings is replaced and the user is informed about
+     * the change.
+     * <p>
+     *     We also check if a sorted file exists, following the naming schema, {@code <originalName>_sorted.<extension>}
+     * </p>
+     *
+     */
+    protected void sortGTFReference() {
+        File refFile = settings.get(FluxSimulatorSettings.REF_FILE);
+        String sortedFileName = settings.get(FluxSimulatorSettings.PRO_FILE).getParent() + File.separator + refFile.getName();
+        File sorted = new File(sortedFileName);
+        GFFReader gffReader = new GFFReader(refFile.getAbsolutePath());
+        // make sure the gtf is valid and sorted
+        Log.info("Checking GTF file");
+        if (!gffReader.isApplicable()) {
+            gffReader.close();
+
+            // okey its not sorted, check if there is a sorted version
+
+            if(sorted.exists() && sorted.length() == refFile.length()){
+                gffReader = new GFFReader(sortedFileName);
+                if(gffReader.isApplicable()){
+                    // found a sorted file
+                    // inform the user and switch
+                    Log.warn("GTF FILE", "The GTF reference file given is not sorted, but we found a sorted version.");
+                    Log.warn("GTF FILE", "The Simulator will use " + sortedFileName);
+                    Log.warn("GTF FILE", "You might want to update your parameters file");
+                    settings.setRefFile(sorted);
+                }
+                gffReader.close();
+                return;
+            }
+            // sort the file
+            Log.warn("GTF FILE", "The GTF reference file given is not sorted, sorting it right now...");
+            gffReader = new GFFReader(refFile.getAbsolutePath());
+            gffReader.setStars(true);
+            gffReader.setSilent(false);
+            gffReader.createSortedFile(sorted);
+            settings.setRefFile(sorted);
+            gffReader.close();
+            Log.warn("GTF FILE", "The Simulator will use " + sortedFileName);
+            Log.warn("GTF FILE", "You might want to update your parameters file");
+        }
+    }
+
 
 }

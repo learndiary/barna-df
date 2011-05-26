@@ -410,6 +410,56 @@ public class Transcript extends DirectedRegion {
 		}
 		return sb.toString();
 	}
+
+
+    public String getSplicedSequence(int leftFlank, int rightFlank, String leftFlankChar, String rightFlankChars) {
+        DirectedRegion[] regs= getExonicRegions();	// not sorted
+        if (regs== null)
+            return "";
+        java.util.Arrays.sort(regs, new DirectedRegion.DirectedPositionComparator());
+        StringBuffer sb= new StringBuffer();
+        for (int i = 0; i < regs.length; i++) {
+            String s= Graph.readSequence(regs[i]);
+            if (s!= null)
+                sb.append(s);
+        }
+
+        // append flanks
+        if(leftFlank > 0){
+            // append start
+            int start = get5PrimeEdge() - leftFlank;
+            String ss = "";
+            ss= Graph.readSequence(
+                        getSpecies(),
+                        getChromosome(),
+                        isForward(),
+                        start,
+                        get5PrimeEdge()-1
+                );
+            while(ss.length() < leftFlank){
+                ss = leftFlankChar+ss;
+            }
+            sb.insert(0, ss);
+        }
+
+        if(rightFlank > 0){
+            int end = get3PrimeEdge() + rightFlank ;
+            String se= Graph.readSequence(
+                    getSpecies(),
+                    getChromosome(),
+                    isForward(),
+                    get3PrimeEdge(),
+                    end
+            );
+            while(se.length() < rightFlank){
+                se = se+rightFlankChars;
+            }
+            sb.append(se);
+        }
+
+        return sb.toString();
+    }
+
 	
 	private int elength= -1;
 	public void setExonicLength(int newLen) {

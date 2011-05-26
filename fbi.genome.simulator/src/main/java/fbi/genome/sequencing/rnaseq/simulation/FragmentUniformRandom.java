@@ -1,0 +1,147 @@
+package fbi.genome.sequencing.rnaseq.simulation;
+
+import fbi.commons.ByteArrayCharSequence;
+import org.apache.commons.math.special.Gamma;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
+ */
+public class FragmentUniformRandom implements FragmentProcessor{
+    /**
+     * Default median size after fragmentation, according to 2010 Illumina protocol.
+     */
+    private static final double DEFAULT_MED_SIZE = 200;
+    private double d0;
+    private double urDelta;
+    private double urEta;
+    private Random rndBreak = new Random();
+    private double medMoleculeLength;
+    private boolean filtering;
+
+    public FragmentUniformRandom(double d0, double delta, double eta, double medMoleculeLength, boolean filtering) {
+        this.filtering = filtering;
+        if(d0 < 1.0) throw new IllegalArgumentException("D0 must be >= 1.0!");
+        this.d0 = d0;
+        this.urDelta = delta;
+        this.urEta = eta;
+        this.medMoleculeLength = medMoleculeLength;
+    }
+
+    @Override
+    public List<Fragment> process(final ByteArrayCharSequence id, final ByteArrayCharSequence cs, final int start, final int end, final int len) {
+        assert (d0 >= 1); // problem with integer breakpoints, when fragment size << 1 !
+        double delta = getFragURdelta(len);
+        double eta = getFragUReta();
+
+        double E = d0 + eta * Math.exp(Gamma.logGamma(1d + 1d / delta));
+        // determine n, the number of fragments (i.e. (n-1) breakpoints)
+        double nn = ((double) len) / E;
+        int n = (int) nn;
+        double nr = nn - n;
+        double r = rndBreak.nextDouble();
+        if (r <= nr) {
+            ++n;
+        }
+
+        // molecule does not break
+        List<Fragment> fragments = new ArrayList<Fragment>();
+        if (n <= 1 || len <= 1 || (n * d0) >= len) {
+            cs.replace(0, start);
+            cs.replace(1, end);
+            //rw.writeLine(cs, fos);
+            //fragments.add(cs.toString());
+            fragments.add(new Fragment(id, start, end));
+            return fragments;
+        }
+
+        // uniformly cut (n-1) times unit space
+        double[] x = new double[n];
+        for (int i = 0; i < (n - 1); ++i) {
+            x[i] = rndBreak.nextDouble();
+        }
+        x[x.length - 1] = 1;    // last breakpoint is end
+
+        // get fragment lengths (in unit space)
+        Arrays.sort(x);
+        for (int i = (n - 1); i > 0; --i) {
+            x[i] -= x[i - 1];
+        }
+
+        // compute c, transform to molecule space
+        float sum = 0;
+        for (int i = 0; i < x.length; i++) {
+            sum += Math.pow(x[i], 1 / delta);
+        }
+        double c = Math.pow((len - n * d0) / sum, -delta);
+        for (int i = 0; i < n; i++) {
+            x[i] = d0 + Math.pow(x[i] / c, (1 / delta));
+        }
+
+        double dsum = 0;
+        for (int i = 0; i < n; i++) {
+            int nuStart = start + (int) Math.round(dsum);
+            dsum += x[i];
+            int nuEnd = start + (int) Math.round(dsum) - 1;
+            //double frac= dsum/ len;
+            int nuLen = (nuEnd - nuStart) + 1;
+            if (nuLen < 0) {
+                throw new RuntimeException("Fragment with length < 0! " + nuLen);
+            }
+
+            cs.replace(0, nuStart);
+            cs.replace(1, nuEnd);
+            //rw.writeLine(cs, fos);    // id is invalid now
+            //fragments.add(cs.toString());
+            fragments.add(new Fragment(id, nuStart, nuEnd));
+        }
+        assert (Math.round(dsum) == len);
+        return fragments;
+    }
+
+    private double getFragURdelta(double len) {
+
+        if (Double.isNaN(urDelta)) {
+            return Math.max(Math.log10(len), 1);
+        }
+        return urDelta;
+    }
+
+    /**
+     * Provides eta ("intensity of fragmentation") of the uniform random fragmentation process;
+     * if no eta has been provided as input parameter, eta is optimized to provide the median
+     * molecule length a value that corresponds to the median of the subsequently filtered
+     * values, or constant <code>DEFAULT_MED_SIZE</code>.
+     *
+     * @return
+     */
+    private double getFragUReta() {
+
+        if (Double.isNaN(urEta)) {
+
+            double medDelta = getFragURdelta(medMoleculeLength);
+            //double d0 = settings.get(FluxSimulatorSettings.FRAG_UR_D0);
+            double medFilt = DEFAULT_MED_SIZE;
+            if (filtering) {
+                medFilt = 170; //getFiltMedian();
+            }
+            urEta = ((medFilt - d0) / Math.exp(Gamma.logGamma(1d + 1d / medDelta)));
+        }
+
+        return urEta;
+    }
+
+    @Override
+    public String getName() {
+        return "Fragmentation UR";
+    }
+
+    @Override
+    public String getConfiguration() {
+        return null;
+    }
+}
