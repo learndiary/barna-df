@@ -341,8 +341,8 @@ public class InputGUI extends JPanel implements ReadyOrNot, StoppableRunnable {
 	public void run() {		
 				
 //		settings.getProfiler().setStop(false);
-//		if (loadStats) {
-//			loadStats();
+//		if (initializeProfiler) {
+//			initializeProfiler();
 //			setLoadStats(false);
 //			return;
 //		}
@@ -430,7 +430,7 @@ public class InputGUI extends JPanel implements ReadyOrNot, StoppableRunnable {
 	public boolean loadStats() {
 //		if (settings.getProfiler().getIds()== null|| settings.getProfiler().getLen()== null) {
 //			settings.getProfiler().setStop(false);
-//			if (!settings.getProfiler().loadStats())
+//			if (!settings.getProfiler().initializeProfiler())
 //				return false;
 //		}
 //		if (settings.getProfiler().isFinishedReadAnnotation()) {

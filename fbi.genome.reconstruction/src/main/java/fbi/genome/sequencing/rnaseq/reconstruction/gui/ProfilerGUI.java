@@ -529,7 +529,7 @@ public class ProfilerGUI extends JPanel implements ReadyOrNot, StoppableRunnable
 		
 		TProfile[] profis= func.getProfis();
 		Plotter9 plotter= new Plotter9();
-		plotter.reset(Fragmenter.MODE_FILT_MESSAGE);
+		//plotter.reset(Fragmenter.MODE_FILT_MESSAGE);
 		for (int i = 0; i < profis.length; i++) {
 			for (int j = 0; j < profis[i].getLength(); j++) {
 				int[] a= new int[] {j, j+1};
@@ -550,7 +550,7 @@ public class ProfilerGUI extends JPanel implements ReadyOrNot, StoppableRunnable
 			return false;
 		
 		Plotter9 plotter= new Plotter9();
-		plotter.reset(Fragmenter.MODE_FILT_MESSAGE);
+		//plotter.reset(Fragmenter.MODE_FILT_MESSAGE);
 		
 		uiUpdate();
 		return true;

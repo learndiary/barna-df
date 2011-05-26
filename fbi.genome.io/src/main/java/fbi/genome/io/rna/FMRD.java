@@ -25,8 +25,7 @@ public class FMRD implements ReadDescriptor {
 	public static final Pattern pattPE= Pattern.compile("^[P,p][1,2]");
 	public static final Pattern pattMM= Pattern.compile("^M\\d$");	//"^M\\d{}$" 
 
-	public static void appendReadName(BEDobject2 obj, Transcript t, Transcript t2, 
-			long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean pend, boolean sense) {
+	public static void appendReadName(BEDobject2 obj, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean pend, boolean sense) {
 
 
 		// FURI
