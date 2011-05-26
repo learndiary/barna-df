@@ -222,19 +222,32 @@ public class Fragmenter implements Callable<Void> {
             double polyaScale = settings.get(FluxSimulatorSettings.POLYA_SCALE);
 
             try {
+                int total = FileHelper.countLines(settings.get(FluxSimulatorSettings.REF_FILE));
                 reader.read();
+                Log.progressStart("preparing reads");
 
                 int leftFlank =  Double.isNaN(tssMean) ? 0 : this.startOffset;
                 int rightFlank = Double.isNaN(polyaScale) || Double.isNaN(polyaShape) ? 0 : this.endOffset;
 
+
+                StringBuffer polyA = null;
+                if(rightFlank >0){
+                    polyA = new StringBuffer();
+                    for (int i = 0; i < rightFlank; i++) {
+                        polyA.append("A");
+                    }
+                }
                 for (Gene[] g; (g = reader.getGenes()) != null; reader.read()) {
+                    Log.progress(reader.getNrLinesRead(), total);
                     for (int i = 0; i < g.length; i++) {
                         for (int j = 0; j < g[i].getTranscripts().length; j++) {
                             Transcript t = g[i].getTranscripts()[j];
                             String s = t.getSplicedSequence(leftFlank, 0, "N", "A");    // TODO check chr pre-loading
-                            while(s.length() < leftFlank+t.getLength()+rightFlank ){
-                                // append polya
-                                s = s+"A";
+                            int sourceLength = s.length();
+                            if(rightFlank > 0){
+                                if(s.length() < sourceLength+rightFlank){
+                                    s = s+ polyA.substring(0, (sourceLength+rightFlank)-s.length());
+                                }
                             }
                             ByteArrayCharSequence combID = new ByteArrayCharSequence(g[i].getGeneID());
                             combID.append((byte) FluxSimulatorSettings.SEP_LOC_TID);
@@ -243,8 +256,10 @@ public class Fragmenter implements Callable<Void> {
                         }
                     }
                 }
+                Log.progressFinish(StringUtils.OK, true);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.progressFailed("ERROR");
+                Log.error("Error while preparing sequences: " + e.getMessage(), e);
             }
         }
 
