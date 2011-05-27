@@ -1,16 +1,9 @@
 package genome.sequencing.rnaseq.simulation.distributions;
 
-import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
 import fbi.genome.model.commons.DoubleVector;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * An empirical distribution stored in a histogram.
@@ -155,14 +148,16 @@ public class EmpiricalDistribution extends AbstractDistribution {
 	public static EmpiricalDistribution create(File f, int nrBins, boolean fragFile) throws FileNotFoundException,IOException {
 		return create(f, Double.NaN, Double.NaN, nrBins, fragFile);
 	}
-	public static EmpiricalDistribution create(File f, double min, double max, int nrBins, boolean fragFile) throws FileNotFoundException,IOException {
+    public static EmpiricalDistribution create(File f, double min, double max, int nrBins, boolean fragFile) throws FileNotFoundException,IOException {
+        return create(FileHelper.countLines(f.getAbsolutePath()), new FileInputStream(f), min, max, nrBins, fragFile);
+    }
+	public static EmpiricalDistribution create(int size, InputStream f, double min, double max, int nrBins, boolean fragFile) throws IOException {
 		int total= 0; String[] ss;
-		int ll= FileHelper.countLines(f.getAbsolutePath());
-		DoubleVector v= new DoubleVector(ll, 1);
-		long size= f.length(), current= 0l;
-		BufferedReader buffy= new BufferedReader(new FileReader((f)));
+		//int ll= FileHelper.countLines(f.getAbsolutePath());
+		DoubleVector v= new DoubleVector(size, 1);
+
+		BufferedReader buffy= new BufferedReader(new InputStreamReader(f));
 		for (String s= null; (s= buffy.readLine())!= null;++total) {
-			current+= s.length()+ 1; 	// TODO get real line separator
             //Log.progress(current, size);
 			ss= s.split("\\s");
 			double x= (fragFile?Double.parseDouble(ss[1])-Double.parseDouble(ss[0])+1

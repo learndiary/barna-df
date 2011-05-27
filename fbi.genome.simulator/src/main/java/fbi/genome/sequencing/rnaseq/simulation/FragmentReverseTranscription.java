@@ -14,6 +14,7 @@ public class FragmentReverseTranscription implements FragmentProcessor{
     private File pwmFile;
     private int leftFlank;
     private int rightFlank;
+    private boolean lossless;
     private boolean customMotif;
     private Map<CharSequence, double[]> mapWeightSense = null;
     private Map<CharSequence, double[]> mapWeightAsense = null;
@@ -36,11 +37,14 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                                         final double gc_lo,
                                         final Map<CharSequence, CharSequence> mapTxSeq,
                                         final Profiler profiler,
-                                        final int leftFlank, final int rightFlank) {
+                                        final int leftFlank,
+                                        final int rightFlank,
+                                        final boolean lossless) {
         this.mode = mode;
         this.pwmFile = pwmFile;
         this.leftFlank = leftFlank;
         this.rightFlank = rightFlank;
+        this.lossless = lossless;
         this.customMotif = pwmFile != null;
 
         this.rtMin = rtMin;
@@ -84,11 +88,7 @@ public class FragmentReverseTranscription implements FragmentProcessor{
         if (!customMotif) {
             if (mode == FluxSimulatorSettings.RtranscriptionMode.PDT) {
                 txLen = profiler.getLength(id);
-                if (end < txLen - 1){    // 0-based coordinates
-                    return null;
-                } else {
-                    howmany = getRTeventNr(txLen - end);
-                }
+                howmany = getRTeventNr(end - txLen);
             } else {
                 howmany = getRTeventNr(len);
             }
@@ -104,41 +104,22 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             n1 = Fragmenter.toCDF(wSense, start, end, leftFlank, rightFlank);
         }
 
-        if (howmany <= 0) {
-            throw new RuntimeException("No RT events !");
+        if(lossless){
+            howmany = Math.max(howmany, 1);
         }
-
-        //processFragNot(start, end, len, id);
-        // choose new 3' end(s)
-//        for (int i = 0; i < howmany; i++) {
-//            int p;
-//            if (wAsense == null) {
-//                if (mode == FluxSimulatorSettings.RtranscriptionMode.PDT) {
-//                    p = end + (int) Math.floor(rtRndWhere.nextDouble() * (txLen - end));
-//                } else {
-//                    assert (mode == FluxSimulatorSettings.RtranscriptionMode.RH);
-//                    p = start + (int) Math.round(rtRndWhere.nextDouble() * (len - 1));
-//                }
-//            } else {
-//                p = Arrays.binarySearch(wAsense, start, end, rtRndWhere.nextDouble());
-//                p = (p >= 0 ? p : -(p + 1));
-//                // TODO put a minimum threshold on weight (thermodynamics affinity)?!
-//                ++p; // anti-sense matrix, cut 3' of 0-position
-//            }
-//            //new3Prime= Math.max(start+ p, new3Prime);
-//            index1[i] = p;
-//        }
+        if (howmany <= 0) {
+            return null;
+        }
 
         for (int i = 0; i < howmany; i++) {
             int p = end;
             if (wAsense == null) {
                 if (mode == FluxSimulatorSettings.RtranscriptionMode.PDT) {
-                    p = end + (int) Math.floor(rtRndWhere.nextDouble() * (txLen - end));
+                    int extension = (int) Math.floor(rtRndWhere.nextDouble() * (end - txLen));
+                    p = end + extension;
                 } else {
-
                     int ext = rtMin + (int) (rnd2.nextDouble() * (rtMax - rtMin));
                     int maxEnd = start + (Math.min(end-start, ext)-1);
-
                     for (int j = 0; j < maxEnd; j++) {
                         if(rtRndWhere.nextBoolean()){
                             // found end
@@ -146,23 +127,18 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                             break;
                         }
                     }
-
-                    //p = start + (int) Math.round(rtRndWhere.nextDouble() * (len - 1));
                 }
             } else {
 
                 int ext = rtMin + (int) (rnd2.nextDouble() * (rtMax - rtMin));
                 int maxEnd = start + (Math.min(end-start, ext)-1);
-
-                //p = Arrays.binarySearch(wAsense, start, end, rtRndWhere.nextDouble());
                 p = Arrays.binarySearch(wAsense, leftFlank+start, leftFlank+rightFlank+maxEnd, rtRndWhere.nextDouble());
                 p = (p >= 0 ? p : -(p + 1));
                 ++p; // anti-sense matrix, cut 3' of 0-position
             }
-            //new3Prime= Math.max(start+ p, new3Prime);
             index1[i] = p;
-        }
 
+        }
 
 
 
@@ -179,12 +155,16 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             if (index1[i] < 0) {
                 continue; // got displaced
             }
+
             int ext = rtMin + (int) (rnd2.nextDouble() * (rtMax - rtMin));
             int from = Math.max(index1[i] - ext, start);
+
             // check GC
             double gc = getGCcontent(id, from, index1[i] - 1);    // bp is first nt of next fragment
 
             //double pg = gc < rtC ? 0d : 1d - Math.exp(-(gc - rtC) / gc_lo);
+
+            double pg = gc < rtC ? 0d : 1d - Math.exp(-Math.pow((gc - rtC) / gc_lo, 2));
             //Math.exp((-1d) * (gc - gc_lo) / gc_lo);
             //if (pg > 1 || rnd1.nextDouble() > pg) {
             //    index1[i] = -1;
@@ -216,28 +196,22 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                     break;
                 }
             }
+
             if (displaced) {
                 continue;
             }
 
             // choose 5'-end for second strand synthesis
             int howmany2 = 5;    // roll 5 values
-
-
             int new5Prime = index1[i];
+            int to2 = Math.min(from + 50, index1[i] - 1);    // within 50nt closest to 5'
             for (int j = 0; j < howmany2; j++) {
                 int p = start;
                 double r = rtRndWhere.nextDouble();
                 if (wAsense == null) {
-                    //p = from + (int) Math.floor(r * (to2 - from));
-                    for (int k = start; k < index1[i]; k++) {
-                        if(rtRndWhere.nextBoolean()){
-                            p = k;
-                            break;
-                        }
-                    }
+                    p= from + (int) Math.floor(r* (to2- from));
                 } else {
-                    int to2 = Math.min(leftFlank+from + 50, index1[i] - 1);    // within 50nt closest to 5'
+                    to2 = Math.min(leftFlank+from + 50, index1[i] - 1);    // within 50nt closest to 5'
                     r = wSense[leftFlank+from] + (r * (wSense[to2] - wSense[leftFlank+from]));
                     p = Arrays.binarySearch(wSense, leftFlank + from, to2, r);
                     p = (p >= 0 ? p : -(p + 1));
@@ -248,7 +222,9 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             // write it
             cs.replace(0, new5Prime);
             cs.replace(1, index1[i]);
-            fragments.add(new Fragment(id, new5Prime, index1[i]));
+
+            Fragment fragment = new Fragment(id, new5Prime, index1[i]);
+            fragments.add(fragment);
         }
 
         // re-normalize

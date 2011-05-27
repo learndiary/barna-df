@@ -50,7 +50,12 @@ public class FluxSimulatorSettings extends ParameterSchema {
         /**
          * Enzymatic digestion as fragmentation method.
          */
-        EZ
+        EZ,
+        /**
+         * Disable fragmentation
+         */
+        NONE
+
     }
 
     public static enum RtranscriptionMode {
@@ -62,10 +67,6 @@ public class FluxSimulatorSettings extends ParameterSchema {
          * PAR_RT_MODE_RANDOM
          */
         RH,
-        /**
-         * PAR_RT_MODE_NONE
-         */
-        NONE
     }
 
     public static enum SizeSamplingModes {
@@ -242,6 +243,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if(lo > hi) throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
         }
     });
+    // todo : remove ?
     public static final Parameter<Double> RT_GC_HI = Parameters.doubleParameter("RT_GC_HI",
             "GC content where reverse transcription saturates", 0.7, 0.0, 1.0, new ParameterValidator() {
         @Override
@@ -251,20 +253,15 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if(lo > hi) throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
         }
     });
+
+    public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
+
     public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "", relativePathParser);
 
     /*
     Size Selection
      */
-    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "", false, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            if(schema.get(FILTERING)){
-                File dist = schema.get(SIZE_DISTRIBUTION);
-                if(dist == null || !dist.canRead()) throw new ParameterException("Sorry, but with FILTERING turned on, you have to specify a distribution file using SIZE_DISTRIBUTION");
-            }
-        }
-    });
+    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "", false);
     public static final Parameter<File> SIZE_DISTRIBUTION = Parameters.fileParameter("SIZE_DISTRIBUTION", "Describes " +
             "the distribution of fragments after filtering", relativePathParser);
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
