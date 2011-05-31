@@ -209,7 +209,7 @@ public class Flux {
      *
      * @return tools all detected flux tools
      */
-    static List<FluxTool> findTools() {
+    public static List<FluxTool> findTools() {
 
         // scan the classpath to find tools
         List<FluxTool> tools = new ArrayList<FluxTool>();
