@@ -120,4 +120,9 @@ public class FragmentEnzymatic implements FragmentProcessor{
     public String getConfiguration() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public String done() {
+        return null;
+    }
 }

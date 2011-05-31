@@ -7,6 +7,9 @@ import java.io.File;
 import java.util.*;
 
 /**
+ *
+ * Apply reverse transcription
+ *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class FragmentReverseTranscription implements FragmentProcessor{
@@ -26,9 +29,11 @@ public class FragmentReverseTranscription implements FragmentProcessor{
     private Profiler profiler;
     private int rtMin;
     private int rtMax;
-    private double gc_lo;// = settings.get(FluxSimulatorSettings.RT_GC_LO);
-    private double rtC;// = gc_lo * (1.5d + Math.log(0.5d));
+    private double gc_lo;
     private Map<CharSequence, CharSequence> mapTxSeq;
+
+    private int[] gcIn;
+    private int[] gcOut;
 
     public FragmentReverseTranscription(FluxSimulatorSettings.RtranscriptionMode mode,
                                         File pwmFile,
@@ -52,7 +57,9 @@ public class FragmentReverseTranscription implements FragmentProcessor{
         this.gc_lo = gc_lo;
         this.mapTxSeq = mapTxSeq;
         this.profiler = profiler;
-        this.rtC = gc_lo * (1.5d + Math.log(0.5d));
+
+        this.gcIn = new int[101];
+        this.gcOut = new int[101];
 
         if (pwmFile != null) {
             // read the sequence annotations
@@ -160,16 +167,17 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             int from = Math.max(index1[i] - ext, start);
 
             // check GC
-            double gc = getGCcontent(id, from, index1[i] - 1);    // bp is first nt of next fragment
-
-            //double pg = gc < rtC ? 0d : 1d - Math.exp(-(gc - rtC) / gc_lo);
-
-            double pg = gc < rtC ? 0d : 1d - Math.exp(-Math.pow((gc - rtC) / gc_lo, 2));
-            //Math.exp((-1d) * (gc - gc_lo) / gc_lo);
-            //if (pg > 1 || rnd1.nextDouble() > pg) {
-            //    index1[i] = -1;
-            //    continue;
-            //}
+            if(gc_lo > 0){
+                double gc = getGCcontent(id, from, index1[i] - 1);
+                double pg = gcScore(gc, 0.04);
+                if (rnd1.nextDouble() > pg) {
+                    index1[i] = -1;
+                    gcOut[((int) (100 * gc))]++;
+                    continue;
+                }else{
+                    gcIn[((int) (100 * gc))]++;
+                }
+            }
 
             // resolve displacements
             boolean displaced = false;
@@ -251,23 +259,34 @@ public class FragmentReverseTranscription implements FragmentProcessor{
     private double getGCcontent(ByteArrayCharSequence id, int i, int j) {
         CharSequence seq = mapTxSeq.get(id);
         int g = 0, n = 0;
-        for (int k = i; k <= j; ++k) {
-            // todo: assume gc content before transcription start
-            if (k >= seq.length()) {
-                n++;
-            } else if (k >= 0) {
-                char c = seq.charAt(k);
-                if (c == 'G' || c == 'C') {
-                    ++g;
-                } else if (c != 'N') {
-                    ++n;
-                }
+        for (int k = leftFlank+i; k <= leftFlank+j; ++k) {
+            char c = seq.charAt(k);
+            if (c == 'G' || c == 'C' || c == 'g' || c == 'c' || c == 's' || c == 'S') {
+                ++g;
+            } else if (c != 'N') {
+                ++n;
             }
         }
         if (n + g == 0) {
             return 0;
         }
         return (g / (double) (n + g));
+    }
+
+    /**
+     * S shaped gc select function
+     *
+     * @param x the gc value
+     * @param a the shape parameter
+     * @return v function value
+     */
+    private double gcScore(double x, double a){
+         x = x+(0.52-gc_lo);
+         if(x <= 0.5) {
+             return Math.pow(2d*x,1d/a)/2d;
+         } else {
+             return 1d-Math.pow(2d*(1d-x),1d/a) / 2d;
+         }
     }
 
     @Override
@@ -283,9 +302,14 @@ public class FragmentReverseTranscription implements FragmentProcessor{
         b.append("\t\t").append("RT MIN: ").append(rtMin).append("\n");
         b.append("\t\t").append("RT MAX: ").append(rtMax).append("\n");
         b.append("\t\t").append("GC LO: ").append(gc_lo).append("\n");
-        b.append("\t\t").append("RT C: ").append(rtC).append("\n");
         return b.toString();
     }
+
+    @Override
+    public String done() {
+        return null;
+    }
+
 }
 
 

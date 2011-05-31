@@ -35,4 +35,11 @@ public interface FragmentProcessor {
      * @return config the configuration
      */
     String getConfiguration();
+
+    /**
+     * Return status string or null when processing is done
+     *
+     * @return status status or null
+     */
+    String done();
 }

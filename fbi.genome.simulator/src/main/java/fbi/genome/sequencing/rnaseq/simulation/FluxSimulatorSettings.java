@@ -163,6 +163,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
                     throw new ParameterException("You have to specify FRAG_EZ_MOTIF in order ot use Enzymatic digestion");
                 }
             }
+
+            if(schema.get(FRAG_METHOD) == FragmentationMethod.NB){
+                if(schema.get(FRAG_SUBSTRATE) == Substrate.RNA){
+                    throw new ParameterException("Sorry, but nebulizing RNA is not supported!");
+                }
+            }
+
         }
     });
     public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", " Parameter specifying the substrate of fragmentation.", Substrate.DNA, null);

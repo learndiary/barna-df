@@ -142,6 +142,16 @@ public class FragmentUniformRandom implements FragmentProcessor{
 
     @Override
     public String getConfiguration() {
+        StringBuffer b = new StringBuffer();
+        b.append("\t\t").append("D0: ").append(d0).append("\n");
+        b.append("\t\t").append("Delta: ").append(urDelta).append("\n");
+        b.append("\t\t").append("Eta: ").append(getFragUReta()).append("\n");
+        return b.toString();
+    }
+
+    @Override
+    public String done() {
         return null;
     }
+
 }

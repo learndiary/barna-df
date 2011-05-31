@@ -300,7 +300,7 @@ public class FluxSimulator {
      *
      * @param detached detache
      */
-    @Option(name = "", longName = "detached", description = "Disable interactivity. No questions will be asked", required = false)
+    @Option(name = "f", longName = "force", description = "Disable interactivity. No questions will be asked", required = false)
     public void setDetached(boolean detached){
         Log.setInteractive(!detached);
     }
@@ -328,7 +328,7 @@ public class FluxSimulator {
      *
      * @param threads number of background threads
      */
-    @Option(name = "", longName = "threads", description = "Number of threads, default is 2", required = false, defaultValue = "2")
+    @Option(name = "x", longName = "threads", description = "Number of threads, default is 2", required = false, defaultValue = "2")
     public void setThreads(final int threads) {
         this.threads = threads;
     }

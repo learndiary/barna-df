@@ -18,7 +18,7 @@ public class FragmentNebulization implements FragmentProcessor{
      * Number of Iterations for recursive nebulization.
      */
     private int nebuRecursionDepth = -1;
-    private double nebuC;
+    //private double nebuC;
     private double lambda = 0;
     private double M = 0;
 
@@ -26,12 +26,34 @@ public class FragmentNebulization implements FragmentProcessor{
 
     private Random rndBreak = new Random();
     private Random rndBP = new Random();
+    //private double thold;
+    private double maxLen;
+    //private RandomDataImpl randomData;
 
-    public FragmentNebulization(final int nebuRecursionDepth, final double nebuC, final double lambda, final double m) {
-        this.nebuRecursionDepth = nebuRecursionDepth;
-        this.nebuC = nebuC;
+    public FragmentNebulization(final double lambda, final double m, final double thold, double maxLen) {
+        if(maxLen <= 0) throw new IllegalArgumentException("Max length <= 0 not permitted !");
+        //randomData = new RandomDataImpl();
+        //this.thold = thold;
+        this.maxLen = maxLen;
+        //double nebuC = lambda * (1.5d - Math.pow(-Math.log(0.5d), 1d / M));
+        //double nebuC = 0d;
+
+
+        // expected recursion depth
+        // p_t<= 0.1
+        // tmax= ceil( log2((maxlen-C)/(lambda*(-ln(0.9)^(1/M))) )
+        // e.g. len= 1500 -> ceil(0.53), len= 15k -> ceil(4.37)
+        // maxLen= 10000; lambda= 900; nebuC= 486;
+        this.nebuRecursionDepth = (int) Math.ceil(
+                //1d - (1d/Math.exp(maxLen/lambda))
+                //Math.log10((maxLen - nebuC) / (lambda * Math.pow(-Math.log(1d - thold), 1d / M))) / Math.log10(2)
+                maxLen / lambda
+
+        );
+        //this.nebuC = nebuC;
         this.lambda = lambda;
         M = m;
+
     }
 
     @Override
@@ -48,7 +70,7 @@ public class FragmentNebulization implements FragmentProcessor{
             index1 = new int[(int) Math.pow(2, recDepth)];
         }
         Arrays.fill(index1, -1);
-        index1[0] = len;
+            index1[0] = len;
         int fragmentNb = 1;
 
         // now break it!
@@ -58,7 +80,8 @@ public class FragmentNebulization implements FragmentProcessor{
                 // breakpoint location
                 // N(length/2,sigma)= (N(0,1)*sigma*(length/2)+ length/2
                 int L = index1[j];
-                //int bp= (int) rdiNebuBP.nextGaussian(len/ 2d, len/ 4d);
+
+                //int bp= (int) randomData.nextGaussian(len/ 2d, len/ 4d);
                 //int bp= (int) ((rndBP.nextGaussian()* sigma
                 //		* ((L-1)/2d))+ (L-1)/2d);	// bp index [0;L[
                 int bp = (int) nextGaussianDouble(rndBP, 0, L - 1);
@@ -66,7 +89,8 @@ public class FragmentNebulization implements FragmentProcessor{
                 // breaking probability (pb)
                 // pb= 1- exp^(-((x-C)/lambda)^M)
                 int minL = (bp < (L - bp) ? bp + 1 : L - bp - 1);
-                double pb = minL < nebuC ? 0d : 1d - Math.exp(-Math.pow((minL - nebuC) / lambda, M));
+                //double pb = minL < nebuC ? 0d : 1d - Math.exp(-Math.pow((minL - nebuC) / lambda, M));
+                double pb = 1d - (1d/Math.exp(Math.pow(minL / lambda, M)));
                 double r = rndBreak.nextDouble();
                 if (r > pb) {
                     continue;
@@ -92,7 +116,8 @@ public class FragmentNebulization implements FragmentProcessor{
         for (int j = 0; index1[j] > 0; ++j) {
             int s = start;
             int e = s + index1[j];
-            fragments.add(new Fragment(id, s, e));
+            Fragment fragment = new Fragment(id, s, e);
+            fragments.add(fragment);
             //cs.replace(0, start);
             //start += index1[j];
             //cs.replace(1, start - 1);
@@ -128,6 +153,20 @@ public class FragmentNebulization implements FragmentProcessor{
 
     @Override
     public String getConfiguration() {
+        StringBuffer b = new StringBuffer();
+        b.append("\t\t").append("Lambda: ").append(this.lambda).append("\n");
+        //b.append("\t\t").append("Threshold: ").append(this.thold).append("\n");
+        b.append("\t\t").append("M: ").append(M).append("\n");
+        //b.append("\t\t").append("C: ").append(nebuC).append("\n");
+        b.append("\t\t").append("Max Length: ").append(maxLen).append("\n");
+        b.append("\t\t").append("Recursions: ").append(nebuRecursionDepth).append("\n");
+        return b.toString();
+
+    }
+
+    @Override
+    public String done() {
         return null;
     }
+
 }

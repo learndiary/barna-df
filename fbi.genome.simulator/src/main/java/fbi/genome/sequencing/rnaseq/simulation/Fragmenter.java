@@ -67,6 +67,10 @@ public class Fragmenter implements Callable<Void> {
      * If POLYA scale or shape are set, this is the maximum length of the tail
      */
     private int endOffset = 300;
+    /**
+     * Cache the length information
+     */
+    private long maxLength;
 
 
     public Fragmenter(FluxSimulatorSettings settings, Profiler profiler) {
@@ -364,16 +368,7 @@ public class Fragmenter implements Callable<Void> {
                         Double M = settings.get(FluxSimulatorSettings.FRAG_NB_M);
                         Double thold = settings.get(FluxSimulatorSettings.FRAG_NB_THOLD);
 
-                        double nebuC = nb_lambda * (1.5d - Math.pow(-Math.log(0.5d), 1d / M));
-
-                        // expected recursion depth
-                        // p_t<= 0.1
-                        // tmax= ceil( log2((maxlen-C)/(lambda*(-ln(0.9)^(1/M))) )
-                        // e.g. len= 1500 -> ceil(0.53), len= 15k -> ceil(4.37)
-                        // maxLen= 10000; lambda= 900; nebuC= 486;
-                        int nebuRecursionDepth =
-                                (int) Math.ceil(Math.log10((maxLen - nebuC) / (nb_lambda * Math.pow(-Math.log(1d - thold), 1d / M))) / Math.log10(2));
-                        processor = new FragmentNebulization(nebuRecursionDepth, nebuC, nb_lambda, M);
+                        processor = new FragmentNebulization(nb_lambda, M, thold, this.maxLength);
                         break;
                     case MODE_FRAG:
                         double d0 = settings.get(FluxSimulatorSettings.FRAG_UR_D0);
@@ -459,6 +454,11 @@ public class Fragmenter implements Callable<Void> {
 
                 Log.progressFinish(StringUtils.OK, true);
 
+                String status = processor.done();
+                if(status != null){
+                    Log.message(status);
+                }
+
                 // sum up counts and prepare stats
                 long total = currMols + newMols;
                 Log.message("\t\t" + total + " mol: in " + currMols + ", new " + newMols + ", out " + totalWritten);
@@ -471,6 +471,7 @@ public class Fragmenter implements Callable<Void> {
             Log.error("Error while fragmenting : " + e.getMessage(), e);
         }finally {
 
+            this.maxLength = maxLen;
             if(fis != null){
                 try {fis.close();} catch (IOException ignore) {}
             }
