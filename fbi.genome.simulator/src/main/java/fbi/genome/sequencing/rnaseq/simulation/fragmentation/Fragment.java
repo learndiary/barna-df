@@ -1,4 +1,4 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
 /**
  * Model fragments based on the global id ({@code <chromosome>:<position>@<transcriptID>})

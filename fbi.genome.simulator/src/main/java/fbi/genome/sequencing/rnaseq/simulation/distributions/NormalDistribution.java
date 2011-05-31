@@ -1,4 +1,4 @@
-package genome.sequencing.rnaseq.simulation.distributions;
+package fbi.genome.sequencing.rnaseq.simulation.distributions;
 
 public class NormalDistribution extends AbstractDistribution {
 

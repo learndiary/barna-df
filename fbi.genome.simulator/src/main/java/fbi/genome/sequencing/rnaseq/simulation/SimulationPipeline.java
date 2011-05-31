@@ -4,6 +4,7 @@ import fbi.commons.Log;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.CommandLine;
 import fbi.genome.io.gff.GFFReader;
+import fbi.genome.sequencing.rnaseq.simulation.fragmentation.Fragmenter;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;

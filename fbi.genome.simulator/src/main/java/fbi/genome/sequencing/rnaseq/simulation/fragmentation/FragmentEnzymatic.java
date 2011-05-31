@@ -1,6 +1,7 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
 import fbi.commons.ByteArrayCharSequence;
+import fbi.genome.sequencing.rnaseq.simulation.PWM;
 
 import java.io.File;
 import java.util.*;

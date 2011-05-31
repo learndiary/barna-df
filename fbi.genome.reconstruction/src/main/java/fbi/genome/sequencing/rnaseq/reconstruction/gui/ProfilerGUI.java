@@ -7,7 +7,6 @@ import fbi.genome.model.constants.Constants;
 import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitor;
 import fbi.genome.sequencing.rnaseq.reconstruction.TProfile;
 import fbi.genome.sequencing.rnaseq.reconstruction.TProfileFunction;
-import fbi.genome.sequencing.rnaseq.simulation.Fragmenter;
 
 import javax.swing.*;
 import java.awt.*;

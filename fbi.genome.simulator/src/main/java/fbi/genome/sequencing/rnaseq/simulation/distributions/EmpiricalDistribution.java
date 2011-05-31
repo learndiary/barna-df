@@ -1,4 +1,4 @@
-package genome.sequencing.rnaseq.simulation.distributions;
+package fbi.genome.sequencing.rnaseq.simulation.distributions;
 
 import fbi.commons.file.FileHelper;
 import fbi.genome.model.commons.DoubleVector;

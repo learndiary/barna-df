@@ -1,4 +1,4 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
@@ -11,9 +11,13 @@ import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
-import genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
-import genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
-import genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
+import fbi.genome.sequencing.rnaseq.simulation.PWM;
+import fbi.genome.sequencing.rnaseq.simulation.Profiler;
+import fbi.genome.sequencing.rnaseq.simulation.ProfilerFile;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
 import org.apache.commons.math.random.RandomDataImpl;
 
 import java.io.*;

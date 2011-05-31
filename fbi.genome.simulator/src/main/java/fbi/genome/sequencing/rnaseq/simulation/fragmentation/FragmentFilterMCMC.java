@@ -1,7 +1,7 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
 import fbi.commons.ByteArrayCharSequence;
-import genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
 
 import java.util.Arrays;
 import java.util.List;
