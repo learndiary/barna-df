@@ -2,11 +2,11 @@ package fbi.genome.errormodel;
 
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
+import fbi.commons.flux.FluxTool;
 import fbi.commons.io.Serializer;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.Qualities;
 import fbi.commons.tools.XYLinePlotter;
-import fbi.genome.sequencing.rnaseq.simulation.FluxTool;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -19,7 +19,7 @@ import java.io.FileOutputStream;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 @Cli(name = "model", description = "create markov error model")
-public class MarkovErrorModel implements FluxTool{
+public class MarkovErrorModel implements FluxTool {
 
     private File file;
     private int readLength;

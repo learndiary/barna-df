@@ -1,5 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import fbi.commons.flux.Flux;
+import fbi.commons.flux.FluxTool;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -25,7 +27,7 @@ public class FluxSimulatorTest {
 
     @Test
     public void testFindTools(){
-        List<FluxTool> tools = FluxSimulator.findTools();
+        List<FluxTool> tools = Flux.findTools();
         assertNotNull(tools);
         assertTrue(tools.size() > 2);
     }

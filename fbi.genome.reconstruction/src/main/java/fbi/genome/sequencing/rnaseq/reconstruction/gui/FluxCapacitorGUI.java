@@ -1008,7 +1008,7 @@ public class FluxCapacitorGUI extends JFrame {
 	ReadyOrNot[] readyOrNot;
 	 
 	private void initUI() {
-		//FluxSimulator.c= SystemInspector.checkRuntime();	
+		//Flux.c= SystemInspector.checkRuntime();
 		SwingUtilities.updateComponentTreeUI(FluxCapacitorGUI.this);		
 
 		loadIcons();
@@ -1316,7 +1316,7 @@ public class FluxCapacitorGUI extends JFrame {
 	private void updateTitle(File parFile) {
 		String title= parFile.getName();
 		title= title.substring(0,title.lastIndexOf("."));
-		setTitle(title+" - "+(/*FluxSimulator.c*/false?"(":"")+FluxCapacitorGUI.TITLE+(/*FluxSimulator.c*/false?";)":"")+ " "+ FluxCapacitor.version);
+		setTitle(title+" - "+(/*Flux.c*/false?"(":"")+FluxCapacitorGUI.TITLE+(/*Flux.c*/false?";)":"")+ " "+ FluxCapacitor.version);
 	}
 	
 	JDialog newDialog;

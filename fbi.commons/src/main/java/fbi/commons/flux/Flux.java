@@ -1,4 +1,4 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.commons.flux;
 
 import fbi.commons.Execute;
 import fbi.commons.Log;
@@ -31,7 +31,7 @@ import java.util.jar.Manifest;
  * this checks for any {@link FluxTool} implementations and adds them to the list of available tools.
  */
 @Cli(name = "flux", restrict = false)
-public class FluxSimulator {
+public class Flux {
     /**
      * Current Flux Simulator version
      */
@@ -74,8 +74,8 @@ public class FluxSimulator {
         List<FluxTool> tools = findTools();
 
         // prepare the simulator
-        FluxSimulator simulator = new FluxSimulator();
-        ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(FluxSimulator.class);
+        Flux simulator = new Flux();
+        ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(Flux.class);
         try {
             fluxArguments.process(args, simulator);
         } catch (AccessFailureException ae) {
@@ -340,7 +340,7 @@ public class FluxSimulator {
         /*
         Find the manifest file and extract version revision adn jdk information
          */
-        URL location = FluxSimulator.class.getResource("FluxSimulator.class");
+        URL location = Flux.class.getResource("Flux.class");
         String fileString = location.toExternalForm();
         File jar = null;
         if (fileString.startsWith("jar")) {

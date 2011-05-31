@@ -41,4 +41,4 @@ do
     fi
 done
 
-java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" -cp $cp fbi.genome.sequencing.rnaseq.simulation.FluxSimulator "$@"
+java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" -cp $cp fbi.commons.flux.Flux "$@"

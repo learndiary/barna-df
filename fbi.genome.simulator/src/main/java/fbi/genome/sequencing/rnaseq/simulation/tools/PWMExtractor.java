@@ -2,13 +2,13 @@ package fbi.genome.sequencing.rnaseq.simulation.tools;
 
 import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
+import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.sequencing.rnaseq.simulation.FluxTool;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;

@@ -1,8 +1,8 @@
 package fbi.genome.sequencing.rnaseq.simulation.tools;
 
 import fbi.commons.Log;
+import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
-import fbi.genome.sequencing.rnaseq.simulation.FluxTool;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;

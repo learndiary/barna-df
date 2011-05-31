@@ -1,6 +1,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
+import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.CommandLine;
 import fbi.genome.io.gff.GFFReader;

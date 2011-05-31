@@ -1,4 +1,4 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.commons.flux;
 
 import fbi.commons.options.HelpPrinter;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
@@ -6,7 +6,7 @@ import org.cyclopsgroup.jcli.ArgumentProcessor;
 import java.util.concurrent.Callable;
 
 /**
- * Base interface for flux simulator tools. Implement this interface to add new flux tools.
+ * Base interface for flux tools. Implement this interface to add new flux tool.
  * If the default main class is used, the tools are automatically registered. You can use the
  * {@code @Cli} annotation on the class to give it a name and a description and then annotate
  * setter methods with {@code @Option} to add them as command line parameters.

@@ -81,7 +81,7 @@
                 <configuration>
                   <archive>
                     <manifest>
-                      <mainClass>fbi.genome.sequencing.rnaseq.simulation.FluxSimulator</mainClass>
+                      <mainClass>fbi.commons.flux.Flux</mainClass>
                       <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                     </manifest>
                     <manifestEntries>
@@ -144,13 +144,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Classpath scanner-->
-        <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.5-RC2</version>
-        </dependency>
-
     </dependencies>
 
     <repositories>
@@ -158,12 +151,6 @@
             <id>Fernis</id>
             <name>Fernis</name>
             <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
-        </repository>
-        <!-- class scanner -->
-        <repository>
-            <id>reflections-repo</id>
-            <name>Reflections Maven2 Repository</name>
-            <url>http://reflections.googlecode.com/svn/repo</url>
         </repository>
     </repositories>
 

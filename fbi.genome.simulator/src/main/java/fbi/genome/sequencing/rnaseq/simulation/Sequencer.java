@@ -24,7 +24,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-
+/**
+ * Sequence the library
+ */
 public class Sequencer implements Callable<Void> {
     public static final byte BYTE_TAB = '\t', BYTE_DOT = '.', BYTE_COMMA = ',', BYTE_0 = '0', BYTE_1 = '1', BYTE_PLUS = 43, BYTE_MINUS = '-', BYTE_GT = 62, BYTE_AT = 64, BYTE_NL = '\n';
     public final static String NAME_SEQ = "Sequencing";
