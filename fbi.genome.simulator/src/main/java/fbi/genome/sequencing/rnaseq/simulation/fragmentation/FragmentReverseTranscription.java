@@ -258,11 +258,13 @@ public class FragmentReverseTranscription implements FragmentProcessor {
         CharSequence seq = mapTxSeq.get(id);
         int g = 0, n = 0;
         for (int k = leftFlank + i; k <= leftFlank + j; ++k) {
-            char c = seq.charAt(k);
-            if (c == 'G' || c == 'C' || c == 'g' || c == 'c' || c == 's' || c == 'S') {
-                ++g;
-            } else if (c != 'N') {
-                ++n;
+            if(k >=0 && k< seq.length()){
+                char c = seq.charAt(k);
+                if (c == 'G' || c == 'C' || c == 'g' || c == 'c' || c == 's' || c == 'S') {
+                    ++g;
+                } else if (c != 'N') {
+                    ++n;
+                }
             }
         }
         if (n + g == 0) {

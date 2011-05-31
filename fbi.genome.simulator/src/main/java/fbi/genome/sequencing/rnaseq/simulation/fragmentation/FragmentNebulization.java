@@ -77,7 +77,7 @@ public class FragmentNebulization implements FragmentProcessor {
 
         // now break it!
         for (int i = 0; i < recDepth; ++i) {
-            for (int j = 0; index1[j] > 0; ++j) {
+            for (int j = 0; j < index1.length && index1[j] > 0; ++j) {
 
                 // breakpoint location
                 // N(length/2,sigma)= (N(0,1)*sigma*(length/2)+ length/2
@@ -115,7 +115,7 @@ public class FragmentNebulization implements FragmentProcessor {
 
         // write result to disk
         List<Fragment> fragments = new ArrayList<Fragment>();
-        for (int j = 0; index1[j] > 0; ++j) {
+        for (int j = 0; j < index1.length && index1[j] > 0; ++j) {
             int s = start;
             int e = s + index1[j];
             Fragment fragment = new Fragment(id, s, e);

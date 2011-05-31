@@ -1,7 +1,10 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -14,8 +17,20 @@ import static org.junit.Assert.fail;
  */
 public class SmallSimulationsTest {
 
+
+    @Before
+    public void setUp() throws Exception {
+        Execute.initialize(4);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Execute.shutdown();
+    }
+
     @Test
     public void simpleSim1(){
+
         // disable any questions
         Log.setInteractive(false);
         // the setting file

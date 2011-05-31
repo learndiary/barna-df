@@ -219,7 +219,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
     public static final Parameter<Double> FRAG_NB_M = Parameters.doubleParameter("FRAG_NB_M", "Parameter " +
             "specifying the strength of the " +
-            "nebulization shearfield.", Double.NaN); // todo : check default
+            "nebulization shearfield.", 1.0); //
 
     /*
      RNA Hydrolysis (Uniform-Random)
