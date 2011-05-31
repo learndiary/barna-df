@@ -29,9 +29,8 @@ import java.util.jar.Manifest;
 /**
  * Flux Simulator starter class. Contains the main method and parses command line arguments. During startup,
  * this checks for any {@link FluxTool} implementations and adds them to the list of available tools.
- *
  */
-@Cli(name="flux", restrict = false)
+@Cli(name = "flux", restrict = false)
 public class FluxSimulator {
     /**
      * Current Flux Simulator version
@@ -67,7 +66,7 @@ public class FluxSimulator {
         /*
         Read properties
          */
-        if(!readProperties()){
+        if (!readProperties()) {
             System.exit(-1);
         }
 
@@ -77,17 +76,17 @@ public class FluxSimulator {
         // prepare the simulator
         FluxSimulator simulator = new FluxSimulator();
         ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(FluxSimulator.class);
-        try{
+        try {
             fluxArguments.process(args, simulator);
-        }catch (AccessFailureException ae){
+        } catch (AccessFailureException ae) {
             Log.error("Error while processing arguments !");
-            if(ae.getCause() instanceof InvocationTargetException){
+            if (ae.getCause() instanceof InvocationTargetException) {
                 Log.error(((InvocationTargetException) (ae.getCause())).getTargetException().getMessage());
-            }else{
+            } else {
                 Log.error(ae.getCause().getMessage());
             }
             System.exit(-1);
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.error("Error while processing arguments !");
             Log.error(e.getMessage());
             System.exit(-1);
@@ -103,20 +102,19 @@ public class FluxSimulator {
         }
 
 
-
         // start
-        if(FLUX_VERSION.length() > 0 && FLUX_REVISION.length() > 0){
-            Log.info("I am the Flux Simulator (v"+ FLUX_VERSION +" build"+FLUX_REVISION+"), nice to meet you!\n");
-        }else{
+        if (FLUX_VERSION.length() > 0 && FLUX_REVISION.length() > 0) {
+            Log.info("I am the Flux Simulator (v" + FLUX_VERSION + " build" + FLUX_REVISION + "), nice to meet you!\n");
+        } else {
             Log.info("I am the Flux Simulator ( Devel Mode ), nice to meet you!\n");
         }
 
         // find the tool to start
         FluxTool tool = null;
-        if(simulator.getToolName() != null){
+        if (simulator.getToolName() != null) {
             int i = 0;
             for (org.cyclopsgroup.jcli.spi.Cli cli : toolClis) {
-                if(cli.getName().equals(simulator.getToolName())){
+                if (cli.getName().equals(simulator.getToolName())) {
                     tool = tools.get(i);
                     break;
                 }
@@ -128,11 +126,11 @@ public class FluxSimulator {
         PrintWriter out = new PrintWriter(System.err);
         HelpPrinter printer = new HelpPrinter(out);
 
-        if(simulator.isHelp()){
+        if (simulator.isHelp()) {
             // show help message
-            if(tool == null) {
-               printFluxHelp(tools, fluxArguments, out, printer);
-            }else{
+            if (tool == null) {
+                printFluxHelp(tools, fluxArguments, out, printer);
+            } else {
                 // show tool help
                 // create the argument parser
                 ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
@@ -145,11 +143,11 @@ public class FluxSimulator {
         }
 
 
-        if(tool != null){
+        if (tool != null) {
             // execute the tool
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
             toolArguments.process(args, tool);
-            if(!tool.validateParameters(printer, toolArguments)){
+            if (!tool.validateParameters(printer, toolArguments)) {
                 out.flush();
                 System.exit(-1);
             }
@@ -159,26 +157,26 @@ public class FluxSimulator {
                 Execute.initialize(simulator.getThreads());
 
                 tool.call();
-            }catch (IOException ioError){
+            } catch (IOException ioError) {
                 // check for some specific errors
-                if(ioError.getMessage().equals("No space left on device")){
+                if (ioError.getMessage().equals("No space left on device")) {
                     Log.error("[DISK] There is no space left on the device!");
-                }else{
-                    Log.error("Error while executing "+ tool.getClass(), ioError);
+                } else {
+                    Log.error("Error while executing " + tool.getClass(), ioError);
                 }
-            }catch (Exception e) {
+            } catch (Exception e) {
                 Log.error(e.getMessage(), e);
-                Log.debug("Error while executing "+ tool.getClass(), e);
-            }finally {
+                Log.debug("Error while executing " + tool.getClass(), e);
+            } finally {
                 // shutdown the executor
                 Execute.shutdown();
             }
-        }else{
-            if(simulator.getToolName() == null || simulator.getToolName().isEmpty()){
+        } else {
+            if (simulator.getToolName() == null || simulator.getToolName().isEmpty()) {
                 Log.error("");
                 Log.error("No tool specified!");
                 Log.error("\n");
-            }else{
+            } else {
                 Log.error("");
                 Log.error("Unable to find tool : " + simulator.getToolName());
                 Log.error("\n");
@@ -282,7 +280,7 @@ public class FluxSimulator {
      * @param level the level
      */
     @Option(name = "", longName = "log", description = "Log level (NONE|INFO|ERROR|DEBUG)", defaultValue = "INFO", required = false)
-    public void setLogLevel(String level){
+    public void setLogLevel(String level) {
         Log.setLogLevel(level);
     }
 
@@ -291,7 +289,7 @@ public class FluxSimulator {
      *
      * @return level the log level
      */
-    public String getLogLevel(){
+    public String getLogLevel() {
         return Log.getLogLevel().toString();
     }
 
@@ -301,7 +299,7 @@ public class FluxSimulator {
      * @param detached detache
      */
     @Option(name = "f", longName = "force", description = "Disable interactivity. No questions will be asked", required = false)
-    public void setDetached(boolean detached){
+    public void setDetached(boolean detached) {
         Log.setInteractive(!detached);
     }
 
@@ -310,7 +308,7 @@ public class FluxSimulator {
      *
      * @return detached true if interactivity is disabled
      */
-    public boolean isDetached(){
+    public boolean isDetached() {
         return !Log.isInteractive();
     }
 
@@ -338,14 +336,14 @@ public class FluxSimulator {
      *
      * @return valid returns true if properties are valid and everything is fine
      */
-	private static boolean readProperties() {
+    private static boolean readProperties() {
         /*
         Find the manifest file and extract version revision adn jdk information
          */
         URL location = FluxSimulator.class.getResource("FluxSimulator.class");
         String fileString = location.toExternalForm();
         File jar = null;
-        if(fileString.startsWith("jar")){
+        if (fileString.startsWith("jar")) {
             fileString = fileString.substring(9);
             fileString = fileString.substring(0, fileString.lastIndexOf("!"));
             jar = new File(fileString);
@@ -353,7 +351,7 @@ public class FluxSimulator {
         String buildVersion = "";
         String buildRevision = "";
         String buildJDK = "";
-        if(jar != null){
+        if (jar != null) {
             try {
                 JarFile jf = new JarFile(jar);
                 Manifest manifest = jf.getManifest();
@@ -361,44 +359,45 @@ public class FluxSimulator {
                 Object v = mainAttributes.getValue("Build-Version");
                 Object r = mainAttributes.getValue("Build-Revision");
                 Object j = mainAttributes.getValue("Flux-JDK");
-                if(v != null){
+                if (v != null) {
                     buildVersion = v.toString();
                 }
-                if(r != null){
+                if (r != null) {
                     buildRevision = r.toString();
                 }
-                if(j != null){
+                if (j != null) {
                     buildJDK = j.toString();
                 }
-            } catch (IOException e) {}
+            } catch (IOException e) {
+            }
         }
 
 
-		if(!buildVersion.isEmpty()){
+        if (!buildVersion.isEmpty()) {
             FLUX_VERSION = buildVersion;
         }
 
-        if(!buildRevision.isEmpty()){
+        if (!buildRevision.isEmpty()) {
             FLUX_REVISION = buildRevision;
         }
 
         if (!buildJDK.isEmpty()) {
-			try {
-				float v= Float.parseFloat(buildJDK);
-				String ver= System.getProperty("java.version");
-				int p= ver.indexOf('.', 0);
-				p= ver.indexOf('.', p+1);
-				float v2= Float.parseFloat(ver.substring(0, p));
-				if (v2< v) {
-					Log.error("Wrong java version, I need "+v+" but I found "+v2+".");
+            try {
+                float v = Float.parseFloat(buildJDK);
+                String ver = System.getProperty("java.version");
+                int p = ver.indexOf('.', 0);
+                p = ver.indexOf('.', p + 1);
+                float v2 = Float.parseFloat(ver.substring(0, p));
+                if (v2 < v) {
+                    Log.error("Wrong java version, I need " + v + " but I found " + v2 + ".");
                     return false;
-				}
-			} catch (Exception e) {
-				; // :)
-			}
-			
-		}
+                }
+            } catch (Exception e) {
+                ; // :)
+            }
+
+        }
         return true;
-		
-	}
+
+    }
 }

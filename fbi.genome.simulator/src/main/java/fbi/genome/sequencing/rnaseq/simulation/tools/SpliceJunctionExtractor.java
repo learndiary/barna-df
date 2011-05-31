@@ -1,10 +1,11 @@
-package fbi.genome.sequencing.rnaseq.simulation;
+package fbi.genome.sequencing.rnaseq.simulation.tools;
 
 import fbi.commons.Log;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.options.Options;
 import fbi.genome.io.SpliceGraphIO;
 import fbi.genome.model.IntronModel;
+import fbi.genome.sequencing.rnaseq.simulation.FluxTool;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -16,16 +17,16 @@ import java.io.File;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name="extract", description = "Splice junction extraction", restrict = false)
+@Cli(name = "extract", description = "Splice junction extraction", restrict = false)
 public class SpliceJunctionExtractor implements FluxTool<Void> {
     /**
      * Default 5' flank
      */
-    private static final int FLANK5_LEN= 50;
+    private static final int FLANK5_LEN = 50;
     /**
      * Default 3' flank
      */
-    private static final int FLANK3_LEN= 50;
+    private static final int FLANK3_LEN = 50;
     /**
      * The Genome File
      */
@@ -44,24 +45,24 @@ public class SpliceJunctionExtractor implements FluxTool<Void> {
     private Options options;
 
     public Void call() throws Exception {
-        if (gffFile == null|| !gffFile.exists()) {
+        if (gffFile == null || !gffFile.exists()) {
             throw new RuntimeException("No valid GFF input file specified!");
-        } else{
+        } else {
             // todo : refactor this to not use a static variable
-            fbi.genome.model.Graph.overrideSequenceDirPath= gffFile.getAbsolutePath();
+            fbi.genome.model.Graph.overrideSequenceDirPath = gffFile.getAbsolutePath();
         }
 
-        int[] flanks= getEFlanks();
-        flanks[0]= flanks[0]< 0? FLANK5_LEN: flanks[0];
-        flanks[1]= flanks[1]< 0? FLANK3_LEN: flanks[1];
+        int[] flanks = getEFlanks();
+        flanks[0] = flanks[0] < 0 ? FLANK5_LEN : flanks[0];
+        flanks[1] = flanks[1] < 0 ? FLANK3_LEN : flanks[1];
 
-        IntronModel iModel= new IntronModel();
-        if (modelFile != null){
+        IntronModel iModel = new IntronModel();
+        if (modelFile != null) {
             Log.info("Reading Model file " + modelFile.getAbsolutePath());
             iModel.read(modelFile);
         }
-        Log.info("Extracting splice junctions, 5'sequence "+flanks[0]
-            + ", 3'sequence "+eFlanks[1]+", intron model "+ iModel.getName());
+        Log.info("Extracting splice junctions, 5'sequence " + flanks[0]
+                + ", 3'sequence " + eFlanks[1] + ", intron model " + iModel.getName());
         SpliceGraphIO.extractSpliceJunctions(flanks[0], flanks[1], iModel, gffFile, null);
         return null;
     }
@@ -75,8 +76,8 @@ public class SpliceJunctionExtractor implements FluxTool<Void> {
     public int[] getEFlanks() {
         if (eFlanks == null) {
             eFlanks = new int[2];
-            eFlanks[0]= -1;
-            eFlanks[1]= -1;
+            eFlanks[0] = -1;
+            eFlanks[1] = -1;
         }
 
         return eFlanks;
@@ -88,13 +89,13 @@ public class SpliceJunctionExtractor implements FluxTool<Void> {
      * @param length flank length  @code{> 0}
      */
 
-    @Option(name="5", longName = "5flank", description = "exonic flank 5' of intron")
+    @Option(name = "5", longName = "5flank", description = "exonic flank 5' of intron")
     public void set5flank(int length) {
-        getEFlanks()[0]= -1;
-        if(length <= 0){
+        getEFlanks()[0] = -1;
+        if (length <= 0) {
             throw new IllegalArgumentException("Not a valid length for 5' exon flank: " + length);
         }
-        getEFlanks()[0]= length;
+        getEFlanks()[0] = length;
     }
 
     /**
@@ -102,13 +103,13 @@ public class SpliceJunctionExtractor implements FluxTool<Void> {
      *
      * @param length flank length @code{> 0}
      */
-    @Option(name="3", longName = "3flank", description = "exonic flank 3' of intron")
+    @Option(name = "3", longName = "3flank", description = "exonic flank 3' of intron")
     public void set3flank(int length) {
-        getEFlanks()[1]= -1;
-        if(length <= 0){
+        getEFlanks()[1] = -1;
+        if (length <= 0) {
             throw new IllegalArgumentException("Not a valid length for 3' exon flank: " + length);
         }
-        getEFlanks()[1]= length;
+        getEFlanks()[1] = length;
     }
 
     /**
@@ -144,7 +145,7 @@ public class SpliceJunctionExtractor implements FluxTool<Void> {
      *
      * @param modelFile model file
      */
-    @Option(name="m", longName = "model", description = "specify the intron model")
+    @Option(name = "m", longName = "model", description = "specify the intron model")
     public void setModelFile(File modelFile) {
         this.modelFile = modelFile;
     }

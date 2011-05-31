@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class FragmentEnzymatic implements FragmentProcessor{
+public class FragmentEnzymatic implements FragmentProcessor {
     private Map<CharSequence, double[]> mapWeightSense = null;
     private Map<CharSequence, double[]> mapWeightAsense = null;
     private PWM pwmSense;
@@ -24,7 +24,9 @@ public class FragmentEnzymatic implements FragmentProcessor{
     public FragmentEnzymatic(File ezMotif, Map<CharSequence, CharSequence> mapTxSeq, int leftFlank, final int rightFlank) throws Exception {
         this.leftFlank = leftFlank;
         this.rightFlank = rightFlank;
-        if(ezMotif == null) throw new NullPointerException("Null Motif file for enzymatic fragmentation not permitted !");
+        if (ezMotif == null) {
+            throw new NullPointerException("Null Motif file for enzymatic fragmentation not permitted !");
+        }
         pwmSense = PWM.create(ezMotif);
         mapWeightSense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmSense);
         pwmSense.invert();

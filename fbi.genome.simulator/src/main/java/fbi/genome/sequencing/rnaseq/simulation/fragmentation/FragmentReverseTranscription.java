@@ -10,12 +10,11 @@ import java.io.File;
 import java.util.*;
 
 /**
- *
  * Apply reverse transcription
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class FragmentReverseTranscription implements FragmentProcessor{
+public class FragmentReverseTranscription implements FragmentProcessor {
     private FluxSimulatorSettings.RtranscriptionMode mode;
     private File pwmFile;
     private int leftFlank;
@@ -75,12 +74,11 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                 mapWeightSense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmSense);
                 pwmSense.invert();
                 PWM pwmAsense = pwmSense;
-                mapWeightAsense = Fragmenter.getMapWeight(mapTxSeq,mapTxSeq, pwmAsense);
+                mapWeightAsense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmAsense);
             } catch (Exception e) {
                 Log.error("Error while initializing PWM : " + e.getMessage(), e);
             }
         }
-
 
 
     }
@@ -114,7 +112,7 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             n1 = Fragmenter.toCDF(wSense, start, end, leftFlank, rightFlank);
         }
 
-        if(lossless){
+        if (lossless) {
             howmany = Math.max(howmany, 1);
         }
         if (howmany <= 0) {
@@ -129,11 +127,11 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                     p = end + extension;
                 } else {
                     int ext = rtMin + (int) (rnd2.nextDouble() * (rtMax - rtMin));
-                    int maxEnd = start + (Math.min(end-start, ext)-1);
+                    int maxEnd = start + (Math.min(end - start, ext) - 1);
                     for (int j = 0; j < maxEnd; j++) {
-                        if(rtRndWhere.nextBoolean()){
+                        if (rtRndWhere.nextBoolean()) {
                             // found end
-                            p = maxEnd-i;
+                            p = maxEnd - i;
                             break;
                         }
                     }
@@ -141,17 +139,14 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             } else {
 
                 int ext = rtMin + (int) (rnd2.nextDouble() * (rtMax - rtMin));
-                int maxEnd = start + (Math.min(end-start, ext)-1);
-                p = Arrays.binarySearch(wAsense, leftFlank+start, leftFlank+rightFlank+maxEnd, rtRndWhere.nextDouble());
+                int maxEnd = start + (Math.min(end - start, ext) - 1);
+                p = Arrays.binarySearch(wAsense, leftFlank + start, leftFlank + rightFlank + maxEnd, rtRndWhere.nextDouble());
                 p = (p >= 0 ? p : -(p + 1));
                 ++p; // anti-sense matrix, cut 3' of 0-position
             }
             index1[i] = p;
 
         }
-
-
-
 
 
         // extend first strand
@@ -170,14 +165,14 @@ public class FragmentReverseTranscription implements FragmentProcessor{
             int from = Math.max(index1[i] - ext, start);
 
             // check GC
-            if(gc_lo > 0){
+            if (gc_lo > 0) {
                 double gc = getGCcontent(id, from, index1[i] - 1);
                 double pg = gcScore(gc, 0.04);
                 if (rnd1.nextDouble() > pg) {
                     index1[i] = -1;
                     gcOut[((int) (100 * gc))]++;
                     continue;
-                }else{
+                } else {
                     gcIn[((int) (100 * gc))]++;
                 }
             }
@@ -196,8 +191,8 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                     int dist = Math.min(index1[i] - index1[j], index1[j] - start);
                     f = Math.exp((-1d) * dist / rtMin);
                 } else {    // displacement is a function of motifs
-                    double mi = wAsense[rightFlank+index1[i] - 1] - (index1[i] == 1 ? 0 : wAsense[rightFlank+index1[i] - 2]);    // (-1) as cut after asense 0-pos
-                    double mj = wAsense[rightFlank+index1[j] - 1] - (index1[j] == 1 ? 0 : wAsense[rightFlank+index1[j] - 2]);
+                    double mi = wAsense[rightFlank + index1[i] - 1] - (index1[i] == 1 ? 0 : wAsense[rightFlank + index1[i] - 2]);    // (-1) as cut after asense 0-pos
+                    double mj = wAsense[rightFlank + index1[j] - 1] - (index1[j] == 1 ? 0 : wAsense[rightFlank + index1[j] - 2]);
                     f = (mj == 0 ? 2 : mi / mj); // smaller -> more likely displaced
                 }
                 if (f > 1 || rnd3.nextDouble() <= f) {
@@ -220,10 +215,10 @@ public class FragmentReverseTranscription implements FragmentProcessor{
                 int p = start;
                 double r = rtRndWhere.nextDouble();
                 if (wAsense == null) {
-                    p= from + (int) Math.floor(r* (to2- from));
+                    p = from + (int) Math.floor(r * (to2 - from));
                 } else {
-                    to2 = Math.min(leftFlank+from + 50, index1[i] - 1);    // within 50nt closest to 5'
-                    r = wSense[leftFlank+from] + (r * (wSense[to2] - wSense[leftFlank+from]));
+                    to2 = Math.min(leftFlank + from + 50, index1[i] - 1);    // within 50nt closest to 5'
+                    r = wSense[leftFlank + from] + (r * (wSense[to2] - wSense[leftFlank + from]));
                     p = Arrays.binarySearch(wSense, leftFlank + from, to2, r);
                     p = (p >= 0 ? p : -(p + 1));
                 }
@@ -262,7 +257,7 @@ public class FragmentReverseTranscription implements FragmentProcessor{
     private double getGCcontent(ByteArrayCharSequence id, int i, int j) {
         CharSequence seq = mapTxSeq.get(id);
         int g = 0, n = 0;
-        for (int k = leftFlank+i; k <= leftFlank+j; ++k) {
+        for (int k = leftFlank + i; k <= leftFlank + j; ++k) {
             char c = seq.charAt(k);
             if (c == 'G' || c == 'C' || c == 'g' || c == 'c' || c == 's' || c == 'S') {
                 ++g;
@@ -283,13 +278,13 @@ public class FragmentReverseTranscription implements FragmentProcessor{
      * @param a the shape parameter
      * @return v function value
      */
-    private double gcScore(double x, double a){
-         x = x+(0.52-gc_lo);
-         if(x <= 0.5) {
-             return Math.pow(2d*x,1d/a)/2d;
-         } else {
-             return 1d-Math.pow(2d*(1d-x),1d/a) / 2d;
-         }
+    private double gcScore(double x, double a) {
+        x = x + (0.52 - gc_lo);
+        if (x <= 0.5) {
+            return Math.pow(2d * x, 1d / a) / 2d;
+        } else {
+            return 1d - Math.pow(2d * (1d - x), 1d / a) / 2d;
+        }
     }
 
     @Override

@@ -10,7 +10,7 @@ import java.util.Random;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class FragmentFilterRejection implements FragmentProcessor{
+public class FragmentFilterRejection implements FragmentProcessor {
     private AbstractDistribution[] d;
     private boolean probDistr;
     private Random rndGel = new Random();

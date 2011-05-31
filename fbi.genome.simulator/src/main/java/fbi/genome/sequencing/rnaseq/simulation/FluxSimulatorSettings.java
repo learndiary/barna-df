@@ -88,27 +88,33 @@ public class FluxSimulatorSettings extends ParameterSchema {
     File locations
      */
     public static final Parameter<File> REF_FILE = Parameters.fileParameter("REF_FILE_NAME", "GTF reference file", null, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            File refFile = (File) schema.get(parameter);
-            if (refFile == null) throw new ParameterException("You have to specify a reference file");
-            if (!refFile.exists())
-                throw new ParameterException("The reference file " + refFile.getAbsolutePath() + " could not be found!");
-        }
-    }, relativePathParser);
+                @Override
+                public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                    File refFile = (File) schema.get(parameter);
+                    if (refFile == null) {
+                        throw new ParameterException("You have to specify a reference file");
+                    }
+                    if (!refFile.exists()) {
+                        throw new ParameterException("The reference file " + refFile.getAbsolutePath() + " could not be found!");
+                    }
+                }
+            }, relativePathParser);
     public static final Parameter<File> PRO_FILE = Parameters.fileParameter("PRO_FILE_NAME", "Target Profiler file", null, new FileValidator("pro"), relativePathParser);
     public static final Parameter<File> LIB_FILE = Parameters.fileParameter("LIB_FILE_NAME", "Target library file", null, new FileValidator("lib"), relativePathParser);
     public static final Parameter<File> SEQ_FILE = Parameters.fileParameter("SEQ_FILE_NAME", "Target sequences file", null, new FileValidator("bed"), relativePathParser);
     public static final Parameter<File> GEN_DIR = Parameters.fileParameter("GEN_DIR", "The Genome directory", null, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            File genomeFile = (File) schema.get(parameter);
-            if (genomeFile == null) throw new ParameterException("You have to specify a genome directory");
-            if (!genomeFile.exists())
-                throw new ParameterException("The genome directory " + genomeFile.getAbsolutePath() + " could not be found!");
+                @Override
+                public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                    File genomeFile = (File) schema.get(parameter);
+                    if (genomeFile == null) {
+                        throw new ParameterException("You have to specify a genome directory");
+                    }
+                    if (!genomeFile.exists()) {
+                        throw new ParameterException("The genome directory " + genomeFile.getAbsolutePath() + " could not be found!");
+                    }
 
-        }
-    }, relativePathParser);
+                }
+            }, relativePathParser);
     public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")));
     public static final Parameter<File> ERR_FILE = Parameters.fileParameter("ERR_FILE_NAME", "Error model file", relativePathParser);
 
@@ -120,13 +126,17 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING", "", true, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            if(!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) throw new ParameterException("Sorry, but either LOAD_CODING or LOAD_NONCODING has to be enabled !");
+            if (!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) {
+                throw new ParameterException("Sorry, but either LOAD_CODING or LOAD_NONCODING has to be enabled !");
+            }
         }
     });
     public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING", "", true, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            if(!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) throw new ParameterException("Sorry, but either LOAD_CODING or LOAD_NONCODING has to be enabled !");
+            if (!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) {
+                throw new ParameterException("Sorry, but either LOAD_CODING or LOAD_NONCODING has to be enabled !");
+            }
         }
     });
     public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "", 5000000);
@@ -136,7 +146,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "", 25d, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
-            if(schema.get(TSS_MEAN) <= 0){
+            if (schema.get(TSS_MEAN) <= 0) {
                 throw new ParameterException("TSS_MEAN must be > 0");
             }
         }
@@ -155,17 +165,17 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.NB, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
-            if(schema.get(FRAG_METHOD) == FragmentationMethod.EZ){
-                if(schema.get(FRAG_SUBSTRATE) == Substrate.RNA){
+            if (schema.get(FRAG_METHOD) == FragmentationMethod.EZ) {
+                if (schema.get(FRAG_SUBSTRATE) == Substrate.RNA) {
                     throw new ParameterException("Enzymatic digestion is not supported for RNA substrate!");
                 }
-                if(schema.get(FRAG_EZ_MOTIF) == null || !schema.get(FRAG_EZ_MOTIF).canRead()){
+                if (schema.get(FRAG_EZ_MOTIF) == null || !schema.get(FRAG_EZ_MOTIF).canRead()) {
                     throw new ParameterException("You have to specify FRAG_EZ_MOTIF in order ot use Enzymatic digestion");
                 }
             }
 
-            if(schema.get(FRAG_METHOD) == FragmentationMethod.NB){
-                if(schema.get(FRAG_SUBSTRATE) == Substrate.RNA){
+            if (schema.get(FRAG_METHOD) == FragmentationMethod.NB) {
+                if (schema.get(FRAG_SUBSTRATE) == Substrate.RNA) {
                     throw new ParameterException("Sorry, but nebulizing RNA is not supported!");
                 }
             }
@@ -229,16 +239,20 @@ public class FluxSimulatorSettings extends ParameterSchema {
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int min = schema.get(RT_MIN);
             int max = schema.get(RT_MAX);
-            if(min > max) throw new ParameterException("RT_MIN must me <= RT_MAX");
+            if (min > max) {
+                throw new ParameterException("RT_MIN must me <= RT_MAX");
+            }
         }
     });
     public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX", "Maximum length observed after " +
-            "reverse transcription of full-length transcripts.", 5500,  new ParameterValidator() {
+            "reverse transcription of full-length transcripts.", 5500, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int min = schema.get(RT_MIN);
             int max = schema.get(RT_MAX);
-            if(min > max) throw new ParameterException("RT_MIN must me <= RT_MAX");
+            if (min > max) {
+                throw new ParameterException("RT_MIN must me <= RT_MAX");
+            }
         }
     });
     public static final Parameter<Double> RT_GC_LO = Parameters.doubleParameter("RT_GC_LO", "Minimum GC content for RNA " +
@@ -247,7 +261,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             double lo = schema.get(RT_GC_LO);
             double hi = schema.get(RT_GC_HI);
-            if(lo > hi) throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
+            if (lo > hi) {
+                throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
+            }
         }
     });
     // todo : remove ?
@@ -257,7 +273,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             double lo = schema.get(RT_GC_LO);
             double hi = schema.get(RT_GC_HI);
-            if(lo > hi) throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
+            if (lo > hi) {
+                throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
+            }
         }
     });
 
@@ -296,7 +314,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
      * @throws Exception in case of a parser or validation error
      */
     public static FluxSimulatorSettings createSettings(File f) throws Exception {
-        if (f == null) throw new NullPointerException("Null parameter file not permitted!");
+        if (f == null) {
+            throw new NullPointerException("Null parameter file not permitted!");
+        }
         if (!f.exists()) {
             throw new IllegalArgumentException("Parameter file " + f.getAbsolutePath() + " can not be found!");
         }
@@ -312,9 +332,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
             settings.validate();
             return settings;
         } finally {
-            if (in != null) try {
-                in.close();
-            } catch (IOException e) {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                }
             }
         }
     }
@@ -392,7 +414,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
                     FluxSimulatorSettings s = (FluxSimulatorSettings) schema;
                     if (s.getParameterFile() != null) {
                         File file = new File(s.getParameterFile().getParent(), s.getParameterFile().getName());
-                        if (!suffix.startsWith(".")) suffix = "." + suffix;
+                        if (!suffix.startsWith(".")) {
+                            suffix = "." + suffix;
+                        }
                         file = FileHelper.replaceSfx(file, suffix);
                         schema.set(parameter, file);
                         return;

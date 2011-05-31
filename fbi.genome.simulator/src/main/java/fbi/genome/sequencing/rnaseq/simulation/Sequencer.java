@@ -86,8 +86,6 @@ public class Sequencer implements Callable<Void> {
         p = settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) noOfFragments;
 
 
-
-
         File referenceFile = settings.get(FluxSimulatorSettings.REF_FILE);
 
         sequence(zipFile, referenceFile);
@@ -149,7 +147,10 @@ public class Sequencer implements Callable<Void> {
         } finally {
             io.close();
             if (zipOut != null) {
-                try {zipOut.close();} catch (IOException ignore) {}
+                try {
+                    zipOut.close();
+                } catch (IOException ignore) {
+                }
             }
         }
         return nrOfFrags;
@@ -254,12 +255,12 @@ public class Sequencer implements Callable<Void> {
             ProfilerFile.appendProfile(settings.get(FluxSimulatorSettings.PRO_FILE), ProfilerFile.PRO_COL_NR_SEQ, map);
             return true;
         } catch (Exception e) {
-            Log.error("Error while sequencing : " + e.getMessage(),e);
+            Log.error("Error while sequencing : " + e.getMessage(), e);
             return false;
-        }finally {
-            if(zipFile != null){
-                if(!zipFile.delete()){
-                    Log.error("Unable to delete zip file "+zipFile.getAbsolutePath());
+        } finally {
+            if (zipFile != null) {
+                if (!zipFile.delete()) {
+                    Log.error("Unable to delete zip file " + zipFile.getAbsolutePath());
                 }
             }
         }
@@ -292,15 +293,15 @@ public class Sequencer implements Callable<Void> {
     /**
      * Create polya read
      *
-     * @param obj the bed object to fill
-     * @param start the read start
-     * @param end the read end
-     * @param t the transcript
-     * @param molNr the molecule number
-     * @param absDir the global direction
+     * @param obj       the bed object to fill
+     * @param start     the read start
+     * @param end       the read end
+     * @param t         the transcript
+     * @param molNr     the molecule number
+     * @param absDir    the global direction
      * @param fragStart fragment start
-     * @param fragEnd fragment end
-     * @param left read direction
+     * @param fragEnd   fragment end
+     * @param left      read direction
      * @return bed the filled bed object
      */
     private BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
@@ -342,15 +343,15 @@ public class Sequencer implements Callable<Void> {
     /**
      * Prepare a read and fill the given bed object
      *
-     * @param obj the bed object to fill
-     * @param start the start
-     * @param end the end
-     * @param t the transcript
-     * @param molNr molecule number
-     * @param absDir direction
+     * @param obj       the bed object to fill
+     * @param start     the start
+     * @param end       the end
+     * @param t         the transcript
+     * @param molNr     molecule number
+     * @param absDir    direction
      * @param fragStart fragment start
-     * @param fragEnd fragment end
-     * @param left sens/antisense
+     * @param fragEnd   fragment end
+     * @param left      sens/antisense
      * @return polyA true if polya read
      */
     private boolean createRead(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
@@ -473,7 +474,7 @@ public class Sequencer implements Callable<Void> {
             }
             if (!file.exists()) {
                 return "Fragmentation file " + file.getAbsolutePath() + " not found. Make sure fragmentation was done !";
-            }else if(file.length() == 0){
+            } else if (file.length() == 0) {
                 return "Fragmentation file " + file.getAbsolutePath() + " is empty. Make sure fragmentation was done !";
             }
         }
@@ -633,20 +634,29 @@ public class Sequencer implements Callable<Void> {
                     }
                 } catch (IOException e) {
                     Log.error("Error while reading zip entry in sequencer: " + e.getMessage(), e);
-                }finally {
-                    if(buffy != null){
-                        try {buffy.close();} catch (IOException ignore) {}
+                } finally {
+                    if (buffy != null) {
+                        try {
+                            buffy.close();
+                        } catch (IOException ignore) {
+                        }
                     }
-                    if(is != null){
-                        try {is.close();} catch (IOException ignore) {}
+                    if (is != null) {
+                        try {
+                            is.close();
+                        } catch (IOException ignore) {
+                        }
                     }
                 }
             }
         }
 
-        public void close(){
-            if(zip != null){
-                try {zip.close();} catch (IOException ignore) {}
+        public void close() {
+            if (zip != null) {
+                try {
+                    zip.close();
+                } catch (IOException ignore) {
+                }
             }
         }
 
@@ -655,7 +665,7 @@ public class Sequencer implements Callable<Void> {
     /**
      * Write reads
      */
-    class SequenceWriter{
+    class SequenceWriter {
         /**
          * the bed writer
          */
@@ -693,10 +703,10 @@ public class Sequencer implements Callable<Void> {
 
         public SequenceWriter(File bedFile, File qFasta, int rLen) throws IOException {
             this.rLen = rLen;
-            if(bedFile != null){
+            if (bedFile != null) {
                 bedOut = new BufferedWriter(new FileWriter(bedFile));
             }
-            if(qFasta != null){
+            if (qFasta != null) {
                 qFastaOut = new BufferedWriter(new FileWriter(qFasta));
             }
             // init caches
@@ -707,11 +717,11 @@ public class Sequencer implements Callable<Void> {
         /**
          * Process a transcript and write the read
          *
-         * @param left read direction
-         * @param t the transcript
+         * @param left   read direction
+         * @param t      the transcript
          * @param fstart the fragment start
-         * @param fend the fragment end
-         * @param k the molecule number
+         * @param fend   the fragment end
+         * @param k      the molecule number
          * @throws IOException in case of any errors
          */
         public void writeRead(boolean left, Transcript t, int fstart, int fend, int k) throws IOException {
@@ -737,25 +747,28 @@ public class Sequencer implements Callable<Void> {
 
 
             // bed object
-            if(bedOut != null){
+            if (bedOut != null) {
                 if (left) {
                     boolean polyA = createRead(obj,
                             fstart, Math.min(fstart + settings.get(FluxSimulatorSettings.READ_LENGTH) - 1, fend),     // start, end
                             t, k, absDir,
                             fstart, fend, left);
-                    if(polyA) countPolyAReads++;
+                    if (polyA) {
+                        countPolyAReads++;
+                    }
                 } else {
                     boolean polyA = createRead(obj,
                             Math.max(fend - settings.get(FluxSimulatorSettings.READ_LENGTH) + 1, fstart), fend,     // start, end
                             t, k, antiDir,
                             fstart, fend, left);
-                    if(polyA) countPolyAReads++;
+                    if (polyA) {
+                        countPolyAReads++;
+                    }
                 }
 
                 bedOut.write(obj.toString());
                 bedOut.write("\n");
             }
-
 
 
             // fasta seq
@@ -771,12 +784,18 @@ public class Sequencer implements Callable<Void> {
         /**
          * Close the writer
          */
-        public void close(){
-            if(bedOut != null){
-                try {bedOut.close();} catch (IOException ignore) {}
+        public void close() {
+            if (bedOut != null) {
+                try {
+                    bedOut.close();
+                } catch (IOException ignore) {
+                }
             }
-            if(qFastaOut != null){
-                try {qFastaOut.close();} catch (IOException ignore) {}
+            if (qFastaOut != null) {
+                try {
+                    qFastaOut.close();
+                } catch (IOException ignore) {
+                }
             }
         }
 

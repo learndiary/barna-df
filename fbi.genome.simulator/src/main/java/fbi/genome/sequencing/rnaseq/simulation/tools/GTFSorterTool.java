@@ -25,6 +25,7 @@ public class GTFSorterTool implements FluxTool {
     public File getIntFile() {
         return intFile;
     }
+
     @Option(name = "i", longName = "input", description = "GTF input file")
     public void setIntFile(final File intFile) {
         this.intFile = intFile;
@@ -33,6 +34,7 @@ public class GTFSorterTool implements FluxTool {
     public File getOutFile() {
         return outFile;
     }
+
     @Option(name = "o", longName = "output", description = "GTF output file")
     public void setOutFile(final File outFile) {
         this.outFile = outFile;
@@ -40,12 +42,12 @@ public class GTFSorterTool implements FluxTool {
 
     @Override
     public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
-        if(getIntFile() == null ){
+        if (getIntFile() == null) {
             printer.out.println("Please specify an input file");
             return false;
         }
 
-        if(getOutFile() == null){
+        if (getOutFile() == null) {
             printer.out.println("Please specify an output file");
             return false;
         }

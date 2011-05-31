@@ -22,7 +22,7 @@ public class SimulationPipeline implements FluxTool<Void> {
     /**
      * Expression mode
      */
-	private boolean expression;
+    private boolean expression;
     /**
      * Library mode
      */
@@ -35,23 +35,23 @@ public class SimulationPipeline implements FluxTool<Void> {
     /**
      * The parameter file
      */
-	private File file;
+    private File file;
     /**
      * The flux settings
      */
-	private FluxSimulatorSettings settings;
+    private FluxSimulatorSettings settings;
     /**
      * The Profiler
      */
-	private Profiler profiler;
+    private Profiler profiler;
     /**
      * The Fragmenter
      */
-	private Fragmenter fragmenter;
+    private Fragmenter fragmenter;
     /**
      * The sequencer
      */
-	private Sequencer sequencer;
+    private Sequencer sequencer;
 
     /**
      * Returns true if expression mode os active
@@ -71,6 +71,7 @@ public class SimulationPipeline implements FluxTool<Void> {
     public void setExpression(boolean expression) {
         this.expression = expression;
     }
+
     /**
      * Returns true if library mode os active
      *
@@ -79,6 +80,7 @@ public class SimulationPipeline implements FluxTool<Void> {
     public boolean isLibrary() {
         return library;
     }
+
     /**
      * Activate/Deactivate library mode
      *
@@ -88,6 +90,7 @@ public class SimulationPipeline implements FluxTool<Void> {
     public void setLibrary(boolean library) {
         this.library = library;
     }
+
     /**
      * Returns true if sequence mode os active
      *
@@ -96,6 +99,7 @@ public class SimulationPipeline implements FluxTool<Void> {
     public boolean isSequence() {
         return sequence;
     }
+
     /**
      * Activate/Deactivate sequence mode
      *
@@ -120,7 +124,7 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param file parameter file
      */
-    @Option(name="p", longName = "parameter", description = "specify parameter file (PAR file)", displayName = "file", required = true)
+    @Option(name = "p", longName = "parameter", description = "specify parameter file (PAR file)", displayName = "file", required = true)
     public void setFile(File file) {
         this.file = file;
     }
@@ -131,12 +135,12 @@ public class SimulationPipeline implements FluxTool<Void> {
      * @return settings the flux simulator settings
      */
     public FluxSimulatorSettings getSettings() {
-        if(settings == null){
+        if (settings == null) {
             // init
             try {
-                settings= FluxSimulatorSettings.createSettings(file);
+                settings = FluxSimulatorSettings.createSettings(file);
             } catch (Exception e) {
-                throw new RuntimeException("Unable to load settings from " + file +"\n\n " +e.getMessage(), e);
+                throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
             }
         }
         return settings;
@@ -148,8 +152,8 @@ public class SimulationPipeline implements FluxTool<Void> {
      * @return profiler the profiler
      */
     public Profiler getProfiler() {
-        if(profiler == null){
-            profiler= new Profiler(getSettings());
+        if (profiler == null) {
+            profiler = new Profiler(getSettings());
         }
         return profiler;
     }
@@ -160,7 +164,7 @@ public class SimulationPipeline implements FluxTool<Void> {
      * @return fragmenter the fragmenter
      */
     public Fragmenter getFragmenter() {
-        if(fragmenter == null){
+        if (fragmenter == null) {
             fragmenter = new Fragmenter(getSettings(), getProfiler());
         }
         return fragmenter;
@@ -172,7 +176,7 @@ public class SimulationPipeline implements FluxTool<Void> {
      * @return sequencer the sequencer
      */
     public Sequencer getSequencer() {
-        if(sequencer == null){
+        if (sequencer == null) {
             sequencer = new Sequencer(getSettings(), getProfiler());
         }
         return sequencer;
@@ -180,14 +184,14 @@ public class SimulationPipeline implements FluxTool<Void> {
 
 
     public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
-        if(getFile() == null){
+        if (getFile() == null) {
             Log.error("");
             Log.error("No parameter file specified !");
             Log.error("\n");
             printer.print(toolArguments);
             return false;
         }
-        if(!getFile().canRead()) {
+        if (!getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
             Log.error("\n");
@@ -195,7 +199,7 @@ public class SimulationPipeline implements FluxTool<Void> {
             return false;
         }
 
-        if(!isExpression() && !isLibrary() && !isSequence()){
+        if (!isExpression() && !isLibrary() && !isSequence()) {
             Log.info("No mode selected, executing the full pipeline (-x -l -s)");
             setExpression(true);
             setLibrary(true);
@@ -217,7 +221,7 @@ public class SimulationPipeline implements FluxTool<Void> {
 
         Log.info("I am collecting information on the run.");
         FluxSimulatorSettings settings = getSettings(); // initialize settings
-        if(settings == null){
+        if (settings == null) {
             Log.error("No settings available");
             return null;
         }
@@ -227,9 +231,9 @@ public class SimulationPipeline implements FluxTool<Void> {
             // initialize the profiler
             getProfiler().initializeProfiler(profilerFile);
             if (isExpression() && getProfiler().isFinishedExpression()) {
-                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file "+ profilerFile.getName()+", please confirm:\n\t(Yes,No,Don't know)"))
+                if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file " + profilerFile.getName() + ", please confirm:\n\t(Yes,No,Don't know)")) {
                     return null;
-                else {
+                } else {
                     getProfiler().resetProfile();
                 }
             }
@@ -237,23 +241,25 @@ public class SimulationPipeline implements FluxTool<Void> {
         }
 
 
-        if (settings.get(FluxSimulatorSettings.LIB_FILE) != null&& settings.get(FluxSimulatorSettings.LIB_FILE).exists()&& settings.get(FluxSimulatorSettings.LIB_FILE).canRead()) {
+        if (settings.get(FluxSimulatorSettings.LIB_FILE) != null && settings.get(FluxSimulatorSettings.LIB_FILE).exists() && settings.get(FluxSimulatorSettings.LIB_FILE).canRead()) {
             if (isExpression() || isLibrary()) {
                 Log.info("Removing existing fragmentation file " + settings.get(FluxSimulatorSettings.LIB_FILE).getAbsolutePath());
                 settings.get(FluxSimulatorSettings.LIB_FILE).delete();
-            } else{
+            } else {
                 Log.info("Loading Fragmentation from " + settings.get(FluxSimulatorSettings.LIB_FILE));
                 getFragmenter().loadStats(settings.get(FluxSimulatorSettings.LIB_FILE));
             }
         }
 
-        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null&& !getSequencer().loadErrors())
+        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null && !getSequencer().loadErrors()) {
             throw new RuntimeException("The sequencer produced errors !"); // todo: describe the problem
+        }
 
-        if (settings.get(FluxSimulatorSettings.SEQ_FILE) != null&& settings.get(FluxSimulatorSettings.SEQ_FILE).exists()&& settings.get(FluxSimulatorSettings.SEQ_FILE).canRead()) {
+        if (settings.get(FluxSimulatorSettings.SEQ_FILE) != null && settings.get(FluxSimulatorSettings.SEQ_FILE).exists() && settings.get(FluxSimulatorSettings.SEQ_FILE).canRead()) {
             if (isSequence()) {
-                if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file " + settings.get(FluxSimulatorSettings.SEQ_FILE).getName() + ", please confirm:\n\t(Yes,No,Don't know)"))
+                if (!CommandLine.confirm("[ATTENTION] I am going to delete the sequencing file " + settings.get(FluxSimulatorSettings.SEQ_FILE).getName() + ", please confirm:\n\t(Yes,No,Don't know)")) {
                     return null;
+                }
                 settings.get(FluxSimulatorSettings.SEQ_FILE).delete();
             }
             Log.message("");
@@ -264,34 +270,34 @@ public class SimulationPipeline implements FluxTool<Void> {
         sortGTFReference();
 
         // now start the pipeline
-        long t0= System.currentTimeMillis();
+        long t0 = System.currentTimeMillis();
 
-        if (isExpression())
+        if (isExpression()) {
             getProfiler().call();
-        else{
+        } else {
             Log.info("you did not ask for expression, I skip it.\n");
         }
 
 
-        if (isLibrary()){
+        if (isLibrary()) {
             String message = getFragmenter().isReady();
             if (message != null) {
                 throw new RuntimeException(message);
             }
             getFragmenter().call();
-        }else{
+        } else {
             Log.info("you did not want me to construct the library, I skip it.\n");
         }
         Log.message("");
 
 
-        if (isSequence()){
+        if (isSequence()) {
             String message = getSequencer().isReady();
             if (message != null) {
                 throw new RuntimeException(message);
             }
             getSequencer().call();
-        }else {
+        } else {
             Log.info("sequencing has not been demanded, skipped.\n");
         }
 
@@ -306,9 +312,8 @@ public class SimulationPipeline implements FluxTool<Void> {
      * it will be and the file in the settings is replaced and the user is informed about
      * the change.
      * <p>
-     *     We also check if a sorted file exists, following the naming schema, {@code <originalName>_sorted.<extension>}
+     * We also check if a sorted file exists, following the naming schema, {@code <originalName>_sorted.<extension>}
      * </p>
-     *
      */
     protected void sortGTFReference() {
         File refFile = settings.get(FluxSimulatorSettings.REF_FILE);
@@ -322,9 +327,9 @@ public class SimulationPipeline implements FluxTool<Void> {
 
             // okey its not sorted, check if there is a sorted version
 
-            if(sorted.exists() && sorted.length() == refFile.length()){
+            if (sorted.exists() && sorted.length() == refFile.length()) {
                 gffReader = new GFFReader(sortedFileName);
-                if(gffReader.isApplicable()){
+                if (gffReader.isApplicable()) {
                     // found a sorted file
                     // inform the user and switch
                     Log.warn("GTF FILE", "The GTF reference file given is not sorted, but we found a sorted version.");

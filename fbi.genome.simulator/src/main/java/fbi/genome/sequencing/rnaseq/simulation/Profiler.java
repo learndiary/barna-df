@@ -21,7 +21,6 @@ import java.util.concurrent.Callable;
 
 /**
  * Simulator profiler. Manages and creates the expression profile
- *
  */
 public class Profiler implements Callable<Void> {
 
@@ -79,7 +78,9 @@ public class Profiler implements Callable<Void> {
      * @param settings the settings
      */
     public Profiler(FluxSimulatorSettings settings) {
-        if(settings == null ) throw new NullPointerException("You have to specify settings! NULL not permitted.");
+        if (settings == null) {
+            throw new NullPointerException("You have to specify settings! NULL not permitted.");
+        }
         this.settings = settings;
     }
 
@@ -93,7 +94,7 @@ public class Profiler implements Callable<Void> {
         Log.info("PROFILING", "I am assigning the expression profile");
         status = readStatus();
 
-        if (status == STAT_NONE || ! isFinishedReadAnnotation()) {
+        if (status == STAT_NONE || !isFinishedReadAnnotation()) {
             // read annotation and write initial profile file without expression
             readAnnotation();
             status = STAT_ANN;
@@ -244,25 +245,24 @@ public class Profiler implements Callable<Void> {
     }
 
 
-
-
-
-
     /**
      * Get the transcript length distribution
      *
      * @return lengthDistribution length distribution
      */
-    public Distribution getLengthDistribution(){
+    public Distribution getLengthDistribution() {
         return new Distribution(len.clone());
     }
+
     /**
      * Get the distributions of transcripts per loci
      *
      * @return transcriptDistribution
      */
-    public Distribution getTranscriptDistribution(){
-        if(locIDs == null) throw new RuntimeException("No profile loaded!");
+    public Distribution getTranscriptDistribution() {
+        if (locIDs == null) {
+            throw new RuntimeException("No profile loaded!");
+        }
         CharSequence lastLocID = null;
         int asCtr = 1;
         IntVector asV = new IntVector();
@@ -359,7 +359,7 @@ public class Profiler implements Callable<Void> {
      *
      * @return size the number of transcripts
      */
-    public int size(){
+    public int size() {
         return ids != null ? ids.length : 0;
     }
 
@@ -410,7 +410,7 @@ public class Profiler implements Callable<Void> {
      * @param i the entry
      * @return cds true if CDS
      */
-    public boolean isCds(int i){
+    public boolean isCds(int i) {
         return cds[i];
     }
 
@@ -467,7 +467,6 @@ public class Profiler implements Callable<Void> {
                 }
                 // increase the line counter / array pointer
                 ++ptr;
-
 
 
                 /*
@@ -541,7 +540,7 @@ public class Profiler implements Callable<Void> {
                     len[ptr] = y;
                 }
 
-                if (lim < 3 ) {
+                if (lim < 3) {
                     continue;
                 }
 
@@ -564,11 +563,14 @@ public class Profiler implements Callable<Void> {
             Log.progressFailed("ERROR");
             Log.error("Error while loading stats: " + e.getMessage(), e);
             return false;
-        }finally {
-            if(istream != null){
-                try {istream.close();} catch (IOException ignore) {}
+        } finally {
+            if (istream != null) {
+                try {
+                    istream.close();
+                } catch (IOException ignore) {
+                }
             }
-            if(buffy != null){
+            if (buffy != null) {
                 buffy.close();
             }
 
@@ -625,6 +627,7 @@ public class Profiler implements Callable<Void> {
 
         return cs;
     }
+
     /**
      * Create the global ID for entry i. Global ID consists of
      * chromosome, position, and the transcript ID.
@@ -642,7 +645,6 @@ public class Profiler implements Callable<Void> {
         bb.append(getId(i));
         return bb.toString();
     }
-
 
 
     /**
@@ -691,15 +693,16 @@ public class Profiler implements Callable<Void> {
         molecules = null;
         locIDs = null;
         cds = null;
-        if(mapLenExp != null)
+        if (mapLenExp != null) {
             mapLenExp.clear();
+        }
         mapLenExp = null;
         len = null;
 
         File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
-        if(profilerFile.exists()){
-            boolean b= profilerFile.delete();
-            if(!b){
+        if (profilerFile.exists()) {
+            boolean b = profilerFile.delete();
+            if (!b) {
                 Log.error("PROFILER", "Unable to delete profile!");
             }
             status = STAT_NONE;
@@ -725,9 +728,8 @@ public class Profiler implements Callable<Void> {
     }
 
 
-
     private static double exponential(double rank, double par1) {
-        return Math.exp(-(Math.pow(rank / par1, 2))- (rank / par1));
+        return Math.exp(-(Math.pow(rank / par1, 2)) - (rank / par1));
     }
 
     private static double pareto(double rank, double par1, double par2) {

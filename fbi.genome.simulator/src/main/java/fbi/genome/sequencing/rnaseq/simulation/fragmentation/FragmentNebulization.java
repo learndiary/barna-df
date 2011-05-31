@@ -10,7 +10,7 @@ import java.util.Random;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class FragmentNebulization implements FragmentProcessor{
+public class FragmentNebulization implements FragmentProcessor {
     // 2.85 - <0.5%
     private static final double CUT_OFF_GAUSSIAN_VAL = 2.85f;
 
@@ -31,7 +31,9 @@ public class FragmentNebulization implements FragmentProcessor{
     //private RandomDataImpl randomData;
 
     public FragmentNebulization(final double lambda, final double m, final double thold, double maxLen) {
-        if(maxLen <= 0) throw new IllegalArgumentException("Max length <= 0 not permitted !");
+        if (maxLen <= 0) {
+            throw new IllegalArgumentException("Max length <= 0 not permitted !");
+        }
         //randomData = new RandomDataImpl();
         //this.thold = thold;
         this.maxLen = maxLen;
@@ -70,7 +72,7 @@ public class FragmentNebulization implements FragmentProcessor{
             index1 = new int[(int) Math.pow(2, recDepth)];
         }
         Arrays.fill(index1, -1);
-            index1[0] = len;
+        index1[0] = len;
         int fragmentNb = 1;
 
         // now break it!
@@ -90,7 +92,7 @@ public class FragmentNebulization implements FragmentProcessor{
                 // pb= 1- exp^(-((x-C)/lambda)^M)
                 int minL = (bp < (L - bp) ? bp + 1 : L - bp - 1);
                 //double pb = minL < nebuC ? 0d : 1d - Math.exp(-Math.pow((minL - nebuC) / lambda, M));
-                double pb = 1d - (1d/Math.exp(Math.pow(minL / lambda, M)));
+                double pb = 1d - (1d / Math.exp(Math.pow(minL / lambda, M)));
                 double r = rndBreak.nextDouble();
                 if (r > pb) {
                     continue;

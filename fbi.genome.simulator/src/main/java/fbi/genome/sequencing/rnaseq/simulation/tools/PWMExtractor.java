@@ -42,6 +42,7 @@ public class PWMExtractor implements FluxTool {
     public File getBedFile() {
         return bedFile;
     }
+
     @Option(name = "b", longName = "bed", description = "The .bed file", required = true)
     public void setBedFile(final File bedFile) {
         this.bedFile = bedFile;
@@ -50,6 +51,7 @@ public class PWMExtractor implements FluxTool {
     public File getOutFile() {
         return outFile;
     }
+
     @Option(name = "o", longName = "out", description = "The output file", required = true)
     public void setOutFile(final File outFile) {
         this.outFile = outFile;
@@ -62,96 +64,105 @@ public class PWMExtractor implements FluxTool {
 
     @Override
     public Object call() throws Exception {
-        int flank5= 10, flank3= 20;
-        GFFReader anoReader= new GFFReader(gtfFile.getAbsolutePath());
-        if(!anoReader.isApplicable()){
+        int flank5 = 10, flank3 = 20;
+        GFFReader anoReader = new GFFReader(gtfFile.getAbsolutePath());
+        if (!anoReader.isApplicable()) {
             Log.message("\tsorting GTF file");
-            File f= anoReader.createSortedFile();
-            Log.message("\tsorted file in "+ f.getAbsolutePath());
-            gtfFile= f;
-            anoReader= new GFFReader(f.getAbsolutePath());
+            File f = anoReader.createSortedFile();
+            Log.message("\tsorted file in " + f.getAbsolutePath());
+            gtfFile = f;
+            anoReader = new GFFReader(f.getAbsolutePath());
         }
         Log.message("");
 
-        File ff= new File(bedFile.getAbsolutePath()+ "_sorted");
-        BEDwrapper bedReader= null;
+        File ff = new File(bedFile.getAbsolutePath() + "_sorted");
+        BEDwrapper bedReader = null;
         if (ff.exists()) {
-            Log.message("\tusing sorted file "+ ff.getName());
-            bedFile= ff;
-            bedReader= new BEDwrapper(bedFile.getAbsolutePath());
+            Log.message("\tusing sorted file " + ff.getName());
+            bedFile = ff;
+            bedReader = new BEDwrapper(bedFile.getAbsolutePath());
         } else {
-            bedReader= new BEDwrapper(bedFile.getAbsolutePath());
-            if(!bedReader.isApplicable()) {
+            bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+            if (!bedReader.isApplicable()) {
                 Log.message("\tsorting BED file");
-                File f= bedReader.sortBED(bedFile);
-                if (FileHelper.move(f, ff, null)){
-                    bedFile= ff;
-                }else{
-                    bedFile= f;
+                File f = bedReader.sortBED(bedFile);
+                if (FileHelper.move(f, ff, null)) {
+                    bedFile = ff;
+                } else {
+                    bedFile = f;
                 }
-                Log.message("\tsorted file in "+ bedFile.getAbsolutePath());
-                bedReader= new BEDwrapper(bedFile.getAbsolutePath());
+                Log.message("\tsorted file in " + bedFile.getAbsolutePath());
+                bedReader = new BEDwrapper(bedFile.getAbsolutePath());
             }
         }
 
         Log.message("\tprocessing ");
 
-        int cntTrpt= 0, cntReads= 0;
-        int[][] sense= new int[flank5+ flank3][], asense= new int[flank5+ flank3][];
+        int cntTrpt = 0, cntReads = 0;
+        int[][] sense = new int[flank5 + flank3][], asense = new int[flank5 + flank3][];
         for (int i = 0; i < asense.length; i++) {
-            sense[i]= new int[4];
-            asense[i]= new int[4];
+            sense[i] = new int[4];
+            asense[i] = new int[4];
             for (int j = 0; j < asense[i].length; j++) {
-                sense[i][j]= 0;
-                asense[i][j]= 0;
+                sense[i][j] = 0;
+                asense[i][j] = 0;
             }
         }
-        Gene[] genes= null;
-        for (anoReader.read();(genes= anoReader.getGenes())!= null; anoReader.read()) {
+        Gene[] genes = null;
+        for (anoReader.read(); (genes = anoReader.getGenes()) != null; anoReader.read()) {
             for (int i = 0; i < genes.length; i++) {
-                if (genes[i].getTranscriptCount()> 1)	// non-AS genes
+                if (genes[i].getTranscriptCount() > 1)    // non-AS genes
+                {
                     continue;
+                }
                 ++cntTrpt;
-                Transcript t= genes[i].getTranscripts()[0];
-                BEDobject2[] beds= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
-                if (beds== null)
+                Transcript t = genes[i].getTranscripts()[0];
+                BEDobject2[] beds = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
+                if (beds == null) {
                     continue;
-                String s= t.getSplicedSequence().toUpperCase();
+                }
+                String s = t.getSplicedSequence().toUpperCase();
                 for (int j = 0; j < beds.length; j++) {
                     // get t-coordinates
-                    int tstart= t.getExonicPosition(beds[j].getStart()+ 1),
-                        tend= t.getExonicPosition(beds[j].getEnd());	// t-coordinates, 0-based
-                    if (tstart< 0|| tstart>= s.length())
+                    int tstart = t.getExonicPosition(beds[j].getStart() + 1),
+                            tend = t.getExonicPosition(beds[j].getEnd());    // t-coordinates, 0-based
+                    if (tstart < 0 || tstart >= s.length()) {
                         continue;
+                    }
 
                     // count on subsequence
                     ++cntReads;
-                    boolean sens= beds[j].getStrand()== t.getStrand();
-                    int[][] a= sens? sense: asense;
+                    boolean sens = beds[j].getStrand() == t.getStrand();
+                    int[][] a = sens ? sense : asense;
                     if (sens) {
                         for (int k = 0; k < a.length; ++k) {
-                            int p= tstart- flank5+ k;
-                            if (p< 0)
+                            int p = tstart - flank5 + k;
+                            if (p < 0) {
                                 continue;
-                            if (p>= s.length())
+                            }
+                            if (p >= s.length()) {
                                 break;
-                            if (s.charAt(p)== 'A')
+                            }
+                            if (s.charAt(p) == 'A') {
                                 ++a[k][0];
-                            else if (s.charAt(p)== 'C')
+                            } else if (s.charAt(p) == 'C') {
                                 ++a[k][1];
-                            else if (s.charAt(p)== 'G')
+                            } else if (s.charAt(p) == 'G') {
                                 ++a[k][2];
-                            else if (s.charAt(p)== 'T')
+                            } else if (s.charAt(p) == 'T') {
                                 ++a[k][3];
+                            }
                         }
 
-                    } else {	// read asense to s
+                    } else {    // read asense to s
                         for (int k = 0; k < a.length; ++k) {
-                            int p= tend+ flank5- k;
-                            if (p>= s.length())
+                            int p = tend + flank5 - k;
+                            if (p >= s.length()) {
                                 continue;
-                            if (p< 0)
+                            }
+                            if (p < 0) {
                                 break;
+                            }
                             // reverse complement?
 /*								if (s.charAt(p)== 'A')
                                 ++a[k][3];	// A -> count T
@@ -161,14 +172,16 @@ public class PWMExtractor implements FluxTool {
                                 ++a[k][1];
                             else if (s.charAt(p)== 'T')
                                 ++a[k][0];
-*/								if (s.charAt(p)== 'A')
+*/
+                            if (s.charAt(p) == 'A') {
                                 ++a[k][0];
-                            else if (s.charAt(p)== 'C')
+                            } else if (s.charAt(p) == 'C') {
                                 ++a[k][1];
-                            else if (s.charAt(p)== 'G')
+                            } else if (s.charAt(p) == 'G') {
                                 ++a[k][2];
-                            else if (s.charAt(p)== 'T')
+                            } else if (s.charAt(p) == 'T') {
                                 ++a[k][3];
+                            }
                         }
                     }
 
@@ -180,10 +193,10 @@ public class PWMExtractor implements FluxTool {
         Log.message("");
 
         // output
-        BufferedWriter writer= new BufferedWriter(new FileWriter(outFile));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
         for (int i = 0; i < sense.length; i++) {
-            int pos= (i>= flank5? i- flank5+ 1: i- flank5);
-            writer.write(pos+ "\t"+ sense[i][0]+ "\t"+ sense[i][1]+ "\t"+ sense[i][2]+ "\t"+ sense[i][3]+ "\n");
+            int pos = (i >= flank5 ? i - flank5 + 1 : i - flank5);
+            writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + "\n");
         }
         writer.flush();
         writer.close();

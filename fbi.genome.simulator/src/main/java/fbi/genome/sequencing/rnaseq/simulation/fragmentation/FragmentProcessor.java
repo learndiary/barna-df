@@ -13,11 +13,11 @@ public interface FragmentProcessor {
     /**
      * Process the given read
      *
-     * @param id the id
-     * @param cs the read
+     * @param id    the id
+     * @param cs    the read
      * @param start the start
-     * @param end the end
-     * @param len the length
+     * @param end   the end
+     * @param len   the length
      * @return fragments list of fragments or null
      */
     List<Fragment> process(ByteArrayCharSequence id, ByteArrayCharSequence cs, int start, int end, int len);
@@ -37,7 +37,7 @@ public interface FragmentProcessor {
     String getConfiguration();
 
     /**
-     * Return status string or null when processing is done
+     * Called after all fragments are processed. The returned message is printed
      *
      * @return status status or null
      */

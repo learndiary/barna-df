@@ -100,7 +100,7 @@ public class Fragmenter implements Callable<Void> {
         if (settings.get(FluxSimulatorSettings.FILTERING)) {
             File sizeDist = settings.get(FluxSimulatorSettings.SIZE_DISTRIBUTION);
             String distName = null;
-            if(sizeDist != null){
+            if (sizeDist != null) {
                 distName = sizeDist.getAbsolutePath();
             }
 
@@ -112,7 +112,6 @@ public class Fragmenter implements Callable<Void> {
                 }
             });
         }
-
 
 
         // now write the initial file
@@ -137,11 +136,19 @@ public class Fragmenter implements Callable<Void> {
         FluxSimulatorSettings.FragmentationMethod fragMode = settings.get(FluxSimulatorSettings.FRAG_METHOD);
 
         byte mode;
-        switch (fragMode){
-            case NB: mode = MODE_NEBU; break;
-            case EZ: mode = MODE_FRAG_EZ; break;
-            case NONE: mode = MODE_NONE; break;
-            default: mode = MODE_FRAG; break;
+        switch (fragMode) {
+            case NB:
+                mode = MODE_NEBU;
+                break;
+            case EZ:
+                mode = MODE_FRAG_EZ;
+                break;
+            case NONE:
+                mode = MODE_NONE;
+                break;
+            default:
+                mode = MODE_FRAG;
+                break;
         }
 
 
@@ -177,7 +184,7 @@ public class Fragmenter implements Callable<Void> {
             filterDist = sizeDistFuture.get();
             EmpiricalDistribution eDist = ((EmpiricalDistribution) filterDist[0]);
             if (filterDist[0] instanceof EmpiricalDistribution) {
-                originalDist = parseFilterDistribution(tmpFile.getAbsolutePath(), eDist.getMin(), eDist.getMax(),eDist.getBins().length, true)[0];
+                originalDist = parseFilterDistribution(tmpFile.getAbsolutePath(), eDist.getMin(), eDist.getMax(), eDist.getBins().length, true)[0];
                 eDist.normalizeToPrior((EmpiricalDistribution) originalDist);
             }
             mode = parseFilterSampling(settings.get(FluxSimulatorSettings.SIZE_SAMPLING));
@@ -187,13 +194,13 @@ public class Fragmenter implements Callable<Void> {
         }
 
 
-        if(!FileHelper.move(tmpFile, libraryFile, null)){
+        if (!FileHelper.move(tmpFile, libraryFile, null)) {
             throw new RuntimeException();
         }
         Log.message("\tCopied results to " + libraryFile.getAbsolutePath());
 
         // todo : do this in every step
-        if (!ProfilerFile.appendProfile(profilerFile, ProfilerFile.PRO_COL_NR_FRG, mapFrags)){
+        if (!ProfilerFile.appendProfile(profilerFile, ProfilerFile.PRO_COL_NR_FRG, mapFrags)) {
             throw new RuntimeException();
         }
         return null;
@@ -222,7 +229,7 @@ public class Fragmenter implements Callable<Void> {
      * Iterate over the reads in the map and apply the pwm
      *
      * @param mapSeq the reads
-     * @param pwm the pwm
+     * @param pwm    the pwm
      * @return map maps from read to position weights
      */
     static Map<CharSequence, double[]> getMapWeight(Map<CharSequence, CharSequence> mapTxSeq, Map<CharSequence, CharSequence> mapSeq, PWM pwm) {
@@ -260,12 +267,12 @@ public class Fragmenter implements Callable<Void> {
                 reader.read();
                 Log.progressStart("preparing reads");
 
-                int leftFlank =  Double.isNaN(tssMean) ? 0 : this.startOffset;
+                int leftFlank = Double.isNaN(tssMean) ? 0 : this.startOffset;
                 int rightFlank = Double.isNaN(polyaScale) || Double.isNaN(polyaShape) ? 0 : this.endOffset;
 
 
                 StringBuffer polyA = null;
-                if(rightFlank >0){
+                if (rightFlank > 0) {
                     polyA = new StringBuffer();
                     for (int i = 0; i < rightFlank; i++) {
                         polyA.append("A");
@@ -278,9 +285,9 @@ public class Fragmenter implements Callable<Void> {
                             Transcript t = g[i].getTranscripts()[j];
                             String s = t.getSplicedSequence(leftFlank, 0, "N", "A");    // TODO check chr pre-loading
                             int sourceLength = s.length();
-                            if(rightFlank > 0){
-                                if(s.length() < sourceLength+rightFlank){
-                                    s = s+ polyA.substring(0, (sourceLength+rightFlank)-s.length());
+                            if (rightFlank > 0) {
+                                if (s.length() < sourceLength + rightFlank) {
+                                    s = s + polyA.substring(0, (sourceLength + rightFlank) - s.length());
                                 }
                             }
                             ByteArrayCharSequence combID = new ByteArrayCharSequence(g[i].getGeneID());
@@ -304,12 +311,14 @@ public class Fragmenter implements Callable<Void> {
     /**
      * Perform the fragmentation
      *
-     * @param mode the fragmentation mode
+     * @param mode    the fragmentation mode
      * @param tmpFile the current library file
      * @return success true if success
      */
     boolean process(byte mode, File tmpFile) {
-        if(mode == MODE_NONE) return true;
+        if (mode == MODE_NONE) {
+            return true;
+        }
         if (tmpFile == null) {
             throw new NullPointerException("No library file given !");
         }
@@ -329,15 +338,14 @@ public class Fragmenter implements Callable<Void> {
         // IO
         FileInputStream fis = null;
         BufferedWriter fos = null;
-        IOHandler rw  = null;
+        IOHandler rw = null;
 
         double tssMean = settings.get(FluxSimulatorSettings.TSS_MEAN);
         double polyaShape = settings.get(FluxSimulatorSettings.POLYA_SHAPE);
         double polyaScale = settings.get(FluxSimulatorSettings.POLYA_SCALE);
         //int lengthOffset = (!Double.isNaN(tssMean) || !Double.isNaN(polyaScale) || !Double.isNaN(polyaShape) ) ? 100 : 0;
-        int leftFlank =  Double.isNaN(tssMean) ? 0 : this.startOffset;
+        int leftFlank = Double.isNaN(tssMean) ? 0 : this.startOffset;
         int rightFlank = Double.isNaN(polyaScale) || Double.isNaN(polyaShape) ? 0 : this.endOffset;
-
 
 
         try {
@@ -351,18 +359,22 @@ public class Fragmenter implements Callable<Void> {
                 fos = new BufferedWriter(new FileWriter(tmpWriteFile));
 
 
-
-
                 ByteArrayCharSequence cs = new ByteArrayCharSequence(100);
                 long byteTot = tmpFile.length();
                 long byteNow = 0l;
 
                 /// setup filter
                 FragmentProcessor processor = null;
-                switch(mode){
-                    case MODE_FILT_REJ: processor = new FragmentFilterRejection(filterDist, true); break;
-                    case MODE_FILT_ACC: processor = new FragmentFilterRejection(filterDist, false); break;
-                    case MODE_FILT_MH: processor = new FragmentFilterMCMC(originalDist, filterDist); break;
+                switch (mode) {
+                    case MODE_FILT_REJ:
+                        processor = new FragmentFilterRejection(filterDist, true);
+                        break;
+                    case MODE_FILT_ACC:
+                        processor = new FragmentFilterRejection(filterDist, false);
+                        break;
+                    case MODE_FILT_MH:
+                        processor = new FragmentFilterMCMC(originalDist, filterDist);
+                        break;
                     case MODE_NEBU:
                         // determine C
                         // C~ f(lambda,M), adjust that 1.5 lambda => pb= 0.5
@@ -403,10 +415,10 @@ public class Fragmenter implements Callable<Void> {
                 String name = processor.getName();
                 String config = processor.getConfiguration();
 
-                if(name != null){
+                if (name != null) {
                     Log.info("LIBRARY", name);
                 }
-                if(config != null){
+                if (config != null) {
                     Log.info("LIBRARY", "Configuration");
                     Log.message(config);
                 }
@@ -431,9 +443,9 @@ public class Fragmenter implements Callable<Void> {
 
 
                     List<Fragment> fragments = processor.process(id, ccs, start, end, len);
-                    if(fragments != null && fragments.size() > 0){
+                    if (fragments != null && fragments.size() > 0) {
                         addFragCount(id, 1l);
-                        newMols += fragments.size() > 1 ? fragments.size()-1 : 0;
+                        newMols += fragments.size() > 1 ? fragments.size() - 1 : 0;
                         for (Fragment frag : fragments) {
                             cumuLen += frag.length();
                             maxLen = Math.max(maxLen, frag.length());
@@ -447,7 +459,6 @@ public class Fragmenter implements Callable<Void> {
                 }
 
 
-
                 if (!tmpFile.delete()) {
                     throw new IOException("Couldn't delete source");
                 }
@@ -459,7 +470,7 @@ public class Fragmenter implements Callable<Void> {
                 Log.progressFinish(StringUtils.OK, true);
 
                 String status = processor.done();
-                if(status != null){
+                if (status != null) {
                     Log.message(status);
                 }
 
@@ -473,14 +484,20 @@ public class Fragmenter implements Callable<Void> {
         } catch (Exception e) {
             Log.progressFailed("FAILED");
             Log.error("Error while fragmenting : " + e.getMessage(), e);
-        }finally {
+        } finally {
 
             this.maxLength = maxLen;
-            if(fis != null){
-                try {fis.close();} catch (IOException ignore) {}
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException ignore) {
+                }
             }
-            if(fos != null){
-                try {fos.close();} catch (IOException ignore) {}
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException ignore) {
+                }
             }
 
             rw.close();
@@ -507,8 +524,12 @@ public class Fragmenter implements Callable<Void> {
      * @return fragmenterFile the initial file
      */
     private File writeInitialFile() {
-        if(profiler == null) throw new NullPointerException("Null Profiler not permitted in Fragmenter");
-        if(profiler.size() == 0) throw new IllegalArgumentException("Profiler size is 0. Are you sure Profiling was done ?");
+        if (profiler == null) {
+            throw new NullPointerException("Null Profiler not permitted in Fragmenter");
+        }
+        if (profiler.size() == 0) {
+            throw new IllegalArgumentException("Profiler size is 0. Are you sure Profiling was done ?");
+        }
 
         int moleculesInitilized = 0;
         BufferedWriter fos = null;
@@ -597,7 +618,6 @@ public class Fragmenter implements Callable<Void> {
     }
 
 
-
     /**
      * @return a value representing the sum of the values that have been turned into a CDF
      */
@@ -643,9 +663,8 @@ public class Fragmenter implements Callable<Void> {
      * If tssMean is a number, the start coordinate is shifted.
      * If polya shape and scale are set, the end is shifted.
      *
-     *
-     * @param origLen the reads length
-     * @param tssMean the tss mean or NaN
+     * @param origLen    the reads length
+     * @param tssMean    the tss mean or NaN
      * @param polyaShape the polyA shape or NaN
      * @param polyaScale the polyA scale or NaN
      * @return startEnd array containing the start end end coordinates
@@ -660,8 +679,12 @@ public class Fragmenter implements Callable<Void> {
 
 
             while (start >= Math.min(startOffset, origLen)) {
-                if(origLen <= 0) throw new RuntimeException("Transcript length <= 0?");
-                if(tssMean <= 0) throw new RuntimeException("TSS mean <= 0");
+                if (origLen <= 0) {
+                    throw new RuntimeException("Transcript length <= 0?");
+                }
+                if (tssMean <= 0) {
+                    throw new RuntimeException("TSS mean <= 0");
+                }
                 start = (int) Math.round(rndTSS.nextExponential(Math.min(tssMean, origLen / 4)));    // exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
             }
             double r = rndPlusMinus.nextDouble();
@@ -670,13 +693,13 @@ public class Fragmenter implements Callable<Void> {
             }
         }
         if (!(Double.isNaN(polyaShape) || Double.isNaN(polyaScale))) {
-            int pAtail = endOffset+1; // was 301
+            int pAtail = endOffset + 1; // was 301
             while (pAtail > endOffset) { // was 300
                 pAtail = (int) Math.round(sampleWeibull(rndPA, polyaScale, polyaShape));    // 300d, 2d
             }
             end = origLen + pAtail;
         }
-        if (end < origLen-1) {
+        if (end < origLen - 1) {
             Log.error("end < length in Fragmenter!");
         }
         assert (start < end);
@@ -705,9 +728,9 @@ public class Fragmenter implements Callable<Void> {
     /**
      * Parses the distribution argument, either a path to a file with an empirical
      * description of the function, or a set of analytically described functions.
-     *
+     * <p/>
      * <p>
-     *     Currently function parsing is disabled and this will
+     * Currently function parsing is disabled and this will
      * </p>
      *
      * @param s string describing the distribution
@@ -715,7 +738,7 @@ public class Fragmenter implements Callable<Void> {
      */
     public static AbstractDistribution[] parseFilterDistribution(String s, double min, double max, int nrBins, boolean fragFile) {
 
-        if(s != null){
+        if (s != null) {
             File f = new File(s);
             if (f.exists()) {
                 try {
@@ -723,10 +746,10 @@ public class Fragmenter implements Callable<Void> {
                 } catch (IOException e) {
                     throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage(), e);
                 }
-            }else{
+            } else {
                 throw new RuntimeException("Unable to find size distribution " + s);
             }
-        }else{
+        } else {
             // load the default
             URL url = Fragmenter.class.getResource("/expAll.isizes");
             try {

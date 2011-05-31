@@ -47,18 +47,20 @@ public class ProfilerFile {
      * This appends counts, relative and absolute, at the given column. If the column already exists, the columns and
      * everything after the column will be deleted.
      * <p>
-     *     The map that contains the absolute counts must contain all counts, we use the sum of all counts
-     *     to compute the relative value. The keys are created from the global ids, that is: {@code <chromosome>:<position>@<transcriptid>}.
-     *     For example: {@code chr1:9788211-9892649W@NM_177547}
+     * The map that contains the absolute counts must contain all counts, we use the sum of all counts
+     * to compute the relative value. The keys are created from the global ids, that is: {@code <chromosome>:<position>@<transcriptid>}.
+     * For example: {@code chr1:9788211-9892649W@NM_177547}
      * </p>
      *
      * @param proFile the profile
-     * @param colNr the column to write to (must be {@literal > 3})
-     * @param counts map from profile entry id to the absolute count
+     * @param colNr   the column to write to (must be {@literal > 3})
+     * @param counts  map from profile entry id to the absolute count
      * @return success true if successfully updated
      */
     public static boolean appendProfile(File proFile, int colNr, Map<ByteArrayCharSequence, Long> counts) {
-        if(colNr <= 3) throw new IllegalArgumentException("You can not append to column <= 3!");
+        if (colNr <= 3) {
+            throw new IllegalArgumentException("You can not append to column <= 3!");
+        }
         BufferedReader buffy = null;
         BufferedWriter wright = null;
 
@@ -126,10 +128,10 @@ public class ProfilerFile {
                 wright.write(PRO_FILE_CR);
             }
 
-            if(!proFile.delete()){
+            if (!proFile.delete()) {
                 Log.warn("Unable to remove original .pro file, I try the move anyways");
             }
-            if(!FileHelper.move(tmpF, proFile, null)){
+            if (!FileHelper.move(tmpF, proFile, null)) {
                 throw new RuntimeException("Unable to move new .pro file to its location!");
             }
             Log.progressFinish("OK", false);

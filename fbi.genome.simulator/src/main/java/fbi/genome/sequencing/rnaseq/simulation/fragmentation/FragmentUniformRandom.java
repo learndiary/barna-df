@@ -11,7 +11,7 @@ import java.util.Random;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class FragmentUniformRandom implements FragmentProcessor{
+public class FragmentUniformRandom implements FragmentProcessor {
     /**
      * Default median size after fragmentation, according to 2010 Illumina protocol.
      */
@@ -25,7 +25,9 @@ public class FragmentUniformRandom implements FragmentProcessor{
 
     public FragmentUniformRandom(double d0, double delta, double eta, double medMoleculeLength, boolean filtering) {
         this.filtering = filtering;
-        if(d0 < 1.0) throw new IllegalArgumentException("D0 must be >= 1.0!");
+        if (d0 < 1.0) {
+            throw new IllegalArgumentException("D0 must be >= 1.0!");
+        }
         this.d0 = d0;
         this.urDelta = delta;
         this.urEta = eta;

@@ -8,13 +8,12 @@ import java.util.List;
 import java.util.Random;
 
 /**
- *
  * see <code>http://personal.strath.ac.uk/gary.koop/extra_material_on_metropolis.pdf</code>,
  * <code>http://www.ps.uci.edu/~markm/numerical_methods/Metropolis%96Hastings%20algorithm%20-%20Wikipedia,%20the%20free%20encyclopedia.pdf</code>
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class FragmentFilterMCMC implements FragmentProcessor{
+public class FragmentFilterMCMC implements FragmentProcessor {
     /**
      * Last length
      */

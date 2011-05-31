@@ -20,8 +20,7 @@ public interface FluxTool<T> extends Callable<T> {
      * should validate the parameters. If a required parameter is not set, return false and use
      * the printer to print information
      *
-     *
-     * @param printer the printer to print the actual help message
+     * @param printer       the printer to print the actual help message
      * @param toolArguments the argument processor
      * @return valid true if valid arguments
      */
