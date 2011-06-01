@@ -235,8 +235,7 @@ public class Options {
      */
     public void printUsage(PrintStream out) {
         TableFormatter tf = new TableFormatter(3);
-        tf.setTabRow(true);
-        tf.add(new String[]{"Parameter", "Argument", "Description"});
+        tf.addRow("Parameter", "Argument", "Description");
         Iterator<Method> it = descriptions.keySet().iterator();
         while (it.hasNext()) {
             Method m = it.next();
@@ -276,7 +275,7 @@ public class Options {
             String s2 = sb.toString();
             String s3 = descriptions.get(m);
 
-            tf.add(new String[]{s1, s2, s3});
+            tf.addRow(s1, s2, s3);
         }
         out.println(tf.toString());
     }

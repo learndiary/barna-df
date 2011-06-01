@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.commons;
 
 import java.util.concurrent.ExecutorService;
@@ -5,9 +16,9 @@ import java.util.concurrent.Executors;
 
 /**
  * Helper class that provides a configured executor to run stuff in a background task.
- * Note that you MUST explicitly initializes AND shutdown to use this class ! If you
- * do not shutdown, your process will not terminate.
- *
+ * <B>Note that you MUST explicitly initializes this class!</B> After initialization, this adds
+ * a system shutdown hook to kill the executor on system shutdown, but you are
+ * advised to explicitly call {@link #shutdown()}.
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -16,6 +27,10 @@ public class Execute {
      * The executor
      */
     private static ExecutorService executor;
+    /**
+     * The current shutdown thread
+     */
+    private static ExecutorShutdown shutdown;
 
     /**
      * Shutdown the executor
@@ -24,6 +39,10 @@ public class Execute {
         if(executor != null){
             executor.shutdownNow();
             executor = null;
+            if(shutdown != null){
+                Runtime.getRuntime().removeShutdownHook(shutdown);
+            }
+            shutdown = null;
         }
     }
 
@@ -36,6 +55,8 @@ public class Execute {
         if(maxThreads <= 0) throw new IllegalArgumentException("Max threads must be >= 1");
         if(executor == null){
             executor = Executors.newFixedThreadPool(maxThreads);
+            shutdown = new ExecutorShutdown();
+            Runtime.getRuntime().addShutdownHook(shutdown);
         }else{
             throw new RuntimeException("Executor is already initialized!");
         }
@@ -51,5 +72,16 @@ public class Execute {
             throw new RuntimeException("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!");
         }
         return executor;
+    }
+
+    /**
+     * Shutdown thread to be added as shutdown hook
+     */
+    private static class ExecutorShutdown extends Thread{
+        @Override
+        public void run() {
+            super.run();
+            Execute.shutdown();
+        }
     }
 }

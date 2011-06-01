@@ -566,7 +566,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			long saveBytesRead= bytesRead;
 			int saveUniqueLines= nrUniqueLinesRead;
 			
-			ByteArrayCharSequence cs= new ByteArrayCharSequence(this.cs.a.length);	// this.cs;
+			ByteArrayCharSequence cs= new ByteArrayCharSequence(this.cs.chars.length);	// this.cs;
 			BufferedBACSReader buffy= getReaderBACS();
 			//for (cs= getReader().readLine(cs); cs.end!= 0; cs=getReader().readLine(cs)) {
 			while (buffy.readLine(cs)> 0) {

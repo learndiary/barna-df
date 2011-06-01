@@ -38,7 +38,7 @@ public class BufferedBACSReader {
 	
 	public int readLine(ByteArrayCharSequence cs) {
 		byte n= BYTE_NL, r= BYTE_CR;
-		byte[] b= buf, a= cs.a; // , bb= null;
+		byte[] b= buf, a= cs.chars; // , bb= null;
 		synchronized (b) {
 //			while (pos[idx]== 0) 
 //				fill(idx);
@@ -56,7 +56,7 @@ public class BufferedBACSReader {
 			if (i> 0&& b[i-1]== r)
 				--i;
 			//bb= new byte[i];
-			System.arraycopy(b, 0, cs.a, 0, i);
+			System.arraycopy(b, 0, cs.chars, 0, i);
 			cs.start= 0;
 			cs.end= i;
 			if (i== 0)

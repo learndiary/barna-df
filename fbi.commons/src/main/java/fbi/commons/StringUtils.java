@@ -1,6 +1,16 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.commons;
 
-import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -8,19 +18,16 @@ import java.util.Date;
  * String constants and utilities
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
+ * @author Micha Sammeth (gmicha@googlemail.com)
  */
 public class StringUtils {
-    public static final String TAB = "\t";
-    public static final String HASH = "#";
-    public static final String EMPTYSTRING = "";
-    public static final String STAR = "*";
-    public static final String SPACE = " ";
-    public static final String DOT = ".";
-    public static final String NULL = "0";
-    public static final String COLON = ":";
-    public static final String PAROPEN = "(";
-    public static final String PARCLOSE = ")";
+    /**
+     * OK string
+     */
     public static final String OK = "OK";
+    /**
+     * Error string
+     */
     public static final String ERROR = "ERROR";
     /**
      * Biological characters as spotted in refseq intron annotation of human
@@ -125,20 +132,15 @@ public class StringUtils {
         return s;
     }
 
-    public static int printPercentage(int perc, double val, double base, PrintStream stream) {
-        int currPerc = (int) Math.round(val * 10d / base);
-        if (currPerc > perc) {
-            if (perc == 4 || perc == 9) {
-                stream.print("+");
-            } else {
-                stream.print("*");
-            }
-            stream.flush();
-            ++perc;
-        }
-        return perc;
-    }
-
+    /**
+     * Append the character c to the given string until given length is reached
+     *
+     * @param c the character
+     * @param s the string
+     * @param len length of the final string
+     * @param leading append as prefix
+     * @return string the final string
+     */
     public static String append(char c, String s, int len, boolean leading) {
         if (s.length() >= len) {
             return s;

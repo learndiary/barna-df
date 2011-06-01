@@ -96,9 +96,9 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			// field 5
 			if (p2+ 1>= end)
 				return;
-			if (a[p2+ 1]== BYTE_PLUS)
+			if (chars[p2+ 1]== BYTE_PLUS)
 				strand= 1;
-			else if (a[p2+ 1]== BYTE_MINUS)
+			else if (chars[p2+ 1]== BYTE_MINUS)
 				strand= -1;
 			else 
 				strand= 0;
@@ -129,7 +129,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			assert(end== start);
 			append(chr);
 			ensureLength(start, 1);
-			a[end++]= BYTE_TAB;	// mandatory, add fs after
+			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 			cnt= 0;
 			p1= start;
 			p2= end;
@@ -148,7 +148,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			p1= end+ 1;
 			append(x);
 			ensureLength(end, 1);
-			a[end++]= BYTE_TAB;	// mandatory, add fs after
+			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 			p2= end;
 		} else {
 			p1= start;
@@ -180,7 +180,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 		if (cnt== 2&& p2== end) {
 			assert(nameP1< 0|| nameP2< 0);
 			ensureLength(end, 1);
-			a[end++]= BYTE_TAB;	// optional, fs before
+			chars[end++]= BYTE_TAB;	// optional, fs before
 			nameP1= (byte) (p1= end);
 			append(name);
 			nameP2= (byte) (p2= end);
@@ -196,7 +196,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 		this.score= score;
 		if (cnt== 3&& p2== end) {
 			ensureLength(end, 1);
-			a[end++]= BYTE_TAB;
+			chars[end++]= BYTE_TAB;
 			p1= end;
 			append(score);
 			p2= end;
@@ -218,9 +218,9 @@ public class BEDobject2 extends ByteArrayCharSequence {
 		byte strandByte= strand== 1? BYTE_PLUS: (strand== -1? BYTE_MINUS: BYTE_DOT);
 		if (cnt== 4&& p2== end) {
 			ensureLength(end, 2);
-			a[end++]= BYTE_TAB;
+			chars[end++]= BYTE_TAB;
 			p1= end;
-			a[end++]= strandByte;
+			chars[end++]= strandByte;
 			p2= end;
 			cnt= 5;
 		} else {
@@ -269,7 +269,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 				} else {
 					cs.ensureLength(cs.end, len);
 					cs.end+= len;
-					System.arraycopy(cs.a, headerLen, cs.a, headerLen+ len, cs.end- headerLen- len);
+					System.arraycopy(cs.chars, headerLen, cs.chars, headerLen+ len, cs.end- headerLen- len);
 					Graph.readSequence(chrom, getStrand()>= 0, 
 							first, last, 
 							cs, headerLen, headerLen+ len);
@@ -295,7 +295,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 		else {
 			assert(p1== end);
 			ensureLength(end, 1);
-			a[end++]= BYTE_TAB;
+			chars[end++]= BYTE_TAB;
 			p1= end;
 			append(count);
 			p2= end;
@@ -312,7 +312,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 		for (; cnt < fn; ++cnt) {
 			//p1= end;
 			//a[end++]= DEFAULT_VALUE[cnt];
-			a[end++]= BYTE_TAB;
+			chars[end++]= BYTE_TAB;
 			p1= p2= end;	// empty fields
 		}
 	}
@@ -366,7 +366,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			lastBsize= -1;
 		int x= lastBsize= Math.max(p1, lastBsize+ 1);
 		while (++lastBsize < p2) {
-			if (a[lastBsize]== BYTE_COMMA)
+			if (chars[lastBsize]== BYTE_COMMA)
 				break;
 		}
 		return parseInt(x, lastBsize);
@@ -385,7 +385,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			lastBstart= -1;
 		int x= lastBstart= Math.max(p1, lastBstart+ 1);
 		while (++lastBstart < p2) {
-			if (a[lastBstart]== BYTE_COMMA)
+			if (chars[lastBstart]== BYTE_COMMA)
 				break;
 		}
 		return parseInt(x, lastBstart);

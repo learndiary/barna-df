@@ -29,4 +29,10 @@ public class StringUtilsTest {
         assertEquals("10.30000", StringUtils.fprint(10.3, 5));
         assertEquals("10.00000", StringUtils.fprint(10.00000000000000000000000000003, 5));
     }
+
+    @Test
+    public void testAppend() throws Exception {
+        assertEquals("aAAA", StringUtils.append('A', "a", 4, false));
+        assertEquals("AAAa", StringUtils.append('A', "a", 4, true));
+    }
 }

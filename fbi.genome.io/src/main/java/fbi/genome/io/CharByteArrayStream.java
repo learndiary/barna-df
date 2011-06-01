@@ -234,9 +234,9 @@ public class CharByteArrayStream {
 							eol = true;
 							break charLoop;
 						}
-						if (cs.end>= cs.a.length)
+						if (cs.end>= cs.chars.length)
 							cs.extend();
-						cs.a[cs.end++] = (byte) cb[i];
+						cs.chars[cs.end++] = (byte) cb[i];
 					}
 	
 					startChar = nextChar;

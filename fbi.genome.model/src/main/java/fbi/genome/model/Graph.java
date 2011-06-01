@@ -1100,7 +1100,7 @@ public class Graph implements Serializable {
 						int nextN= (int) (lineLen- (start% lineLen));				// read (end of) first line
 						while (cs.end+ nextN<= to) {		// full lines
 							assert(p+ (cs.end- mark)+ nextN< raf.length());
-							raf.readFully(cs.a,cs.end,nextN);
+							raf.readFully(cs.chars,cs.end,nextN);
 							raf.skipBytes(1);
 							cs.end+= nextN;
 							nextN= lineLen;
@@ -1119,7 +1119,7 @@ public class Graph implements Serializable {
 						if (rest< 0)
 							System.currentTimeMillis();
 						try {
-							raf.readFully(cs.a,cs.end,rest);	// read start of last line
+							raf.readFully(cs.chars,cs.end,rest);	// read start of last line
 							cs.end+= rest;
 						} catch (Exception e) {	//EOFException, IndexOutOfBoundsException
 							System.err.println("Problems reading "+chromosome+": "+ p+ ", "+rest+"> "
@@ -1226,7 +1226,7 @@ public class Graph implements Serializable {
 					}
 					
 					if (raf== null) {
-						System.arraycopy(chrSeq, (int) start, cs.a, from, (int) (end- start)); // 20101210: bugfix 
+						System.arraycopy(chrSeq, (int) start, cs.chars, from, (int) (end- start)); // 20101210: bugfix
 					} else {
 						p= headerOffset+ fileSep.length()+ start+ ((start/lineLen)* fileSep.length());
 						assert(p>= 0);
@@ -1236,7 +1236,7 @@ public class Graph implements Serializable {
 						int fSepLen= fileSep.length();
 						while (curr+ nextN<= to) {		// full lines
 							assert(p+ (to- curr)+ nextN< raf.length());
-							raf.readFully(cs.a,curr,nextN);
+							raf.readFully(cs.chars,curr,nextN);
 							raf.skipBytes(fSepLen);
 							curr+= nextN;
 							nextN= lineLen;
@@ -1253,7 +1253,7 @@ public class Graph implements Serializable {
 	*/	
 						int rest= (int) Math.min(to- curr, end- start- curr);	// 20101210: bugfix	
 						try {
-							raf.readFully(cs.a,curr,rest);	// read start of last line
+							raf.readFully(cs.chars,curr,rest);	// read start of last line
 						} catch (Exception e) {	//EOFException, IndexOutOfBoundsException
 							System.err.println("Problems reading "+chromosome+": "+ p+ ", "+rest+"> "
 									+raf.length()+" into "+cs.length()+": "+e.getMessage());
@@ -1265,7 +1265,7 @@ public class Graph implements Serializable {
 					}
 					// 20101210: bugfix, changed (to- from) to (end-start): exceeds readlength may exceed end of chromosome
 					if ((end- start)< (to- from)) {
-						Arrays.fill(cs.a, (int) (from+ (end- start)), (int) (from+ (to- from)), (byte) 'N'); 
+						Arrays.fill(cs.chars, (int) (from+ (end- start)), (int) (from+ (to- from)), (byte) 'N');
 					}
 
 //					s= new String(seq);

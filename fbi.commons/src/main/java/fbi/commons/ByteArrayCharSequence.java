@@ -1,39 +1,28 @@
 package fbi.commons;
 
 import java.util.Arrays;
-import java.util.Hashtable;
 
 
 public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArrayCharSequence> {
-
-    public static final byte BYTE_TAB = 9;
-
     /**
-     * testing
-     *
-     * @param args
+     * Tab character byte value
      */
-    public static void main(String[] args) {
-        Hashtable<CharSequence, Object> blash = new Hashtable<CharSequence, Object>();
-        ByteArrayCharSequence bas = new ByteArrayCharSequence("Heute");
-        blash.put(bas, bas);
-        System.out.println(blash.get(bas));
-        ByteArrayCharSequence b2 = bas.subSequence(1, 3);
-        blash.put(b2, b2);
-        System.out.println(blash.get(b2));
-        ByteArrayCharSequence b3 = b2.cloneCurrentSeq();
-        blash.put(b3, b3);
-        System.out.println(blash.get(b3));
+    public static final byte BYTE_TAB = 9;
+    /**
+     * DNA/RNA characters
+     */
+    private static final byte[] CHARS_NORMAL = new byte[]{
+            45, 65, 67, 71, 75, 77, 78, 82, 84, 85, 88, 89,        // -ACGKMNRTUXY
+            97, 99, 103, 107, 109, 110, 114, 116, 117, 120, 121};// acgkmnrtuxy
+    /**
+     * DNA/RNA complements
+     */
+    private static final byte[] CHARS_REVERSED = new byte[]{
+            45, 84, 71, 67, 77, 75, 78, 89, 65, 65, 88, 82,        // -TGCMKNYAAXR
+            116, 103, 99, 109, 107, 110, 121, 97, 97, 120, 114};    // tgcmknyaaxr
 
 
-/*		String s= "a69";
-        for (int i = 0; i < s.length(); i++)
-            System.err.println(s.charAt(i)+ "\t"+ ((byte) s.charAt(i)));
-*/
-    }
-
-    public static final int defaultSize = 0;
-    final static byte[] DigitTens = {
+    private final static byte[] DigitTens = {
             48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
             49, 49, 49, 49, 49, 49, 49, 49, 49, 49,
             50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
@@ -46,7 +35,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
             57, 57, 57, 57, 57, 57, 57, 57, 57, 57,
     };
 
-    final static byte[] DigitOnes = {
+    private final static byte[] DigitOnes = {
             48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
             48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
             48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
@@ -61,7 +50,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
     /**
      * All possible chars for representing a number as a String
      */
-    final static byte[] digits = {
+    private final static byte[] digits = {
             48, 49, 50, 51, 52, 53,
             54, 55, 56, 57, 97, 98,
             99, 100, 101, 102, 103, 104,
@@ -69,45 +58,67 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
             111, 112, 113, 114, 115, 116,
             117, 118, 119, 120, 121, 122
     };
+    /**
+     * The characters array
+     */
+    public byte[] chars;
+    /**
+     * Start index
+     */
+    public int start;
+    /**
+     * End index (excluded, first index NOT in the string)
+     */
+    public int end;    // end excluded, heilichs blechle !!
+    /**
+     * Helper for internal find
+     */
+    protected int p1;
+    /**
+     * Helper for internal find
+     */
+    protected int p2;
+    /**
+     * Helper for internal find
+     */
+    protected int cnt;
 
-    public byte[] a;
+    /**
+     * Separator character
+     */
+    private String separator = "\t";
 
-    public int start, end;    // end excluded, heilichs blechle !!
-
-    public ByteArrayCharSequence(byte[] value, String sepString) {
-        this(value);
-        this.sepString = sepString;
-    }
-
+    /**
+     * Initialize the instance using the given byte buffer. The buffers reference is
+     * used directly, no copy is created and start and end ar set to 0 and length of the
+     * buffer respectively
+     *
+     * @param value the byte buffer
+     */
     public ByteArrayCharSequence(byte[] value) {
-        a = value;
+        chars = value;
         this.start = 0;
-        this.end = a.length;
+        this.end = chars.length;
         resetFind();
     }
 
-    public ByteArrayCharSequence(String s, String sepString) {
-        this(s);
-        this.sepString = sepString;
-    }
-
     public ByteArrayCharSequence(String s) {
-        init(s);
+        this(s.getBytes());
     }
 
     public void init(String s) {
-        a = new byte[s.length()];
-        for (int i = 0; i < a.length; i++) {
-            a[i] = (byte) s.charAt(i);
+        chars = new byte[s.length()];
+        for (int i = 0; i < chars.length; i++) {
+            chars[i] = (byte) s.charAt(i);
         }
         start = 0;
         end = s.length();
         resetFind();
     }
 
-    public ByteArrayCharSequence(int capacity, String sepString) {
+    public ByteArrayCharSequence(int capacity, String separator) {
         this(capacity);
-        this.sepString = sepString;
+        this.separator = separator;
     }
 
     public ByteArrayCharSequence(int capacity) {
@@ -116,9 +127,9 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
         resetFind();
     }
 
-    public ByteArrayCharSequence(byte[] value, int start, int end, String sepString) {
+    public ByteArrayCharSequence(byte[] value, int start, int end, String separator) {
         this(value, start, end);
-        this.sepString = sepString;
+        this.separator = separator;
     }
 
     public ByteArrayCharSequence(byte[] value, int start, int end) {
@@ -129,15 +140,15 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
     //@Override
     public char charAt(int index) {
-        return (char) a[start + index];
+        return (char) chars[start + index];
     }
 
     public void setCharAt(int index, char c) {
-        a[start + index] = (byte) c;
+        chars[start + index] = (byte) c;
     }
 
     public byte byteAt(int index) {
-        return a[start + index];
+        return chars[start + index];
     }
 
     //@Override
@@ -150,10 +161,10 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
      * Remove all white-spaces from start and end
      */
     public void trim() {
-        while ((start < end) && (a[start] <= ' ')) {
+        while ((start < end) && (chars[start] <= ' ')) {
             start++;
         }
-        while ((start < end) && (a[end - 1] <= ' ')) {
+        while ((start < end) && (chars[end - 1] <= ' ')) {
             end--;
         }
     }
@@ -167,13 +178,11 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
         // byte[] b= new byte[end-start];
         // System.arraycopy(a, start, b, 0, b.length);
         // return new ByteArrayCharSequence(b);
-        return new ByteArrayCharSequence(a, this.start + start, this.start
+        return new ByteArrayCharSequence(chars, this.start + start, this.start
                 + end);
 
     }
 
-    public int p1, p2, cnt;    // internal find
-    private String sepString = "\t";
 
     /**
      * @param fieldNr 0-based
@@ -182,7 +191,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
         if (fieldNr == cnt) {
             return;
         }
-        String sepString = this.sepString;
+        String sepString = this.separator;
         int sepLen = sepString.length();
         if (fieldNr > cnt) {    // fw
 
@@ -341,7 +350,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
         // Fall thru to fast mode for smaller numbers
         // assert(i <= 65536, i);
-        for (; ;) {
+        for (; ; ) {
             q = (i * 52429) >>> (16 + 3);
             r = i - ((q << 3) + (q << 1));  // r = i-(q*10) ...
             buf[--charPos] = digits[r];
@@ -391,16 +400,16 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
         }
 
         int diff = 1 - (p2 - p1);
-        if (end + diff > a.length) {
+        if (end + diff > chars.length) {
             extend(diff);
         }
         if (diff != 0) {
-            System.arraycopy(a, p2, a, p2 + diff, end - p2);
+            System.arraycopy(chars, p2, chars, p2 + diff, end - p2);
             end += diff;
             p2 += diff;
         }
         assert (p2 == p1 + 1);
-        a[p1] = value;
+        chars[p1] = value;
         return true;
     }
 
@@ -412,16 +421,16 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
         int digits = value < 0 ? stringSize(-value) + 1 : stringSize(value);
         int diff = digits - (p2 - p1);
-        if (end + diff > a.length) {
+        if (end + diff > chars.length) {
             extend(diff);
         }
         if (diff != 0) {
-            System.arraycopy(a, p2, a, p2 + diff, end - p2);
+            System.arraycopy(chars, p2, chars, p2 + diff, end - p2);
             end += diff;
             p2 += diff;
         }
 
-        int p = getChars(value, p2, a);    // p2 is new end of field
+        int p = getChars(value, p2, chars);    // p2 is new end of field
         assert (p == p1);
         return true;
     }
@@ -434,18 +443,18 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
         int digits = value.length();
         int diff = digits - (p2 - p1);
-        if (end + diff > a.length) {
+        if (end + diff > chars.length) {
             extend(diff);
         }
         if (diff != 0) {
-            System.arraycopy(a, p2, a, p2 + diff, end - p2);
+            System.arraycopy(chars, p2, chars, p2 + diff, end - p2);
             end += diff;
             p2 += diff;
         }
 
         int p;
         for (p = p1; p < p1 + digits; ++p) {
-            a[p] = (byte) value.charAt(p - p1);
+            chars[p] = (byte) value.charAt(p - p1);
         }
 
         assert (p == p2);
@@ -470,7 +479,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 //		if (sum>= a.length)
 //			extend(sum- a.length);
         for (int i = 0; i < len; ++i) {
-            a[end + i] = (byte) cs.charAt(i);
+            chars[end + i] = (byte) cs.charAt(i);
         }
         end += len;
     }
@@ -478,38 +487,38 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
     public void append(byte[] b, int from, int to) {
         int len = to - from;
         ensureLength(end, len);
-        System.arraycopy(b, from, a, end, len);
+        System.arraycopy(b, from, chars, end, len);
         end += len;
     }
 
     public void appendCurrField(byte x) {
         ensureLength(end, 1);
-        System.arraycopy(a, p2, a, p2 + 1, end - p2);
+        System.arraycopy(chars, p2, chars, p2 + 1, end - p2);
         end++;
-        a[p2++] = x;
+        chars[p2++] = x;
     }
 
     public void appendCurrField(int x) {
         int digits = stringSize(x);
         ensureLength(end, digits);
-        System.arraycopy(a, p2, a, p2 + digits, end - p2);
+        System.arraycopy(chars, p2, chars, p2 + digits, end - p2);
         end += digits;
         p2 += digits; // end index
-        getChars(x, p2, a);
+        getChars(x, p2, chars);
     }
 
     public void appendCurrField(CharSequence value) {
         int digits = value.length();
         ensureLength(end, digits);
         if (digits != 0) {
-            System.arraycopy(a, p2, a, p2 + digits, end - p2);
+            System.arraycopy(chars, p2, chars, p2 + digits, end - p2);
             end += digits;
             p2 += digits;
         }
 
         int p;
         for (p = p1; p < p1 + digits; ++p) {
-            a[p] = (byte) value.charAt(p - p1);
+            chars[p] = (byte) value.charAt(p - p1);
         }
 
         assert (p == p2);
@@ -517,34 +526,34 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
     public void append(byte x) {
         ensureLength(end, 1);
-        a[end++] = x;
+        chars[end++] = x;
     }
 
     public void append(int x) {
         int len = stringSize(x);
         ensureLength(end, len);
         end += len;    // end index
-        getChars(x, end, a);
+        getChars(x, end, chars);
     }
 
     public void extend() {
-        extend(Math.max(1, (int) (a.length * 0.3)));
+        extend(Math.max(1, (int) (chars.length * 0.3)));
     }
 
     public void extend(int x) {
-        byte[] b = new byte[a.length + x];
-        System.arraycopy(a, 0, b, 0, a.length);
-        a = b;
+        byte[] b = new byte[chars.length + x];
+        System.arraycopy(chars, 0, b, 0, chars.length);
+        chars = b;
     }
 
     public ByteArrayCharSequence cloneCurrentSeq() {
         byte[] cloned = getCurrentArray();
-        return new ByteArrayCharSequence(cloned, 0, cloned.length, sepString);
+        return new ByteArrayCharSequence(cloned, 0, cloned.length, separator);
     }
 
     public byte[] getCurrentArray() {
         byte[] cloned = new byte[length()];
-        System.arraycopy(a, start, cloned, 0, cloned.length);
+        System.arraycopy(chars, start, cloned, 0, cloned.length);
         return cloned;
     }
 
@@ -554,7 +563,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 //		for (int i = 0; i < length(); i++)
 //			s.append(charAt(i));
 //
-        return new String(a, start, length());
+        return new String(chars, start, length());
 //		return s.toString();
     }
 
@@ -603,20 +612,20 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
     public int parseInt() {
         int val = 0;
         for (int i = end - 1, pow = 1; i >= start; --i, pow *= 10) {
-            val += (a[i] - 48) * pow;
+            val += (chars[i] - 48) * pow;
         }
         return val;
     }
 
     public int parseInt(int from, int to) {
         int f = 1;
-        if (a[from] == 45) { // '-'
+        if (chars[from] == 45) { // '-'
             f = -1;
             ++from;
         }
         int val = 0;
         for (int i = to - 1, pow = 1; i >= from; --i, pow *= 10) {
-            val += (a[i] - 48) * pow;
+            val += (chars[i] - 48) * pow;
         }
         return (val * f);
     }
@@ -671,8 +680,8 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
         int j = anotherSeq.start;
 
         for (int m = 0; m < n; m++) {
-            if (a[i + m] != anotherSeq.a[j + m]) {
-                return a[i + m] - anotherSeq.a[j + m];
+            if (chars[i + m] != anotherSeq.chars[j + m]) {
+                return chars[i + m] - anotherSeq.chars[j + m];
             }
         }
         return len1 - len2;
@@ -738,10 +747,10 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
         if (target == null) {
             target = new ByteArrayCharSequence(src.length());
         }
-        if (target.a.length < src.length()) {
-            target.a = new byte[src.length()];
+        if (target.chars.length < src.length()) {
+            target.chars = new byte[src.length()];
         }
-        System.arraycopy(src.a, src.start, target.a, 0, src.length());
+        System.arraycopy(src.chars, src.start, target.chars, 0, src.length());
         target.start = src.start;
         target.end = src.end;
         return target;
@@ -776,12 +785,12 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
     }
 
     public static void reverseComplement(ByteArrayCharSequence cs, int from, int to) {
-        complement(cs.a, cs.start + from, cs.start + to);
-        reverse(cs.a, cs.start + from, cs.start + to);
+        complement(cs.chars, cs.start + from, cs.start + to);
+        reverse(cs.chars, cs.start + from, cs.start + to);
     }
 
     public static void reverse(ByteArrayCharSequence cs, int from, int to) {
-        reverse(cs.a, cs.start + from, cs.start + to);
+        reverse(cs.chars, cs.start + from, cs.start + to);
     }
 
     public static void reverse(byte[] a, int from, int to) {
@@ -803,17 +812,13 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
 
     }
 
-    public static final byte[] CHARS_NORMAL = new byte[]{45, 65, 67, 71, 75, 77, 78, 82, 84, 85, 88, 89,        // -ACGKMNRTUXY
-            97, 99, 103, 107, 109, 110, 114, 116, 117, 120, 121},// acgkmnrtuxy
-            CHARS_REVERSED = new byte[]{45, 84, 71, 67, 77, 75, 78, 89, 65, 65, 88, 82,        // -TGCMKNYAAXR
-                    116, 103, 99, 109, 107, 110, 121, 97, 97, 120, 114};    // tgcmknyaaxr
 
     public static void complement(ByteArrayCharSequence cs) {
-        complement(cs.a, cs.start, cs.end);
+        complement(cs.chars, cs.start, cs.end);
     }
 
     public static void complement(ByteArrayCharSequence cs, int from, int to) {
-        complement(cs.a, cs.start + from, cs.start + to);
+        complement(cs.chars, cs.start + from, cs.start + to);
     }
 
     public static void complement(byte[] a, int from, int to) {
@@ -829,9 +834,9 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
     }
 
     public void ensureLength(int from, int len) {
-        int diff = (from + len) - a.length;
+        int diff = (from + len) - chars.length;
         if (diff > 0) {
-            int e = a.length * 2;
+            int e = chars.length * 2;
             if (e > diff) {
                 diff = e;
             }
@@ -841,19 +846,19 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<ByteArray
     }
 
     public void toUpperCase() {
-        toUpperCase(a, start, end);
+        toUpperCase(chars, start, end);
     }
 
     public void toUpperCase(int from, int to) {
-        toUpperCase(a, start + from, start + to);
+        toUpperCase(chars, start + from, start + to);
     }
 
     public void toLowerCase() {
-        toLowerCase(a, start, end);
+        toLowerCase(chars, start, end);
     }
 
     public void toLowerCase(int from, int to) {
-        toLowerCase(a, start + from, start + to);
+        toLowerCase(chars, start + from, start + to);
     }
 
     public static void toUpperCase(byte[] b, int from, int to) {

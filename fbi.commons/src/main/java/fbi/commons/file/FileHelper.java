@@ -507,9 +507,6 @@ public class FileHelper {
             int perc = 0;
             for (int c = 0, nb = 0; (nb = buffy.read(cbuf)) >= 0; ++c) {
                 bytesRead += nb;
-                if (!silent) {
-                    StringUtils.printPercentage(perc, bytesRead, bytesTotal, System.err);
-                }
                 wright.write(cbuf, 0, nb);
                 if (c % 10 == 0) {
                     wright.flush();

@@ -29,7 +29,7 @@ public class BEDobject extends AnnotationObject {
 		synchronized (recycleObjV) {
 			int z= recycleObjV.size();
 			for (int i = 0; i < z; i++) {
-				if (recycleObjV.elementAt(z- 1- i).chrom.a.length>= asize) {
+				if (recycleObjV.elementAt(z- 1- i).chrom.chars.length>= asize) {
 					o= recycleObjV.remove(z- 1- i);
 					break;
 				}

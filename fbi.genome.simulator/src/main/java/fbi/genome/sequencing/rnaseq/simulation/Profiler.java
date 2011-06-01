@@ -619,10 +619,10 @@ public class Profiler implements Callable<Void> {
         ByteArrayCharSequence tID = ids[i];
 
         ByteArrayCharSequence cs = new ByteArrayCharSequence(locID.length() + tID.length() + 1);
-        System.arraycopy(locID.a, locID.start, cs.a, cs.end, locID.length());
+        System.arraycopy(locID.chars, locID.start, cs.chars, cs.end, locID.length());
         cs.end += locID.length();
-        cs.a[cs.end++] = FluxSimulatorSettings.SEP_LOC_TID;
-        System.arraycopy(tID.a, tID.start, cs.a, cs.end, tID.length());
+        cs.chars[cs.end++] = FluxSimulatorSettings.SEP_LOC_TID;
+        System.arraycopy(tID.chars, tID.start, cs.chars, cs.end, tID.length());
         cs.end += tID.length();
 
         return cs;

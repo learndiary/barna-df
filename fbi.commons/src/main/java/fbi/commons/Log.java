@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.commons;
 
 /**
@@ -32,7 +43,7 @@ public class Log {
         /**
          * Integer representation
          */
-        int level;
+        final int level;
 
         Level(int level) {
             this.level = level;
@@ -47,7 +58,7 @@ public class Log {
     /**
      * The console progress
      */
-    private static Progressable progress = new PrintstreamProgressable(System.err);
+    private static final Progressable progress = new PrintstreamProgressable(System.err);
 
     /**
      * Is the logger interactive
@@ -102,7 +113,7 @@ public class Log {
      * Log a debug message and print the stacktrace of the error
      *
      * @param message the message
-     * @param error   the error
+     * @param error   the error (null permitted)
      */
     public static void debug(String message, Throwable error) {
         if (logLevel.level >= Log.Level.DEBUG.level) {
@@ -145,6 +156,7 @@ public class Log {
     /**
      * Log an info message using a given prefix
      *
+     * @param prefix prefix
      * @param message the message
      */
     public static void info(String prefix, String message) {
@@ -244,7 +256,7 @@ public class Log {
     /**
      * Do a progress step
      */
-    public static void progress() {
+    private static void progress() {
         if (logLevel.level >= Log.Level.INFO.level) {
             progress.progress();
         }

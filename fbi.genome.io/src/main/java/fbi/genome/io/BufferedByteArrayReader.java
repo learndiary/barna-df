@@ -47,7 +47,7 @@ public class BufferedByteArrayReader {
 				return null;
 			if (i> 0&& b[i-1]== r)
 				--i;
-			System.arraycopy(b, 0, cs.a, 0, i);
+			System.arraycopy(b, 0, cs.chars, 0, i);
 			cs.start= 0;
 			cs.end= i;
 			while(++i< pos&& (b[i]== r|| b[i]== n));

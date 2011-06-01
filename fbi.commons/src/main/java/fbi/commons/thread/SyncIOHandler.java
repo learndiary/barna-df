@@ -218,7 +218,7 @@ public class SyncIOHandler extends Thread {
                 --i;
             }
             //bb= new byte[i];
-            System.arraycopy(b, 0, cs.a, 0, i);
+            System.arraycopy(b, 0, cs.chars, 0, i);
             cs.start = 0;
             cs.end = i;
 
@@ -277,7 +277,7 @@ public class SyncIOHandler extends Thread {
                     ; // :)
                 }
             }
-            System.arraycopy(cs.a, cs.start, b, pos[idx], len);
+            System.arraycopy(cs.chars, cs.start, b, pos[idx], len);
             pos[idx] += len;
             b[pos[idx]++] = BYTE_NL;
         }

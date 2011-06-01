@@ -334,7 +334,7 @@ public class SyncIOHandler2 extends Thread {
                 --i;
             }
             //bb= new byte[i];
-            System.arraycopy(b, 0, cs.a, 0, i);
+            System.arraycopy(b, 0, cs.chars, 0, i);
             cs.start = 0;
             cs.end = i;
 
@@ -416,7 +416,7 @@ public class SyncIOHandler2 extends Thread {
                 }
                 pos = posHash.get(out);
             }
-            System.arraycopy(cs.a, cs.start, b, pos, len);
+            System.arraycopy(cs.chars, cs.start, b, pos, len);
             pos += len;
             b[pos++] = BYTE_NL;
             posHash.put(out, pos);

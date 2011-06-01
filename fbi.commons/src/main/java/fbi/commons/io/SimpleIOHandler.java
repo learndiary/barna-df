@@ -147,7 +147,7 @@ class SimpleIOHandler implements IOHandler {
             throw new IllegalArgumentException("The stream was not registered with this handler or it was removed. Pleas ensure you call addStream before you try to write!");
         }
 
-        outputStream.write(cs.a, 0, cs.length());
+        outputStream.write(cs.chars, 0, cs.length());
         outputStream.write(BYTE_NL);
     }
 

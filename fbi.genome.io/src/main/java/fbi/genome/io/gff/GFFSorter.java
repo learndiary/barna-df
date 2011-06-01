@@ -63,8 +63,8 @@ public class GFFSorter {
      */
 	static byte[] encode(ByteArrayCharSequence tid, ByteArrayCharSequence chr) {
 		byte[] key = new byte[tid.length() + chr.length()];
-		System.arraycopy(tid.a, tid.start, key, 0, tid.length());
-		System.arraycopy(chr.a, chr.start, key, tid.length(), chr.length());
+		System.arraycopy(tid.chars, tid.start, key, 0, tid.length());
+		System.arraycopy(chr.chars, chr.start, key, tid.length(), chr.length());
 		return key;
 	}
 

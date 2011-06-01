@@ -125,7 +125,7 @@ public class HelpPrinter {
                     cols[2] = "";
                 }
                 cols[3] = option.getDescription();
-                table.add(cols);
+                table.addRow(cols);
             }
             out.println(table.toString());
         }

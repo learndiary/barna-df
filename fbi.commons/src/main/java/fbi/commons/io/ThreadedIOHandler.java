@@ -303,7 +303,7 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                 --i;
             }
             //bb= new byte[i];
-            System.arraycopy(b, 0, cs.a, 0, i);
+            System.arraycopy(b, 0, cs.chars, 0, i);
             cs.start = 0;
             cs.end = i;
 
@@ -398,7 +398,7 @@ class ThreadedIOHandler extends Thread implements IOHandler {
                 }
                 pos = posHash.get(out);
             }
-            System.arraycopy(cs.a, cs.start, b, pos, len);
+            System.arraycopy(cs.chars, cs.start, b, pos, len);
             pos += len;
             b[pos++] = IOHandler.BYTE_NL;
             posHash.put(out, pos);

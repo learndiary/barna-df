@@ -744,7 +744,7 @@ public class ModelPool {
             cs.append("\n+\n");
             seqEnd += 3;
             cs.ensureLength(cs.end, len);    // for qualities
-            byte[] a = cs.a;
+            byte[] a = cs.chars;
 
             // 1. fill with good quals
             while (cs.end < seqEnd + len) {
@@ -770,7 +770,7 @@ public class ModelPool {
             }
         } else {
             //  just mutate sequence
-            byte[] a = cs.a;
+            byte[] a = cs.chars;
             for (int i = 0; i < idxModelV.size(); i++) {
                 PositionErrorModel model = (PositionErrorModel) modelV.get(idxModelV.get(i));
                 int modelStart = model.start;

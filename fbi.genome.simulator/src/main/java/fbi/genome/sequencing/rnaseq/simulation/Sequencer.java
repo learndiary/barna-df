@@ -141,7 +141,7 @@ public class Sequencer implements Callable<Void> {
                     zipOut.putNextEntry(new ZipEntry(id.toString()));
                     lastID = id.cloneCurrentSeq();
                 }
-                zipOut.write(cs.a, cs.start, cs.length());
+                zipOut.write(cs.chars, cs.start, cs.length());
                 zipOut.write(BYTE_NL);
             }
             zipOut.close();
@@ -278,11 +278,11 @@ public class Sequencer implements Callable<Void> {
 
     private void createQname(BEDobject2 obj2, ByteArrayCharSequence cs) {
 
-        byte[] a = obj2.a;
+        byte[] a = obj2.chars;
         cs.reset();
         int p1 = obj2.getNameP1(), p2 = obj2.getNameP2();
         cs.ensureLength(0, 1 + (p2 - p1));
-        byte[] b = cs.a;
+        byte[] b = cs.chars;
         b[0] = (babes == null || !babes.hasQualities()) ? BYTE_GT : BYTE_AT;
         ++cs.end;
         assert (p1 > 0 && p2 > 0);
@@ -507,10 +507,10 @@ public class Sequencer implements Callable<Void> {
 
             // prevent polyA in the middle of a transcript
             if (absDir == tDir) {
-                Arrays.fill(cs.a, cs.end, cs.end + diff, BYTE_a);
+                Arrays.fill(cs.chars, cs.end, cs.end + diff, BYTE_a);
             } else {
-                System.arraycopy(cs.a, fStart, cs.a, fStart + diff, diff);
-                Arrays.fill(cs.a, fStart, fStart + diff, BYTE_t);
+                System.arraycopy(cs.chars, fStart, cs.chars, fStart + diff, diff);
+                Arrays.fill(cs.chars, fStart, fStart + diff, BYTE_t);
             }
             cs.end += diff;
 
