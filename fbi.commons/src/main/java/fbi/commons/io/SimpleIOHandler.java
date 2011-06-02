@@ -158,7 +158,7 @@ class SimpleIOHandler implements IOHandler {
         if (bufferSequence == null) {
             bufferSequence = new ByteArrayCharSequence(object.toString());
         } else {
-            bufferSequence.reset();
+            bufferSequence.clear();
             bufferSequence.append(object.toString());
         }
         writeLine(bufferSequence, out);
@@ -171,7 +171,7 @@ class SimpleIOHandler implements IOHandler {
         }
 
         // reset the sequence
-        cc.getSequence().reset();
+        cc.getSequence().clear();
         int read = cc.readLine();
         if (read < 0) {
             return null;
@@ -185,7 +185,7 @@ class SimpleIOHandler implements IOHandler {
             throw new IllegalArgumentException("The stream was not registered with this handler or it was removed. Pleas ensure you call addStream before you try to read!");
         }
         ByteArrayCharSequence old = cc.getSequence();
-        cs.reset();
+        cs.clear();
         cc.setSequence(cs);
         int read = cc.readLine();
         cc.setSequence(old);

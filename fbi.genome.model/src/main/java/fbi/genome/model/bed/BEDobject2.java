@@ -44,10 +44,10 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	}
 	
 	public BEDobject2(ByteArrayCharSequence cs) {
-		super(cs.getCurrentArray());
+		super(cs.cloneBuffer());
 	}
 	
-	public void reset() {
+	public void clear() {
 		resetFind();		// p1= p2= cnt= 
 		start= end= 0;		// ByteArrayCharSequence		
 		bedStart= bedEnd= score= -1;	// BED object
@@ -446,11 +446,12 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	}
 
 	@Override
-	protected void find(int fieldNr) {
-		super.find(fieldNr);
-		if (fieldNr== FN_NAME) {
+	protected boolean find(int fieldNr) {
+        boolean b = super.find(fieldNr);
+        if (fieldNr== FN_NAME) {
 			nameP1= (byte) p1; nameP2= (byte) p2;
 		}
+        return b;
 	}
 	
 	public int getNameP2() {

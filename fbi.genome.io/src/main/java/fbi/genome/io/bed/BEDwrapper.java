@@ -789,10 +789,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							}
 							continue;
 						}
-						chrToki= cs.getToken(1, TAB).toString();
+						chrToki= cs.getToken(0).toString();
 						try {
-							bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-							bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+							bedStart= BEDobject.encodeInt(cs.getToken(1));
+							bedEnd= BEDobject.encodeInt(cs.getToken(2));
 						} catch (NumberFormatException e) {
 							e.printStackTrace();
 						}
@@ -841,10 +841,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 										//cs= new ByteArrayCharSequence(line);
 										bytesRead+= cs.length()+ fileSep.length();
 										++nrUniqueLinesRead;
-										chrToki= cs.getToken(1, TAB).toString();
+										chrToki= cs.getToken(0).toString();
 										try {
-											bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-											bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+											bedStart= BEDobject.encodeInt(cs.getToken(1));
+											bedEnd= BEDobject.encodeInt(cs.getToken(2));
 										} catch (Exception e) {
 											System.err.println("[ERROR] encodeint:\n"+ cs.toString());
 											System.currentTimeMillis();
@@ -873,16 +873,16 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 									
 									this.cs= newCS;
 									cs= newCS;
-									chrToki= cs.getToken(1, TAB).toString();	
+									chrToki= cs.getToken(0).toString();
 									addChr(chrToki,
 											bytesRead- cs.length()- guessFileSep().length(), 
 											nrUniqueLinesRead-1);
 											
 									buffy= getReader();
 									lastChrRead= chr.toString();
-									chrToki= cs.getToken(1, TAB).toString();
-									bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-									bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+									chrToki= cs.getToken(0).toString();
+									bedStart= BEDobject.encodeInt(cs.getToken(1));
+									bedEnd= BEDobject.encodeInt(cs.getToken(2));
 								}
 							}
 						}
@@ -1020,10 +1020,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							}
 							continue;
 						}
-						chrToki= cs.getToken(1, TAB).toString();
+						chrToki= cs.getToken(0).toString();
 						try {
-							bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-							bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+							bedStart= BEDobject.encodeInt(cs.getToken(1));
+							bedEnd= BEDobject.encodeInt(cs.getToken(2));
 						} catch (NumberFormatException e) {
 							e.printStackTrace();
 						}
@@ -1066,10 +1066,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											break;
 										bytesRead+= cs.length()+ fileSep.length();
 										++nrUniqueLinesRead;
-										chrToki= cs.getToken(1, TAB).toString();
+										chrToki= cs.getToken(0).toString();
 										try {
-											bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-											bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+											bedStart= BEDobject.encodeInt(cs.getToken(1));
+											bedEnd= BEDobject.encodeInt(cs.getToken(2));
 										} catch (Exception e) {
 											System.err.println("[ERROR] encodeint:\n"+ cs.toString());
 											System.currentTimeMillis();
@@ -1095,16 +1095,16 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 									
 									this.cs= newCS;
 									cs= newCS;
-									chrToki= cs.getToken(1, TAB).toString();	
+									chrToki= cs.getToken(0).toString();
 									addChr(chrToki,
 											bytesRead- cs.length()- guessFileSep().length(), 
 											nrUniqueLinesRead-1);
 											
 									buffy= getReaderBACS();
 									lastChrRead= chr.toString();
-									chrToki= cs.getToken(1, TAB).toString();
-									bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-									bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+									chrToki= cs.getToken(0).toString();
+									bedStart= BEDobject.encodeInt(cs.getToken(1));
+									bedEnd= BEDobject.encodeInt(cs.getToken(2));
 								}
 							}
 						}
@@ -1300,10 +1300,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											//cs= new ByteArrayCharSequence(line);
 											bytesRead+= cs.length()+ fileSep.length();
 											++nrUniqueLinesRead;
-											chrToki= cs.getToken(1, TAB).toString();
+											chrToki= cs.getToken(0).toString();
 											try {
-												bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-												bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+												bedStart= BEDobject.encodeInt(cs.getToken(1));
+												bedEnd= BEDobject.encodeInt(cs.getToken(2));
 											} catch (Exception e) {
 												System.err.println("[ERROR] encodeint:\n"+ cs.toString());
 											}
@@ -1328,16 +1328,16 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 										
 										this.cs= newCS;
 										cs= newCS;
-										chrToki= cs.getToken(1, TAB).toString();	
+										chrToki= cs.getToken(0).toString();
 										addChr(chrToki,
 												bytesRead- cs.length()- guessFileSep().length(), 
 												nrUniqueLinesRead-1);
 												
 										buffy= getReaderBACS();
 										lastChrRead= chr.toString();
-										chrToki= cs.getToken(1, TAB).toString();
-										bedStart= BEDobject.encodeInt(cs.getToken(2, TAB)); 
-										bedEnd= BEDobject.encodeInt(cs.getToken(3, TAB));
+										chrToki= cs.getToken(0).toString();
+										bedStart= BEDobject.encodeInt(cs.getToken(1));
+										bedEnd= BEDobject.encodeInt(cs.getToken(2));
 									}
 								}
 							}

@@ -321,13 +321,13 @@ public class GFFSorter {
             if(cs == null){
                 cs = new ByteArrayCharSequence(o1);
             }
-            cs.reset();
+            cs.clear();
             cs.append(o1);
             ByteArrayCharSequence[] fields= find(cs, fieldNrs);	// 1,4,-1
             byte[] key= encode(fields[1], fields[0]);
             int v1= Math.abs(map.get(key));
 
-            cs.reset();
+            cs.clear();
             cs.append(o2);
             fields= find(cs, fieldNrs);	// 1,4,-1
             key= encode(fields[1], fields[0]);

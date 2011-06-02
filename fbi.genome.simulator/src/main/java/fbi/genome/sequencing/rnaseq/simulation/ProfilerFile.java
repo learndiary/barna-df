@@ -113,7 +113,7 @@ public class ProfilerFile {
                 // check if the entry is in the map and we have counts otherwise append
                 // the null string
                 //String id = token[0] + "@" + token[1];
-                key.reset();
+                key.clear();
                 key.append(token[0] + "@" + token[1]);
                 if (total > 0 && counts.containsKey(key)) {
                     long absCnt = counts.get(key);

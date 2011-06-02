@@ -369,7 +369,7 @@ class ThreadedIOHandler extends Thread implements IOHandler {
         if (bufferSequence == null) {
             bufferSequence = new ByteArrayCharSequence(object.toString());
         }
-        bufferSequence.reset();
+        bufferSequence.clear();
         bufferSequence.append(object.toString());
         writeLine(bufferSequence, out);
     }

@@ -279,7 +279,7 @@ public class Sequencer implements Callable<Void> {
     private void createQname(BEDobject2 obj2, ByteArrayCharSequence cs) {
 
         byte[] a = obj2.chars;
-        cs.reset();
+        cs.clear();
         int p1 = obj2.getNameP1(), p2 = obj2.getNameP2();
         cs.ensureLength(0, 1 + (p2 - p1));
         byte[] b = cs.chars;
@@ -307,7 +307,7 @@ public class Sequencer implements Callable<Void> {
      * @return bed the filled bed object
      */
     private BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
-        obj.reset();
+        obj.clear();
         obj.append(CHR_POLYA);
         obj.append(BYTE_TAB);
         obj.append(0);
@@ -407,7 +407,7 @@ public class Sequencer implements Callable<Void> {
         --bedStart; // lower the lower pos, 0-based
 
         // build object
-        obj.reset();
+        obj.clear();
         obj.append(t.getChromosome());
         obj.append(BYTE_TAB);
         obj.append(bedStart);
@@ -616,7 +616,7 @@ public class Sequencer implements Callable<Void> {
                     String s = null;
                     while ((s = buffy.readLine()) != null) {
                         fragments++;
-                        cs.init(s);
+                        cs.set(s);
                         int fstart = cs.getTokenInt(0);
                         int fend = cs.getTokenInt(1);
 

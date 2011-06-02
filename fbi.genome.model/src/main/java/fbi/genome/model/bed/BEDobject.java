@@ -385,7 +385,7 @@ public class BEDobject extends AnnotationObject {
 	
 	public int getBlockCount() {
 		if (blockCount == -1&& (cs!= null)) {
-			ByteArrayCharSequence subs= cs.getToken(10, TAB);
+			ByteArrayCharSequence subs= cs.getToken(9);
 			if (subs== null) {
 				setBlockCount(0);
 			} else
@@ -488,7 +488,7 @@ public class BEDobject extends AnnotationObject {
 	public ByteArrayCharSequence getBlockSizes() {
 		
 		if (blockSizes == null&& cs!= null) {
-			ByteArrayCharSequence subs= cs.getToken(11, TAB);
+			ByteArrayCharSequence subs= cs.getToken(10);
 			if (subs!= null)
 				setBlockSizes(subs);
 		}
@@ -497,7 +497,7 @@ public class BEDobject extends AnnotationObject {
 	}
 	public ByteArrayCharSequence getBlockStarts() {
 		if (blockStarts == null) {
-			ByteArrayCharSequence subs= cs.getToken(12, TAB);
+			ByteArrayCharSequence subs= cs.getToken(11);
 			if (subs!= null)
 				setBlockStarts(subs);
 		}
@@ -536,7 +536,7 @@ public class BEDobject extends AnnotationObject {
 
 	public CharSequence getChrom() {
 		if (chrom == null) {
-			ByteArrayCharSequence subs= cs.getToken(1, TAB);
+			ByteArrayCharSequence subs= cs.getToken(0);
 			if (subs!= null) 
 				setChrom(subs);
 		}
@@ -559,7 +559,7 @@ public class BEDobject extends AnnotationObject {
 	public Color getCol() {
 		if (col == null) {
 			if (cs!= null) {
-				ByteArrayCharSequence subs= cs.getToken(9, TAB);
+				ByteArrayCharSequence subs= cs.getToken(8);
 				if (subs!= null) 
 					setCol(subs);
 			}
@@ -670,7 +670,7 @@ public class BEDobject extends AnnotationObject {
 
 	public CharSequence getName() {
 		if (name == null) {
-			name = cs.getToken(4, TAB);
+			name = cs.getToken(3);
 		}
 		return name;
 	}
@@ -682,7 +682,7 @@ public class BEDobject extends AnnotationObject {
 	public int getScore() {
 		if (score == Integer.MIN_VALUE) {
 			if (cs!= null) {
-				ByteArrayCharSequence subs= cs.getToken(5, TAB);
+				ByteArrayCharSequence subs= cs.getToken(4);
 				if (subs!= null) 
 					setScore(BEDobject.encodeInt(subs, 0, subs.length()));
 			}
@@ -732,7 +732,7 @@ public class BEDobject extends AnnotationObject {
 	
 	public byte getStrand() {
 		if (strand == 0) {
-			ByteArrayCharSequence subs= cs.getToken(6, TAB);
+			ByteArrayCharSequence subs= cs.getToken(5);
 			if (subs!= null)
 				setStrand(BEDobject.parseStrand(subs));
 		}
@@ -776,7 +776,7 @@ public class BEDobject extends AnnotationObject {
 
 	public int getThickEnd() {
 		if (thickEnd == -1) {
-			ByteArrayCharSequence subs= cs.getToken(7, TAB);
+			ByteArrayCharSequence subs= cs.getToken(6);
 			if (subs!= null) 
 				setThickEnd(BEDobject.encodeInt(subs, 0, subs.length()));
 		}
@@ -796,7 +796,7 @@ public class BEDobject extends AnnotationObject {
 
 	public int getThickStart() {
 		if (thickStart == -1) {
-			ByteArrayCharSequence subs= cs.getToken(7, TAB);
+			ByteArrayCharSequence subs= cs.getToken(6);
 			if (subs!= null) 
 				setThickStart(BEDobject.encodeInt(subs, 0, subs.length()));
 		}
