@@ -2,7 +2,6 @@ package fbi.genome.io.gff;
 
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
-import fbi.commons.thread.StoppableRunnable;
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.model.*;
@@ -31,7 +30,7 @@ import java.util.regex.Pattern;
  * @author micha
  *
  */
-public class GFFReader extends DefaultIOWrapper implements StoppableRunnable {
+public class GFFReader extends DefaultIOWrapper {
 	static boolean sort = false;
 
 	static String usage = "GTFChrReader [options] <inputFile>\n\n"

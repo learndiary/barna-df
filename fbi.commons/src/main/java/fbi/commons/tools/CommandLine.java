@@ -1,9 +1,21 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.commons.tools;
 
 import fbi.commons.Log;
 
 /**
- * Static helper methods for command line tools
+ * Static helper methods for command line tools. This class is bound to the {@link Log} implementation
+ * to check for quiet state and log levels.
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -30,7 +42,7 @@ public class CommandLine {
         }
 
         while (true) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             int in;
 
             if (message != null) {
@@ -42,18 +54,18 @@ public class CommandLine {
                 while ((in = System.in.read()) != '\n') {
                     sb.append((char) in);
                 }
-            } catch (Exception e) {
-                ; // :)
+            } catch (Exception ignore) {
+                // ignore exceptions
             }
 
             String s = sb.toString().toLowerCase().trim();
-            for (int i = 0; i < user_yes.length; i++) {
-                if (s.equals(user_yes[i])) {
+            for (String user_ye : user_yes) {
+                if (s.equals(user_ye)) {
                     return true;
                 }
             }
-            for (int i = 0; i < user_no.length; i++) {
-                if (s.equals(user_no[i])) {
+            for (String anUser_no : user_no) {
+                if (s.equals(anUser_no)) {
                     return false;
                 }
             }

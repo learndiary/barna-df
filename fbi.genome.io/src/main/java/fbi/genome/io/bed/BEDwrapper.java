@@ -770,7 +770,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					int bedStart= -1, bedEnd= -1;
 					String chrToki= null;
 					try {
-						int toks= cs.countTokens(TAB);
+						int toks= cs.countTokens();
 						if (identTok< 0)
 							identTok= toks;
 						else
@@ -1001,7 +1001,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					int bedStart= -1, bedEnd= -1;
 					String chrToki= null;
 					try {
-						int toks= cs.countTokens(TAB);
+						int toks= cs.countTokens();
 						if (identTok< 0)
 							identTok= toks;
 						else
@@ -1226,7 +1226,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						int bedStart= -1, bedEnd= -1;
 						String chrToki= null;
 						try {
-							int toks= cs.countTokens(TAB);
+							int toks= cs.countTokens();
 							if (identTok< 0)
 								identTok= toks;
 							else

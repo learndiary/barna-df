@@ -56,7 +56,7 @@ public class StringUtils {
      * @return reverse the reverse string
      */
     public static String reverse(String in) {
-        StringBuffer buffy = new StringBuffer(in.length());
+        StringBuilder buffy = new StringBuilder(in.length());
         for (int i = in.length() - 1; i >= 0; i--) {
             buffy.append(in.charAt(i));
         }
@@ -84,7 +84,7 @@ public class StringUtils {
      * @throws RuntimeException in case a character could not be translated to its complement
      */
     public static String complement(String sequence) throws RuntimeException {
-        StringBuffer buffy = new StringBuffer(sequence.length());
+        StringBuilder buffy = new StringBuilder(sequence.length());
         for (int i = 0; i < sequence.length(); i++) {
             int p = BIOLOGICAL_CHARS.indexOf(sequence.charAt(i));
             if (p < 0) {

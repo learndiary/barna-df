@@ -1,7 +1,5 @@
 package fbi.genome.model.constants;
 
-import fbi.commons.Dialogable;
-
 import java.lang.management.ManagementFactory;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -47,8 +45,6 @@ public class Constants {
 	
 	public static final String CLI_PAR_LONG= "--", CLI_PAR_SHORT= "-";
 
-	public static Dialogable dialog= new PrintstreamDialogable(System.err, System.in);
-	
 	public static String getTime() {		
 		return DateFormat.getTimeInstance().format(new Date(System.currentTimeMillis()));
 	}

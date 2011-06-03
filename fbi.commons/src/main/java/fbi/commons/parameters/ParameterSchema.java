@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.commons.parameters;
 
 import fbi.commons.Log;
@@ -10,13 +21,27 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * A parameter schema is a set of parameters that can be parsed and validated.
+ * The class checks itself for static parameter fields and initializes the parameter map
+ * accordingly.
+ *
+ *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 
 public abstract class ParameterSchema {
+    /**
+     * Parser pattern
+     */
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("(.*)\\s+(.*)");
+    /**
+     * The parameters
+     */
     private Map<String, Parameter> parameters;
 
+    /**
+     * Initialize a new schema
+     */
     protected ParameterSchema() {
         this.parameters = new HashMap<String, Parameter>();
 
@@ -50,20 +75,36 @@ public abstract class ParameterSchema {
         return parameters.size();
     }
 
+    /**
+     * Manually register a parameter
+     *
+     * @param parameter the parameter
+     */
     public void register(Parameter parameter) {
         if (parameters.containsKey(parameter.getName())) {
-            throw new IllegalArgumentException("Paramter " + parameter.getName() + " already exists !");
+            throw new IllegalArgumentException("Parameter " + parameter.getName() + " already exists !");
         }
         this.parameters.put(parameter.getName().toUpperCase(), parameter);
     }
 
+    /**
+     * Validate the parameters
+     *
+     * @throws ParameterException in case a parameter could not be parsed
+     */
     public void validate() throws ParameterException {
         for (Map.Entry<String, Parameter> p : parameters.entrySet()) {
             p.getValue().validate(this);
         }
     }
 
-
+    /**
+     * Access a parameter value
+     *
+     * @param parameter the parameter
+     * @param <T> the type
+     * @return value the parameter value
+     */
     public <T> T get(Parameter<T> parameter) {
         // find the parameter
         Parameter local = parameters.get(parameter.getName().toUpperCase());
@@ -73,6 +114,13 @@ public abstract class ParameterSchema {
         return (T) local.get();
     }
 
+    /**
+     * Set a parameter value
+     *
+     * @param parameter the parameter
+     * @param value the value
+     * @param <T> the type
+     */
     public <T> void set(Parameter<T> parameter, T value) {
         Parameter local = parameters.get(parameter.getName().toUpperCase());
         if (local == null) {
@@ -91,6 +139,11 @@ public abstract class ParameterSchema {
         return parameter.getName() +"\t" +get(parameter);
     }
 
+    /**
+     * Write the parameter set to the given string
+     *
+     * @param out the target stream
+     */
     public void write(OutputStream out) {
         BufferedWriter writer = null;
         try {
@@ -112,13 +165,16 @@ public abstract class ParameterSchema {
                 writer.write(name + "\t" + (o != null ? o : "") + "\n");
             }
         } catch (IOException e) {
-            try {
-                writer.close();
-            } catch (IOException e1) {
-            }
+            try {writer.close();} catch (IOException ignore) {}
         }
     }
 
+    /**
+     * Parse parameters from the input stream
+     *
+     * @param input the input stream
+     * @throws ParameterException in case a parameter could not be parsed
+     */
     public void parse(InputStream input) throws ParameterException {
         BufferedReader reader = null;
         try {
@@ -160,10 +216,7 @@ public abstract class ParameterSchema {
             Log.error("Error while reading parameter file : " + io.getMessage(), io);
         } finally {
             if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                }
+                try {reader.close();} catch (IOException ignore) {}
             }
         }
     }

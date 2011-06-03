@@ -44,7 +44,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	}
 	
 	public BEDobject2(ByteArrayCharSequence cs) {
-		super(cs.cloneBuffer());
+		super(cs);
 	}
 	
 	public void clear() {

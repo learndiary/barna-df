@@ -20,7 +20,6 @@ import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
-import fbi.genome.sequencing.rnaseq.reconstruction.gui.FluxCapacitorGUI;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
@@ -32,13 +31,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-
-//import io.Sammy;
-//import genome.sequencing.rnaseq.SolexaDescriptor;
-//import gphase.solexa.lp.GraphLPsolverRelease;
-//import gphase.solexa.lp.TProfile;
-//import gphase.solexa.lp.TProfileFunction;
-
 
 
 public class FluxCapacitor implements ReadStatCalculator {
@@ -3945,7 +3937,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			if (args== null|| args.length== 0) {
 				if (showGUI) {
 					FluxCapacitor.loadLibraries();
-					FluxCapacitorGUI.createGUI();
+					//FluxCapacitorGUI.createGUI();
 				} else
 					printUsage();
 			}

@@ -6,7 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class ThreadedQWriter extends Thread implements StoppableRunnable {
+public class ThreadedQWriter extends Thread {
 
     private static int id = 0;
 
