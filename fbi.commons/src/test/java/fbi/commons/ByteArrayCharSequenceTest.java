@@ -124,8 +124,14 @@ public class ByteArrayCharSequenceTest {
         assertEquals("ABC", s.getToken(0).toString());
         assertEquals("", s.getToken(1).toString());
         assertEquals("123", s.getToken(2).toString());
+        assertEquals("", s.getToken(1).toString());
+        assertEquals("ABC", s.getToken(0).toString());
         assertNull(s.getToken(3));
         assertNull(s.getToken(-1));
+
+
+
+
     }
 
     @Test

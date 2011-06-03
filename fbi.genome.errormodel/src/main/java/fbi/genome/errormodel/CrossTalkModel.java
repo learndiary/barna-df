@@ -104,7 +104,7 @@ public class CrossTalkModel {
         for (int i=0; i<SYMBOLS.length; i++){
             header[i+1] = Character.toString(SYMBOLS[i]);
         }
-        table.add(header);
+        table.addRow(header);
 
         for (int i=0; i<SYMBOLS.length; i++){
             String[] row = new String[SYMBOLS.length+1];
@@ -112,7 +112,7 @@ public class CrossTalkModel {
             for (int j=0; j<SYMBOLS.length; j++){
                 row[j+1] =""+p(state,i,j);
             }
-            table.add(row);
+            table.addRow(row);
         }
         return table.toString();
     }
