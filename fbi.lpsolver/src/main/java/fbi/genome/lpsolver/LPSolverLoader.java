@@ -11,8 +11,6 @@
 
 package fbi.genome.lpsolver;
 
-import fbi.commons.Log;
-import fbi.commons.system.OSChecker;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
@@ -109,11 +107,7 @@ public class LPSolverLoader {
 
         // check
         VersionInfo versionInfo = LpSolve.lpSolveVersion();
-
-		Log.info("\t* JNI LPSolver library found");
-		Log.info("\t* successfully loaded lpsolve JNI (version "+versionInfo.getMajorversion()+"."+versionInfo.getMinorversion()
-						+",release "+versionInfo.getRelease()+",build "+versionInfo.getBuild()+")\n");
-        return true;
+        return versionInfo != null;
     }
 
     /**
