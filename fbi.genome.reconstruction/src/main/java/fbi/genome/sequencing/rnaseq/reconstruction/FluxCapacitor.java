@@ -7273,10 +7273,14 @@ public class FluxCapacitor implements ReadStatCalculator {
      */
 	public static int loadLibraries() {
 		Log.info("PRE-CHECK","I am checking availability of the required lpsolve JNI libs.");
-
-		// check to load from java.library.path
 		VersionInfo lpVer= null;
 		try {
+
+            // first check the operating system
+
+
+
+
 			System.loadLibrary(LPSOLVE_LIB_NAME);
 			System.loadLibrary(LPSOLVE_JNI_NAME);
 
