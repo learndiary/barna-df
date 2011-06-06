@@ -64,7 +64,7 @@ public class ProfilerTest {
         File testProFile = new File(getClass().getResource("/test.pro").getFile());
         settings.set(FluxSimulatorSettings.PRO_FILE, testProFile);
         Profiler profiler = new Profiler(settings);
-        profiler.initializeProfiler(testProFile);
+        //profiler.initializeProfiler(testProFile);
 
         /*
         chrI:335-792W   YAL069W CDS     315     3.7997796127824584E-4   190

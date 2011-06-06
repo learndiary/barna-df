@@ -7264,21 +7264,23 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 	}
 
+    /**
+     * Check operating system and load the native libraries. Exceptions are catched and logged here.
+     * Use the return value to check whether loading was successfull
+     *
+     *
+     * @return
+     */
 	public static int loadLibraries() {
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println("[PRE-CHECK] I am checking availability of the required lpsolve JNI libs.");
-//		if (SystemInspector.checkRuntime())
-//			miss= true;
-//		if (SystemInspector.checkRuntimeCirco()) {
-//			System.exit(-1);
-//		}
-	
-		// check to load from java.library.path 
+		Log.info("PRE-CHECK","I am checking availability of the required lpsolve JNI libs.");
+
+		// check to load from java.library.path
 		VersionInfo lpVer= null;
 		try {
 			System.loadLibrary(LPSOLVE_LIB_NAME);
 			System.loadLibrary(LPSOLVE_JNI_NAME);
+
+
 			lpVer= LpSolve.lpSolveVersion();
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t* JNI in java library path");

@@ -155,8 +155,12 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      */
     public ByteArrayCharSequence(ByteArrayCharSequence source) {
         this(source.cloneBuffer());
-        this.start = source.start;
-        this.end = Math.min(length(), source.end);
+        /*
+        Clone buffer reduces the chars array already to the string bounded by start and end
+        so we have to use 0 and length as new bounds
+         */
+        this.start = 0;
+        this.end = chars.length;
         this.separator = source.separator;
 
     }
