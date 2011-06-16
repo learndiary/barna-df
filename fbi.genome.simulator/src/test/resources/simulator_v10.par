@@ -47,7 +47,6 @@ RT_PRIMER       RH
 RT_MIN	500
 RT_MAX	5500
 RT_GC_LO	0.32
-RT_GC_HI	0.45
 RT_MOTIF	motif_1mer_0-5.pwm
 
 ## Size Selection
