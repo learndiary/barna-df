@@ -163,6 +163,7 @@ public abstract class ParameterSchema {
                 }
                 Object o = get(p);
                 writer.write(name + "\t" + (o != null ? o : "") + "\n");
+                writer.write("\n");
             }
         } catch (IOException e) {
             try {writer.close();} catch (IOException ignore) {}

@@ -6,14 +6,13 @@ DESCRIPTION
 -----------
 
 The Flux Simulator is a program to simulate in silico RNAseq experiments as
-
 carried out adopting new sequencing technologies.
 
 
 REQUIREMENTS
 ------------
 
-* java 1.5 or higher installed
+* java 1.6 or higher installed
 
 * approx 1Gb of RAM
 
@@ -30,13 +29,6 @@ your platform:
 flux.bat     Windows
 
 flux         UNIX clones and Mac OS X
-
-
-* If you just want to play around, start the graphical user interface with
-
-	flux -X
-
-and use the files provided in the /demo folder of the installation directory.
 
 
 * For having some sample data, download the corresponding

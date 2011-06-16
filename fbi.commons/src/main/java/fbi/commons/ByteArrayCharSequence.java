@@ -538,7 +538,10 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      * @param x the integer
      */
     protected void appendCurrField(int x) {
-        if(!find(cnt)) throw new IllegalArgumentException("Current field " +cnt + " is not valid!");
+        if(!find(cnt)){
+            //throw new IllegalArgumentException("Current field " +cnt + " is not valid!");
+
+        }
         int digits = countCharacters(x);
         ensureLength(end, digits);
         System.arraycopy(chars, p2, chars, p2 + digits, end - p2);

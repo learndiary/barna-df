@@ -217,16 +217,6 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "Parameter denoting the threshold on molecule population still " +
                     "breaking when determining convergence of iterative nebulizaiton.", 0.1);
 
-    /**
-     * Parameter for providing the fraction of molecule that marks
-     * the standard deviation of the breakpoint in nebulization
-     * (mean=center of the molecule).
-     */
-    public static final Parameter<Double> FRAG_NB_SIGMA = Parameters.doubleParameter("FRAG_NB_SIGMA",
-            "Parameter for providing the fraction of molecule that marks " +
-                    "the standard deviation of the breakpoint in nebulization " +
-                    "(mean=center of the molecule).",
-            0.05);
 
     public static final Parameter<Double> FRAG_NB_M = Parameters.doubleParameter("FRAG_NB_M", "Parameter " +
             "specifying the strength of the " +
@@ -267,28 +257,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
         }
     });
     public static final Parameter<Double> RT_GC_LO = Parameters.doubleParameter("RT_GC_LO", "Minimum GC content for RNA " +
-            "stretches to be successfully reversely transcribed.", 0.4, 0.0, 1.0, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            double lo = schema.get(RT_GC_LO);
-            double hi = schema.get(RT_GC_HI);
-            if (lo > hi) {
-                throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
-            }
-        }
-    });
-    // todo : remove ?
-    public static final Parameter<Double> RT_GC_HI = Parameters.doubleParameter("RT_GC_HI",
-            "GC content where reverse transcription saturates", 0.7, 0.0, 1.0, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            double lo = schema.get(RT_GC_LO);
-            double hi = schema.get(RT_GC_HI);
-            if (lo > hi) {
-                throw new ParameterException("RT_GC_HI must be >= RT_GC_LO");
-            }
-        }
-    });
+            "stretches to be successfully reversely transcribed.", 0.4, 0.0, 1.0, null);
 
     public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
 

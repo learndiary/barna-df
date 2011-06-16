@@ -11,6 +11,8 @@
 
 package fbi.commons.parameters;
 
+import java.util.Arrays;
+
 /**
  * Enum parameter implementation
  *
@@ -57,7 +59,7 @@ class EnumParameter<E extends Enum<E>> extends Parameter<E> {
 
     @Override
     public String getValuesString() {
-        return values.toString();
+        return Arrays.toString(values);
     }
 
     @Override

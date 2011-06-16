@@ -1,25 +1,6 @@
-FLUX SIMULATOR 1.0
-==================
-
-Barcelona, 13th of march 2009 (still friday)
-
-DESCRIPTION
-The Flux Simulator is a program to simulate in silico RNAseq experiments as
-carried out for new sequencing technologies.
-
-DISCLAIMER AND LICENSE
-Copyright 2008-2009 Michael Sammeth, you can do whatever you want with the code,
-but when redistributing you have to include a copy of this notice. The Flux
-Capacitor includes the Apache Commons Mathematics Library
-(http://commons.apache.org/math/) and Jerry's Java Image Processing Library
-(http://www.jhlabs.com/ip/filters/index.html), both distributed under the Apache
-License 2.
-As always, I take no responsibility of what my program does with your computer.
-Watch especially the hard disk activity and space, we talk about potentially
-violent data masses and the program aggressively reads and writes in multiple
-threads. In the early versions there was not the luxury to build estimating
-functions and check whether a certain run you concepted is feasable on your
-system.
-
-Take it easy,
-micha
+The code of the Flux Library may be freely distributed and modified under the terms of the
+European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+Copyright for the code is held jointly by the individual authors, who should be listed
+in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+include results produced by the Flux Library are liable to reference the Work,
+see the Flux Library homepage <http://flux.sammeth.net> for more information.

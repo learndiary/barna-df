@@ -157,7 +157,11 @@ public class FragmentUniformRandom implements FragmentProcessor {
     public String getConfiguration() {
         StringBuffer b = new StringBuffer();
         b.append("\t\t").append("D0: ").append(d0).append("\n");
-        b.append("\t\t").append("Delta: ").append(urDelta).append("\n");
+        if(!Double.isNaN(urDelta)){
+            b.append("\t\t").append("Delta: ").append(urDelta).append("\n");
+        }else{
+            b.append("\t\t").append("Delta: ").append(" Not specified, depends on sequence length\n");
+        }
         b.append("\t\t").append("Eta: ").append(getFragUReta()).append("\n");
         return b.toString();
     }
