@@ -31,18 +31,23 @@ flux.bat     Windows
 flux         UNIX clones and Mac OS X
 
 
-* For having some sample data, download the corresponding
+* For having some sample data, download the corresponding demo data
 
-	FluxSimulator-X.Y-j1.X-b2009XXXX-sample.tar.gz from the download repository
-	
-	http://code.google.com/p/fluxcapacitor/issues/list
-	
-	As (some) pathes in the parameter files are saved in absolute terms, you will 
-	
-	have to adapt them to your file system, manually or with the installation flag
-	
-	bin/sim.sh --install
-	
+    http://code.google.com/p/fluxcapacitor/issues/list
+
+    For example, get :
+    http://fluxcapacitor.googlecode.com/files/fluxsimulator_demo_yeast-1.0.tar.gz
+
+	and extract the file
+
+	tar xzvf fluxsimulator_demo_yeast-1.0.tar.gz
+
+	this will create a demo folder with GTF annotations and teh genomic sequences +
+	a set of parameters files. Now, to start the simulator (assuming that flux is in
+	your path) do:
+
+	flux -t simulator -p yeast_demo.par
+
 
 * All pages related to the program are reachable from the program homepage
 
@@ -69,4 +74,4 @@ in and create a new issue.
 or leave me an email.
 
 
-Michael Sammeth
+The FluxDev-Team
