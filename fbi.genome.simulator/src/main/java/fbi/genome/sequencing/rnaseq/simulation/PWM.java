@@ -33,8 +33,13 @@ public class PWM implements WeightMatrix {
 
     static final int MIN_DEFAULT = Integer.MAX_VALUE, MAX_DEFAULT = Integer.MIN_VALUE;
 
+
     public static PWM create(File f) throws Exception {
-        BufferedReader buffy = new BufferedReader(new FileReader(f));
+        return create(new FileReader(f));
+    }
+
+    public static PWM create(Reader reader) throws Exception {
+        BufferedReader buffy = new BufferedReader(reader);
         Vector<String> v = new Vector<String>();
         for (String s = null; (s = buffy.readLine()) != null; ) {
             s = s.trim();

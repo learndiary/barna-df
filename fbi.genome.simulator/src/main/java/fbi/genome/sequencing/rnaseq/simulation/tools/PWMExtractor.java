@@ -33,8 +33,8 @@ import java.io.FileWriter;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "extractPWM", description = "Extract PWM from GTF annotation and BED file")
-public class PWMExtractor implements FluxTool {
+//@Cli(name = "extractPWM", description = "Extract PWM from GTF annotation and BED file")
+public class PWMExtractor {  //implements FluxTool {
 
     private File gtfFile;
     private File bedFile;
@@ -68,12 +68,12 @@ public class PWMExtractor implements FluxTool {
         this.outFile = outFile;
     }
 
-    @Override
+    //@Override
     public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
         return true;
     }
 
-    @Override
+    //@Override
     public Object call() throws Exception {
         int flank5 = 10, flank3 = 20;
         GFFReader anoReader = new GFFReader(gtfFile.getAbsolutePath());

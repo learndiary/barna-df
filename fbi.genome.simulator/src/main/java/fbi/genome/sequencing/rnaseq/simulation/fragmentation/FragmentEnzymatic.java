@@ -15,6 +15,7 @@ import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.sequencing.rnaseq.simulation.PWM;
 
 import java.io.File;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -28,17 +29,29 @@ public class FragmentEnzymatic implements FragmentProcessor {
     Random rnd1 = new Random();
     Random rnd2 = new Random();
     Random rnd3 = new Random();
+    private File ezMotif;
     private int leftFlank;
     private int rightFlank;
 
 
     public FragmentEnzymatic(File ezMotif, Map<CharSequence, CharSequence> mapTxSeq, int leftFlank, final int rightFlank) throws Exception {
+        this.ezMotif = ezMotif;
         this.leftFlank = leftFlank;
         this.rightFlank = rightFlank;
         if (ezMotif == null) {
             throw new NullPointerException("Null Motif file for enzymatic fragmentation not permitted !");
         }
-        pwmSense = PWM.create(ezMotif);
+
+        if(!ezMotif.exists() && (ezMotif.getName().equalsIgnoreCase("NlaIII") || ezMotif.getName().equalsIgnoreCase("DpnII"))){
+            if(ezMotif.getName().equalsIgnoreCase("NlaIII")){
+                pwmSense = PWM.create(new InputStreamReader(getClass().getResource("/NlaIII.pwm").openStream()));
+            }else{
+                pwmSense = PWM.create(new InputStreamReader(getClass().getResource("/DpnII.pwm").openStream()));
+            }
+
+        }else{
+            pwmSense = PWM.create(ezMotif);
+        }
         mapWeightSense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmSense);
         pwmSense.invert();
         pwmAsense = pwmSense;
@@ -132,7 +145,9 @@ public class FragmentEnzymatic implements FragmentProcessor {
 
     @Override
     public String getConfiguration() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return "Left Flank : " + leftFlank + "\n" +
+               "Right Flank : " + rightFlank+ "\n"+
+               "Motif: " + ezMotif.getName();
     }
 
     @Override

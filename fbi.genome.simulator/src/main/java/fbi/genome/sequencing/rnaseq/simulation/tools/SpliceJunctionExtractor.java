@@ -28,8 +28,8 @@ import java.io.File;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "extract", description = "Splice junction extraction", restrict = false)
-public class SpliceJunctionExtractor implements FluxTool<Void> {
+//@Cli(name = "extract", description = "Splice junction extraction", restrict = false)
+public class SpliceJunctionExtractor { //implements FluxTool<Void> {
     /**
      * Default 5' flank
      */

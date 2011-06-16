@@ -249,15 +249,27 @@ public class Fragmenter implements Callable<Void> {
         while (iter.hasNext()) {
             CharSequence id = iter.next();
             CharSequence seq = mapTxSeq.get(id);
-            double[] a = new double[seq.length()];
-            for (int p = 0; p < a.length; ++p) {
-                double pb = pwm.apply(seq, p);
-                a[p] = pb;
-                assert (!(Double.isNaN(pb) || Double.isInfinite(pb)));
-            }
+            double[] a = applyPWM(seq, pwm);
             map.put(id, a);
         }
         return map;
+    }
+
+    /**
+     * Get weights for sequence
+     *
+     * @param seq the sequence
+     * @param pwm the PWM
+     * @return weights position weights based on PWM
+     */
+    static double[] applyPWM(CharSequence seq, PWM pwm){
+        double[] a = new double[seq.length()];
+        for (int p = 0; p < a.length; ++p) {
+            double pb = pwm.apply(seq, p);
+            a[p] = pb;
+            assert (!(Double.isNaN(pb) || Double.isInfinite(pb)));
+        }
+        return a;
     }
 
     private Map<CharSequence, CharSequence> getMapTxSeq() {
@@ -411,7 +423,9 @@ public class Fragmenter implements Callable<Void> {
                     case MODE_RT:
                         processor = new FragmentReverseTranscription(
                                 settings.get(FluxSimulatorSettings.RT_PRIMER),
-                                settings.get(FluxSimulatorSettings.RT_MOTIF),
+
+                                null, // todo: reenable custom RT PWM
+                                //settings.get(FluxSimulatorSettings.RT_MOTIF),
                                 settings.get(FluxSimulatorSettings.RT_MIN),
                                 settings.get(FluxSimulatorSettings.RT_MAX),
                                 settings.get(FluxSimulatorSettings.RT_GC_LO),

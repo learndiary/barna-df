@@ -4,7 +4,7 @@
 ## CONFIGURATION
 
 if [ -z "$FLUX_MEM" ]; then
-    FLUX_MEM="2G"
+    FLUX_MEM="1G"
 fi
 
 

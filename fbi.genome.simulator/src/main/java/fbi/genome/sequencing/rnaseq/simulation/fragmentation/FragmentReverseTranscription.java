@@ -18,6 +18,7 @@ import fbi.genome.sequencing.rnaseq.simulation.PWM;
 import fbi.genome.sequencing.rnaseq.simulation.Profiler;
 
 import java.io.File;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -32,8 +33,8 @@ public class FragmentReverseTranscription implements FragmentProcessor {
     private int rightFlank;
     private boolean lossless;
     private boolean customMotif;
-    private Map<CharSequence, double[]> mapWeightSense = null;
-    private Map<CharSequence, double[]> mapWeightAsense = null;
+    //private Map<CharSequence, double[]> mapWeightSense = null;
+    //private Map<CharSequence, double[]> mapWeightAsense = null;
     private int[] index1;
     private Random rnd1 = new Random();
     private Random rnd2 = new Random();
@@ -47,6 +48,8 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 
     private int[] gcIn;
     private int[] gcOut;
+    private PWM pwmSense;
+    private PWM pwmASense;
 
     public FragmentReverseTranscription(FluxSimulatorSettings.RtranscriptionMode mode,
                                         File pwmFile,
@@ -77,15 +80,28 @@ public class FragmentReverseTranscription implements FragmentProcessor {
         if (pwmFile != null) {
             // read the sequence annotations
             try {
-                PWM pwmSense = PWM.create(pwmFile);
+                pwmSense = null;
+
+                if(!pwmFile.exists() && pwmFile.getName().equalsIgnoreCase("default")){
+                    // load default motif_1mer_0-5
+                    pwmSense = PWM.create(new InputStreamReader(getClass().getResource("/motif_1mer_0-5.pwm").openStream()));
+                    pwmASense = PWM.create(new InputStreamReader(getClass().getResource("/motif_1mer_0-5.pwm").openStream()));
+                }else{
+                    pwmSense = PWM.create(pwmFile);
+                    pwmASense = PWM.create(pwmFile);
+                }
                 for (int i = 0; i < 100; i++) {
                     pwmSense.multiply();
+                    pwmASense.multiply();
                 }
                 pwmSense.makePDF();
-                mapWeightSense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmSense);
-                pwmSense.invert();
-                PWM pwmAsense = pwmSense;
-                mapWeightAsense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmAsense);
+                pwmASense.makePDF();
+                pwmASense.invert();
+                //pwmSense.makePDF();
+                //mapWeightSense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmSense);
+                //pwmSense.invert();
+                //PWM pwmAsense = pwmSense;
+                //mapWeightAsense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmAsense);
             } catch (Exception e) {
                 Log.error("Error while initializing PWM : " + e.getMessage(), e);
             }
@@ -116,10 +132,12 @@ public class FragmentReverseTranscription implements FragmentProcessor {
             howmany = getRTeventNr(len);
             howmany = Math.min(howmany, index1.length);
 
-            wAsense = mapWeightAsense.get(id);
+            //wAsense = mapWeightAsense.get(id);
+            wAsense = Fragmenter.applyPWM(mapTxSeq.get(id), pwmASense);
             n2 = Fragmenter.toCDF(wAsense, start, end, leftFlank, rightFlank);
 
-            wSense = mapWeightSense.get(id);
+            //wSense = mapWeightSense.get(id);
+            wSense = Fragmenter.applyPWM(mapTxSeq.get(id), pwmSense);
             n1 = Fragmenter.toCDF(wSense, start, end, leftFlank, rightFlank);
         }
 
@@ -148,10 +166,12 @@ public class FragmentReverseTranscription implements FragmentProcessor {
                     }
                 }
             } else {
-
                 int ext = rtMin + (int) (rnd2.nextDouble() * (rtMax - rtMin));
                 int maxEnd = start + (Math.min(end - start, ext) - 1);
-                p = Arrays.binarySearch(wAsense, leftFlank + start, leftFlank + rightFlank + maxEnd, rtRndWhere.nextDouble());
+
+                int s = Math.min(wAsense.length-1, leftFlank + start);
+                int e = Math.min(wAsense.length, leftFlank + rightFlank + maxEnd);
+                p = Arrays.binarySearch(wAsense, s, e, rtRndWhere.nextDouble());
                 p = (p >= 0 ? p : -(p + 1));
                 ++p; // anti-sense matrix, cut 3' of 0-position
             }
@@ -202,8 +222,13 @@ public class FragmentReverseTranscription implements FragmentProcessor {
                     int dist = Math.min(index1[i] - index1[j], index1[j] - start);
                     f = Math.exp((-1d) * dist / rtMin);
                 } else {    // displacement is a function of motifs
-                    double mi = wAsense[rightFlank + index1[i] - 1] - (index1[i] == 1 ? 0 : wAsense[rightFlank + index1[i] - 2]);    // (-1) as cut after asense 0-pos
-                    double mj = wAsense[rightFlank + index1[j] - 1] - (index1[j] == 1 ? 0 : wAsense[rightFlank + index1[j] - 2]);
+                    int ri1 = Math.min(wAsense.length-1, rightFlank + index1[i] - 1);
+                    int ri2 = Math.min(wAsense.length-1, rightFlank + index1[i] - 2);
+                    int rj1 = Math.min(wAsense.length-1, rightFlank + index1[j] - 1);
+                    int rj2 = Math.min(wAsense.length-1, rightFlank + index1[j] - 2);
+
+                    double mi = wAsense[ri1] - (index1[i] == 1 ? 0 : wAsense[ri2]);    // (-1) as cut after asense 0-pos
+                    double mj = wAsense[rj1] - (index1[j] == 1 ? 0 : wAsense[rj2]);
                     f = (mj == 0 ? 2 : mi / mj); // smaller -> more likely displaced
                 }
                 if (f > 1 || rnd3.nextDouble() <= f) {
@@ -241,6 +266,8 @@ public class FragmentReverseTranscription implements FragmentProcessor {
             cs.replace(1, index1[i]);
 
             Fragment fragment = new Fragment(id, new5Prime, index1[i]);
+            if(fragment.length() > len)
+                System.out.println("Got longer ? " + len + " " + fragment.length());
             fragments.add(fragment);
         }
 
@@ -309,7 +336,7 @@ public class FragmentReverseTranscription implements FragmentProcessor {
     public String getConfiguration() {
         StringBuffer b = new StringBuffer();
         b.append("\t\t").append("Mode: ").append(mode).append("\n");
-        b.append("\t\t").append("Custom PWM: ").append(pwmFile == null ? "No" : pwmFile.getName()).append("\n");
+        b.append("\t\t").append("PWM: ").append(pwmFile == null ? "No" : pwmFile.getName()).append("\n");
         b.append("\t\t").append("RT MIN: ").append(rtMin).append("\n");
         b.append("\t\t").append("RT MAX: ").append(rtMax).append("\n");
         b.append("\t\t").append("GC LO: ").append(gc_lo).append("\n");

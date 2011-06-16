@@ -66,6 +66,30 @@ public class SimulationPipeline implements FluxTool<Void> {
     private Sequencer sequencer;
 
     /**
+     * Print default parameters
+     */
+    private boolean printParameters;
+
+    /**
+     * True if default parameters are printed
+     *
+     * @return print print parameters
+     */
+    public boolean isPrintParameters() {
+        return printParameters;
+    }
+
+    /**
+     * Enable default parameter printing
+     *
+     * @param printParameters enable disable
+     */
+    @Option(name = "o", longName = "printParameters", description = "Print default parameters", required = false)
+    public void setPrintParameters(final boolean printParameters) {
+        this.printParameters = printParameters;
+    }
+
+    /**
      * Returns true if expression mode os active
      *
      * @return expression true if expression mode is active
@@ -196,6 +220,12 @@ public class SimulationPipeline implements FluxTool<Void> {
 
 
     public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+        if(isPrintParameters()){
+            FluxSimulatorSettings settings = new FluxSimulatorSettings();
+            settings.write(System.out);
+            return false;
+        }
+
         if (getFile() == null) {
             Log.error("");
             Log.error("No parameter file specified !");

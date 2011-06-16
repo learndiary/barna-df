@@ -150,11 +150,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "", 5000000);
-    public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "", -0.6);
-    public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "", 50000000);
-    public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "", 9500);
-    public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "", 25d, new ParameterValidator() {
+    public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "number of RNA molecules initially in the experiment", 5000000);
+    public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "exponent of power-law underlying the expression profile", -0.6);
+    public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "parameter determining the maximum expression of the underlying power-law", 50000000);
+    public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "parameter controlling the exponential decay along the power-law", 9500);
+    public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "average deviation from the annotated transcription start site (TSS)", 25d, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             if (schema.get(TSS_MEAN) <= 0) {
@@ -162,13 +162,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "", 2d, 0.0, Double.MAX_VALUE, null);
-    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "", 300d, 0.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "determining the shape of the poly-A tail size distribution", 2d, 0.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "controlling the average length of the poly-A tail sizes", 300d, 0.0, Double.MAX_VALUE, null);
 
     /*
     Fragementation
      */
-    public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION", "", true);
+    public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION", "turn fragmentation on/off", true);
     public static final Parameter<FragmentationMethod> FRAG_METHOD = Parameters.enumParameter("FRAG_METHOD", "" +
             "Method applied for Fragmentation\n" +
             "[NB] Nebulization fragmentation method.\n" +
@@ -180,7 +180,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
                 if (schema.get(FRAG_SUBSTRATE) == Substrate.RNA) {
                     throw new ParameterException("Enzymatic digestion is not supported for RNA substrate!");
                 }
-                if (schema.get(FRAG_EZ_MOTIF) == null || !schema.get(FRAG_EZ_MOTIF).canRead()) {
+                if (schema.get(FRAG_EZ_MOTIF) == null) {
                     throw new ParameterException("You have to specify FRAG_EZ_MOTIF in order ot use Enzymatic digestion");
                 }
             }
@@ -198,7 +198,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
     Enzymatic
      */
-    public static final Parameter<File> FRAG_EZ_MOTIF = Parameters.fileParameter("FRAG_EZ_MOTIF", "The motif description for enzymatic digestion", relativePathParser);
+    public static final Parameter<File> FRAG_EZ_MOTIF = Parameters.fileParameter("FRAG_EZ_MOTIF", "The motif description for enzymatic digestion\n" +
+            "You can specify a custom PWM file or\n" +
+            "use one of the available defaults:\n" +
+            "\n" +
+            "NlaIII or DpnII", relativePathParser);
 
 
     /*
@@ -225,9 +229,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
      RNA Hydrolysis (Uniform-Random)
      */
-    public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA", "", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA", "", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0", "", 1.0, 1.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA", "exhaustiveness of UR fragmentation, determining the number of breaks per unit length", Double.NaN);
+    public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA", "geometry of the UR process (1=linear, 2=surface-diameter, 3=volume-diameter, etc.)", Double.NaN);
+    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0", "minimum length of fragments produced by UR fragmentation", 1.0, 1.0, Double.MAX_VALUE, null);
 
     /*
      Reverse Transcription
@@ -261,12 +265,15 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
     public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
 
-    public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "", relativePathParser);
+    // todo: disabled for the moment !! reenable in Fragmenter RT
+//    public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "Reverse transcription motif PWM.\n" +
+//            "This is disabled by default, but you can use a default matrix\n" +
+//            "by specifying 'default' as value.", relativePathParser);
 
     /*
     Size Selection
      */
-    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "", false);
+    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "turn filtering on/off", false);
     public static final Parameter<File> SIZE_DISTRIBUTION = Parameters.fileParameter("SIZE_DISTRIBUTION", "Describes " +
             "the distribution of fragments after filtering", relativePathParser);
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
