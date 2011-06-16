@@ -9,6 +9,29 @@
     <version>1.0-SNAPSHOT</version>
     <name>FluxSimulator</name>
 
+    <description>
+        the FluxSimulator
+    </description>
+
+    <contributors>
+        <contributor>
+            <name>Michael Sammeth</name>
+            <email>gmicha@googlemail.com</email>
+        </contributor>
+        <contributor>
+            <name>Thasso Griebel</name>
+            <email>thasso.griebel@googlemail.com</email>
+        </contributor>
+    </contributors>
+
+    <licenses>
+        <license>
+            <name>European Union Public Licence (EUPL)</name>
+            <url>http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1</url>
+        </license>
+    </licenses>
+
+
     <scm>
         <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.simulator</url>
         <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.simulator</connection>
@@ -124,17 +147,17 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.commons</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.io</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
 
         <dependency>
@@ -153,5 +176,19 @@
             <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>fenris</id>
+            <name>fenris-releases</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>fenris</id>
+            <name>fenris-snapshots</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
 </project>

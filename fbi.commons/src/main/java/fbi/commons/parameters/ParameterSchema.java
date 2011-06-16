@@ -166,6 +166,14 @@ public abstract class ParameterSchema {
             }
         } catch (IOException e) {
             try {writer.close();} catch (IOException ignore) {}
+        }finally {
+            if(writer != null){
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
