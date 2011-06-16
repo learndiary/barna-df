@@ -1,11 +1,15 @@
-package fbi.genome.model.commons;
-
 /*
- *  @(#)HashMap.java	1.72 06/04/24
+ * This file is part of the Flux Library.
  *
- * Copyright 2006 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
+
+package fbi.genome.model.commons;
 
 import java.io.*;
 import java.util.AbstractCollection;
