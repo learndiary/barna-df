@@ -4,6 +4,7 @@
     <id>simulator</id>
     <formats>
         <format>tar.gz</format>
+        <format>zip</format>
         <format>dir</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
