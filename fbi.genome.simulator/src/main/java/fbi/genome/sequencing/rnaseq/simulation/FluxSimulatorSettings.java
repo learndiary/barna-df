@@ -157,7 +157,8 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "average deviation from the annotated transcription start site (TSS)", 25d, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
-            if (schema.get(TSS_MEAN) <= 0) {
+            // FIX #55 and make sure that NaN is supported to disable TSS_MEAN
+            if (!Double.isNaN(schema.get(TSS_MEAN)) && schema.get(TSS_MEAN) <= 0) {
                 throw new ParameterException("TSS_MEAN must be > 0");
             }
         }

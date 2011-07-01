@@ -701,8 +701,6 @@ public class Fragmenter implements Callable<Void> {
         int end = origLen - 1;
         if (!Double.isNaN(tssMean)) {
             start = origLen;
-
-
             while (start >= Math.min(startOffset, origLen)) {
                 if (origLen <= 0) {
                     throw new RuntimeException("Transcript length <= 0?");
