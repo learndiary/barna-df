@@ -43,11 +43,8 @@ public class FragmentReverseTranscription implements FragmentProcessor {
     private Profiler profiler;
     private int rtMin;
     private int rtMax;
-    private double gc_lo;
     private Map<CharSequence, CharSequence> mapTxSeq;
 
-    private int[] gcIn;
-    private int[] gcOut;
     private PWM pwmSense;
     private PWM pwmASense;
 
@@ -55,7 +52,6 @@ public class FragmentReverseTranscription implements FragmentProcessor {
                                         File pwmFile,
                                         final int rtMin,
                                         final int rtMax,
-                                        final double gc_lo,
                                         final Map<CharSequence, CharSequence> mapTxSeq,
                                         final Profiler profiler,
                                         final int leftFlank,
@@ -70,12 +66,9 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 
         this.rtMin = rtMin;
         this.rtMax = rtMax;
-        this.gc_lo = gc_lo;
         this.mapTxSeq = mapTxSeq;
         this.profiler = profiler;
 
-        this.gcIn = new int[101];
-        this.gcOut = new int[101];
 
         if (pwmFile != null) {
             // read the sequence annotations
@@ -196,17 +189,17 @@ public class FragmentReverseTranscription implements FragmentProcessor {
             int from = Math.max(index1[i] - ext, start);
 
             // check GC
-            if (gc_lo > 0) {
-                double gc = getGCcontent(id, from, index1[i] - 1);
-                double pg = gcScore(gc, 0.04);
-                if (rnd1.nextDouble() > pg) {
-                    index1[i] = -1;
-                    gcOut[((int) (100 * gc))]++;
-                    continue;
-                } else {
-                    gcIn[((int) (100 * gc))]++;
-                }
-            }
+//            if (gc_lo > 0) {
+//                double gc = getGCcontent(id, from, index1[i] - 1);
+//                double pg = gcScore(gc, 0.04);
+//                if (rnd1.nextDouble() > pg) {
+//                    index1[i] = -1;
+//                    gcOut[((int) (100 * gc))]++;
+//                    continue;
+//                } else {
+//                    gcIn[((int) (100 * gc))]++;
+//                }
+//            }
 
             // resolve displacements
             boolean displaced = false;
@@ -266,8 +259,6 @@ public class FragmentReverseTranscription implements FragmentProcessor {
             cs.replace(1, index1[i]);
 
             Fragment fragment = new Fragment(id, new5Prime, index1[i]);
-            if(fragment.length() > len)
-                System.out.println("Got longer ? " + len + " " + fragment.length());
             fragments.add(fragment);
         }
 
@@ -311,22 +302,6 @@ public class FragmentReverseTranscription implements FragmentProcessor {
         return (g / (double) (n + g));
     }
 
-    /**
-     * S shaped gc select function
-     *
-     * @param x the gc value
-     * @param a the shape parameter
-     * @return v function value
-     */
-    private double gcScore(double x, double a) {
-        x = x + (0.52 - gc_lo);
-        if (x <= 0.5) {
-            return Math.pow(2d * x, 1d / a) / 2d;
-        } else {
-            return 1d - Math.pow(2d * (1d - x), 1d / a) / 2d;
-        }
-    }
-
     @Override
     public String getName() {
         return "Reverse Transcription";
@@ -339,7 +314,6 @@ public class FragmentReverseTranscription implements FragmentProcessor {
         b.append("\t\t").append("PWM: ").append(pwmFile == null ? "No" : pwmFile.getName()).append("\n");
         b.append("\t\t").append("RT MIN: ").append(rtMin).append("\n");
         b.append("\t\t").append("RT MAX: ").append(rtMax).append("\n");
-        b.append("\t\t").append("GC LO: ").append(gc_lo).append("\n");
         return b.toString();
     }
 

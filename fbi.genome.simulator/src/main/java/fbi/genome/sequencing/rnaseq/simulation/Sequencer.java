@@ -92,10 +92,10 @@ public class Sequencer implements Callable<Void> {
 
         /*
         Write initial zip file and collect the line number. This represents
-        the number of fragments written and is used to compute the priopability
+        the number of fragments written and is used to compute the propability
         for a read to be sequenced
          */
-        int noOfFragments = writeInitialFile(inFile, zipFile);
+        long noOfFragments = writeInitialFile(inFile, zipFile);
         p = settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) noOfFragments;
 
 
@@ -113,7 +113,7 @@ public class Sequencer implements Callable<Void> {
      * @return lines lines zipped
      * @throws IOException in case of errors
      */
-    int writeInitialFile(File libraryFile, File zipFile) throws IOException {
+    long writeInitialFile(File libraryFile, File zipFile) throws IOException {
         if (libraryFile == null) {
             throw new NullPointerException("NULL library file not permitted");
         }
@@ -124,7 +124,8 @@ public class Sequencer implements Callable<Void> {
         IOHandler io = IOHandlerFactory.createDefaultHandler();
         ZipOutputStream zipOut = null;
 
-        int nrOfFrags = 0;
+        long nrOfFrags = 0;
+        long lines = 0;
         try {
             Log.message("\tinitialize");
             Log.progressStart("zipping");
@@ -143,11 +144,14 @@ public class Sequencer implements Callable<Void> {
 
             while (io.readLine(sortedIn, cs) != -1) {
                 currBytes += cs.length() + 1;
-                nrOfFrags++;
+                //nrOfFrags++;
+                lines++;
                 Log.progress(currBytes, totBytes);
 
                 cs.resetFind();
                 ByteArrayCharSequence id = cs.getToken(2);
+                int dups = cs.getTokenInt(3);
+                nrOfFrags+=dups;
                 if (!id.equals(lastID)) {
                     zipOut.putNextEntry(new ZipEntry(id.toString()));
                     lastID = id.cloneCurrentSeq();
@@ -156,7 +160,7 @@ public class Sequencer implements Callable<Void> {
                 zipOut.write(BYTE_NL);
             }
             zipOut.close();
-            Log.progressFinish(nrOfFrags + " lines zipped", true);
+            Log.progressFinish(lines + " lines zipped ("+nrOfFrags +" fragments)", true);
         } finally {
             io.close();
             if (zipOut != null) {
@@ -626,24 +630,59 @@ public class Sequencer implements Callable<Void> {
                     int k = 0;
                     String s = null;
                     while ((s = buffy.readLine()) != null) {
-                        fragments++;
                         cs.set(s);
                         int fstart = cs.getTokenInt(0);
                         int fend = cs.getTokenInt(1);
+                        int dups = cs.getTokenInt(3);
+                        dups = Math.max(dups, 1);
 
-                        double r = rnd.nextDouble();
-                        if (r < p) {
-                            double q = rndFiftyFifty.nextDouble();
-                            if (pairedEnd || q < 0.5) {
+
+                        double q = p * dups;
+                        int frags = (int) q;
+                        double rest = q-frags;
+
+                        // write fragments
+                        for(int dd = 0; dd<frags;dd++){
+                            fragments++;
+                            k++;
+                            if(pairedEnd){
                                 writer.writeRead(true, t, fstart, fend, k);
                                 ++cntPlus;
-                            }
-                            if (pairedEnd || q > 0.5) {
                                 writer.writeRead(false, t, fstart, fend, k);
                                 ++cntMinus;
+                            }else{
+                                if (rndFiftyFifty.nextDouble() < 0.5) {
+                                    writer.writeRead(true, t, fstart, fend, k);
+                                    ++cntPlus;
+                                }else{
+                                    writer.writeRead(false, t, fstart, fend, k);
+                                    ++cntMinus;
+                                }
                             }
                         }
-                        ++k;
+
+                        // try for the rest
+                        double r = rnd.nextDouble();
+                        if (r < rest) {
+                            if(pairedEnd){
+                                writer.writeRead(true, t, fstart, fend, k);
+                                ++cntPlus;
+                                writer.writeRead(false, t, fstart, fend, k);
+                                ++cntMinus;
+                            }else{
+                                if (rndFiftyFifty.nextDouble() < 0.5) {
+                                    writer.writeRead(true, t, fstart, fend, k);
+                                    ++cntPlus;
+                                }else{
+                                    writer.writeRead(false, t, fstart, fend, k);
+                                    ++cntMinus;
+                                }
+                            }
+                            ++k;
+                            fragments++;
+                        }
+
+
                     }
                 } catch (IOException e) {
                     Log.error("Error while reading zip entry in sequencer: " + e.getMessage(), e);

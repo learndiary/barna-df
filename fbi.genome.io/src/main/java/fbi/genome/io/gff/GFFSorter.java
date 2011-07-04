@@ -22,6 +22,7 @@ import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.gff.GFFObject;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
@@ -107,9 +108,9 @@ public class GFFSorter {
      * @return fields extracted fields
      */
 	private static ByteArrayCharSequence[] find(CharSequence input, int[] fieldNrs) {
-		 int index = 0;
-		 ByteArrayCharSequence[] result= new ByteArrayCharSequence[fieldNrs.length];
-		 int mCtr= 0, fCtr= 0;
+		int index = 0;
+		ByteArrayCharSequence[] result= new ByteArrayCharSequence[fieldNrs.length];
+		int mCtr= 0, fCtr= 0;
 		Matcher m= SPLITTER_PATTERN.matcher(input);
         while(m.find()) {
         	if (fCtr< fieldNrs.length&& mCtr== fieldNrs[fCtr]) {
@@ -182,6 +183,10 @@ public class GFFSorter {
 
 				if (cs.charAt(0)== '#')
 					continue;
+                // also ignore empty lines
+                if(cs.length() == 0){
+                    continue;
+                }
 
 				if (fieldNrs[3]< 0) {
 					fieldNrs[3]= findTranscriptID(cs);
@@ -274,6 +279,11 @@ public class GFFSorter {
             io.addStream(fileInput);
 
             while (io.readLine(fileInput,cs) != -1){
+                // issue #56 make sure we skip empty lines and comment lines
+                if (cs.length() == 0 || cs.charAt(0)== '#'){
+                    continue;
+                }
+
                 ByteArrayCharSequence[] fields= find(cs, fieldNrs);	// 1,4,-1
 				
                 byte[] key= encode(fields[1], fields[0]);
@@ -321,7 +331,7 @@ public class GFFSorter {
     class GlobalTranscriptPositionComparator implements Comparator<String>{
         Map<byte[], Integer> map;
         int[] fieldNrs;
-        ByteArrayCharSequence cs;
+        //ByteArrayCharSequence cs;
 
         GlobalTranscriptPositionComparator(Map<byte[], Integer> map, int[] fieldNrs) {
             this.map = map;
@@ -329,20 +339,19 @@ public class GFFSorter {
         }
 
         public int compare(String o1, String o2) {
-            if(cs == null){
-                cs = new ByteArrayCharSequence(o1);
-            }
+            ByteArrayCharSequence cs = new ByteArrayCharSequence(o1);
             cs.clear();
             cs.append(o1);
             ByteArrayCharSequence[] fields= find(cs, fieldNrs);	// 1,4,-1
-            byte[] key= encode(fields[1], fields[0]);
-            int v1= Math.abs(map.get(key));
 
+            byte[] key= encode(fields[1], fields[0]);
+            Integer mapValue = map.get(key);
+            int v1= Math.abs(mapValue);
             cs.clear();
             cs.append(o2);
             fields= find(cs, fieldNrs);	// 1,4,-1
             key= encode(fields[1], fields[0]);
-            int v2= Math.abs(map.get(key));
+            int v2= Math.abs(mapValue);
             return v1-v2;
         }
     }

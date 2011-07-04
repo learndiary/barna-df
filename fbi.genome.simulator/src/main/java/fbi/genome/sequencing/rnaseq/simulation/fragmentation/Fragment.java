@@ -31,6 +31,11 @@ public class Fragment {
     private int end;
 
     /**
+     * Number of duplications created during amplification
+     */
+    private int duplicates;
+
+    /**
      * Create a new Fragment
      *
      * @param id    the id
@@ -88,8 +93,27 @@ public class Fragment {
         return end - start + 1;
     }
 
+    /**
+     * Get the number of duplicates created during amplification
+     *
+     * @return duplicates the number of duplicates
+     */
+    public int getDuplicates() {
+        return duplicates;
+    }
+
+    /**
+     * Set the number of duplicates
+     *
+     * @param duplicates number of duplicates
+     */
+    public void setDuplicates(final int duplicates) {
+        if(duplicates < 0) throw new IllegalArgumentException("Number of Duplicates must be >= 0");
+        this.duplicates = duplicates;
+    }
+
     @Override
     public String toString() {
-        return start + "\t" + end + "\t" + id;
+        return start + "\t" + end + "\t" + id + "\t" + duplicates;
     }
 }

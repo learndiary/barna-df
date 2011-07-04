@@ -48,6 +48,7 @@ public class Fragmenter implements Callable<Void> {
     public static final byte MODE_FILT_REJ = 5;
     public static final byte MODE_FILT_ACC = 6;
     public static final byte MODE_FILT_MH = 7;
+    public static final byte MODE_AMPLIFICATION = 8;
 
     private static int GEL_NB_BINS_LENGTH = 100;
 
@@ -202,6 +203,13 @@ public class Fragmenter implements Callable<Void> {
             if ((!process(mode, tmpFile))) {
                 return null;
             }
+        }
+
+
+        // amplification
+        Log.message("\t\tstart amplification");
+        if(!process(MODE_AMPLIFICATION, tmpFile)){
+            return null;
         }
 
 
@@ -378,7 +386,7 @@ public class Fragmenter implements Callable<Void> {
                 rw = IOHandlerFactory.createDefaultHandler();
                 rw.addStream(fis);
 
-                File tmpWriteFile = File.createTempFile("Framgmenter-write", ".tmp");
+                File tmpWriteFile = File.createTempFile("Fragmenter-write", ".tmp");
                 fos = new BufferedWriter(new FileWriter(tmpWriteFile));
 
 
@@ -423,17 +431,22 @@ public class Fragmenter implements Callable<Void> {
                     case MODE_RT:
                         processor = new FragmentReverseTranscription(
                                 settings.get(FluxSimulatorSettings.RT_PRIMER),
-
                                 null, // todo: reenable custom RT PWM
                                 //settings.get(FluxSimulatorSettings.RT_MOTIF),
                                 settings.get(FluxSimulatorSettings.RT_MIN),
                                 settings.get(FluxSimulatorSettings.RT_MAX),
-                                settings.get(FluxSimulatorSettings.RT_GC_LO),
                                 getMapTxSeq(),
                                 profiler,
                                 leftFlank, rightFlank,
                                 settings.get(FluxSimulatorSettings.RT_LOSSLESS)
                         );
+                        break;
+                    case MODE_AMPLIFICATION:
+                        processor = new Amplification(
+                                settings.get(FluxSimulatorSettings.PCR_ROUNDS),
+                                settings.get(FluxSimulatorSettings.GC_MEAN),
+                                settings.get(FluxSimulatorSettings.GC_SD),
+                                getMapTxSeq());
                         break;
                 }
 
@@ -566,7 +579,7 @@ public class Fragmenter implements Callable<Void> {
 
         try {
             Log.progressStart("Initializing Fragmentation File");
-            tmpFile = File.createTempFile("Framgmenter-tmp", ".tmp");
+            tmpFile = File.createTempFile("Fragmenter-tmp", ".tmp");
             fos = new BufferedWriter(new FileWriter(tmpFile));
             //molInit = 0;
             int profileSize = profiler.size();

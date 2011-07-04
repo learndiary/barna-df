@@ -261,8 +261,18 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Double> RT_GC_LO = Parameters.doubleParameter("RT_GC_LO", "Minimum GC content for RNA " +
-            "stretches to be successfully reversely transcribed.", 0.4, 0.0, 1.0, null);
+    /**
+     * GC mean
+     */
+    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution ", 0.5, 0.0, 1.0, null);
+    /**
+     * GC sd
+     */
+    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation value for GC distribution ", 0.1, 0.0, 100.0, null);
+    /**
+     * Amplification rounds
+     */
+    public static final Parameter<Integer> PCR_ROUNDS = Parameters.intParameter("PCR_ROUNDS", "Number of amplification rounds",15, 0, Integer.MAX_VALUE, null);
 
     public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
 
