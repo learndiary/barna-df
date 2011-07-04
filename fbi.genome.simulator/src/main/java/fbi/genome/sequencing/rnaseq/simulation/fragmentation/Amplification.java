@@ -40,7 +40,7 @@ public class Amplification implements FragmentProcessor{
     /**
      * The standard deviation
      */
-    private double sigma = 1.0;
+    private double sigma = 0.1;
 
     /**
      * Number of processed fragments
@@ -77,39 +77,26 @@ public class Amplification implements FragmentProcessor{
         this.sigma = sigma;
         this.mapTxSeq = mapTxSeq;
         this.distribution = new NormalDistribution(mean, sigma);
-        this.maxFragments = (long) Math.pow(2, rounds)-1;
+        this.maxFragments = Math.max(1,(long) Math.pow(2, rounds)-1);
     }
 
     @Override
     public List<Fragment> process(final ByteArrayCharSequence id, final ByteArrayCharSequence cs, final int start, final int end, final int len) {
         // get the gc content
         double gc = getGCcontent(id, start, end);
-        //double gcp = distribution.getP(gc, mean);
         double gcp = distribution.getRelFreq(gc);
-
-        //System.out.println(gc + "\t" + gcp);
 
         List<Fragment> fragments = new ArrayList<Fragment>();
         Fragment fragment = new Fragment(id, start, end);
         fragments.add(fragment);
 
-        int nfragments = (int) (maxFragments * gcp);
+        int nfragments = Math.max(1,(int) (maxFragments * gcp));
         in++;
         out+=nfragments;
         fragment.setDuplicates(nfragments);
         //System.out.println(gc + "\t" + nfragments);
         return fragments;
     }
-
-    public static void main(String[] args) {
-        NormalDistribution normalDistribution = new NormalDistribution(0.5, 0.1);
-        double d = 100;
-        for(int i=0; i<d;i++){
-            //System.out.println(i/100.0 + "\t" + normalDistribution.getP((i/100.0)));
-            System.out.println(i/d + "\t" + normalDistribution.getRelFreq(i/d));
-        }
-    }
-
 
     /**
      * Compute the relative GC content
