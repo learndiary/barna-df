@@ -1801,21 +1801,36 @@ public class GFFReader extends DefaultIOWrapper {
 				}
 				if (tidField>= 0&& !tokens[tidField].equals(lastTID)) {
 					if (tidMap.get(tokens[tidField]) != null) {
-							Log.warn("Unsorted in line " + lineCtr
+                            if(!silent && stars){
+                                Log.progressFailed("Unsorted in line " + lineCtr
 									+ " transcript id " + tokens[tidField]
 									+ " used twice, on: " + tokens[0] + ","
 									+ tidMap.get(tokens[tidField]));
+                            }else{
+                                Log.warn("Unsorted in line " + lineCtr
+                                        + " transcript id " + tokens[tidField]
+                                        + " used twice, on: " + tokens[0] + ","
+                                        + tidMap.get(tokens[tidField]));
+                            }
                         return false;
 					}
 					tidMap.put(tokens[tidField], tokens[0]);
 					if (lastTID != null && clusterGenes) {
 						int newStart = Integer.parseInt(tokens[3]);
 						if (lastStart > newStart) {
+                            if(!silent && stars){
+                                Log.progressFailed("Unsorted in line " + lineCtr
+										+ " - cannot perform gene clustering: "
+										+ tokens[0] + " " + tokens[6] + " "
+										+ tokens[tidField] + " @ " + tokens[3]
+										+ " after " + lastTID + " @ " + lastStart);
+                            }else{
 								Log.warn("Unsorted in line " + lineCtr
 										+ " - cannot perform gene clustering: "
 										+ tokens[0] + " " + tokens[6] + " "
 										+ tokens[tidField] + " @ " + tokens[3]
 										+ " after " + lastTID + " @ " + lastStart);
+                            }
 							buffy.close();
 							return false;
 						}
@@ -1838,8 +1853,11 @@ public class GFFReader extends DefaultIOWrapper {
 							}
 						}
 						if (tidField < 0) {
-							if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-								throw new RuntimeException("Error line " + lineCtr+ " - no GID.");
+                            if(!silent && stars){
+                                Log.progressFailed("Error line " + lineCtr+ " - no GID.");
+                            }else{
+								Log.warn("Error line " + lineCtr+ " - no GID.");
+                            }
 							return false;
 						}
 					}
