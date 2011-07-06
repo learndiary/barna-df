@@ -264,7 +264,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * GC mean
      */
-    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution ", 0.5, 0.0, 1.0, null);
+    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution", 0.5, 0.0, 1.0, null);
     /**
      * GC sd
      */
@@ -272,7 +272,8 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Amplification rounds
      */
-    public static final Parameter<Integer> PCR_ROUNDS = Parameters.intParameter("PCR_ROUNDS", "Number of amplification rounds",15, 0, Integer.MAX_VALUE, null);
+    public static final Parameter<Integer> PCR_ROUNDS = Parameters.intParameter("PCR_ROUNDS", "Number of amplification rounds.\n" +
+            "Set this to 0 to disable the amplification.",15, 0, Integer.MAX_VALUE, null);
 
     public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
 

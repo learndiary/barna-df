@@ -19,6 +19,19 @@ REQUIREMENTS
 * enough hard disk space for whatever you plan to do
 
 
+CHANGES
+---------------
+
+FluxSimulator RC2
+
+    -fixed issue #55 and allow to disable TSS_MEAN by setting it to NaN
+    -fixed issue #57 - the GTF sorter
+    -added an amplification step and removed RT_GC_LO parameter. Now, GC content
+     is weighted in amplification. The amplification consists of three parameters:
+      * PCR_ROUNDS - the number of rounds (set this to 0 to disable amplification)
+      * GC_MEAN and GC_SD - mean and standard deviation for the GC content distribution
+
+
 GETTING STARTED
 ---------------
 
