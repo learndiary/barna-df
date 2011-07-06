@@ -10,14 +10,12 @@
   ~ see the Flux Library homepage <http://flux.sammeth.net> for more information.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fbi</groupId>
     <artifactId>fbi.genome.model</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
 
     <description>
         The FBI Model library contains basic data models
@@ -42,9 +40,9 @@
     </licenses>
 
     <scm>
-        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.model</url>
-        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.model</connection>
-        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.model</developerConnection>
+        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/tags/fbi.genome.model-1.1</url>
+        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/tags/fbi.genome.model-1.1</connection>
+        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/tags/fbi.genome.model-1.1</developerConnection>
     </scm>
 
     <properties>
