@@ -12,6 +12,7 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
+import fbi.commons.file.FileHelper;
 import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.CommandLine;
@@ -359,7 +360,8 @@ public class SimulationPipeline implements FluxTool<Void> {
      */
     protected void sortGTFReference() {
         File refFile = settings.get(FluxSimulatorSettings.REF_FILE);
-        String sortedFileName = settings.get(FluxSimulatorSettings.PRO_FILE).getParent() + File.separator + refFile.getName();
+        // Fix Issue #58 and make sure the sorted file is used and differs in name
+        String sortedFileName = settings.get(FluxSimulatorSettings.PRO_FILE).getParent() + File.separator + FileHelper.append(refFile.getName(), "_sorted");
         File sorted = new File(sortedFileName);
         GFFReader gffReader = new GFFReader(refFile.getAbsolutePath());
         // make sure the gtf is valid and sorted
@@ -369,7 +371,7 @@ public class SimulationPipeline implements FluxTool<Void> {
 
             // okey its not sorted, check if there is a sorted version
 
-            if (sorted.exists() && sorted.length() == refFile.length()) {
+            if (sorted.exists()) {
                 gffReader = new GFFReader(sortedFileName);
                 if (gffReader.isApplicable()) {
                     // found a sorted file
@@ -388,8 +390,9 @@ public class SimulationPipeline implements FluxTool<Void> {
             gffReader.setStars(true);
             gffReader.setSilent(false);
             gffReader.createSortedFile(sorted);
-            settings.setRefFile(sorted);
             gffReader.close();
+            settings.setRefFile(sorted);
+
             Log.warn("GTF FILE", "The Simulator will use " + sortedFileName);
             Log.warn("GTF FILE", "You might want to update your parameters file");
         }

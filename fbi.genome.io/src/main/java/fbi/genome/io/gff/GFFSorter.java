@@ -178,7 +178,9 @@ public class GFFSorter {
             ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
             //int[] fieldNrs= new int[]{1,4,7,-1};	// ,-1 for gene
             int bytesRead = 0;
+            int lineCounter = 0;
             while(io.readLine(reader, cs) != -1){
+                lineCounter++;
 				bytesRead += cs.length() + eol.length();
 
 				if (cs.charAt(0)== '#')
@@ -198,11 +200,10 @@ public class GFFSorter {
 				ByteArrayCharSequence[] fields= find(cs, fieldNrs);	// 1,4,tid,gid
 				for (int i = 0; i < fields.length; i++) {
 					if (fields[i]== null) {
-                        throw new RuntimeException("I could not find field number "+fieldNrs[i]+" in line"
-                        +cs.toString()+"\n"
+                        throw new RuntimeException("I could not find field number "+fieldNrs[i]+" in line " + lineCounter
+                        +"\n"
                         +"\tline skipped check format of GTF file"+"\n"
                         +"\t(first 8 fields and transcript_id in the same column!)");
-
 					}
 				}
 
@@ -223,6 +224,7 @@ public class GFFSorter {
 						continue;
 					}
 				}
+
 				if (oldVal == null || Math.abs(oldVal) > start) {
 					transcriptPositions.put(key, (strand* start));
 				}
@@ -270,7 +272,6 @@ public class GFFSorter {
                             //.field(1, true) // tpos
                     .field(fieldNrs[3], false) // tid
                     .field(3, true).sortInBackground();// pos
-
             fieldNrs= new int[]{fieldNrs[0], fieldNrs[3]};	// 090901: start pos from map
 			HashSet<String> setInvalidTx= new HashSet<String>();
 			int nrInvalidLines= 0;
@@ -340,19 +341,19 @@ public class GFFSorter {
 
         public int compare(String o1, String o2) {
             ByteArrayCharSequence cs = new ByteArrayCharSequence(o1);
-            cs.clear();
-            cs.append(o1);
             ByteArrayCharSequence[] fields= find(cs, fieldNrs);	// 1,4,-1
+            byte[] key1= encode(fields[1], fields[0]);
+            Integer mapValue1 = map.get(key1);
+            int v1= Math.abs(mapValue1);
 
-            byte[] key= encode(fields[1], fields[0]);
-            Integer mapValue = map.get(key);
-            int v1= Math.abs(mapValue);
             cs.clear();
             cs.append(o2);
             fields= find(cs, fieldNrs);	// 1,4,-1
-            key= encode(fields[1], fields[0]);
-            int v2= Math.abs(mapValue);
-            return v1-v2;
+            byte[] key2= encode(fields[1], fields[0]);
+            Integer mapValue2 = map.get(key2);
+            int v2= Math.abs(mapValue2);
+            int result = v1 - v2;
+            return result;
         }
     }
 

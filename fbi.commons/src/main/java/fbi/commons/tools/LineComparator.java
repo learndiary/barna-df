@@ -26,7 +26,7 @@ public class LineComparator implements Comparator<String> {
     /**
      * Parse the field to a numerical value
      */
-    private boolean numerical;
+    private final boolean numerical;
     /**
      * Field separator
      */
@@ -57,6 +57,7 @@ public class LineComparator implements Comparator<String> {
         super();
         this.field = new int[copy.field.length];
         System.arraycopy(copy.field, 0, this.field,0, copy.field.length);
+        this.numerical = copy.numerical;
 
         this.separator = copy.separator;
         if(copy.subComparators != null){
@@ -123,6 +124,7 @@ public class LineComparator implements Comparator<String> {
      */
     public LineComparator(Comparator<String> comparator) {
         this.parent = comparator;
+        this.numerical = false;
     }
 
 
