@@ -139,6 +139,14 @@ public class ProfilerFile {
                 wright.write(PRO_FILE_CR);
             }
 
+
+            /*
+            Check this for issue #58 and make sure we close all streams before moving the files
+             */
+            buffy.close();
+            wright.close();
+
+
             if (!proFile.delete()) {
                 Log.warn("Unable to remove original .pro file, I try the move anyways");
             }

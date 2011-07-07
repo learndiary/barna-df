@@ -272,7 +272,9 @@ public class SimulationPipeline implements FluxTool<Void> {
         File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
         if (profilerFile.exists()) {
             // initialize the profiler
-            getProfiler().initializeProfiler(profilerFile);
+            if(!getProfiler().initializeProfiler(profilerFile)){
+                throw new RuntimeException("Error while initializing Profiler!");
+            }
             if (isExpression() && getProfiler().isFinishedExpression()) {
                 if (!CommandLine.confirm("[CAUTION] I overwrite the expression values in file " + profilerFile.getName() + ", please confirm:\n\t(Yes,No,Don't know)")) {
                     return null;
