@@ -269,6 +269,13 @@ public class SimulationPipeline implements FluxTool<Void> {
             return null;
         }
 
+        // fix issue #60 and transfer the temp file
+        File settingsTmp = settings.get(FluxSimulatorSettings.TMP_DIR);
+        if(settingsTmp != null){
+            FileHelper.tempDirectory = settingsTmp;
+        }
+
+
         File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
         if (profilerFile.exists()) {
             // initialize the profiler

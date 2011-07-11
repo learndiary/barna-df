@@ -47,6 +47,7 @@ public class Flux {
      * Current Flux Simulator version
      */
     public static String FLUX_VERSION = "";
+
     /**
      * Current Flux Simulator revision
      */
@@ -115,9 +116,9 @@ public class Flux {
 
         // start
         if (FLUX_VERSION.length() > 0 && FLUX_REVISION.length() > 0) {
-            Log.info("I am the Flux Simulator (v" + FLUX_VERSION + " build" + FLUX_REVISION + "), nice to meet you!\n");
+            Log.info("I am the Flux Toolbox (v" + FLUX_VERSION + " build" + FLUX_REVISION + "), nice to meet you!\n");
         } else {
-            Log.info("I am the Flux Simulator ( Devel Mode ), nice to meet you!\n");
+            Log.info("I am the Flux Toolbox ( Devel Mode ), nice to meet you!\n");
         }
 
         // find the tool to start
