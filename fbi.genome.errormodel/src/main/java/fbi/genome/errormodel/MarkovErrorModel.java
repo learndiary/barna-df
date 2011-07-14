@@ -146,12 +146,8 @@ public class MarkovErrorModel implements FluxTool {
     }
 
     public Object call() throws Exception {
-
         if(getInput() != null){
-            Log.message("Reading model from " + getInput().getAbsolutePath());
-            FileInputStream in = new FileInputStream(getInput());
-            QualityTransitions trans = (QualityTransitions) Serializer.load(in);
-            in.close();
+            QualityErrorModel trans = loadErrorModel(file);
             return trans;
         }
 
@@ -245,7 +241,11 @@ public class MarkovErrorModel implements FluxTool {
 
         Log.message("Writing model to " + getOutput().getAbsolutePath());
         FileOutputStream out = new FileOutputStream(getOutput());
-        Serializer.save(trans, out);
+
+        // prepare model
+        QualityErrorModel qualityErrorModel = new QualityErrorModel(trans, crossTalkQuality);
+        Serializer.save(qualityErrorModel, out);
+
         out.close();
 
         if (isPrintQualityDistribution()){
@@ -257,8 +257,8 @@ public class MarkovErrorModel implements FluxTool {
             System.out.println(readQuals.toString());
         }
 
-        System.out.println("QUALITY PER POSITION");
-        System.out.println(lengthDist.toString());
+        //System.out.println("QUALITY PER POSITION");
+        //System.out.println(lengthDist.toString());
 
 
 
@@ -367,66 +367,85 @@ public class MarkovErrorModel implements FluxTool {
         int p_threshold = 25;
         int q_thrshold = 5;
 
-        double[] ps = new double[p_threshold];
-        double[] pfs = new double[p_threshold];
-        double[] qfs = new double[35-q_thrshold]; // 35 quals - q_thrshold
-        double[] qs = new double[35-q_thrshold]; // 35 quals - q_thrshold
-
-        char[] chars = new char[]{'A', 'C','G','T', 'N'};
-
-
-        lengthDist.w.close();
-
-
-
-        for (int j = 0; j < chars.length; j++) {
-            for (int k = 0; k < chars.length; k++) {
-                if(j==k) continue;
-
-                // positions
-                double[][] ac = crossTalkPosition.getDistribution(chars[j], chars[k]);
-
-                /// write to file
-
-                File t = new File(plotDir, chars[j]+"-"+chars[k]+"-CT_positions.dat");
-                BufferedWriter w = new BufferedWriter(new FileWriter(t));
-
-                for (int l = 0; l < ac[0].length; l++) {
-                    w.write(ac[0][l] + "\t" + ac[1][l]+"\n");
-                }
-
-                w.close();
-
-                for (int l = 0; l < ps.length; l++) {
-                    ps[l] = l; // positions
-                    pfs[l] = ac[1][l]; // scores
-                }
-
-                double p1 = getPearsonCorrelation(ps, pfs);
-                if(Double.isNaN(p1)){
-                    //System.out.println("NaN pearson ...");
-                    continue;
-                }
+//        double[] ps = new double[p_threshold];
+//        double[] pfs = new double[p_threshold];
+//        double[] qfs = new double[35-q_thrshold]; // 35 quals - q_thrshold
+//        double[] qs = new double[35-q_thrshold]; // 35 quals - q_thrshold
+//
+//        char[] chars = new char[]{'A', 'C','G','T', 'N'};
+//
+//
+//        lengthDist.w.close();
 
 
-                // qualities
-                double[][] qc = crossTalkQuality.getDistribution(chars[j], chars[k]);
-                for (int l = 0; l < qs.length; l++) {
-                    qs[l] = qc[0][qs.length - (l+1) + q_thrshold]; // quality
-                    qfs[l] = qc[1][qs.length - (l+1) + q_thrshold]; // scores
-                }
-                double p2 = getPearsonCorrelation(qs, qfs);
 
-                if(Double.isNaN(p2)){continue;}
-
-                System.out.print(p1 + "\t");
-                System.out.println(p2);
-            }
-        }
+//        for (int j = 0; j < chars.length; j++) {
+//            for (int k = 0; k < chars.length; k++) {
+//                if(j==k) continue;
+//
+//                // positions
+//                double[][] ac = crossTalkPosition.getDistribution(chars[j], chars[k]);
+//
+//                /// write to file
+//
+//                File t = new File(plotDir, chars[j]+"-"+chars[k]+"-CT_positions.dat");
+//                BufferedWriter w = new BufferedWriter(new FileWriter(t));
+//
+//                for (int l = 0; l < ac[0].length; l++) {
+//                    w.write(ac[0][l] + "\t" + ac[1][l]+"\n");
+//                }
+//
+//                w.close();
+//
+//                for (int l = 0; l < ps.length; l++) {
+//                    ps[l] = l; // positions
+//                    pfs[l] = ac[1][l]; // scores
+//                }
+//
+//                double p1 = getPearsonCorrelation(ps, pfs);
+//                if(Double.isNaN(p1)){
+//                    //System.out.println("NaN pearson ...");
+//                    continue;
+//                }
+//
+//
+//                // qualities
+//                double[][] qc = crossTalkQuality.getDistribution(chars[j], chars[k]);
+//                for (int l = 0; l < qs.length; l++) {
+//                    qs[l] = qc[0][qs.length - (l+1) + q_thrshold]; // quality
+//                    qfs[l] = qc[1][qs.length - (l+1) + q_thrshold]; // scores
+//                }
+//                double p2 = getPearsonCorrelation(qs, qfs);
+//
+//                if(Double.isNaN(p2)){continue;}
+//
+//                System.out.print(p1 + "\t");
+//                System.out.println(p2);
+//            }
+//        }
         return null;
     }
 
+    /**
+     * Load an error model from file
+     * @return
+     * @throws IOException
+     */
+    public QualityErrorModel loadErrorModel(File file) throws IOException {
+        Log.message("Reading model from " + file.getAbsolutePath());
+        FileInputStream in = new FileInputStream(file);
+        QualityErrorModel trans = (QualityErrorModel) Serializer.load(in);
+        in.close();
+        return trans;
+    }
 
+    /**
+     * Helper to compute pearson
+     *
+     * @param scores1 v1
+     * @param scores2 v2
+     * @return pearson
+     */
     private static double getPearsonCorrelation(double[] scores1,double[] scores2){
         double result = 0;
         double sum_sq_x = 0;

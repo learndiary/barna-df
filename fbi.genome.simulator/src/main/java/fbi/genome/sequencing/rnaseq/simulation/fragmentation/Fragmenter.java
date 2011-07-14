@@ -485,9 +485,14 @@ public class Fragmenter implements Callable<Void> {
                         addFragCount(id, 1l);
                         newMols += fragments.size() > 1 ? fragments.size() - 1 : 0;
                         for (Fragment frag : fragments) {
-                            cumuLen += frag.length();
                             maxLen = Math.max(maxLen, frag.length());
-                            totalWritten++;
+                            if(frag.getDuplicates() < 2){
+                                totalWritten++;
+                                cumuLen += frag.length();
+                            }else{
+                                totalWritten+=frag.getDuplicates();
+                                cumuLen += (frag.length()*frag.getDuplicates());
+                            }
                             // write the fragment
                             fos.write(frag.toString());
                             fos.write("\n");
@@ -515,7 +520,7 @@ public class Fragmenter implements Callable<Void> {
                 // sum up counts and prepare stats
                 long total = currMols + newMols;
                 Log.message("\t\t" + total + " mol: in " + currMols + ", new " + newMols + ", out " + totalWritten);
-                Log.message("\t\tavg Len " + (cumuLen / (float) total) + ", maxLen " + maxLen);
+                Log.message("\t\tavg Len " + (cumuLen / (float) totalWritten) + ", maxLen " + maxLen);
             }
             System.gc();
             return true;

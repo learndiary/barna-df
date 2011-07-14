@@ -61,4 +61,18 @@ public class GFFSorterTest {
             s.close();
         }
     }
+    @Test
+    public void testGFFSort4() throws IOException {
+        File sortedFile = GFFSorter.sort(new File(GFFSorterTest.class.getResource("/testGtf4.gtf").getFile()));
+        BufferedReader s = new BufferedReader(new FileReader(sortedFile));
+        String l1;
+        try{
+            int c = 0;
+            while( (l1 = s.readLine()) != null){
+                System.out.println(l1);
+            }
+        }finally {
+            s.close();
+        }
+    }
 }
