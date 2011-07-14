@@ -290,7 +290,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "the distribution of fragments after filtering", relativePathParser);
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
             "Describes the method for subsampling fragments in order to meet the characteristics " +
-                    "of the filter Distribution (see SIZE_DISTRIBUTION)", SizeSamplingModes.AC, null);
+                    "of the filter Distribution (see SIZE_DISTRIBUTION)\n" +
+                    "\n" +
+                    "MH is a metropolis Hastings Filter\n" +
+                    "RJ is a rejection filter, picking the probability directly from the distribution\n" +
+                    "AC is a acceptance filter, picking the probability from the distribution, \n" +
+                    "   but stretching it such that the probability of the 'most likely' element in the distribution is\n" +
+                    "   stretched to 1.0.", SizeSamplingModes.AC, null);
 
     /*
       Sequencing

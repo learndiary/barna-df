@@ -51,7 +51,7 @@ public class FragmentFilterRejection implements FragmentProcessor {
 
     @Override
     public String getName() {
-        return "Segregating cDNA (Rejection Filter)";
+        return "Segregating cDNA ("+(!probDistr ? "Acceptance" : "Rejection")+")";
     }
 
     @Override

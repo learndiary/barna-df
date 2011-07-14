@@ -1,5 +1,6 @@
 package fbi.genome.errormodel;
 
+import com.sun.deploy.panel.ITreeNode;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.flux.FluxTool;
@@ -11,9 +12,8 @@ import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.util.ArrayList;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -58,7 +58,7 @@ public class MarkovErrorModel implements FluxTool {
     public File getInput() {
         return input;
     }
-    @Option(name = "i", longName = "input", description = "input file name")
+    @Option(name = "i", longName = "input", description = "model input file name")
     public void setInput(File input) {
         this.input = input;
     }
@@ -262,8 +262,8 @@ public class MarkovErrorModel implements FluxTool {
 
 
 
-        System.out.println(crossTalkQuality.toString());
-        System.out.println(crossTalkQuality.printStateTable());
+        //System.out.println(crossTalkQuality.toString());
+        //System.out.println(crossTalkQuality.printStateTable());
 
 
         if(plotDir != null){
@@ -357,10 +357,97 @@ public class MarkovErrorModel implements FluxTool {
                     .dataset("", readQuals.getDistribution())
                     .xBounds(0, 35)
                     .pdf(new File(dir, "averageQuality.pdf"), 500, 500);
-
-
         }
 
+
+
+        // custom data for correlation plots ?
+
+        // positions
+        int p_threshold = 25;
+        int q_thrshold = 5;
+
+        double[] ps = new double[p_threshold];
+        double[] pfs = new double[p_threshold];
+        double[] qfs = new double[35-q_thrshold]; // 35 quals - q_thrshold
+        double[] qs = new double[35-q_thrshold]; // 35 quals - q_thrshold
+
+        char[] chars = new char[]{'A', 'C','G','T', 'N'};
+
+
+        lengthDist.w.close();
+
+
+
+        for (int j = 0; j < chars.length; j++) {
+            for (int k = 0; k < chars.length; k++) {
+                if(j==k) continue;
+
+                // positions
+                double[][] ac = crossTalkPosition.getDistribution(chars[j], chars[k]);
+
+                /// write to file
+
+                File t = new File(plotDir, chars[j]+"-"+chars[k]+"-CT_positions.dat");
+                BufferedWriter w = new BufferedWriter(new FileWriter(t));
+
+                for (int l = 0; l < ac[0].length; l++) {
+                    w.write(ac[0][l] + "\t" + ac[1][l]+"\n");
+                }
+
+                w.close();
+
+                for (int l = 0; l < ps.length; l++) {
+                    ps[l] = l; // positions
+                    pfs[l] = ac[1][l]; // scores
+                }
+
+                double p1 = getPearsonCorrelation(ps, pfs);
+                if(Double.isNaN(p1)){
+                    //System.out.println("NaN pearson ...");
+                    continue;
+                }
+
+
+                // qualities
+                double[][] qc = crossTalkQuality.getDistribution(chars[j], chars[k]);
+                for (int l = 0; l < qs.length; l++) {
+                    qs[l] = qc[0][qs.length - (l+1) + q_thrshold]; // quality
+                    qfs[l] = qc[1][qs.length - (l+1) + q_thrshold]; // scores
+                }
+                double p2 = getPearsonCorrelation(qs, qfs);
+
+                if(Double.isNaN(p2)){continue;}
+
+                System.out.print(p1 + "\t");
+                System.out.println(p2);
+            }
+        }
         return null;
+    }
+
+
+    private static double getPearsonCorrelation(double[] scores1,double[] scores2){
+        double result = 0;
+        double sum_sq_x = 0;
+        double sum_sq_y = 0;
+        double sum_coproduct = 0;
+        double mean_x = scores1[0];
+        double mean_y = scores2[0];
+        for(int i=2;i<scores1.length+1;i+=1){
+            double sweep =Double.valueOf(i-1)/i;
+            double delta_x = scores1[i-1]-mean_x;
+            double delta_y = scores2[i-1]-mean_y;
+            sum_sq_x += delta_x * delta_x * sweep;
+            sum_sq_y += delta_y * delta_y * sweep;
+            sum_coproduct += delta_x * delta_y * sweep;
+            mean_x += delta_x / i;
+            mean_y += delta_y / i;
+        }
+        double pop_sd_x = (double) Math.sqrt(sum_sq_x/scores1.length);
+        double pop_sd_y = (double) Math.sqrt(sum_sq_y/scores1.length);
+        double cov_x_y = sum_coproduct / scores1.length;
+        result = cov_x_y / (pop_sd_x*pop_sd_y);
+        return result;
     }
 }
