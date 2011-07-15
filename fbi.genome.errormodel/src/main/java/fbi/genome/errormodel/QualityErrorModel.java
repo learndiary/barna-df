@@ -11,6 +11,8 @@
 
 package fbi.genome.errormodel;
 
+import fbi.commons.tools.Qualities;
+
 /**
  * Wraps around the markov error model and the crosstalk table
  *
@@ -25,6 +27,14 @@ public class QualityErrorModel {
      * the crosstalk table
      */
     private CrossTalkModel crossTalk;
+    /**
+     * The technology
+     */
+    private Qualities.Technology technology;
+    /**
+     * The read length
+     */
+    private int readLength;
 
     /**
      * INTERNAL : Empty constructor
@@ -38,7 +48,9 @@ public class QualityErrorModel {
      * @param qualityModel the quality model
      * @param crossTalk the crosstalk table
      */
-    public QualityErrorModel(final QualityTransitions qualityModel, final CrossTalkModel crossTalk) {
+    public QualityErrorModel(final Qualities.Technology technology, final int readLength, final QualityTransitions qualityModel, final CrossTalkModel crossTalk) {
+        this.technology = technology;
+        this.readLength = readLength;
         this.qualityModel = qualityModel;
         this.crossTalk = crossTalk;
     }
@@ -59,5 +71,22 @@ public class QualityErrorModel {
      */
     public CrossTalkModel getCrossTalk() {
         return crossTalk;
+    }
+
+    /**
+     * Get the technology used to create this model
+     * @return tech the technology used to create this model
+     */
+    public Qualities.Technology getTechnology() {
+        return technology;
+    }
+
+    /**
+     * Get the readlength of this model
+     *
+     * @return length read length
+     */
+    public int getReadLength() {
+        return readLength;
     }
 }

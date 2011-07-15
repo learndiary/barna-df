@@ -10,8 +10,6 @@ import java.util.regex.Pattern;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 class Read {
-
-   private static Pattern MISMATCH_PATTERN= Pattern.compile("([A,C,G,T,N,a,c,g,t,n]\\d{1,3}+)");
    private CharSequence name;
    private CharSequence sequence;
    private int length;

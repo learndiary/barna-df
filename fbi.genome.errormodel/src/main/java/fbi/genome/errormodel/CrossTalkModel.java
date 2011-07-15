@@ -30,6 +30,16 @@ public class CrossTalkModel {
      */
     private boolean qualities;
 
+    /**
+     * The number of scanned nucleotides
+     */
+    private long numberOfNucleotides;
+
+    /**
+     * The number of mutations
+     */
+    private long numberOfMutations;
+
 
     public CrossTalkModel(int states, boolean qualities) {
         super();
@@ -44,6 +54,7 @@ public class CrossTalkModel {
             return; // no mapping - skip this read
         }
 
+        numberOfNucleotides+=read.getLength();
         // add missmatches
         for (Read.Mapping mapping : mappings) {
             if(mapping.getMissmatches() != null){
@@ -53,31 +64,38 @@ public class CrossTalkModel {
                     char genomicCharacter = Character.toUpperCase(missmatch.getGenomicCharacter());
                     int p0 = Arrays.binarySearch(SYMBOLS, genomicCharacter);
                     int p1 = Arrays.binarySearch(SYMBOLS, readChar);
+                    numberOfMutations++;
+
                     int state = transitions.length == 1 ? 0 : qualities ? read.getQualities()[i] : i;
                     transitions[state][p0][p1]++;
                     counts[state][p0]++;
                 }
             }
-
         }
     }
 
     public char getTransition(int state, char from, double random){
-        int p0 = Arrays.binarySearch(SYMBOLS, from);
-        double sum = 0;
-        for (int i = 0; i < transitions.length; i++) {
-            state = transitions.length == 1 ? 0 : state;
-            double numberOfReadsFromQ0 = counts[state][p0];
-            if(numberOfReadsFromQ0 == 0) {
-                numberOfReadsFromQ0 = 1d/transitions.length; // equally distributed ?
-            }
 
-            sum += transitions[state][p0][i]/ numberOfReadsFromQ0;
-            if(sum >= random){
-                return SYMBOLS[i];
+        // make sure its upper case
+        from = Character.toUpperCase(from);
+        int p0 = Arrays.binarySearch(SYMBOLS, from);
+        state = transitions.length == 1 ? 0 : state;
+
+        if(p0 >= 0){
+            double sum = 0;
+            for (int i = 0; i < SYMBOLS.length; i++) {
+                double numberOfReadsFromQ0 = counts[state][p0];
+                if(numberOfReadsFromQ0 == 0) {
+                    numberOfReadsFromQ0 = 1d/transitions.length; // equally distributed ?
+                }
+
+                sum += transitions[state][p0][i]/ numberOfReadsFromQ0;
+                if(sum >= random){
+                    return SYMBOLS[i];
+                }
             }
         }
-        return SYMBOLS[SYMBOLS.length-1];
+        return from;
     }
 
     private double p(int state, int from, int to){
@@ -140,5 +158,14 @@ public class CrossTalkModel {
             d[1][k] = p(k,p0,p1);
         }
         return d;
+    }
+
+    /**
+     * Get the average number of mutations
+     *
+     * @return mutations average number of mutations
+     */
+    public double getAverageMutations(){
+        return (double)numberOfMutations/(double )numberOfNucleotides;
     }
 }

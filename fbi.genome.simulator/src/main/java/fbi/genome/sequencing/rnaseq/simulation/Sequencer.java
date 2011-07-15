@@ -13,9 +13,12 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
+import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
+import fbi.genome.errormodel.MarkovErrorModel;
+import fbi.genome.errormodel.QualityErrorModel;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.model.Exon;
@@ -24,6 +27,7 @@ import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.sequencing.rnaseq.simulation.error.ModelPool;
+import sun.nio.cs.ext.DoubleByteEncoder;
 
 import java.io.*;
 import java.util.Arrays;
@@ -69,7 +73,7 @@ public class Sequencer implements Callable<Void> {
      */
     private Hashtable<ByteArrayCharSequence, Long> map;
     /**
-     * Read propability
+     * Read probability
      */
     private double p = -1;
     /**
@@ -92,7 +96,7 @@ public class Sequencer implements Callable<Void> {
 
         /*
         Write initial zip file and collect the line number. This represents
-        the number of fragments written and is used to compute the propability
+        the number of fragments written and is used to compute the probability
         for a read to be sequenced
          */
         long noOfFragments = writeInitialFile(inFile, zipFile);
@@ -178,17 +182,47 @@ public class Sequencer implements Callable<Void> {
      *
      * @return success true if loaded
      */
-    public boolean loadErrors() { // todo : this should happen internally and protected or private
+    public boolean loadErrors() {
         // load model
-        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null) {
-            babes = ModelPool.read(settings.get(FluxSimulatorSettings.ERR_FILE), settings);
-            if (babes == null) {
-                return false;
+        String errorFile = settings.get(FluxSimulatorSettings.ERR_FILE);
+        if (errorFile != null && errorFile.length() > 0) {
+            QualityErrorModel errorModel;
+            try {
+                InputStream input = null;
+                String name = null;
+                if(errorFile.equals("35")){
+                    input = getClass().getResource("/35_error.model").openStream();
+                    name = "35 bases model";
+                }else if(errorFile.equals("76")){
+                    input = getClass().getResource("/76_error.model").openStream();
+                    name = "76 bases model";
+                }else {
+                    File file = new File(errorFile);
+                    if(!file.canRead()){
+                        throw new RuntimeException("unable to read error model from file " + errorFile);
+                    }
+                    input = new FileInputStream(file);
+                    name = file.getAbsolutePath();
+                }
+
+                errorModel = MarkovErrorModel.loadErrorModel(name, input);
+                babes = new ModelPool(true, errorModel);
+            } catch (IOException e) {
+                Log.error("Unable to load error model : " + e.getMessage(), e);
+                throw new RuntimeException("Unable to load error model : " + e.getMessage(), e);
             }
-            // check qualities for issued #48
-            if (!babes.hasQualities() && settings.get(FluxSimulatorSettings.FASTQ)) {
-                Log.warn("FastQ output requested, but the model does not support qualities. Disabled FastQ output!");
-                settings.set(FluxSimulatorSettings.FASTQ, false);
+
+            // check length
+            int readLength = settings.get(FluxSimulatorSettings.READ_LENGTH);
+            int modelLength = errorModel.getReadLength();
+            if(readLength > modelLength){
+                throw new RuntimeException("The error model supports a read length of " + modelLength + " but\n" +
+                        "you are trying to create reads of length "+ readLength +"! This is not supported. Please \n" +
+                        "use a different error model or reduce your read length!");
+            }
+            if(readLength < modelLength){
+                Log.warn("The error model supports a read length of " + modelLength + " but\n" +
+                        "you are trying to create reads of length " + readLength + "!");
             }
             return true;
         }
@@ -214,10 +248,10 @@ public class Sequencer implements Callable<Void> {
 
             File tmpFile = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
             File tmpFasta = null;
-            if (settings.get(FluxSimulatorSettings.FASTQ) && settings.get(FluxSimulatorSettings.GEN_DIR) != null) {
+            //if (settings.get(FluxSimulatorSettings.FASTQ) && settings.get(FluxSimulatorSettings.GEN_DIR) != null) {
                 tmpFasta = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
                 Graph.overrideSequenceDirPath = settings.get(FluxSimulatorSettings.GEN_DIR).getAbsolutePath();
-            }
+            //}
 
             map = new Hashtable<ByteArrayCharSequence, Long>(profiler.size());
 
@@ -255,6 +289,12 @@ public class Sequencer implements Callable<Void> {
             Log.message("\t" + writer.totalReads + " reads sequenced");
             Log.message("\t" + writer.countPolyAReads + " reads fall in poly-A tail");
             Log.message("\t" + writer.countTruncatedReads + " truncated reads");
+            if(tmpFasta != null && babes != null){
+                Log.message("");
+                Log.message("\tQuality stats: ");
+                Log.message("\t" + StringUtils.fprint(babes.getAverageMutations(), 2)+" % average mutations per sequence");
+                Log.message("\t" + StringUtils.fprint(babes.getAverageQuality(), 2)+" average quality ");
+            }
 
             // store reads
             totalReads = writer.totalReads;
@@ -284,7 +324,7 @@ public class Sequencer implements Callable<Void> {
     }
 
     private boolean hasQualities() {
-        return !(babes == null || !babes.hasQualities());
+        return true;
     }
 
     private File getFASTAfile() {
@@ -298,11 +338,11 @@ public class Sequencer implements Callable<Void> {
         int p1 = obj2.getNameP1(), p2 = obj2.getNameP2();
         cs.ensureLength(0, 1 + (p2 - p1));
         byte[] b = cs.chars;
-        b[0] = (babes == null || !babes.hasQualities()) ? BYTE_GT : BYTE_AT;
+        b[0] = (babes == null || true) ? BYTE_GT : BYTE_AT;
         ++cs.end;
         assert (p1 > 0 && p2 > 0);
-        System.arraycopy(a, p1, b, 1, p2 - p1);
-        cs.end += p2 - p1;
+        System.arraycopy(a, p1, b, 1, (p2 - p1));
+        cs.end += (p2 - p1);
         cs.append(BYTE_NL);
     }
 
@@ -319,9 +359,10 @@ public class Sequencer implements Callable<Void> {
      * @param fragStart fragment start
      * @param fragEnd   fragment end
      * @param left      read direction
+     * @param pairedEndSide paired end side, either 1 or 2 or 0 for no paired ends
      * @return bed the filled bed object
      */
-    private BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
+    private BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
         obj.clear();
         obj.append(CHR_POLYA);
         obj.append(BYTE_TAB);
@@ -329,7 +370,7 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         obj.append(end - start);
         obj.append(BYTE_TAB);
-        FMRD.appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, settings.get(FluxSimulatorSettings.PAIRED_END), left);
+        FMRD.appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -369,9 +410,10 @@ public class Sequencer implements Callable<Void> {
      * @param fragStart fragment start
      * @param fragEnd   fragment end
      * @param left      sens/antisense
+     * @param pairedEndSide either 1 or 2 or anything else if no pairedend reads are produced
      * @return polyA true if polya read
      */
-    private boolean createRead(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left) {
+    private boolean createRead(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
 
 
         int originalStart = start;
@@ -379,7 +421,7 @@ public class Sequencer implements Callable<Void> {
         int tlen = t.getExonicLength();
         boolean isPolyA = false;
         if (start > tlen) {
-            createReadPolyA(obj, start, end, t, molNr, absDir, fragStart, fragEnd, left);    // read in polyA tail
+            createReadPolyA(obj, start, end, t, molNr, absDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
             return true;
         }
         int offsStart = 0, offsEnd = 0;
@@ -431,7 +473,7 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         FMRD.appendReadName(obj, t,
                 molNr, absDir, fragStart, fragEnd,
-                originalStart, originalEnd, settings.get(FluxSimulatorSettings.PAIRED_END), left);
+                originalStart, originalEnd, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -498,7 +540,7 @@ public class Sequencer implements Callable<Void> {
         return null;
     }
 
-    private ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, byte absDir, byte tDir, int len, int flen/*int fstart, int fend, Transcript t*/) {
+    private ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, byte absDir, byte tDir, int len, int flen) {
 
         //int flen= fend- fstart+ 1;
         cs.ensureLength(cs.end, len);
@@ -616,10 +658,13 @@ public class Sequencer implements Callable<Void> {
                 Transcript t = gene.getTranscripts()[j];
                 String compID = baseID + t.getTranscriptID();
 
+
                 ZipEntry ze = zipHash.remove(compID);
                 if (ze == null) {
                     continue;    // not in frg file
                 }
+                boolean transcriptWritten = false;
+
 
                 InputStream is = null;
                 BufferedReader buffy = null;
@@ -646,43 +691,46 @@ public class Sequencer implements Callable<Void> {
                             fragments++;
                             k++;
                             if(pairedEnd){
-                                writer.writeRead(true, t, fstart, fend, k);
+                                int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
+                                writer.writeRead(true, dir,t, fstart, fend, k);
                                 ++cntPlus;
-                                writer.writeRead(false, t, fstart, fend, k);
+
+                                writer.writeRead(false, dir==1?2:1, t, fstart, fend, k);
                                 ++cntMinus;
                             }else{
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true, t, fstart, fend, k);
+                                    writer.writeRead(true, 0 ,t, fstart, fend, k);
                                     ++cntPlus;
                                 }else{
-                                    writer.writeRead(false, t, fstart, fend, k);
+                                    writer.writeRead(false, 0, t, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
+
                         }
 
                         // try for the rest
                         double r = rnd.nextDouble();
                         if (r < rest) {
                             if(pairedEnd){
-                                writer.writeRead(true, t, fstart, fend, k);
+                                int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
+                                writer.writeRead(true, dir, t, fstart, fend, k);
                                 ++cntPlus;
-                                writer.writeRead(false, t, fstart, fend, k);
+
+                                writer.writeRead(false,dir==1?2:1, t, fstart, fend, k);
                                 ++cntMinus;
                             }else{
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true, t, fstart, fend, k);
+                                    writer.writeRead(true,0, t, fstart, fend, k);
                                     ++cntPlus;
                                 }else{
-                                    writer.writeRead(false, t, fstart, fend, k);
+                                    writer.writeRead(false,0, t, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
                             ++k;
                             fragments++;
                         }
-
-
                     }
                 } catch (IOException e) {
                     Log.error("Error while reading zip entry in sequencer: " + e.getMessage(), e);
@@ -770,13 +818,14 @@ public class Sequencer implements Callable<Void> {
          * Process a transcript and write the read
          *
          * @param left   read direction
+         * @param pairedEndSide either 1 or 2 (or anything if no pairedend reads are produced)
          * @param t      the transcript
          * @param fstart the fragment start
          * @param fend   the fragment end
          * @param k      the molecule number
          * @throws IOException in case of any errors
          */
-        public void writeRead(boolean left, Transcript t, int fstart, int fend, int k) throws IOException {
+        public void writeRead(boolean left,int pairedEndSide, Transcript t, int fstart, int fend, int k) throws IOException {
             byte absDir = (byte) (t.getStrand() >= 0 ? 1 : -1);
             byte antiDir = (byte) (t.getStrand() >= 0 ? -1 : 1);
 
@@ -804,7 +853,7 @@ public class Sequencer implements Callable<Void> {
                     boolean polyA = createRead(obj,
                             fstart, Math.min(fstart + settings.get(FluxSimulatorSettings.READ_LENGTH) - 1, fend),     // start, end
                             t, k, absDir,
-                            fstart, fend, left);
+                            fstart, fend, left, pairedEndSide);
                     if (polyA) {
                         countPolyAReads++;
                     }
@@ -812,7 +861,7 @@ public class Sequencer implements Callable<Void> {
                     boolean polyA = createRead(obj,
                             Math.max(fend - settings.get(FluxSimulatorSettings.READ_LENGTH) + 1, fstart), fend,     // start, end
                             t, k, antiDir,
-                            fstart, fend, left);
+                            fstart, fend, left, pairedEndSide);
                     if (polyA) {
                         countPolyAReads++;
                     }

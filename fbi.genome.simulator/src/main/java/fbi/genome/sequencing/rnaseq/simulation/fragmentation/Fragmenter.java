@@ -27,6 +27,7 @@ import fbi.genome.sequencing.rnaseq.simulation.PWM;
 import fbi.genome.sequencing.rnaseq.simulation.Profiler;
 import fbi.genome.sequencing.rnaseq.simulation.ProfilerFile;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.Distributions;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
 import org.apache.commons.math.random.RandomDataImpl;
@@ -51,10 +52,6 @@ public class Fragmenter implements Callable<Void> {
     public static final byte MODE_AMPLIFICATION = 8;
 
     private static int GEL_NB_BINS_LENGTH = 100;
-
-    private static final char FILTER_DISTRIBUTION_NORMAL = 'N';
-    private static final char FILTER_DISTRIBUTION_UNIFORM = 'U';
-    private static final char FILTER_DISTRIBUTION_WEIBULL = 'W';
 
     /**
      * The profiler
@@ -110,19 +107,38 @@ public class Fragmenter implements Callable<Void> {
         // size selection
         Future<AbstractDistribution[]> sizeDistFuture = null;
         if (settings.get(FluxSimulatorSettings.FILTERING)) {
-            File sizeDist = settings.get(FluxSimulatorSettings.SIZE_DISTRIBUTION);
-            String distName = null;
-            if (sizeDist != null) {
-                distName = sizeDist.getAbsolutePath();
+            String distribution = settings.get(FluxSimulatorSettings.SIZE_DISTRIBUTION);
+
+            File sizeDist = null;
+            if(distribution !=null){
+                sizeDist = new File(distribution);
             }
 
-            final String finalDistName = distName;
-            sizeDistFuture = Execute.getExecutor().submit(new Callable<AbstractDistribution[]>() {
-                @Override
-                public AbstractDistribution[] call() throws Exception {
-                    return parseFilterDistribution(finalDistName, Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, false);
+
+            if(sizeDist == null || (sizeDist.exists() && sizeDist.canRead())){
+                String distName = null;
+                if (sizeDist != null) {
+                    distName = sizeDist.getAbsolutePath();
                 }
-            });
+
+                final String finalDistName = distName;
+                sizeDistFuture = Execute.getExecutor().submit(new Callable<AbstractDistribution[]>() {
+                    @Override
+                    public AbstractDistribution[] call() throws Exception {
+                        return parseFilterDistribution(finalDistName, Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, false);
+                    }
+                });
+            }else{
+                // try to parse the string to a distribution
+                try{
+                    AbstractDistribution dist = Distributions.parseDistribution(distribution);
+                    filterDist = new AbstractDistribution[]{dist};
+
+                    Log.info("Size Distribution : "+ dist.toString());
+                }catch (Exception e){
+                    throw new RuntimeException("Unable to parse size distribution from " + distribution, e);
+                }
+            }
         }
 
 
@@ -193,7 +209,13 @@ public class Fragmenter implements Callable<Void> {
         // size selection
         if (settings.get(FluxSimulatorSettings.FILTERING)) {
             Log.message("\t\tinitializing Selected Size distribution");
-            filterDist = sizeDistFuture.get();
+            if(sizeDistFuture != null){
+                filterDist = sizeDistFuture.get();
+            }else{
+                if(filterDist == null){
+                    throw new RuntimeException("Something went wrong! There is no size distribution !");
+                }
+            }
             EmpiricalDistribution eDist = ((EmpiricalDistribution) filterDist[0]);
             if (filterDist[0] instanceof EmpiricalDistribution) {
                 originalDist = parseFilterDistribution(tmpFile.getAbsolutePath(), eDist.getMin(), eDist.getMax(), eDist.getBins().length, true)[0];
@@ -442,9 +464,15 @@ public class Fragmenter implements Callable<Void> {
                         );
                         break;
                     case MODE_AMPLIFICATION:
+                        Integer rounds = settings.get(FluxSimulatorSettings.PCR_ROUNDS);
+                        Double mean = settings.get(FluxSimulatorSettings.GC_MEAN);
+                        if(rounds == 0){
+                            Log.info("LIBRARY", "0 PCR rounds configured, skipping amplification");
+                            return true;
+                        }
                         processor = new Amplification(
-                                settings.get(FluxSimulatorSettings.PCR_ROUNDS),
-                                settings.get(FluxSimulatorSettings.GC_MEAN),
+                                rounds,
+                                mean,
                                 settings.get(FluxSimulatorSettings.GC_SD),
                                 getMapTxSeq());
                         break;
@@ -809,40 +837,6 @@ public class Fragmenter implements Callable<Void> {
 //
 //        return d;
     }
-
-
-    private static AbstractDistribution parseFilterDistributionFunction(String s) {
-
-        // find parameter block delimiters
-        int p = s.indexOf('('), q = s.indexOf(')');
-        assert (p > 0 && q > p);
-
-        // parse parameters
-        String[] ss = s.substring(p + 1, q).split(",");
-        double[] par = new double[ss.length];
-        for (int i = 0; i < par.length; i++) {
-            par[i] = Double.parseDouble(ss[i]);
-        }
-
-        // nature of function
-        AbstractDistribution d = null;
-        if (s.charAt(p - 1) == FILTER_DISTRIBUTION_NORMAL) {
-            d = (par.length == 1 ? new NormalDistribution(par[0]) : new NormalDistribution(par[0], par[1]));
-        } else if (s.charAt(p - 1) == FILTER_DISTRIBUTION_UNIFORM) {
-            ; // TODO
-        } else if (s.charAt(p - 1) == FILTER_DISTRIBUTION_WEIBULL) {
-            ; // TODO
-        }
-
-        // weight (in sums of functions)
-        if (p > 1) {
-            double f = Double.parseDouble(s.substring(0, p - 1));
-            d.setWeight(f);
-        }
-
-        return d;
-    }
-
 
     /**
      * @param rnd

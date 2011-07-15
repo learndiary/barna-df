@@ -127,7 +127,24 @@ public class FluxSimulatorSettings extends ParameterSchema {
                 }
             }, relativePathParser);
     public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")));
-    public static final Parameter<File> ERR_FILE = Parameters.fileParameter("ERR_FILE_NAME", "Error model file", relativePathParser);
+    public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE", "Error model file\n" +
+            "\n" +
+            "You can use the default models '35' or '76' for the corresponding read lengths or\n" +
+            "specify a custom error model file\n", "", new ParameterValidator(){
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+            String v = schema.get(FluxSimulatorSettings.ERR_FILE);
+
+            if(v != null && v.length() > 0){
+                if(!v.equals("35") && !v.equals("76")){
+                    // check file
+                    if(!new File(v).canRead()){
+                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
+                    }
+                }
+            }
+        }
+    });
 
 
     public static final Parameter<Boolean> FASTQ = Parameters.booleanParameter("FASTQ", "Create FastQ output", false);
@@ -174,7 +191,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "Method applied for Fragmentation\n" +
             "[NB] Nebulization fragmentation method.\n" +
             "[UR] Uniformal random fragmentation method.\n" +
-            "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.NB, new ParameterValidator() {
+            "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.UR, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             if (schema.get(FRAG_METHOD) == FragmentationMethod.EZ) {
@@ -264,7 +281,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * GC mean
      */
-    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution", 0.5, 0.0, 1.0, null);
+    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution. Set this to 'NaN' to disable GC filtering.", 0.5, 0.0, 1.0, null);
     /**
      * GC sd
      */
@@ -286,8 +303,17 @@ public class FluxSimulatorSettings extends ParameterSchema {
     Size Selection
      */
     public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "turn filtering on/off", false);
-    public static final Parameter<File> SIZE_DISTRIBUTION = Parameters.fileParameter("SIZE_DISTRIBUTION", "Describes " +
-            "the distribution of fragments after filtering", relativePathParser);
+    public static final Parameter<String> SIZE_DISTRIBUTION = Parameters.stringParameter("SIZE_DISTRIBUTION", "Describes " +
+            "the distribution of fragments after filtering.\n" +
+            "You can either specify an file with an empirical distribution, where each line" +
+            "represents the length of a read (no ordering required).\n" +
+            "\n" +
+            "You can also specify a Normal-Distribution with mean and standard deviation using:\n" +
+            "\n" +
+            "N(mean, sd) \n" +
+            "\n" +
+            "for example: N(800, 200)"
+    );
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
             "Describes the method for subsampling fragments in order to meet the characteristics " +
                     "of the filter Distribution (see SIZE_DISTRIBUTION)\n" +

@@ -44,5 +44,8 @@ public abstract class AbstractDistribution {
         this.weight = weight;
     }
 
-
+    @Override
+    public String toString() {
+        return "Distribution mean: " + getMean();
+    }
 }

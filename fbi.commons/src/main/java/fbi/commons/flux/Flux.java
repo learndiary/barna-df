@@ -177,8 +177,9 @@ public class Flux {
                     Log.error("Error while executing " + tool.getClass(), ioError);
                 }
             } catch (Exception e) {
-                Log.error(e.getMessage(), e);
-                Log.debug("Error while executing " + tool.getClass(), e);
+                Log.error(e.getMessage());
+                Log.debug("\n\n");
+                Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
             } finally {
                 // shutdown the executor
                 Execute.shutdown();

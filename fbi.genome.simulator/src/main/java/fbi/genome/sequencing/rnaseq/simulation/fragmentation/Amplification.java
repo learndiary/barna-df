@@ -76,7 +76,9 @@ public class Amplification implements FragmentProcessor{
         this.mean = mean;
         this.sigma = sigma;
         this.mapTxSeq = mapTxSeq;
-        this.distribution = new NormalDistribution(mean, sigma);
+        if(!Double.isNaN(mean)){
+            this.distribution = new NormalDistribution(mean, sigma);
+        }
         this.maxFragments = Math.max(1,(long) Math.pow(2, rounds)-1);
     }
 
@@ -90,7 +92,10 @@ public class Amplification implements FragmentProcessor{
         Fragment fragment = new Fragment(id, start, end);
         fragments.add(fragment);
 
-        int nfragments = Math.max(1,(int) (maxFragments * gcp));
+        int nfragments = 1;
+        if(!Double.isNaN(mean)){
+            nfragments = Math.max(1,(int) (maxFragments * gcp));
+        }
         in++;
         out+=nfragments;
         fragment.setDuplicates(nfragments);

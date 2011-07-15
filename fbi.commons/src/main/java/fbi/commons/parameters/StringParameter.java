@@ -53,7 +53,7 @@ class StringParameter extends Parameter<String> {
 
     @Override
     void set(String value) {
-        if (values != null && !values.contains(value)) {
+        if (values != null && values.size() > 0 &&!values.contains(value)) {
             throw new IllegalArgumentException("Unknown value " + value + ". Must be one of " + values);
         }
         this.value = value;

@@ -303,8 +303,8 @@ public class SimulationPipeline implements FluxTool<Void> {
             }
         }
 
-        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null && !getSequencer().loadErrors()) {
-            throw new RuntimeException("The sequencer produced errors !"); // todo: describe the problem
+        if (settings.get(FluxSimulatorSettings.ERR_FILE) != null && settings.get(FluxSimulatorSettings.ERR_FILE).length() > 0 && !getSequencer().loadErrors()) {
+            throw new RuntimeException("Unable to load the error model! Specify a valid model or disable fasta/fastq output");
         }
 
         if (settings.get(FluxSimulatorSettings.SEQ_FILE) != null && settings.get(FluxSimulatorSettings.SEQ_FILE).exists() && settings.get(FluxSimulatorSettings.SEQ_FILE).canRead()) {

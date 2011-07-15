@@ -86,5 +86,4 @@ public class QualityTransitions {
         }
         return -1;
     }
-
 }

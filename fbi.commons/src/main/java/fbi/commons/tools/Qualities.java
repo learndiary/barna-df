@@ -64,6 +64,31 @@ public class Qualities {
         return -1;
     }
 
+    public static byte ascii(int value) {
+        return ascii(Technology.Illumina18, value);
+    }
+
+    /**
+     * Returns the Phred quality for the given character. Solexa qualities are converted
+     *
+     * @param tech  the technology
+     * @param value the value
+     * @return quality the phred quality
+     */
+    public static byte ascii(Technology tech, int value) {
+        switch (tech) {
+            case Phred:
+                return (byte) (value + PHRED_RANGE_ASCII[0]);
+            case Illumina13:
+                return (byte) (value + ILLUMINA_13_RANGE_ASCII[0]);
+            case Illumina18:
+                return (byte) (value + ILLUMINA_18_RANGE_ASCII[0]);
+            case Solexa:
+                return (byte) (value + SOLEXA_RANGE_ASCII[0]); // todo check solexa quality
+        }
+        return '-';
+    }
+
     /**
      * Get the probability for a given phred quality value
      *

@@ -1,6 +1,7 @@
 package fbi.genome.errormodel;
 
 import com.sun.deploy.panel.ITreeNode;
+import com.thoughtworks.xstream.XStream;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.flux.FluxTool;
@@ -14,6 +15,8 @@ import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -240,13 +243,28 @@ public class MarkovErrorModel implements FluxTool {
         Log.progressFinish(StringUtils.OK, true);
 
         Log.message("Writing model to " + getOutput().getAbsolutePath());
-        FileOutputStream out = new FileOutputStream(getOutput());
+        OutputStream out = new BufferedOutputStream(new FileOutputStream(getOutput()));
+        //OutputStream zipOut = new ZipOutputStream(out);
 
         // prepare model
-        QualityErrorModel qualityErrorModel = new QualityErrorModel(trans, crossTalkQuality);
-        Serializer.save(qualityErrorModel, out);
+        QualityErrorModel qualityErrorModel = new QualityErrorModel(technology, readLength, trans, crossTalkQuality);
+        //Serializer.save(qualityErrorModel, zipOut);
+        XStream ss = new XStream();
+        ss.toXML(qualityErrorModel, out);
 
         out.close();
+
+
+        // try to read just to make sure that
+        // the model is valid
+        try{
+            QualityErrorModel restoredModel = loadErrorModel(getOutput());
+            if(restoredModel == null){
+                throw new RuntimeException("Unable to load created model. Something went wrong while saving !");
+            }
+        }catch (Exception e){
+            throw new RuntimeException("Unable to load created model. Something went wrong while saving !", e);
+        }
 
         if (isPrintQualityDistribution()){
             System.out.println("QUALITY DISTRIBUTION");
@@ -359,6 +377,9 @@ public class MarkovErrorModel implements FluxTool {
                     .pdf(new File(dir, "averageQuality.pdf"), 500, 500);
         }
 
+        Log.message("\tError model stats");
+        Log.message("\t\tAverage mutations "+ crossTalkQuality.getAverageMutations());
+        Log.message("\t\tAverage quality "+ qualityDistribution.getAverageQuality());
 
 
         // custom data for correlation plots ?
@@ -428,13 +449,29 @@ public class MarkovErrorModel implements FluxTool {
 
     /**
      * Load an error model from file
-     * @return
-     * @throws IOException
+     *
+     * @return model the model
+     * @throws IOException in case of any errors
      */
-    public QualityErrorModel loadErrorModel(File file) throws IOException {
-        Log.message("Reading model from " + file.getAbsolutePath());
-        FileInputStream in = new FileInputStream(file);
-        QualityErrorModel trans = (QualityErrorModel) Serializer.load(in);
+    public static QualityErrorModel loadErrorModel(File file) throws IOException {
+        Log.info("Reading error model from " + file.getAbsolutePath());
+        InputStream in = new BufferedInputStream(new FileInputStream(file));
+        XStream xx = new XStream();
+        QualityErrorModel trans = (QualityErrorModel) xx.fromXML(in);
+        in.close();
+        return trans;
+    }
+    /**
+     * Load an error model from file
+     *
+     * @return input the input stream
+     * @throws IOException in case of any errors
+     */
+    public static QualityErrorModel loadErrorModel(String name, InputStream inputStream) throws IOException {
+        Log.info("Reading error model " +(name== null ? "":name) );
+        InputStream in = new BufferedInputStream(inputStream);
+        XStream xx = new XStream();
+        QualityErrorModel trans = (QualityErrorModel) xx.fromXML(in);
         in.close();
         return trans;
     }

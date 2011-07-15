@@ -26,6 +26,10 @@ public class NormalDistribution extends AbstractDistribution {
         this.sdSquare = Math.pow(sd, 2d);
     }
 
+    public double getSd() {
+        return sd;
+    }
+
     public double getP(double x) {
 
         return getP(x, getMean());
@@ -55,5 +59,11 @@ public class NormalDistribution extends AbstractDistribution {
     public double getMean() {
         return mean;
     }
+
+    @Override
+    public String toString() {
+        return "Normal-Distribution mean: " + getMean() + " SD: " + getSd();
+    }
+
 
 }

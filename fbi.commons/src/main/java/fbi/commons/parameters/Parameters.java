@@ -13,6 +13,7 @@ package fbi.commons.parameters;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * Helper class to create parameters
@@ -38,7 +39,7 @@ public class Parameters {
     }
 
     public static Parameter<String> stringParameter(String name, String description, String defaultValue, ParameterValidator validator, String... values) {
-        return new StringParameter(name, description, defaultValue, Arrays.asList(values), validator);
+        return new StringParameter(name, description, defaultValue, values == null ? Collections.EMPTY_LIST : Arrays.asList(values), validator);
     }
 
     public static Parameter<Boolean> booleanParameter(String name) {

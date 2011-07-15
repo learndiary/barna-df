@@ -36,7 +36,7 @@ public class FMRD implements ReadDescriptor {
 	public static final Pattern pattPE= Pattern.compile("^[P,p][1,2]");
 	public static final Pattern pattMM= Pattern.compile("^M\\d$");	//"^M\\d{}$" 
 
-	public static void appendReadName(BEDobject2 obj, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean pend, boolean sense) {
+	public static void appendReadName(BEDobject2 obj, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean sense, int pairedEndSide) {
 
 
 		// FURI
@@ -52,8 +52,8 @@ public class FMRD implements ReadDescriptor {
 		obj.append(BYTE_DELIM_FMOLI);
 		obj.append(fragEnd);
 		obj.append(BYTE_DELIM_FMOLI);
-        obj.append(sense ? fragStart : fragEnd);
-        obj.append(BYTE_DELIM_FMOLI);
+//        obj.append(sense ? fragStart : fragEnd);
+//        obj.append(BYTE_DELIM_FMOLI);
 
         //if(t.isForward()){ // read direction
         //if(absDir >= 0){ // read direction
@@ -71,10 +71,11 @@ public class FMRD implements ReadDescriptor {
 		//obj.append(readEnd);
 
 
-        if (pend) {
-			obj.append((byte) BYTE_DELIM_BARNA);
+        if (pairedEndSide == 1 || pairedEndSide == 2) {
+			obj.append(BYTE_DELIM_BARNA);
 			//obj.append((byte) FMRD.ID_PE);
-			obj.append((byte) (absDir== t.getStrand()? PE_OPT[0]: PE_OPT[1]));
+			//obj.append((byte) (absDir== t.getStrand()? PE_OPT[0]: PE_OPT[1]));
+            obj.append(pairedEndSide);
 		}
 
 
