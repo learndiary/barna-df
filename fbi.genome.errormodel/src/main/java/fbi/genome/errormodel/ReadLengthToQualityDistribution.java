@@ -1,17 +1,22 @@
-package fbi.genome.errormodel;
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+package fbi.genome.errormodel;
 
 /**
  * Distribution of the quality per read position
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class ReadLengthToQualityDistribution extends Distribution{
+class ReadLengthToQualityDistribution extends Distribution {
 
 
     //BufferedWriter w;
@@ -26,7 +31,7 @@ class ReadLengthToQualityDistribution extends Distribution{
 //        }
     }
 
-    public void addRead(Read read){
+    public void addRead(Read read) {
         reads++;
         int[] q = read.getQualities();
         for (int i = 0; i < size; i++) {

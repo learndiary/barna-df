@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.genome.errormodel;
 
 /**
@@ -8,7 +19,7 @@ public class QualityTransitions {
     /**
      * Transition matrix
      */
-    private long [][][] transitions;
+    private long[][][] transitions;
     /**
      * Number of reads
      */
@@ -42,7 +53,7 @@ public class QualityTransitions {
         initialDistribution = new int[size];
     }
 
-    void addRead(Read r){
+    void addRead(Read r) {
         numReads++;
         int[] readQualities = r.getQualities();
 
@@ -51,38 +62,38 @@ public class QualityTransitions {
 
         // positions 1..n transitions
         for (int i = 1; i < r.getLength(); i++) {
-                int q0 = readQualities[i-1];
-                int q1 = readQualities[i];
+            int q0 = readQualities[i - 1];
+            int q1 = readQualities[i];
 
-                transitions[i][q0][q1]++;
-                reads[i][q0]++;
+            transitions[i][q0][q1]++;
+            reads[i][q0]++;
         }
     }
 
 
-    public int getQuality(int position, int lastQualityValue, double random){
+    public int getQuality(int position, int lastQualityValue, double random) {
         // if start, sample from initial position 0 distribution
-        if(position == 0) return getInitialQuality(random);
+        if (position == 0) return getInitialQuality(random);
 
         // otherwise sample from transitions
         double sum = 0;
         for (int i = 0; i < size; i++) {
 
             double numberOfReadsFromQ0 = (double) reads[position][lastQualityValue];
-            if(numberOfReadsFromQ0 == 0) {
-                numberOfReadsFromQ0 = 1d/size; // equally distributed ?
+            if (numberOfReadsFromQ0 == 0) {
+                numberOfReadsFromQ0 = 1d / size; // equally distributed ?
             }
-            sum += transitions[position][lastQualityValue][i]/ numberOfReadsFromQ0;
-            if(sum >= random) return i;
+            sum += transitions[position][lastQualityValue][i] / numberOfReadsFromQ0;
+            if (sum >= random) return i;
         }
         return -1;
     }
 
-    private int getInitialQuality(double r){
+    private int getInitialQuality(double r) {
         double sum = 0;
         for (int i = 0; i < size; i++) {
-            sum += initialDistribution[i]/(double)numReads;
-            if(sum >= r) return i;
+            sum += initialDistribution[i] / (double) numReads;
+            if (sum >= r) return i;
         }
         return -1;
     }

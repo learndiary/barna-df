@@ -1,173 +1,202 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.genome.errormodel;
 
-import com.sun.deploy.panel.ITreeNode;
 import com.thoughtworks.xstream.XStream;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
+import fbi.commons.file.FileHelper;
 import fbi.commons.flux.FluxTool;
-import fbi.commons.io.Serializer;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.Qualities;
-import fbi.commons.tools.XYLinePlotter;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 /**
+ * Error model driver class to create error models from GEM mapping files.
+ * <p>
+ * For easy access to a stored model, use the {@link #loadErrorModel(java.io.File)}
+ * method.
+ * </p>
+ *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "model", description = "create markov error model")
+@Cli(name = "errormodel", description = "create an error model")
 public class MarkovErrorModel implements FluxTool {
-
+    /**
+     * The mapping file
+     */
     private File file;
+    /**
+     * The read length
+     */
     private int readLength;
+    /**
+     * The output file
+     */
     private File output;
-    private File input;
+    /**
+     * Limit number of reads that will be taken into account
+     */
     private int limit = -1;
-    private boolean printQualityDistribution;
-    private boolean printReadQualityDistribution;
-    private String plotDir;
+    /**
+     * The technology used
+     */
     private Qualities.Technology technology;
 
+    /**
+     * Get the mapping file
+     *
+     * @return file the mapping file
+     */
     public File getFile() {
         return file;
     }
-    @Option(name = "f", longName = "file",description = ".map input file")
+
+    /**
+     * Set the mapping file
+     *
+     * @param file the mapping file
+     */
+    @Option(name = "f", longName = "file", description = ".map input file", required = true)
     public void setFile(File file) {
         this.file = file;
     }
 
+    /**
+     * Get the readlength. Returns -1 if not set explicitly. In this case it is
+     * guessed.
+     *
+     * @return readLength the read length
+     */
     public int getReadLength() {
         return readLength;
     }
-    @Option(name = "l", longName="length", description = "read length", required = false)
+
+    /**
+     * Set the read length
+     *
+     * @param readLength the read length
+     */
+    @Option(name = "l", longName = "length", description = "read length", required = false)
     public void setReadLength(int readLength) {
+        if (readLength <= 0) {
+            throw new IllegalArgumentException("Read length <= 0 not permitted!");
+        }
         this.readLength = readLength;
     }
 
+    /**
+     * Get the output file name
+     *
+     * @return output the output filename
+     */
     public File getOutput() {
         return output;
     }
-    @Option(name = "o", longName = "output", description = "output file name")
+
+    /**
+     * Set the output filename
+     *
+     * @param output the output filename
+     */
+    @Option(name = "o", longName = "output", description = "output file name", required = true)
     public void setOutput(File output) {
         this.output = output;
     }
 
-    public File getInput() {
-        return input;
-    }
-    @Option(name = "i", longName = "input", description = "model input file name")
-    public void setInput(File input) {
-        this.input = input;
-    }
-
+    /**
+     * Returns the current sequence limit or -1
+     *
+     * @return limit the limit or -1
+     */
     public int getLimit() {
         return limit;
     }
-    @Option(name = "s", longName = "limit", description = "read limit number of sequences to create the model")
+
+    /**
+     * Set the current sequence limit
+     *
+     * @param limit the limit
+     */
+    @Option(name = "s", longName = "limit", description = "read limit number of sequences to create the model", required = false)
     public void setLimit(int limit) {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit <= 0 not permitted!");
+        }
         this.limit = limit;
     }
 
-    public boolean isPrintQualityDistribution() {
-        return printQualityDistribution;
-    }
-
-    @Option(name = "q", longName = "qualityDistribution", description = "print the quality distribution")
-    public void setPrintQualityDistribution(boolean printQualityDistribution) {
-        this.printQualityDistribution = printQualityDistribution;
-    }
-
-    public boolean isPrintReadQualityDistribution() {
-        return printReadQualityDistribution;
-    }
-
-    @Option(name = "r", longName = "readDistribution", description = "print the read quality distribution")
-    public void setPrintReadQualityDistribution(boolean printReadQualityDistribution) {
-        this.printReadQualityDistribution = printReadQualityDistribution;
-    }
-
-    public String getPlotDir() {
-        return plotDir;
-    }
-    @Option(name = "p", longName = "plots", description = "Directory to plot results")
-    public void setPlotDir(String plotDir) {
-        this.plotDir = plotDir;
-    }
-    @Option(name = "", longName = "tech", description = "Technology [phred|solexa|illumina13|illumina18]", required = false)
-    public void setTechnology(String technology){
-        if(technology != null && technology.length()>0){
+    /**
+     * Set the technology. This is used to properly translate quality characters
+     *
+     * @param technology the technology
+     */
+    @Option(name = "", longName = "tech", description = "Technology [phred|solexa|illumina13|illumina18]", required = true)
+    public void setTechnology(String technology) {
+        if (technology != null && technology.length() > 0) {
             technology = technology.trim();
-            if (technology.equalsIgnoreCase("phred")){
+            if (technology.equalsIgnoreCase("phred")) {
                 this.technology = Qualities.Technology.Phred;
-            }else if(technology.equalsIgnoreCase("solexa")){
+            } else if (technology.equalsIgnoreCase("solexa")) {
                 this.technology = Qualities.Technology.Solexa;
-            }else if(technology.equalsIgnoreCase("illumina13")){
+            } else if (technology.equalsIgnoreCase("illumina13")) {
                 this.technology = Qualities.Technology.Illumina13;
-            }else if(technology.equalsIgnoreCase("illumina18")){
+            } else if (technology.equalsIgnoreCase("illumina18")) {
                 this.technology = Qualities.Technology.Illumina18;
             }
         }
     }
 
     public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
-        if(getInput() != null){
-            if(!getInput().exists()){
-                printer.out.print("Model input file "+ getInput() + " not found!");
-                printer.print(toolArguments);
-                return false;
-            }
-            return true;
-        }
-
-        if(getFile() == null){
+        if (getFile() == null) {
             printer.out.println("No input file specified!\n");
             printer.print(toolArguments);
             return false;
-        }else if(!getFile().exists()){
+        } else if (!getFile().exists()) {
             printer.out.println(getFile().getAbsolutePath() + " does not exist!\n");
             printer.print(toolArguments);
             return false;
         }
-        if(getOutput() == null){
+        if (getOutput() == null) {
             printer.out.println("Please specify an output file!\n");
             printer.print(toolArguments);
             return false;
         }
 
-        if(technology == null){
+        if (technology == null) {
             printer.out.println("No technology specified, please specify the technology used to create the quality scores!\n");
             printer.print(toolArguments);
-
         }
+
         return true;
     }
 
     public Object call() throws Exception {
-        if(getInput() != null){
-            QualityErrorModel trans = loadErrorModel(file);
-            return trans;
-        }
-
-
-
-        if(getReadLength() == 0){
+        if (getReadLength() == 0) {
             Log.message("No read length specified (-l). Trying to figure the read length");
             MapFileReader reader = new MapFileReader(getFile(), technology);
             int reads = 0;
             // check the first 10 reads
-            while(reads++ < 10){
+            while (reads++ < 10) {
                 Read read = reader.parseNext(false);
-                if(read == null) break;
-                if(readLength == 0){
+                if (read == null) break;
+                if (readLength == 0) {
                     readLength = read.getLength();
-                }else{
-                    if(readLength != read.getLength()){
+                } else {
+                    if (readLength != read.getLength()) {
                         Log.error("Looks like your reads are of different length ... sorry ... I can not handle that!");
                         return null;
                     }
@@ -175,7 +204,7 @@ public class MarkovErrorModel implements FluxTool {
             }
             reader.close();
 
-            if(readLength == 0){
+            if (readLength == 0) {
                 Log.error("Unable to figure out the read length");
                 return null;
             }
@@ -184,15 +213,20 @@ public class MarkovErrorModel implements FluxTool {
         }
 
         int numStates = Qualities.PHRED_RANGE[1];
-        switch (technology){
-            case Phred:numStates = Qualities.PHRED_RANGE[1];break;
-            case Solexa:numStates = Qualities.SOLEXA_RANGE[1];break;
-            case Illumina13:numStates = Qualities.ILLUMINA_13_RANGE[1];break;
-            case Illumina18:numStates = Qualities.ILLUMINA_18_RANGE[1];break;
+        switch (technology) {
+            case Phred:
+                numStates = Qualities.PHRED_RANGE[1];
+                break;
+            case Solexa:
+                numStates = Qualities.SOLEXA_RANGE[1];
+                break;
+            case Illumina13:
+                numStates = Qualities.ILLUMINA_13_RANGE[1];
+                break;
+            case Illumina18:
+                numStates = Qualities.ILLUMINA_18_RANGE[1];
+                break;
         }
-
-
-
 
         Log.progressStart("Creating Markov Model");
         MapFileReader reader = new MapFileReader(getFile(), technology);
@@ -205,24 +239,22 @@ public class MarkovErrorModel implements FluxTool {
         CrossTalkModel crossTalkPosition = new CrossTalkModel(readLength, false);
 
         // charachter quality distributions
-        CharacterQualityDistribution dA = new CharacterQualityDistribution('A',numStates);
-        CharacterQualityDistribution dC = new CharacterQualityDistribution('C',numStates);
-        CharacterQualityDistribution dG = new CharacterQualityDistribution('G',numStates);
-        CharacterQualityDistribution dT = new CharacterQualityDistribution('T',numStates);
-        CharacterQualityDistribution dN = new CharacterQualityDistribution('N',numStates);
+        CharacterQualityDistribution dA = new CharacterQualityDistribution('A', numStates);
+        CharacterQualityDistribution dC = new CharacterQualityDistribution('C', numStates);
+        CharacterQualityDistribution dG = new CharacterQualityDistribution('G', numStates);
+        CharacterQualityDistribution dT = new CharacterQualityDistribution('T', numStates);
+        CharacterQualityDistribution dN = new CharacterQualityDistribution('N', numStates);
 
         int c = 0;
         Read read = null;
-
-        while((read = reader.parseNext(false)) != null && (limit < 0 || c < limit )){
-            // TEST only seq that mapped to something NOT a chromosome
-            if(read.getMappings() == null || read.getMappings().size() == 0){
+        int sum = limit;
+        if (sum <= 0) {
+            sum = FileHelper.countLines(getFile());
+        }
+        while ((read = reader.parseNext(false)) != null && (limit < 0 || c < limit)) {
+            if (read.getMappings() == null || read.getMappings().size() == 0) {
                 continue;
             }
-
-            //for (Read.Mapping mapping : read.getMappings()) {
-            //    if(!mapping.getName().startsWith("chr")) continue;
-            //}
 
             trans.addRead(read);
             readQuals.addRead(read);
@@ -236,214 +268,35 @@ public class MarkovErrorModel implements FluxTool {
             dG.addRead(read);
             dT.addRead(read);
             dN.addRead(read);
-
-
-            Log.progress(c++,limit);
+            Log.progress(c++, sum);
         }
         Log.progressFinish(StringUtils.OK, true);
 
-        Log.message("Writing model to " + getOutput().getAbsolutePath());
+        Log.info("Writing model to " + getOutput().getAbsolutePath());
         OutputStream out = new BufferedOutputStream(new FileOutputStream(getOutput()));
-        //OutputStream zipOut = new ZipOutputStream(out);
-
         // prepare model
         QualityErrorModel qualityErrorModel = new QualityErrorModel(technology, readLength, trans, crossTalkQuality);
-        //Serializer.save(qualityErrorModel, zipOut);
         XStream ss = new XStream();
         ss.toXML(qualityErrorModel, out);
-
         out.close();
 
 
         // try to read just to make sure that
         // the model is valid
-        try{
+        try {
+            Log.info("Validating model");
             QualityErrorModel restoredModel = loadErrorModel(getOutput());
-            if(restoredModel == null){
+            if (restoredModel == null) {
                 throw new RuntimeException("Unable to load created model. Something went wrong while saving !");
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException("Unable to load created model. Something went wrong while saving !", e);
         }
 
-        if (isPrintQualityDistribution()){
-            System.out.println("QUALITY DISTRIBUTION");
-            System.out.println(qualityDistribution.toString());
-        }
-        if(isPrintReadQualityDistribution()){
-            System.out.println("READ LENGTH");
-            System.out.println(readQuals.toString());
-        }
+        Log.info("\tError model stats");
+        Log.info("\t\tAverage mutations " + crossTalkQuality.getAverageMutations());
+        Log.info("\t\tAverage quality " + qualityDistribution.getAverageQuality());
 
-        //System.out.println("QUALITY PER POSITION");
-        //System.out.println(lengthDist.toString());
-
-
-
-        //System.out.println(crossTalkQuality.toString());
-        //System.out.println(crossTalkQuality.printStateTable());
-
-
-        if(plotDir != null){
-            File dir = new File(plotDir);
-            dir.mkdirs();
-
-            /// plot crosstalk quality
-            new XYLinePlotter("CrossTalk A", "Quality", "Rate")
-            .dataset("A->C", crossTalkQuality.getDistribution('A', 'C'))
-            .dataset("A->G", crossTalkQuality.getDistribution('A', 'G'))
-            .dataset("A->T", crossTalkQuality.getDistribution('A', 'T'))
-            .dataset("A->N", crossTalkQuality.getDistribution('A', 'N'))
-            .pdf(new File(dir, "crosstalk-A.pdf"), 500, 500);
-
-            new XYLinePlotter("CrossTalk C", "Quality", "Rate")
-            .dataset("C->A", crossTalkQuality.getDistribution('C', 'A'))
-            .dataset("C->G", crossTalkQuality.getDistribution('C', 'G'))
-            .dataset("C->T", crossTalkQuality.getDistribution('C', 'T'))
-            .dataset("C->N", crossTalkQuality.getDistribution('C', 'N'))
-            .pdf(new File(dir, "crosstalk-C.pdf"), 500, 500);
-
-            new XYLinePlotter("CrossTalk G", "Quality", "Rate")
-            .dataset("G->A", crossTalkQuality.getDistribution('G', 'A'))
-            .dataset("G->C", crossTalkQuality.getDistribution('G', 'C'))
-            .dataset("G->T", crossTalkQuality.getDistribution('G', 'T'))
-            .dataset("G->N", crossTalkQuality.getDistribution('G', 'N'))
-            .pdf(new File(dir, "crosstalk-G.pdf"), 500, 500);
-
-            new XYLinePlotter("CrossTalk T", "Quality", "Rate")
-            .dataset("T->A", crossTalkQuality.getDistribution('T', 'A'))
-            .dataset("T->C", crossTalkQuality.getDistribution('T', 'C'))
-            .dataset("T->G", crossTalkQuality.getDistribution('T', 'G'))
-            .dataset("T->N", crossTalkQuality.getDistribution('T', 'N'))
-            .pdf(new File(dir, "crosstalk-T.pdf"), 500, 500);
-
-
-
-            /// plot crosstalk position
-            new XYLinePlotter("CrossTalk A", "Position", "Rate")
-            .dataset("A->C", crossTalkPosition.getDistribution('A', 'C'))
-            .dataset("A->G", crossTalkPosition.getDistribution('A', 'G'))
-            .dataset("A->T", crossTalkPosition.getDistribution('A', 'T'))
-            .dataset("A->N", crossTalkPosition.getDistribution('A', 'N'))
-            .pdf(new File(dir, "crosstalkPosition-A.pdf"), 500, 500);
-
-            new XYLinePlotter("CrossTalk C", "Position", "Rate")
-            .dataset("C->A", crossTalkPosition.getDistribution('C', 'A'))
-            .dataset("C->G", crossTalkPosition.getDistribution('C', 'G'))
-            .dataset("C->T", crossTalkPosition.getDistribution('C', 'T'))
-            .dataset("C->N", crossTalkPosition.getDistribution('C', 'N'))
-            .pdf(new File(dir, "crosstalkPosition-C.pdf"), 500, 500);
-
-            new XYLinePlotter("CrossTalk G", "Position", "Rate")
-            .dataset("G->A", crossTalkPosition.getDistribution('G', 'A'))
-            .dataset("G->C", crossTalkPosition.getDistribution('G', 'C'))
-            .dataset("G->T", crossTalkPosition.getDistribution('G', 'T'))
-            .dataset("G->N", crossTalkPosition.getDistribution('G', 'N'))
-            .pdf(new File(dir, "crosstalkPosition-G.pdf"), 500, 500);
-
-            new XYLinePlotter("CrossTalk T", "Position", "Rate")
-            .dataset("T->A", crossTalkPosition.getDistribution('T', 'A'))
-            .dataset("T->C", crossTalkPosition.getDistribution('T', 'C'))
-            .dataset("T->G", crossTalkPosition.getDistribution('T', 'G'))
-            .dataset("T->N", crossTalkPosition.getDistribution('T', 'N'))
-            .pdf(new File(dir, "crosstalkPosition-T.pdf"), 500, 500);
-
-
-
-            /// plot character distributions
-            File characters2QualPDF = new File(dir, "characters2Qualities.pdf");
-            XYLinePlotter c2qPlotter = new XYLinePlotter("Characters 2 Qualities", "Quality", "% Characters");
-
-            c2qPlotter.dataset("A", dA.getDistribution());
-            c2qPlotter.dataset("C", dC.getDistribution());
-            c2qPlotter.dataset("G", dG.getDistribution());
-            c2qPlotter.dataset("T", dT.getDistribution());
-            c2qPlotter.dataset("N", dN.getDistribution());
-
-            c2qPlotter.yBounds(0, 1.0);
-
-            c2qPlotter.pdf(characters2QualPDF, 500, 500);
-
-
-
-            // print read length 2 quality
-            new XYLinePlotter("Read Length 2 Quality", "Position", "Quality")
-                    .dataset("", lengthDist.getDistribution())
-                    .pdf(new File(dir, "length2Quality.pdf"),500,500);
-
-            new XYLinePlotter("Quality Distribution", "Rate", "Quality")
-                    .dataset("", readQuals.getDistribution())
-                    .xBounds(0, 35)
-                    .pdf(new File(dir, "averageQuality.pdf"), 500, 500);
-        }
-
-        Log.message("\tError model stats");
-        Log.message("\t\tAverage mutations "+ crossTalkQuality.getAverageMutations());
-        Log.message("\t\tAverage quality "+ qualityDistribution.getAverageQuality());
-
-
-        // custom data for correlation plots ?
-
-        // positions
-        int p_threshold = 25;
-        int q_thrshold = 5;
-
-//        double[] ps = new double[p_threshold];
-//        double[] pfs = new double[p_threshold];
-//        double[] qfs = new double[35-q_thrshold]; // 35 quals - q_thrshold
-//        double[] qs = new double[35-q_thrshold]; // 35 quals - q_thrshold
-//
-//        char[] chars = new char[]{'A', 'C','G','T', 'N'};
-//
-//
-//        lengthDist.w.close();
-
-
-
-//        for (int j = 0; j < chars.length; j++) {
-//            for (int k = 0; k < chars.length; k++) {
-//                if(j==k) continue;
-//
-//                // positions
-//                double[][] ac = crossTalkPosition.getDistribution(chars[j], chars[k]);
-//
-//                /// write to file
-//
-//                File t = new File(plotDir, chars[j]+"-"+chars[k]+"-CT_positions.dat");
-//                BufferedWriter w = new BufferedWriter(new FileWriter(t));
-//
-//                for (int l = 0; l < ac[0].length; l++) {
-//                    w.write(ac[0][l] + "\t" + ac[1][l]+"\n");
-//                }
-//
-//                w.close();
-//
-//                for (int l = 0; l < ps.length; l++) {
-//                    ps[l] = l; // positions
-//                    pfs[l] = ac[1][l]; // scores
-//                }
-//
-//                double p1 = getPearsonCorrelation(ps, pfs);
-//                if(Double.isNaN(p1)){
-//                    //System.out.println("NaN pearson ...");
-//                    continue;
-//                }
-//
-//
-//                // qualities
-//                double[][] qc = crossTalkQuality.getDistribution(chars[j], chars[k]);
-//                for (int l = 0; l < qs.length; l++) {
-//                    qs[l] = qc[0][qs.length - (l+1) + q_thrshold]; // quality
-//                    qfs[l] = qc[1][qs.length - (l+1) + q_thrshold]; // scores
-//                }
-//                double p2 = getPearsonCorrelation(qs, qfs);
-//
-//                if(Double.isNaN(p2)){continue;}
-//
-//                System.out.print(p1 + "\t");
-//                System.out.println(p2);
-//            }
-//        }
         return null;
     }
 
@@ -461,6 +314,7 @@ public class MarkovErrorModel implements FluxTool {
         in.close();
         return trans;
     }
+
     /**
      * Load an error model from file
      *
@@ -468,42 +322,11 @@ public class MarkovErrorModel implements FluxTool {
      * @throws IOException in case of any errors
      */
     public static QualityErrorModel loadErrorModel(String name, InputStream inputStream) throws IOException {
-        Log.info("Reading error model " +(name== null ? "":name) );
+        Log.info("Reading error model " + (name == null ? "" : name));
         InputStream in = new BufferedInputStream(inputStream);
         XStream xx = new XStream();
         QualityErrorModel trans = (QualityErrorModel) xx.fromXML(in);
         in.close();
         return trans;
-    }
-
-    /**
-     * Helper to compute pearson
-     *
-     * @param scores1 v1
-     * @param scores2 v2
-     * @return pearson
-     */
-    private static double getPearsonCorrelation(double[] scores1,double[] scores2){
-        double result = 0;
-        double sum_sq_x = 0;
-        double sum_sq_y = 0;
-        double sum_coproduct = 0;
-        double mean_x = scores1[0];
-        double mean_y = scores2[0];
-        for(int i=2;i<scores1.length+1;i+=1){
-            double sweep =Double.valueOf(i-1)/i;
-            double delta_x = scores1[i-1]-mean_x;
-            double delta_y = scores2[i-1]-mean_y;
-            sum_sq_x += delta_x * delta_x * sweep;
-            sum_sq_y += delta_y * delta_y * sweep;
-            sum_coproduct += delta_x * delta_y * sweep;
-            mean_x += delta_x / i;
-            mean_y += delta_y / i;
-        }
-        double pop_sd_x = (double) Math.sqrt(sum_sq_x/scores1.length);
-        double pop_sd_y = (double) Math.sqrt(sum_sq_y/scores1.length);
-        double cov_x_y = sum_coproduct / scores1.length;
-        result = cov_x_y / (pop_sd_x*pop_sd_y);
-        return result;
     }
 }

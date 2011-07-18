@@ -1,3 +1,14 @@
+/*
+ * This file is part of the Flux Library.
+ *
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
+ */
+
 package fbi.genome.errormodel;
 
 import fbi.commons.tools.Qualities;
@@ -17,12 +28,12 @@ public class MapFileReaderTest {
     private static File testfile;
 
     @BeforeClass
-    public static void setUp(){
+    public static void setUp() {
         testfile = new File(MapFileReaderTest.class.getResource("/test.map").getFile());
     }
 
     @Test
-    public void testReadOne(){
+    public void testReadOne() {
         MapFileReader reader = new MapFileReader(testfile, Qualities.Technology.Phred);
         try {
             Read read1 = reader.parseNext(false);
@@ -34,12 +45,13 @@ public class MapFileReaderTest {
         } catch (IOException e) {
             e.printStackTrace();
             fail();
-        }finally {
+        } finally {
             reader.close();
         }
     }
+
     @Test
-    public void testReadMappings(){
+    public void testReadMappings() {
         MapFileReader reader = new MapFileReader(testfile, Qualities.Technology.Phred);
         try {
             Read read1 = reader.parseNext(false);
@@ -66,7 +78,7 @@ public class MapFileReaderTest {
         } catch (IOException e) {
             e.printStackTrace();
             fail();
-        }finally {
+        } finally {
             reader.close();
         }
     }
