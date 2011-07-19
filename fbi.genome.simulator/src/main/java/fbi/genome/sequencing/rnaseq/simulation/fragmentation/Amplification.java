@@ -65,6 +65,13 @@ public class Amplification implements FragmentProcessor{
     private long maxFragments = 0;
 
     /**
+     * Radom sampler
+     */
+    private Random random;
+
+
+
+    /**
      * Create a new instance
      *
      * @param rounds number of rounds to perform
@@ -80,6 +87,7 @@ public class Amplification implements FragmentProcessor{
             this.distribution = new NormalDistribution(mean, sigma);
         }
         this.maxFragments = Math.max(1,(long) Math.pow(2, rounds)-1);
+        this.random = new Random();
     }
 
     @Override
