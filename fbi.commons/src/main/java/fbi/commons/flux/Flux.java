@@ -24,17 +24,14 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 
 /**
@@ -116,7 +113,7 @@ public class Flux {
 
         // start
         if (FLUX_VERSION.length() > 0 && FLUX_REVISION.length() > 0) {
-            Log.info("I am the Flux Toolbox (v" + FLUX_VERSION + " build" + FLUX_REVISION + "), nice to meet you!\n");
+            Log.info("I am the Flux Toolbox (v" + FLUX_VERSION + " build " + FLUX_REVISION + "), nice to meet you!\n");
         } else {
             Log.info("I am the Flux Toolbox ( Devel Mode ), nice to meet you!\n");
         }
@@ -353,25 +350,17 @@ public class Flux {
         /*
         Find the manifest file and extract version revision adn jdk information
          */
-        URL location = Flux.class.getResource("Flux.class");
-        String fileString = location.toExternalForm();
-        File jar = null;
-        if (fileString.startsWith("jar")) {
-            fileString = fileString.substring(9);
-            fileString = fileString.substring(0, fileString.lastIndexOf("!"));
-            jar = new File(fileString);
-        }
+        URL location = Flux.class.getResource("/flux.properties");
         String buildVersion = "";
         String buildRevision = "";
         String buildJDK = "";
-        if (jar != null) {
+        if (location != null) {
             try {
-                JarFile jf = new JarFile(jar);
-                Manifest manifest = jf.getManifest();
-                Attributes mainAttributes = manifest.getMainAttributes();
-                Object v = mainAttributes.getValue("Build-Version");
-                Object r = mainAttributes.getValue("Build-Revision");
-                Object j = mainAttributes.getValue("Flux-JDK");
+                Properties pp = new Properties();
+                pp.load(location.openStream());
+                String v = pp.getProperty("Build-Version");
+                String r = pp.getProperty("buildNumber");
+                String j = pp.getProperty("Flux-JDK");
                 if (v != null) {
                     buildVersion = v.toString();
                 }
