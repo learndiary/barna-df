@@ -205,7 +205,7 @@ public class Sequencer implements Callable<Void> {
                 }
 
                 errorModel = MarkovErrorModel.loadErrorModel(name, input);
-                babes = new ModelPool(true, errorModel);
+                babes = new ModelPool(settings.get(FluxSimulatorSettings.FASTQ), errorModel);
             } catch (IOException e) {
                 Log.error("Unable to load error model : " + e.getMessage(), e);
                 throw new RuntimeException("Unable to load error model : " + e.getMessage(), e);
@@ -247,10 +247,11 @@ public class Sequencer implements Callable<Void> {
 
             File tmpFile = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
             File tmpFasta = null;
-            //if (settings.get(FluxSimulatorSettings.FASTQ) && settings.get(FluxSimulatorSettings.GEN_DIR) != null) {
+
+            if (settings.get(FluxSimulatorSettings.GEN_DIR) != null && settings.get(FluxSimulatorSettings.ERR_FILE) != null) {
                 tmpFasta = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
                 Graph.overrideSequenceDirPath = settings.get(FluxSimulatorSettings.GEN_DIR).getAbsolutePath();
-            //}
+            }
 
             map = new Hashtable<ByteArrayCharSequence, Long>(profiler.size());
 
@@ -323,7 +324,7 @@ public class Sequencer implements Callable<Void> {
     }
 
     private boolean hasQualities() {
-        return true;
+        return settings.get(FluxSimulatorSettings.FASTQ);
     }
 
     private File getFASTAfile() {
