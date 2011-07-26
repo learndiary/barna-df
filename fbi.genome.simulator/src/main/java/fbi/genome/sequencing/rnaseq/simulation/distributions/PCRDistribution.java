@@ -18,7 +18,12 @@ import org.apache.commons.math.special.Gamma;
 import java.util.Arrays;
 
 /**
- * PCR amplification distribution
+ * PCR amplification distribution for a given duplication probability
+ * and a given number of generations.
+ * <p>
+ *     To compute a new distribution, use the static {@link #create(int, double)} method.
+ * </p>
+ *
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -26,7 +31,7 @@ public class PCRDistribution {
     /**
      * Gamma cache for creation
      */
-    private static double[] gammaCache;
+    private double[] gammaCache;
     /**
      * Number of generations
      */
@@ -38,37 +43,70 @@ public class PCRDistribution {
     /**
      * Distribution
      */
-    private double[] v;
+    double[] v;
 
+
+
+    /**
+     * Creaet a new instance with the given number of generations, a given duplication
+     * probability and the probability distribution
+     *
+     * @param generations the number of generations
+     * @param p the duplication probability
+     * @param v the probability distribution
+     */
     public PCRDistribution(final int generations, final double p, final double[] v) {
         this.generations = generations;
         this.p = p;
         this.v = v;
     }
 
+    /**
+     * INTERNAL: create an empty distributtion
+     *
+     * @param generations
+     * @param p
+     */
+    protected PCRDistribution(final int generations, final double p) {
+        this(generations, p, null);
+    }
+
+    /**
+     * Get the next sample from the probability distribution
+     *
+     * @param random a random value {@code 0<=r<=1.0}
+     * @return sample a sample from the distribution
+     */
     public int getNext(double random){
         double s = 0;
+        int zeroIndex = -1;
         for (int i = 0; i < v.length; i++) {
             s += v[i];
             if(s >= random){
                 return i;
             }
+            if(v[i] == 0 && zeroIndex < 0) zeroIndex = i;
+            else if(v[i] > 0) zeroIndex = -1;
         }
-        return v.length-1;
+        return zeroIndex > 0 ? zeroIndex-1 : v.length-1;
     }
 
 
-
-    private static void initCache(int generations){
+    /**
+     * Helper method to initialize the gamma cache for a given number of generations
+     *
+     * @param generations the number of generations
+     */
+    private void initCache(int generations){
         gammaCache = new double[(int) Math.pow(2, generations)];
         Arrays.fill(gammaCache, -1);
     }
 
-    private static double logbico(double n, double k){
+    private double logbico(double n, double k){
         return factln(n) - factln(k) - factln(n-k);
     }
 
-    private static double factln(final double n) {
+    private double factln(final double n) {
         if(n >= gammaCache.length) return Gamma.logGamma(n + 1.0);
         if(gammaCache[((int) n)] < 0){
             gammaCache[((int) n)] = Gamma.logGamma(n + 1.0);
@@ -76,13 +114,14 @@ public class PCRDistribution {
         return gammaCache[((int) n)];
     }
 
-    private static double pbico(double n, double k, double p){
+    private double pbico(double n, double k, double p){
         if (n<k) return 0;
         double v = logbico(n,k) + (Math.log(p) * k) + (Math.log(1 - p) * (n - k));
         return Math.exp(v);
     }
 
-    private static double psd(int n, double p, double[] v){
+
+    private double psd(int n, double p, double[] v){
         int n2 = (int) Math.floor(n/2.0);
         double sum = 0;
         for (int k = 0; k <= n2; k++) {
@@ -98,10 +137,18 @@ public class PCRDistribution {
         return sum;
     }
 
+    /**
+     * Compute a new distribution. Note that the running time grows
+     * exponentially with the number of generations
+     *
+     * @param generations the number of generations
+     * @param p the duplication probability
+     * @return distribution the distribution
+     */
     public static PCRDistribution create(int generations, double p){
-
-        Log.progressStart("Creating PCR Distributions (p=" + p + ", generations=" + generations + ")");
-        initCache(generations);
+        Log.progressStart("Creating PCR Distributions (p=" + StringUtils.fprint(p, 2) + ", generations=" + generations + ")");
+        PCRDistribution dist = new PCRDistribution(generations, p);
+        dist.initCache(generations);
         double[] v = null;
         for(int j=1; j<= generations; j++ ){
             Log.progress(j, generations);
@@ -113,26 +160,15 @@ public class PCRDistribution {
             }else{
                 double[] nv = new double[(int) Math.pow(2,j)];
                 for (int i = 0; i < nv.length; i++) {
-                    nv[i] = psd(i+1, p, v);
+                    nv[i] = dist.psd(i+1, p, v);
                 }
                 v = nv;
             }
         }
         Log.progressFinish(StringUtils.OK, true);
+        dist.v = v;
         // reset cache
-        gammaCache = null;
-
-        return new PCRDistribution(generations, p, v);
-    }
-
-    public static void main(String[] args) {
-        double p = 0.2;
-        int g = 15;
-        PCRDistribution pcrDistribution = create(g, p);
-
-        for(int i=0; i<pcrDistribution.v.length;i++){
-            System.out.println(i + " " + pcrDistribution.v[i]);
-        }
-
+        dist.gammaCache = null;
+        return dist;
     }
 }

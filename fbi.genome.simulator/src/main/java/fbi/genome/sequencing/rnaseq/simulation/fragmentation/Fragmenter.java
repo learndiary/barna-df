@@ -26,11 +26,10 @@ import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import fbi.genome.sequencing.rnaseq.simulation.PWM;
 import fbi.genome.sequencing.rnaseq.simulation.Profiler;
 import fbi.genome.sequencing.rnaseq.simulation.ProfilerFile;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.Distributions;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.*;
+import fbi.genome.sequencing.rnaseq.simulation.tools.PCRDistributionsTool;
 import org.apache.commons.math.random.RandomDataImpl;
+import org.bouncycastle.jce.PKCS10CertificationRequest;
 
 import java.io.*;
 import java.net.URL;
@@ -216,10 +215,10 @@ public class Fragmenter implements Callable<Void> {
                     throw new RuntimeException("Something went wrong! There is no size distribution !");
                 }
             }
-            EmpiricalDistribution eDist = ((EmpiricalDistribution) filterDist[0]);
+            AbstractDistribution eDist = filterDist[0];
             if (filterDist[0] instanceof EmpiricalDistribution) {
-                originalDist = parseFilterDistribution(tmpFile.getAbsolutePath(), eDist.getMin(), eDist.getMax(), eDist.getBins().length, true)[0];
-                eDist.normalizeToPrior((EmpiricalDistribution) originalDist);
+                originalDist = parseFilterDistribution(tmpFile.getAbsolutePath(),((EmpiricalDistribution) eDist).getMin(), ((EmpiricalDistribution) eDist).getMax(), ((EmpiricalDistribution) eDist).getBins().length, true)[0];
+                ((EmpiricalDistribution) eDist).normalizeToPrior((EmpiricalDistribution) originalDist);
             }
             mode = parseFilterSampling(settings.get(FluxSimulatorSettings.SIZE_SAMPLING));
             if ((!process(mode, tmpFile))) {
@@ -274,8 +273,8 @@ public class Fragmenter implements Callable<Void> {
      * @return map maps from read to position weights
      */
     static Map<CharSequence, double[]> getMapWeight(Map<CharSequence, CharSequence> mapTxSeq, Map<CharSequence, CharSequence> mapSeq, PWM pwm) {
-        HashMap<CharSequence, double[]> map = new HashMap<CharSequence, double[]>(mapSeq.size(), 1f);
-        Iterator<CharSequence> iter = mapSeq.keySet().iterator();
+        HashMap<CharSequence, double[]> map = new HashMap<CharSequence, double[]>(mapSeq != null ? mapSeq.size(): mapTxSeq.size(), 1f);
+        Iterator<CharSequence> iter = mapSeq != null ? mapSeq.keySet().iterator() : mapTxSeq.keySet().iterator();
         while (iter.hasNext()) {
             CharSequence id = iter.next();
             CharSequence seq = mapTxSeq.get(id);
@@ -453,7 +452,7 @@ public class Fragmenter implements Callable<Void> {
                     case MODE_RT:
                         processor = new FragmentReverseTranscription(
                                 settings.get(FluxSimulatorSettings.RT_PRIMER),
-                                null, // todo: reenable custom RT PWM
+                                settings.get(FluxSimulatorSettings.RT_MOTIF),
                                 //settings.get(FluxSimulatorSettings.RT_MOTIF),
                                 settings.get(FluxSimulatorSettings.RT_MIN),
                                 settings.get(FluxSimulatorSettings.RT_MAX),
@@ -462,16 +461,35 @@ public class Fragmenter implements Callable<Void> {
                                 leftFlank, rightFlank,
                                 settings.get(FluxSimulatorSettings.RT_LOSSLESS)
                         );
+
+                        ((FragmentReverseTranscription)processor).initPWMMap();
                         break;
                     case MODE_AMPLIFICATION:
-                        Integer rounds = settings.get(FluxSimulatorSettings.PCR_ROUNDS);
+                        String pcrDist = settings.get(FluxSimulatorSettings.PCR_DISTRIBUTION);
                         Double mean = settings.get(FluxSimulatorSettings.GC_MEAN);
-                        if(rounds == 0){
-                            Log.info("LIBRARY", "0 PCR rounds configured, skipping amplification");
+                        Double pcrProb = settings.get(FluxSimulatorSettings.PCR_PROBABILITY);
+                        if(pcrDist == null || pcrDist.equals("none")){
+                            Log.info("LIBRARY", "PCR disabled, skipping amplification");
                             return true;
                         }
+
+                        GCPCRDistribution dist = null;
+                        if(pcrDist.equals("default")){
+                            // load
+                            Log.info("Loading default PCR distribution");
+                            InputStream inputStream = getClass().getResource("/pcr_15_20.dat").openStream();
+                            dist = PCRDistributionsTool.load(inputStream);
+                        }else{
+                            File f = new File(pcrDist);
+                            Log.info("Loading default PCR distribution from " + f.getAbsolutePath());
+                            InputStream inputStream = new FileInputStream(f);
+                            dist = PCRDistributionsTool.load(inputStream);
+                        }
+
+
                         processor = new Amplification(
-                                rounds,
+                                dist,
+                                pcrProb,
                                 mean,
                                 settings.get(FluxSimulatorSettings.GC_SD),
                                 getMapTxSeq());
@@ -495,6 +513,9 @@ public class Fragmenter implements Callable<Void> {
                     // progress
                     byteNow += cs.length() + 1;
                     Log.progress(byteNow, byteTot);
+//                    if(mode == MODE_RT){
+//                        System.out.println(byteNow + " / " + byteTot);
+//                    }
                     ++currMols;
 
                     cs.resetFind();

@@ -23,6 +23,8 @@ import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Error model driver class to create error models from GEM mapping files.
@@ -273,7 +275,7 @@ public class MarkovErrorModel implements FluxTool {
         Log.progressFinish(StringUtils.OK, true);
 
         Log.info("Writing model to " + getOutput().getAbsolutePath());
-        OutputStream out = new BufferedOutputStream(new FileOutputStream(getOutput()));
+        OutputStream out = new GZIPOutputStream(new FileOutputStream(getOutput()));
         // prepare model
         QualityErrorModel qualityErrorModel = new QualityErrorModel(technology, readLength, trans, crossTalkQuality);
         XStream ss = new XStream();
@@ -307,12 +309,7 @@ public class MarkovErrorModel implements FluxTool {
      * @throws IOException in case of any errors
      */
     public static QualityErrorModel loadErrorModel(File file) throws IOException {
-        Log.info("Reading error model from " + file.getAbsolutePath());
-        InputStream in = new BufferedInputStream(new FileInputStream(file));
-        XStream xx = new XStream();
-        QualityErrorModel trans = (QualityErrorModel) xx.fromXML(in);
-        in.close();
-        return trans;
+        return loadErrorModel(file.getAbsolutePath(), new FileInputStream(file));
     }
 
     /**
@@ -323,10 +320,29 @@ public class MarkovErrorModel implements FluxTool {
      */
     public static QualityErrorModel loadErrorModel(String name, InputStream inputStream) throws IOException {
         Log.info("Reading error model " + (name == null ? "" : name));
-        InputStream in = new BufferedInputStream(inputStream);
+        GZIPInputStream gz = new GZIPInputStream(inputStream);
         XStream xx = new XStream();
-        QualityErrorModel trans = (QualityErrorModel) xx.fromXML(in);
-        in.close();
+        QualityErrorModel trans = (QualityErrorModel) xx.fromXML(gz);
+        gz.close();
         return trans;
+    }
+
+    public static void main(String[] args) throws IOException {
+        File tmp = File.createTempFile("out", "gz");
+
+        File in = new File("/home/thasso/Projects/trunk/fbi.genome.simulator/src/main/resources/pcr_15_20.dat");
+
+        BufferedInputStream b = new BufferedInputStream(new FileInputStream(in));
+        GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(tmp));
+
+        byte[] bb = new byte[1024];
+        int l = 0;
+        while((l = b.read(bb)) != -1){
+            out.write(bb, 0, l);
+        }
+        b.close();
+        out.close();
+
+        FileHelper.move(tmp, in);
     }
 }

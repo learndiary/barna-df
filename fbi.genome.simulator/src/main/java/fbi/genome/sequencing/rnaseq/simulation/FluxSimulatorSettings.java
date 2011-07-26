@@ -287,17 +287,35 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation value for GC distribution ", 0.1, 0.0, 100.0, null);
     /**
+     * PCR PROBABILITY
+     */
+    public static final Parameter<Double> PCR_PROBABILITY = Parameters.doubleParameter("PCR_PROBABILITY", "PCR duplication probability\n" +
+            "This is used if GC filtering is disabled by setting GC_MEAN to NaN", 0.7, 0.0, 1.0, null);
+    /**
      * Amplification rounds
      */
-    public static final Parameter<Integer> PCR_ROUNDS = Parameters.intParameter("PCR_ROUNDS", "Number of amplification rounds.\n" +
-            "Set this to 0 to disable the amplification.",15, 0, Integer.MAX_VALUE, null);
+    public static final Parameter<String> PCR_DISTRIBUTION = Parameters.stringParameter("PCR_DISTRIBUTION", "PCR distribution file or 'default' to .\n" +
+            "use a distribution with 15 rounds and 20 bins.\n" +
+            "Set this to 'none' to disable amplification.", "default", new ParameterValidator() {
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+            String dist = schema.get(FluxSimulatorSettings.PCR_DISTRIBUTION);
+            if(dist != null){
+                if(!dist.equals("default")){
+                    if(!new File(dist).exists()) {
+                        throw new ParameterException("Distribution file " + dist  + " not found");
+                    }
+                }
+            }
+        }
+    });
 
     public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
 
     // todo: disabled for the moment !! reenable in Fragmenter RT
-//    public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "Reverse transcription motif PWM.\n" +
-//            "This is disabled by default, but you can use a default matrix\n" +
-//            "by specifying 'default' as value.", relativePathParser);
+    public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "Reverse transcription motif PWM.\n" +
+            "This is disabled by default, but you can use a default matrix\n" +
+            "by specifying 'default' as value.", relativePathParser);
 
     /*
     Size Selection

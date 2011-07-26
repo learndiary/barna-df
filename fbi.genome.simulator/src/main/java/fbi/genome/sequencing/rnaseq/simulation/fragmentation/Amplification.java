@@ -13,14 +13,14 @@ package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
-import org.apache.commons.math.random.RandomDataImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Callable;
 
 /**
  *
@@ -29,10 +29,11 @@ import java.util.concurrent.Callable;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class Amplification implements FragmentProcessor{
+    private GCPCRDistribution pcrDistribution;
     /**
-     * Number of duplication rounds
+     * PCR duplication prob in case GC is disabled
      */
-    private int rounds;
+    private double pcrProbability = 0.7;
     /**
      * The mean
      */
@@ -74,40 +75,48 @@ public class Amplification implements FragmentProcessor{
     /**
      * Create a new instance
      *
-     * @param rounds number of rounds to perform
+     * @param pcrDistribution the pcr distribution
      * @param mean the mean
      * @param sigma the standard deviation
      */
-    public Amplification(final int rounds, final double mean, final double sigma, Map<CharSequence, CharSequence> mapTxSeq) {
-        this.rounds = rounds;
+    public Amplification(GCPCRDistribution pcrDistribution, final double pcrProbability, final double mean, final double sigma, Map<CharSequence, CharSequence> mapTxSeq) {
+        this.pcrDistribution = pcrDistribution;
+        this.pcrProbability = pcrProbability;
         this.mean = mean;
         this.sigma = sigma;
         this.mapTxSeq = mapTxSeq;
         if(!Double.isNaN(mean)){
-            this.distribution = new NormalDistribution(mean, sigma);
+            this.distribution = new EmpiricalDistribution(new NormalDistribution(mean, sigma), 1000, 4);
         }
-        this.maxFragments = Math.max(1,(long) Math.pow(2, rounds)-1);
+        this.maxFragments = Math.max(1,(long) Math.pow(2, pcrDistribution.getGenerations())-1);
         this.random = new Random();
     }
 
     @Override
     public List<Fragment> process(final ByteArrayCharSequence id, final ByteArrayCharSequence cs, final int start, final int end, final int len) {
         // get the gc content
-        double gc = getGCcontent(id, start, end);
-        double gcp = distribution.getRelFreq(gc);
+        double gcp = -1;
+        if(distribution != null){
+            double gc = getGCcontent(id, start, end);
+            gcp = distribution.getP(gc);
+        }
 
         List<Fragment> fragments = new ArrayList<Fragment>();
         Fragment fragment = new Fragment(id, start, end);
         fragments.add(fragment);
 
         int nfragments = 1;
+
         if(!Double.isNaN(mean)){
-            nfragments = Math.max(1,(int) (maxFragments * gcp));
+            nfragments = (int) Math.max(1, pcrDistribution.getNext(random.nextDouble(), gcp));
+        }else{
+            // use pcr prob
+            nfragments = (int) Math.max(1, pcrDistribution.getNext(random.nextDouble(), pcrProbability));
         }
+
         in++;
         out+=nfragments;
         fragment.setDuplicates(nfragments);
-        //System.out.println(gc + "\t" + nfragments);
         return fragments;
     }
 
@@ -147,9 +156,13 @@ public class Amplification implements FragmentProcessor{
     @Override
     public String getConfiguration() {
         StringBuffer b = new StringBuffer();
-        b.append("\t\tRounds: " + rounds+" \n");
-        b.append("\t\tMean: " + mean+" \n");
-        b.append("\t\tStandard Deviation: " + sigma+" \n");
+        b.append("\t\tRounds: " + pcrDistribution.getGenerations()+" \n");
+        if(Double.isNaN(mean)){
+            b.append("\t\tPCR Probability: " + pcrProbability+" \n");
+        }else{
+            b.append("\t\tMean: " + mean+" \n");
+            b.append("\t\tStandard Deviation: " + sigma+" \n");
+        }
         b.append("\n");
         return b.toString();
     }

@@ -47,6 +47,8 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 
     private PWM pwmSense;
     private PWM pwmASense;
+    private Map<CharSequence, double[]> mapWeightAsense;
+    private Map<CharSequence, double[]> mapWeightSense;
 
     public FragmentReverseTranscription(FluxSimulatorSettings.RtranscriptionMode mode,
                                         File pwmFile,
@@ -99,8 +101,16 @@ public class FragmentReverseTranscription implements FragmentProcessor {
                 Log.error("Error while initializing PWM : " + e.getMessage(), e);
             }
         }
+    }
 
 
+    public void initPWMMap(){
+        if(pwmASense != null){
+            Log.info("Initializing PWM cache");
+            mapWeightAsense = Fragmenter.getMapWeight(mapTxSeq,null, pwmASense);
+            mapWeightSense = Fragmenter.getMapWeight(mapTxSeq,null, pwmSense);
+            Log.info("Done");
+        }
     }
 
     @Override
@@ -108,11 +118,13 @@ public class FragmentReverseTranscription implements FragmentProcessor {
         if (index1 == null) {
             index1 = new int[getRTeventNr(profiler.getMaxMoleculeLength())];
         }
-        double[] wSense = null, wAsense = null;
-        double n1 = Double.NaN, n2 = Double.NaN;
-        int txLen = -1, howmany = -1;
+        double[] wSense = null;
+        double[] wAsense = null;
+        double n1 = Double.NaN;
+        double n2 = Double.NaN;
+        int txLen = -1;
+        int howmany = -1;
 
-        //File motifFile = null; // FluxSimulatorSettings.RT_MOTIF
         if (!customMotif) {
             if (mode == FluxSimulatorSettings.RtranscriptionMode.PDT) {
                 txLen = profiler.getLength(id);
@@ -125,12 +137,12 @@ public class FragmentReverseTranscription implements FragmentProcessor {
             howmany = getRTeventNr(len);
             howmany = Math.min(howmany, index1.length);
 
-            //wAsense = mapWeightAsense.get(id);
-            wAsense = Fragmenter.applyPWM(mapTxSeq.get(id), pwmASense);
+            wAsense = mapWeightAsense.get(id);
+            //wAsense = Fragmenter.applyPWM(mapTxSeq.get(id), pwmASense);
             n2 = Fragmenter.toCDF(wAsense, start, end, leftFlank, rightFlank);
 
-            //wSense = mapWeightSense.get(id);
-            wSense = Fragmenter.applyPWM(mapTxSeq.get(id), pwmSense);
+            wSense = mapWeightSense.get(id);
+            //wSense = Fragmenter.applyPWM(mapTxSeq.get(id), pwmSense);
             n1 = Fragmenter.toCDF(wSense, start, end, leftFlank, rightFlank);
         }
 
@@ -246,9 +258,11 @@ public class FragmentReverseTranscription implements FragmentProcessor {
                 if (wAsense == null) {
                     p = from + (int) Math.floor(r * (to2 - from));
                 } else {
-                    to2 = Math.min(leftFlank + from + 50, index1[i] - 1);    // within 50nt closest to 5'
-                    r = wSense[leftFlank + from] + (r * (wSense[to2] - wSense[leftFlank + from]));
-                    p = Arrays.binarySearch(wSense, leftFlank + from, to2, r);
+                    to2 = Math.min(wSense.length-1, Math.min(leftFlank + from + 50, index1[i] - 1));    // within 50nt closest to 5'
+                    int from2 = Math.min(leftFlank + from, wSense.length-1);
+
+                    r = wSense[from2] + (r * (wSense[to2] - wSense[from2]));
+                    p = Arrays.binarySearch(wSense, from2, to2, r);
                     p = (p >= 0 ? p : -(p + 1));
                 }
                 new5Prime = Math.min(p, new5Prime);
@@ -274,33 +288,6 @@ public class FragmentReverseTranscription implements FragmentProcessor {
         return (int) Math.ceil(Math.abs(len) / (double) 100);
     }
 
-
-    /**
-     * Compute the relative GC content
-     *
-     * @param id ID of the sequence
-     * @param i  start index (included)
-     * @param j  end index (included)
-     * @return gc gc content
-     */
-    private double getGCcontent(ByteArrayCharSequence id, int i, int j) {
-        CharSequence seq = mapTxSeq.get(id);
-        int g = 0, n = 0;
-        for (int k = leftFlank + i; k <= leftFlank + j; ++k) {
-            if(k >=0 && k< seq.length()){
-                char c = seq.charAt(k);
-                if (c == 'G' || c == 'C' || c == 'g' || c == 'c' || c == 's' || c == 'S') {
-                    ++g;
-                } else if (c != 'N') {
-                    ++n;
-                }
-            }
-        }
-        if (n + g == 0) {
-            return 0;
-        }
-        return (g / (double) (n + g));
-    }
 
     @Override
     public String getName() {

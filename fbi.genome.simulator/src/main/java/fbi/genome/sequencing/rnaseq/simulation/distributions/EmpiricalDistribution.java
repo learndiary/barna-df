@@ -244,6 +244,38 @@ public class EmpiricalDistribution extends AbstractDistribution {
     }
 
     /**
+     * Sample an empirical distribution from the given normal distribution using
+     * the given number of bins. The distance parameter is used to compute the range, starting at
+     * {@code -(distance*normal.getSd())} going to {@code (distance*normal.getSd())}.
+     * The values are normalized to be in the range from 0 to 1.0 reflecting the probabilities
+     * from the normal distribution sampled with the given number of bins. Min value is 0 max value is 1.
+     *
+     * @param normal the normal distribution
+     * @param bins the number of bins
+     * @param distance the distance to compute the range
+     */
+    public EmpiricalDistribution(NormalDistribution normal, int bins, final double distance) {
+        a = new double[bins+2];
+        min = 0;
+        max = 1.0;
+        double start= -distance *normal.getSd();
+        double end = distance*normal.getSd();
+        double s = (end-start)/((double)bins);
+        double step = start;
+        int c = 0;
+        sum = 0;
+        while(c < a.length-2){
+            double p = normal.pdf(step);
+            double bb = p / ( 1.0 / s);
+            int index = 1 + (c++);
+            a[index] = bb;
+            sum += bb;
+            step += s;
+        }
+        updateHistogram();
+    }
+
+    /**
      * Returns the probability for the bin of value <code>x</code>.
      *
      * @param x a value from the empirical distribution
