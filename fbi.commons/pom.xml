@@ -4,7 +4,7 @@
 
     <groupId>fbi</groupId>
     <artifactId>fbi.commons</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
 
 
     <description>
@@ -30,9 +30,9 @@
     </licenses>
 
     <scm>
-        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.commons</url>
-        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.commons</connection>
-        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.commons</developerConnection>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.commons-1.4</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.commons-1.4</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.commons-1.4</developerConnection>
     </scm>
 
     <properties>
