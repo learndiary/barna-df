@@ -27,10 +27,11 @@ FluxSimulator RC3
     -fixed issue #58 - made sure all buffers are flushed before moving files
     -fixed issue #61 - temp directory is passed to FileUtils
     -fixed issue #60 - added documentation
-    -fixed issue #48 - fastq output and new error model
+    -fixed issue #48 - fastq output and new error model - you need an error model for for fasta/fastq now
     -added the ability to specify size distributions using normal distributions with mean and sd (i.e. N(200,20))
     -added PCR with a combined GC filtering step
     -added quality error models and a tool to create such models (currently only from GEM file)
+
 
 FluxSimulator RC2
 
