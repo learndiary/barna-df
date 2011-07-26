@@ -9,9 +9,9 @@
     <version>1.0-SNAPSHOT</version>
 
     <scm>
-        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.astalavista</url>
-        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.astalavista</connection>
-        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.astalavista</developerConnection>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.astalavista</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.astalavista</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.astalavista</developerConnection>
     </scm>
 
     <properties>
