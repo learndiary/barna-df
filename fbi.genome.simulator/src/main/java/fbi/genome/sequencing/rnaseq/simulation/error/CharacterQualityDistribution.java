@@ -9,7 +9,7 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package fbi.genome.errormodel;
+package fbi.genome.sequencing.rnaseq.simulation.error;
 
 /**
  * Distribution of a Character to its quality values

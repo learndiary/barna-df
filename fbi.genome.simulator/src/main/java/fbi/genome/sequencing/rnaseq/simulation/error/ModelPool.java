@@ -12,21 +12,9 @@
 package fbi.genome.sequencing.rnaseq.simulation.error;
 
 import fbi.commons.ByteArrayCharSequence;
-import fbi.commons.Log;
-import fbi.commons.PrintstreamProgressable;
-import fbi.commons.Progressable;
 import fbi.commons.tools.Qualities;
-import fbi.genome.errormodel.QualityErrorModel;
-import fbi.genome.io.GEMobject;
-import fbi.genome.io.ThreadedBufferedByteArrayStream;
-import fbi.genome.model.commons.IntVector;
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 
-import java.io.*;
-import java.util.Arrays;
 import java.util.Random;
-import java.util.Vector;
-import java.util.regex.Matcher;
 
 /**
  * The model pool applies error model qualities and mutates the sequence according to

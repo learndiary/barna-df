@@ -17,8 +17,8 @@ import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
-import fbi.genome.errormodel.MarkovErrorModel;
-import fbi.genome.errormodel.QualityErrorModel;
+import fbi.genome.sequencing.rnaseq.simulation.error.MarkovErrorModel;
+import fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.model.Exon;
@@ -27,7 +27,6 @@ import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.sequencing.rnaseq.simulation.error.ModelPool;
-import sun.nio.cs.ext.DoubleByteEncoder;
 
 import java.io.*;
 import java.util.Arrays;

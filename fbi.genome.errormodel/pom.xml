@@ -21,9 +21,9 @@
 
 
     <scm>
-        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel</url>
-        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel</connection>
-        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel
         </developerConnection>
     </scm>
 
