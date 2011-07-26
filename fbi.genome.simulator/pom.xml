@@ -10,13 +10,12 @@
   ~ see the Flux Library homepage <http://flux.sammeth.net> for more information.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fbi</groupId>
     <artifactId>fbi.genome.simulator</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0-RC3</version>
     <name>FluxSimulator</name>
 
     <description>
@@ -43,9 +42,9 @@
 
 
     <scm>
-        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.simulator</url>
-        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.simulator</connection>
-        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.simulator
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.simulator-1.0-RC3</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.simulator-1.0-RC3</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.simulator-1.0-RC3
         </developerConnection>
     </scm>
 
