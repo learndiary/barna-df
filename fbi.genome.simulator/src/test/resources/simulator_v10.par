@@ -50,7 +50,7 @@ RT_MAX	5500
 
 ## Size Selection
 FILTERING	YES
-SIZE_DISTRIBUTION	expAll.isizes
+#SIZE_DISTRIBUTION	expAll.isizes
 SIZE_SAMPLING	AC
 
 ## Sequencing
