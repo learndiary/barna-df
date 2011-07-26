@@ -189,7 +189,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.io</artifactId>
-            <version>1.2-SNAPSHOT</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
