@@ -147,9 +147,10 @@ public class FluxSimulatorSettings extends ParameterSchema {
     });
 
 
-    public static final Parameter<Boolean> FASTQ = Parameters.booleanParameter("FASTQ", "Create FastQ output. You have to specify an\n" +
-            "error model using the ERR_FILE parameter for this to work. If you specify just an error model and set this to false,\n" +
-            "the simulator will create a fasta file and use the quality model to evaluate and integrate errors in the sequence.", false);
+    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA", "Create .fasta/.fastq output. output.\n" +
+            "If you specify an ERR_FILE as to be used as a quality model (or you use one of the default models)\n" +
+            "the simulator will create a .fastq file with errors added to the actual sequence. If no error model is\n" +
+            "specified, the simulator create a .fasta file where no error are added to the sequences.", false);
     /*
     Expression parameters
      */

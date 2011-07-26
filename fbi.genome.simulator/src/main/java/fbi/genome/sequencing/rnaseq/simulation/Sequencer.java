@@ -184,7 +184,8 @@ public class Sequencer implements Callable<Void> {
     public boolean loadErrors() {
         // load model
         String errorFile = settings.get(FluxSimulatorSettings.ERR_FILE);
-        if (errorFile != null && errorFile.length() > 0) {
+        boolean fastOutput = settings.get(FluxSimulatorSettings.FASTA);
+        if (fastOutput && errorFile != null && errorFile.length() > 0) {
             QualityErrorModel errorModel;
             try {
                 InputStream input = null;
@@ -205,8 +206,8 @@ public class Sequencer implements Callable<Void> {
                 }
 
                 errorModel = MarkovErrorModel.loadErrorModel(name, input);
-                babes = new ModelPool(settings.get(FluxSimulatorSettings.FASTQ), errorModel);
-            } catch (IOException e) {
+                babes = new ModelPool(settings.get(FluxSimulatorSettings.FASTA), errorModel);
+            } catch (Exception e) {
                 Log.error("Unable to load error model : " + e.getMessage(), e);
                 throw new RuntimeException("Unable to load error model : " + e.getMessage(), e);
             }
@@ -224,7 +225,11 @@ public class Sequencer implements Callable<Void> {
                         "you are trying to create reads of length " + readLength + "!");
             }
             return true;
+        }else if( fastOutput){
+            // just plain fasta
+            babes = new ModelPool(true, null);
         }
+
         return false;
     }
 
@@ -248,9 +253,14 @@ public class Sequencer implements Callable<Void> {
             File tmpFile = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
             File tmpFasta = null;
 
-            if (settings.get(FluxSimulatorSettings.GEN_DIR) != null && settings.get(FluxSimulatorSettings.ERR_FILE) != null) {
+            File genomeDir = settings.get(FluxSimulatorSettings.GEN_DIR);
+            String errorModelFile = settings.get(FluxSimulatorSettings.ERR_FILE);
+            boolean fasta = settings.get(FluxSimulatorSettings.FASTA);
+            boolean hasErrorModel = errorModelFile != null && errorModelFile.trim().length() > 0;
+
+            if (genomeDir != null && fasta) {
                 tmpFasta = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
-                Graph.overrideSequenceDirPath = settings.get(FluxSimulatorSettings.GEN_DIR).getAbsolutePath();
+                Graph.overrideSequenceDirPath = genomeDir.getAbsolutePath();
             }
 
             map = new Hashtable<ByteArrayCharSequence, Long>(profiler.size());
@@ -324,7 +334,7 @@ public class Sequencer implements Callable<Void> {
     }
 
     private boolean hasQualities() {
-        return settings.get(FluxSimulatorSettings.FASTQ);
+        return babes != null && babes.hasErrorModel();
     }
 
     private File getFASTAfile() {

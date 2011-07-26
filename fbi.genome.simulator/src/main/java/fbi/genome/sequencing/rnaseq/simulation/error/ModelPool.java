@@ -28,7 +28,7 @@ public class ModelPool {
     /**
      * True if a fastq file should be generated
      */
-    private boolean fastQ = true;
+    private boolean fastaOutput = true;
     /**
      * The error model
      */
@@ -49,12 +49,12 @@ public class ModelPool {
     /**
      * Create a new model pool
      *
-     * @param fastQ create fastq output
+     * @param fastOutput create fastq output
      * @param errorModel the error model
      */
-    public ModelPool(final boolean fastQ, final QualityErrorModel errorModel) {
+    public ModelPool(final boolean fastOutput, final QualityErrorModel errorModel) {
         if(errorModel == null) throw new NullPointerException("Null error model not permitted");
-        this.fastQ = fastQ;
+        this.fastaOutput = fastOutput;
         this.errorModel = errorModel;
     }
 
@@ -71,7 +71,7 @@ public class ModelPool {
         int len = seqEnd - seqStart;
 
         // prepare sequence for fastQ
-        if (fastQ) {
+        if (fastaOutput && errorModel != null) {
             cs.append("\n+\n");
             seqEnd += 3;
             cs.ensureLength(cs.end, len);    // for qualities
@@ -81,27 +81,30 @@ public class ModelPool {
         byte[] a = cs.chars;
         int quality = -1;
 
-        for (int i = 0; i < len; i++) {
-            // iterate over the sequence and generate qualities
-            char character = (char) a[seqStart+i];
-            double r = rndMutator.nextDouble();
-            quality = errorModel.getQualityModel().getQuality(i, quality, r);
-            sumQualities +=quality;
-            writtenNucleotides++;
-            // check if we have to mutate
-            double pe = Qualities.getPropability(quality);
-            double random = 0;
-            if (rndMutator.nextDouble() < pe) {
-                // mutate using crosstalk
-                random = rndMutator.nextDouble();
-                a[seqStart + i] = (byte) errorModel.getCrossTalk().getTransition(quality, (char) a[seqStart + i], random);
-                sumMutations++;
-            }
+        if(errorModel != null){
+            for (int i = 0; i < len; i++) {
+                // iterate over the sequence and generate qualities
+                char character = (char) a[seqStart+i];
+                double r = rndMutator.nextDouble();
+                quality = errorModel.getQualityModel().getQuality(i, quality, r);
+                sumQualities +=quality;
+                writtenNucleotides++;
+                // check if we have to mutate
+                double pe = Qualities.getPropability(quality);
+                double random = rndMutator.nextDouble();
+                if ( random <= pe) {
+                    // mutate using crosstalk
+                    a[seqStart + i] = (byte) errorModel.getCrossTalk().getTransition(quality, (char) a[seqStart + i], random);
+                    sumMutations++;
+                }
 
-            // if fastq, write quality value
-            if(fastQ){
-                a[cs.end++] = Qualities.ascii(quality);
+                // if fastq, write quality value
+                if(fastaOutput){
+                    a[cs.end++] = Qualities.ascii(quality);
+                }
             }
+        }else{
+            writtenNucleotides += len;
         }
     }
 
@@ -122,5 +125,14 @@ public class ModelPool {
      */
     public double getAverageQuality() {
         return (double)sumQualities/(double)writtenNucleotides;
+    }
+
+    /**
+     * Returns true if an error model exists
+     *
+     * @return model the error model
+     */
+    public boolean hasErrorModel() {
+        return errorModel != null;
     }
 }

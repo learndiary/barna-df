@@ -326,23 +326,4 @@ public class MarkovErrorModel implements FluxTool {
         gz.close();
         return trans;
     }
-
-    public static void main(String[] args) throws IOException {
-        File tmp = File.createTempFile("out", "gz");
-
-        File in = new File("/home/thasso/Projects/trunk/fbi.genome.simulator/src/main/resources/pcr_15_20.dat");
-
-        BufferedInputStream b = new BufferedInputStream(new FileInputStream(in));
-        GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(tmp));
-
-        byte[] bb = new byte[1024];
-        int l = 0;
-        while((l = b.read(bb)) != -1){
-            out.write(bb, 0, l);
-        }
-        b.close();
-        out.close();
-
-        FileHelper.move(tmp, in);
-    }
 }
