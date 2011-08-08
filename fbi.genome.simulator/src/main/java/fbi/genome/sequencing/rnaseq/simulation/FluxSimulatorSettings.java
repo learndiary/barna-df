@@ -304,7 +304,8 @@ public class FluxSimulatorSettings extends ParameterSchema {
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             String dist = schema.get(FluxSimulatorSettings.PCR_DISTRIBUTION);
             if(dist != null){
-                if(!dist.equals("default")){
+                // FIX SIMULATOR-2
+                if(!dist.equals("default") && !dist.equals("none")){
                     if(!new File(dist).exists()) {
                         throw new ParameterException("Distribution file " + dist  + " not found");
                     }
