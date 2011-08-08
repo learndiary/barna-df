@@ -468,7 +468,7 @@ public class Fragmenter implements Callable<Void> {
                         String pcrDist = settings.get(FluxSimulatorSettings.PCR_DISTRIBUTION);
                         Double mean = settings.get(FluxSimulatorSettings.GC_MEAN);
                         Double pcrProb = settings.get(FluxSimulatorSettings.PCR_PROBABILITY);
-                        if(pcrDist == null || pcrDist.equals("none")) {
+                        if(pcrDist == null || pcrDist.equals("none")){
                             Log.info("LIBRARY", "PCR disabled, skipping amplification");
                             return true;
                         }
