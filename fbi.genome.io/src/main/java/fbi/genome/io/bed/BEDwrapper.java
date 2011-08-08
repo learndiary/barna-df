@@ -558,7 +558,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
             Sorter.create(in, out, true)
                     .separator("\\s")
                     .field(0, false)
-                    .field(1, false)
+                    .field(1, true)
                     .sort();
 			return outFile;
 			
