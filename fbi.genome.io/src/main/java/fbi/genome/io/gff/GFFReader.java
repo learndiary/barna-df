@@ -1815,24 +1815,26 @@ public class GFFReader extends DefaultIOWrapper {
                         return false;
 					}
 					tidMap.put(tokens[tidField], tokens[0]);
-					if (lastTID != null && clusterGenes) {
+					if (clusterGenes) {
 						int newStart = Integer.parseInt(tokens[3]);
-						if (lastStart > newStart) {
-                            if(!silent && stars){
-                                Log.progressFailed("Unsorted in line " + lineCtr
-										+ " - cannot perform gene clustering: "
-										+ tokens[0] + " " + tokens[6] + " "
-										+ tokens[tidField] + " @ " + tokens[3]
-										+ " after " + lastTID + " @ " + lastStart);
-                            }else{
-								Log.warn("Unsorted in line " + lineCtr
-										+ " - cannot perform gene clustering: "
-										+ tokens[0] + " " + tokens[6] + " "
-										+ tokens[tidField] + " @ " + tokens[3]
-										+ " after " + lastTID + " @ " + lastStart);
-                            }
-							buffy.close();
-							return false;
+						if (lastTID != null) {
+							if (lastStart > newStart) {
+	                            if(!silent && stars){
+	                                Log.progressFailed("Unsorted in line " + lineCtr
+											+ " - cannot perform gene clustering: "
+											+ tokens[0] + " " + tokens[6] + " "
+											+ tokens[tidField] + " @ " + tokens[3]
+											+ " after " + lastTID + " @ " + lastStart);
+	                            }else{
+									Log.warn("Unsorted in line " + lineCtr
+											+ " - cannot perform gene clustering: "
+											+ tokens[0] + " " + tokens[6] + " "
+											+ tokens[tidField] + " @ " + tokens[3]
+											+ " after " + lastTID + " @ " + lastStart);
+	                            }
+								buffy.close();
+								return false;
+							}
 						}
 						lastStart = newStart;
 					}
