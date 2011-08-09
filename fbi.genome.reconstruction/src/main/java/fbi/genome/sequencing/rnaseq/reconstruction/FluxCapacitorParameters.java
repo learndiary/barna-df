@@ -201,7 +201,9 @@ public class FluxCapacitorParameters {
 					}
 				} else if (ll[0].equalsIgnoreCase(PAR_READ_DESCRIPTOR)) {
 					pars.descriptor= new UniversalReadDescriptor();
-					if (!pars.descriptor.init(ll[1])) {
+					try {
+						pars.descriptor.init(ll[1]);
+					} catch (Exception e) {
 						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 							System.err.println("[BAD] No valid read descriptor "+ ll[1]);
 						}

@@ -1,5 +1,6 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.file.FileHelper;
@@ -1845,18 +1846,19 @@ public class FluxCapacitor implements ReadStatCalculator {
 //							mapTrivial(gene.getTranscripts()[0], beds);
 //							outputGFF(null, null, null);
 //						} else {
-							Graph myGraph= getGraph(this.gene);
-							map(myGraph, this.gene, this.beds);
+							//Graph myGraph= getGraph(this.gene);
+							AnnotationMapper mapper= new AnnotationMapper(this.gene);
+							mapper.map(this.beds);
 							
 							GraphLPsolver2 mySolver= null;
 							// != mapReadOrPairIDs.size()> 0, does also count singles
 							if (nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
-								mySolver= getSolver(myGraph, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
+								mySolver= getSolver(mapper, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
 								mySolver.run();
 							}
 			//				if (this.gene.getTranscriptCount()== 1)
 			//					System.currentTimeMillis();
-							outputGFF(myGraph, events, mySolver);
+							outputGFF(mapper, events, mySolver);
 							
 //						}
 					} else {
@@ -2089,7 +2091,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				// map read pairs
 				for (int j = 0; beds!= null&& j< beds.length; ++j) {
 	
-					int xxx= mapRead2(myGraph, beds[j], false);
+					int xyxx= mapRead2(myGraph, beds[j], false);
 					//nrMappingsReadsOrPairs+= xxx;
 				}
 				nrMappingsReadsOrPairs+= mapReadOrPairIDs.size()/ 2;
@@ -3930,6 +3932,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	public static void main(String[] args) {
 		
+		Execute.initialize(2);
+		
 		try {
 			readProperties(); 
 			
@@ -3980,8 +3984,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 			} else
 				System.err.println("[NOCLEAN] Cleanup disabled!");
 			
-			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+			// found 1 temporary files with prefix capacitor,...
+/*			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				File dir= new File(System.getProperty(Constants.PROPERTY_TMPDIR));
 				String[] fNames= dir.list();
 				Vector<File> v= new Vector<File>(), vSort= new Vector<File>();
@@ -3999,6 +4003,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					removeZombies(v, "sort");
 				
 			}
+*/			
 			
 			int ok= loadLibraries();
 			if (ok< 0) 
@@ -4037,6 +4042,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 					}
 			}
 			
+		} finally {
+			Execute.shutdown();
 		}
 	}
 
@@ -5168,7 +5175,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 			else {
 				isSortedGTF= false;
 				File tmpGTF= getGTFreader().createSortedFile();
-				boolean bb= getFileGTF().delete();	// TODO do sth when false..
+				if (tmpGTF== null)
+					return false;
+				//boolean bb= getFileGTF().delete();	// TODO do sth when false..
 				this.fileGTF= tmpGTF;
 				if (outputSorted&& fileOutDir!= null) {
 					String ext= FileHelper.getCompressionExtension(compressionGTF);
@@ -5241,7 +5250,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 			else {
 				isSortedBED= false;
 				File tmp= getBedReader().sortBED(fileBED);
-				getFileBED().delete();
+				if (tmp== null)
+					return false;
+				//getFileBED().delete();
 				this.fileBED= tmp;
 				if (outputSorted&& fileOutDir!= null) {
 					String destFName= fileOutDir+ File.separator+ Constants.getGlobalPfx()+ "_"+ 
@@ -6536,8 +6547,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 
 	
-	public static final String GFF_FEATURE_JUNCTION= "junction", GFF_FEATURE_PAIRED= "paired",
-		GFF_FEATURE_FRAGMENT= "fragment";
+	public static final String GFF_FEATURE_JUNCTION = "junction",
+			GFF_FEATURE_PAIRED = "paired", GFF_FEATURE_FRAGMENT = "fragment";
 	
 	public static final String GTF_ATTRIBUTE_PVAL= "falsification";
 	

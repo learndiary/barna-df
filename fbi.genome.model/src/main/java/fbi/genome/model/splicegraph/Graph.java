@@ -864,15 +864,15 @@ public class Graph {
 
 	static TranscriptByNameComparator defaultTranscriptByNameComparator= new TranscriptByNameComparator();
 	static Node.PositionTypeComparator defaultNodeByPositionTypeComparator= new Node.PositionTypeComparator();
-	Gene gene;
+	protected Gene gene;
 	public Transcript[] trpts;	// for flux capacitor
 	int taSize;
-	HashMap<SpliceSite, Node> nodeHash= new HashMap<SpliceSite, Node>();
-	HashMap<String, Edge> edgeHash= new HashMap<String, Edge>();
+	protected HashMap<SpliceSite, Node> nodeHash= new HashMap<SpliceSite, Node>();
+	protected HashMap<String, Edge> edgeHash= new HashMap<String, Edge>();
 	public Node leaf;
 	public Node root;
-	Node[] nodesInGenomicOrder= null;
-	Vector<ASEvent> eventV= null;
+	protected Node[] nodesInGenomicOrder= null;
+	protected Vector<ASEvent> eventV= null;
 	long mappedReads= 0;
 	Edge[] exonicEdgesInGenomicOrder = null;
 	public Graph(Gene g) {
@@ -3192,7 +3192,7 @@ public class Graph {
 		return mappedReads;
 	}
 
-	Vector<Edge> edgeVector= new Vector<Edge>();
+	protected Vector<Edge> edgeVector= new Vector<Edge>();
 	public Edge getEdge_old(BEDobject obj) {
 			
 			Vector<Edge> v= edgeVector; //new Vector<Edge>();
