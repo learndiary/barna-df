@@ -8,11 +8,41 @@ import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
 
 public class UniversalReadDescriptorTest {
 
+	String descriptorIDmissing= "";
+	String descriptorIDoptional= 
+		UniversalReadDescriptor.SYMBOL_OPT_LEFT
+		+UniversalReadDescriptor.TAG_ID
+		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT;
+	String descriptorIDnoLeft= 
+		UniversalReadDescriptor.SYMBOL_OPT_LEFT
+		+UniversalReadDescriptor.TAG_STRAND
+		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT
+		+UniversalReadDescriptor.SYMBOL_TAG_LEFT
+		+UniversalReadDescriptor.TAG_ID
+		+UniversalReadDescriptor.SYMBOL_TAG_RIGHT;
+	String descriptorIDnoRight= 
+		UniversalReadDescriptor.SYMBOL_TAG_LEFT
+		+UniversalReadDescriptor.TAG_ID
+		+UniversalReadDescriptor.SYMBOL_TAG_RIGHT
+		+UniversalReadDescriptor.SYMBOL_OPT_LEFT
+		+UniversalReadDescriptor.TAG_STRAND
+		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT;
+	String descriptorPairOptional= 
+		UniversalReadDescriptor.SYMBOL_TAG_LEFT
+		+UniversalReadDescriptor.TAG_ID
+		+UniversalReadDescriptor.SYMBOL_TAG_RIGHT
+		+UniversalReadDescriptor.SYMBOL_OPT_LEFT
+		+UniversalReadDescriptor.TAG_PAIR
+		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT;
+	String descriptorBracketMismatch= 
+		UniversalReadDescriptor.SYMBOL_TAG_LEFT
+		+UniversalReadDescriptor.TAG_ID
+		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT;
 	
-	String simRead1= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:S/1",
-	 	simRead2= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:S/2",
-	 	simRead3= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/1",
-	 	simRead4= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/2";
+	String simRead1= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:S/1";
+	String simRead2= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:S/2";
+	String simRead3= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/1";
+	String simRead4= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/2";
 	
 	String barnaID1= "BILLIEHOLIDAY:5:100:1000:1190/1s";
 	String barnaID2= "BILLIEHOLIDAY:5:100:1000:1190/1a";
@@ -25,10 +55,51 @@ public class UniversalReadDescriptorTest {
 	
 	String newCshlCombined= "MARILYN_0005:7:1:2804:1011#0/1";
 
+
+	@Test
+	public void testInvalidDescriptor() {
+		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+		try {
+			descriptor.init(descriptorIDmissing);
+			fail(descriptorIDmissing);
+		} catch (Exception e) {
+			; //:)
+		}
+		try {
+			descriptor.init(descriptorIDoptional);
+			fail(descriptorIDoptional);
+		} catch (Exception e) {
+			; //:)
+		}
+		try {
+			descriptor.init(descriptorIDnoLeft);
+			fail(descriptorIDnoLeft);
+		} catch (Exception e) {
+			; //:)
+		}
+		try {
+			descriptor.init(descriptorIDnoRight);
+			fail(descriptorIDnoRight);
+		} catch (Exception e) {
+			; //:)
+		}
+		try {
+			descriptor.init(descriptorPairOptional);
+			fail(descriptorPairOptional);
+		} catch (Exception e) {
+			; //:)
+		}
+	}
+	
 	@Test
 	public void testSimpleDescriptor() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		assertTrue(descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE)));
+		try {
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));	
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+		
 	}
 	
 	@Test
@@ -52,7 +123,12 @@ public class UniversalReadDescriptorTest {
 	@Test
 	public void testPairedDescriptor() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		assertTrue(descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED)));
+		try {
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+		
 	}
 	
 	@Test
@@ -82,7 +158,12 @@ public class UniversalReadDescriptorTest {
 	@Test
 	public void testSimulatorDescriptor() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		assertTrue(descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR)));
+		try {
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+		
 	}
 	
 	@Test
@@ -105,17 +186,65 @@ public class UniversalReadDescriptorTest {
 		assertEquals(a.strand, 2);
 		assertEquals(a.flag, 1);
 		
-		a= descriptor.getAttributes("chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/2", a);
+		a= descriptor.getAttributes(simRead4, a);
 		assertEquals(a.id, simRead4.substring(0, simRead4.lastIndexOf(":548:")));
 		assertEquals(a.strand, 2);
 		assertEquals(a.flag, 2);
-		
+
+		// alternative control
+		descriptor= new UniversalReadDescriptor();
+		descriptor.init(
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
+				UniversalReadDescriptor.TAG_ID+
+				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
+				":???:"+
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
+				UniversalReadDescriptor.TAG_STRAND+
+				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
+				UniversalReadDescriptor.SYMBOL_SET_LEFT+
+				"S,A"+
+				UniversalReadDescriptor.SYMBOL_SET_RIGHT+
+				"/"+
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
+				UniversalReadDescriptor.TAG_PAIR+
+				UniversalReadDescriptor.SYMBOL_TAG_RIGHT
+		);
+		a= descriptor.getAttributes(simRead4, a);
+		assertEquals(a.id, simRead4.substring(0, simRead4.lastIndexOf(":548:")));
+		assertEquals(a.strand, 2);
+		assertEquals(a.flag, 2);
+
+		// negative control
+		descriptor= new UniversalReadDescriptor();
+		descriptor.init(
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
+				UniversalReadDescriptor.TAG_ID+
+				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
+				":??:"+
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
+				UniversalReadDescriptor.TAG_STRAND+
+				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
+				UniversalReadDescriptor.SYMBOL_SET_LEFT+
+				"S,A"+
+				UniversalReadDescriptor.SYMBOL_SET_RIGHT+
+				"/"+
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
+				UniversalReadDescriptor.TAG_PAIR+
+				UniversalReadDescriptor.SYMBOL_TAG_RIGHT
+		);
+		a= descriptor.getAttributes(simRead4, a);
+		assertNull(a);
 	}
 	
 	@Test
 	public void testBarnaDescriptor() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		assertTrue(descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA)));
+		try {
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA));
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+		
 	}
 	
 	@Test
@@ -154,7 +283,11 @@ public class UniversalReadDescriptorTest {
 	@Test
 	public void testCSHLoldDescriptor() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		assertTrue(descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL)));
+		try {
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE));			
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
 	}
 	
 	@Test
@@ -176,7 +309,12 @@ public class UniversalReadDescriptorTest {
 	@Test
 	public void testCSHLcombiDescriptor() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		assertTrue(descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE)));
+		try {
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE));
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+		
 	}
 	
 	@Test
