@@ -104,6 +104,7 @@ public class UniversalReadDescriptor {
 				":*:"+
 				SYMBOL_TAG_LEFT+ TAG_STRAND+ SYMBOL_TAG_RIGHT+
 				SYMBOL_SET_LEFT+ "S,A"+ SYMBOL_SET_RIGHT+
+				"/"+
 				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT);	
 	}
 //	static {
@@ -266,6 +267,7 @@ public class UniversalReadDescriptor {
 						}				
 					}
 					cpos-= parsed;
+					lastCPos= cpos;
 					continue;
 				}
 				
@@ -317,6 +319,8 @@ public class UniversalReadDescriptor {
 					}
 				}
 				
+				if (left!= lastCPos)
+					return null;
 				if (i== posPair) {
 					if(!setPair(a, cs, left)) {
 						if (mandatory[i])
