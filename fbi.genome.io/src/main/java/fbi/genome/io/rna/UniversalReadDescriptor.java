@@ -16,7 +16,7 @@ import java.util.HashMap;
 public class UniversalReadDescriptor {
 
 	public class Attributes {
-		public byte strand, flag;
+		public byte strand= 0, flag= 0;
 		public CharSequence id;
 		@Override
 		public String toString() {
@@ -33,16 +33,29 @@ public class UniversalReadDescriptor {
 		}
 	}
 	
+	public static String 
+		DESCRIPTORID_SIMPLE= "SIMPLE", 
+		DESCRIPTORID_PAIRED= "PAIRED", 
+		DESCRIPTORID_STRAND_MATE= "STRAND_MATE", 
+		DESCRIPTORID_MATE_STRAND_CSHL= "MATE_STRAND_CSHL",
+		DESCRIPTORID_MATE1_SENSE= "MATE1_SENSE",
+		DESCRIPTORID_MATE2_SENSE= "MATE2_SENSE",
+		DESCRIPTORID_SIMULATOR= "SIMULATOR",
+		DESCRIPTORID_BARNA= "BARNA";
+	
 	static HashMap<String, String> mapSimpleDescriptors= new HashMap<String, String>();
 	static {
-		mapSimpleDescriptors.put("SIMPLE", "#");
-		mapSimpleDescriptors.put("PAIRED", "#/@");
-		mapSimpleDescriptors.put("MATE_STRAND", "#/$/@");
-		mapSimpleDescriptors.put("MATE_STRAND-CSHL", "#/@_strand$[0,1,2]");
-		mapSimpleDescriptors.put("STRAND_MATE", "#/$/@");
-		mapSimpleDescriptors.put("MATE1_SENSE", "#/?");
-		mapSimpleDescriptors.put("MATE2_SENSE", "#/!");
-		mapSimpleDescriptors.put("BARNA", "#/@~[s,a]");
+		mapSimpleDescriptors.put(DESCRIPTORID_SIMPLE, "#");
+		mapSimpleDescriptors.put(DESCRIPTORID_PAIRED, "#/@");
+		mapSimpleDescriptors.put(DESCRIPTORID_STRAND_MATE, "#/$/@");
+		mapSimpleDescriptors.put(DESCRIPTORID_MATE_STRAND_CSHL, "#/@_strand$[0,1,2]");
+		mapSimpleDescriptors.put(DESCRIPTORID_MATE1_SENSE, "#/?");
+		mapSimpleDescriptors.put(DESCRIPTORID_MATE2_SENSE, "#/!");
+		mapSimpleDescriptors.put(DESCRIPTORID_BARNA, "#/@~[s,a]");
+		mapSimpleDescriptors.put(DESCRIPTORID_SIMULATOR, "#:*:$[S,A]/@[1,2]");	
+	}
+	public static String getDescriptor(CharSequence descriptorID) {
+		return mapSimpleDescriptors.get(descriptorID);
 	}
 	
 	public static char TAG_ID= '#', TAG_PAIR= '@', TAG_STRAND= '$', TAG_STRAND_OPT= '~', TAG_MATE1_SENSE= '?', TAG_MATE2_SENSE= '!';
@@ -196,48 +209,6 @@ public class UniversalReadDescriptor {
 		return sb.toString();
 	}
 	
-	public static void main(String[] args) {
-		
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		String barnaDesc= "#/@~[s,a]";
-		String gingerasDesc= "#/$/@";
-		String oldgingerDesc= "#/@_strand$";
-		String desc= mapSimpleDescriptors.get("MATE2_SENSE");
-		System.out.println(desc);		
-		boolean b= descriptor.init(desc);
-		System.out.println(desc);
-		System.out.println(b);
-		if (b)
-			System.out.println(descriptor);
-		else
-			System.exit(-1);
-		System.out.println();
-		
-		String gingerasID1= "BILLIEHOLIDAY:5:100:1000:1190/1/2";
-		String gingerasID2= "BILLIEHOLIDAY:5:100:1000:1190/2/2";
-		String gingerasID3= "BILLIEHOLIDAY:5:100:1000:1190/2";
-		String gingerasID4= "BILLIEHOLIDAY:5:100:1000:1190/2/s";
-		
-		String barnaID1= "BILLIEHOLIDAY:5:100:1000:1190/1s";
-		String barnaID2= "BILLIEHOLIDAY:5:100:1000:1190/1a";
-		String barnaID3= "BILLIEHOLIDAY:5:100:1000:1190/2";
-		String barnaID4= "BILLIEHOLIDAY:5:100:1000:1190/2a";
-		String barnaID5= "BILLIEHOLIDAY:5:100:1000:1190/1";
-		
-		String oldGingerID1= "BILLIEHOLIDAY:5:100:1000:1190/1_strand2";
-		String oldGingerID2= "BILLIEHOLIDAY:5:100:1000:1190/1_strand0";
-		
-		String newGingerCombined= "MARILYN_0005:7:1:2804:1011#0/1";
-		
-		String id= newGingerCombined;
-		Attributes a= descriptor.getAttributes(id, null);
-		System.out.println(id);
-		b= (a!= null);
-		System.out.println(b);
-		if (b) 
-			System.out.println(a);
-	}
-	
 	public boolean isStranded() {
 		return (posStrand>= 0);
 	}
@@ -251,85 +222,96 @@ public class UniversalReadDescriptor {
 		if (a== null)
 			a= new Attributes();
 		
-		try {
+		else {	// re-init
+			a.strand= 0;
+			a.flag= 0;
+			a.id= null;
+		}
 		
-			// from start
-			int cpos= 0, lastPos= 0, lastCPos= 0;
-			// TEMPORARILY DEACTIVATED
-//			for (int i = 0; i < posID; i++) {
-//				if (separators[i]!= null) {
-//					int j= cpos, k= 0;
-//					for(;j< cs.length()&& k< separators[i].length()
-//						&& cs.charAt(j++) == separators[i].charAt(k++););
-//					if (j>= cs.length()) 
-//						return null;
-//					if (k== separators[i].length()) {
-//						int dc= cpos- lastCPos, dp= i- lastPos;
-//						assert(dc<= dp);
-//						boolean opt= (dc< dp)?false:true;
-//						for (int h = lastPos, p= lastCPos; h < i; h++) {
-//							if (mandatory[h]|| opt) {
-//								if (h== posPair){
-//									if(!setPair(a, cs, p++))
-//										return null;
-//								} else if (h== posStrand)
-//									setStrand(a, cs, p++);
-//							}
-//						}
-//					} 
-//					cpos+= k;
-//					if (k== separators[i].length()) { 
-//						lastCPos= cpos;
-//						lastPos= i;
-//					}
-//				}
-//			}
-			int posLeft= lastPos;
-				
-			// from end
-			cpos= cs.length()- 1;
-			lastCPos= cpos+ 1;
-			lastPos= separators.length;
-			for (int i = separators.length- 1; i > posID;) {
+		try {
+			
+			// parse from end
+			int cpos= cs.length()- 1;
+			int lastCPos= cpos;
+			for (int i = separators.length- 1; i >= 0; --i) {
 				if (separators[i]== null) {
-					--i;
+					int parsed= 0;
+					if (i== posPair) {
+						if(!setPair(a, cs, cpos)) {
+							if (mandatory[i])
+								return null;
+						} else
+							parsed= 1;
+					} else { 
+						if (i== posStrand) {
+							if (!setStrand(a, cs, cpos)) {
+								if (mandatory[i])
+									return null;
+							} else
+								parsed= 1;
+						}				
+					}
+					cpos-= parsed;
 					continue;
 				}
-				int j= cpos, k= separators[i].length()- 1;
-				for(;j>= 0&& k>= 0;--j, --k) {
-					if (cs.charAt(j)!= separators[i].charAt(k))
+				
+				// scan for separator
+				boolean ok= true;
+				int left= -1;
+				int k = separators[i].length()- 1;
+				for (; ok&& k>= 0; --k) {
+					
+					char d= separators[i].charAt(k);
+					if (d== '*')
+						continue;
+					
+					for (; cpos>= 0; --cpos) {
+						char c= cs.charAt(cpos);
+						if (c== d) {
+							--cpos;	// set cpos always to next position
+							break;
+						}
+						if (k== separators[i].length()- 1) {
+							left= cpos;
+							continue; // start of target chars
+						}
+
+						assert(k< separators[i].length()- 1);						
+						if (separators[i].charAt(k+ 1)== '*')
+							continue;
+						ok= false;
 						break;
+					}
 				}
 				
-				if (j< 0) 
-					return null;
-				cpos-= separators[i].length()- (k< 0?0:k);
-				if (k< 0) {	// sep found
-					int p= cpos+ 1+ separators[i].length();
-					int dc= lastCPos- p, dp= lastPos- i;
-					assert(dc<= dp);
-					boolean opt= (dc< dp);
-					for (int h = i; h < lastPos; ++h) {
-						if (mandatory[h]|| (!opt)) {
-							if (h== posPair) {
-								if(!setPair(a, cs, p))
-									return null;
-							} 
-							// 20101222, not else for pair-stranded 
-							if (h== posStrand) {
-								if (!setStrand(a, cs, p))
-									return null;
-							}
-							p++;
-						}
+				if (k>= 0|| !ok) {
+					if (mandatory[i])
+						return null;
+					else {
+						cpos= lastCPos;
+						continue;
 					}
-					lastCPos= cpos+ 1;
-					lastPos= i;
-					--i;
 				}
+				
+				if (i== posPair) {
+					if(!setPair(a, cs, left)) {
+						if (mandatory[i])
+							return null;
+					}
+				} 
+				// 20101222, not else for pair-stranded 
+				if (i== posStrand) {
+					if (!setStrand(a, cs, left)) {
+						if (mandatory[i])
+							return null;
+					}
+				}
+				//--cpos;
+				lastCPos= cpos;
+				
 			}
 			
-			a.id= cs.subSequence(posLeft, cpos);
+			a.id= cs.subSequence(0, cpos+ 1);	// 20110808: cpos+ 1 to catch last char
 			return a;
 			
 		} catch (Throwable e) {
