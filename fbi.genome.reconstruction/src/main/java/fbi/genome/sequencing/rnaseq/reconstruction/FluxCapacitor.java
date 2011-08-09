@@ -36,7 +36,10 @@ import java.util.zip.ZipOutputStream;
 
 public class FluxCapacitor implements ReadStatCalculator {
 
-	public static byte SHELL_NONE= 0, SHELL_BASH= 1, SHELL_CSH= 2, SHELL_KSH= 3;
+    public static byte SHELL_NONE;
+    public static byte SHELL_BASH= 1;
+    public static byte SHELL_CSH= 2;
+    public static byte SHELL_KSH= 3;
 	
 	public static final String GTF_ATTRIBUTE_LENGTH= "slots",
 	GTF_ATTRIBUTE_TOKEN_OBSV= "obsv",
@@ -1681,44 +1684,42 @@ public class FluxCapacitor implements ReadStatCalculator {
 		CLI_ABBREV_COST_MODEL= "cm", 
 		CLI_ABBREV_COST_SPLIT= "cs";
 
-	public static final Character  
-	 CLI_SHORT_PFX= '-',
-	 CLI_SHORT_BATCH= 'b',
-	 CLI_SHORT_COMPRESSION= 'c',
-	 CLI_SHORT_FORCE= 'f',
-	 CLI_SHORT_LOCAL= 'l',
-	 CLI_SHORT_FILENAME= 'n',
-	 CLI_SHORT_HELP= 'h',
-	 CLI_SHORT_OUT= 'o',
-	 CLI_SHORT_PAIR= 'p',
-	 CLI_SHORT_THREAD= 't',
-	 CLI_SHORT_REF= 'r', 
-	 CLI_SHORT_SRA= 's',
-	 CLI_SHORT_UNIF= 'u',
-	 CLI_SHORT_VERBOSE= 'v';
+	public static final Character  CLI_SHORT_PFX= '-';
+    public static final Character CLI_SHORT_BATCH= 'b';
+    public static final Character CLI_SHORT_COMPRESSION= 'c';
+    public static final Character CLI_SHORT_FORCE= 'f';
+    public static final Character CLI_SHORT_LOCAL= 'l';
+    public static final Character CLI_SHORT_FILENAME= 'n';
+    public static final Character CLI_SHORT_HELP= 'h';
+    public static final Character CLI_SHORT_OUT= 'o';
+    public static final Character CLI_SHORT_PAIR= 'p';
+    public static final Character CLI_SHORT_THREAD= 't';
+    public static final Character CLI_SHORT_REF= 'r';
+    public static final Character CLI_SHORT_SRA= 's';
+    public static final Character CLI_SHORT_UNIF= 'u';
+    public static final Character CLI_SHORT_VERBOSE= 'v';
 	
-	public static final String 
-		CLI_LONG_PFX= "--",
-		CLI_LONG_BATCH= "batch", 
-		CLI_LONG_COMPRESSION= "compress",
-		CLI_LONG_FORCE= "force",
-		CLI_LONG_HELP= "help", 
-		CLI_LONG_INSTALL= "install", 
-		CLI_LONG_JVM= "jvm", 
-		CLI_LONG_LIB= "lib", 
-		CLI_LONG_LOCAL= "local", 
-		CLI_LONG_FILENAME= "name", 
-		CLI_LONG_OUT= "output", 
-		CLI_LONG_PAIR= "pair", 
-		CLI_LONG_PROFILE= "pro", 
-		CLI_LONG_REF= "ref",
-		CLI_LONG_SRA= "sra", 
-		CLI_LONG_SSPECIFIC= "sp", 
-		CLI_LONG_THREAD= "thread",
-		CLI_LONG_TMP= "tmp",
-		CLI_LONG_TPX= "tpx",
-		CLI_LONG_UNIF= "uniform",
-		CLI_LONG_VERBOSE= "verbose";
+	public static final String CLI_LONG_PFX= "--";
+    public static final String CLI_LONG_BATCH= "batch";
+    public static final String CLI_LONG_COMPRESSION= "compress";
+    public static final String CLI_LONG_FORCE= "force";
+    public static final String CLI_LONG_HELP= "help";
+    public static final String CLI_LONG_INSTALL= "install";
+    public static final String CLI_LONG_JVM= "jvm";
+    public static final String CLI_LONG_LIB= "lib";
+    public static final String CLI_LONG_LOCAL= "local";
+    public static final String CLI_LONG_FILENAME= "name";
+    public static final String CLI_LONG_OUT= "output";
+    public static final String CLI_LONG_PAIR= "pair";
+    public static final String CLI_LONG_PROFILE= "pro";
+    public static final String CLI_LONG_REF= "ref";
+    public static final String CLI_LONG_SRA= "sra";
+    public static final String CLI_LONG_SSPECIFIC= "sp";
+    public static final String CLI_LONG_THREAD= "thread";
+    public static final String CLI_LONG_TMP= "tmp";
+    public static final String CLI_LONG_TPX= "tpx";
+    public static final String CLI_LONG_UNIF= "uniform";
+    public static final String CLI_LONG_VERBOSE= "verbose";
 	
 	public static boolean debug= false, outputPbClusters= false;
 	public boolean pairedEnd= false, stranded= false, force= false;
@@ -4781,146 +4782,148 @@ public class FluxCapacitor implements ReadStatCalculator {
 	protected static HashMap<String, Method> cliLongMap= new HashMap<String, Method>(); 
 	protected static HashMap<Character, Method> cliShortMap= new HashMap<Character, Method>();
 	protected static HashMap<String[], String> cliExplMap= new HashMap<String[], String>();
-	static {
-		try {
-			Method m;
-			m= FluxCapacitor.class.getDeclaredMethod("setFileReads", new Class[] {String.class});
-			cliShortMap.put(CLI_SHORT_SRA, m);
-			cliLongMap.put(CLI_LONG_SRA, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_SRA.toString(), CLI_LONG_PFX+ CLI_LONG_SRA}, 
-					"set file containing Short Reads Archive (mandatory!)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setFileReference", new Class[] {String.class});
-			cliShortMap.put(CLI_SHORT_REF, m);
-			cliLongMap.put(CLI_LONG_REF, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_REF.toString(), CLI_LONG_PFX+ CLI_LONG_REF}, 
-					"set file with REFerence annotation (mandatory!)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setNameOutDir", new Class[] {String.class});
-			cliShortMap.put(CLI_SHORT_FILENAME, m);
-			cliLongMap.put(CLI_LONG_FILENAME, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_FILENAME.toString(), CLI_LONG_PFX+ CLI_LONG_FILENAME}, 
-					"set output fileName prefix (default stdout)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setForce", null);
-			cliShortMap.put(CLI_SHORT_FORCE, m);
-			cliLongMap.put(CLI_LONG_FORCE, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_FILENAME.toString(), CLI_LONG_PFX+ CLI_LONG_FILENAME}, 
-					"set force (no overwrite checks)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setInstall", (Class[]) null);
-			cliLongMap.put(CLI_LONG_INSTALL, m);
-			cliExplMap.put(new String[] {CLI_LONG_PFX+ CLI_LONG_INSTALL}, 
-					"installs the basic wrapper script (no reads are mapped)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setJVM", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_JVM, m);
-			cliExplMap.put(new String[] {CLI_LONG_PFX+ CLI_LONG_JVM}, 
-					"set a specific Java Virtual Machine home (installation)\n");
 
-			m= FluxCapacitor.class.getDeclaredMethod("setLib", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_LIB, m);
-			cliExplMap.put(new String[] {CLI_LONG_PFX+ CLI_LONG_LIB}, 
-					"set path to native libraries (installation)\n");
+    static {
+        try {
+            Method m;
+            m = FluxCapacitor.class.getDeclaredMethod("setFileReads", new Class[]{String.class});
+            cliShortMap.put(CLI_SHORT_SRA, m);
+            cliLongMap.put(CLI_LONG_SRA, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_SRA.toString(), CLI_LONG_PFX + CLI_LONG_SRA},
+                    "set file containing Short Reads Archive (mandatory!)\n");
 
-			m= FluxCapacitor.class.getDeclaredMethod("setBatch", (Class[]) null);
-			cliShortMap.put(CLI_SHORT_BATCH, m);
-			cliLongMap.put(CLI_LONG_BATCH, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_BATCH.toString(), CLI_LONG_PFX+ CLI_LONG_BATCH}, 
-					"set Batch mode, suppresses file checks and stderr communication\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setUniformal", (Class[]) null);
-			cliShortMap.put(CLI_SHORT_UNIF, m);
-			cliLongMap.put(CLI_LONG_UNIF, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_UNIF.toString(), CLI_LONG_PFX+ CLI_LONG_UNIF}, 
-					"set uniformal distribution no profiling step is carried out\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setPairedEnd", (Class[]) null);
-			cliShortMap.put(CLI_SHORT_PAIR, m);
-			cliLongMap.put(CLI_LONG_PAIR, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_PAIR.toString(), CLI_LONG_PFX+ CLI_LONG_PAIR}, "set input paired ends, " +
-					"read name expected in FMRD format (see http://fluxcapacitor.wikidot.com/formats:fmrd)\n");
+            m = FluxCapacitor.class.getDeclaredMethod("setFileReference", new Class[]{String.class});
+            cliShortMap.put(CLI_SHORT_REF, m);
+            cliLongMap.put(CLI_LONG_REF, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_REF.toString(), CLI_LONG_PFX + CLI_LONG_REF},
+                    "set file with REFerence annotation (mandatory!)\n");
 
-			m= FluxCapacitor.class.getDeclaredMethod("setProfile", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_PROFILE, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_PAIR.toString(), CLI_LONG_PFX+ CLI_LONG_PAIR}, "set profile name");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setOutput", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_OUT, m);
-			cliShortMap.put(CLI_SHORT_OUT, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_OUT.toString(), CLI_LONG_PFX+ CLI_LONG_OUT}, 
-					"select output from [acdefijkgmnoprstuv]\n"
-					+ "a All (scope)\n" 
-					+ "c Coverage (measure)\n"
-					+ "d preDiction (base)\n"
-					+ "e Exon (feature)\n"
-					+ "f Frequency (measure)\n"
-					+ "i Insert size (additional, paired-end only)\n"
-					+ "j splice Junction (feature)\n"
-					+ "k Keepsorted (additional)\n"
-					+ "g Gene (feature)\n"
-					+ "m Mapped (additional)\n"
-					+ "n Notmapped (additional)\n"
-					+ "o Observed (base)\n"
-					+ "p Profiles (additional)\n"
-					+ "r Relative frequency (measure)\n"
-					+ "s Split (scope)\n"
-					+ "t Transcript (feature)\n"
-					+ "u Unique (scope)\n"
-					+ "v eVents (feature)\n"
-			);
-			// g gene, l linear program, m mate-edges, x exon-junctions
+            m = FluxCapacitor.class.getDeclaredMethod("setNameOutDir", new Class[]{String.class});
+            cliShortMap.put(CLI_SHORT_FILENAME, m);
+            cliLongMap.put(CLI_LONG_FILENAME, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_FILENAME.toString(), CLI_LONG_PFX + CLI_LONG_FILENAME},
+                    "set output fileName prefix (default stdout)\n");
 
-			m= FluxCapacitor.class.getDeclaredMethod("setHelp", (Class[]) null);
-			cliLongMap.put(CLI_LONG_HELP, m);
-			cliShortMap.put(CLI_SHORT_HELP, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_HELP.toString(), CLI_LONG_PFX+ CLI_LONG_HELP},
-					"print help summary");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setLogLevel", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_VERBOSE, m);
-			cliShortMap.put(CLI_SHORT_VERBOSE, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_VERBOSE.toString(), CLI_LONG_PFX+ CLI_LONG_VERBOSE},
-					"set verbose level (SILENT, VERBOSE, ERRORS, DEBUG)");
+            m = FluxCapacitor.class.getDeclaredMethod("setForce", null);
+            cliShortMap.put(CLI_SHORT_FORCE, m);
+            cliLongMap.put(CLI_LONG_FORCE, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_FILENAME.toString(), CLI_LONG_PFX + CLI_LONG_FILENAME},
+                    "set force (no overwrite checks)\n");
 
-			m= FluxCapacitor.class.getDeclaredMethod("setThreads", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_THREAD, m);
-			cliShortMap.put(CLI_SHORT_THREAD, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_THREAD.toString(), CLI_LONG_PFX+ CLI_LONG_THREAD}, "set multi-thread mode, provide number of threads\n" +
-					"(time gain only with complex linear programs, otherwise default=1 recommended)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setLocal", (Class[]) null);
-			cliLongMap.put(CLI_LONG_LOCAL, m);
-			cliShortMap.put(CLI_SHORT_LOCAL, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_LOCAL.toString(), CLI_LONG_PFX+ CLI_LONG_LOCAL}, 
-					"work locally, i.e., copy all files to the temporary directory\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setTempDir", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_TMP, m);
-			cliExplMap.put(new String[] {CLI_LONG_PFX+ CLI_LONG_TMP}, 
-					"set path to the temporary directory\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setTempPfx", new Class[] {String.class});
-			cliLongMap.put(CLI_LONG_TPX, m);
-			cliExplMap.put(new String[] {CLI_LONG_PFX+ CLI_LONG_TPX}, 
-					"set prefix for temporary files\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setCompression", new Class[] {String.class});
-			cliShortMap.put(CLI_SHORT_COMPRESSION, m);
-			cliLongMap.put(CLI_LONG_COMPRESSION, m);
-			cliExplMap.put(new String[] {CLI_SHORT_PFX+ CLI_SHORT_COMPRESSION.toString(), 
-						CLI_LONG_PFX+ CLI_LONG_COMPRESSION}, 
-					"set compression method for output files (output file, mapped read-mappings, not-mapped read-mappings, insert sizes)\n");
-			
-			m= FluxCapacitor.class.getDeclaredMethod("setStrandSpecific", (Class[]) null);
-			cliLongMap.put(CLI_LONG_SSPECIFIC, m);
-			cliExplMap.put(new String[] {CLI_LONG_PFX+ CLI_LONG_SSPECIFIC}, 
-					"set strand specific reads (default: strand information disregarded/disabled)\n");
-			
-		} catch (NoSuchMethodException e) {
-			; // :)
-		}
-	}
+            m = FluxCapacitor.class.getDeclaredMethod("setInstall", (Class[]) null);
+            cliLongMap.put(CLI_LONG_INSTALL, m);
+            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_INSTALL},
+                    "installs the basic wrapper script (no reads are mapped)\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setJVM", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_JVM, m);
+            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_JVM},
+                    "set a specific Java Virtual Machine home (installation)\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setLib", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_LIB, m);
+            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_LIB},
+                    "set path to native libraries (installation)\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setBatch", (Class[]) null);
+            cliShortMap.put(CLI_SHORT_BATCH, m);
+            cliLongMap.put(CLI_LONG_BATCH, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_BATCH.toString(), CLI_LONG_PFX + CLI_LONG_BATCH},
+                    "set Batch mode, suppresses file checks and stderr communication\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setUniformal", (Class[]) null);
+            cliShortMap.put(CLI_SHORT_UNIF, m);
+            cliLongMap.put(CLI_LONG_UNIF, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_UNIF.toString(), CLI_LONG_PFX + CLI_LONG_UNIF},
+                    "set uniformal distribution no profiling step is carried out\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setPairedEnd", (Class[]) null);
+            cliShortMap.put(CLI_SHORT_PAIR, m);
+            cliLongMap.put(CLI_LONG_PAIR, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_PAIR.toString(), CLI_LONG_PFX + CLI_LONG_PAIR}, "set input paired ends, " +
+                    "read name expected in FMRD format (see http://fluxcapacitor.wikidot.com/formats:fmrd)\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setProfile", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_PROFILE, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_PAIR.toString(), CLI_LONG_PFX + CLI_LONG_PAIR}, "set profile name");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setOutput", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_OUT, m);
+            cliShortMap.put(CLI_SHORT_OUT, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_OUT.toString(), CLI_LONG_PFX + CLI_LONG_OUT},
+                    "select output from [acdefijkgmnoprstuv]\n"
+                            + "a All (scope)\n"
+                            + "c Coverage (measure)\n"
+                            + "d preDiction (base)\n"
+                            + "e Exon (feature)\n"
+                            + "f Frequency (measure)\n"
+                            + "i Insert size (additional, paired-end only)\n"
+                            + "j splice Junction (feature)\n"
+                            + "k Keepsorted (additional)\n"
+                            + "g Gene (feature)\n"
+                            + "m Mapped (additional)\n"
+                            + "n Notmapped (additional)\n"
+                            + "o Observed (base)\n"
+                            + "p Profiles (additional)\n"
+                            + "r Relative frequency (measure)\n"
+                            + "s Split (scope)\n"
+                            + "t Transcript (feature)\n"
+                            + "u Unique (scope)\n"
+                            + "v eVents (feature)\n"
+            );
+            // g gene, l linear program, m mate-edges, x exon-junctions
+
+            m = FluxCapacitor.class.getDeclaredMethod("setHelp", (Class[]) null);
+            cliLongMap.put(CLI_LONG_HELP, m);
+            cliShortMap.put(CLI_SHORT_HELP, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_HELP.toString(), CLI_LONG_PFX + CLI_LONG_HELP},
+                    "print help summary");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setLogLevel", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_VERBOSE, m);
+            cliShortMap.put(CLI_SHORT_VERBOSE, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_VERBOSE.toString(), CLI_LONG_PFX + CLI_LONG_VERBOSE},
+                    "set verbose level (SILENT, VERBOSE, ERRORS, DEBUG)");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setThreads", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_THREAD, m);
+            cliShortMap.put(CLI_SHORT_THREAD, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_THREAD.toString(), CLI_LONG_PFX + CLI_LONG_THREAD}, "set multi-thread mode, provide number of threads\n" +
+                    "(time gain only with complex linear programs, otherwise default=1 recommended)\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setLocal", (Class[]) null);
+            cliLongMap.put(CLI_LONG_LOCAL, m);
+            cliShortMap.put(CLI_SHORT_LOCAL, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_LOCAL.toString(), CLI_LONG_PFX + CLI_LONG_LOCAL},
+                    "work locally, i.e., copy all files to the temporary directory\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setTempDir", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_TMP, m);
+            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_TMP},
+                    "set path to the temporary directory\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setTempPfx", new Class[]{String.class});
+            cliLongMap.put(CLI_LONG_TPX, m);
+            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_TPX},
+                    "set prefix for temporary files\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setCompression", new Class[]{String.class});
+            cliShortMap.put(CLI_SHORT_COMPRESSION, m);
+            cliLongMap.put(CLI_LONG_COMPRESSION, m);
+            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_COMPRESSION.toString(),
+                    CLI_LONG_PFX + CLI_LONG_COMPRESSION},
+                    "set compression method for output files (output file, mapped read-mappings, not-mapped read-mappings, insert sizes)\n");
+
+            m = FluxCapacitor.class.getDeclaredMethod("setStrandSpecific", (Class[]) null);
+            cliLongMap.put(CLI_LONG_SSPECIFIC, m);
+            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_SSPECIFIC},
+                    "set strand specific reads (default: strand information disregarded/disabled)\n");
+
+        } catch (NoSuchMethodException e) {
+            ; // :)
+        }
+        SHELL_NONE = 0;
+    }
 
 	
 	private boolean move(File src, File dest) {
