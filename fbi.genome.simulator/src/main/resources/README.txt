@@ -34,7 +34,7 @@ FluxSimulator RC3
     -added the ability to specify size distributions using normal distributions with mean and sd (i.e. N(200,20))
     -added PCR with a combined GC filtering step
     -added quality error models and a tool to create such models (currently only from GEM file)
-    -
+
 
 
 FluxSimulator RC2
