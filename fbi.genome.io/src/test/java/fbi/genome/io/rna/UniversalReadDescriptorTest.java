@@ -39,10 +39,10 @@ public class UniversalReadDescriptorTest {
 		+UniversalReadDescriptor.TAG_ID
 		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT;
 	
-	String simRead1= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:S/1";
-	String simRead2= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:S/2";
-	String simRead3= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/1";
-	String simRead4= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:548:A/2";
+	String simRead1= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:S/1";
+	String simRead2= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:S/2";
+	String simRead3= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:A/1";
+	String simRead4= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:A/2";
 	
 	String barnaID1= "BILLIEHOLIDAY:5:100:1000:1190/1s";
 	String barnaID2= "BILLIEHOLIDAY:5:100:1000:1190/1a";
@@ -172,32 +172,32 @@ public class UniversalReadDescriptorTest {
 		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 		Attributes a= 
 			descriptor.getAttributes(simRead1, null);
-		assertEquals(a.id, simRead1.substring(0, simRead1.lastIndexOf(":548:")));
+		assertEquals(a.id, simRead1.substring(0, simRead1.lastIndexOf(":")));
 		assertEquals(a.strand, 1);
 		assertEquals(a.flag, 1);
 		
 		a= descriptor.getAttributes(simRead2, a);
-		assertEquals(a.id, simRead2.substring(0, simRead2.lastIndexOf(":548:")));
+		assertEquals(a.id, simRead2.substring(0, simRead2.lastIndexOf(":")));
 		assertEquals(a.strand, 1);
 		assertEquals(a.flag, 2);
 		
 		a= descriptor.getAttributes(simRead3, a);
-		assertEquals(a.id, simRead3.substring(0, simRead3.lastIndexOf(":548:")));
+		assertEquals(a.id, simRead3.substring(0, simRead3.lastIndexOf(":")));
 		assertEquals(a.strand, 2);
 		assertEquals(a.flag, 1);
 		
 		a= descriptor.getAttributes(simRead4, a);
-		assertEquals(a.id, simRead4.substring(0, simRead4.lastIndexOf(":548:")));
+		assertEquals(a.id, simRead4.substring(0, simRead4.lastIndexOf(":")));
 		assertEquals(a.strand, 2);
 		assertEquals(a.flag, 2);
 
-		// alternative control
+		// alternative control, used for question mark operator before
 		descriptor= new UniversalReadDescriptor();
 		descriptor.init(
 				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
 				UniversalReadDescriptor.TAG_ID+
 				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
-				":???:"+
+				":"+
 				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
 				UniversalReadDescriptor.TAG_STRAND+
 				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
@@ -210,7 +210,7 @@ public class UniversalReadDescriptorTest {
 				UniversalReadDescriptor.SYMBOL_TAG_RIGHT
 		);
 		a= descriptor.getAttributes(simRead4, a);
-		assertEquals(a.id, simRead4.substring(0, simRead4.lastIndexOf(":548:")));
+		assertEquals(a.id, simRead4.substring(0, simRead4.lastIndexOf(":")));
 		assertEquals(a.strand, 2);
 		assertEquals(a.flag, 2);
 

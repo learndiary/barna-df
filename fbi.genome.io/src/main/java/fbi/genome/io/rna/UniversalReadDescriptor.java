@@ -101,7 +101,7 @@ public class UniversalReadDescriptor {
 				SYMBOL_SET_LEFT+ "s,a"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_SIMULATOR, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
-				":*:"+
+				":"+
 				SYMBOL_TAG_LEFT+ TAG_STRAND+ SYMBOL_TAG_RIGHT+
 				SYMBOL_SET_LEFT+ "S,A"+ SYMBOL_SET_RIGHT+
 				"/"+
