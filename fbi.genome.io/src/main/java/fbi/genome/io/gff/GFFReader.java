@@ -588,15 +588,20 @@ public class GFFReader extends DefaultIOWrapper {
 
 		try {
 			read();
-			while (getGenes()!= null) {
+			int chkGeneCnt= 0, chkTxCnt= 0, chkExonCnt= 0;
+			while (getGenes()!= null) {				
 				for (int i = 0; i < getGenes().length; i++) {
+					++chkGeneCnt;
 					txPerLocus.add(getGenes()[i].getTranscriptCount());
 					for (int j = 0; j < getGenes()[i].getTranscripts().length; j++) {
+						++chkTxCnt;
+						chkExonCnt+= getGenes()[i].getTranscripts()[j].getExons().length;
 						txLengths.add(getGenes()[i].getTranscripts()[j].getExonicLength());
 					}
 				}
 				read();
 			}
+			System.err.println("[CHECK] read "+chkGeneCnt+" genes, "+chkTxCnt+" tx, "+chkExonCnt+" exons.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1217,6 +1222,7 @@ public class GFFReader extends DefaultIOWrapper {
 				GFFObject obj= readBuildObject(line);
 				if (!checkObject(obj)) {	// object based criteria
 					++skippedObjects;
+					Log.warn("skipped line "+ obj);
 					
 					if (trpt!= null && geneWise
 							&& ((readAheadLimit> 0&& cnt== (readAheadLimit+1))|| (readAheadTranscripts> 0&& cntTrpt>= readAheadTranscripts))) {
@@ -1252,7 +1258,8 @@ public class GFFReader extends DefaultIOWrapper {
 					//++readChrs;
 					if (lastChrID != null) { 						
 						if (!checkChromosome(chrID)) {
-								getReadChr().add(lastChrID);
+							Log.warn("skipped chromosome "+ chrID);
+							getReadChr().add(lastChrID);
 							ArrayUtils.addUnique(getSkippedChr(), chrID);
 							buffy= skipToNextChromosome(buffy, size, chrID);
 							if (buffy== null)
@@ -1319,6 +1326,7 @@ public class GFFReader extends DefaultIOWrapper {
 						}
 					} else {
 						skippedTranscripts.add(lastTrpt.getTranscriptID());
+						Log.warn("skipped transcript "+ lastTrpt.getTranscriptID());
 					}
 
 					Gene ge = new Gene(Gene.getUniqueID());

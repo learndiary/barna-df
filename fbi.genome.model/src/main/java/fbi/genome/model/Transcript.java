@@ -31,6 +31,8 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jfree.util.Log;
+
 //import genome.tools.MyArray;
 //import genome.tools.ENCODE;
 
@@ -1237,7 +1239,7 @@ public class Transcript extends DirectedRegion {
 		return true;
 	}
 	
-	/**
+			/**
 			 * Inserts the exons in an array sorted according to ascending order
 			 * of their start/stop position. <b>IMPORTANT</b>: add exons AFTER adding 
 			 * transcripts to ensure the correct init of AS types.
@@ -1256,22 +1258,16 @@ public class Transcript extends DirectedRegion {
 					// too short introns
 				if (removeGaps) {
 					if ((p-1>= 0)&& (exons[p-1].get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1>= newExon.get5PrimeEdge()))  {
-						if (Constants.verboseLevel> Constants.VERBOSE_ERRORS) {
-							System.err.println("\n\t[WARNING] in transcript "+getTranscriptID());
-							System.err.println("\tmerging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p-1].start+","+exons[p-1].end+")");
-							System.err.println("\tbecause intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt.");
-						}
+						Log.warn("merging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p-1].start+","+exons[p-1].end+")"+
+								" in transcript "+ getTranscriptID()+ " because intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt."); 
 						newExon.set5PrimeEdge(exons[p-1].get5PrimeEdge());
 						removeExon(exons[p-1], false, true);
 						--p;
 						//return false;
 					}
 					if ((p< exons.length)&& (exons[p].get5PrimeEdge()<= newExon.get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1))  {
-						if (Constants.verboseLevel> Constants.VERBOSE_ERRORS) {
-							System.err.println("\n\t[WARNING] in transcript "+getTranscriptID());
-							System.err.println("\tmerging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p].start+","+exons[p].end+")");
-							System.err.println("\tbecause intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt.");
-						}
+						Log.warn("merging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p].start+","+exons[p].end+")"+
+								" in transcript "+ getTranscriptID()+ " because intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt."); 
 						newExon.set3PrimeEdge(exons[p].get3PrimeEdge());
 						removeExon(exons[p], true, false);
 						; // nothing, insertion point is the same

@@ -60,7 +60,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.model</artifactId>
-            <version>1.0</version>
+            <version>1.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
