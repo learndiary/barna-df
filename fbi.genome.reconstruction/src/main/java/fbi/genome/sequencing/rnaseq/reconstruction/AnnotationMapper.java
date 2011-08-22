@@ -21,7 +21,7 @@ public class AnnotationMapper extends Graph {
 
 	HashSet<CharSequence> mapReadOrPairIDs;
 	UniversalReadDescriptor.Attributes attributes= null;
-	UniversalReadDescriptor descriptor2;
+
 	HashMap<CharSequence, Vector<BEDobject2>[]> mapEndsOfPairs;
 	long nrReadsMapped= 0;
 	long nrReadsLoci= 0;
@@ -33,6 +33,10 @@ public class AnnotationMapper extends Graph {
 	long nrLocusMultimaps= 0;
 	public AnnotationMapper(Gene gene) {
 		super(gene);
+		constructGraph();
+		getNodesInGenomicOrder();	// important ??!
+		transformToFragmentGraph();
+
 	}
 	
 	public Edge getEdge(BEDobject2 obj) {
@@ -172,7 +176,7 @@ public class AnnotationMapper extends Graph {
 	 * add a SINGLE read
 	 * @param regs
 	 */
-	int mapRead(BEDobject2 dobject, boolean force) {
+	int mapRead(BEDobject2 dobject, UniversalReadDescriptor descriptor2, boolean force) {
 		// find the edge(s) where the regions align
 		// if these do not form a continous chain, create a new edge
 		
@@ -322,7 +326,7 @@ public class AnnotationMapper extends Graph {
 		
 	}
 
-	void map(BEDobject2[] beds) {
+	void map(BEDobject2[] beds, UniversalReadDescriptor descriptor2) {
 
 			// init
 			nrMappingsReadsOrPairs= 0;
@@ -340,7 +344,7 @@ public class AnnotationMapper extends Graph {
 			// map read pairs
 			for (int j = 0; beds!= null&& j< beds.length; ++j) {
 
-				int xyxx= mapRead(beds[j], false);
+				int xyxx= mapRead(beds[j], descriptor2, false);
 				//nrMappingsReadsOrPairs+= xxx;
 			}
 			nrMappingsReadsOrPairs+= mapReadOrPairIDs.size()/ 2;
@@ -348,7 +352,7 @@ public class AnnotationMapper extends Graph {
 			// map single reads, mapping on single edges and inc count
 			if (false) {
 				for (int j = 0; beds!= null&& j< beds.length; ++j) {
-					int xxx= mapRead(beds[j], true);
+					int xxx= mapRead(beds[j], descriptor2, true);
 					nrMappingsForced+= xxx;
 				}
 			}
@@ -425,5 +429,21 @@ public class AnnotationMapper extends Graph {
 			}
 
 		}
+
+	public HashSet<CharSequence> getMapReadOrPairIDs() {
+		return mapReadOrPairIDs;
+	}
+
+	public long getNrMappingsReadsOrPairs() {
+		return nrMappingsReadsOrPairs;
+	}
+
+	public long getNrPairsNoTxEvidence() {
+		return nrPairsNoTxEvidence;
+	}
+
+	public long getNrPairsWrongOrientation() {
+		return nrPairsWrongOrientation;
+	}
 
 }

@@ -1,5 +1,6 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
@@ -36,43 +37,6 @@ import java.util.zip.ZipOutputStream;
 
 public class FluxCapacitor implements ReadStatCalculator {
 
-    public static byte SHELL_NONE;
-    public static byte SHELL_BASH= 1;
-    public static byte SHELL_CSH= 2;
-    public static byte SHELL_KSH= 3;
-	
-	public static final String GTF_ATTRIBUTE_LENGTH= "slots",
-	GTF_ATTRIBUTE_TOKEN_OBSV= "obsv",
-	GTF_ATTRIBUTE_TOKEN_PRED= "pred",
-	GTF_ATTRIBUTE_TOKEN_BALANCED= "bal",
-	GTF_ATTRIBUTE_TOKEN_ALL= "all",
-	GTF_ATTRIBUTE_TOKEN_TID= "split",
-	GTF_ATTRIBUTE_TOKEN_EXC= "uniq",
-	GTF_ATTRIBUTE_TOKEN_READS= "freq",
-	GTF_ATTRIBUTE_TOKEN_RFREQ= "rfreq",
-	GTF_ATTRIBUTE_TOKEN_RPKM= "RPKM", // rpkm
-	GTF_ATTRIBUTE_TOKEN_COV= "cov", 
-	GTF_ATTRIBUTE_TOKEN_FWD= "fwd",
-	GTF_ATTRIBUTE_TOKEN_REV= "rev",
-	GTF_ATTRIBUTE_TOKEN_BID= "bid",
-	GTF_ATTRIBUTE_TOKEN_SEP= "_";
-	
-	public static final String GTF_ATTRIBUTE_PROFILE= "profile",
-		GTF_ATTRIBUTE_EXPECT= "expect";
-
-	static final String[] GTF_ATTRIBUTES_BASE= new String[] {GTF_ATTRIBUTE_TOKEN_OBSV, GTF_ATTRIBUTE_TOKEN_PRED, GTF_ATTRIBUTE_TOKEN_BALANCED};
-	static final String[] GTF_ATTRIBUTES_RESOLUTION= new String[] {GTF_ATTRIBUTE_TOKEN_ALL, GTF_ATTRIBUTE_TOKEN_TID, GTF_ATTRIBUTE_TOKEN_EXC};
-	static final String[] GTF_ATTRIBUTES_MEASUREMENT= new String[] {GTF_ATTRIBUTE_TOKEN_READS, GTF_ATTRIBUTE_TOKEN_RFREQ, GTF_ATTRIBUTE_TOKEN_RPKM};
-
-	static final String PFX_CAPACITOR= "capacitor", 
-		PFX_MAPPED_READS= "mapped",
-		PFX_UNMAPPED_READS= "notmapped";
-	
-	static final char UNDERSCORE= '_';
-	
-	public static final String PROPERTY_BUILD= "capacitor.build";
-	public static final String PROPERTY_JDK= "capacitor.jdk";
-	
 	Object lock= new Object();
 
 	ReadDescriptor descriptor;
@@ -373,10 +337,10 @@ public class FluxCapacitor implements ReadStatCalculator {
 				
 				//incrementProfile(g, target, dobject, sense);
 
-				if (sense|| (strand!= STRAND_ENABLED)) {
+				if (sense|| (strand!= FluxCapacitorConstants.STRAND_ENABLED)) {
 					target.incrReadNr();
 					mapCtr= 1;
-				} else if (strand!= STRAND_SPECIFIC) {
+				} else if (strand!= FluxCapacitorConstants.STRAND_SPECIFIC) {
 					target.incrRevReadNr();
 					mapCtr= 1;
 				} else {
@@ -452,7 +416,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			// deprecated
 			boolean unsolvedSystem= false;	
 			double valOF= solver== null?0: solver.getValObjFunc();
-			if (valOF> BIG) { 
+			if (valOF> FluxCapacitorConstants.BIG) { 
 				++nrUnsolved;
 				unsolvedSystem= true;
 			}
@@ -526,7 +490,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						if ((outputObs|| outputPred)&& tx< g.trpts.length)
 							getGTF(sb, g.trpts[tx], solver, g, perM, pv, true);
 						else if (outputBalanced) {
-							sb.append(GTF_ATTRIBUTE_TOKEN_RPKM);
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 							sb.append(Constants.SPACE);
 							if (rpkmMap.containsKey(tid))
 								sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
@@ -569,7 +533,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							}
 							getGTF(sb, g.trpts[x].getExons()[j], g.trpts[i], g, solver, unsolvedSystem, perM, pv, true);
 						} else if (outputBalanced) {
-							sb.append(GTF_ATTRIBUTE_TOKEN_RPKM);
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 							sb.append(Constants.SPACE);
 							if (rpkmMap.containsKey(tid))
 								sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
@@ -653,7 +617,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							else
 								sb.append(Constants.SPACE);
 							
-							sb.append(GTF_ATTRIBUTE_TOKEN_RPKM);
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 							sb.append(Constants.SPACE);							
 							//sb.append(rpkmMap.get(g.trpts[i].getTranscriptID()));
 							sb.append(String.format("%1$f", rpkmMap.get(g.trpts[i].getTranscriptID()).floatValue()));	// rgasp parser does not like scientific notation
@@ -840,7 +804,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				if (!uniform) {
 					// not any more, now expr x length unique, and IDs
 					// profile= func.getProfile(plen, (strand== STRAND_ENABLED), pairedEnd);
-					profile= new TProfile(tx.getGene().getGeneID(), plen, (strand== STRAND_ENABLED), pairedEnd);
+					profile= new TProfile(tx.getGene().getGeneID(), plen, (strand== FluxCapacitorConstants.STRAND_ENABLED), pairedEnd);
 					func.profiles.add(profile);
 				}
 				HashMap<CharSequence, BEDobject2[][]> mapPends= new HashMap<CharSequence, BEDobject2[][]>();
@@ -874,7 +838,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						continue; 	// doesnt align to the transcript
 					}
 
-					if (strand== STRAND_SPECIFIC&& beds[i].getStrand()!= tx.getStrand()) {
+					if (strand== FluxCapacitorConstants.STRAND_SPECIFIC&& beds[i].getStrand()!= tx.getStrand()) {
 						++nrMappingsWrongStrand;
 						continue;
 					}
@@ -928,7 +892,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							
 					} else {
 						byte dir= Constants.DIR_FORWARD;
-						if (strand== STRAND_ENABLED&& beds[i].getStrand()!= tx.getStrand())
+						if (strand== FluxCapacitorConstants.STRAND_ENABLED&& beds[i].getStrand()!= tx.getStrand())
 							dir= Constants.DIR_BACKWARD;
 						
 						if (!uniform)
@@ -947,7 +911,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 			GraphLPsolver solver= new GraphLPsolver(g, readLenMin, 
 					pairedEnd?insertMinMax:null, mappedReads, 
-					(strand== STRAND_ENABLED), 
+					(strand== FluxCapacitorConstants.STRAND_ENABLED), 
 					pairedEnd);
 			if (outputLP)
 				solver.setFileLPdir(getFileLP());
@@ -1008,11 +972,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 				sb.append("\t");
 				if (e instanceof SuperEdge) {
 					if (((SuperEdge) e).isPend())
-						sb.append(GFF_FEATURE_PAIRED);
+						sb.append(FluxCapacitorConstants.GFF_FEATURE_PAIRED);
 					else 
-						sb.append(GFF_FEATURE_JUNCTION);
+						sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
 				} else
-					sb.append(GFF_FEATURE_FRAGMENT);
+					sb.append(FluxCapacitorConstants.GFF_FEATURE_FRAGMENT);
 				sb.append("\t");
 				
 				int[] frac= e.getFrac(tt[0], readLenMin);
@@ -1203,9 +1167,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 					if ((x== 0&& !outputAll)|| (x== 1&& !outputSplit)|| (x==2&& !outputUnique))
 						output= false;
 					if (output) {
-						sb.append(GTF_ATTRIBUTE_LENGTH);
-						sb.append(GTF_ATTRIBUTE_TOKEN_SEP);
-						sb.append(x== 0? GTF_ATTRIBUTE_TOKEN_ALL: (x==1? GTF_ATTRIBUTE_TOKEN_TID: GTF_ATTRIBUTE_TOKEN_EXC));
+						sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_LENGTH);
+						sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP);
+						sb.append(x== 0? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_ALL: (x==1? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_TID: FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_EXC));
 						sb.append(" ");	// \"
 					}
 					boolean excl= x==2? true: false;
@@ -1245,11 +1209,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 									|| (x== 2&& !outputRcov))
 								output= false;
 							if (output) {
-								sb.append(i==0? GTF_ATTRIBUTE_TOKEN_OBSV: (i==1? GTF_ATTRIBUTE_TOKEN_PRED:GTF_ATTRIBUTE_TOKEN_BALANCED));
-								sb.append(GTF_ATTRIBUTE_TOKEN_SEP);
-								sb.append(j== 0?GTF_ATTRIBUTE_TOKEN_ALL:(j==1? GTF_ATTRIBUTE_TOKEN_TID: GTF_ATTRIBUTE_TOKEN_EXC));
-								sb.append(GTF_ATTRIBUTE_TOKEN_SEP);				
-								sb.append(x== 0?GTF_ATTRIBUTE_TOKEN_READS: GTF_ATTRIBUTE_TOKEN_COV);	// pairedEnd?GTF_ATTRIBUTE_TOKEN_COV:GTF_ATTRIBUTE_TOKEN_RPKM
+								sb.append(i==0? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_OBSV: (i==1? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_PRED:FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_BALANCED));
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP);
+								sb.append(j== 0?FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_ALL:(j==1? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_TID: FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_EXC));
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP);				
+								sb.append(x== 0?FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS: FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_COV);	// pairedEnd?GTF_ATTRIBUTE_TOKEN_COV:GTF_ATTRIBUTE_TOKEN_RPKM
 								sb.append(" ");	// no \"
 							}
 							for (int m = 0; m < tid.length; m++) {
@@ -1257,12 +1221,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 								if (calc== null) {
 									if (output)
-										sb.append(VALUE_NA);
+										sb.append(FluxCapacitorConstants.VALUE_NA);
 								} else {
 									
 									boolean normalized= i== 2? true: false;
-									double val= ms* (j== 0? calc.getReads(eeV.elementAt(m), BYTE_0, sig, normalized):  // ALL								
-										calc.getReadsAvg(eeV.elementAt(m), BYTE_0, g, sig, excl, normalized));	// TID, excl 							
+									double val= ms* (j== 0? calc.getReads(eeV.elementAt(m), FluxCapacitorConstants.BYTE_0, sig, normalized):  // ALL								
+										calc.getReadsAvg(eeV.elementAt(m), FluxCapacitorConstants.BYTE_0, g, sig, excl, normalized));	// TID, excl 							
 									
 //									if (val!= 0&& i>= 1&& j== 2&& containerVecLen.elementAt(m)[j]== 0)
 //										System.currentTimeMillis();
@@ -1310,7 +1274,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 											val/= length;
 										}
 										if (output)
-											sb.append(length== 0? FLOAT_STRING_0: Float.toString((float) val));
+											sb.append(length== 0? FluxCapacitorConstants.FLOAT_STRING_0: Float.toString((float) val));
 									} 
 								}
 								if (output)
@@ -1337,7 +1301,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					// deprecated
 						boolean unsolvedSystem= false;	
 						double valOF= solver== null?0: solver.getValObjFunc();
-						if (valOF> BIG) { 
+						if (valOF> FluxCapacitorConstants.BIG) { 
 							++nrUnsolved;
 							unsolvedSystem= true;
 						}
@@ -1523,7 +1487,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						if (elen< readLenMin)
 							return;	// TODO discards reads
 						
-						int binLen= Arrays.binarySearch(BIN_LEN, elen);
+						int binLen= Arrays.binarySearch(FluxCapacitorConstants.BIN_LEN, elen);
 						if (binLen< 0)
 							binLen= -(binLen+ 1);
 						
@@ -1535,7 +1499,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						if (!uniform) {
 							// not any more, now expr x length unique, and IDs
 							// profile= func.getProfile(plen, (strand== STRAND_ENABLED), pairedEnd);
-							profile= new TProfile(tx.getGene().getGeneID(), plen, (strand== STRAND_ENABLED), pairedEnd);
+							profile= new TProfile(tx.getGene().getGeneID(), plen, (strand== FluxCapacitorConstants.STRAND_ENABLED), pairedEnd);
 							func.profiles.add(profile);
 						}
 						HashMap<CharSequence, BEDobject2[][]> mapPends= new HashMap<CharSequence, BEDobject2[][]>();
@@ -1570,7 +1534,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								continue; 	// doesnt align to the transcript
 							}
 		
-							if (strand== STRAND_SPECIFIC&& beds[i].getStrand()!= tx.getStrand()) {
+							if (strand== FluxCapacitorConstants.STRAND_SPECIFIC&& beds[i].getStrand()!= tx.getStrand()) {
 								++nrMappingsWrongStrand;
 								continue;
 							}
@@ -1626,7 +1590,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								
 								
 								byte dir= Constants.DIR_FORWARD;
-								if (strand== STRAND_ENABLED) {
+								if (strand== FluxCapacitorConstants.STRAND_ENABLED) {
 									//assert(ePos[0]> 0);	// can be, out of range
 									if (!tx.getTranscriptID().startsWith("AT1G04050")) {
 										if (ePos[0]> 0&& ePos[1]<= elen) {
@@ -1670,64 +1634,14 @@ public class FluxCapacitor implements ReadStatCalculator {
 					}
 	}
 	
-	public static final String SFX_GTF= "gtf", SFX_BED= "bed";
-	public static final String VERSION_ID= "1.2";
-	
-	public static final String SUBDIR_NATIVELIBS= "lib"+File.separator+"native", SUBDIR_LPSOLVE= "lpsolve55", LPSOLVE_LIB_NAME= "lpsolve55", LPSOLVE_JNI_NAME= "lpsolve55j";
-	
-	public static final String DEBUG_LP_OUT= "C:\\lp_out";
-	
-	public static final String CLI_CMD= "flux";
-	
-	public static final String
-		CLI_ABBREV_COST_BOUNDS= "cb", 
-		CLI_ABBREV_COST_MODEL= "cm", 
-		CLI_ABBREV_COST_SPLIT= "cs";
-
-	public static final Character  CLI_SHORT_PFX= '-';
-    public static final Character CLI_SHORT_BATCH= 'b';
-    public static final Character CLI_SHORT_COMPRESSION= 'c';
-    public static final Character CLI_SHORT_FORCE= 'f';
-    public static final Character CLI_SHORT_LOCAL= 'l';
-    public static final Character CLI_SHORT_FILENAME= 'n';
-    public static final Character CLI_SHORT_HELP= 'h';
-    public static final Character CLI_SHORT_OUT= 'o';
-    public static final Character CLI_SHORT_PAIR= 'p';
-    public static final Character CLI_SHORT_THREAD= 't';
-    public static final Character CLI_SHORT_REF= 'r';
-    public static final Character CLI_SHORT_SRA= 's';
-    public static final Character CLI_SHORT_UNIF= 'u';
-    public static final Character CLI_SHORT_VERBOSE= 'v';
-	
-	public static final String CLI_LONG_PFX= "--";
-    public static final String CLI_LONG_BATCH= "batch";
-    public static final String CLI_LONG_COMPRESSION= "compress";
-    public static final String CLI_LONG_FORCE= "force";
-    public static final String CLI_LONG_HELP= "help";
-    public static final String CLI_LONG_INSTALL= "install";
-    public static final String CLI_LONG_JVM= "jvm";
-    public static final String CLI_LONG_LIB= "lib";
-    public static final String CLI_LONG_LOCAL= "local";
-    public static final String CLI_LONG_FILENAME= "name";
-    public static final String CLI_LONG_OUT= "output";
-    public static final String CLI_LONG_PAIR= "pair";
-    public static final String CLI_LONG_PROFILE= "pro";
-    public static final String CLI_LONG_REF= "ref";
-    public static final String CLI_LONG_SRA= "sra";
-    public static final String CLI_LONG_SSPECIFIC= "sp";
-    public static final String CLI_LONG_THREAD= "thread";
-    public static final String CLI_LONG_TMP= "tmp";
-    public static final String CLI_LONG_TPX= "tpx";
-    public static final String CLI_LONG_UNIF= "uniform";
-    public static final String CLI_LONG_VERBOSE= "verbose";
-	
-	public static boolean debug= false, outputPbClusters= false;
+	public static boolean debug= false;
+	public static boolean outputPbClusters= false;
 	public boolean pairedEnd= false, stranded= false, force= false;
 	int tolerance= 1000;	// +/- gene-near region
 	public static boolean 
 		cheatDoNotExit= false,
 		cheatLearn= false, 
-		cheatDisableFCheck= false,
+		cheatDisableFCheck= true,
 		cheatDisableCleanup= true,
 		cheatCopyFile= true,
 		doUseLocusNormalization= false;
@@ -1756,7 +1670,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		if (!(outputExon|| outputSJunction|| outputTranscript|| outputGene|| outputEvent)) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 				System.err.println("[WARNING] no features for output selected (["
-						+ CLI_SHORT_PFX+ CLI_SHORT_OUT+ "|"+ CLI_LONG_PFX+ CLI_LONG_OUT+ "] [ejtgv]");
+						+ FluxCapacitorConstants.CLI_SHORT_PFX+ FluxCapacitorConstants.CLI_SHORT_OUT+ "|"+ FluxCapacitorConstants.CLI_LONG_PFX+ FluxCapacitorConstants.CLI_LONG_OUT+ "] [ejtgv]");
 		}
 		if (outputExon|| outputSJunction|| outputTranscript|| outputGene|| outputEvent) {
 			if (!(outputObs|| outputPred|| outputBalanced)) {
@@ -1791,7 +1705,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 //			return false;
 		}
 		
-		if (strand== STRAND_SPECIFIC&& pairedEnd) {
+		if (strand== FluxCapacitorConstants.STRAND_SPECIFIC&& pairedEnd) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 				System.err.println("[NONO] strand specific reads can (currently) not be mate pairs, no?!");
 			return false;
@@ -1847,19 +1761,31 @@ public class FluxCapacitor implements ReadStatCalculator {
 //							mapTrivial(gene.getTranscripts()[0], beds);
 //							outputGFF(null, null, null);
 //						} else {
-							//Graph myGraph= getGraph(this.gene);
-							AnnotationMapper mapper= new AnnotationMapper(this.gene);
-							mapper.map(this.beds);
+							Graph myGraph= getGraph(this.gene);
+							if (beds!= null)
+								nrReadsLoci+= beds.length;
+							//AnnotationMapper mapper= new AnnotationMapper(this.gene);
+							map(myGraph, this.gene, this.beds); 
+//							mapper.map(this.beds, descriptor2);
+//							nrReadsMapped+= mapper.getNrMappingsReadsOrPairs();
+//							nrMappingsReadsOrPairs+= mapper.getMapReadOrPairIDs().size()/ 2;
+//							nrPairsNoTxEvidence+= mapper.getNrPairsNoTxEvidence();
+//							nrPairsWrongOrientation+= mapper.getNrPairsWrongOrientation();
 							
 							GraphLPsolver2 mySolver= null;
 							// != mapReadOrPairIDs.size()> 0, does also count singles
 							if (nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
-								mySolver= getSolver(mapper, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
+								mySolver= getSolver(myGraph, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
 								mySolver.run();
 							}
+//							if (mapper.nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
+//								mySolver= getSolver(mapper, (int) (mapper.nrMappingsReadsOrPairs* 2)); // not: getMappedReadcount()
+//								mySolver.run();
+//							}
 			//				if (this.gene.getTranscriptCount()== 1)
 			//					System.currentTimeMillis();
-							outputGFF(mapper, events, mySolver);
+							outputGFF(myGraph, events, mySolver);
+							//outputGFF(mapper, events, mySolver);
 							
 //						}
 					} else {
@@ -2389,7 +2315,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				// deprecated
 				boolean unsolvedSystem= false;	
 				double valOF= solver== null?0: solver.getValObjFunc();
-				if (valOF> BIG) { 
+				if (valOF> FluxCapacitorConstants.BIG) { 
 					++nrUnsolved;
 					unsolvedSystem= true;
 				}
@@ -2468,7 +2394,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							if ((outputObs|| outputPred)&& tx< tt.length)
 								; //getGTF(sb, tt[tx], solver, g, perM, pv, true);
 							else if (outputBalanced) {
-								sb.append(GTF_ATTRIBUTE_TOKEN_RPKM);
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 								sb.append(Constants.SPACE);
 								if (rpkmMap.containsKey(tid))
 									sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
@@ -2511,7 +2437,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								}
 								//getGTF(sb, tt[x].getExons()[j], tt[i], g, solver, unsolvedSystem, perM, pv, true);
 							} else if (outputBalanced) {
-								sb.append(GTF_ATTRIBUTE_TOKEN_RPKM);
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 								sb.append(Constants.SPACE);
 								if (rpkmMap.containsKey(tid))
 									sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
@@ -2595,7 +2521,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								else
 									sb.append(Constants.SPACE);
 								
-								sb.append(GTF_ATTRIBUTE_TOKEN_RPKM);
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 								sb.append(Constants.SPACE);							
 								//sb.append(rpkmMap.get(g.trpts[i].getTranscriptID()));
 								sb.append(String.format("%1$f", rpkmMap.get(tt[i].getTranscriptID()).floatValue()));	// rgasp parser does not like scientific notation
@@ -2782,7 +2708,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					if (!uniform) {
 						// not any more, now expr x length unique, and IDs
 						// profile= func.getProfile(plen, (strand== STRAND_ENABLED), pairedEnd);
-						profile= new TProfile(tx.getGene().getGeneID(), plen, (strand== STRAND_ENABLED), pairedEnd);
+						profile= new TProfile(tx.getGene().getGeneID(), plen, (strand== FluxCapacitorConstants.STRAND_ENABLED), pairedEnd);
 						func.profiles.add(profile);
 					}
 					HashMap<CharSequence, BEDobject2[][]> mapPends= new HashMap<CharSequence, BEDobject2[][]>();
@@ -2816,7 +2742,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							continue; 	// doesnt align to the transcript
 						}
 	
-						if (strand== STRAND_SPECIFIC&& beds[i].getStrand()!= tx.getStrand()) {
+						if (strand== FluxCapacitorConstants.STRAND_SPECIFIC&& beds[i].getStrand()!= tx.getStrand()) {
 							++nrMappingsWrongStrand;
 							continue;
 						}
@@ -2870,7 +2796,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								
 						} else {
 							byte dir= Constants.DIR_FORWARD;
-							if (strand== STRAND_ENABLED&& beds[i].getStrand()!= tx.getStrand())
+							if (strand== FluxCapacitorConstants.STRAND_ENABLED&& beds[i].getStrand()!= tx.getStrand())
 								dir= Constants.DIR_BACKWARD;
 							
 							if (!uniform)
@@ -2889,7 +2815,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			
 				GraphLPsolver2 solver= new GraphLPsolver2(g, readLenMin, 
 						pairedEnd?insertMinMax:null, mappedReads, 
-						(strand== STRAND_ENABLED), 
+						(strand== FluxCapacitorConstants.STRAND_ENABLED), 
 						pairedEnd);
 				if (outputLP)
 					solver.setFileLPdir(getFileLP());
@@ -2950,11 +2876,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 					sb.append("\t");
 					if (e instanceof SuperEdge) {
 						if (((SuperEdge) e).isPend())
-							sb.append(GFF_FEATURE_PAIRED);
+							sb.append(FluxCapacitorConstants.GFF_FEATURE_PAIRED);
 						else 
-							sb.append(GFF_FEATURE_JUNCTION);
+							sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
 					} else
-						sb.append(GFF_FEATURE_FRAGMENT);
+						sb.append(FluxCapacitorConstants.GFF_FEATURE_FRAGMENT);
 					sb.append("\t");
 					
 					int[] frac= e.getFrac(tt[0], readLenMin);
@@ -3145,9 +3071,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 						if ((x== 0&& !outputAll)|| (x== 1&& !outputSplit)|| (x==2&& !outputUnique))
 							output= false;
 						if (output) {
-							sb.append(GTF_ATTRIBUTE_LENGTH);
-							sb.append(GTF_ATTRIBUTE_TOKEN_SEP);
-							sb.append(x== 0? GTF_ATTRIBUTE_TOKEN_ALL: (x==1? GTF_ATTRIBUTE_TOKEN_TID: GTF_ATTRIBUTE_TOKEN_EXC));
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_LENGTH);
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP);
+							sb.append(x== 0? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_ALL: (x==1? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_TID: FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_EXC));
 							sb.append(" ");	// \"
 						}
 						boolean excl= x==2? true: false;
@@ -3187,11 +3113,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 										|| (x== 2&& !outputRcov))
 									output= false;
 								if (output) {
-									sb.append(i==0? GTF_ATTRIBUTE_TOKEN_OBSV: (i==1? GTF_ATTRIBUTE_TOKEN_PRED:GTF_ATTRIBUTE_TOKEN_BALANCED));
-									sb.append(GTF_ATTRIBUTE_TOKEN_SEP);
-									sb.append(j== 0?GTF_ATTRIBUTE_TOKEN_ALL:(j==1? GTF_ATTRIBUTE_TOKEN_TID: GTF_ATTRIBUTE_TOKEN_EXC));
-									sb.append(GTF_ATTRIBUTE_TOKEN_SEP);				
-									sb.append(x== 0?GTF_ATTRIBUTE_TOKEN_READS: GTF_ATTRIBUTE_TOKEN_COV);	// pairedEnd?GTF_ATTRIBUTE_TOKEN_COV:GTF_ATTRIBUTE_TOKEN_RPKM
+									sb.append(i==0? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_OBSV: (i==1? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_PRED:FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_BALANCED));
+									sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP);
+									sb.append(j== 0?FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_ALL:(j==1? FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_TID: FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_EXC));
+									sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP);				
+									sb.append(x== 0?FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS: FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_COV);	// pairedEnd?GTF_ATTRIBUTE_TOKEN_COV:GTF_ATTRIBUTE_TOKEN_RPKM
 									sb.append(" ");	// no \"
 								}
 								for (int m = 0; m < tid.length; m++) {
@@ -3199,12 +3125,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 			
 									if (calc== null) {
 										if (output)
-											sb.append(VALUE_NA);
+											sb.append(FluxCapacitorConstants.VALUE_NA);
 									} else {
 										
 										boolean normalized= i== 2? true: false;
-										double val= ms* (j== 0? calc.getReads(eeV.elementAt(m), BYTE_0, sig, normalized):  // ALL								
-											calc.getReadsAvg(eeV.elementAt(m), BYTE_0, g, sig, excl, normalized));	// TID, excl 							
+										double val= ms* (j== 0? calc.getReads(eeV.elementAt(m), FluxCapacitorConstants.BYTE_0, sig, normalized):  // ALL								
+											calc.getReadsAvg(eeV.elementAt(m), FluxCapacitorConstants.BYTE_0, g, sig, excl, normalized));	// TID, excl 							
 										
 	//									if (val!= 0&& i>= 1&& j== 2&& containerVecLen.elementAt(m)[j]== 0)
 	//										System.currentTimeMillis();
@@ -3252,7 +3178,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 												val/= length;
 											}
 											if (output)
-												sb.append(length== 0? FLOAT_STRING_0: Float.toString((float) val));
+												sb.append(length== 0? FluxCapacitorConstants.FLOAT_STRING_0: Float.toString((float) val));
 										} 
 									}
 									if (output)
@@ -3279,7 +3205,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						// deprecated
 							boolean unsolvedSystem= false;	
 							double valOF= solver== null?0: solver.getValObjFunc();
-							if (valOF> BIG) { 
+							if (valOF> FluxCapacitorConstants.BIG) { 
 								++nrUnsolved;
 								unsolvedSystem= true;
 							}
@@ -3661,6 +3587,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						}
 						// for profiles paired reads only
 						boolean found= false;
+						boolean dbg= false;
 						for (int j = 0; j < oo.length; j++) {
 							if (j==flag|| oo[j]== null)
 								continue;
@@ -3684,8 +3611,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 									addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);
 									
 									// count each pair only once, TODO first hit counted
-									map.put(bed1.getName(), null);
+									map.put(bed1.getName(), null);	
 									map.put(bed2.getName(), null);
+										
 									break;
 								} 
 							}
@@ -3707,14 +3635,16 @@ public class FluxCapacitor implements ReadStatCalculator {
 					Object[] ooo= map.keySet().toArray();
 					Arrays.sort(ooo);
 					for (int i = 0; i < ooo.length; i++) {
-						System.err.println(ooo[i]);
+						if (!mapReadOrPairIDs.contains(ooo[i]))
+							System.err.println(ooo[i]);
 					}
 					
 					System.err.println();
-					ooo= map.keySet().toArray();
+					ooo= mapReadOrPairIDs.toArray();
 					Arrays.sort(ooo);
 					for (int i = 0; i < ooo.length; i++) {
-						System.err.println(ooo[i]);
+						if (!map.containsKey(ooo[i]))
+							System.err.println(ooo[i]);
 					}
 					
 					System.currentTimeMillis();
@@ -3841,10 +3771,10 @@ public class FluxCapacitor implements ReadStatCalculator {
 							
 							//incrementProfile(g, target, dobject, sense);
 			
-							if (sense|| (strand!= STRAND_ENABLED)) {
+							if (sense|| (strand!= FluxCapacitorConstants.STRAND_ENABLED)) {
 								target.incrReadNr();
 								mapCtr= 1;
-							} else if (strand!= STRAND_SPECIFIC) {
+							} else if (strand!= FluxCapacitorConstants.STRAND_SPECIFIC) {
 								target.incrRevReadNr();
 								mapCtr= 1;
 							} else {
@@ -3867,9 +3797,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 	static void printUsage() {
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 			
-			Iterator<String[]> iter= cliExplMap.keySet().iterator();
+			Iterator<String[]> iter= FluxCapacitorConstants.cliExplMap.keySet().iterator();
 			int max= 0;
-			String[][] ss= new String[cliExplMap.size()][];
+			String[][] ss= new String[FluxCapacitorConstants.cliExplMap.size()][];
 			for (int i = 0; iter.hasNext(); i++) {
 				ss[i]= iter.next();
 				int x= 0;
@@ -3898,7 +3828,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				for (int j = 0; j < pos; j++) 
 					sb.append(" ");
 				
-				String expl= cliExplMap.get(ss[i]);
+				String expl= FluxCapacitorConstants.cliExplMap.get(ss[i]);
 				pos= sep;
 				for (int j = 0; j < expl.length(); j++, pos++) {
 					if (pos>= maxWidth) {
@@ -3923,12 +3853,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 			}
 			
 		}
-	}
-	
-	private static final String HELP_HEADER= "", HELP_FOOTER= ""; 
-	private static void wellcome() {
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println("\n[HELLO] I am the FLUX CAPACITOR (build "+version+ "), nice to meet you!\n");
 	}
 	
 	public static void main(String[] args) {
@@ -3977,7 +3901,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				Runtime.getRuntime().addShutdownHook(new Thread("MrProper") {
 				    public void run() { 
 				    	FileHelper.cleanup(System.getProperty(Constants.PROPERTY_TMPDIR), 
-				    			Constants.globalPfx== null?PFX_CAPACITOR+ "."+ myCapacitor.getRunID():Constants.globalPfx+ "_",
+				    			Constants.globalPfx== null?FluxCapacitorConstants.PFX_CAPACITOR+ "."+ myCapacitor.getRunID():Constants.globalPfx+ "_",
 				    			null,
 				    			Constants.verboseLevel> Constants.VERBOSE_SHUTUP?System.err:null); 
 				    }
@@ -4132,7 +4056,7 @@ public class FluxCapacitor implements ReadStatCalculator {
         Log.progressStart("progress ");
 		try {
 			BufferedReader buffy= new BufferedReader(new FileReader(fileBED));
-			File f= File.createTempFile(PFX_CAPACITOR, "prescanIDs");
+			File f= File.createTempFile(FluxCapacitorConstants.PFX_CAPACITOR, "prescanIDs");
 			BufferedWriter writer= new BufferedWriter(new FileWriter(f));
 			long bRead= 0, bTot= fileBED.length();
 			int perc= 0, lines= 0;
@@ -4266,29 +4190,29 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 		String s;
 		for (int i = 0; i < args.length; i++) {
-			if (args[i].startsWith(CLI_LONG_PFX)) {
-				s= args[i].substring(CLI_LONG_PFX.length());
-				if (! cliLongMap.containsKey(s)) {
+			if (args[i].startsWith(FluxCapacitorConstants.CLI_LONG_PFX)) {
+				s= args[i].substring(FluxCapacitorConstants.CLI_LONG_PFX.length());
+				if (! FluxCapacitorConstants.cliLongMap.containsKey(s)) {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 						System.err.println("[OHNO] Unrecognized long option \'"+args[i]+"\'");
-					Iterator<String> iter= cliLongMap.keySet().iterator();
+					Iterator<String> iter= FluxCapacitorConstants.cliLongMap.keySet().iterator();
 					while (iter.hasNext())
 						System.err.println("\'"+iter.next()+"\'");
 					System.exit(-1);
 				}
-				Method m= cliLongMap.get(s);
+				Method m= FluxCapacitorConstants.cliLongMap.get(s);
 				if ((i= init(m, args, i))< 0) 
 					System.exit(-1);
 				
-			} else if (args[i].startsWith(CLI_SHORT_PFX.toString())){
+			} else if (args[i].startsWith(FluxCapacitorConstants.CLI_SHORT_PFX.toString())){
 				s= args[i].substring(1);
 				for (int j = 0; j < s.length(); j++) {
-					if (! cliShortMap.containsKey(s.charAt(j))) {
+					if (! FluxCapacitorConstants.cliShortMap.containsKey(s.charAt(j))) {
 						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 							System.err.println("[OHNO] Unrecognized short option \'"+args[i]+"\'");
 						System.exit(-1);
 					}
-					Method m= cliShortMap.get(s.charAt(j));
+					Method m= FluxCapacitorConstants.cliShortMap.get(s.charAt(j));
 					if ((i= init(m, args, i))< 0) 
 						System.exit(-1);
 				}
@@ -4307,7 +4231,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					System.err.println("\tyou said nothing and this is bad.");
 				else
 					System.err.println("\tyou said it is "+fileBED+" but it is bad.");
-				System.err.println("\tUse the "+CLI_LONG_PFX+CLI_LONG_SRA+" parameter and give me a correct one please.\n");
+				System.err.println("\tUse the "+FluxCapacitorConstants.CLI_LONG_PFX+FluxCapacitorConstants.CLI_LONG_SRA+" parameter and give me a correct one please.\n");
 			}
 			return -1;
 		}
@@ -4318,7 +4242,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					System.err.println("\tyou said nothing and this is not good.");
 				else
 					System.err.println("\tyou said it is "+fileGTF+" but it is not good.");
-				System.err.println("\tTry again, using the "+CLI_LONG_PFX+CLI_LONG_REF+" parameter.\n");
+				System.err.println("\tTry again, using the "+FluxCapacitorConstants.CLI_LONG_PFX+FluxCapacitorConstants.CLI_LONG_REF+" parameter.\n");
 			}
 			return -1;
 		}
@@ -4363,7 +4287,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	private void printStats(PrintStream p, String[] args) {
 		p.println("\n[HEHO] We are set, so let's go!");
-		p.print("\tcmd\t"+CLI_CMD);
+		p.print("\tcmd\t"+FluxCapacitorConstants.CLI_CMD);
 		for (int i = 0; i < args.length; i++) 
 			p.print(" "+args[i]);
 		p.println();
@@ -4382,14 +4306,14 @@ public class FluxCapacitor implements ReadStatCalculator {
 			p.println("\tOUTPUT");
 			p.println("\tTemporary Folder\t"+ System.getProperty(Constants.PROPERTY_TMPDIR));			
 			if (Constants.globalPfx!= null)
-				p.println("\t"+CLI_LONG_TPX+"\t"+ Constants.globalPfx);
+				p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
 			p.print("\tQuantification File\t");
 			if (fileOut== null)
 				p.println("stdout");
 			else {
 				p.println(fileOut.getCanonicalPath());
 				if (compressionOut!= FileHelper.COMPRESSION_NONE)
-					p.println("\t"+ CLI_LONG_COMPRESSION+ "\t"+ FileHelper.COMPRESSION_KEYWORDS[compressionOut]);
+					p.println("\t"+ FluxCapacitorConstants.CLI_LONG_COMPRESSION+ "\t"+ FileHelper.COMPRESSION_KEYWORDS[compressionOut]);
 			}
 /*			p.print("\tfeatures:\t");
 			if (outputExon)
@@ -4492,10 +4416,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 	}
 	
-	private final static String[] L_USER_COMMENTS= new String[] {"[OOOPS] ", "[HEOO] ", "[PLONG] ", "[BAOOO] "};
 	private final static Random rndLuser= new Random();
 	private String errorMissingArgument(String string) {
-		return L_USER_COMMENTS[rndLuser.nextInt(L_USER_COMMENTS.length)]
+		return FluxCapacitorConstants.L_USER_COMMENTS[rndLuser.nextInt(FluxCapacitorConstants.L_USER_COMMENTS.length)]
 		       + "You forgot to give me an argument for the parameter "
 		       + string+ "!";
 		
@@ -4610,10 +4533,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 		Constants.globalPfx= tmpPfx;
 	}
 	
-	public static final byte STRAND_NONE= 0, STRAND_ENABLED= 1, STRAND_SPECIFIC= 2;
-	byte strand= STRAND_NONE;
+	byte strand= FluxCapacitorConstants.STRAND_NONE;
 	public void setStrandSpecific() {
-		strand= STRAND_SPECIFIC;
+		strand= FluxCapacitorConstants.STRAND_SPECIFIC;
 	}
 	
 	public boolean setThreads(String nrThreads) {
@@ -4657,35 +4579,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		pairedEnd= true;
 	}
 	
-	public static final char 
-		CLI_OUT_ALL= 'a', 
-		CLI_OUT_BALANCED= 'b',
-		CLI_OUT_COVERAGE= 'c',
-		CLI_OUT_PRED= 'd',
-		// e
-		CLI_OUT_RFREQ= 'f', // fraction
-		CLI_OUT_GENE= 'g',
-		// h
-		CLI_OUT_ISIZE= 'i', 
-		CLI_OUT_SJUNCTION= 'j',	// junctions in general.. separate later 
-		CLI_OUT_KEEPSORTED= 'k', 
-		CLI_OUT_LP= 'l', 
-		CLI_OUT_MAPPED= 'm', 
-		CLI_OUT_NOTMAPPED= 'n', 
-		CLI_OUT_OBS= 'o', 
-		CLI_OUT_PROFILES= 'p',
-		CLI_OUT_UNIQUE= 'q',	// WAS: u
-		CLI_OUT_FREQ= 'r',	// reads 
-		CLI_OUT_SPLIT= 's', 
-		CLI_OUT_TRANSCRIPT= 't',
-		CLI_OUT_LOCUS= 'u',	// locus, cluster
-		CLI_OUT_EVENTS= 'v',
-		// w
-		CLI_OUT_EXON= 'x',	// WAS: e 
-		CLI_OUT_INTRON= 'y';
-		// z
-
-	
 	public boolean setOutput(String s) {
 		boolean 
 			outputObs= this.outputObs,
@@ -4710,45 +4603,45 @@ public class FluxCapacitor implements ReadStatCalculator {
 			outputISize= this.outputISize;
 			
 		for (int i = 0; i < s.length(); i++) {
-			if (s.charAt(i)== CLI_OUT_ALL) 
+			if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_ALL) 
 				outputAll= false;
-			else if (s.charAt(i)== CLI_OUT_SPLIT)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_SPLIT)
 				outputSplit= false;
-			else if (s.charAt(i)== CLI_OUT_UNIQUE)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_UNIQUE)
 				outputUnique= false;
-			else if (s.charAt(i)== CLI_OUT_OBS)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_OBS)
 				outputObs= false;
-			else if (s.charAt(i)== CLI_OUT_PRED)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_PRED)
 				outputPred= false;
-			else if (s.charAt(i)== CLI_OUT_BALANCED)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_BALANCED)
 				outputBalanced= false;
-			else if (s.charAt(i)== CLI_OUT_FREQ)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_FREQ)
 				outputFreq= false;
-			else if (s.charAt(i)== CLI_OUT_RFREQ)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_RFREQ)
 				outputRfreq= false;
-			else if (s.charAt(i)== CLI_OUT_COVERAGE)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_COVERAGE)
 				outputRcov= false;
-			else if (s.charAt(i)== CLI_OUT_EXON)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_EXON)
 				outputExon= false;
-			else if (s.charAt(i)== CLI_OUT_SJUNCTION)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_SJUNCTION)
 				outputSJunction= false;
-			else if (s.charAt(i)== CLI_OUT_TRANSCRIPT)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_TRANSCRIPT)
 				outputTranscript= false;
-			else if (s.charAt(i)== CLI_OUT_GENE)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_GENE)
 				outputGene= false;
-			else if (s.charAt(i)== CLI_OUT_EVENTS)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_EVENTS)
 				outputEvent= false;
-			else if (s.charAt(i)== CLI_OUT_LP)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_LP)
 				outputLP= false;
-			else if (s.charAt(i)== CLI_OUT_PROFILES)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_PROFILES)
 				outputProfiles= false;
-			else if (s.charAt(i)== CLI_OUT_MAPPED)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_MAPPED)
 				outputMapped= false;
-			else if (s.charAt(i)== CLI_OUT_NOTMAPPED)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_NOTMAPPED)
 				outputNotmapped= false;
-			else if (s.charAt(i)== CLI_OUT_ISIZE)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_ISIZE)
 				outputISize= false;
-			else if (s.charAt(i)== CLI_OUT_KEEPSORTED)
+			else if (s.charAt(i)== FluxCapacitorConstants.CLI_OUT_KEEPSORTED)
 				outputSorted= false;
 			else 
 				return false;
@@ -4779,78 +4672,74 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	
-	protected static HashMap<String, Method> cliLongMap= new HashMap<String, Method>(); 
-	protected static HashMap<Character, Method> cliShortMap= new HashMap<Character, Method>();
-	protected static HashMap<String[], String> cliExplMap= new HashMap<String[], String>();
-
-    static {
+	static {
         try {
             Method m;
             m = FluxCapacitor.class.getDeclaredMethod("setFileReads", new Class[]{String.class});
-            cliShortMap.put(CLI_SHORT_SRA, m);
-            cliLongMap.put(CLI_LONG_SRA, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_SRA.toString(), CLI_LONG_PFX + CLI_LONG_SRA},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_SRA, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_SRA, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_SRA.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_SRA},
                     "set file containing Short Reads Archive (mandatory!)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setFileReference", new Class[]{String.class});
-            cliShortMap.put(CLI_SHORT_REF, m);
-            cliLongMap.put(CLI_LONG_REF, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_REF.toString(), CLI_LONG_PFX + CLI_LONG_REF},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_REF, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_REF, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_REF.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_REF},
                     "set file with REFerence annotation (mandatory!)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setNameOutDir", new Class[]{String.class});
-            cliShortMap.put(CLI_SHORT_FILENAME, m);
-            cliLongMap.put(CLI_LONG_FILENAME, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_FILENAME.toString(), CLI_LONG_PFX + CLI_LONG_FILENAME},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_FILENAME, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_FILENAME, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_FILENAME.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_FILENAME},
                     "set output fileName prefix (default stdout)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setForce", null);
-            cliShortMap.put(CLI_SHORT_FORCE, m);
-            cliLongMap.put(CLI_LONG_FORCE, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_FILENAME.toString(), CLI_LONG_PFX + CLI_LONG_FILENAME},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_FORCE, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_FORCE, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_FILENAME.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_FILENAME},
                     "set force (no overwrite checks)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setInstall", (Class[]) null);
-            cliLongMap.put(CLI_LONG_INSTALL, m);
-            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_INSTALL},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_INSTALL, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_INSTALL},
                     "installs the basic wrapper script (no reads are mapped)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setJVM", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_JVM, m);
-            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_JVM},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_JVM, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_JVM},
                     "set a specific Java Virtual Machine home (installation)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setLib", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_LIB, m);
-            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_LIB},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_LIB, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_LIB},
                     "set path to native libraries (installation)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setBatch", (Class[]) null);
-            cliShortMap.put(CLI_SHORT_BATCH, m);
-            cliLongMap.put(CLI_LONG_BATCH, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_BATCH.toString(), CLI_LONG_PFX + CLI_LONG_BATCH},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_BATCH, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_BATCH, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_BATCH.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_BATCH},
                     "set Batch mode, suppresses file checks and stderr communication\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setUniformal", (Class[]) null);
-            cliShortMap.put(CLI_SHORT_UNIF, m);
-            cliLongMap.put(CLI_LONG_UNIF, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_UNIF.toString(), CLI_LONG_PFX + CLI_LONG_UNIF},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_UNIF, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_UNIF, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_UNIF.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_UNIF},
                     "set uniformal distribution no profiling step is carried out\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setPairedEnd", (Class[]) null);
-            cliShortMap.put(CLI_SHORT_PAIR, m);
-            cliLongMap.put(CLI_LONG_PAIR, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_PAIR.toString(), CLI_LONG_PFX + CLI_LONG_PAIR}, "set input paired ends, " +
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_PAIR, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_PAIR, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_PAIR.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_PAIR}, "set input paired ends, " +
                     "read name expected in FMRD format (see http://fluxcapacitor.wikidot.com/formats:fmrd)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setProfile", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_PROFILE, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_PAIR.toString(), CLI_LONG_PFX + CLI_LONG_PAIR}, "set profile name");
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_PROFILE, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_PAIR.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_PAIR}, "set profile name");
 
             m = FluxCapacitor.class.getDeclaredMethod("setOutput", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_OUT, m);
-            cliShortMap.put(CLI_SHORT_OUT, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_OUT.toString(), CLI_LONG_PFX + CLI_LONG_OUT},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_OUT, m);
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_OUT, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_OUT.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_OUT},
                     "select output from [acdefijkgmnoprstuv]\n"
                             + "a All (scope)\n"
                             + "c Coverage (measure)\n"
@@ -4874,55 +4763,55 @@ public class FluxCapacitor implements ReadStatCalculator {
             // g gene, l linear program, m mate-edges, x exon-junctions
 
             m = FluxCapacitor.class.getDeclaredMethod("setHelp", (Class[]) null);
-            cliLongMap.put(CLI_LONG_HELP, m);
-            cliShortMap.put(CLI_SHORT_HELP, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_HELP.toString(), CLI_LONG_PFX + CLI_LONG_HELP},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_HELP, m);
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_HELP, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_HELP.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_HELP},
                     "print help summary");
 
             m = FluxCapacitor.class.getDeclaredMethod("setLogLevel", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_VERBOSE, m);
-            cliShortMap.put(CLI_SHORT_VERBOSE, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_VERBOSE.toString(), CLI_LONG_PFX + CLI_LONG_VERBOSE},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_VERBOSE, m);
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_VERBOSE, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_VERBOSE.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_VERBOSE},
                     "set verbose level (SILENT, VERBOSE, ERRORS, DEBUG)");
 
             m = FluxCapacitor.class.getDeclaredMethod("setThreads", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_THREAD, m);
-            cliShortMap.put(CLI_SHORT_THREAD, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_THREAD.toString(), CLI_LONG_PFX + CLI_LONG_THREAD}, "set multi-thread mode, provide number of threads\n" +
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_THREAD, m);
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_THREAD, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_THREAD.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_THREAD}, "set multi-thread mode, provide number of threads\n" +
                     "(time gain only with complex linear programs, otherwise default=1 recommended)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setLocal", (Class[]) null);
-            cliLongMap.put(CLI_LONG_LOCAL, m);
-            cliShortMap.put(CLI_SHORT_LOCAL, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_LOCAL.toString(), CLI_LONG_PFX + CLI_LONG_LOCAL},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_LOCAL, m);
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_LOCAL, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_LOCAL.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_LOCAL},
                     "work locally, i.e., copy all files to the temporary directory\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setTempDir", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_TMP, m);
-            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_TMP},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_TMP, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_TMP},
                     "set path to the temporary directory\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setTempPfx", new Class[]{String.class});
-            cliLongMap.put(CLI_LONG_TPX, m);
-            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_TPX},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_TPX, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_TPX},
                     "set prefix for temporary files\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setCompression", new Class[]{String.class});
-            cliShortMap.put(CLI_SHORT_COMPRESSION, m);
-            cliLongMap.put(CLI_LONG_COMPRESSION, m);
-            cliExplMap.put(new String[]{CLI_SHORT_PFX + CLI_SHORT_COMPRESSION.toString(),
-                    CLI_LONG_PFX + CLI_LONG_COMPRESSION},
+            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_COMPRESSION, m);
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_COMPRESSION, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_COMPRESSION.toString(),
+                    FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_COMPRESSION},
                     "set compression method for output files (output file, mapped read-mappings, not-mapped read-mappings, insert sizes)\n");
 
             m = FluxCapacitor.class.getDeclaredMethod("setStrandSpecific", (Class[]) null);
-            cliLongMap.put(CLI_LONG_SSPECIFIC, m);
-            cliExplMap.put(new String[]{CLI_LONG_PFX + CLI_LONG_SSPECIFIC},
+            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_SSPECIFIC, m);
+            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_SSPECIFIC},
                     "set strand specific reads (default: strand information disregarded/disabled)\n");
 
         } catch (NoSuchMethodException e) {
             ; // :)
         }
-        SHELL_NONE = 0;
+        FluxCapacitorConstants.SHELL_NONE = 0;
     }
 
 	
@@ -5121,7 +5010,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		String s= System.getProperty(Constants.PROPERTY_TMPDIR)
 				+ File.separator
 				+ (Constants.globalPfx== null?"":Constants.globalPfx+ "_")
-				+ PFX_CAPACITOR
+				+ FluxCapacitorConstants.PFX_CAPACITOR
 				+ "."
 				+ getRunID()
 				+ "."+ id
@@ -5315,8 +5204,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return (isReadyBED&& isReadyGTF); 
 	}
 	
-	public static final String SFX_INFLATE= "__inflated";
-	public static final String SFX_MAPPED= "_mapped", SFX_NOTMAPPED= "_notmapped", SFX_PROFILES= "_profiles", SFX_LP= "_lp", SFX_INSERTSIZE= "_insertsize";
 	private static boolean waitForYesNo() {
 		while(true) {
 			String s= readSystemIn().trim().toLowerCase();
@@ -5434,7 +5321,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 //		}
 		
 		
-		explore(MODE_RECONSTRUCT);
+		explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 		
 //		try {
 //			testWriter.flush();
@@ -5524,19 +5411,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return null;
 	}
 
-	private static final String obsReadsAllTag= GTF_ATTRIBUTE_TOKEN_OBSV+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_ALL+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS, 
-	obsReadsSplitTag= GTF_ATTRIBUTE_TOKEN_OBSV+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_TID+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS,				
-	obsReadsUniqTag= GTF_ATTRIBUTE_TOKEN_OBSV+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_EXC+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS, 
-	predReadsAllTag= GTF_ATTRIBUTE_TOKEN_PRED+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_ALL+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS,
-	predReadsSplitTag= GTF_ATTRIBUTE_TOKEN_PRED+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_TID+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS, 
-	predReadsUniqTag= GTF_ATTRIBUTE_TOKEN_PRED+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_EXC+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS,
-	lengthAllTag= GTF_ATTRIBUTE_LENGTH+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_ALL,
-	lengthSplitTag= GTF_ATTRIBUTE_LENGTH+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_TID,
-	lengthUniqTag= GTF_ATTRIBUTE_LENGTH+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_EXC,
-	normReadsAllTag= GTF_ATTRIBUTE_TOKEN_BALANCED+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_ALL+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS,
-	normReadsSplitTag= GTF_ATTRIBUTE_TOKEN_BALANCED+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_TID+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS, 
-	normReadsUniqTag= GTF_ATTRIBUTE_TOKEN_BALANCED+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_EXC+ GTF_ATTRIBUTE_TOKEN_SEP+ GTF_ATTRIBUTE_TOKEN_READS;
-
 	static boolean miss= false;
 	void appendFreq() {
 		
@@ -5582,7 +5456,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					event= true;
 				
 				// TODO check: ss[2].equals(GFF_FEATURE_JUNCTION)
-				if (ss[2].equals(GFF_FEATURE_FRAGMENT)|| ss[2].equals(GFF_FEATURE_PAIRED)) {
+				if (ss[2].equals(FluxCapacitorConstants.GFF_FEATURE_FRAGMENT)|| ss[2].equals(FluxCapacitorConstants.GFF_FEATURE_PAIRED)) {
 					writer.write("\n");
 					continue;
 				}
@@ -5620,29 +5494,29 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 							// collect
 						try {
-							if (ss[i].equals(obsReadsAllTag)) 
+							if (ss[i].equals(FluxCapacitorConstants.obsReadsAllTag)) 
 								appendReads[0][0]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(obsReadsSplitTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.obsReadsSplitTag)) 
 								appendReads[0][1]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(obsReadsUniqTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.obsReadsUniqTag)) 
 								appendReads[0][2]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(predReadsAllTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.predReadsAllTag)) 
 								appendReads[1][0]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(predReadsSplitTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.predReadsSplitTag)) 
 								appendReads[1][1]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(predReadsUniqTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.predReadsUniqTag)) 
 								appendReads[1][2]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(normReadsAllTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.normReadsAllTag)) 
 								appendReads[1][0]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(normReadsSplitTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.normReadsSplitTag)) 
 								appendReads[1][1]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(normReadsUniqTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.normReadsUniqTag)) 
 								appendReads[1][2]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(lengthAllTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.lengthAllTag)) 
 								appendLengths[0]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(lengthSplitTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.lengthSplitTag)) 
 								appendLengths[1]= Double.parseDouble(sss== null?target: sss[dim]);
-							else if (ss[i].equals(lengthUniqTag)) 
+							else if (ss[i].equals(FluxCapacitorConstants.lengthUniqTag)) 
 								appendLengths[2]= Double.parseDouble(sss== null?target: sss[dim]);
 						} catch (NumberFormatException e) {
 							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
@@ -5706,18 +5580,18 @@ public class FluxCapacitor implements ReadStatCalculator {
 	private void addAttributes(double[] lengths, double[][] reads, StringBuilder[] sb) {
 		
 		for (int i = 0; i < 3; i++) { // obs, pred, balanced
-			String tag= GTF_ATTRIBUTES_BASE[i];
-			tag+= GTF_ATTRIBUTE_TOKEN_SEP;
+			String tag= FluxCapacitorConstants.GTF_ATTRIBUTES_BASE[i];
+			tag+= FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP;
 			for (int j = 0; j < 3; j++) {	// all, split, uniq
-				String tag2= tag+ GTF_ATTRIBUTES_RESOLUTION[j];
-				tag2+= GTF_ATTRIBUTE_TOKEN_SEP;
+				String tag2= tag+ FluxCapacitorConstants.GTF_ATTRIBUTES_RESOLUTION[j];
+				tag2+= FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_SEP;
 				for (int x = 0; x < 2; x++) {	// freq, cov
 					int pos= (i* 6)+ (j* 2)+ x;
 					if (lengths[j]< 0|| reads[i][j]< 0) {
 						sb[pos]= null;
 						continue;
 					}
-					String tag3= tag2+ GTF_ATTRIBUTES_MEASUREMENT[x+1];
+					String tag3= tag2+ FluxCapacitorConstants.GTF_ATTRIBUTES_MEASUREMENT[x+1];
 					if (sb[pos].length()== 0) {
 						sb[pos].append(" ");
 						sb[pos].append(tag3);
@@ -5774,7 +5648,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		if (fName== null)
 			return null;
 		String sfx= FileHelper.getCompressionExtension(compressionProfiles);
-		return fName+ SFX_PROFILES+ (sfx== null? "": Constants.DOT+ sfx);
+		return fName+ FluxCapacitorConstants.SFX_PROFILES+ (sfx== null? "": Constants.DOT+ sfx);
 	}
 	public File getFileProfile() {
 		if (fileProfile == null) {
@@ -5797,7 +5671,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	private String getNameOut() {
 		if (getCompositeFName()== null)
 			return null;
-		return getCompositeFName()+ Constants.DOT+ SFX_GTF;
+		return getCompositeFName()+ Constants.DOT+ FluxCapacitorConstants.SFX_GTF;
 	}
 	
 	public File getFileOut() {
@@ -5815,7 +5689,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		String s= getCompositeFName();
 		if (s== null)
 			return null;
-		return s+ SFX_INSERTSIZE+ Constants.DOT+ "txt";
+		return s+ FluxCapacitorConstants.SFX_INSERTSIZE+ Constants.DOT+ "txt";
 	}
 	
 	public File getFileISize() {
@@ -5829,7 +5703,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	private String getNameLP() {
-		return getCompositeFName()+ SFX_LP;
+		return getCompositeFName()+ FluxCapacitorConstants.SFX_LP;
 	}
 	
 	public File getFileLP() {
@@ -5847,7 +5721,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		String s= getCompositeFName();
 		if (s==  null)
 			return null;
-		return s+ SFX_MAPPED+ Constants.DOT+ SFX_BED;
+		return s+ FluxCapacitorConstants.SFX_MAPPED+ Constants.DOT+ FluxCapacitorConstants.SFX_BED;
 	}
 	
 	
@@ -5855,13 +5729,13 @@ public class FluxCapacitor implements ReadStatCalculator {
 		String s= getCompositeFName();
 		if (s== null)
 			return null;
-		return s+ SFX_NOTMAPPED+ Constants.DOT+ SFX_BED;
+		return s+ FluxCapacitorConstants.SFX_NOTMAPPED+ Constants.DOT+ FluxCapacitorConstants.SFX_BED;
 	}
 	public File getFileMappedReads() {
 		if (fileMappedReads == null) {
 			fileMappedReads= createTempFile(
 					getNameMappedReads(),
-					SFX_BED);
+					FluxCapacitorConstants.SFX_BED);
 		}
 
 		return fileMappedReads;
@@ -5943,7 +5817,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 //				for (int j = 0; j < supis[i].length; j++) {
 		    for (int i = 0; i < profileStub.length; i++) {
 					try {
-						String lenString= i< BIN_LEN.length? Integer.toString(BIN_LEN[i]): "big";
+						String lenString= i< FluxCapacitorConstants.BIN_LEN.length? Integer.toString(FluxCapacitorConstants.BIN_LEN[i]): "big";
 						//int expUp= TProfileFunction.BIN_EXP[j];
 						String name= "master"+ UNDERSCORE+ 
 							lenString+ NT;
@@ -5955,7 +5829,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						StringBuilder buf= new StringBuilder();
 						for (int k = 0; k < profileStub[i].length; k++) {
 							buf.append(profileStub[i][k]);
-							if (strand== STRAND_ENABLED) {
+							if (strand== FluxCapacitorConstants.STRAND_ENABLED) {
 								buf.append('\t');
 								buf.append(profileStubRev[i][k]);
 							}
@@ -6016,8 +5890,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 	}
 	
-	public static byte FORMAT_BED= 0, FORMAT_GTF= 1, FORMAT_SAM= 2;
-	public static byte mapFileType= FORMAT_SAM;
+	public static byte mapFileType= FluxCapacitorConstants.FORMAT_SAM;
 	private void writeMapFileSam(Graph g, Edge e, DirectedRegion[] regs, DirectedRegion[][] contRegs) {
 		
 		return;
@@ -6107,7 +5980,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 
 	
-	public static final byte MODE_LEARN= 0, MODE_RECONSTRUCT= 1;
 	TProfileFunction func= new TProfileFunction(this); 
 	private Vector<Thread> threadPool= new Vector<Thread>();
 	int maxThreads= 1;
@@ -6125,7 +5997,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 		SyncIOHandler2 handler= new SyncIOHandler2(10* 1024* 1024);
 		
-		if (mode== MODE_LEARN) {
+		if (mode== FluxCapacitorConstants.MODE_LEARN) {
 			nrReadsSingleLoci= 0;
 			nrReadsSingleLociMapped= 0;
 		} 
@@ -6141,23 +6013,23 @@ public class FluxCapacitor implements ReadStatCalculator {
 			bedWrapper.reset();
 			
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (mode== MODE_LEARN) 
+				if (mode== FluxCapacitorConstants.MODE_LEARN) 
 					System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
-				else if (mode== MODE_RECONSTRUCT)
+				else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
 					System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
 			}
 			final String profiling= "profiling ", decomposing= "decomposing "; 
 
-            if (mode== MODE_LEARN)
+            if (mode== FluxCapacitorConstants.MODE_LEARN)
                 Log.progressStart(profiling);
-            else if (mode== MODE_RECONSTRUCT)
+            else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
                 Log.progressStart(decomposing);
 
 
 			
-			if (mode== MODE_LEARN) 
+			if (mode== FluxCapacitorConstants.MODE_LEARN) 
 				gtfReader.setKeepOriginalLines(false);
-			else if (mode== MODE_RECONSTRUCT)
+			else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
 				gtfReader.setKeepOriginalLines(true);
 			
 			getGTFreader().read();
@@ -6183,7 +6055,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				
 				if ((gene= geneNext)== null)
 					break;
-				if (mode== MODE_RECONSTRUCT)
+				if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
 					origLines= (Vector<String>) getGTFreader().getVLines().clone();	// TODO make array, trim..
 				
 				// http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
@@ -6239,7 +6111,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					
 					if (gene[i].getTranscriptCount()== 1)
 						++nrSingleTranscriptLoci;
-					else if (mode== MODE_LEARN)
+					else if (mode== FluxCapacitorConstants.MODE_LEARN)
 						continue;	// performance for not reading beds
 					
 					BEDobject2[] beds= null;
@@ -6325,12 +6197,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 //					if (i>= 1500)
 //						System.err.println("read "+beds.length+" objects");
 					
-					if (mode== MODE_LEARN&& beds!= null&& beds.length> 0) {
+					if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null&& beds.length> 0) {
 //						if (Constants.progress!= null) 
 //							Constants.progress.setString(profiling+ gene[i].getGeneID());
 						solve(gene[i], beds, false);
 					}
-					else if (mode== MODE_RECONSTRUCT) {
+					else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
 
 						// check length
 //						for (int k = 0; readLenMin> 0&& beds!= null&& k < beds.length; k++) {
@@ -6400,7 +6272,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			if (checkBEDscanMappings> 0&& checkBEDscanMappings!= getBedReader().getNrLines())
 				System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ getBedReader().getNrLines());
 			//checkBEDscanMappings= getBedReader().getNrLines();
-			if (mode== MODE_LEARN) {
+			if (mode== FluxCapacitorConstants.MODE_LEARN) {
 
 				if (pairedEnd&& outputISize)
 					writeISizes();
@@ -6416,7 +6288,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							+ getBedReader().getNrLines()+ " mappings in file\n\t"
 							+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
 							+ nrReadsSingleLociMapped+" mappings map to annotation\n\t"
-							+ ((strand== STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
+							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
 							//+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
 							+ (pairedEnd?(nrReadsSingleLociPairsMapped* 2)+" mappings in annotation-mapped pairs\n\t":"")
 							//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
@@ -6428,7 +6300,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					System.err.println();
 				}
 				
-			} else if (mode== MODE_RECONSTRUCT) {
+			} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
 				while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
 					try {
 						threadPool.elementAt(0).join();
@@ -6453,7 +6325,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								"\t"+ nrPairsNoTxEvidence+ " pairs without tx evidence\n"
 								+ "\t"+ nrPairsWrongOrientation+ " pairs in wrong orientation\n"
 								+ "\t"+ nrMappingsForced+ " single mappings forced\n":"")
-							+ ((strand== STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
+							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
 							//+ nrMultiMaps+" mapped multiply.\n\n\t"
 							+ (outputGene?"\n\t"+ nrLoci+ " loci, "+ nrLociExp+ " detected":"")
 							+ (outputTranscript?"\n\t"+nrTx+" transcripts, "+nrTxExp+" detected":"")
@@ -6550,11 +6422,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 
 	
-	public static final String GFF_FEATURE_JUNCTION = "junction",
-			GFF_FEATURE_PAIRED = "paired", GFF_FEATURE_FRAGMENT = "fragment";
-	
-	public static final String GTF_ATTRIBUTE_PVAL= "falsification";
-	
 	byte costModel= GraphLPsolver.COSTS_LINEAR, costSplit= 1;
 	
 	String runID= null;
@@ -6600,9 +6467,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	long nrReadsAll= 0;
 	double costModelPar= Double.NaN;
 	float[] costBounds= new float[] {0.95f, Float.NaN};	// how much of the original observation can be subs/add
-	private static final int BIG= 999999999;
-	public static final String VALUE_NA= "0";	// NA
-	
 	int[] profileBoundaries;
 	private int getBinIdx(int len) {
 		int p= Arrays.binarySearch(profileBoundaries, len);
@@ -6633,7 +6497,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			if (profile== null) {
 				profile= new Profile(this);
 				try {
-					explore(MODE_LEARN);			
+					explore(FluxCapacitorConstants.MODE_LEARN);			
 				} catch (Throwable e) {
 					e.printStackTrace();
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
@@ -6662,12 +6526,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	private String getAttributeOF(double val, GraphLPsolver solver, int readCount) {
 
-		StringBuilder sb= new StringBuilder(GTF_ATTRIBUTE_PVAL);
+		StringBuilder sb= new StringBuilder(FluxCapacitorConstants.GTF_ATTRIBUTE_PVAL);
 		sb.append(" \"");
-		if (val > BIG|| solver== null) {
-			if (val> BIG)
+		if (val > FluxCapacitorConstants.BIG|| solver== null) {
+			if (val> FluxCapacitorConstants.BIG)
 				System.currentTimeMillis();
-			sb.append(" \""+VALUE_NA+ "\";" );
+			sb.append(" \""+FluxCapacitorConstants.VALUE_NA+ "\";" );
 		} else {
 			val= val/ (val+ readCount);
 			sb.append(StringUtils.fprint(val, 2));
@@ -6764,7 +6628,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 //		getQWriter().interrupt();
 	}
 
-	private static final String FLOAT_STRING_0= "0.0";
 	private Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>();
 	
 	static AtomicLong along= new AtomicLong((0L ^ 0x5DEECE66DL) & ((1L << 48) - 1));
@@ -6787,8 +6650,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 		
 
-	public static final byte BYTE_0= (byte) 0, BYTE_1= (byte) 1, BYTE_MINUS_1= (byte) (-1);
-	private static final String NULL_STR= "0";
 	private static final float[] rpkm_1= new float[3], rpkm_2= new float[3];
 	Vector<Edge> edgeColl1= new Vector<Edge>(), edgeColl2= new Vector<Edge>();
 	int[][] containerIntA1A1= new int[1][];
@@ -7083,8 +6944,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	private String readLenGuessedFrom;
 
-	public static int[] BIN_EXP= new int[] {10, 100};
-	public static int[] BIN_LEN= new int[] {1000, 2000};
 	int[][] profileStub, profileStubRev;
 	/**
 	 * profile managing the matrices
@@ -7241,13 +7100,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 			return ctr;
 		}
 
-	private static String FNAME_PROPERTIES= "capacitor.prop";
 	static void readProperties() {
 		String wrapper= System.getProperty(Constants.PROPERTY_KEY_WRAPPER_BASE);
 		if (wrapper== null)
-			wrapper= FNAME_PROPERTIES;
+			wrapper= FluxCapacitorConstants.FNAME_PROPERTIES;
 		else
-			wrapper+= File.separator+ FNAME_PROPERTIES;
+			wrapper+= File.separator+ FluxCapacitorConstants.FNAME_PROPERTIES;
 		File pFile= new File(wrapper);		
 		Properties props= new Properties();
 		try {
@@ -7256,11 +7114,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 			; // :)
 		}
 	
-		if (props.containsKey(PROPERTY_BUILD))
-			version= (String) props.get(PROPERTY_BUILD);
-		if (props.containsKey(PROPERTY_JDK)) {
+		if (props.containsKey(FluxCapacitorConstants.PROPERTY_BUILD))
+			version= (String) props.get(FluxCapacitorConstants.PROPERTY_BUILD);
+		if (props.containsKey(FluxCapacitorConstants.PROPERTY_JDK)) {
 			try {
-				float v= Float.parseFloat((String) props.get(PROPERTY_JDK));
+				float v= Float.parseFloat((String) props.get(FluxCapacitorConstants.PROPERTY_JDK));
 				String ver= System.getProperty("java.version");
 				int p= ver.indexOf('.', 0);
 				p= ver.indexOf('.', p+1);
@@ -7295,8 +7153,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 
 
-			System.loadLibrary(LPSOLVE_LIB_NAME);
-			System.loadLibrary(LPSOLVE_JNI_NAME);
+			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_LIB_NAME);
+			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_JNI_NAME);
 
 
 			lpVer= LpSolve.lpSolveVersion();
@@ -7378,9 +7236,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 			bits= bits2;
 		}
 		String bit= Integer.toString(bits);
-		String nativePath= System.getProperty(CLI_LONG_LIB);
+		String nativePath= System.getProperty(FluxCapacitorConstants.CLI_LONG_LIB);
 		if (nativePath== null) {
-			nativePath= basePath+ File.separator+ SUBDIR_NATIVELIBS+ File.separator+ SUBDIR_LPSOLVE+ File.separator+ 
+			nativePath= basePath+ File.separator+ FluxCapacitorConstants.SUBDIR_NATIVELIBS+ File.separator+ FluxCapacitorConstants.SUBDIR_LPSOLVE+ File.separator+ 
 				os+ File.separator+ arch+ File.separator+ bit;
 			try {
 				nativePath= new File(nativePath).getCanonicalPath();
@@ -7471,18 +7329,18 @@ public class FluxCapacitor implements ReadStatCalculator {
 					while((s= buffy.readLine())!= null) {
 						s= s.trim();
 						if (s.endsWith("bash"))
-							shell= SHELL_BASH;
+							shell= FluxCapacitorConstants.SHELL_BASH;
 						else if (s.endsWith("csh"))
-							shell= SHELL_CSH;
+							shell= FluxCapacitorConstants.SHELL_CSH;
 						else if (s.endsWith("ksh"))
-							shell= SHELL_KSH;
+							shell= FluxCapacitorConstants.SHELL_KSH;
 					}
 					p.destroy();
 				} catch (Exception e) {
 					; // :)
 				}
 				
-				if (shell== SHELL_CSH)
+				if (shell== FluxCapacitorConstants.SHELL_CSH)
 					writer.write("setenv ");
 				else
 					writer.write("export ");
@@ -7490,7 +7348,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				if (SystemInspector.getOSgroup()== SystemInspector.OS_GROUP_MACOSX)
 					writer.write("DY");
 				writer.write("LD_LIBRARY_PATH");
-				if (shell== SHELL_CSH)
+				if (shell== FluxCapacitorConstants.SHELL_CSH)
 					writer.write(" ");
 				else
 					writer.write("=");
