@@ -3,8 +3,10 @@ package fbi.genome.sequencing.rnaseq.reconstruction;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Vector;
 
+import fbi.genome.io.bed.BEDiteratorArray;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Gene;
@@ -219,6 +221,7 @@ public class AnnotationMapper extends Graph {
 		
 		if (target== null)
 			return 0;
+		
 		if (force) {
 			boolean sense= trpts[0].getStrand()== dobject.getStrand();
 			if (sense)
@@ -326,32 +329,62 @@ public class AnnotationMapper extends Graph {
 		
 	}
 
-	void map(BEDobject2[] beds, UniversalReadDescriptor descriptor2) {
+	void map(Iterator<BEDobject2> beds, UniversalReadDescriptor descriptor2) {
 
 			// init
+			boolean paired= descriptor2.isPaired();
+			boolean stranded= descriptor2.isStranded();
 			nrMappingsReadsOrPairs= 0;
-			mapReadOrPairIDs= new HashSet<CharSequence>(beds== null?0:beds.length, 1f);
+			mapReadOrPairIDs= new HashSet<CharSequence>();
 			if (descriptor2.isPaired())
-				mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>(beds== null?0:beds.length/ 2, 1f);
+				mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>();
 			attributes= descriptor2.createAttributes();
 		
-			if (beds== null|| beds.length== 0)
+			if (beds== null)
 				return;
 			
 			boolean output= false;
 			long t0 = System.currentTimeMillis();
+
+			
 			
 			// map read pairs
-			for (int j = 0; beds!= null&& j< beds.length; ++j) {
+			BEDobject2 dobject= null;
+			while (beds.hasNext()) {
 
-				int xyxx= mapRead(beds[j], descriptor2, false);
+				CharSequence tag= dobject.getName();
+				attributes= descriptor2.getAttributes(tag, attributes);
+				if (attributes== null) {
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
+						System.err.println("Invalid read identifier "+ tag);
+					return 0;	
+				}
+				byte flag= 0; //getFlag(dobject); 
+				if (paired) {
+					flag= attributes.flag;
+					if (flag<= 0) {
+						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
+							System.err.println("Error in readID:\n"+ dobject.getName());
+						return 0;
+					}
+				}
+				CharSequence ID= tag;	//getID(dobject);
+				if (paired|| stranded) 
+					ID= attributes.id;
+
+//						if (ID.equals("HWUSI-EAS626_1:5:82:1446:1847"))
+//							System.currentTimeMillis();
+				
+				Edge target= getEdge2(dobject);			
+
+				int xyxx= mapRead(bed, descriptor2, false);
 				//nrMappingsReadsOrPairs+= xxx;
 			}
 			nrMappingsReadsOrPairs+= mapReadOrPairIDs.size()/ 2;
 
 			// map single reads, mapping on single edges and inc count
 			if (false) {
-				for (int j = 0; beds!= null&& j< beds.length; ++j) {
+				for (int j = 0; beds!= null&& j< beds.size(); ++j) {
 					int xxx= mapRead(beds[j], descriptor2, true);
 					nrMappingsForced+= xxx;
 				}

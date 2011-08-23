@@ -8,7 +8,9 @@ import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
+import fbi.genome.io.bed.BEDiteratorArray;
 import fbi.genome.io.bed.BEDwrapper;
+import fbi.genome.io.bed.BufferedBEDiterator;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.ReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor;
@@ -1723,7 +1725,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	class LocusSolver2 extends Thread {
 			Gene gene= null;
 			ASEvent[] events= null;
-			BEDobject2[] beds= null;
+			BufferedBEDiterator beds= null;
 			boolean decompose= false;
 			Thread threadBefore= null;
 			int nrMappingsReadsOrPairs;
@@ -1734,7 +1736,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 			private float invariantTestObsSplitFreq= 0, invariantTestPredSplitFreq= 0;
 			
-			public LocusSolver2(Gene newGene, BEDobject2[] newBeds, boolean decompose) {
+			public LocusSolver2(Gene newGene, BufferedBEDiterator newBeds, boolean decompose) {
 				//super(newGene.getGeneID());
 				
 				this.gene= newGene; 
@@ -1742,9 +1744,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 				this.decompose= decompose;
 				
 				nrMappingsReadsOrPairs= 0;
-				mapReadOrPairIDs= new HashSet<CharSequence>(newBeds== null?0:newBeds.length, 1f);
+				mapReadOrPairIDs= new HashSet<CharSequence>();
 				if (pairedEnd)
-					mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>(newBeds== null?0:newBeds.length/ 2, 1f);
+					mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>();
 				attributes= descriptor2.createAttributes();
 			}
 			
@@ -1761,31 +1763,30 @@ public class FluxCapacitor implements ReadStatCalculator {
 //							mapTrivial(gene.getTranscripts()[0], beds);
 //							outputGFF(null, null, null);
 //						} else {
-							Graph myGraph= getGraph(this.gene);
-							if (beds!= null)
-								nrReadsLoci+= beds.length;
-							//AnnotationMapper mapper= new AnnotationMapper(this.gene);
-							map(myGraph, this.gene, this.beds); 
-//							mapper.map(this.beds, descriptor2);
-//							nrReadsMapped+= mapper.getNrMappingsReadsOrPairs();
-//							nrMappingsReadsOrPairs+= mapper.getMapReadOrPairIDs().size()/ 2;
-//							nrPairsNoTxEvidence+= mapper.getNrPairsNoTxEvidence();
-//							nrPairsWrongOrientation+= mapper.getNrPairsWrongOrientation();
+							//Graph myGraph= getGraph(this.gene);
+							AnnotationMapper mapper= new AnnotationMapper(this.gene);
+							//map(myGraph, this.gene, this.beds); 
+							mapper.map(this.beds, descriptor2);
+							nrReadsLoci+= mapper.nrReadsLoci;
+							nrReadsMapped+= mapper.getNrMappingsReadsOrPairs();
+							nrMappingsReadsOrPairs+= mapper.getMapReadOrPairIDs().size()/ 2;
+							nrPairsNoTxEvidence+= mapper.getNrPairsNoTxEvidence();
+							nrPairsWrongOrientation+= mapper.getNrPairsWrongOrientation();
 							
 							GraphLPsolver2 mySolver= null;
 							// != mapReadOrPairIDs.size()> 0, does also count singles
-							if (nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
-								mySolver= getSolver(myGraph, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
-								mySolver.run();
-							}
-//							if (mapper.nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
-//								mySolver= getSolver(mapper, (int) (mapper.nrMappingsReadsOrPairs* 2)); // not: getMappedReadcount()
+//							if (nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
+//								mySolver= getSolver(myGraph, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
 //								mySolver.run();
 //							}
+							if (mapper.nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
+								mySolver= getSolver(mapper, (int) (mapper.nrMappingsReadsOrPairs* 2)); // not: getMappedReadcount()
+								mySolver.run();
+							}
 			//				if (this.gene.getTranscriptCount()== 1)
 			//					System.currentTimeMillis();
-							outputGFF(myGraph, events, mySolver);
-							//outputGFF(mapper, events, mySolver);
+							//outputGFF(myGraph, events, mySolver);
+							outputGFF(mapper, events, mySolver);
 							
 //						}
 					} else {
@@ -3495,9 +3496,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 			}
 			
 			
-			private void learn(Transcript tx, BEDobject2[] beds) {
+			private void learn(Transcript tx, BufferedBEDiterator beds) {
 							
-				if (beds== null|| beds.length== 0)
+				if (beds== null)
 					return;
 				
 				// pre-filter reads for non-valid split-maps (null)
@@ -5985,365 +5986,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	int maxThreads= 1;
 	Vector<String> origLines= null;
 	int checkGTFscanExons= 0;
-	public boolean explore(byte mode) {
-
-		nrSingleTranscriptLoci= 0;
-		nrReadsLoci= 0;
-		nrReadsMapped= 0; 
-		nrReadsWrongLength= 0;
-		nrMappingsWrongStrand= 0;
-		
-		BEDobject2[] leftover= null;
-		
-		SyncIOHandler2 handler= new SyncIOHandler2(10* 1024* 1024);
-		
-		if (mode== FluxCapacitorConstants.MODE_LEARN) {
-			nrReadsSingleLoci= 0;
-			nrReadsSingleLociMapped= 0;
-		} 
-		
-		//System.out.println(System.getProperty("java.library.path"));
-		long t0= System.currentTimeMillis();
-		try {
-			
-			Transcript.setEdgeConfidenceLevel(Transcript.ID_SRC_MOST_INCONFIDENT);
-			//this.gtfReader= null;
-			//GFFReader gtfReader= getGTFreader();
-			gtfReader.reset();
-			bedWrapper.reset();
-			
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				if (mode== FluxCapacitorConstants.MODE_LEARN) 
-					System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
-				else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-					System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
-			}
-			final String profiling= "profiling ", decomposing= "decomposing "; 
-
-            if (mode== FluxCapacitorConstants.MODE_LEARN)
-                Log.progressStart(profiling);
-            else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-                Log.progressStart(decomposing);
-
-
-			
-			if (mode== FluxCapacitorConstants.MODE_LEARN) 
-				gtfReader.setKeepOriginalLines(false);
-			else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-				gtfReader.setKeepOriginalLines(true);
-			
-			getGTFreader().read();
-			Gene[] gene= null, geneNext= getGTFreader().getGenes();
-			
-			long tlast= System.currentTimeMillis();
-			boolean output= false;
-	
-			String lastChr= null; 
-			byte lastStr= 0;
-			int lastEnd= -1;
-			int tol= this.tolerance; // 1000
-
-			if (geneNext!= null) {
-				lastChr= geneNext[0].getChromosome();
-				lastStr= geneNext[0].getStrand();
-			}
-			
-			Thread readerThread= null;
-			int readObjects= 0;
-			while (lastChr!= null) {	// MAIN LOOP
-				
-				
-				if ((gene= geneNext)== null)
-					break;
-				if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-					origLines= (Vector<String>) getGTFreader().getVLines().clone();	// TODO make array, trim..
-				
-				// http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
-				if (readerThread== null)
-					readerThread= new GTFreaderThread();
-				//readerThread.start();
-				readerThread.run();
-//				while (readerThread!= null&& readerThread.isAlive())
-//					try {
-//						readerThread.join();
-//					} catch (InterruptedException e) {
-//						; // :)
-//					}
-				geneNext= getGTFreader().getGenes();
-
-				for (int i = 0; (gene!= null)&& i < gene.length; i++) {
-					
-					//System.gc();
-					//Thread.yield();
-//					if (i>= 1500) { 
-//						int c= 0;
-//						while (c!= '\n') {
-//							System.err.println("start?");
-//							c= System.in.read();
-//						}
-//					}
-						
-					
-					// flop strand
-					if (lastChr.equals(gene[i].getChromosome())) {
-						if (lastStr!= gene[i].getStrand()) {
-							//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
-							readObjects= 0;	
-							leftover= null;
-							// jump back
-							getBedReader().reset(gene[i].getChromosome());
-							lastStr= gene[i].getStrand();
-							lastEnd= -1;
-						}
-					} else {						// flop chr
-						//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
-						readObjects= 0;
-						leftover= null;
-						lastChr= gene[i].getChromosome();
-						lastStr= gene[i].getStrand();
-						lastEnd= -1;
-					}
-				
-//					for (int j = 0; j < gene[i].getTranscripts().length; j++) {
-//						if (gene[i].getTranscripts()[j].getTranscriptID().equals("ENST00000391372"))
-//							System.currentTimeMillis();
-//					}
-					
-					if (gene[i].getTranscriptCount()== 1)
-						++nrSingleTranscriptLoci;
-					else if (mode== FluxCapacitorConstants.MODE_LEARN)
-						continue;	// performance for not reading beds
-					
-					BEDobject2[] beds= null;
-
-/*					File f= File.createTempFile("fluxpfx", ".bed");
-					FileOutputStream fos= new FileOutputStream(f);
-					handler.addStream(fos);
-					fileBED= f;
-					bedWrapper= null;
-*/					
-					// boundaries
-					int start= gene[i].getStart();
-					int end= gene[i].getEnd();
-					assert(geneNext== null|| geneNext.length== 1);
-					
-					if (gene[i].getStrand()< 0) {
-						start= -start;
-						end= -end;
-					}
-					tol= 0;
-					start= Math.max(1, start- tol);
-					end= end+ tol;					
-/*					if (lastEnd< 0)
-						start= Math.max(1, start- tol);
-					else {
-						start= Math.max(lastEnd+ 1, start- tol);
-					}
-					if (geneNext== null|| (!geneNext[0].getChromosome().equals(gene[i].getChromosome()))
-							|| (geneNext[0].getStrand()!= gene[i].getStrand()))
-						end+= tol;
-					else {
-						int next= Math.abs(geneNext[0].getStart());
-						end= Math.min(end+ tol, end+ ((next- end)/ 2));
-					}
-					lastEnd= end;
-*/			
-					
-//					if (false&& geneNext[0].getGeneID().equals("chr19:1609293-1652326C"))
-//						System.currentTimeMillis();
-
-					beds= readBedFile(gene[i], start, end, mode);
-					
-/*					if (false&& leftover!= null) {
-						BEDobject2[] nuBeds= 
-							new BEDobject2[leftover.length+ (beds== null? 0: beds.length)];
-						System.arraycopy(leftover, 0, nuBeds, 0, leftover.length);
-						if (beds!= null) 
-							System.arraycopy(beds, 0, nuBeds, leftover.length, beds.length);
-						beds= nuBeds;
-						leftover= null;
-					}
-*/					
-				
-//					if (geneNext[0].getGeneID().equals("chr12:58213712-58240747C"))
-//						System.currentTimeMillis();
-					
-					if (beds!= null&& beds.length> 0) {
-						
-/*						if (false&& geneNext!= null&& geneNext[0].getChromosome().equals(gene[i].getChromosome())
-								&& geneNext[0].getStrand()== gene[i].getStrand()) {
-
-							int bp= Math.abs(geneNext[0].getStart())- tol;
-							if (bp< end) {
-								int p= beds.length- 1;
-								for(;p>= 0;--p) {
-									if (beds[p].getStart()< bp)
-										break;
-								}
-								if (p< 0)
-									p= 0;	// take all
-								leftover= new BEDobject2[beds.length- p];
-								for (int j = p; j < beds.length; j++) 
-									leftover[j- p]= beds[j];
-								readObjects+= beds.length- p;
-							}
-						} else
-*/						 
-							readObjects+= beds.length;
-//						if (beds.length> 0&& mode== MODE_RECONSTRUCT)
-//							System.err.println(gene[i].toUCSCString()+ " "+ beds.length);
-					}
-					
-//					if (i>= 1500)
-//						System.err.println("read "+beds.length+" objects");
-					
-					if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null&& beds.length> 0) {
-//						if (Constants.progress!= null) 
-//							Constants.progress.setString(profiling+ gene[i].getGeneID());
-						solve(gene[i], beds, false);
-					}
-					else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-
-						// check length
-//						for (int k = 0; readLenMin> 0&& beds!= null&& k < beds.length; k++) {
-//							int tmpLen= beds[k].getLength();
-//							
-//							if (tmpLen!= readLenMin) {
-//								
-//								++nrReadsWrongLength;								
-//								//int diff= tmpLen- readLenMin;	// was set to min
-//								beds[k]= null;
-//								/*boolean b= beds[k].trim(beds[k].getStrand()< 0, diff); // (-) always from start, (+) always from end, regardless gene.strand
-//								if (!b) {
-//									if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-//										System.err.println("[HEY] mapping length "+tmpLen+" < minReadLen "+readLenMin+"!");
-//									beds[k]= null;
-//								} else try {assert(beds[k].length()== readLenMin);} catch (AssertionError err) {
-//									if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-//										System.err.println("[OOPS] failed to trim bed from "+tmpLen+" to "+readLenMin+":\n\t"+ beds[k]);
-//									beds[k]= null;
-//								}*/
-//								
-//							}
-//								
-//						}
-						
-//						if (Constants.progress!= null) {
-//							Constants.progress.setString(decomposing);	// + gene[i].getGeneID()
-//						}
-						
-						solve(gene[i], beds, true); 
-					}
-						
-					if (output) {
-						System.out.println(gene[i].getChromosome()+ " "+
-								gene[i].getStrand()+
-								" cluster "+ gene[i].getGeneID()+
-								", "+beds.length+" reads.");
-						if ((lastStr!= gene[i].getStrand()
-								||!(lastChr.equals(gene[i].getChromosome())))) {
-							long t= System.currentTimeMillis();
-							if (lastStr!= 0&& (!lastChr.equals("")))
-								System.out.println(lastChr+" "+lastStr+
-										" "+((t-tlast)/1000)+" sec.");
-							tlast= t;
-							lastStr= gene[i].getStrand();
-							lastChr= gene[i].getChromosome();
-						}		
-					}
-				}
-				//getWriter().flush();
-				
-				
-			}	// end iterate GTF
-			
-			getBedReader().finish();
-			
-			while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
-				try {
-					threadPool.elementAt(0).join();
-				} catch (Exception e) {
-					; //:)
-				}
-            Log.progressFinish(StringUtils.OK, true);
-			if (checkGTFscanExons> 0&& checkGTFscanExons!= getGTFreader().getNrExons())
-				System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ getGTFreader().getNrExons());
-			checkGTFscanExons= getGTFreader().getNrExons(); 
-			if (checkBEDscanMappings> 0&& checkBEDscanMappings!= getBedReader().getNrLines())
-				System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ getBedReader().getNrLines());
-			//checkBEDscanMappings= getBedReader().getNrLines();
-			if (mode== FluxCapacitorConstants.MODE_LEARN) {
-
-				if (pairedEnd&& outputISize)
-					writeISizes();
-				if (pairedEnd&& func.getTProfiles()!= null) {
-					insertMinMax= getInsertMinMax();
-				}
-
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					
-					//System.err.println(" OK.");
-					System.err.println("\tfirst round finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
-							+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
-							+ getBedReader().getNrLines()+ " mappings in file\n\t"
-							+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
-							+ nrReadsSingleLociMapped+" mappings map to annotation\n\t"
-							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
-							//+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
-							+ (pairedEnd?(nrReadsSingleLociPairsMapped* 2)+" mappings in annotation-mapped pairs\n\t":"")
-							//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
-							//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
-							+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
-							+ (pairedEnd&& insertMinMax!= null?insertMinMax[0]+","+insertMinMax[1]+" min/max insert size\n\t":""));
-					//nrUniqueReads= getBedReader().getNrUniqueLinesRead();
-					//System.err.println("\ttotal lines in file "+nrUniqueReads);
-					System.err.println();
-				}
-				
-			} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-				while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
-					try {
-						threadPool.elementAt(0).join();
-					} catch (Exception e) {
-						; //:)
-					}
-				getWriter().flush();
-				getWriter().close();
-
-//					if (fileMappings!= null)
-//						getSammy().close();
-				
-				//assert(nrUniqueReads==getBedReader().getNrUniqueLinesRead());	// take out for cheat
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					System.err.println();
-					System.err.println("\treconstruction finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
-							+ getBedReader().getNrLines()+" mappings read from file\n\t"
-							// no info, reads in redundantly many reads
-							//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
-							+ nrReadsMapped+ " mapping"+ (pairedEnd?" pairs":"s") +" map to annotation\n"
-							+ (pairedEnd?
-								"\t"+ nrPairsNoTxEvidence+ " pairs without tx evidence\n"
-								+ "\t"+ nrPairsWrongOrientation+ " pairs in wrong orientation\n"
-								+ "\t"+ nrMappingsForced+ " single mappings forced\n":"")
-							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
-							//+ nrMultiMaps+" mapped multiply.\n\n\t"
-							+ (outputGene?"\n\t"+ nrLoci+ " loci, "+ nrLociExp+ " detected":"")
-							+ (outputTranscript?"\n\t"+nrTx+" transcripts, "+nrTxExp+" detected":"")
-							+ (outputEvent?"\n\t"+ nrEvents+" ASevents of dimension "+eventDim+", "+nrEventsExp+" detected":"")
-							+ "\n"
-							//+ nrUnsolved+" unsolved systems."
-							);
-				}					
-			}
-			
-		} catch (Exception e1) {
-			e1.printStackTrace();
-			return false;
-		}
-
-		return true;
-	}
-	
 	boolean copyLocal= false;
 	
 	boolean 
@@ -6377,7 +6019,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	int eventDim= 2;
 	long dbgTimeEmptyGraphs= 0;
-	private void solve(Gene gene, BEDobject2[] beds, boolean decompose) {
+	private void solve(Gene gene, BufferedBEDiterator beds, boolean decompose) {
 		
 		// create LP and solve
 		LocusSolver2 lsolver= new LocusSolver2(gene, beds, decompose); 
@@ -6949,7 +6591,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	 * profile managing the matrices
 	 */
 	Profile profile;
-	private BEDobject2[] readBedFile(Gene gene, int from, int to, byte mode) {
+	private BufferedBEDiterator readBedFile(Gene gene, int from, int to, byte mode) {
 		
 		//ByteArrayCharSequence chr= new ByteArrayCharSequence(gene.getChromosome());
 		
@@ -6971,12 +6613,13 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 		//BEDobject[] beds= getBedReader().read_old(gene.getChromosome(), start, end);
 		BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
+		BufferedBEDiterator iter= new BEDiteratorArray(beds);
 //		if (gene.getGeneID().equals("chr19:1609293-1652326C"))
 //			System.currentTimeMillis();
 		if (beds== null)
 			return null;
 		
-		return beds;
+		return iter;
 		
 	}
 	
@@ -7532,6 +7175,366 @@ public class FluxCapacitor implements ReadStatCalculator {
 		this.outputSorted= pars.fileMappingsSorted!= null; 
 		this.pars= pars;
 	}
+
+	public boolean explore(byte mode) {
+	
+			nrSingleTranscriptLoci= 0;
+			nrReadsLoci= 0;
+			nrReadsMapped= 0; 
+			nrReadsWrongLength= 0;
+			nrMappingsWrongStrand= 0;
+			
+			BEDobject2[] leftover= null;
+			
+			SyncIOHandler2 handler= new SyncIOHandler2(10* 1024* 1024);
+			
+			if (mode== FluxCapacitorConstants.MODE_LEARN) {
+				nrReadsSingleLoci= 0;
+				nrReadsSingleLociMapped= 0;
+			} 
+			
+			//System.out.println(System.getProperty("java.library.path"));
+			long t0= System.currentTimeMillis();
+			try {
+				
+				Transcript.setEdgeConfidenceLevel(Transcript.ID_SRC_MOST_INCONFIDENT);
+				//this.gtfReader= null;
+				//GFFReader gtfReader= getGTFreader();
+				gtfReader.reset();
+				bedWrapper.reset();
+				
+				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+					if (mode== FluxCapacitorConstants.MODE_LEARN) 
+						System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
+					else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
+						System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
+				}
+				final String profiling= "profiling ", decomposing= "decomposing "; 
+	
+	            if (mode== FluxCapacitorConstants.MODE_LEARN)
+	                Log.progressStart(profiling);
+	            else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
+	                Log.progressStart(decomposing);
+	
+	
+				
+				if (mode== FluxCapacitorConstants.MODE_LEARN) 
+					gtfReader.setKeepOriginalLines(false);
+				else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
+					gtfReader.setKeepOriginalLines(true);
+				
+				getGTFreader().read();
+				Gene[] gene= null, geneNext= getGTFreader().getGenes();
+				
+				long tlast= System.currentTimeMillis();
+				boolean output= false;
+		
+				String lastChr= null; 
+				byte lastStr= 0;
+				int lastEnd= -1;
+				int tol= this.tolerance; // 1000
+	
+				if (geneNext!= null) {
+					lastChr= geneNext[0].getChromosome();
+					lastStr= geneNext[0].getStrand();
+				}
+				
+				Thread readerThread= null;
+				int readObjects= 0;
+				while (lastChr!= null) {	// MAIN LOOP
+					
+					
+					if ((gene= geneNext)== null)
+						break;
+					if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
+						origLines= (Vector<String>) getGTFreader().getVLines().clone();	// TODO make array, trim..
+					
+					// http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
+					if (readerThread== null)
+						readerThread= new GTFreaderThread();
+					//readerThread.start();
+					readerThread.run();
+	//				while (readerThread!= null&& readerThread.isAlive())
+	//					try {
+	//						readerThread.join();
+	//					} catch (InterruptedException e) {
+	//						; // :)
+	//					}
+					geneNext= getGTFreader().getGenes();
+	
+					for (int i = 0; (gene!= null)&& i < gene.length; i++) {
+						
+						//System.gc();
+						//Thread.yield();
+	//					if (i>= 1500) { 
+	//						int c= 0;
+	//						while (c!= '\n') {
+	//							System.err.println("start?");
+	//							c= System.in.read();
+	//						}
+	//					}
+							
+						
+						// flop strand
+						if (lastChr.equals(gene[i].getChromosome())) {
+							if (lastStr!= gene[i].getStrand()) {
+								//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
+								readObjects= 0;	
+								leftover= null;
+								// jump back
+								getBedReader().reset(gene[i].getChromosome());
+								lastStr= gene[i].getStrand();
+								lastEnd= -1;
+							}
+						} else {						// flop chr
+							//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
+							readObjects= 0;
+							leftover= null;
+							lastChr= gene[i].getChromosome();
+							lastStr= gene[i].getStrand();
+							lastEnd= -1;
+						}
+					
+	//					for (int j = 0; j < gene[i].getTranscripts().length; j++) {
+	//						if (gene[i].getTranscripts()[j].getTranscriptID().equals("ENST00000391372"))
+	//							System.currentTimeMillis();
+	//					}
+						
+						if (gene[i].getTranscriptCount()== 1)
+							++nrSingleTranscriptLoci;
+						else if (mode== FluxCapacitorConstants.MODE_LEARN)
+							continue;	// performance for not reading beds
+						
+						BufferedBEDiterator beds= null;
+	
+	/*					File f= File.createTempFile("fluxpfx", ".bed");
+						FileOutputStream fos= new FileOutputStream(f);
+						handler.addStream(fos);
+						fileBED= f;
+						bedWrapper= null;
+	*/					
+						// boundaries
+						int start= gene[i].getStart();
+						int end= gene[i].getEnd();
+						assert(geneNext== null|| geneNext.length== 1);
+						
+						if (gene[i].getStrand()< 0) {
+							start= -start;
+							end= -end;
+						}
+						tol= 0;
+						start= Math.max(1, start- tol);
+						end= end+ tol;					
+	/*					if (lastEnd< 0)
+							start= Math.max(1, start- tol);
+						else {
+							start= Math.max(lastEnd+ 1, start- tol);
+						}
+						if (geneNext== null|| (!geneNext[0].getChromosome().equals(gene[i].getChromosome()))
+								|| (geneNext[0].getStrand()!= gene[i].getStrand()))
+							end+= tol;
+						else {
+							int next= Math.abs(geneNext[0].getStart());
+							end= Math.min(end+ tol, end+ ((next- end)/ 2));
+						}
+						lastEnd= end;
+	*/			
+						
+	//					if (false&& geneNext[0].getGeneID().equals("chr19:1609293-1652326C"))
+	//						System.currentTimeMillis();
+	
+						beds= readBedFile(gene[i], start, end, mode);
+						
+	/*					if (false&& leftover!= null) {
+							BEDobject2[] nuBeds= 
+								new BEDobject2[leftover.length+ (beds== null? 0: beds.length)];
+							System.arraycopy(leftover, 0, nuBeds, 0, leftover.length);
+							if (beds!= null) 
+								System.arraycopy(beds, 0, nuBeds, leftover.length, beds.length);
+							beds= nuBeds;
+							leftover= null;
+						}
+	*/					
+					
+	//					if (geneNext[0].getGeneID().equals("chr12:58213712-58240747C"))
+	//						System.currentTimeMillis();
+						
+						if (beds!= null) {
+							
+	/*						if (false&& geneNext!= null&& geneNext[0].getChromosome().equals(gene[i].getChromosome())
+									&& geneNext[0].getStrand()== gene[i].getStrand()) {
+	
+								int bp= Math.abs(geneNext[0].getStart())- tol;
+								if (bp< end) {
+									int p= beds.length- 1;
+									for(;p>= 0;--p) {
+										if (beds[p].getStart()< bp)
+											break;
+									}
+									if (p< 0)
+										p= 0;	// take all
+									leftover= new BEDobject2[beds.length- p];
+									for (int j = p; j < beds.length; j++) 
+										leftover[j- p]= beds[j];
+									readObjects+= beds.length- p;
+								}
+							} else
+	*/						 	//TODO beds.size() no longer available
+								//readObjects+= beds.size();
+	//						if (beds.length> 0&& mode== MODE_RECONSTRUCT)
+	//							System.err.println(gene[i].toUCSCString()+ " "+ beds.length);
+						}
+						
+	//					if (i>= 1500)
+	//						System.err.println("read "+beds.length+" objects");
+						
+						if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null) {
+	//						if (Constants.progress!= null) 
+	//							Constants.progress.setString(profiling+ gene[i].getGeneID());
+							solve(gene[i], beds, false);
+						}
+						else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
+	
+							// check length
+	//						for (int k = 0; readLenMin> 0&& beds!= null&& k < beds.length; k++) {
+	//							int tmpLen= beds[k].getLength();
+	//							
+	//							if (tmpLen!= readLenMin) {
+	//								
+	//								++nrReadsWrongLength;								
+	//								//int diff= tmpLen- readLenMin;	// was set to min
+	//								beds[k]= null;
+	//								/*boolean b= beds[k].trim(beds[k].getStrand()< 0, diff); // (-) always from start, (+) always from end, regardless gene.strand
+	//								if (!b) {
+	//									if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
+	//										System.err.println("[HEY] mapping length "+tmpLen+" < minReadLen "+readLenMin+"!");
+	//									beds[k]= null;
+	//								} else try {assert(beds[k].length()== readLenMin);} catch (AssertionError err) {
+	//									if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
+	//										System.err.println("[OOPS] failed to trim bed from "+tmpLen+" to "+readLenMin+":\n\t"+ beds[k]);
+	//									beds[k]= null;
+	//								}*/
+	//								
+	//							}
+	//								
+	//						}
+							
+	//						if (Constants.progress!= null) {
+	//							Constants.progress.setString(decomposing);	// + gene[i].getGeneID()
+	//						}
+							
+							solve(gene[i], beds, true); 
+						}
+							
+						if (output) {
+							System.out.println(gene[i].getChromosome()+ " "+
+									gene[i].getStrand()+
+									" cluster "+ gene[i].getGeneID());
+									// TODO beds.size() no longer available
+									//", "+beds.size()+" reads.");
+							if ((lastStr!= gene[i].getStrand()
+									||!(lastChr.equals(gene[i].getChromosome())))) {
+								long t= System.currentTimeMillis();
+								if (lastStr!= 0&& (!lastChr.equals("")))
+									System.out.println(lastChr+" "+lastStr+
+											" "+((t-tlast)/1000)+" sec.");
+								tlast= t;
+								lastStr= gene[i].getStrand();
+								lastChr= gene[i].getChromosome();
+							}		
+						}
+					}
+					//getWriter().flush();
+					
+					
+				}	// end iterate GTF
+				
+				getBedReader().finish();
+				
+				while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
+					try {
+						threadPool.elementAt(0).join();
+					} catch (Exception e) {
+						; //:)
+					}
+	            Log.progressFinish(StringUtils.OK, true);
+				if (checkGTFscanExons> 0&& checkGTFscanExons!= getGTFreader().getNrExons())
+					System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ getGTFreader().getNrExons());
+				checkGTFscanExons= getGTFreader().getNrExons(); 
+				if (checkBEDscanMappings> 0&& checkBEDscanMappings!= getBedReader().getNrLines())
+					System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ getBedReader().getNrLines());
+				//checkBEDscanMappings= getBedReader().getNrLines();
+				if (mode== FluxCapacitorConstants.MODE_LEARN) {
+	
+					if (pairedEnd&& outputISize)
+						writeISizes();
+					if (pairedEnd&& func.getTProfiles()!= null) {
+						insertMinMax= getInsertMinMax();
+					}
+	
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+						
+						//System.err.println(" OK.");
+						System.err.println("\tfirst round finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
+								+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
+								+ getBedReader().getNrLines()+ " mappings in file\n\t"
+								+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
+								+ nrReadsSingleLociMapped+" mappings map to annotation\n\t"
+								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
+								//+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
+								+ (pairedEnd?(nrReadsSingleLociPairsMapped* 2)+" mappings in annotation-mapped pairs\n\t":"")
+								//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
+								//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
+								+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
+								+ (pairedEnd&& insertMinMax!= null?insertMinMax[0]+","+insertMinMax[1]+" min/max insert size\n\t":""));
+						//nrUniqueReads= getBedReader().getNrUniqueLinesRead();
+						//System.err.println("\ttotal lines in file "+nrUniqueReads);
+						System.err.println();
+					}
+					
+				} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
+					while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
+						try {
+							threadPool.elementAt(0).join();
+						} catch (Exception e) {
+							; //:)
+						}
+					getWriter().flush();
+					getWriter().close();
+	
+	//					if (fileMappings!= null)
+	//						getSammy().close();
+					
+					//assert(nrUniqueReads==getBedReader().getNrUniqueLinesRead());	// take out for cheat
+					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+						System.err.println();
+						System.err.println("\treconstruction finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
+								+ getBedReader().getNrLines()+" mappings read from file\n\t"
+								// no info, reads in redundantly many reads
+								//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
+								+ nrReadsMapped+ " mapping"+ (pairedEnd?" pairs":"s") +" map to annotation\n"
+								+ (pairedEnd?
+									"\t"+ nrPairsNoTxEvidence+ " pairs without tx evidence\n"
+									+ "\t"+ nrPairsWrongOrientation+ " pairs in wrong orientation\n"
+									+ "\t"+ nrMappingsForced+ " single mappings forced\n":"")
+								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
+								//+ nrMultiMaps+" mapped multiply.\n\n\t"
+								+ (outputGene?"\n\t"+ nrLoci+ " loci, "+ nrLociExp+ " detected":"")
+								+ (outputTranscript?"\n\t"+nrTx+" transcripts, "+nrTxExp+" detected":"")
+								+ (outputEvent?"\n\t"+ nrEvents+" ASevents of dimension "+eventDim+", "+nrEventsExp+" detected":"")
+								+ "\n"
+								//+ nrUnsolved+" unsolved systems."
+								);
+					}					
+				}
+				
+			} catch (Exception e1) {
+				e1.printStackTrace();
+				return false;
+			}
+	
+			return true;
+		}
 
 }
  
