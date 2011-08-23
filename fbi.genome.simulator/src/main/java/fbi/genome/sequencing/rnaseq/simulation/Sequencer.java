@@ -453,8 +453,9 @@ public class Sequencer implements Callable<Void> {
 
         // bed boundaries
         byte strand = t.getStrand();
-        int bedStart = Math.abs(t.getGenomicPosition(start - 1)),
-                bedEnd = Math.abs(t.getGenomicPosition(end - 1));    // uncorrected positions, 1-based
+        // 0-based transcript coordinates
+        int bedStart = Math.abs(t.getGenomicPosition(start)),
+                bedEnd = Math.abs(t.getGenomicPosition(end)); 
         int idxExA = t.getExonIdx(strand * bedStart),
                 idxExB = t.getExonIdx(strand * bedEnd);    // exon indices
         if (idxExA == -1 || idxExB == -1) {
@@ -471,7 +472,7 @@ public class Sequencer implements Callable<Void> {
             bedStart = bedEnd;
             bedEnd = h;    // swap for neg strand
         }
-        --bedStart; // lower the lower pos, 0-based
+        --bedStart; // lower the lower pos, BED:0-based
 
         // build object
         obj.clear();
