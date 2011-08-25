@@ -11,6 +11,8 @@
 
 package fbi.commons.tools;
 
+import com.sun.xml.internal.org.jvnet.fastinfoset.sax.EncodingAlgorithmContentHandler;
+
 import java.util.*;
 
 /**
@@ -18,7 +20,7 @@ import java.util.*;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class LineComparator implements Comparator<String> {
+public class LineComparator<T extends CharSequence> implements Comparator<T> {
     /**
      * The fields to use for comparison
      */
@@ -36,16 +38,16 @@ public class LineComparator implements Comparator<String> {
      * Possible list of sub comparators that are used if
      * this comparators result is 0
      */
-    private List<Comparator<String>> subComparators;
+    private List<Comparator<T>> subComparators;
     /**
      * Optional parent comparator
      */
-    private Comparator<String> parent;
+    private Comparator<T> parent;
 
     /**
      * Cache separator splits
      */
-    private Map<String, Object> splitCache = new HashMap<String, Object>();
+    private Map<CharSequence, Object> splitCache = new HashMap<CharSequence, Object>();
 
 
     /**
@@ -53,7 +55,7 @@ public class LineComparator implements Comparator<String> {
      *
      * @param copy the source
      */
-    public LineComparator(LineComparator copy){
+    public LineComparator(LineComparator<T> copy){
         super();
         this.field = new int[copy.field.length];
         System.arraycopy(copy.field, 0, this.field,0, copy.field.length);
@@ -61,12 +63,12 @@ public class LineComparator implements Comparator<String> {
 
         this.separator = copy.separator;
         if(copy.subComparators != null){
-            this.subComparators = new ArrayList<Comparator<String>>();
-            for (Comparator<String> cc : copy.subComparators) {
+            this.subComparators = new ArrayList<Comparator<T>>();
+            for (Comparator<? extends CharSequence> cc : copy.subComparators) {
                 if(cc instanceof LineComparator){
-                    this.subComparators.add(new LineComparator((LineComparator)cc));
+                    this.subComparators.add(new LineComparator((LineComparator<T>)cc));
                 }else{
-                    this.subComparators.add(cc);
+                    this.subComparators.add((Comparator<T>) cc);
                 }
             }
         }
@@ -122,7 +124,7 @@ public class LineComparator implements Comparator<String> {
      *
      * @param comparator parent comparator
      */
-    public LineComparator(Comparator<String> comparator) {
+    public LineComparator(Comparator<T> comparator) {
         this.parent = comparator;
         this.numerical = false;
     }
@@ -133,25 +135,25 @@ public class LineComparator implements Comparator<String> {
      *
      * @param comparator the sub comparator
      */
-    public void addComparator(Comparator<String> comparator) {
+    public void addComparator(Comparator<T> comparator) {
         if (comparator != null) {
             if (subComparators == null) {
-                subComparators = new ArrayList<Comparator<String>>();
+                subComparators = new ArrayList<Comparator<T>>();
             }
             subComparators.add(comparator);
         }
     }
 
 
-    public int compare(final String o1, final String o2) {
+    public int compare(final T o1, final T o2) {
         // check for empty string
         if (o1.length() == 0 || o2.length() == 0) {
-            return o1.compareTo(o2);
+            return o1.toString().compareTo(o2.toString());
         }
         int result = 0;
         if (parent == null) {
-            String s1 = o1;
-            String s2 = o2;
+            String s1 = o1.toString();
+            String s2 = o2.toString();
 
             Object c1 = splitCache.get(o1);
             Object c2 = splitCache.get(o2);
@@ -171,18 +173,18 @@ public class LineComparator implements Comparator<String> {
                 if (field.length == 1 && field[0] >= 0) {
                     // split fields
                     if(c1 == null){
-                        s1 = o1.split(separator)[field[0]];
+                        s1 = o1.toString().split(separator)[field[0]];
                         splitCache.put(o1, s1);
                     }
                     if(c2 == null){
-                        s2 = o2.split(separator)[field[0]];
+                        s2 = o2.toString().split(separator)[field[0]];
                         splitCache.put(o2, s2);
                     }
                 } else if (field.length > 1) {
                     // merge multiple fields
                     // merge o1 fields
                     if(c1 == null){
-                        String[] o1_split = o1.split(separator);
+                        String[] o1_split = o1.toString().split(separator);
                         for (int i : field) {
                             s1 += o1_split[i];
                         }
@@ -191,7 +193,7 @@ public class LineComparator implements Comparator<String> {
 
                     if(c2 == null){
                         // merge o2 fields
-                        String[] o2_split = o2.split(separator);
+                        String[] o2_split = o2.toString().split(separator);
                         for (int i : field) {
                             s2 += o2_split[i];
                         }
@@ -227,7 +229,7 @@ public class LineComparator implements Comparator<String> {
         If result is 0 check the sub comparators
          */
         if (result == 0 && subComparators != null) {
-            for (Comparator<String> subComparator : subComparators) {
+            for (Comparator<T> subComparator : subComparators) {
                 int sub = subComparator.compare(o1, o2);
                 if (sub != 0) {
                     return sub;
@@ -240,7 +242,7 @@ public class LineComparator implements Comparator<String> {
     public void reset(){
         splitCache.clear();
         if(subComparators != null){
-            for (Comparator<String> subComparator : subComparators) {
+            for (Comparator<? extends CharSequence> subComparator : subComparators) {
                 if(subComparator instanceof LineComparator){
                     ((LineComparator)subComparator).reset();
                 }
