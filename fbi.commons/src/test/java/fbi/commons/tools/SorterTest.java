@@ -8,6 +8,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -126,6 +127,34 @@ public class SorterTest {
                 ,outString);
 
     }
+
+    @Test
+    public void testSmallSortCustomComparator(){
+        ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        try {
+            Sorter.create(in, out, true).field(new Comparator<CharSequence>() {
+                @Override
+                public int compare(final CharSequence o1, final CharSequence o2) {
+                    return o1.toString().compareTo(o2.toString());
+                }
+            }).sort();
+            String outString = new String(out.toByteArray());
+            assertEquals(
+                    "\n"+
+                    "\n"+
+                    "\n"+
+                    "A\tX\t3\n"+
+                    "B\tZ\t1\n"+
+                    "C\tY\t2\n"
+                    ,outString);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
 
 
 }

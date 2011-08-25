@@ -125,7 +125,7 @@ public class Sorter {
      * @param comparator the comparator
      * @return sorter this sorter
      */
-    public Sorter field(Comparator<String> comparator) {
+    public Sorter field(Comparator<? extends CharSequence> comparator) {
         if (comparator == null) {
             throw new NullPointerException("Null comparator is not permitted");
         }
