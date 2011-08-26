@@ -40,7 +40,7 @@ public class Constants {
 	}
 
 	public static byte verboseLevel= VERBOSE_NORMAL;
-	
+	public static final char NL= '\n';
 	public static final String TAB= "\t";
 	public static final String HASH= "#";
 	public static final String EMPTYSTRING= "";
