@@ -178,7 +178,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.commons</artifactId>
-            <version>1.4</version>
+            <version>1.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
