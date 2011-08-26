@@ -16,6 +16,12 @@ import fbi.commons.ByteArrayCharSequence;
 import java.io.*;
 
 
+/**
+ * @deprecated marked for deletion
+ * @see BufferedBACSReader
+ * @author micha
+ *
+ */
 public class ThreadedBufferedByteArrayStream {
 		static int btCtr= 0;
 		BufferThread bt;

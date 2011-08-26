@@ -232,7 +232,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 			//ThreadedBufferedByteArrayStream buffy= getReader();
 			BufferedBACSReader buffy= getReaderBACS();
 			//for (cs= buffy.readLine(cs); cs.end!= 0; cs= buffy.readLine(cs)) {
-			while (buffy.readLine(cs)> 0) {
+			while (buffy.readLine(cs)!= null) {
 				bytesRead+= cs.length()+ guessFileSep().length();
 				++nrUniqueLinesRead;
 			}
@@ -341,6 +341,8 @@ private BEDobject[] toObjectsOld(Vector<BEDobject> objV) {
 	}
 
 private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
+	if (objV.size()== 0)
+		return null;
 	BEDobject2[] beds= new BEDobject2[objV.size()];
 	for (int i = 0; i < beds.length; i++) 
 		beds[i]= objV.elementAt(i);
@@ -580,7 +582,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(this.cs.chars.length);	// this.cs;
 			BufferedBACSReader buffy= getReaderBACS();
 			//for (cs= getReader().readLine(cs); cs.end!= 0; cs=getReader().readLine(cs)) {
-			while (buffy.readLine(cs)> 0) {
+			while (buffy.readLine(cs)!= null) {
 				bytesRead+= cs.length()+guessFileSep().length();
 				++nrUniqueLinesRead;
 				if (cs.startsWith(chr))
@@ -726,240 +728,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		return readerB;
 	}
 
-	public BEDobject[] read_old(String chr, int start, int end) {
-			
-			if (mapChr.containsKey(chr)) {
-				if (mapChr.get(chr)== null)
-					return null;
-			}  
-				
-			
-			--start;	// convert to bed coordinate
-			
-			Vector<BEDobject> objV= new Vector<BEDobject>();
-			try {
-				//BufferedReader buffy= getReader();
-				ThreadedBufferedByteArrayStream buffy= getReader();
-				ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
-				//String line;
-				String lastChrRead= null;
-				guessFileSep();
-				boolean inited= false;
-				if (reuse&& lastLine!= null) {
-					cs= lastLine;
-					lastLine= null;
-					inited= true;
-				}
-	
-				//for (cs= buffy.readLine(cs); cs.end!= 0; cs= buffy.readLine(cs)) {
-				while (true) {
-					
-					long tmpBytes= bytesRead;			
-	
-					if (inited) {
-						inited= false;
-					} else {
-						cs= buffy.readLine(cs);
-						bytesRead+= cs.length()+ fileSep.length();
-						++nrUniqueLinesRead;
-					}
-					if (cs.end== 0)
-						break; // EOF
-					
-					// use this for debugging fpointer
-	//				File file = new File(this.fPath+MyFile.separator+this.fName);
-	//				InputStream inputStream = new FileInputStream(file);
-	//				inputStream.skip(bytesRead);	// must read next line 
-	//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
-	//				String chk= r2.readLine();
-	//				r2.close();
-					
-					if (cs.startsWith(TRACK)|| cs.startsWith(BROWSER))
-						continue;
-					
-					// check if in range
-					int bedStart= -1, bedEnd= -1;
-					String chrToki= null;
-					try {
-						int toks= cs.countTokens();
-						if (identTok< 0)
-							identTok= toks;
-						else
-							if (identTok!= toks&& false) {	// can be now, we read reads and split reads
-								if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-									System.err.println("\t\n[OHLALA] line "+nrUniqueLinesRead+" has not "+identTok+" elements as the lines before!");
-									System.err.println("\t"+ cs.toString());
-									System.err.println("\tcheck file "+ fName);
-								}
-							}
-						if (toks< 3) {
-							if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-								System.err.println("\t\n[OHNOO] line "+nrUniqueLinesRead+" has less than 3 token, I am skipping.");
-								System.err.println("\t"+ cs.toString());
-								System.err.println("\tcheck file "+ fName);
-							}
-							continue;
-						}
-						chrToki= cs.getToken(0).toString();
-						try {
-							bedStart= BEDobject.encodeInt(cs.getToken(1));
-							bedEnd= BEDobject.encodeInt(cs.getToken(2));
-						} catch (NumberFormatException e) {
-							e.printStackTrace();
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-					if (chrToki.compareTo(chr)> 0) {	// 090520 check whether reads too far
-						if (reuse)
-							lastLine= cs;
-						else {
-							bytesRead= tmpBytes; 
-							--nrUniqueLinesRead;
-						}
-						if (objV== null)
-							return null;
-						BEDobject[] obj= toObjectsOld(objV);
-						addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
-						
-						return obj;
-					}
-						
-					if (lastChrRead== null) {	// first line read in this batch
-						
-						addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
-						
-						if (chr!= null&& !cs.subSequence(0, chr.length()).equals(chr)) {
-							if (mapChr.containsKey(chr)) {
-								if (mapChr.get(chr)== null) {
-									if (reuse)
-										lastLine= cs;
-									else {
-										bytesRead= tmpBytes;
-										--nrUniqueLinesRead;
-	//									buffy.setStop(true);	//close();
-	//									readerB= null;
-									}
-									return null;
-								} else {
-									if (mapChr.get(chr)[0]> tmpBytes) { 	// only jump forward, never back
-										long[] bytesNlines= mapChr.get(chr);
-										reset(bytesNlines[0], (int) bytesNlines[1]);
-										lastChrRead= chr.toString();
-										buffy= getReader();
-										cs= buffy.readLine(cs);
-										//cs= new ByteArrayCharSequence(line);
-										bytesRead+= cs.length()+ fileSep.length();
-										++nrUniqueLinesRead;
-										chrToki= cs.getToken(0).toString();
-										try {
-											bedStart= BEDobject.encodeInt(cs.getToken(1));
-											bedEnd= BEDobject.encodeInt(cs.getToken(2));
-										} catch (Exception e) {
-											System.err.println("[ERROR] encodeint:\n"+ cs.toString());
-											System.currentTimeMillis();
-										}
-									} else {
-										reset(tmpBytes, nrUniqueLinesRead-1);
-										return null;
-									}
-								}
-							} else {
-								ByteArrayCharSequence newCS= sweepToChromosome(chr);
-								if (newCS== null) {	// not found
-									mapChr.put(chr, null);	// BUG: not chrToki
-									if (reuse) 
-										lastLine= cs;
-									else {
-										bytesRead= tmpBytes;
-										--nrUniqueLinesRead;
-										if (buffy.isThreaded())
-											buffy.setStop(true);	//close();
-										buffy.close();
-										readerB= null;
-									}
-									return null; 
-								} else {
-									
-									this.cs= newCS;
-									cs= newCS;
-									chrToki= cs.getToken(0).toString();
-									addChr(chrToki,
-											bytesRead- cs.length()- guessFileSep().length(), 
-											nrUniqueLinesRead-1);
-											
-									buffy= getReader();
-									lastChrRead= chr.toString();
-									chrToki= cs.getToken(0).toString();
-									bedStart= BEDobject.encodeInt(cs.getToken(1));
-									bedEnd= BEDobject.encodeInt(cs.getToken(2));
-								}
-							}
-						}
-					}
-	
-					//line= line.trim();
-					if (cs.startsWith("browser")|| cs.startsWith("track")|| cs.length()< 1)
-						continue;
-					
-					if (lastChrRead== null)
-						lastChrRead= chrToki;
-					else {
-						if (!lastChrRead.equals(chrToki)) {	// changes chr
-							if (reuse)
-								lastLine= cs;
-							else {
-								bytesRead= tmpBytes;
-								--nrUniqueLinesRead;
-							}
-							addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead);
-							break;
-						} 
-					}
-					
-	
-					boolean stop= false, continues= false;
-					
-					if (start>= 0&& bedEnd< start)
-						continues= true;
-					else if (end>= 0&& bedStart> end)
-						stop= true;
-					
-					if (continues)
-						continue;
-					if (stop) {	// not found on this chr
-						if (reuse)
-							lastLine= cs;
-						else {
-							bytesRead= tmpBytes;
-							--nrUniqueLinesRead;
-						}
-						if (objV.size()== 0)
-							return null;
-						return toObjectsOld(objV);
-					}
-					
-					
-					// create object
-					//String[] tokens= line.split("\\s");	// not \\s+ for empty name
-					BEDobject bed= BEDobject.createBEDobject(cs, 
-							chrToki, bedStart, bedEnd); //.getRecycleObj();
-					objV.add(bed);
-	
-				}
-				if (buffy.isThreaded())
-					buffy.setStop(true);
-				
-				//readerB= null;	// always reset, for jumping around
-	
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			return toObjectsOld(objV);
-		}
-
 	public int get(String chr, int start, int end, SyncIOHandler2 handler, OutputStream ostream) {
 			
 			int count= 0;
@@ -991,7 +759,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					if (inited) {
 						inited= false;
 					} else {
-						if (buffy.readLine(cs)<= 0)
+						if (buffy.readLine(cs)== null)
 							break;	// EOF
 						bytesRead+= cs.length()+ fileSep.length();
 						++nrUniqueLinesRead;
@@ -1073,7 +841,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 										reset(bytesNlines[0], (int) bytesNlines[1]);
 										lastChrRead= chr.toString();
 										buffy= getReaderBACS();
-										if (buffy.readLine(cs)<= 0)
+										if (buffy.readLine(cs)== null)
 											break;
 										bytesRead+= cs.length()+ fileSep.length();
 										++nrUniqueLinesRead;
@@ -1179,23 +947,48 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			return count;
 		}
 
+	/**
+	 * Reads BED objects from the underlying <code>InputStream</code> 
+	 * overlapping the area specified by <code>chr</code>, 
+	 * <code>start</code> and <code>end</code> and returns them as 
+	 * an array.
+	 * @param os stream to which the output is written
+	 * @param chr chromosome name of the specified area
+	 * @param start start position of the specified area
+	 * @param end end position of the specified area
+	 */
 	public BEDobject2[] read(String chr, int start, int end) {
+		return read(chr, start, end, null);
+	}
+	
+	/**
+	 * Reads the BED lines from the underlying <code>InputStream</code> 
+	 * overlapping the area specified by <code>chr</code>, 
+	 * <code>start</code> and <code>end</code> into the 
+	 * provided <code>OutputStream</code>.
+	 * @param os stream to which the output is written
+	 * @param chr chromosome name of the specified area
+	 * @param start start position of the specified area
+	 * @param end end position of the specified area
+	 */
+	public BEDobject2[] read(OutputStream os, String chr, int start, int end) {
+		return read(chr, start, end, os);
+	}
+	
+	protected BEDobject2[] read(String chr, int start, int end, OutputStream os) {
 				
 				if (mapChr.containsKey(chr)) {
 					if (mapChr.get(chr)== null)
 						return null;
 				}  
 					
-				
 				--start;	// convert to bed coordinate
-				
-				Vector<BEDobject2> objV= new Vector<BEDobject2>();
+				Vector<BEDobject2> objV= null;
+				//if (os== null)
+					objV= new Vector<BEDobject2>();
 				try {
-					//BufferedReader buffy= getReader();
-					//ThreadedBufferedByteArrayStream buffy= getReader();
 					BufferedBACSReader buffy= getReaderBACS();
 					ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
-					//String line;
 					String lastChrRead= null;
 					guessFileSep();
 					boolean inited= false;
@@ -1205,8 +998,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						inited= true;
 					}
 		
-					//for (cs= buffy.readLine(cs); cs.end!= 0; cs= buffy.readLine(cs)) {
-					//ByteArrayCharSequence lastLine= null;
 					while (true) {
 						
 						long tmpBytes= bytesRead;			
@@ -1215,7 +1006,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							inited= false;
 						} else {
 							lastLine= cs.cloneCurrentSeq();
-							if (buffy.readLine(cs)<= 0)
+							if (buffy.readLine(cs)== null)
 								break;	// EOF
 							cs.resetFind();
 							bytesRead+= cs.length()+ fileSep.length();
@@ -1259,12 +1050,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							
 							cs.resetFind();	// DEBUG 100827: somehow getToken(0) results in NullPointer otherwise 
 							chrToki= cs.getToken(0).toString();	// getToken(1, TAB)
-//							try {
-								bedStart= cs.getTokenInt(1); 	//BEDobject.encodeInt(cs.getToken(2, TAB)); 
-								bedEnd= cs.getTokenInt(2);		//BEDobject.encodeInt(cs.getToken(3, TAB));
-//							} catch (NumberFormatException e) {
-//								e.printStackTrace();
-//							}
+							bedStart= cs.getTokenInt(1); 	//BEDobject.encodeInt(cs.getToken(2, TAB)); 
+							bedEnd= cs.getTokenInt(2);		//BEDobject.encodeInt(cs.getToken(3, TAB));
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -1278,10 +1065,12 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							}
 							if (objV== null)
 								return null;
-							BEDobject2[] obj= toObjects(objV);
 							addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
 							
-							return obj;
+							if (os== null)
+								return toObjects(objV);
+							else
+								return toObjects(objV);
 						}
 							
 						if (lastChrRead== null) {	// first line read in this batch
@@ -1296,8 +1085,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 										else {
 											bytesRead= tmpBytes;
 											--nrUniqueLinesRead;
-		//									buffy.setStop(true);	//close();
-		//									readerB= null;
 										}
 										return null;
 									} else {
@@ -1306,7 +1093,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											reset(bytesNlines[0], (int) bytesNlines[1]);
 											lastChrRead= chr.toString();
 											buffy= getReaderBACS();
-											if (buffy.readLine(cs)<= 0)
+											if (buffy.readLine(cs)== null)
 												break;
 											//cs= new ByteArrayCharSequence(line);
 											bytesRead+= cs.length()+ fileSep.length();
@@ -1375,7 +1162,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						
 		
 						boolean stop= false, continues= false;
-						
 						if (start>= 0&& bedEnd< start)
 							continues= true;
 						else if (end>= 0&& bedStart> end)
@@ -1390,28 +1176,35 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								bytesRead= tmpBytes;
 								--nrUniqueLinesRead;
 							}
-							if (objV.size()== 0)
-								return null;
-							return toObjects(objV);
+
+							if (os== null)
+								return toObjects(objV);
+							else
+								return toObjects(objV);
 						}
 						
-						
 						// create object
-						//String[] tokens= line.split("\\s");	// not \\s+ for empty name
-						BEDobject2 bed= new BEDobject2(cs); 
-	//						BEDobject.createBEDobject(cs, 
-	//							chrToki, bedStart, bedEnd); //.getRecycleObj();
-						objV.add(bed);
+						if (os== null) {
+							BEDobject2 bed= new BEDobject2(cs); 
+							objV.add(bed);
+						} else {
+							BEDobject2 bed= new BEDobject2(cs);
+							objV.add(bed);
+							os.write(cs.chars);
+							os.write(Constants.NL);
+							os.flush();
+						}
 		
 					}
 					
-					//readerB= null;	// always reset, for jumping around
-		
 				} catch (Exception e) {					
 					e.printStackTrace();
 				}
 				
-				return toObjects(objV);
+				if (os== null)
+					return toObjects(objV);
+				else
+					return toObjects(objV);
 			}
 
 	public ReadDescriptor checkReadDescriptor(boolean pairedEnd) {

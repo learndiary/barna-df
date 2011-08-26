@@ -4,6 +4,14 @@ import java.util.Iterator;
 
 import fbi.genome.model.bed.BEDobject2;
 
+/**
+ * The interface defines methods for marking a position in 
+ * the data, to which the iterator subsequently can be 
+ * repositioned.
+ * 
+ * @author Micha Sammeth (gmicha@gmail.com)
+ *
+ */
 public interface BufferedBEDiterator extends Iterable<BEDobject2>, Iterator<BEDobject2>{
 
 	/**
@@ -12,8 +20,7 @@ public interface BufferedBEDiterator extends Iterable<BEDobject2>, Iterator<BEDo
 	public void mark();
 	
 	/**
-	 * resets to last marked element
-	 * @return success of reset operation
+	 * resets to last marked element (if any)
 	 */
-	public boolean reset();
+	public void reset();
 }

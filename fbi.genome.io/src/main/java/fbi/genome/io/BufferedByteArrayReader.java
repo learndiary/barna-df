@@ -17,6 +17,12 @@ import fbi.genome.model.constants.Constants;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * @deprecated marked for deletion
+ * @see BufferedBACSReader
+ * @author micha
+ *
+ */
 public class BufferedByteArrayReader {
 
 	static final byte BYTE_NL= '\n', BYTE_CR= '\r';
