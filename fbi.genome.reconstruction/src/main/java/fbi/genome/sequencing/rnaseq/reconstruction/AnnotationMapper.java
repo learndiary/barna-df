@@ -6,8 +6,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
 
-import fbi.genome.io.bed.BEDiteratorArray;
+import org.jfree.util.Log;
+
+import fbi.genome.io.bed.BEDiteratorMemory;
+import fbi.genome.io.bed.BufferedBEDiterator;
 import fbi.genome.io.rna.UniversalReadDescriptor;
+import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
 import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Gene;
 import fbi.genome.model.SpliceSite;
@@ -21,18 +25,13 @@ import fbi.genome.model.splicegraph.SuperEdge;
 
 public class AnnotationMapper extends Graph {
 
-	HashSet<CharSequence> mapReadOrPairIDs;
-	UniversalReadDescriptor.Attributes attributes= null;
-
-	HashMap<CharSequence, Vector<BEDobject2>[]> mapEndsOfPairs;
-	long nrReadsMapped= 0;
-	long nrReadsLoci= 0;
-	long nrMappingsForced= 0;
-	long nrMappingsReadsOrPairs= 0;
+	long nrMappingsLocus= 0;
+	long nrMappingsMapped= 0;
+	long nrMappingsNotMapped= 0;
+	long nrMappingsNotMappedAsPair= 0;
 	long nrMappingsWrongStrand= 0;
-	long nrPairsWrongOrientation= 0;
-	long nrPairsNoTxEvidence= 0;
-	long nrLocusMultimaps= 0;
+	long nrMappingsWrongPairOrientation= 0;
+	long nrMappingsLocusMultiMaps= 0;
 	public AnnotationMapper(Gene gene) {
 		super(gene);
 		constructGraph();
@@ -174,309 +173,156 @@ public class AnnotationMapper extends Graph {
 
 	}
 
-	/**
-	 * add a SINGLE read
-	 * @param regs
-	 */
-	int mapRead(BEDobject2 dobject, UniversalReadDescriptor descriptor2, boolean force) {
-		// find the edge(s) where the regions align
-		// if these do not form a continous chain, create a new edge
+	Attributes getAttributes(BEDobject2 o, UniversalReadDescriptor d, Attributes attributes) {
 		
-//			GFFObject[] gtfs= GFFObject.fromBed(dobject);	// TODO kill intermediary GTFs !!!
-//			DirectedRegion[] regs= new DirectedRegion[gtfs.length];
-//			for (int i = 0; i < regs.length; i++) 
-//				regs[i]= new DirectedRegion(gtfs[i]);
-		
-		boolean paired= descriptor2.isPaired();
-		boolean stranded= descriptor2.isStranded();
-		
-		if (force&& mapReadOrPairIDs.contains(dobject.getName())) {
-			return 0;
-		}
-		
-		CharSequence tag= dobject.getName();
-		attributes= descriptor2.getAttributes(tag, attributes);
+		CharSequence tag= o.getName();
+		attributes= d.getAttributes(tag, attributes);
 		if (attributes== null) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("Invalid read identifier "+ tag);
-			return 0;	
+			Log.warn("Error in read ID: could not parse read identifier "+ tag);
+			return null;
 		}
-		byte flag= 0; //getFlag(dobject); 
-		if (paired) {
-			flag= attributes.flag;
-			if (flag<= 0) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-					System.err.println("Error in readID:\n"+ dobject.getName());
-				return 0;
-			}
+		if (d.isPaired()&& attributes.flag<= 0) {
+			Log.warn("Error in read ID: could not find mate in "+ tag);
+			return null;
 		}
-		CharSequence ID= tag;	//getID(dobject);
-		if (paired|| stranded) 
-			ID= attributes.id;
-
-//				if (ID.equals("HWUSI-EAS626_1:5:82:1446:1847"))
-//					System.currentTimeMillis();
-		
-		Edge target= getEdge2(dobject);
-		
-		if (target== null)
-			return 0;
-		
-		if (force) {
-			boolean sense= trpts[0].getStrand()== dobject.getStrand();
-			if (sense)
-				target.incrReadNr();
-			else
-				target.incrRevReadNr();
-			mapReadOrPairIDs.add(dobject.getName());
-			return 1;
+		if (d.isStranded()&& attributes.strand< 0) {
+			Log.warn("Error in read ID: could not find strand in "+ tag);
+			return null;
 		}
-		
-		
-		byte refStrand= trpts[0].getStrand();
-		if (stranded) {
-			boolean sense= dobject.getStrand()== refStrand;
-			byte dir= attributes.strand;
-			if ((dir== 2&& sense)|| (dir== 1&& !sense)) {
-				++nrMappingsWrongStrand;
-				return 0;
-			}
-		}
-		byte antiflag= (byte) ((flag==1)?2:1);
-		int mapCtr= 0;
-		
-		
-		// add first/single read
-		if (paired) { /* PAIRED END */
-
-			//int mappedIDsBefore= mapReadOrPairIDs.size();
-			Vector<BEDobject2>[] vv= mapEndsOfPairs.get(ID);
-			Vector<BEDobject2> v= null;
-			if (vv!= null)
-				v= vv[antiflag- 1];
-			for (int i = 0; v!= null
-				&&i < v.size(); i++) {
-				
-				BEDobject2 dobject2= v.elementAt(i);
-				if (dobject.getStrand()== dobject2.getStrand()
-						// 20101222: check also that the leftmost (in genomic direction) is sense (in genomic direction) 
-						|| (dobject.getStart()< dobject2.getStart()&& dobject.getStrand()!= Transcript.STRAND_POS)
-						|| (dobject2.getStart()< dobject.getStart()&& dobject2.getStrand()!= Transcript.STRAND_POS)) {
-					++nrPairsWrongOrientation;
-					continue;
-				}
-				
-				Edge target2= getEdge2(dobject2);
-				if (target2== null)
-					continue;
-
-				Vector<Edge> w= new Vector<Edge>();
-				if (target.getFrac(true)< target2.getFrac(true)) {
-					w.add(target);
-					w.add(target2);
-				} else {
-					w.add(target2);
-					w.add(target);
-				}
-				SuperEdge se= getSuperEdge(w, true, null);
-				if (se== null) {
-					++nrPairsNoTxEvidence;
-					continue;	// no tx evidence
-				}
-				se.incrReadNr();
-				++mapCtr;
-				
-				
-//						if (gene.getGeneID().equals("chr12:58213712-58240747C")) 
-//							try {
-//								testWriter.write(dobject.toString()+ "\n");
-//								testWriter.write(dobject2.toString()+ "\n");
-//							} catch (Exception e) {
-//								e.printStackTrace();
-//							}
-					
-
-				mapReadOrPairIDs.add(dobject.getName());
-				mapReadOrPairIDs.add(dobject2.getName()); // !!! must have same id as bed object
-
-//					if (outputMapped) {
-//						writeMappedRead(dobject);
-//						writeMappedRead(dobject2);
-//					}
-			}
-			
-			//Vector<DirectedRegion[]>[] vv= null;
-			if (vv== null) {
-				vv= new Vector[] {new Vector<DirectedRegion>(5,5),
-						new Vector<DirectedRegion>(5,5)};
-				mapEndsOfPairs.put(ID, vv);
-			} 
-			vv[flag- 1].add(dobject);
-			
-			return mapCtr; 	// (mapReadOrPairIDs.size()> mappedIDsBefore);
-			
-			
-		} else { /* SINGLE READS */
-			
-			//incrementProfile(g, target, dobject, sense);
-			mapCtr= 1;
-			if (!mapReadOrPairIDs.add(dobject.getName()))
-				++nrLocusMultimaps;
-//				if (outputMapped)
-//					writeMappedRead(dobject);
-			return mapCtr;
-		}
-		
+		return attributes;
 	}
+	
+	public void map(BufferedBEDiterator beds, UniversalReadDescriptor descriptor2) {
 
-	void map(Iterator<BEDobject2> beds, UniversalReadDescriptor descriptor2) {
-
-			// init
-			boolean paired= descriptor2.isPaired();
-			boolean stranded= descriptor2.isStranded();
-			nrMappingsReadsOrPairs= 0;
-			mapReadOrPairIDs= new HashSet<CharSequence>();
-			if (descriptor2.isPaired())
-				mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>();
-			attributes= descriptor2.createAttributes();
-		
 			if (beds== null)
 				return;
-			
-			boolean output= false;
-			long t0 = System.currentTimeMillis();
-
-			
-			
+		
+			// init
+			BEDobject2 dobject, dobject2;
+			CharSequence lastName= null;
+			UniversalReadDescriptor.Attributes 
+				attributes= descriptor2.createAttributes(), 
+				attributes2= descriptor2.createAttributes();
+			boolean paired= descriptor2.isPaired();
+			boolean stranded= descriptor2.isStranded();
+			nrMappingsLocus= 0;
+			nrMappingsLocusMultiMaps= 0;
+			nrMappingsMapped= 0;
+			nrMappingsNotMapped= 0;
+			nrMappingsNotMappedAsPair= 0;
+			nrMappingsWrongPairOrientation= 0;
+			nrMappingsWrongStrand= 0;
+		
 			// map read pairs
-			BEDobject2 dobject= null;
 			while (beds.hasNext()) {
-
-				CharSequence tag= dobject.getName();
-				attributes= descriptor2.getAttributes(tag, attributes);
-				if (attributes== null) {
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-						System.err.println("Invalid read identifier "+ tag);
-					return 0;	
+				
+				dobject= beds.next();
+				++nrMappingsLocus;
+				CharSequence name= dobject.getName();
+				if (name.equals(lastName))
+					++nrMappingsLocusMultiMaps;
+				lastName= name; 
+				
+				attributes= getAttributes(dobject, descriptor2, attributes);
+				if (paired&& attributes.flag== 2)	// don't iterate twice, for counters
+					continue;
+				Edge target= getEdge2(dobject);
+				if (target== null) {
+					++nrMappingsNotMapped;
+					continue;	// couldn't map
 				}
-				byte flag= 0; //getFlag(dobject); 
-				if (paired) {
-					flag= attributes.flag;
-					if (flag<= 0) {
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-							System.err.println("Error in readID:\n"+ dobject.getName());
-						return 0;
+
+				byte refStrand= trpts[0].getStrand();	// TODO get from edge
+				if (stranded) {
+					boolean sense= dobject.getStrand()== refStrand;
+					byte dir= attributes.strand;
+					if ((dir== 2&& sense)|| (dir== 1&& !sense)) {
+						++nrMappingsWrongStrand;
+						continue;
 					}
 				}
-				CharSequence ID= tag;	//getID(dobject);
-				if (paired|| stranded) 
-					ID= attributes.id;
 
-//						if (ID.equals("HWUSI-EAS626_1:5:82:1446:1847"))
-//							System.currentTimeMillis();
-				
-				Edge target= getEdge2(dobject);			
+				if (paired) {
+					
+					// scan for mates
+					beds.mark();
+					while (beds.hasNext()) {
+						dobject2= beds.next();
+						attributes2= getAttributes(dobject2, descriptor2, attributes2);
+						if (!attributes.id.equals(attributes2.id))
+							break;						
+						if (attributes2== null|| attributes2.flag== 1)
+							continue;
 
-				int xyxx= mapRead(bed, descriptor2, false);
-				//nrMappingsReadsOrPairs+= xxx;
-			}
-			nrMappingsReadsOrPairs+= mapReadOrPairIDs.size()/ 2;
+						Edge target2= getEdge2(dobject2);
+						if (target2== null) {
+							++nrMappingsNotMapped;
+							continue;
+						}
 
-			// map single reads, mapping on single edges and inc count
-			if (false) {
-				for (int j = 0; beds!= null&& j< beds.size(); ++j) {
-					int xxx= mapRead(beds[j], descriptor2, true);
-					nrMappingsForced+= xxx;
+						// check again strand in case one strand-info had been lost
+						if (stranded) {
+							boolean sense= dobject2.getStrand()== refStrand;
+							byte dir= attributes2.strand;
+							if ((dir== 2&& sense)|| (dir== 1&& !sense)) {
+								++nrMappingsWrongStrand;
+								continue;
+							}
+						}
+						
+						// check directionality (sequencing-by-synthesis)
+						// 20101222: check also that the leftmost (in genomic direction) 
+						// is sense (in genomic direction)
+						if (dobject.getStrand()== dobject2.getStrand()
+								|| (dobject.getStart()< dobject2.getStart()&& dobject.getStrand()!= Transcript.STRAND_POS)
+								|| (dobject2.getStart()< dobject.getStart()&& dobject2.getStrand()!= Transcript.STRAND_POS)) {
+							nrMappingsWrongPairOrientation+= 2;
+							continue;
+						}
+						
+						// find common super-edge
+						Vector<Edge> w= new Vector<Edge>();
+						if (target.getFrac(true)< target2.getFrac(true)) {
+							w.add(target);
+							w.add(target2);
+						} else {
+							w.add(target2);
+							w.add(target);
+						}
+						SuperEdge se= getSuperEdge(w, true, null);
+						if (se== null) {
+							nrMappingsNotMappedAsPair+= 2;
+							continue;	
+						}
+						se.incrReadNr();
+						nrMappingsMapped+= 2;	
+					}
+					beds.reset();
+
+				} else {	// single reads, strand already checked
+					boolean sense= trpts[0].getStrand()== dobject.getStrand();	// TODO get from edge
+					if (sense)
+						target.incrReadNr();
+					else
+						target.incrRevReadNr();
+					++nrMappingsMapped;
 				}
 			}
-			
-			// increase pair number
-/*				int gstart= gene.get5PrimeEdge(), gend= gene.get3PrimeEdge();
-				if (gene.isReverse()) {
-					int h= Math.abs(gstart);
-					gstart= Math.abs(gend);
-					gend= h;
-				}
-				for (int j = 0; beds!= null&& j< beds.length; ++j) {
-					if (beds[j].getStart()>= gstart&& beds[j].getEnd()<= gend)
-						continue;
-					ByteArrayCharSequence id= beds[j].getName();
-					if (mapReadOrPairIDs.contains(id))
-						continue;
-					byte flag= getFlag(beds[j]);  
-					char antiflag= ((flag==1)?'2':'1');
-					id.setCharAt(id.length()- 1, antiflag);
-					if (mapReadOrPairIDs.contains(id)) 
-						++nrMappingsReadsOrPairs;
-				}
-*/				
-			
-			int cntNomapped= 0;
-			//HashSet<CharSequence> tmpMap= new HashSet<CharSequence>();
-			for (int i = 0; i < beds.length; i++) {
-				if (mapReadOrPairIDs.contains(beds[i].getName())) 
-					continue;
-//				if (outputNotmapped)
-//					writeNotmappedRead(beds[i]);
-//				BEDobject.addRecycleObj(beds[i]);
+			setMappedReads(nrMappingsMapped);	// TODO 
 
-				//tmpMap.add(beds[i].getName());
-				++cntNomapped;
-				
-				beds[i]= null;
-			}
-
-			
-/*			Iterator<CharSequence> iter= tmpMap.iterator();
-			while(iter.hasNext()) {
-				CharSequence cseq= iter.next();
-				if (mapReadOrPairIDs.contains(cseq)) {
-					System.err.println(cseq.hashCode());
-					System.currentTimeMillis();
-				}
-			}*/
-			
-			if (output) {
-				System.err.println(", mapping "+((System.currentTimeMillis()- t0)/ 1000)+" sec.");
-				System.err.flush();
-			}
-			
-			long notMapped= 0;
-			if (beds!= null)  {	// && mapOnly
-				if (descriptor2.isPaired()) {
-					//assert(mappedReads== myGraph.mappedIDSet.size()); // no, multimaps
-					//mappedReads*= 2;
-				}
-				notMapped= beds.length- nrMappingsReadsOrPairs;
-				setMappedReads(nrMappingsReadsOrPairs); 
-				nrReadsMapped+= nrMappingsReadsOrPairs;
-				nrReadsLoci+= beds.length;
-			}
-	//		if (mapOnly)
-	//			return;
-			if (notMapped> 0) { 
-				
-				if (Constants.verboseLevel>= Constants.VERBOSE_DEBUG)
-					System.err.println("[WARNING] locus "+gene.getReferenceTranscript().getTranscriptID()
-						+" couldnt map "+notMapped+" of "+beds.length+" mappings.");
-			}
 
 		}
 
-	public HashSet<CharSequence> getMapReadOrPairIDs() {
-		return mapReadOrPairIDs;
+	public long getNrMappingsMapped() {
+		return nrMappingsMapped;
 	}
 
-	public long getNrMappingsReadsOrPairs() {
-		return nrMappingsReadsOrPairs;
+	public long getNrMappingsNotMappedAsPair() {
+		return nrMappingsNotMappedAsPair;
 	}
 
-	public long getNrPairsNoTxEvidence() {
-		return nrPairsNoTxEvidence;
-	}
-
-	public long getNrPairsWrongOrientation() {
-		return nrPairsWrongOrientation;
+	public long getNrMappingsWrongPairOrientation() {
+		return nrMappingsWrongPairOrientation;
 	}
 
 }

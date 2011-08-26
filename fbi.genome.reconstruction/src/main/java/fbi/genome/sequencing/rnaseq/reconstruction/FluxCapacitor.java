@@ -8,7 +8,10 @@ import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
-import fbi.genome.io.bed.BEDiteratorArray;
+import fbi.commons.tools.Sorter;
+import fbi.genome.io.bed.BEDDescriptorComparator;
+import fbi.genome.io.bed.BEDiteratorDisk;
+import fbi.genome.io.bed.BEDiteratorMemory;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.bed.BufferedBEDiterator;
 import fbi.genome.io.gff.GFFReader;
@@ -31,6 +34,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -1767,11 +1771,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 							AnnotationMapper mapper= new AnnotationMapper(this.gene);
 							//map(myGraph, this.gene, this.beds); 
 							mapper.map(this.beds, descriptor2);
-							nrReadsLoci+= mapper.nrReadsLoci;
-							nrReadsMapped+= mapper.getNrMappingsReadsOrPairs();
-							nrMappingsReadsOrPairs+= mapper.getMapReadOrPairIDs().size()/ 2;
-							nrPairsNoTxEvidence+= mapper.getNrPairsNoTxEvidence();
-							nrPairsWrongOrientation+= mapper.getNrPairsWrongOrientation();
+							nrReadsLoci+= mapper.nrMappingsLocus;
+							nrReadsMapped+= mapper.getNrMappingsMapped();
+							nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
+							nrPairsNoTxEvidence+= mapper.getNrMappingsNotMappedAsPair();
+							nrPairsWrongOrientation+= mapper.getNrMappingsWrongPairOrientation();
 							
 							GraphLPsolver2 mySolver= null;
 							// != mapReadOrPairIDs.size()> 0, does also count singles
@@ -1779,8 +1783,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 //								mySolver= getSolver(myGraph, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
 //								mySolver.run();
 //							}
-							if (mapper.nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
-								mySolver= getSolver(mapper, (int) (mapper.nrMappingsReadsOrPairs* 2)); // not: getMappedReadcount()
+							if (mapper.nrMappingsMapped> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
+								mySolver= getSolver(mapper, (int) (mapper.nrMappingsMapped* 2)); // not: getMappedReadcount()
 								mySolver.run();
 							}
 			//				if (this.gene.getTranscriptCount()== 1)
@@ -3501,40 +3505,29 @@ public class FluxCapacitor implements ReadStatCalculator {
 				if (beds== null)
 					return;
 				
-				// pre-filter reads for non-valid split-maps (null)
-				Graph myGraph= getGraph(this.gene);
-				map(myGraph, this.gene, beds);
-				// DEBUG
-				HashMap<CharSequence, CharSequence> map= new HashMap<CharSequence, CharSequence>();
-				
-				int elen= tx.getExonicLength();	// TODO this is the effective length
+				BEDobject2 bed1, bed2;
+				UniversalReadDescriptor.Attributes 
+					attributes= descriptor2.createAttributes(), 
+					attributes2= descriptor2.createAttributes();
+				int elen= tx.getExonicLength();	// this is the "effective" length, modify by extensions		
 //				if (elen< readLenMin)
 //					return;	// discards reads
 				
-				HashMap<CharSequence, BEDobject2[][]> mapPends= null;
-				int[] extension= new int[2];	// 5' extension, 3' extension
-				extension[0]= 0; extension[1]= 0;
-				int extLen= elen;
-				if (pairedEnd) {
-					mapPends= new HashMap<CharSequence, BEDobject2[][]>();
-					//extension= extend(tx, beds, extension);
-					extLen+= extension[0]+ extension[1];
-				}
-				//float rpk= beds.length* 1000f/ elen; 
-				UniversalMatrix m= profile.getMatrix(extLen);
+				UniversalMatrix m= profile.getMatrix(elen);
 				
-				nrReadsSingleLoci+= beds.length;
-				for (int i = 0; i < beds.length; i++) {
+				while (beds.hasNext()) {
 					
-					BEDobject2 bed1= beds[i];
-					if (bed1== null)
-						continue;
-					// unique only, bad idea
-					//--too little and does not eliminate peaks
-//					if (bed1.getScore()> 1)
-//						continue;
+					++nrReadsSingleLoci;
+					bed1= beds.next();
 					CharSequence tag= bed1.getName();
-					attributes= descriptor2.getAttributes(tag, attributes);						
+					attributes= descriptor2.getAttributes(tag, attributes);	
+					if (pairedEnd) {
+						if (attributes.flag< 1)
+							Log.warn("Read ignored, error in readID: "+ tag);
+						if (attributes.flag== 2)	// don't iterate twice, for counters
+							continue;
+					}
+
 					if (stranded) {
 						if ((tx.getStrand()== bed1.getStrand()&& attributes.strand== 2)
 								|| (tx.getStrand()!= bed1.getStrand()&& attributes.strand== 1))
@@ -3543,114 +3536,62 @@ public class FluxCapacitor implements ReadStatCalculator {
 					}
 					
 					int bpoint1= getBpoint(tx, bed1);					
-//					if (m.sense.length== 1250&& bpoint1== 303&& bed1.getScore()<= 1)
-//						System.currentTimeMillis();
-					if (bpoint1== Integer.MIN_VALUE) {	// was intron
+					if(bpoint1< 0|| bpoint1>= elen) {	// outside tx area, or intron (Int.MIN_VALUE)
 						++nrReadsSingleLociNoAnnotation;
-						continue; 	// doesnt align to the transcript
-					}
-					bpoint1+= extension[0];
-					if(bpoint1< 0|| bpoint1>= extLen) {	// outside tolerated area
 						continue;
 					}
 
-					int rlen1= bed1.getLength();
-					if (readLenMin< 0|| rlen1< readLenMin)
-						readLenMin= rlen1;
-					if (rlen1> readLenMax) {	// readLenMax< 0|| 
-						readLenMax= rlen1;
-					}
+					++nrReadsSingleLociMapped;	// TODO here?
 					
-					++nrReadsSingleLociMapped;
 					if (pairedEnd) {
 
-						byte flag= attributes.flag;  
-							// (byte) (descriptor.getPairedEndInformation(bed1.getName())- 1);	// (Fasta.getReadDir(beds[i].getName())- 1))
-						if (flag < 1) {
-							System.err.println("\n\tRead ignored, error in readID:\n"+ tag);
-							continue;
-						}
-						--flag; // for array index
-						CharSequence id= attributes.id; 	// descriptor.getUniqueDescriptor(bed1.getName());	//Fasta.getReadID(beds[i].getName())
-						//CharSequence id= beds[i].getName();
-						BEDobject2[][] oo= mapPends.get(id);
-						if (oo== null) {
-							oo= new BEDobject2[2][];
-							mapPends.put(id, oo);
-						} 
-						if (oo[flag]== null) 
-							oo[flag]= new BEDobject2[] {bed1};
-						else {
-							BEDobject2[] op= new BEDobject2[oo[flag].length+ 1];
-							System.arraycopy(oo[flag], 0, op, 0, oo[flag].length);
-							op[op.length- 1]= bed1;
-							oo[flag]= op;
-						}
-						// for profiles paired reads only
-						boolean found= false;
-						boolean dbg= false;
-						for (int j = 0; j < oo.length; j++) {
-							if (j==flag|| oo[j]== null)
+						beds.mark();
+						while(beds.hasNext()) {
+							bed2= beds.next();
+							attributes2= descriptor2.getAttributes(bed2.getName(), attributes2);
+							if (attributes2== null)
 								continue;
-							for (int k = 0; k < oo[j].length; k++) {
-								BEDobject2 bed2= oo[j][k];
-								if (bed2== null)
-									continue;
-								// unique only, bad idea
-								//--too little and does not eliminate peaks
-//								if (bed2.getScore()> 1)
-//									continue;
-								int bpoint2= getBpoint(tx, bed2);
-//								if (m.sense.length== 1250&& bpoint2== 303&& bed2.getScore()<= 1)
-//									System.currentTimeMillis();
-								bpoint2+= extension[0];
-								if (bpoint2>= 0&& bpoint2< extLen) {	// inside tolerated area
-									int rlen2= bed2.getLength();
-//									if (tx.getStrand()< 0)
-//										System.currentTimeMillis();
-									m.add(bpoint1, bpoint2, rlen1, rlen2, extLen);
-									addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);
-									
-									// count each pair only once, TODO first hit counted
-									map.put(bed1.getName(), null);	
-									map.put(bed2.getName(), null);
-										
-									break;
-								} 
+							if (!attributes.id.equals(attributes2.id))
+								break;						
+							if (attributes2.flag== 1)	// not before break, inefficient
+								continue;
+
+							int bpoint2= getBpoint(tx, bed2);
+							if (bpoint2< 0|| bpoint2>= elen) {
+								++nrReadsSingleLociNoAnnotation;
+								continue;
 							}
-							if (found)
-								break;
+								
+							// check again strand in case one strand-info had been lost
+							if (stranded) {
+								if ((tx.getStrand()== bed2.getStrand()&& attributes2.strand== 2)
+										|| (tx.getStrand()!= bed2.getStrand()&& attributes2.strand== 1))
+								++nrMappingsWrongStrand;
+								continue;
+							}
+							
+							// check directionality (sequencing-by-synthesis)
+							if (bed1.getStrand()== bed2.getStrand()
+									|| (bed1.getStart()< bed2.getStart()&& bed1.getStrand()!= Transcript.STRAND_POS)
+									|| (bed2.getStart()< bed1.getStart()&& bed2.getStrand()!= Transcript.STRAND_POS)) {
+								nrPairsWrongOrientation+= 2;	
+								continue;
+							}
+
+							m.add(bpoint1, bpoint2, -1, -1, elen);	// TODO rlen currently not used
+							addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO omit
+							
+							nrReadsSingleLociPairsMapped+= 2;
+							
 						}
-					
-					} else {
+						beds.reset();
 						
-						m.add(bpoint1, rlen1, extLen, bed1.getStrand()== tx.getStrand()?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
+					} else {	// single reads						
+						m.add(bpoint1, -1, elen, 
+								bed1.getStrand()== tx.getStrand()?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
 					}
-				}
-				
-				nrReadsSingleLociPairsMapped+= map.size()/ 2;
-				
-				// DEBUG
-				if (map.size()!= mapReadOrPairIDs.size()) {
-					System.err.println();
-					Object[] ooo= map.keySet().toArray();
-					Arrays.sort(ooo);
-					for (int i = 0; i < ooo.length; i++) {
-						if (!mapReadOrPairIDs.contains(ooo[i]))
-							System.err.println(ooo[i]);
-					}
-					
-					System.err.println();
-					ooo= mapReadOrPairIDs.toArray();
-					Arrays.sort(ooo);
-					for (int i = 0; i < ooo.length; i++) {
-						if (!map.containsKey(ooo[i]))
-							System.err.println(ooo[i]);
-					}
-					
-					System.currentTimeMillis();
-				} else
-					System.currentTimeMillis();
+
+				} // iterate bed objects
 				
 
 			}
@@ -3793,6 +3734,171 @@ public class FluxCapacitor implements ReadStatCalculator {
 						}
 						
 					}
+
+
+					/**
+					 * still works with extensions
+					 * @param tx
+					 * @param beds
+					 */
+			private void learn_last(Transcript tx, BEDobject2[] beds) {
+										
+							if (beds== null)
+								return;
+							
+							// pre-filter reads for non-valid split-maps (null)
+							Graph myGraph= getGraph(this.gene);
+							map(myGraph, this.gene, beds);
+							// DEBUG
+							HashMap<CharSequence, CharSequence> map= new HashMap<CharSequence, CharSequence>();
+							
+							int elen= tx.getExonicLength();	// TODO this is the effective length
+			//				if (elen< readLenMin)
+			//					return;	// discards reads
+							
+							HashMap<CharSequence, BEDobject2[][]> mapPends= null;
+							int[] extension= new int[2];	// 5' extension, 3' extension
+							extension[0]= 0; extension[1]= 0;
+							int extLen= elen;
+							if (pairedEnd) {
+								mapPends= new HashMap<CharSequence, BEDobject2[][]>();
+								//extension= extend(tx, beds, extension);
+								extLen+= extension[0]+ extension[1];
+							}
+							//float rpk= beds.length* 1000f/ elen; 
+							UniversalMatrix m= profile.getMatrix(extLen);
+							
+							nrReadsSingleLoci+= beds.length;
+							for (int i = 0; i < beds.length; i++) {
+								
+								BEDobject2 bed1= beds[i];
+								if (bed1== null)
+									continue;
+								// unique only, bad idea
+								//--too little and does not eliminate peaks
+			//					if (bed1.getScore()> 1)
+			//						continue;
+								CharSequence tag= bed1.getName();
+								attributes= descriptor2.getAttributes(tag, attributes);						
+								if (stranded) {
+									if ((tx.getStrand()== bed1.getStrand()&& attributes.strand== 2)
+											|| (tx.getStrand()!= bed1.getStrand()&& attributes.strand== 1))
+									++nrMappingsWrongStrand;
+									continue;
+								}
+								
+								int bpoint1= getBpoint(tx, bed1);					
+			//					if (m.sense.length== 1250&& bpoint1== 303&& bed1.getScore()<= 1)
+			//						System.currentTimeMillis();
+								if (bpoint1== Integer.MIN_VALUE) {	// was intron
+									++nrReadsSingleLociNoAnnotation;
+									continue; 	// doesnt align to the transcript
+								}
+								bpoint1+= extension[0];
+								if(bpoint1< 0|| bpoint1>= extLen) {	// outside tolerated area
+									continue;
+								}
+			
+								int rlen1= bed1.getLength();
+								if (readLenMin< 0|| rlen1< readLenMin)
+									readLenMin= rlen1;
+								if (rlen1> readLenMax) {	// readLenMax< 0|| 
+									readLenMax= rlen1;
+								}
+								
+								++nrReadsSingleLociMapped;
+								if (pairedEnd) {
+			
+									byte flag= attributes.flag;  
+										// (byte) (descriptor.getPairedEndInformation(bed1.getName())- 1);	// (Fasta.getReadDir(beds[i].getName())- 1))
+									if (flag < 1) {
+										System.err.println("\n\tRead ignored, error in readID:\n"+ tag);
+										continue;
+									}
+									--flag; // for array index
+									CharSequence id= attributes.id; 	// descriptor.getUniqueDescriptor(bed1.getName());	//Fasta.getReadID(beds[i].getName())
+									//CharSequence id= beds[i].getName();
+									BEDobject2[][] oo= mapPends.get(id);
+									if (oo== null) {
+										oo= new BEDobject2[2][];
+										mapPends.put(id, oo);
+									} 
+									if (oo[flag]== null) 
+										oo[flag]= new BEDobject2[] {bed1};
+									else {
+										BEDobject2[] op= new BEDobject2[oo[flag].length+ 1];
+										System.arraycopy(oo[flag], 0, op, 0, oo[flag].length);
+										op[op.length- 1]= bed1;
+										oo[flag]= op;
+									}
+									// for profiles paired reads only
+									boolean found= false;
+									boolean dbg= false;
+									for (int j = 0; j < oo.length; j++) {
+										if (j==flag|| oo[j]== null)
+											continue;
+										for (int k = 0; k < oo[j].length; k++) {
+											BEDobject2 bed2= oo[j][k];
+											if (bed2== null)
+												continue;
+											// unique only, bad idea
+											//--too little and does not eliminate peaks
+			//								if (bed2.getScore()> 1)
+			//									continue;
+											int bpoint2= getBpoint(tx, bed2);
+			//								if (m.sense.length== 1250&& bpoint2== 303&& bed2.getScore()<= 1)
+			//									System.currentTimeMillis();
+											bpoint2+= extension[0];
+											if (bpoint2>= 0&& bpoint2< extLen) {	// inside tolerated area
+												int rlen2= bed2.getLength();
+			//									if (tx.getStrand()< 0)
+			//										System.currentTimeMillis();
+												m.add(bpoint1, bpoint2, rlen1, rlen2, extLen);
+												addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);
+												
+												// count each pair only once, TODO first hit counted
+												map.put(bed1.getName(), null);	
+												map.put(bed2.getName(), null);
+													
+												break;
+											} 
+										}
+										if (found)
+											break;
+									}
+								
+								} else {
+									
+									m.add(bpoint1, rlen1, extLen, bed1.getStrand()== tx.getStrand()?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
+								}
+							}
+							
+							nrReadsSingleLociPairsMapped+= map.size()/ 2;
+							
+							// DEBUG
+							if (map.size()!= mapReadOrPairIDs.size()) {
+								System.err.println();
+								Object[] ooo= map.keySet().toArray();
+								Arrays.sort(ooo);
+								for (int i = 0; i < ooo.length; i++) {
+									if (!mapReadOrPairIDs.contains(ooo[i]))
+										System.err.println(ooo[i]);
+								}
+								
+								System.err.println();
+								ooo= mapReadOrPairIDs.toArray();
+								Arrays.sort(ooo);
+								for (int i = 0; i < ooo.length; i++) {
+									if (!map.containsKey(ooo[i]))
+										System.err.println(ooo[i]);
+								}
+								
+								System.currentTimeMillis();
+							} else
+								System.currentTimeMillis();
+							
+			
+						}
 		}
 
 	static void printUsage() {
@@ -6478,6 +6584,16 @@ public class FluxCapacitor implements ReadStatCalculator {
 		int gpos= bed.getStrand()>= 0? bed.getStart()+ 1: bed.getEnd();	
 		int epos= tx.getExonicPosition(gpos);
 		
+		// security check, get distance between both exonic coordinates
+		int epos2= tx.getExonicPosition(bed.getStrand()>= 0? bed.getEnd(): bed.getStart()+ 1);
+		int len= bed.getLength();
+		if (readLenMin< 0|| len< readLenMin)
+			readLenMin= len;
+		if (len> readLenMax) 
+			readLenMax= len;
+
+		if (len!= Math.abs(epos- epos2)+ 1)
+			return Integer.MIN_VALUE;
 		return epos;
 	}
 	
@@ -6593,36 +6709,65 @@ public class FluxCapacitor implements ReadStatCalculator {
 	Profile profile;
 	private BufferedBEDiterator readBedFile(Gene gene, int from, int to, byte mode) {
 		
-		//ByteArrayCharSequence chr= new ByteArrayCharSequence(gene.getChromosome());
-		
-		if (from> to) {
-			System.err.println("reading range error: "+from+","+to);
-		}
-//		if (gene.getGeneID().equals("chr12:58213712-58240747C")) {
-//			System.err.println("\t"+ gene.getGeneID()+" from "+from+" to "+to);
-//		}
-		
-		assert(from>= 0&&to>= 0&&from<= to);
-//		for (int i = 0; i < gene.getTranscriptCount(); i++) {
-//			if (gene.getTranscripts()[i].getTranscriptID().equals("ENST00000373548")) {
-//				System.currentTimeMillis();
-//				break;
-//			}
-//		}
+		if (from> to|| from< 0|| to< 0) 
+			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 
+		// init iterator
+		BufferedBEDiterator iter= null;
+
+		// memory
+		//BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
+		//if (beds== null)
+		//	return null;
+		//Arrays.sort(beds, getDescriptorComparator());
+		//iter= new BEDiteratorMemory(beds);
 		
-		//BEDobject[] beds= getBedReader().read_old(gene.getChromosome(), start, end);
-		BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
-		BufferedBEDiterator iter= new BEDiteratorArray(beds);
-//		if (gene.getGeneID().equals("chr19:1609293-1652326C"))
-//			System.currentTimeMillis();
-		if (beds== null)
-			return null;
-		
+		try {
+			// read, maintain main thread			
+			PipedInputStream  pin= new PipedInputStream();
+	        PipedOutputStream pout= new PipedOutputStream(pin);
+			Comparator<CharSequence> c= new BEDDescriptorComparator(descriptor2);
+			BEDiteratorDisk biter= new BEDiteratorDisk(pin, false, c,  
+					gene.getChromosome()+ ":"+ from+ "-"+ to);
+			biter.init();
+			iter= biter;
+			BEDobject2[] beds= getBedReader().read(pout, gene.getChromosome(), from, to);
+/*	        OutputStreamWriter writer= new OutputStreamWriter(pout);
+	        for (int i = 0; i < beds.length; i++) {
+	        	String s= beds[i].toString();
+				writer.write(s);
+				writer.write('\n');
+			}
+			writer.flush();
+			writer.close();
+*/			
+			// finishing
+			pout.flush();
+			pout.close();
+			
+			int x= biter.countRemainingElements();
+			if ((beds== null&& x> 0)|| (beds!= null&& x!= beds.length))
+				System.currentTimeMillis();
+
+		} catch (IOException e) {
+			Log.error("Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to);
+			e.printStackTrace(Log.logStream);
+		}
+        
 		return iter;
 		
 	}
 	
+	
+	BEDDescriptorComparator comp= null;
+	private Comparator<? super BEDobject2> getDescriptorComparator() {
+		if (comp == null) {
+			comp = new BEDDescriptorComparator(descriptor2);
+		}
+
+		return comp;
+	}
+
 	private int splitBedFile(Gene gene, SyncIOHandler2 handler, OutputStream ostream) {
 		
 		int start= gene.getStart();
@@ -7117,6 +7262,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return fileGTF;
 	}
 
+	/**
+	 * @deprecated check whether further neeeded
+	 * @param gene
+	 * @param mode
+	 * @return
+	 */
 	private BEDobject2[] readBedFile(Gene gene, byte mode) {
 		
 		int start= gene.getStart();
@@ -7154,6 +7305,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 				System.err.println("[UPS] Parameter file does not appear to exist "+ f.getAbsolutePath());
 			}
 		}
+		
+		Log.setLogLevel(Log.Level.ERROR);
 		FluxCapacitorParameters pars= FluxCapacitorParameters.create(f);
 		if (pars== null|| !pars.check()) 
 			System.exit(-1);
