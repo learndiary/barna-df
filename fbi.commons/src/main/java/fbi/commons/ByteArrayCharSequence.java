@@ -586,7 +586,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      *
      * @param x extend
      */
-    protected void extend(int x) {
+    public void extend(int x) {
         byte[] b = new byte[chars.length + x];
         System.arraycopy(chars, 0, b, 0, chars.length);
         chars = b;

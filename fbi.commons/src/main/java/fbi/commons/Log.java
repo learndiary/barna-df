@@ -11,6 +11,8 @@
 
 package fbi.commons;
 
+import java.io.PrintStream;
+
 /**
  * Defines constants and current logging level.
  * This is a simple abstraction for the system out stream at the moment, but we
@@ -19,8 +21,14 @@ package fbi.commons;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class Log {
+	
+	/**
+	 * Default log stream to which output is written.
+	 */
+	public static PrintStream logStream= System.err;
+	
 
-    /**
+	/**
      * Log levels
      */
     public static enum Level {
@@ -58,7 +66,7 @@ public class Log {
     /**
      * The console progress
      */
-    private static final Progressable progress = new PrintstreamProgressable(System.err);
+    private static final Progressable progress = new PrintstreamProgressable(logStream);
 
     /**
      * Is the logger interactive
@@ -117,9 +125,9 @@ public class Log {
      */
     public static void debug(String message, Throwable error) {
         if (logLevel.level >= Log.Level.DEBUG.level) {
-            System.err.println("[DEBUG] " + message);
+            logStream.println("[DEBUG] " + message);
             if (error != null) {
-                error.printStackTrace(System.err);
+                error.printStackTrace(logStream);
             }
         }
     }
@@ -162,9 +170,9 @@ public class Log {
     public static void info(String prefix, String message) {
         if (logLevel.level >= Log.Level.INFO.level) {
             if (prefix != null && !prefix.isEmpty()) {
-                System.err.println("[" + prefix + "] " + message);
+                logStream.println("[" + prefix + "] " + message);
             } else {
-                System.err.println(message);
+                logStream.println(message);
             }
         }
     }
@@ -188,9 +196,9 @@ public class Log {
     public static void error(String prefix, String message) {
         if (logLevel.level >= Log.Level.ERROR.level) {
             if (prefix != null && prefix.length() > 0) {
-                System.err.println("[" + prefix + "]" + " " + message);
+                logStream.println("[" + prefix + "]" + " " + message);
             } else {
-                System.err.println(message);
+                logStream.println(message);
             }
         }
     }
@@ -205,7 +213,7 @@ public class Log {
         if (logLevel.level >= Log.Level.ERROR.level) {
             error(message);
             if (error != null) {
-                error.printStackTrace(System.err);
+                error.printStackTrace(logStream);
             }
         }
     }
@@ -219,7 +227,7 @@ public class Log {
      */
     public static void message(String message) {
         if (logLevel.level >= Log.Level.INFO.level) {
-            System.err.println(message);
+            logStream.println(message);
         }
     }
 
