@@ -11,6 +11,7 @@
 
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import fbi.commons.Log;
 import fbi.commons.file.FileHelper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.constants.Constants;
@@ -24,6 +25,8 @@ import java.io.FileReader;
  */
 public class FluxCapacitorParameters {
 
+	public static final String PAR_YES= "YES"; 
+	public static final String PAR_NO= "NO"; 
 	public static final String PAR_ANNOTATION_FILE= "ANNOTATION_FILE"; 
 	public static final String PAR_SORTED_ANNOTATION_FILE= "SORTED_ANNOTATION_FILE";
 	public static final String PAR_MAPPING_FILE= "MAPPING_FILE";
@@ -46,6 +49,7 @@ public class FluxCapacitorParameters {
 	public static final String PAR_NOT_MAPPED_READ_FILE= "NOT_MAPPED_READ_FILE";
 	public static final String PAR_INSERT_SIZE_FILE= "INSERT_SIZE_FILE";
 	public static final String PAR_LP_ZIP_FILE= "LP_ZIP_FILE";
+	public static final String PAR_SORT_IN_RAM= "SORT_IN_RAM";
 	
 	public boolean check() {
 		
@@ -210,6 +214,14 @@ public class FluxCapacitorParameters {
 						buffy.close();
 						return null;
 					}
+				} else if (ll[0].equalsIgnoreCase(PAR_SORT_IN_RAM)) {
+					if (ll[1].equalsIgnoreCase(PAR_YES))
+						pars.sortInRam= true;
+					else if (ll[1].equalsIgnoreCase(PAR_NO))
+						pars.sortInRam= false;
+					else
+						Log.error("Invalid value "+ ll[1]+ ", please use "+ PAR_YES+ " or "+
+								PAR_NO+ " to specify a value for "+ PAR_SORT_IN_RAM);
 				} else {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 						System.err.println("[UNKNOWN] I couldnt understand parameter "+ ll[0]);
@@ -239,6 +251,7 @@ public class FluxCapacitorParameters {
 		fileProfile, fileMapped, fileNotmapped, fileInsert, fileLPzip, fileStdErr, fileStdOut,
 		fileCoverage;
 	boolean force= false, ioInTemp= false, inputOverwrite= false, pairedEnd= false, stranded= false;
+	boolean sortInRam= false;
 	long readNr= -1;
 	UniversalReadDescriptor descriptor;
 	

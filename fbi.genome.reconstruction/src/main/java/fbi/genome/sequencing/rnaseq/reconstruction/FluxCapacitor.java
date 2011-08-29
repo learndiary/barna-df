@@ -1647,7 +1647,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	public static boolean 
 		cheatDoNotExit= false,
 		cheatLearn= false, 
-		cheatDisableFCheck= true,
+		cheatDisableFCheck= false,
 		cheatDisableCleanup= true,
 		cheatCopyFile= true,
 		doUseLocusNormalization= false;
@@ -4408,6 +4408,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 			//p.println("\t"+CLI_LONG_VERBOSE+"\t"+Constants.VERBOSE_KEYWORDS[Constants.verboseLevel]);
 			if (copyLocal)
 				p.println("\t"+FluxCapacitorParameters.PAR_COPY_INPUT);
+			p.println("\t"+ FluxCapacitorParameters.PAR_SORT_IN_RAM+ "\t"+ 
+					(pars.sortInRam?FluxCapacitorParameters.PAR_YES:FluxCapacitorParameters.PAR_NO));
 			
 			// OUTPUT
 			p.println("\tOUTPUT");
@@ -6715,43 +6717,36 @@ public class FluxCapacitor implements ReadStatCalculator {
 		// init iterator
 		BufferedBEDiterator iter= null;
 
-		// memory
-		//BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
-		//if (beds== null)
-		//	return null;
-		//Arrays.sort(beds, getDescriptorComparator());
-		//iter= new BEDiteratorMemory(beds);
-		
 		try {
-			// read, maintain main thread			
-			PipedInputStream  pin= new PipedInputStream();
-	        PipedOutputStream pout= new PipedOutputStream(pin);
-			Comparator<CharSequence> c= new BEDDescriptorComparator(descriptor2);
-			BEDiteratorDisk biter= new BEDiteratorDisk(pin, false, c,  
-					gene.getChromosome()+ ":"+ from+ "-"+ to);
-			biter.init();
-			iter= biter;
-			BEDobject2[] beds= getBedReader().read(pout, gene.getChromosome(), from, to);
-/*	        OutputStreamWriter writer= new OutputStreamWriter(pout);
-	        for (int i = 0; i < beds.length; i++) {
-	        	String s= beds[i].toString();
-				writer.write(s);
-				writer.write('\n');
-			}
-			writer.flush();
-			writer.close();
-*/			
-			// finishing
-			pout.flush();
-			pout.close();
-			
-			int x= biter.countRemainingElements();
-			if ((beds== null&& x> 0)|| (beds!= null&& x!= beds.length))
-				System.currentTimeMillis();
-
+			if (pars.sortInRam) {
+				// memory
+				BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
+				if (beds== null)
+					return null;
+				Arrays.sort(beds, getDescriptorComparator());
+				iter= new BEDiteratorMemory(beds);
+				
+			} else {
+				
+				// read, maintain main thread			
+				PipedInputStream  pin= new PipedInputStream();
+		        PipedOutputStream pout= new PipedOutputStream(pin);
+				Comparator<CharSequence> c= new BEDDescriptorComparator(descriptor2);
+				BEDiteratorDisk biter= new BEDiteratorDisk(pin, false, c,  
+						gene.getChromosome()+ ":"+ from+ "-"+ to);
+				biter.init();
+				iter= biter;
+				long count= getBedReader().read(pout, gene.getChromosome(), from, to);
+				pout.flush();
+				pout.close();
+				if (count== 0)
+					return null;
+			}			
 		} catch (IOException e) {
-			Log.error("Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to);
-			e.printStackTrace(Log.logStream);
+			throw new RuntimeException(
+				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to,
+				e
+			);
 		}
         
 		return iter;

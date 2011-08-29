@@ -958,7 +958,11 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * @param end end position of the specified area
 	 */
 	public BEDobject2[] read(String chr, int start, int end) {
-		return read(chr, start, end, null);
+		Vector<BEDobject2> objV= new Vector<BEDobject2>();
+		long count= read(chr, start, end, objV, null);
+		if (count== 0)
+			return null;
+		return toObjects(objV);
 	}
 	
 	/**
@@ -971,21 +975,19 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
-	public BEDobject2[] read(OutputStream os, String chr, int start, int end) {
-		return read(chr, start, end, os);
+	public long read(OutputStream os, String chr, int start, int end) {
+		return read(chr, start, end, null, os);
 	}
 	
-	protected BEDobject2[] read(String chr, int start, int end, OutputStream os) {
+	protected long read(String chr, int start, int end, Vector<BEDobject2> objV, OutputStream os) {
 				
 				if (mapChr.containsKey(chr)) {
 					if (mapChr.get(chr)== null)
-						return null;
+						return 0;
 				}  
 					
 				--start;	// convert to bed coordinate
-				Vector<BEDobject2> objV= null;
-				//if (os== null)
-					objV= new Vector<BEDobject2>();
+				long count= 0l;
 				try {
 					BufferedBACSReader buffy= getReaderBACS();
 					ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
@@ -1063,14 +1065,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								bytesRead= tmpBytes; 
 								--nrUniqueLinesRead;
 							}
-							if (objV== null)
-								return null;
+							
 							addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
 							
-							if (os== null)
-								return toObjects(objV);
-							else
-								return toObjects(objV);
+							return count;
 						}
 							
 						if (lastChrRead== null) {	// first line read in this batch
@@ -1086,7 +1084,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											bytesRead= tmpBytes;
 											--nrUniqueLinesRead;
 										}
-										return null;
+										return count;
 									} else {
 										if (mapChr.get(chr)[0]> tmpBytes) { 	// only jump forward, never back
 											long[] bytesNlines= mapChr.get(chr);
@@ -1107,7 +1105,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											}
 										} else {
 											reset(tmpBytes, nrUniqueLinesRead-1);
-											return null;
+											return count;
 										}
 									}
 								} else {
@@ -1121,7 +1119,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											--nrUniqueLinesRead;
 											readerB= null;
 										}
-										return null; 
+										return count; 
 									} else {
 										
 										this.cs= newCS;
@@ -1177,22 +1175,19 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								--nrUniqueLinesRead;
 							}
 
-							if (os== null)
-								return toObjects(objV);
-							else
-								return toObjects(objV);
+							return count;
 						}
 						
 						// create object
 						if (os== null) {
 							BEDobject2 bed= new BEDobject2(cs); 
 							objV.add(bed);
+							++count;
 						} else {
-							BEDobject2 bed= new BEDobject2(cs);
-							objV.add(bed);
 							os.write(cs.chars);
 							os.write(Constants.NL);
-							os.flush();
+							//os.flush();
+							count+= cs.chars.length+ 1; 
 						}
 		
 					}
@@ -1200,11 +1195,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				} catch (Exception e) {					
 					e.printStackTrace();
 				}
-				
-				if (os== null)
-					return toObjects(objV);
-				else
-					return toObjects(objV);
+
+				return count;
 			}
 
 	public ReadDescriptor checkReadDescriptor(boolean pairedEnd) {
