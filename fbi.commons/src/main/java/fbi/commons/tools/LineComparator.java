@@ -11,8 +11,6 @@
 
 package fbi.commons.tools;
 
-import com.sun.xml.internal.org.jvnet.fastinfoset.sax.EncodingAlgorithmContentHandler;
-
 import java.util.*;
 
 /**
