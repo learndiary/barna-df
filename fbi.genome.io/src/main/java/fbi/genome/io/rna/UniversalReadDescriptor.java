@@ -14,6 +14,8 @@ package fbi.genome.io.rna;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import fbi.genome.model.constants.Constants;
+
 import javassist.compiler.SymbolTable;
 
 public class UniversalReadDescriptor {
@@ -71,32 +73,40 @@ public class UniversalReadDescriptor {
 		mapSimpleDescriptors.put(DESCRIPTORID_PAIRED, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
-				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT);
+				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_STRAND_MATE, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
 				SYMBOL_TAG_LEFT+ TAG_STRAND+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "0,1,2"+ SYMBOL_SET_RIGHT+
 				"/"+
-				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT);
+				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_MATE_STRAND_CSHL, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
 				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT+
 				"_strand"+
 				SYMBOL_TAG_LEFT+ TAG_STRAND+ SYMBOL_TAG_RIGHT+
 				SYMBOL_SET_LEFT+ "0,1,2"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_MATE1_SENSE, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
-				SYMBOL_TAG_LEFT+ TAG_MATE1SENSE+ SYMBOL_TAG_RIGHT);
+				SYMBOL_TAG_LEFT+ TAG_MATE1SENSE+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_MATE2_SENSE, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
-				SYMBOL_TAG_LEFT+ TAG_MATE2SENSE+ SYMBOL_TAG_RIGHT);
+				SYMBOL_TAG_LEFT+ TAG_MATE2SENSE+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_BARNA, 
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
 				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT+
+				
 				SYMBOL_OPT_LEFT+ TAG_STRAND+ SYMBOL_OPT_RIGHT+
 				SYMBOL_SET_LEFT+ "s,a"+ SYMBOL_SET_RIGHT);
 		mapSimpleDescriptors.put(DESCRIPTORID_SIMULATOR, 
@@ -105,7 +115,8 @@ public class UniversalReadDescriptor {
 				SYMBOL_TAG_LEFT+ TAG_STRAND+ SYMBOL_TAG_RIGHT+
 				SYMBOL_SET_LEFT+ "S,A"+ SYMBOL_SET_RIGHT+
 				"/"+
-				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT);	
+				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);	
 	}
 //	static {
 //		mapSimpleDescriptors.put(DESCRIPTORID_SIMPLE, "#");
@@ -136,7 +147,7 @@ public class UniversalReadDescriptor {
 			|| descriptor.charAt(i+3)!= ',')
 			return i;
 		if (descriptor.charAt(i+5)== ']') {
-			symbolNoSense= '\n';
+			symbolNoSense= Constants.NL;
 			symbolSense= descriptor.charAt(i+ 2);
 			symbolAsense= descriptor.charAt(i+ 4);
 			return (i+5);
@@ -177,47 +188,34 @@ public class UniversalReadDescriptor {
 					sb.append(TAG_MATE1SENSE);
 				else
 					sb.append(TAG_MATE2SENSE);
-			} else if (i== posPair) {
+			} else if (i== posPair) 
 				sb.append(TAG_PAIR);
+			else if (i== posStrand) 
+				sb.append(TAG_STRAND);
+			
+			if (mandatory[i])
+				sb.append(SYMBOL_TAG_RIGHT);
+			else
+				sb.append(SYMBOL_OPT_RIGHT);
+
+			// append set
+			if (i== posPair) {
 				sb.append(SYMBOL_SET_LEFT);
 				sb.append(symbolMate1);
 				sb.append(',');
 				sb.append(symbolMate2);
 				sb.append(SYMBOL_SET_RIGHT);
+			// if pair includes mate info, the following is not executed
 			} else if (i== posStrand) {
-				sb.append(TAG_STRAND);
 				sb.append(SYMBOL_SET_LEFT);
-				sb.append(symbolNoSense);
-				sb.append(',');
+				if (symbolNoSense!= Constants.NL) {
+					sb.append(symbolNoSense);
+					sb.append(',');
+				}
 				sb.append(symbolSense);
 				sb.append(',');
 				sb.append(symbolAsense);
 				sb.append(SYMBOL_SET_RIGHT);
-			}
-			if (mandatory[i])
-				sb.append(SYMBOL_TAG_LEFT);
-			else
-				sb.append(SYMBOL_OPT_LEFT);
-
-			// append charset
-			if (!(i== posPair&& i== posStrand)) {
-				if (i== posPair) {
-					sb.append(TAG_PAIR);
-					sb.append(SYMBOL_SET_LEFT);
-					sb.append(symbolMate1);
-					sb.append(',');
-					sb.append(symbolMate2);
-					sb.append(SYMBOL_SET_RIGHT);
-				} else if (i== posStrand) {
-					sb.append(TAG_STRAND);
-					sb.append(SYMBOL_SET_LEFT);
-					sb.append(symbolNoSense);
-					sb.append(',');
-					sb.append(symbolSense);
-					sb.append(',');
-					sb.append(symbolAsense);
-					sb.append(SYMBOL_SET_RIGHT);
-				}
 			}
 		}
 		
@@ -353,7 +351,7 @@ public class UniversalReadDescriptor {
 			a.strand= 1;
 		else if (cs.charAt(i)== symbolAsense)
 			a.strand= 2;
-		else if (symbolNoSense!= '\n'&& cs.charAt(i)== symbolNoSense)
+		else if (symbolNoSense!= Constants.NL&& cs.charAt(i)== symbolNoSense)
 			a.strand= 0;
 		else
 			return false;

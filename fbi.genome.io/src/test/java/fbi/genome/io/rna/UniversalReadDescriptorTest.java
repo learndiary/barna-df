@@ -328,4 +328,54 @@ public class UniversalReadDescriptorTest {
 		assertEquals(a.strand, 1);
 		
 	}
+	
+	@Test
+	public void testToString() {
+		try {
+			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+			
+			String expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_STRAND_MATE);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+			
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+			
+			descriptor= new UniversalReadDescriptor();
+			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
+			descriptor.init(expr);
+			assertEquals(expr, descriptor.toString());
+
+
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+	}
 }
