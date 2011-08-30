@@ -37,6 +37,7 @@ public class LpSolveTest {
     @Test
 	public void testVersion() throws Exception {
 		VersionInfo info = LpSolve.lpSolveVersion();
+        System.out.println(info.getBuild());
 		assertEquals(5, info.getMajorversion());
 		assertEquals(5, info.getMinorversion());
 		assertEquals(0, info.getRelease());

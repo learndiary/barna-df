@@ -81,36 +81,34 @@ public class LPSolverLoader {
 
         // check if the files exist, otherwise copy the lib from jar to file
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-
-        // on osx move to $HOME/lib
-        if(OSChecker.isMacOSX()){
-            tmpDir = new File(System.getProperty("user.home")+"/lib");
-            tmpDir.mkdirs();
-        }
-
         File libFile = new File(tmpDir, name);
         File libjFile = new File(tmpDir, jname);
 
-        if(!libFile.exists()){
+        //if(!libFile.exists()){
             // copy
             try {
-                write2File(LPSolverLoader.class.getResource("/"+dir+"/"+bits+"/"+name), libFile);
+                URL dylib = LPSolverLoader.class.getResource("/" + dir + "/" + bits + "/" + name);
+                if(!OSChecker.isMac()){ // mac os is a single jnilib file
+                    write2File(dylib, libFile);
+                }
             } catch (IOException e) {
                 throw new RuntimeException("Unable to copy library to filesystem! " + e.getMessage(), e);
             }
-        }
-        if(!libjFile.exists()){
+        //}
+        //if(!libjFile.exists()){
             // copy
             try {
                 write2File(LPSolverLoader.class.getResource("/"+dir+"/"+bits+"/"+jname), libjFile);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to copy library to filesystem! " + e.getMessage(), e);
             }
-        }
+        //}
 
         // files should exist now, load
-        System.load(libFile.getAbsolutePath());
-        System.load(libjFile.getAbsolutePath());
+        if(libFile.exists())
+            System.load(libFile.getAbsolutePath());
+        if(libFile.exists())
+            System.load(libjFile.getAbsolutePath());
 
         // check
         VersionInfo versionInfo = LpSolve.lpSolveVersion();
