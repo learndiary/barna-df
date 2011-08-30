@@ -58,6 +58,7 @@ public class LPSolverLoader {
      */
     public static boolean load(){
         String bits = OSChecker.is64bit() ? "64":"32";
+
         String name = null;
         String jname = null;
         String dir = null;
@@ -80,6 +81,12 @@ public class LPSolverLoader {
 
         // check if the files exist, otherwise copy the lib from jar to file
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+
+        // on osx move to $HOME/lib
+        if(OSChecker.isMacOSX()){
+            tmpDir = new File(System.getProperty("user.home")+"/lib");
+            tmpDir.mkdirs();
+        }
 
         File libFile = new File(tmpDir, name);
         File libjFile = new File(tmpDir, jname);
