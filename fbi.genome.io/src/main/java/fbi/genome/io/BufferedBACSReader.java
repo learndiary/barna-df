@@ -126,9 +126,7 @@ public class BufferedBACSReader {
 				if (pos< b.length) 
 					fill();
 				p= pos;
-				if (p== lastI) {
-					return null;
-				}
+				
 				for (; i < p&& b[i]!= n; ++i, ++currBytes);	
 				
 				// last chance: omit marked position, if any
@@ -142,11 +140,14 @@ public class BufferedBACSReader {
 					for (; i < p&& b[i]!= n; ++i, ++currBytes);
 				}
 			}
-			
-			assert(i!= p);
+			// note: i== lastI can hold true, 
+			// eg empty lines \n\n produce an
+			// empty string
+			if (p== lastI) 
+				return null;	// nothing more, EOS
 			
 			// parse line-sep
-			if (i> 0&& b[i-1]== r) {
+			if (i> lastI&& b[i-1]== r) {
 				--i;
 				--currBytes;
 			}
