@@ -1,4 +1,4 @@
-@echo on
+@echo off
 setlocal ENABLEDELAYEDEXPANSION
 ::CONFIGURATION
 IF "%FLUX_MEM%" == "" set FLUX_MEM="1G"
