@@ -1,4 +1,4 @@
-@echo off
+@echo on
 setlocal ENABLEDELAYEDEXPANSION
 ::CONFIGURATION
 IF "%FLUX_MEM%" == "" set FLUX_MEM="1G"
@@ -11,5 +11,5 @@ if not defined FOUND (
 )
 
 set parent=%~dp0%..\lib
-FOR /R %parent% %%G IN (*.jar) DO set CLASSPATH=!CLASSPATH!;%%G
+FOR /R "%parent%" %%G IN ("*.jar") DO set CLASSPATH=!CLASSPATH!;"%%G"
 java -Xmx%FLUX_MEM% -cp %CLASSPATH% fbi.commons.flux.Flux %*
