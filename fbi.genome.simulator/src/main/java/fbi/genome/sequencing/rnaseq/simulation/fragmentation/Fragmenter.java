@@ -549,9 +549,17 @@ public class Fragmenter implements Callable<Void> {
                     }
 
                 }
-
-
-                if (!tmpFile.delete()) {
+                try {
+                	fis.close();
+				} catch (IOException e) {
+					throw new RuntimeException("couldn't close file "+ tmpFile.getAbsolutePath(), e);
+				}
+                try {
+                	fos.close();
+				} catch (IOException e) {
+					throw new RuntimeException("couldn't close file "+ tmpWriteFile.getAbsolutePath(), e);
+				}
+                if (!tmpFile.delete()) {                	
                     throw new IOException("Couldn't delete source");
                 }
                 if (!tmpWriteFile.renameTo(tmpFile)) {
@@ -610,7 +618,7 @@ public class Fragmenter implements Callable<Void> {
 
     }
 
-    /**
+    /**ou
      * Write and return the initial fragmentation file
      *
      * @return fragmenterFile the initial file
@@ -626,7 +634,8 @@ public class Fragmenter implements Callable<Void> {
         int moleculesInitilized = 0;
         BufferedWriter fos = null;
         File tmpFile = null;
-
+        int[] ints = null; // re-use
+        
         double tssMean = settings.get(FluxSimulatorSettings.TSS_MEAN);
         double polyaShape = settings.get(FluxSimulatorSettings.POLYA_SHAPE);
         double polyaScale = settings.get(FluxSimulatorSettings.POLYA_SCALE);
@@ -644,7 +653,7 @@ public class Fragmenter implements Callable<Void> {
                 long molecules = profiler.getMolecules(i);
                 for (int x = 0; x < molecules; x++) {
                     ++moleculesInitilized;
-                    int[] ints = processInitial(origLen, tssMean, polyaShape, polyaScale);
+                    ints = processInitial(origLen, tssMean, polyaShape, polyaScale, ints);
                     fos.write(ints[0] + "\t" + ints[1] + "\t" + compIDstring + "\n");
                 }
             }
@@ -667,6 +676,7 @@ public class Fragmenter implements Callable<Void> {
                 try {
                     fos.close();
                 } catch (IOException ignore) {
+                	throw new RuntimeException("couldn't close file "+ tmpFile.getAbsolutePath(), ignore);
                 }
             }
         }
@@ -761,11 +771,12 @@ public class Fragmenter implements Callable<Void> {
      * @param polyaScale the polyA scale or NaN
      * @return startEnd array containing the start end end coordinates
      */
-    int[] processInitial(int origLen, double tssMean, double polyaShape, double polyaScale) {
+    int[] processInitial(int origLen, double tssMean, double polyaShape, double polyaScale, int[] ints) {
 
-        // transcript variation
+    	// 0-based tx coordinates
         int start = 0;
         int end = origLen - 1;
+        // transcript variation
         if (!Double.isNaN(tssMean)) {
             start = origLen;
             while (start >= Math.min(startOffset, origLen)) {
@@ -793,7 +804,14 @@ public class Fragmenter implements Callable<Void> {
             Log.error("end < length in Fragmenter!");
         }
         assert (start < end);
-        return new int[]{start, end};
+        
+        if (ints== null|| ints.length!= 2)
+        	ints= new int[]{start, end};
+        else {
+        	ints[0]= start;
+        	ints[1]= end;
+        }
+        return ints;
     }
 
     /**
