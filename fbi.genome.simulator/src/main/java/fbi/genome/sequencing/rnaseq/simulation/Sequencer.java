@@ -162,7 +162,6 @@ public class Sequencer implements Callable<Void> {
                 zipOut.write(cs.chars, cs.start, cs.length());
                 zipOut.write(BYTE_NL);
             }
-            zipOut.close();
             Log.progressFinish(lines + " lines zipped ("+nrOfFrags +" fragments)", true);
         } finally {
             io.close();
@@ -170,6 +169,7 @@ public class Sequencer implements Callable<Void> {
                 try {
                     zipOut.close();
                 } catch (IOException ignore) {
+                	throw new RuntimeException("Unable to close zip file "+ zipFile.getAbsolutePath(), ignore);
                 }
             }
         }
@@ -291,6 +291,7 @@ public class Sequencer implements Callable<Void> {
                 }
             }
             // stats
+            processor.close();
             writer.close();
 
             Log.progressFinish();
@@ -341,7 +342,7 @@ public class Sequencer implements Callable<Void> {
         return FileHelper.replaceSfx(settings.get(FluxSimulatorSettings.SEQ_FILE), "." + (hasQualities() ? SFX_FASTQ : SFX_FASTA));
     }
 
-    private void createQname(BEDobject2 obj2, ByteArrayCharSequence cs) {
+    public static void createQname(BEDobject2 obj2, ByteArrayCharSequence cs, ModelPool babes) {
 
         byte[] a = obj2.chars;
         cs.clear();
@@ -372,13 +373,13 @@ public class Sequencer implements Callable<Void> {
      * @param pairedEndSide paired end side, either 1 or 2 or 0 for no paired ends
      * @return bed the filled bed object
      */
-    private BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public static BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
         obj.clear();
         obj.append(CHR_POLYA);
         obj.append(BYTE_TAB);
         obj.append(0);
         obj.append(BYTE_TAB);
-        obj.append(end - start);
+        obj.append(end - start+ 1);	// (+1) for end being excluded in BED, included in tx coordinates
         obj.append(BYTE_TAB);
         FMRD.appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
         obj.append(BYTE_TAB);
@@ -412,42 +413,39 @@ public class Sequencer implements Callable<Void> {
      * Prepare a read and fill the given bed object
      *
      * @param obj       the bed object to fill
-     * @param start     the start
-     * @param end       the end
-     * @param t         the transcript
-     * @param molNr     molecule number
-     * @param absDir    direction
-     * @param fragStart fragment start
-     * @param fragEnd   fragment end
-     * @param left      sens/antisense
+     * @param start     the start read start position in transcript coordinates (0-based)
+     * @param end       the end read end position in transcript coordinates (0-based)
+     * @param t         the transcript with genomic positions (1-based)
+     * @param molNr     molecule number of the transcript
+     * @param absDir    absolute direction of the transcript
+     * @param fragStart fragment start start position of the fragment in transcript coordinates (0-based)
+     * @param fragEnd   fragment end end position of the fragment in transcript coordinates (0-based)
+     * @param left      flag indicating whether the read is the left end of the fragment
      * @param pairedEndSide either 1 or 2 or anything else if no pairedend reads are produced
-     * @return polyA true if polya read
+     * @return polyA the number of nucleotides in the poly-A tail
      */
-    private boolean createRead(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public static int createRead(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
 
 
         int originalStart = start;
         int originalEnd = end;
         int tlen = t.getExonicLength();
-        boolean isPolyA = false;
-        if (start > tlen) {
+
+        if (start > tlen- 1) {
             createReadPolyA(obj, start, end, t, molNr, absDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
-            return true;
+            return (end- start+ 1);
         }
         int offsStart = 0, offsEnd = 0;
-        if (start < 1) {
-            offsStart = start - 1; // t-coords 1-based, offs negative
-            start = 1;
+        if (start < 0) {
+            offsStart = start; // t-coords 0-based, offs negative
+            start = 0;
         }
-        if (end > tlen) {
-            offsEnd = end - tlen;    // positive, pos's after annotated end
-            end = tlen;
-            if (!left) {
-                isPolyA = true;
-            }
+        if (end > tlen- 1) {
+            offsEnd = end - tlen+ 1;    // positive, pos's after annotated end
+            end = tlen- 1;
         } else if (end < 1) {
-            offsEnd = end - 1;    // negative, pos's before annotated start
-            end = 1;
+            offsEnd = end;    // negative, pos's before annotated start
+            end = 0;
         }
 
 
@@ -459,14 +457,20 @@ public class Sequencer implements Callable<Void> {
         int idxExA = t.getExonIdx(strand * bedStart),
                 idxExB = t.getExonIdx(strand * bedEnd);    // exon indices
         if (idxExA == -1 || idxExB == -1) {
-            Log.error("[INCONSISTENT] strand " + strand + " idx " + idxExA + ", " + idxExB);
+            throw new RuntimeException("Invalid read (out of exons): " +
+            		"tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+ 
+            		"], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
+            		"], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
         }
         bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
                 : bedStart + (offsEnd * strand);    // use original bedstart, before!
         bedStart += offsStart * strand;            // correct out of range
         if (bedStart > bedEnd) {
             if (t.getStrand() >= 0) {
-                Log.error("[INCONSISTENT] start " + bedStart + ", end " + bedEnd + ", strand " + t.getStrand());
+                throw new RuntimeException("Invalid read (end before start): " +
+                		"tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+ 
+                		"], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
+                		"], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
             }
             int h = bedStart;
             bedStart = bedEnd;
@@ -492,14 +496,13 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_ARRAY_FROM_STRAND_TO_BLOCKS, 0,
                 BYTE_ARRAY_FROM_STRAND_TO_BLOCKS.length);    // spare if there are blocks?
         if (idxExA == idxExB) {    // no blocks, spare?
-            // spare?
             obj.append(BYTE_TAB);
             obj.append(BYTE_1);    // 1 block
             obj.append(BYTE_TAB);
             obj.append(bedEnd - bedStart);
             obj.append(BYTE_TAB);
             obj.append(BYTE_0);
-            return isPolyA;
+            return offsEnd;
         }
 
         if (strand < 0) {
@@ -524,7 +527,7 @@ public class Sequencer implements Callable<Void> {
                 break;
             }
         }
-        return isPolyA;
+        return offsEnd;
     }
 
 
@@ -551,7 +554,7 @@ public class Sequencer implements Callable<Void> {
         return null;
     }
 
-    private ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, byte absDir, byte tDir, int len, int flen) {
+    public static ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, byte absDir, byte tDir, int len, int flen, ModelPool babes) {
 
         //int flen= fend- fstart+ 1;
         cs.ensureLength(cs.end, len);
@@ -746,16 +749,18 @@ public class Sequencer implements Callable<Void> {
                 } catch (IOException e) {
                     Log.error("Error while reading zip entry in sequencer: " + e.getMessage(), e);
                 } finally {
+                    if (is != null) {
+                        try {
+                            is.close();                            
+                        } catch (IOException ignore) {
+                        	throw new RuntimeException("Could not close zip inputstream from "+ zip.getName(), ignore);
+                        }
+                    }
                     if (buffy != null) {
                         try {
                             buffy.close();
                         } catch (IOException ignore) {
-                        }
-                    }
-                    if (is != null) {
-                        try {
-                            is.close();
-                        } catch (IOException ignore) {
+                        	throw new RuntimeException("Could not close reader of zip inputstream from "+ zip.getName(), ignore);
                         }
                     }
                 }
@@ -860,22 +865,21 @@ public class Sequencer implements Callable<Void> {
 
             // bed object
             if (bedOut != null) {
+            	
+            	int polyA= 0;
                 if (left) {
-                    boolean polyA = createRead(obj,
+                    polyA = createRead(obj,
                             fstart, Math.min(fstart + settings.get(FluxSimulatorSettings.READ_LENGTH) - 1, fend),     // start, end
                             t, k, absDir,
                             fstart, fend, left, pairedEndSide);
-                    if (polyA) {
-                        countPolyAReads++;
-                    }
                 } else {
-                    boolean polyA = createRead(obj,
+                    polyA = createRead(obj,
                             Math.max(fend - settings.get(FluxSimulatorSettings.READ_LENGTH) + 1, fstart), fend,     // start, end
                             t, k, antiDir,
                             fstart, fend, left, pairedEndSide);
-                    if (polyA) {
-                        countPolyAReads++;
-                    }
+                }
+                if (polyA> 0) {
+                    countPolyAReads++;
                 }
 
                 bedOut.write(obj.toString());
@@ -885,8 +889,8 @@ public class Sequencer implements Callable<Void> {
 
             // fasta seq
             if (qFastaOut != null) {
-                createQname(obj, cs);
-                createQSeq(cs, obj, absDir, t.getStrand(), rLen, flen);
+                createQname(obj, cs, babes);
+                createQSeq(cs, obj, absDir, t.getStrand(), rLen, flen, babes);
                 qFastaOut.write(cs.toString());
                 qFastaOut.write("\n");
             }
