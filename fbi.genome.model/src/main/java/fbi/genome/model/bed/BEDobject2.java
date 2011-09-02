@@ -254,6 +254,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			CharSequence chrom= getChr();
 			int headerLen= cs.end;
 			int bcount= getBlockCount();
+			
 			if (bcount<= 1) {
 				int first= f* (bedStart+ 1), 
 					last= f* bedEnd,
@@ -263,6 +264,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 						first, last, 
 						cs, cs.end, cs.end+ len);
 				cs.end+= len;
+				
 			} else for (int i = 0; i < bcount; i++) { 
 				int nextSt= getNextBlockStart(),
 					nextSi= getNextBlockSize();
@@ -287,9 +289,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 				}
 			}
 		} catch (Exception e) {
-			//throw new RuntimeException
-			System.err.println("Problems reading BED object sequence:\n\t"+ toString()+ "\n\t"+ e.getMessage());
-			e.printStackTrace();
+			throw new RuntimeException("Problems reading BED object "+ toString(), e);
 		}
 	}
 

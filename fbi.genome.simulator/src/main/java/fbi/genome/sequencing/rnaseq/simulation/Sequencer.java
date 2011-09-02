@@ -285,9 +285,11 @@ public class Sequencer implements Callable<Void> {
 
             SequenceWriter writer = new SequenceWriter(tmpFile, tmpFasta, readLength);
             Processor processor = new Processor(writer, pairs, zipFile, zipHash);
+            long fileLen= referenceFile.length();
             for (reader.read(); (g = reader.getGenes()) != null; reader.read()) {
                 for (Gene aG : g) {
                     processor.process(aG);
+                    Log.progress(reader.getBytesRead(), fileLen);
                 }
             }
             // stats
@@ -905,12 +907,14 @@ public class Sequencer implements Callable<Void> {
                 try {
                     bedOut.close();
                 } catch (IOException ignore) {
+                	throw new RuntimeException(ignore);
                 }
             }
             if (qFastaOut != null) {
                 try {
                     qFastaOut.close();
                 } catch (IOException ignore) {
+                	throw new RuntimeException(ignore);
                 }
             }
         }

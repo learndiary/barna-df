@@ -30,6 +30,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sound.sampled.LineListener;
+
+import org.bouncycastle.crypto.RuntimeCryptoException;
+
 //import gphase.algo.AlignmentGenerator;
 //import gphase.algo.AlignmentWrapper;
 //import gphase.db.EnsemblDBAdaptor;
@@ -1165,13 +1169,9 @@ public class Graph implements Serializable {
 		 * @return
 		 */
 		static byte[] chrSeq= null;
-		public static void readSequence(
-				CharSequence chromosome, boolean forwardStrand, 
-				long start, long end,
-				ByteArrayCharSequence cs, int from, int to) {
+		public static void readSequence(CharSequence chromosome, boolean forwardStrand, 
+				long start, long end, ByteArrayCharSequence cs, int from, int to) {
 				
-//				if (Math.abs(end- start)+ 1!= to- from)
-//					System.currentTimeMillis();
 				assert(Math.abs(end- start)+ 1== to- from);
 				
 				if (!forwardStrand) {	// WAS: (start< 0), neg strand genes
@@ -1188,7 +1188,6 @@ public class Graph implements Serializable {
 				//byte[] seq= new byte[(int) (end- start)];
 				//String s= null;
 				
-				long p= -1;
 				try {
 	//				System.out.println(getSequenceDirectory(speRealName)+ File.separator+ "chr"+ chromosome+ Constants2.CHROMOSOME_EXT);
 	//				System.out.println(start+"-"+end);				
@@ -1239,38 +1238,38 @@ public class Graph implements Serializable {
 					if (raf== null) {
 						System.arraycopy(chrSeq, (int) start, cs.chars, from, (int) (end- start)); // 20101210: bugfix
 					} else {
-						p= headerOffset+ fileSep.length()+ start+ ((start/lineLen)* fileSep.length());
-						assert(p>= 0);
-						raf.seek(p);	// fpointer is different from reading point!
+						long startP= headerOffset+ fileSep.length()+ start+ ((start/lineLen)* fileSep.length());
+						assert(startP>= 0);
+						raf.seek(startP);	// fpointer is different from reading point!
 						int curr= from;
 						int nextN= (int) (lineLen- (start% lineLen));				// read (end of) first line
 						int fSepLen= fileSep.length();
+						int cnt= 0;
+						long p= startP;
 						while (curr+ nextN<= to) {		// full lines
 							assert(p+ (to- curr)+ nextN< raf.length());
 							raf.readFully(cs.chars,curr,nextN);
+							p+= nextN;
 							raf.skipBytes(fSepLen);
+							p+= fSepLen;
 							curr+= nextN;
 							nextN= lineLen;
+							++cnt;
 						}
-	/*					int a= cs.a.length- pos;
-						int b= (int) (raf.length()- p- pos- 1);
-						int rest= Math.min(a, b);	// catch EOF (when reading range larger than file)
-						if (a < 0)
-							rest= b;
-						else if (b< 0)
-							rest= a;
-						if (a< 0&& b< 0)
-							rest= 0;
-	*/	
-						int rest= (int) Math.min(to- curr, end- start- curr);	// 20101210: bugfix	
+						
+						// don't read over end of chromosome
+						int rest= (int) Math.min(to- curr, raf.length()- p);	
 						try {
 							raf.readFully(cs.chars,curr,rest);	// read start of last line
 						} catch (Exception e) {	//EOFException, IndexOutOfBoundsException
-							System.err.println("Problems reading "+chromosome+": "+ p+ ", "+rest+"> "
-									+raf.length()+" into "+cs.length()+": "+e.getMessage());
-							System.err.println("check for the right species/genome version!");
-							e.printStackTrace();
-							return;
+							
+							String msg= "Problems reading chromosome "+chromosome+" from "+ start+ " to "+ end+
+									"\ninto array of "+ cs.length()+ " from "+ from+ " to "+ to+
+									"\nstarted @ file position "+ startP +", total file length "+ raf.length()+
+									"\nread "+cnt+ " batches, first "+ (int) (lineLen- (start% lineLen))+ " chars, then "+ (cnt-1)+ " of "+ lineLen+
+									"\nerror occurred @ file position "+ p+
+									"\nwhen attempting to copy remaining "+ rest+ " chars @ array position "+ curr;
+							throw new RuntimeException(msg, e);
 						}
 						
 					}
@@ -1279,19 +1278,13 @@ public class Graph implements Serializable {
 						Arrays.fill(cs.chars, (int) (from+ (end- start)), (int) (from+ (to- from)), (byte) 'N');
 					}
 
-//					s= new String(seq);
-//					if (seq.length- pos> rest)
-//						s= s.substring(0, s.length()- ((seq.length- pos)- rest));
 					if (!forwardStrand) 
 						ByteArrayCharSequence.reverseComplement(cs, from, to);
 					
-					
 				} catch (Exception e) {
-					//throw new RuntimeException(
-					System.err.println("Problems reading sequence "+ chromosome+": pos "+p
-							+ ", len "+(end- start+ 1)+ " into ["+ cs.start+ ","+ cs.end+ "]\n\t"
-							+ e.getMessage());					
-					e.printStackTrace();
+					String msg= "Problems reading chromosome "+chromosome+" from "+ start+ " to "+ end+
+					"\ninto array of "+ cs.length()+ " from "+ from+ " to "+ to;
+					throw new RuntimeException(msg, e);
 				}
 			}
 
