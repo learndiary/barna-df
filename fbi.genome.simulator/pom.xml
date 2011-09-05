@@ -15,7 +15,7 @@
 
     <groupId>fbi</groupId>
     <artifactId>fbi.genome.simulator</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0-RC4</version>
     <name>FluxSimulator</name>
 
     <description>
@@ -42,9 +42,9 @@
 
 
     <scm>
-        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.simulator</url>
-        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.simulator</connection>
-        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.simulator
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.simulator-1.0-RC4</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.simulator-1.0-RC4</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.simulator-1.0-RC4
         </developerConnection>
     </scm>
 
