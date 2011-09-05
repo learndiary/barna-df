@@ -8,8 +8,8 @@ import java.util.Vector;
 
 import org.jfree.util.Log;
 
-import fbi.genome.io.bed.BEDiteratorMemory;
-import fbi.genome.io.bed.BufferedBEDiterator;
+import fbi.genome.io.Bufferediterator;
+import fbi.genome.io.BufferedIteratorMemory;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
 import fbi.genome.model.DirectedRegion;
@@ -192,7 +192,7 @@ public class AnnotationMapper extends Graph {
 		return attributes;
 	}
 	
-	public void map(BufferedBEDiterator beds, UniversalReadDescriptor descriptor2) {
+	public void map(Bufferediterator beds, UniversalReadDescriptor descriptor2) {
 
 			if (beds== null)
 				return;

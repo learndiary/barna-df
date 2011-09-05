@@ -1,4 +1,4 @@
-package fbi.genome.io.bed;
+package fbi.genome.io;
 
 import java.util.Iterator;
 
@@ -12,7 +12,7 @@ import fbi.genome.model.bed.BEDobject2;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public interface BufferedBEDiterator extends Iterable<BEDobject2>, Iterator<BEDobject2>{
+public interface Bufferediterator extends Iterable<BEDobject2>, Iterator<BEDobject2>{
 
 	/**
 	 * marks the actual element

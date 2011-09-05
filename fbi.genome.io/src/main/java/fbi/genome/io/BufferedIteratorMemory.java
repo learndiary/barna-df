@@ -1,4 +1,4 @@
-package fbi.genome.io.bed;
+package fbi.genome.io;
 
 import java.util.Iterator;
 
@@ -9,9 +9,9 @@ import fbi.genome.model.bed.BEDobject2;
  * by iterating on an array in memory.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
- * @see BEDiteratorDisk
+ * @see BufferedIteratorDisk
  */
-public class BEDiteratorMemory implements BufferedBEDiterator{
+public class BufferedIteratorMemory implements Bufferediterator{
 	
 	/**
 	 * Array of BED lines that are iterated
@@ -38,7 +38,7 @@ public class BEDiteratorMemory implements BufferedBEDiterator{
 	 * provided starting with the first one.
 	 * @param elements array of BED lines
 	 */
-	public BEDiteratorMemory(BEDobject2[] elements) {
+	public BufferedIteratorMemory(BEDobject2[] elements) {
 		this.elements= elements;
 		currentIndex= 0;
 	}

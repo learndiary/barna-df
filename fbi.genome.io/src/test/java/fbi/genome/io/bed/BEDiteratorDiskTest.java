@@ -17,6 +17,7 @@ import org.junit.AfterClass;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
 import fbi.genome.io.BufferedBACSReader;
+import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.bed.BEDobject2;
 import static junit.framework.Assert.*;
@@ -61,7 +62,7 @@ public class BEDiteratorDiskTest {
 			//for (int i = 0; i < beds.length; i++) {
 			//	System.out.println(beds[i]);
 			//}
-			BEDiteratorDisk biter= new BEDiteratorDisk(pin, false, comp);
+			BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, false, comp);
 			biter.init();
 			
 			OutputStreamWriter writer= new OutputStreamWriter(pout);
@@ -104,7 +105,7 @@ public class BEDiteratorDiskTest {
 			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 			Comparator<CharSequence> comp= new BEDDescriptorComparator(descriptor);
-			BEDiteratorDisk biter= new BEDiteratorDisk(x, true);
+			BufferedIteratorDisk biter= new BufferedIteratorDisk(x, true);
 			biter.init();
 			
 			int tstL= 0, tstC= 0;

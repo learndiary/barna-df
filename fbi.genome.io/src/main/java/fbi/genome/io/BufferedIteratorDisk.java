@@ -1,4 +1,4 @@
-package fbi.genome.io.bed;
+package fbi.genome.io;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +20,6 @@ import fbi.commons.CharsequenceComparator;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.tools.Sorter;
-import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.model.bed.BEDobject2;
 
 /**
@@ -28,9 +27,9 @@ import fbi.genome.model.bed.BEDobject2;
  * by reading data from a file on disk.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
- * @see BEDiteratorMemory
+ * @see BufferedIteratorMemory
  */
-public class BEDiteratorDisk implements BufferedBEDiterator {
+public class BufferedIteratorDisk implements Bufferediterator {
 
 	/**
 	 * Class for capsulating file copy processes: stream-to-file, 
@@ -253,7 +252,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @param istream the input stream
 	 * @param sorted flag to indicate whether BED lines are sorted
 	 */
-	public BEDiteratorDisk(InputStream istream, boolean sorted) {
+	public BufferedIteratorDisk(InputStream istream, boolean sorted) {
 		this(istream, sorted, CharsequenceComparator.DEFAULT_CHARSEQUENCE_COMPARATOR, -1, null, null);
 	}
 	
@@ -264,7 +263,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @param sorted flag to indicate whether BED lines are sorted
 	 * @param comparator the comparator that is used for sorting
 	 */
-	public BEDiteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator) {
+	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator) {
 		this(istream, sorted, comparator, -1, null, null);
 	}
 	
@@ -279,7 +278,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @param capacity value specifying the capacity of the reader
 	 * @see #reader
 	 */
-	public BEDiteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, int capacity) {
+	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, int capacity) {
 		this(istream, sorted, comparator, capacity, null, null);
 	}
 	
@@ -296,7 +295,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @see #reader
 	 * @see #tmpFile
 	 */
-	public BEDiteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, String prefix) {
+	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, String prefix) {
 		this(istream, sorted, comparator, -1, prefix, null);
 	}
 	
@@ -315,7 +314,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @see #tmpFile
 	 * @see #directory
 	 */
-	public BEDiteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, int capacity, String prefix, File directory) {		
+	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, int capacity, String prefix, File directory) {		
 		this.inputStream= istream;
 		this.sorted= sorted;
 		this.comparator= comparator;
@@ -329,7 +328,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @param inputFile the input file
 	 * @param sorted flag to indicate whether BED lines are sorted
 	 */
-	public BEDiteratorDisk(File inputFile, boolean sorted) {
+	public BufferedIteratorDisk(File inputFile, boolean sorted) {
 		this(inputFile, sorted, -1, null, null);
 	}
 	
@@ -341,7 +340,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @param sorted flag to indicate whether BED lines are sorted
 	 * @param capacity number of bytes used for the reading buffer
 	 */
-	public BEDiteratorDisk(File inputFile, boolean sorted, int capacity) {
+	public BufferedIteratorDisk(File inputFile, boolean sorted, int capacity) {
 		this(inputFile, sorted, capacity, null, null);
 	}
 	
@@ -355,7 +354,7 @@ public class BEDiteratorDisk implements BufferedBEDiterator {
 	 * @param prefix prefix of the sorted file's name
 	 * @param directory folder where the sorted file is created 
 	 */
-	public BEDiteratorDisk(File inputFile, boolean sorted, int capacity, String prefix, File directory) {
+	public BufferedIteratorDisk(File inputFile, boolean sorted, int capacity, String prefix, File directory) {
 		this.inputFile= inputFile;
 		this.sorted= sorted;
 		this.prefix= prefix;
