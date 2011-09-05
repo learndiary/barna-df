@@ -22,6 +22,11 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator RC4
+    -fixed problem with disabling the PCR distriubution
+    -fixed windows startup problems
+    -fixed BED sorter issue
+
 FluxSimulator RC3
 
     -fixed issue #58 - made sure all buffers are flushed before moving files
