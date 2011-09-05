@@ -11,7 +11,7 @@ import fbi.genome.model.bed.BEDobject2;
  * @author Micha Sammeth (gmicha@gmail.com)
  * @see BufferedIteratorDisk
  */
-public class BufferedIteratorMemory implements Bufferediterator{
+public class BufferedIteratorMemory implements BufferedIterator{
 	
 	/**
 	 * Array of BED lines that are iterated

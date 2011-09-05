@@ -12,7 +12,7 @@ import fbi.genome.model.bed.BEDobject2;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public interface Bufferediterator extends Iterable<BEDobject2>, Iterator<BEDobject2>{
+public interface BufferedIterator extends Iterable<BEDobject2>, Iterator<BEDobject2>{
 
 	/**
 	 * marks the actual element

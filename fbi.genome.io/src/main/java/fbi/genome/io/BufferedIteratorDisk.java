@@ -29,7 +29,7 @@ import fbi.genome.model.bed.BEDobject2;
  * @author Micha Sammeth (gmicha@gmail.com)
  * @see BufferedIteratorMemory
  */
-public class BufferedIteratorDisk implements Bufferediterator {
+public class BufferedIteratorDisk implements BufferedIterator {
 
 	/**
 	 * Class for capsulating file copy processes: stream-to-file, 
