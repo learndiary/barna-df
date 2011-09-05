@@ -113,8 +113,11 @@ public class SequenceRetriever {
 	
 	public static void main(String[] args) {
 		try {
-			getSequenceFromGTF(new File("/Users/micha/annotation/hg19_RefSeq_fromUCSC100615_introns_uniq.gtf"), new File("/genomes/hg19"), 
-					new PrintStream(new File("/Users/micha/annotation/hg19_RefSeq_fromUCSC100615_introns_uniq.mfasta")));
+//			getSequenceFromGTF(new File("/Users/micha/annotation/hg19_RefSeq_fromUCSC100615_introns_uniq.gtf"), new File("/genomes/hg19"), 
+//					new PrintStream(new File("/Users/micha/annotation/hg19_RefSeq_fromUCSC100615_introns_uniq.mfasta")));
+			getSequenceFromGTF(new File("/Users/micha/projects/demassy/download/IP5300109chrall_F.gtf"), new File("/Users/micha/genomes/mm9"), 
+					new PrintStream(new File("/Users/micha/projects/demassy/download/IP5300109chrall_F.fasta")));
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
