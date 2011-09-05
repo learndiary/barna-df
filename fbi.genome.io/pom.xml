@@ -15,7 +15,7 @@
 
     <groupId>fbi</groupId>
     <artifactId>fbi.genome.io</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.3</version>
 
 
     <description>
@@ -41,9 +41,9 @@
     </licenses>
 
     <scm>
-        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.io</url>
-        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.io</connection>
-        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.io</developerConnection>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.io-1.3</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.io-1.3</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.io-1.3</developerConnection>
     </scm>
 
     <properties>
