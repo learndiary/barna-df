@@ -15,7 +15,7 @@
 
     <groupId>fbi</groupId>
     <artifactId>fbi.genome.model</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <description>
         The FBI Model library contains basic data models
@@ -40,9 +40,9 @@
     </licenses>
 
     <scm>
-        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.model</url>
-        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.model</connection>
-        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.model</developerConnection>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.model-1.2</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.model-1.2</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/tags/fbi.genome.model-1.2</developerConnection>
     </scm>
 
     <properties>
