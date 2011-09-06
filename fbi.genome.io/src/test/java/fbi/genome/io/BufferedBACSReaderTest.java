@@ -35,6 +35,7 @@ public class BufferedBACSReaderTest {
 			assertEquals(tstC, refC);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail();
 		}
 		
 	}
@@ -96,6 +97,7 @@ public class BufferedBACSReaderTest {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail();
 		}
     }
 

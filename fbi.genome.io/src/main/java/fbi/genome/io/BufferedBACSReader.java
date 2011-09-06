@@ -166,8 +166,8 @@ public class BufferedBACSReader {
 				System.arraycopy(b, lastI, cs.chars, 0, lineLen);
 				cs.start= 0;
 				cs.end= lineLen;
+				cs.resetFind();
 			}
-			
 			
 			// make sure only one lsep is read \n, \r\n, or \n\r
 			// ==> enable reading empty lines
@@ -202,20 +202,20 @@ public class BufferedBACSReader {
 	
 	private int fill() {
 		
-		byte[] b= buf;
 		int len= -1;
+		byte[] b= buf;
 		synchronized (b) {
 			int p= pos;
 			len= b.length- p;
 			if (maxBytes> 0)
 				len= (int) Math.min(len, maxBytes- p);
 			try {
-				//if (in.available()> 0)
-				len= in.read(b, p, len);
+				if (in.available()> 0)
+					len= in.read(b, p, len);
+				else
+					return 0;	// nothing read, maybe EOS reached
 			} catch (IOException e) {
-				if (Constants.verboseLevel> Constants.VERBOSE_DEBUG)
-					System.err.println(e);
-				len= -1;
+				throw new RuntimeException(e);
 			}
 			if (len< 0) {
 				try {
@@ -224,13 +224,11 @@ public class BufferedBACSReader {
 					;
 				}
 				return -1;
-				//System.err.println("closed "+ x);
 			} else {
 				pos+= len;
-				//System.err.println("filled "+ len+ " from "+ x);
 			}
 		}
-		//System.err.println("read "+ len);
+		
 		return len;
 	}
 	
@@ -258,6 +256,7 @@ public class BufferedBACSReader {
 			long diff= currBytes- markBytes;
 			lastI-= diff;
 			markBytes= -1;
+			currBytes-= diff;
 		} 
 		
 		return markBytes;

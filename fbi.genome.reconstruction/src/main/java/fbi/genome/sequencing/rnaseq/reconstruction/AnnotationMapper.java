@@ -8,8 +8,8 @@ import java.util.Vector;
 
 import org.jfree.util.Log;
 
-import fbi.genome.io.Bufferediterator;
-import fbi.genome.io.BufferedIteratorMemory;
+import fbi.genome.io.BufferedIterator;
+import fbi.genome.io.BufferedIteratorRAM;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
 import fbi.genome.model.DirectedRegion;
@@ -192,7 +192,7 @@ public class AnnotationMapper extends Graph {
 		return attributes;
 	}
 	
-	public void map(Bufferediterator beds, UniversalReadDescriptor descriptor2) {
+	public void map(BufferedIterator beds, UniversalReadDescriptor descriptor2) {
 
 			if (beds== null)
 				return;
@@ -216,7 +216,7 @@ public class AnnotationMapper extends Graph {
 			// map read pairs
 			while (beds.hasNext()) {
 				
-				dobject= beds.next();
+				dobject= new BEDobject2(beds.next());
 				++nrMappingsLocus;
 				CharSequence name= dobject.getName();
 				if (name.equals(lastName))
@@ -247,7 +247,7 @@ public class AnnotationMapper extends Graph {
 					// scan for mates
 					beds.mark();
 					while (beds.hasNext()) {
-						dobject2= beds.next();
+						dobject2= new BEDobject2(beds.next());
 						attributes2= getAttributes(dobject2, descriptor2, attributes2);
 						if (!attributes.id.equals(attributes2.id))
 							break;						

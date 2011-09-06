@@ -75,7 +75,8 @@ public class BEDiteratorDiskTest {
 			
 			int i= 0;
 			while(biter.hasNext()) {
-				BEDobject2 obj= biter.next();
+				ByteArrayCharSequence cs= biter.next();
+				BEDobject2 obj= new BEDobject2(cs);
 				// do not exchange arguments, String.equalsTo() checks OID
 				assertEquals(obj, bedSorted[i++]);
 			}
@@ -112,7 +113,8 @@ public class BEDiteratorDiskTest {
 			count= false;
 			boolean first= true;
 			while(biter.hasNext()) {
-				BEDobject2 cs= biter.next();
+				ByteArrayCharSequence cseq= biter.next();
+				BEDobject2 cs= new BEDobject2(cseq);
 				if (count) {
 					++tstL;
 					tstC+= cs.length();
@@ -137,6 +139,7 @@ public class BEDiteratorDiskTest {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail();
 		}
     }
 	

@@ -20,14 +20,13 @@ import fbi.commons.CharsequenceComparator;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.tools.Sorter;
-import fbi.genome.model.bed.BEDobject2;
 
 /**
  * A class implementing the <code>BufferedBEDiterator</code> interface
  * by reading data from a file on disk.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
- * @see BufferedIteratorMemory
+ * @see BufferedIteratorRAM
  */
 public class BufferedIteratorDisk implements BufferedIterator {
 
@@ -506,6 +505,8 @@ public class BufferedIteratorDisk implements BufferedIterator {
 				reader = new BufferedBACSReader(fis, capacity);
 			else
 				reader = new BufferedBACSReader(fis);
+			if (pos> 0)
+				reader.currBytes= pos;
 		}
 
 		return reader;
@@ -517,7 +518,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @return <code>this</code> instance
 	 */
 	@Override
-	public Iterator<BEDobject2> iterator() {		
+	public Iterator<ByteArrayCharSequence> iterator() {		
 		return this;
 	}
 
@@ -546,13 +547,13 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @return the next BED line of this iterator
 	 */
 	@Override
-	public BEDobject2 next() {
+	public ByteArrayCharSequence next() {
 		
 		try {
 			reader= getReader(-1);
 			cs= reader.readLine(cs);
 			// bedObject2 clones byte[]
-			return new BEDobject2(cs);
+			return cs;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

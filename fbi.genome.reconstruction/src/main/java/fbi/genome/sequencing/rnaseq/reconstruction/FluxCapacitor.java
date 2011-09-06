@@ -7,9 +7,9 @@ import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
-import fbi.genome.io.Bufferediterator;
+import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.BufferedIteratorDisk;
-import fbi.genome.io.BufferedIteratorMemory;
+import fbi.genome.io.BufferedIteratorRAM;
 import fbi.genome.io.bed.BEDDescriptorComparator;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
@@ -147,7 +147,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	class LocusSolver extends Thread {
 			Gene gene= null;
 			ASEvent[] events= null;
-			Bufferediterator beds= null;
+			BufferedIterator beds= null;
 			boolean decompose= false;
 			Thread threadBefore= null;
 			int nrMappingsReadsOrPairs;
@@ -158,7 +158,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 			private float invariantTestObsSplitFreq= 0, invariantTestPredSplitFreq= 0;
 			
-			public LocusSolver(Gene newGene, Bufferediterator newBeds, boolean decompose) {
+			public LocusSolver(Gene newGene, BufferedIterator newBeds, boolean decompose) {
 				//super(newGene.getGeneID());
 				
 				this.gene= newGene; 
@@ -1213,7 +1213,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			}
 			
 			
-			private void learn(Transcript tx, Bufferediterator beds) {
+			private void learn(Transcript tx, BufferedIterator beds) {
 							
 				if (beds== null)
 					return;
@@ -1231,7 +1231,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				while (beds.hasNext()) {
 					
 					++nrReadsSingleLoci;
-					bed1= beds.next();
+					bed1= new BEDobject2(beds.next());
 					CharSequence tag= bed1.getName();
 					attributes= descriptor.getAttributes(tag, attributes);	
 					if (pairedEnd) {
@@ -1260,7 +1260,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 						beds.mark();
 						while(beds.hasNext()) {
-							bed2= beds.next();
+							bed2= new BEDobject2(beds.next());
 							attributes2= descriptor.getAttributes(bed2.getName(), attributes2);
 							if (attributes2== null)
 								continue;
@@ -3535,7 +3535,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	int eventDim= 2;
 	long dbgTimeEmptyGraphs= 0;
-	private void solve(Gene gene, Bufferediterator beds, boolean decompose) {
+	private void solve(Gene gene, BufferedIterator beds, boolean decompose) {
 		
 		// create LP and solve
 		LocusSolver lsolver= new LocusSolver(gene, beds, decompose); 
@@ -4117,13 +4117,13 @@ public class FluxCapacitor implements ReadStatCalculator {
 	 * profile managing the matrices
 	 */
 	Profile profile;
-	private Bufferediterator readBedFile(Gene gene, int from, int to, byte mode) {
+	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode) {
 		
 		if (from> to|| from< 0|| to< 0) 
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 
 		// init iterator
-		Bufferediterator iter= null;
+		BufferedIterator iter= null;
 
 		try {
 			if (pars.sortInRam) {
@@ -4132,7 +4132,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				if (beds== null)
 					return null;
 				Arrays.sort(beds, getDescriptorComparator());
-				iter= new BufferedIteratorMemory(beds);
+				iter= new BufferedIteratorRAM(beds);
 				
 			} else {
 				
@@ -4861,7 +4861,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						else if (mode== FluxCapacitorConstants.MODE_LEARN)
 							continue;	// performance for not reading beds
 						
-						Bufferediterator beds= null;
+						BufferedIterator beds= null;
 	
 	/*					File f= File.createTempFile("fluxpfx", ".bed");
 						FileOutputStream fos= new FileOutputStream(f);

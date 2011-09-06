@@ -2,6 +2,7 @@ package fbi.genome.io;
 
 import java.util.Iterator;
 
+import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.model.bed.BEDobject2;
 
 /**
@@ -12,7 +13,7 @@ import fbi.genome.model.bed.BEDobject2;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public interface BufferedIterator extends Iterable<BEDobject2>, Iterator<BEDobject2>{
+public interface BufferedIterator extends Iterable<ByteArrayCharSequence>, Iterator<ByteArrayCharSequence>{
 
 	/**
 	 * marks the actual element
