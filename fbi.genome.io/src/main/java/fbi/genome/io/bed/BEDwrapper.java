@@ -69,13 +69,42 @@ public class BEDwrapper extends DefaultIOWrapper {
 		refIDset= null;
 	}
 	
-	public boolean isApplicable() {
+	@Override
+	public boolean isApplicable() throws Exception {
+		long lines= isApplicable(new File(fPath+ File.separator+ fName));
+		if (lines< 0)
+			return false;
+		return true;
+	}
+	
+	/**
+	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * @param inputStream stream from which is read
+	 * @param size total size of data in the stream, if known, otherwise <= 0
+	 * @return number of lines read, or -(number of lines read) up to the unsorted
+	 * entry
+	 */
+	public static long isApplicable(File fileBED) {
+		try {
+			return isApplicable(new FileInputStream(fileBED), fileBED.length());
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * @param inputStream stream from which is read
+	 * @param size total size of data in the stream, if known, otherwise <= 0
+	 * @return number of lines read, or -(number of lines read) up to the unsorted
+	 * entry
+	 */
+	public static long isApplicable(InputStream inputStream, long size) {
 		try {
             Log.progressStart("checking");
-			File f= new File(fPath+File.separator+fName);
-			BufferedReader buffy= new BufferedReader(new FileReader(f), 10* 1024* 1024);
-			int rowCtr= 0, perc= 0;
-			long size= f.length(), bRead= 0;
+			BufferedReader buffy= new BufferedReader(new InputStreamReader(inputStream), 10* 1024* 1024);
+			long rowCtr= 0;
+			long bRead= 0;
 			String lastC= null, nowC= null;
 			int lastP= -1, nowP= -1;
 			HashSet<String> setChr= new HashSet<String>();
@@ -83,7 +112,8 @@ public class BEDwrapper extends DefaultIOWrapper {
 				++rowCtr;
 				bRead+= s.length()+ 1;
 
-                Log.progress(bRead, size);
+				if (size> 0)
+					Log.progress(bRead, size);
 
 				if (s.startsWith("track")|| s.startsWith("browser"))
 					continue;
@@ -96,7 +126,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 						break;
 				}
 				nowC= s.substring(0, i);
-				addRefID(nowC);
+				//addRefID(nowC);
 				while (i< len&& (c== ' '|| c== '\t'))
 					c= s.charAt(++i);
 				int p= i;
@@ -107,12 +137,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 				}
 				nowP= BEDobject.encodeInt(s, p, i);
 				
-				// not efficient
-//				String[] sss= s.split("\\s");	// take whitspaces, for Ali M.
-//				nowC= sss[0];
-//				addRefID(nowC);
-//				nowP= Integer.parseInt(sss[1]);
-				
+				// avoid String.split(), not efficient
 				boolean ascendingChr= false, chrYetRead= false;
 				if (lastC!= null) {
 					ascendingChr= lastC.compareTo(nowC)< 0;
@@ -128,24 +153,20 @@ public class BEDwrapper extends DefaultIOWrapper {
 					lastP= nowP;
 					nowC= null;
 				} else {
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-						System.err.println("\n\tunsorted in line "+rowCtr+".");
-					clearRefIDs();
+					Log.info("\n\tunsorted in line "+rowCtr+".");
+					//clearRefIDs();
 					buffy.close();
-					return false;
+					return (-rowCtr);
 				}
 			}
 			buffy.close();
             Log.progressFinish(Constants.OK, true);
 				
-			nrUniqueLinesRead= rowCtr;
+			return rowCtr;
 		} catch (Exception e) {
-			e.printStackTrace();
             Log.progressFailed(" ERROR.");
+            throw new RuntimeException(e);
 		}
-		
-		
-		return true;
 	}
 
 	public void read() throws Exception {

@@ -1710,36 +1710,33 @@ public class GFFReader extends DefaultIOWrapper {
      */
 	public boolean isApplicable() {
 		reset();
-		BufferedReader buffy = null;
-
-        File f = null;
-		if (fPath != null && fName != null){
-            f = new File(fPath + File.separator + fName);
-            try {
-                buffy = new BufferedReader(new InputStreamReader(new FileInputStream(f)));
-            } catch (FileNotFoundException e) {
-                Log.error("Unable to open file " + f.getAbsolutePath(), e);
-            }
-        }else {
-            throw new RuntimeException("No GTF file specified!");
-        }
-
-        if(!silent && stars){
-            Log.progressStart("checking");
-        }
-
-		long bytesRead = 0l;
-		long size = f.length();
-
-
-		String lastChrID = null, lastGID = null, lastTID = null, lastStrand = null;
-		HashMap<String, String> chrMap = new HashMap<String, String>(25, 1f), 
-			tidMap = new HashMap<String, String>(), gidMap = new HashMap<String, String>();
-		int tidField = -1, gidField = -1, lastStart = -1;
+		long lines= isApplicable(new File(fPath + File.separator + fName), clusterGenes);
+		if (lines< 0)
+			return false;
+		return true;
+	}
+	
+	public static long isApplicable(File inputFile, boolean clusterGenes) {
 		try {
+			return isApplicable(new FileInputStream(inputFile), clusterGenes, inputFile.length());
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public static long isApplicable(InputStream inputStream, boolean clusterGenes, long size) {
+		
+		long bytesRead = 0l;
+		BufferedReader buffy = new BufferedReader(new InputStreamReader(inputStream));
+
+		int lineCtr = 0;
+		try {
+			String lastChrID = null, lastGID = null, lastTID = null, lastStrand = null;
+			HashMap<String, String> chrMap = new HashMap<String, String>(25, 1f), 
+				tidMap = new HashMap<String, String>(), gidMap = new HashMap<String, String>();
+			int tidField = -1, gidField = -1, lastStart = -1;
 			String line;
-			int lineCtr = 0;
-			while ((line = buffy.readLine())!= null&& !isStop()) {
+			while ((line = buffy.readLine())!= null) {	// TODO && !isStop()
 	
 				if (line.startsWith("#"))
 					continue;
@@ -1748,7 +1745,7 @@ public class GFFReader extends DefaultIOWrapper {
 	
 				++lineCtr;
 				bytesRead += line.length() + 1;
-                if(!silent && stars){
+                if(size> 0){	// TODO !silent && stars
                     Log.progress(bytesRead, size);
                 }
 				String[] tokens = line.split("\\s");
@@ -1777,7 +1774,7 @@ public class GFFReader extends DefaultIOWrapper {
 							Log.warn("Unsorted in line " + lineCtr
 									+ " - chr/strand " + tokens[0] + " "
 									+ tokens[6] + " already read.");
-						return false;
+						return (-lineCtr);
 					}
 					chrMap.put(chrStrand, chrStrand);
 					lastChrID = tokens[0];
@@ -1809,39 +1806,39 @@ public class GFFReader extends DefaultIOWrapper {
 				}
 				if (tidField>= 0&& !tokens[tidField].equals(lastTID)) {
 					if (tidMap.get(tokens[tidField]) != null) {
-                            if(!silent && stars){
-                                Log.progressFailed("Unsorted in line " + lineCtr
-									+ " transcript id " + tokens[tidField]
-									+ " used twice, on: " + tokens[0] + ","
-									+ tidMap.get(tokens[tidField]));
-                            }else{
+//                            if(!silent && stars){
+//                                Log.progressFailed("Unsorted in line " + lineCtr
+//									+ " transcript id " + tokens[tidField]
+//									+ " used twice, on: " + tokens[0] + ","
+//									+ tidMap.get(tokens[tidField]));
+//                            }else{
                                 Log.warn("Unsorted in line " + lineCtr
                                         + " transcript id " + tokens[tidField]
                                         + " used twice, on: " + tokens[0] + ","
                                         + tidMap.get(tokens[tidField]));
-                            }
-                        return false;
+//                            }
+                        return (-lineCtr);
 					}
 					tidMap.put(tokens[tidField], tokens[0]);
 					if (clusterGenes) {
 						int newStart = Integer.parseInt(tokens[3]);
 						if (lastTID != null) {
 							if (lastStart > newStart) {
-	                            if(!silent && stars){
-	                                Log.progressFailed("Unsorted in line " + lineCtr
-											+ " - cannot perform gene clustering: "
-											+ tokens[0] + " " + tokens[6] + " "
-											+ tokens[tidField] + " @ " + tokens[3]
-											+ " after " + lastTID + " @ " + lastStart);
-	                            }else{
+//	                            if(!silent && stars){
+//	                                Log.progressFailed("Unsorted in line " + lineCtr
+//											+ " - cannot perform gene clustering: "
+//											+ tokens[0] + " " + tokens[6] + " "
+//											+ tokens[tidField] + " @ " + tokens[3]
+//											+ " after " + lastTID + " @ " + lastStart);
+//	                            }else{
 									Log.warn("Unsorted in line " + lineCtr
 											+ " - cannot perform gene clustering: "
 											+ tokens[0] + " " + tokens[6] + " "
 											+ tokens[tidField] + " @ " + tokens[3]
 											+ " after " + lastTID + " @ " + lastStart);
-	                            }
+//	                            }
 								buffy.close();
-								return false;
+								return (-lineCtr);
 							}
 						}
 						lastStart = newStart;
@@ -1863,16 +1860,16 @@ public class GFFReader extends DefaultIOWrapper {
 							}
 						}
 						if (tidField < 0) {
-                            if(!silent && stars){
+                            if(size> 0){	// TODO !silent && stars
                                 Log.progressFailed("Error line " + lineCtr+ " - no GID.");
                             }else{
 								Log.warn("Error line " + lineCtr+ " - no GID.");
                             }
-							return false;
+							return (-lineCtr);
 						}
 					}
 					if (!tokens[gidField].equals(lastGID)) {
-						if (gidMap.get(tokens[gidField]) != null&& !silent)
+						if (gidMap.get(tokens[gidField]) != null)	// TODO && !silent
 							Log.warn("Warning line " + lineCtr+ " gene id " + tokens[gidField]
 									+ " used twice, on: " + tokens[0] + ","
 									+ gidMap.get(tokens[gidField]));
@@ -1884,12 +1881,12 @@ public class GFFReader extends DefaultIOWrapper {
 	
 			buffy.close();
 
-            if(!silent && stars){
+            if(size> 0){	// TODO !silent && stars
                 Log.progressFinish(StringUtils.OK, true);
             }
 
 		} catch (IOException e) {
-            if(!silent && stars){
+            if(size> 0){	// TODO !silent && stars
                 Log.progressFailed("ERROR");
             }
             Log.error("Error while checking GTF file!", e);
@@ -1897,7 +1894,7 @@ public class GFFReader extends DefaultIOWrapper {
             if(buffy != null) try {buffy.close();} catch (IOException e) {}
         }
 
-		return true;
+		return lineCtr;
 	}
 
 	public void setFiltTrptIDs(String[] filtTrptIDs) {
