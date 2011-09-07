@@ -70,7 +70,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 	}
 	
 	@Override
-	public boolean isApplicable() throws Exception {
+	public boolean isApplicable() {
 		long lines= isApplicable(new File(fPath+ File.separator+ fName));
 		if (lines< 0)
 			return false;
