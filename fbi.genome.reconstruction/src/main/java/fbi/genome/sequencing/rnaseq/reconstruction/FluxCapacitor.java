@@ -7,6 +7,7 @@ import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
+import fbi.commons.tools.CommandLine;
 import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.BufferedIteratorRAM;
@@ -25,6 +26,7 @@ import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
+import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
@@ -1396,7 +1398,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					printUsage();
 					System.exit(0);
 				} else
-					myCapacitor.init2(args);
+					myCapacitor.init(args);
 			}
 			
 //			myCapacitor.init2(args);
@@ -1448,12 +1450,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 			int ok= loadLibraries();
 			if (ok< 0) 
 				exit(-1);
-			
-			// check
-			ok= myCapacitor.checkParameter();
-			if (ok< 0) 
-				exit(-1);
-	
 			
 			if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) 
 				myCapacitor.printStats(System.err, args);
@@ -1675,131 +1671,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return true;
 	}
 
-	int init(Method m, String[] args, int p) {
-		
-		Object res= null;
-		try {
-			if (m.getParameterTypes()!= null&& m.getParameterTypes().length> 0) {
-				if (p+1>= args.length) {
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-						System.err.println("[HEY] missing parameter for "+ args[p]);
-					return -1;
-				}
-				res= m.invoke(this, args[++p]);
-			} else
-				res= m.invoke(this, null);
-		} catch (Exception e) {
-			System.err.println("[OLALA] Could not set parameter "+ args[p]);
-			return -1;
-		}
-
-		if (res!= null&& res instanceof Boolean&& !((Boolean) res).booleanValue()) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("[WAAAA] Initialiation failed for parameter "+ args[p]);
-			return -1;
-		}
-		return p;
-	}
-	
-	int init(String[] args) {
-		
-		String s;
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].startsWith(FluxCapacitorConstants.CLI_LONG_PFX)) {
-				s= args[i].substring(FluxCapacitorConstants.CLI_LONG_PFX.length());
-				if (! FluxCapacitorConstants.cliLongMap.containsKey(s)) {
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-						System.err.println("[OHNO] Unrecognized long option \'"+args[i]+"\'");
-					Iterator<String> iter= FluxCapacitorConstants.cliLongMap.keySet().iterator();
-					while (iter.hasNext())
-						System.err.println("\'"+iter.next()+"\'");
-					System.exit(-1);
-				}
-				Method m= FluxCapacitorConstants.cliLongMap.get(s);
-				if ((i= init(m, args, i))< 0) 
-					System.exit(-1);
-				
-			} else if (args[i].startsWith(FluxCapacitorConstants.CLI_SHORT_PFX.toString())){
-				s= args[i].substring(1);
-				for (int j = 0; j < s.length(); j++) {
-					if (! FluxCapacitorConstants.cliShortMap.containsKey(s.charAt(j))) {
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-							System.err.println("[OHNO] Unrecognized short option \'"+args[i]+"\'");
-						System.exit(-1);
-					}
-					Method m= FluxCapacitorConstants.cliShortMap.get(s.charAt(j));
-					if ((i= init(m, args, i))< 0) 
-						System.exit(-1);
-				}
-			}
-		}
-		
-		return 0;
-	}
-	
-	private int checkParameter() {
-		
-		if (fileBEDoriginal== null|| !fileBEDoriginal.exists()) {
-			if (Constants.verboseLevel!= Constants.VERBOSE_SHUTUP) {
-				System.err.println("[AIII] I need a input file with aligned reads in order to work.");
-				if (fileBED== null)
-					System.err.println("\tyou said nothing and this is bad.");
-				else
-					System.err.println("\tyou said it is "+fileBED+" but it is bad.");
-				System.err.println("\tUse the "+FluxCapacitorConstants.CLI_LONG_PFX+FluxCapacitorConstants.CLI_LONG_SRA+" parameter and give me a correct one please.\n");
-			}
-			return -1;
-		}
-		if (fileGTForiginal== null|| !fileGTForiginal.exists()) {
-			if (Constants.verboseLevel!= Constants.VERBOSE_SHUTUP) {
-				System.err.println("[MANO] I need a reference file with the transcripts you want to analyze.");
-				if (fileGTF== null)
-					System.err.println("\tyou said nothing and this is not good.");
-				else
-					System.err.println("\tyou said it is "+fileGTF+" but it is not good.");
-				System.err.println("\tTry again, using the "+FluxCapacitorConstants.CLI_LONG_PFX+FluxCapacitorConstants.CLI_LONG_REF+" parameter.\n");
-			}
-			return -1;
-		}
-		if (fileOut!= null&& fileOut.exists()) {
-			if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) {
-				System.err.println("[OUCH] There is already a file at the output location "+fileOut+".");
-				System.err.println("\tDo you want me to touch that? (Yes/No/Don't know)");
-//				To confirm, write \'easy\' <CR>");
-//				String[] expected= new String[] {"easy", "hooo-hooo", "ho-ho-hooo"},
-//					proposed= new String[] {
-//						"\tSay \'hooo-hooo\'!",
-//						"\tSay \'ho-ho-hooo\'!",
-//						"\tDo you always everything they tell you? A simple \'yes\' would have been enough."
-//				};
-//				for (int j = 0; j < expected.length; j++) {
-//					String s= readSystemIn().trim();
-//					if (s.equalsIgnoreCase("yes")|| s.equalsIgnoreCase("y")) {
-//						break;
-//					}
-//					if (s.equalsIgnoreCase(expected[j])) {
-//						System.err.println(proposed[j]);
-//					} else {
-//						System.err.println("\tI did not get that. Try again.");
-//						--j;
-//					}
-//				}
-				boolean yes= true;
-				if (!force)
-					yes= waitForYesNo();
-				if (yes) {
-					fileOut.delete();
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-						System.err.println("[BUM] I permanently deleted "+fileOut+".\n");
-				} else
-					System.exit(-1);
-			} else 
-				return -1;
-		}
-		
-		return 0;
-	}
-	
 	private void printStats(PrintStream p, String[] args) {
 		p.println("\n[HEHO] We are set, so let's go!");
 		p.print("\tcmd\t"+FluxCapacitorConstants.CLI_CMD);
@@ -1810,25 +1681,31 @@ public class FluxCapacitor implements ReadStatCalculator {
 		try {
 			// INPUT
 			p.println("\tINPUT");
-			p.println("\t"+FluxCapacitorParameters.PAR_ANNOTATION_FILE+"\t"+fileGTForiginal.getCanonicalPath());
-			p.println("\t"+FluxCapacitorParameters.PAR_MAPPING_FILE+"\t"+fileBEDoriginal.getCanonicalPath());
-			p.println("\tdescriptor\t"+descriptor);
+			p.println("\t"+ FluxCapacitorSettings.ANNOTATION_FILE.getName()+
+					"\t"+ settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getCanonicalPath());
+			p.println("\t"+ FluxCapacitorSettings.MAPPING_FILE.getName()+ 
+					"\t"+ settings.get(FluxCapacitorSettings.MAPPING_FILE).getCanonicalPath());
+			p.println("\t"+ FluxCapacitorSettings.READ_DESCRIPTOR.getName()+ 
+					"\t"+ settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+			// TODO
 			//p.println("\t"+CLI_LONG_VERBOSE+"\t"+Constants.VERBOSE_KEYWORDS[Constants.verboseLevel]);
-			if (copyLocal)
-				p.println("\t"+FluxCapacitorParameters.PAR_COPY_INPUT);
-			p.println("\t"+ FluxCapacitorParameters.PAR_SORT_IN_RAM+ "\t"+ 
-					(pars.sortInRam?FluxCapacitorParameters.PAR_YES:FluxCapacitorParameters.PAR_NO));
+			//if (copyLocal)
+			//	p.println("\t"+FluxCapacitorParameters.PAR_COPY_INPUT);
+			p.println("\t"+ settings.SORT_IN_RAM.getName()+ "\t"+ 
+					(settings.get(FluxCapacitorSettings.SORT_IN_RAM)));
 			
 			// OUTPUT
 			p.println("\tOUTPUT");
-			p.println("\tTemporary Folder\t"+ System.getProperty(Constants.PROPERTY_TMPDIR));			
-			if (Constants.globalPfx!= null)
-				p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
+			p.println("\t"+ FluxCapacitorSettings.TMP_DIR.getName()+ 
+					"\t"+ settings.get(FluxCapacitorSettings.TMP_DIR).getAbsolutePath());
+			// TODO
+			//if (Constants.globalPfx!= null)
+				//p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
 			p.print("\tQuantification File\t");
-			if (fileOut== null)
+			if (settings.get(FluxCapacitorSettings.STDOUT_FILE)== null)
 				p.println("stdout");
 			else {
-				p.println(fileOut.getCanonicalPath());
+				p.println(settings.get(FluxCapacitorSettings.STDOUT_FILE).getCanonicalPath());
 				if (compressionOut!= FileHelper.COMPRESSION_NONE)
 					p.println("\t"+ FluxCapacitorConstants.CLI_LONG_COMPRESSION+ "\t"+ FileHelper.COMPRESSION_KEYWORDS[compressionOut]);
 			}
@@ -2397,7 +2274,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 		if (outputLP) {
 			FileHelper.setSilent(false); 
 			String sfx= FileHelper.getCompressionExtension(FileHelper.COMPRESSION_GZIP);
-			File dst= this.pars.fileLPzip; // new File(fileOutDir+ File.separator+ getNameLP()+ (sfx== null? "": Constants.DOT+ sfx));
+			// TODO re-add variable
+			File dst= null; // settings.fileLPzip; // new File(fileOutDir+ File.separator+ getNameLP()+ (sfx== null? "": Constants.DOT+ sfx));
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 				System.err.println("\tzipping "+ fileLPdir.getAbsolutePath()
 						+"\n\t->"+ dst.getAbsolutePath());
@@ -2553,25 +2431,30 @@ public class FluxCapacitor implements ReadStatCalculator {
 		gtfReader= null;
 		
 		// copy or deflate, if necessary: fGTForig -> fGTF
+		File fileGTForiginal= settings.get(FluxCapacitorSettings.ANNOTATION_FILE);
+		File fileGTF= null;
 		compressionGTF= FileHelper.getCompression(fileGTForiginal);
-		if (compressionGTF== FileHelper.COMPRESSION_NONE&& !copyLocal)
-			fileGTF= fileGTForiginal;
-		else {
+		if (copyLocal|| compressionGTF!= FileHelper.COMPRESSION_NONE) {
 			if (compressionGTF== FileHelper.COMPRESSION_NONE) 
-				fileGTF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ File.separator+ Constants.getGlobalPfx()+ "_"+ MyFile.getFileNameOnly(fileGTForiginal.getAbsolutePath()));
+				fileGTF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ 
+						File.separator+ Constants.getGlobalPfx()+ "_"+ 
+						MyFile.getFileNameOnly(fileGTForiginal.getAbsolutePath()));
 			else 
-				fileGTF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ File.separator+ Constants.getGlobalPfx()+ "_"+ MyFile.getFileNameOnly(fileGTForiginal.getAbsolutePath()));
+				fileGTF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ 
+						File.separator+ Constants.getGlobalPfx()+ "_"+ 
+						MyFile.getFileNameOnly(fileGTForiginal.getAbsolutePath()));
+			
 			if (force|| !fileGTF.exists()) {
 				if (fileGTF.exists()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\texisting file overwritten: "+ fileGTF.getAbsolutePath());
+					Log.warn("\texisting file overwritten: "+ fileGTF.getAbsolutePath());
 				if(!copyOrDeflate(fileGTForiginal, fileGTF, compressionGTF))
 					return false;
 			} else {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\tfile seems exists and no overwrite forced: "+ fileGTF.getAbsolutePath());
+				Log.error("\tfile exists "+ fileGTF.getAbsolutePath());
+				return false;
 			}
-		}
-		
+			settings.set(FluxCapacitorSettings.ANNOTATION_FILE, fileGTF);
+		} 
 		
 		// check sorting
 		if (cheatDisableFCheck) {
@@ -2792,6 +2675,14 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	public void run() {
 		
+		if (settings.get(FluxCapacitorSettings.STDOUT_FILE).exists()) {
+			 if (!CommandLine.confirm("[CAUTION] I overwrite the output file " + 
+					 settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() + 
+					 ", please confirm:\n\t(Yes,No,Don't know)")) {
+                exit(-1);
+            }
+		}		
+
 		if (!fileInit())
 			System.exit(-1);
 	
@@ -4126,7 +4017,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		BufferedIterator iter= null;
 
 		try {
-			if (pars.sortInRam) {
+			if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
 				// memory
 				BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
 				if (beds== null)
@@ -4692,8 +4583,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 	}
 
-	FluxCapacitorParameters pars= null;
-	void init2(String[] args) {
+	FluxCapacitorSettings settings= null;
+	void init(String[] args) {
 
 		if (args== null|| args.length< 1) {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
@@ -4710,26 +4601,33 @@ public class FluxCapacitor implements ReadStatCalculator {
 		}
 		
 		Log.setLogLevel(Log.Level.ERROR);
-		FluxCapacitorParameters pars= FluxCapacitorParameters.create(f);
-		if (pars== null|| !pars.check()) 
-			System.exit(-1);
-		this.fileGTForiginal= pars.fileAnnotation;
-		this.fileBEDoriginal= pars.fileMappings;
-		this.fileProfile= pars.fileProfile;
-		if (fileProfile!= null)
-			uniform= false;
-		this.pairedEnd= pars.pairedEnd;
-		this.stranded= pars.stranded;
-		this.descriptor= pars.descriptor;
-		this.fileOut= pars.fileStdOut;
-		this.copyLocal= pars.ioInTemp;
-		if (pars.fileLPzip!= null) {
-			//this.fileLPdir= pars.fileLP;
-			this.outputLP= true;
-		}
 		
-		this.outputSorted= pars.fileMappingsSorted!= null; 
-		this.pars= pars;
+        try {
+            settings = FluxCapacitorSettings.createSettings(f);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to load settings from " + f + "\n\n " + e.getMessage(), e);
+        }
+
+//		FluxCapacitorParameters pars= FluxCapacitorParameters.create(f);
+//		if (pars== null|| !pars.check()) 
+//			System.exit(-1);
+//		this.fileGTForiginal= pars.fileAnnotation;
+//		this.fileBEDoriginal= pars.fileMappings;
+//		this.fileProfile= pars.fileProfile;
+//		if (fileProfile!= null)
+//			uniform= false;
+//		this.pairedEnd= pars.pairedEnd;
+//		this.stranded= pars.stranded;
+//		this.descriptor= pars.descriptor;
+//		this.fileOut= pars.fileStdOut;
+//		this.copyLocal= pars.ioInTemp;
+//		if (pars.fileLPzip!= null) {
+//			//this.fileLPdir= pars.fileLP;
+//			this.outputLP= true;
+//		}
+//		
+//		this.outputSorted= pars.fileMappingsSorted!= null; 
+//		this.pars= pars;
 	}
 
 	public boolean explore(byte mode) {
@@ -5091,6 +4989,82 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 			return true;
 		}
+
+	public File fileInit(File inputFile) {
+		
+		isReadyGTF= false;
+		gtfReader= null;
+		
+		// copy or deflate, if necessary: fGTForig -> fGTF
+		File targetFile= null;
+		byte compression= FileHelper.getCompression(inputFile);
+		if (copyLocal|| compression!= FileHelper.COMPRESSION_NONE) {
+			
+			String fname= null;
+			if (compression== FileHelper.COMPRESSION_NONE) 
+				fname= MyFile.getFileNameOnly(inputFile.getAbsolutePath());
+			else 
+				fname= MyFile.stripExtension(inputFile.getName());
+			
+			//targetFile= File.createTempFile(Constants.getGlobalPfx(), fname); 
+			
+			if (force|| !targetFile.exists()) {
+				if (fileGTF.exists()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
+					Log.warn("\texisting file overwritten: "+ fileGTF.getAbsolutePath());
+				if(!copyOrDeflate(fileGTForiginal, fileGTF, compressionGTF))
+					return null;
+			} else {
+				Log.error("\tfile exists "+ fileGTF.getAbsolutePath());
+				return null;
+			}
+		} 
+		
+		// check sorting
+		if (cheatDisableFCheck) {
+			System.err.println("\tTEST Sort check disabled !!!");
+			isSortedGTF= true;
+		} else { 
+			
+			if (getGTFreader().isApplicable()) 
+				isSortedGTF= true;
+			else {
+				isSortedGTF= false;
+				File tmpGTF= getGTFreader().createSortedFile();
+				if (tmpGTF== null)
+					return null;
+				//boolean bb= getFileGTF().delete();	// TODO do sth when false..
+				this.fileGTF= tmpGTF;
+				if (outputSorted&& fileOutDir!= null) {
+					String ext= FileHelper.getCompressionExtension(compressionGTF);
+					String destFName= fileOutDir+ File.separator+ Constants.getGlobalPfx()+ "_"+ 
+										fileGTF.getName()+
+										(ext== null?"":Constants.DOT+ ext);
+					File destFile= new File(destFName);
+					if ((!force)&& !ensureFileCanWrite(destFile))
+						return null;
+					else if (!copyOrDeflate(tmpGTF, destFile,compressionGTF))
+						return null;
+				}
+			}
+		}
+		
+		// scan file
+		if (cheatDisableFCheck) {
+			System.err.println("\tTEST GTF scan disabled !!!");
+			getGTFreader();
+		} else {
+			gtfReader= null;	// reinit
+			getGTFreader().scanFile();
+			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+				System.err.println(Constants.TAB+ getGTFreader().getNrGenes()+ " loci, "
+						+ getGTFreader().getNrTranscripts()+ " transcripts, "
+						+ getGTFreader().getNrExons()+ " exons.");
+			}
+		}
+		isReadyGTF= true;
+	
+		return targetFile;
+	}
 
 }
  
