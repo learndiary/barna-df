@@ -132,7 +132,11 @@ public class UniversalReadDescriptor {
 		return mapSimpleDescriptors.get(descriptorID);
 	}
 	
-	
+	public static HashMap<String, String> getMapSimpleDescriptors() {
+		return mapSimpleDescriptors;
+	}
+
+
 	String[] separators= null;
 	boolean[] mandatory= null;
 	int posPair= -1, posStrand= -1, posID= -1;
