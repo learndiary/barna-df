@@ -51,13 +51,13 @@ public abstract class Parameter<T> {
         return validator;
     }
 
-    abstract T get();
+    protected abstract T get();
 
-    abstract void set(T value);
+    protected abstract void set(T value);
 
-    abstract void parse(String value) throws ParameterException;
+    protected abstract void parse(String value) throws ParameterException;
 
-    void validate(ParameterSchema schema) throws ParameterException {
+    protected void validate(ParameterSchema schema) throws ParameterException {
         if (validator != null) {
             validator.validate(schema, this);
         }

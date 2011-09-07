@@ -39,17 +39,17 @@ class BooleanParameter extends Parameter<Boolean> {
     }
 
     @Override
-    void set(Boolean value) {
+    protected void set(Boolean value) {
         this.value = value;
     }
 
     @Override
-    Boolean get() {
+    protected Boolean get() {
         return value;
     }
 
     @Override
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         String l = value.toLowerCase();
         for (String s : TRUE) {
             if (l.equals(s)) {

@@ -34,11 +34,34 @@ public class ParameterException extends Exception {
     /**
      * Create a new instance for a parameter that can not parse its value
      *
-     * @param parameter the parameter tha has a problem
+     * @param causedBy the <code>Exception</code> this <code>ParameterException</code>
+     * is deferred from.
+     */
+    public ParameterException(Exception causedBy) {
+    	super(causedBy);
+    }
+
+    /**
+     * Create a new instance for a parameter that can not parse its value
+     *
+     * @param parameter the parameter that has a problem
      * @param value the parameter value that caused the problem
      */
     public ParameterException(Parameter parameter, String value) {
         super("Invalid Parameter " + parameter.getName() + " with value " + value);
+        this.parameter = parameter;
+    }
+
+    /**
+     * Create a new instance for a parameter that can not parse its value
+     *
+     * @param parameter the parameter that has a problem
+     * @param value the parameter value that caused the problem
+     * @param causedBy the <code>Exception</code> this <code>ParameterException</code>
+     * is deferred from.
+     */
+    public ParameterException(Parameter parameter, String value, Exception causedBy) {
+        super("Invalid Parameter " + parameter.getName() + " with value " + value, causedBy);
         this.parameter = parameter;
     }
 

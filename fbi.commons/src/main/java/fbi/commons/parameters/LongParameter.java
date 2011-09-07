@@ -39,7 +39,7 @@ class LongParameter extends NumberParameter<Long> {
     }
 
     @Override
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         try {
             this.value = new BigDecimal(value).longValue();
             return;

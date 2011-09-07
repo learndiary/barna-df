@@ -39,15 +39,15 @@ class EnumParameter<E extends Enum<E>> extends Parameter<E> {
 
 
     @Override
-    void set(E value) {
+    protected void set(E value) {
         this.value = value;
     }
 
-    E get() {
+    protected E get() {
         return value == null ? getDefault() : value;
     }
 
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         for (E e : values) {
             if (e.name().equalsIgnoreCase(value)) {
                 this.value = e;

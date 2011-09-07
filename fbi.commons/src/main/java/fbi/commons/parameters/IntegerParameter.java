@@ -40,7 +40,7 @@ class IntegerParameter extends NumberParameter<Integer> {
     }
 
     @Override
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         try {
             this.value = new BigDecimal(value).intValue();
             return;

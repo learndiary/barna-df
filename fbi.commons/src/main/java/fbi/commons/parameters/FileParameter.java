@@ -46,15 +46,15 @@ class FileParameter extends Parameter<File> {
 
 
     @Override
-    void set(File value) {
+    protected void set(File value) {
         this.value = value;
     }
 
-    File get() {
+    protected File get() {
         return value == null ? getDefault() : value;
     }
 
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         if (nameParser != null) {
             this.value = nameParser.parse(value);
         } else {

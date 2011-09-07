@@ -40,7 +40,7 @@ class DoubleParameter extends NumberParameter<Double> {
     }
 
     @Override
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         if (value.equalsIgnoreCase("nan")) {
             this.value = Double.NaN;
             return;

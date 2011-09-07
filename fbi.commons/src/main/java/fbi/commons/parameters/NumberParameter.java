@@ -33,12 +33,12 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
     }
 
     @Override
-    void set(T value) {
+    protected void set(T value) {
         this.value = value;
     }
 
     @Override
-    T get() {
+    protected T get() {
         if (value == null) {
             return getDefault();
         }
@@ -46,7 +46,7 @@ abstract class NumberParameter<T extends Number> extends Parameter<T> {
     }
 
     @Override
-    void validate(ParameterSchema schema) throws ParameterException {
+    protected void validate(ParameterSchema schema) throws ParameterException {
         if (minimumValue != null || maximumValue != null) {
             if (value == null) {
                 value = getDefault();

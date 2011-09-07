@@ -52,23 +52,23 @@ class StringParameter extends Parameter<String> {
     }
 
     @Override
-    void set(String value) {
+    protected void set(String value) {
         if (values != null && values.size() > 0 &&!values.contains(value)) {
             throw new IllegalArgumentException("Unknown value " + value + ". Must be one of " + values);
         }
         this.value = value;
     }
 
-    String get() {
+    protected String get() {
         return value == null ? getDefault() : value;
     }
 
-    void parse(String value) throws ParameterException {
+    protected void parse(String value) throws ParameterException {
         this.value = value;
     }
 
     @Override
-    void validate(ParameterSchema schema) throws ParameterException {
+    protected void validate(ParameterSchema schema) throws ParameterException {
         if (getValidator() == null) {
             // if values are available, check that this is valid
             if (values != null && values.size() > 0) {
