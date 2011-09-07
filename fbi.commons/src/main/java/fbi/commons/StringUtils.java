@@ -12,7 +12,11 @@
 package fbi.commons;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * String constants and utilities
@@ -155,5 +159,39 @@ public class StringUtils {
         }
 
         return sb.toString();
+    }
+    
+    /**
+     * Creates a <code>String</code> instance with all elements of the 
+     * <code>Collection</code> instance provided, separated by the 
+     * character specified as &quot;separator&quot;  
+     * @param enumeration set of objects that are to be printed in the
+     * string
+     * @param separator the separator character
+     * @return a string with all elements represented by calling their 
+     * <code>toString()</code> method
+     */
+    public static String toString(Collection collection, char separator) {
+    	return toString(Collections.enumeration(collection), separator);
+    }	
+
+    /**
+     * Creates a <code>String</code> instance with all elements of the 
+     * <code>Enumeration</code> instance provided, separated by the 
+     * character specified as &quot;separator&quot;  
+     * @param enumeration set of objects that are to be printed in the
+     * string
+     * @param separator the separator character
+     * @return a string with all elements represented by calling their 
+     * <code>toString()</code> method
+     */
+    public static String toString(Enumeration enumeration, char separator) {
+    	StringBuilder sb= new StringBuilder();
+    	while(enumeration.hasMoreElements()) {
+    		sb.append(enumeration.nextElement().toString());
+    		sb.append(separator);
+    	}
+    	sb.deleteCharAt(sb.length()- 1);
+    	return sb.toString();
     }
 }
