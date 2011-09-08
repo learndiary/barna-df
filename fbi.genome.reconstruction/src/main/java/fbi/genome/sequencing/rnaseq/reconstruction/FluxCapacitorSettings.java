@@ -248,6 +248,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     */
 	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", false);
 	    
+	    public static final Parameter<Boolean> KEEP_SORTED_FILES = Parameters.booleanParameter("KEEP_SORTED_FILES", "Keeps input files ("+ ANNOTATION_FILE.getName()+
+	    		", "+ MAPPING_FILE, false);
 	    /**
 	     * The parameter file
 	     */

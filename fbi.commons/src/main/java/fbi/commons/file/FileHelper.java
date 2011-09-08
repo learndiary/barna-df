@@ -37,6 +37,38 @@ public class FileHelper {
      */
     public static File tempDirectory;
 
+    
+    /**
+     * Returns a stream for reading from the given file. 
+     * Compressed formats .GZ and .ZIP are recognized and
+     * corresponding decompressor streams are opened.  
+     * @param inputFile the file from which is to be read
+     * @return a stream of possibly decompressed data 
+     * read from the file
+     */
+	public static InputStream openFile(File inputFile) {
+		try {
+			InputStream istream= new FileInputStream(inputFile);
+			byte compression= FileHelper.getCompression(inputFile);
+			if (compression== FileHelper.COMPRESSION_NONE)
+				istream= new BufferedInputStream(istream);
+			else if (compression== FileHelper.COMPRESSION_GZIP)
+				istream= new GZIPInputStream(istream);
+			else if (compression== FileHelper.COMPRESSION_ZIP) {
+				ZipInputStream zistream= new ZipInputStream(istream);
+				ZipEntry ze= zistream.getNextEntry();
+				if (ze== null)
+					throw new RuntimeException("No file in zip file "+ inputFile.getName()+ "!");
+				istream= zistream;
+			}
+			return istream;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+	}
+
+    
     /**
      * Reads the file until the first new line character appears. This looks for
      * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
