@@ -1170,7 +1170,7 @@ public class GFFReader extends DefaultIOWrapper {
 	}
 	
 	boolean readAll= false;
-	public void read() throws Exception {
+	public void read() {
 
 		BufferedReader buffy = getBuffy();
 		if (buffy== null)
@@ -1441,12 +1441,7 @@ public class GFFReader extends DefaultIOWrapper {
 			}
 			
 		} catch (Exception e) {
-			if (!silent) {
-				e.printStackTrace();
-				System.err.println("line " + nrLinesRead);
-				System.err.println(line);
-			}
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 			//

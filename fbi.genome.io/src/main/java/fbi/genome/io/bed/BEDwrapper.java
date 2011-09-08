@@ -188,7 +188,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 		}
 	}
 
-	public void read() throws Exception {
+	public void read() {
 		read(0);
 	}
 	
@@ -251,7 +251,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 			}
 			buffy.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		
 
@@ -391,7 +391,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 
 	private static final char TAB= '\t';
 	
-	public void write() throws Exception {
+	public void write() {
 		write(false);
 	}
 	
@@ -569,7 +569,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			buffy.flush();
 			buffy.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
