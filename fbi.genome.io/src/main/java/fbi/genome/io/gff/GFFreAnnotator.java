@@ -11,7 +11,7 @@
 
 package fbi.genome.io.gff;
 
-import fbi.commons.file.FileHelper;
+import fbi.genome.io.FileHelper;
 import fbi.genome.model.*;
 import fbi.genome.model.gff.GFFObject;
 

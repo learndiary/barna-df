@@ -54,7 +54,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.commons</artifactId>
-            <version>1.5</version>
+            <version>1.6-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

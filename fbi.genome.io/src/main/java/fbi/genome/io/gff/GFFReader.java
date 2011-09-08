@@ -14,7 +14,6 @@ package fbi.genome.io.gff;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +31,7 @@ import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.DefaultIOWrapper;
+import fbi.genome.io.FileHelper;
 import fbi.genome.model.AbstractRegion;
 import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Exon;
@@ -1739,8 +1739,11 @@ public class GFFReader extends DefaultIOWrapper {
 	 */
 	public long isApplicable(File inputFile, boolean clusterGenes) {
 		try {
-			return isApplicable(new FileInputStream(inputFile), clusterGenes, inputFile.length());
-		} catch (FileNotFoundException e) {
+			FileInputStream fis= new FileInputStream(inputFile);
+			long linesOK= isApplicable(fis, clusterGenes, FileHelper.getSize(inputFile));
+			fis.close();
+			return linesOK;
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}

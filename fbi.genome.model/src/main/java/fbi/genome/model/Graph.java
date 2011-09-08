@@ -19,20 +19,27 @@ package fbi.genome.model;
 
 //import gphase.NMDSimulator;
 
-import fbi.commons.ByteArrayCharSequence;
-import fbi.commons.StringUtils;
-import fbi.commons.file.FileHelper;
-import fbi.commons.tools.ArrayUtils;
-import fbi.genome.model.constants.Constants2;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.RandomAccessFile;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.sound.sampled.LineListener;
-
-import org.bouncycastle.crypto.RuntimeCryptoException;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.StringUtils;
+import fbi.commons.tools.ArrayUtils;
+import fbi.genome.model.constants.Constants2;
 
 //import gphase.algo.AlignmentGenerator;
 //import gphase.algo.AlignmentWrapper;
@@ -938,7 +945,7 @@ public class Graph implements Serializable {
 			fName= dirPath+ File.separator+ chrFile;
 		}
 		File f= new File(fName);
-		fileSep= FileHelper.guessFileSep(f);
+		fileSep= "\n"; // TODO: Factory FileHelper.guessFileSep(f);
 		try {
 			BufferedReader buffy= new BufferedReader(new FileReader(f));
 			headerOffset= 0;
@@ -1012,7 +1019,7 @@ public class Graph implements Serializable {
 
 
 			File f= new File(fName);
-			fileSep= FileHelper.guessFileSep(f);
+			fileSep= "\n";// TODO: Factory: FileHelper.guessFileSep(f);
 			try {
 				if (raf!= null)
 					raf.close();

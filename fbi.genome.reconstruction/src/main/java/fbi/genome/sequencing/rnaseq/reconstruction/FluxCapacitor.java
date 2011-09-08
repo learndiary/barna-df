@@ -39,7 +39,6 @@ import lpsolve.VersionInfo;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
-import fbi.commons.file.FileHelper;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
@@ -47,7 +46,9 @@ import fbi.commons.tools.CommandLine;
 import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.BufferedIteratorRAM;
+import fbi.genome.io.Copier;
 import fbi.genome.io.DefaultIOWrapper;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.bed.BEDDescriptorComparator;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
@@ -3978,7 +3979,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		try {
 			FileOutputStream fos = new FileOutputStream(getFileISize());
 		    ZipOutputStream zos = new ZipOutputStream(fos);
-			zos.putNextEntry(new ZipEntry(MyFile.getFileNameWithoutExtension(
+			zos.putNextEntry(new ZipEntry(FileHelper.getFileNameWithoutExtension(
 					fileISize.getAbsolutePath())));
 			BufferedWriter buffy= new BufferedWriter(new OutputStreamWriter(zos));
 			buffy.write(isizeV.toString());
@@ -5019,74 +5020,74 @@ public class FluxCapacitor implements ReadStatCalculator {
 			return true;
 		}
 
+	/**
+	 * Creates a new file, either as the child of the given parent 
+	 * directory, or, in the user/system temporary files folder. 
+	 * @param parent the parent directory
+	 * @param fileName the name of the file
+	 * @return the new file
+	 */
+	File create(File parent, String fileName) {
+		
+		try {
+			File file= null;
+			if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES)) {
+				file= new File(parent, fileName);
+			} else {	// write temp file to user/system temp			
+				file= FileHelper.createTempFile(
+						FileHelper.getFileNameWithoutExtension(fileName), 
+						FileHelper.getExtension(fileName));
+			}
+			return file;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public File fileInit(File inputFile, DefaultIOWrapper wrapper) {
 		
-		isReadyGTF= false;
-		gtfReader= null;
-
-		long inputSize= inputFile.length();
-		InputStream iStream= FileHelper.openFile(inputFile);
-		long lines= wrapper.isApplicable(iStream, inputSize);
-		if (lines< 0)
-			;
-		
-		
-		// copy or deflate, if necessary: fGTForig -> fGTF
-		File targetFile= null;
-		byte compression= FileHelper.getCompression(inputFile);
-		InputStream istream= null;
-		if (copyLocal|| compression!= FileHelper.COMPRESSION_NONE) {
-			
-			String fname= null;
-			if (compression== FileHelper.COMPRESSION_NONE) 
-				fname= MyFile.getFileNameOnly(inputFile.getAbsolutePath());
-			else 
-				fname= MyFile.stripExtension(inputFile.getName());
-			
-			//targetFile= File.createTempFile(Constants.getGlobalPfx(), fname); 
-			
-			if (force|| !targetFile.exists()) {
-				if (fileGTF.exists()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					Log.warn("\texisting file overwritten: "+ fileGTF.getAbsolutePath());
-				if(!copyOrDeflate(fileGTForiginal, fileGTF, compressionGTF))
-					return null;
-			} else {
-				Log.error("\tfile exists "+ fileGTF.getAbsolutePath());
-				return null;
-			}
-		} 
-		
-		// check sorting
-		if (cheatDisableFCheck) {
-			System.err.println("\tTEST Sort check disabled !!!");
-			isSortedGTF= true;
-		} else { 
-			
-			if (getGTFreader().isApplicable()) 
-				isSortedGTF= true;
-			else {
-				isSortedGTF= false;
-				File tmpGTF= getGTFreader().createSortedFile();
-				if (tmpGTF== null)
-					return null;
-				//boolean bb= getFileGTF().delete();	// TODO do sth when false..
-				this.fileGTF= tmpGTF;
-				if (outputSorted&& fileOutDir!= null) {
-					String ext= FileHelper.getCompressionExtension(compressionGTF);
-					String destFName= fileOutDir+ File.separator+ Constants.getGlobalPfx()+ "_"+ 
-										fileGTF.getName()+
-										(ext== null?"":Constants.DOT+ ext);
-					File destFile= new File(destFName);
-					if ((!force)&& !ensureFileCanWrite(destFile))
-						return null;
-					else if (!copyOrDeflate(tmpGTF, destFile,compressionGTF))
-						return null;
-				}
-			}
+		// check whether sorted
+		boolean sort= false;
+		try {
+			InputStream iStream= FileHelper.openFile(inputFile);
+			if (!wrapper.isApplicable())
+				sort= true;
+			iStream.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		
+		// check whether new file is to be written
+		byte compression= FileHelper.getCompression(inputFile);
+		if (sort|| compression!= FileHelper.COMPRESSION_NONE) {
+			String fname= (sort?FileHelper.append(inputFile.getName(), "_sorted"):
+				FileHelper.append(inputFile.getName(),"",true,""));
+			File newFile= create(inputFile.getParentFile(), fname);
+			
+			// do it
+			try {
+				InputStream iStream= FileHelper.openFile(inputFile);
+				OutputStream oStream= new FileOutputStream(newFile);
+				if (sort) {
+					PipedInputStream pin= new PipedInputStream();
+					PipedOutputStream pout= new PipedOutputStream();
+					Copier c1= new Copier(iStream, pout);
+					c1.call();
+					
+				} else {
+				}
+				iStream.close();
+				oStream.flush();
+				oStream.close();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			return newFile;
+		} else
+			return inputFile;
+		
 		// scan file
-		if (cheatDisableFCheck) {
+/*		if (cheatDisableFCheck) {
 			System.err.println("\tTEST GTF scan disabled !!!");
 			getGTFreader();
 		} else {
@@ -5101,6 +5102,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		isReadyGTF= true;
 	
 		return targetFile;
+*/		
 	}
 
 }

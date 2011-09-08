@@ -12,7 +12,7 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
 import fbi.commons.Log;
-import fbi.commons.file.FileHelper;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.constants.Constants;
 

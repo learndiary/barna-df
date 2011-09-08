@@ -11,24 +11,33 @@
 
 package fbi.genome.io.gff;
 
-import fbi.commons.ByteArrayCharSequence;
-import fbi.commons.Log;
-import fbi.commons.file.FileHelper;
-import fbi.commons.io.IOHandler;
-import fbi.commons.io.IOHandlerFactory;
-import fbi.commons.tools.Sorter;
-import fbi.genome.model.commons.MyArrayHashMap;
-import fbi.genome.model.commons.MyFile;
-import fbi.genome.model.gff.GFFObject;
-
-import java.io.*;
-import java.util.Arrays;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import fbi.commons.ByteArrayCharSequence;
+import fbi.commons.Log;
+import fbi.commons.io.IOHandler;
+import fbi.commons.io.IOHandlerFactory;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.Sorter;
+import fbi.genome.model.commons.MyArrayHashMap;
+import fbi.genome.model.commons.MyFile;
+import fbi.genome.model.gff.GFFObject;
 
 /**
  * Sort a GTF file. Use the static {@link #sort(java.io.File)}  or {@link #sort(java.io.File, java.io.File)} methods
@@ -138,7 +147,9 @@ public class GFFSorter {
      * @return transcriptMap map from the concatenated transcriptID+chromosome as key and the minimal global position as value
      * @throws Exception in case of any error
      */
-    Map<byte[], Integer> createTranscriptMap(File file, int[] fieldNrs) throws Exception{
+    Map<byte[], Integer> createTranscriptMap(File file) throws Exception{
+    	
+        int[] fieldNrs= new int[]{0,3,6,-1};	// ,-1 for transcriptid
         IOHandler io = IOHandlerFactory.createDefaultHandler();
         try{
             // guess the file separator from input
@@ -243,8 +254,28 @@ public class GFFSorter {
      * @throws Exception in case of any errors
      */
 	private void sortFile(File f, File outFile) throws Exception {
+		
+        Map<byte[], Integer> transcriptPositions = createTranscriptMap(f);
+		System.gc();
+
+        FileInputStream fileInput = new FileInputStream(f);
+        OutputStream outStr = new BufferedOutputStream(new FileOutputStream(outFile));
+        sortFile(fileInput, outStr, transcriptPositions);
+        fileInput.close();
+        if(outStr != null) try {outStr.close();} catch (IOException e) {}
+
+	}
+	
+    /**
+     * Sort data read from an <code>InputStream</code> and 
+     * write it to an <code>OutputStream</code>.
+     *
+     * @param istream the source stream
+     * @param ostream the target stream
+     * @throws Exception in case of any errors
+     */
+	private void sortFile(InputStream fileInput, OutputStream outStr, Map<byte[], Integer> transcriptPositions) throws Exception {
         IOHandler io = IOHandlerFactory.createDefaultHandler();
-        OutputStream outStr = null;
         PipedOutputStream out = null;
         PipedInputStream in = null;
         BufferedWriter writer = null;
@@ -254,12 +285,9 @@ public class GFFSorter {
 		try {
             // attentionAttention, the nrs have to be sorted - look in find()
             int[] fieldNrs= new int[]{0,3,6,-1};	// ,-1 for transcriptid
-            Map<byte[], Integer> transcriptPositions = createTranscriptMap(f, fieldNrs);
-			System.gc();
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
 
-
-            outStr = new BufferedOutputStream(new FileOutputStream(outFile));
+            
             out = new PipedOutputStream();
             in = new PipedInputStream(out);
             writer= new BufferedWriter(new OutputStreamWriter(out));
@@ -276,7 +304,6 @@ public class GFFSorter {
 			HashSet<String> setInvalidTx= new HashSet<String>();
 			int nrInvalidLines= 0;
 
-            FileInputStream fileInput = new FileInputStream(f);
             io.addStream(fileInput);
 
             while (io.readLine(fileInput,cs) != -1){
@@ -316,7 +343,6 @@ public class GFFSorter {
             }
 		} finally {
             io.close();
-            if(outStr != null) try {outStr.close();} catch (IOException e) {}
             if(out != null) try {out.close();} catch (IOException e) {}
             if(in != null) try {in.close();} catch (IOException e) {}
             if(writer != null) try {writer.close();} catch (IOException e) {}

@@ -19,7 +19,7 @@ package fbi.genome.io;
  */
 public interface IOWrapper {
 
-	public void read() throws Exception;
-	public void write() throws Exception;
-	public boolean isApplicable() throws Exception;
+	public void read();
+	public void write();
+	public boolean isApplicable();
 }

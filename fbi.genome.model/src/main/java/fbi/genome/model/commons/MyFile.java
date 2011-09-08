@@ -12,9 +12,9 @@
 package fbi.genome.model.commons;
 
 
-import fbi.commons.StringUtils;
-
 import java.io.PrintStream;
+
+import fbi.commons.StringUtils;
 
 public class MyFile extends java.io.File {
 	
@@ -102,17 +102,6 @@ public class MyFile extends java.io.File {
 		return new MyFile(fName);
 	}
 	
-	public static String getPathOnly(String absPath) {
-		int pos= absPath.lastIndexOf(MyFile.separator);
-		if (pos< 0)
-			return null;	// absPath
-		return absPath.substring(0,pos);		
-	}
-	
-	public String getPathOnly() {
-		return getPathOnly(getAbsolutePath());
-	}
-	
 	public String getFileNameOnly() {
 		return getFileNameOnly(getAbsolutePath());
 	}
@@ -146,19 +135,6 @@ public class MyFile extends java.io.File {
 		return getFileNameOnly().substring(0, pos);
 	}
 		
-	public static String getFileNameWithoutExtension(String absPath) {
-		String fnOnly= getFileNameOnly(absPath);
-		int pos= fnOnly.lastIndexOf('.');
-		if (pos< 0)
-			return fnOnly;
-		return fnOnly.substring(0, pos);
-	}
-	public String getAbsolutePathWithoutExtension() {
-		String absFileNameWOext= getPathOnly()+ MyFile.separator
-			+getFileNameWithoutExtension();
-		return absFileNameWOext;
-	}
-
 	public static boolean hasCompressedSuffix(String fName) {
 		String sfx= getExtension(fName);
 		for (int i = 0; i < MyFile.SFX_COMPRESSED.length; i++) {

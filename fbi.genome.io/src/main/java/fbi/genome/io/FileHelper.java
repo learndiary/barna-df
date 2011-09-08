@@ -9,19 +9,44 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package fbi.commons.file;
+package fbi.genome.io;
 
 
-import fbi.commons.Log;
-import fbi.commons.StringUtils;
-
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.*;
-import java.util.zip.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.InflaterInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+import fbi.commons.Log;
+import fbi.commons.StringUtils;
+import fbi.commons.file.MultiMemberGZIPInputStream;
 
 /**
  * File Utilities
@@ -60,12 +85,42 @@ public class FileHelper {
 				if (ze== null)
 					throw new RuntimeException("No file in zip file "+ inputFile.getName()+ "!");
 				istream= zistream;
-			}
+			} else
+				throw new RuntimeException("Unsupported format of file "+ inputFile.getName());
 			return istream;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 
+	}
+	
+    /**
+     * Returns the (uncompressed) size of a file.
+     * <b>Note</b>: assumes 50% compression ratio for the
+     * GZIP format.   
+     * @param inputFile the file from which is to be read
+     * @return the (uncompressed) size of the (first) file
+     */
+	public static long getSize(File inputFile) {
+		try {
+			byte compression= FileHelper.getCompression(inputFile);
+			if (compression== FileHelper.COMPRESSION_NONE)
+				return inputFile.length();
+			else if (compression== FileHelper.COMPRESSION_GZIP) {
+				return (2* inputFile.length());	// assume 50% compression ratio 
+			} else if (compression== FileHelper.COMPRESSION_ZIP) {
+				ZipInputStream zistream= new ZipInputStream(new FileInputStream(inputFile));
+				ZipEntry ze= zistream.getNextEntry();
+				if (ze== null)
+					throw new RuntimeException("No file in zip file "+ inputFile.getName()+ "!");
+				long size= ze.getSize();
+				zistream.close();
+				return size;
+			} else
+				throw new RuntimeException("Unsupported format of file "+ inputFile.getName());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
     
@@ -700,6 +755,29 @@ public class FileHelper {
         return s;
     }
 
+	public static String getFileNameWithoutExtension(File file) {
+		return getFileNameWithoutExtension(file.getName());
+	}
+	
+	public static String getFileNameWithoutExtension(String fileName) {
+		int pos= fileName.lastIndexOf('.');
+		if (pos< 0)
+			return fileName;
+		return fileName.substring(0, pos);
+	}
+
+
+	public static String getPathOnly(File file) {
+		if (file.getParentFile()== null)
+			return null;
+		return file.getParentFile().getAbsolutePath();
+	}
+	
+	public static String getAbsolutePathWithoutExtension(File file) {
+		String absFileNameWOext= getPathOnly(file)+ File.separator
+			+ getFileNameWithoutExtension(file);
+		return absFileNameWOext;
+	}
 
     /**
      * Converts a given File as a Unix path relative to the given directory. If directory is

@@ -17,14 +17,14 @@
  */
 package fbi.genome.model.commons;
 
-import fbi.genome.model.Exon;
-import fbi.genome.model.Gene;
-
 import java.awt.Point;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
+import fbi.genome.model.Exon;
+import fbi.genome.model.Gene;
 
 /**
  * 
@@ -103,7 +103,7 @@ public class Toolbox {
 	 */
 	public static String getDateStampIncr(String fName) {
 		String baseName= fbi.genome.model.commons.MyFile.getFileNameOnly(fName);
-		String path= new fbi.genome.model.commons.MyFile(fName).getPathOnly();
+		String path= fName.substring(0, fName.lastIndexOf(File.separator));
 		String timestamp= MyTime.getHexDate();
 		int ctr= 1;
 		String s= (ctr<10)?"0"+java.lang.Integer.toString(ctr):java.lang.Integer.toString(ctr);		

@@ -1,6 +1,7 @@
-package fbi.commons.file;
+package fbi.genome.io;
 
 import org.junit.Test;
+
 
 import java.io.File;
 

@@ -1,6 +1,9 @@
-package fbi.commons.tools;
+package fbi.genome.io;
 
 import fbi.commons.Execute;
+import fbi.genome.io.StreamSorter;
+import fbi.genome.io.UnixStreamSorter;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,9 +11,10 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
@@ -18,7 +22,7 @@ import static junit.framework.Assert.fail;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class SorterTest {
+public class UnixStreamSorterTest {
     private static final String SIMPLE_INPUT =
             "C\tY\t2\n" +
             "B\tZ\t1\n" +
@@ -34,12 +38,11 @@ public class SorterTest {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void before(){
         Execute.initialize(4);
     }
-
     @After
-    public void tearDown() throws Exception {
+    public void after(){
         Execute.shutdown();
     }
 
@@ -47,8 +50,33 @@ public class SorterTest {
     public void testSmallSort(){
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        StreamSorter sorter = new UnixStreamSorter(0, false, "\t");
         try {
-            Sorter.create(in, out, true).field(0, false).sort();
+            sorter.sort(in, out);
+
+            String outString = new String(out.toByteArray());
+            assertEquals(
+                    "A\tX\t3\n"+
+                    "B\tZ\t1\n"+
+                    "C\tY\t2\n"
+                    ,outString);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+    }
+    @Test
+    public void testSmallSortSmallMem(){
+        byte[] bytes = SIMPLE_INPUT.getBytes();
+        System.out.println("Len: " + bytes.length);
+        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        StreamSorter sorter = new UnixStreamSorter(10, 0, false, "\t");
+        try {
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -67,8 +95,10 @@ public class SorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
+        StreamSorter sorter = new UnixStreamSorter(0, false, "\t");
         try {
-            Sorter.create(in, out, true).field(0, false).sort();
+            sorter.sort(in, out);
+
             String outString = new String(out.toByteArray());
             assertEquals(
                     "\n"+
@@ -89,8 +119,9 @@ public class SorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
+        StreamSorter sorter = new UnixStreamSorter(2, true, "\t");
         try {
-            Sorter.create(in, out, true).field(2, true).sort();
+            sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -104,57 +135,37 @@ public class SorterTest {
         }
     }
 
+
     @Test
-    public void testSmallSortThreaded(){
-        ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Future future = Sorter.create(in, out, true).field(0, false).sortInBackground();
-        try {
-            future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-            fail();
-            return;
+    public void testRandomNumbers(){
+        Random r = new Random();
+        StringBuffer bb = new StringBuffer();
+        List<Double> data = new ArrayList<Double>();
+        for (int i = 0; i < 1000; i++) {
+            double d = r.nextDouble();
+            bb.append(d).append("\n");
+            data.add(d);
         }
 
-        String outString = new String(out.toByteArray());
-        assertEquals(
-                "A\tX\t3\n"+
-                "B\tZ\t1\n"+
-                "C\tY\t2\n"
-                ,outString);
+        Collections.sort(data);
 
-    }
-
-    @Test
-    public void testSmallSortCustomComparator(){
-        ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
+        ByteArrayInputStream in = new ByteArrayInputStream(bb.toString().getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
+        StreamSorter sorter = new UnixStreamSorter(0, true, "\t");
         try {
-            Sorter.create(in, out, true).field(new Comparator<CharSequence>() {
-                @Override
-                public int compare(final CharSequence o1, final CharSequence o2) {
-                    return o1.toString().compareTo(o2.toString());
-                }
-            }).sort();
+            sorter.sort(in, out);
+
             String outString = new String(out.toByteArray());
-            assertEquals(
-                    "\n"+
-                    "\n"+
-                    "\n"+
-                    "A\tX\t3\n"+
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"
-                    ,outString);
+            String[] lines = outString.split("\\n");
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+                assertEquals(data.get(i).toString(), line);
+            }
         } catch (IOException e) {
             e.printStackTrace();
             fail();
         }
     }
-
-
 
 }

@@ -9,9 +9,12 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package fbi.commons.tools;
+package fbi.genome.io;
 
 import fbi.commons.io.DevNullOutputStream;
+import fbi.commons.tools.Interceptable;
+import fbi.commons.tools.LineComparator;
+import fbi.commons.tools.Interceptable.Interceptor;
 
 import java.io.IOException;
 import java.io.InputStream;

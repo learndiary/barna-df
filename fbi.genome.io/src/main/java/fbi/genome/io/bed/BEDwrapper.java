@@ -39,9 +39,10 @@ import fbi.commons.io.DevNullOutputStream;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.tools.ArrayUtils;
 import fbi.commons.tools.Interceptable;
-import fbi.commons.tools.Sorter;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.DefaultIOWrapper;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.Sorter;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.io.rna.ReadDescriptor;
@@ -94,15 +95,16 @@ public class BEDwrapper extends DefaultIOWrapper {
 	
 	/**
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
-	 * @param fileBED file from which is read
+	 * @param inputFile file from which is read
 	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
-	public long isApplicable(File fileBED) {
+	public long isApplicable(File inputFile) {
+		
 		try {
-			FileInputStream fis= new FileInputStream(fileBED);
-			long linesOK= isApplicable(fis, fileBED.length());
+			FileInputStream fis= new FileInputStream(inputFile);
+			long linesOK= isApplicable(fis, FileHelper.getSize(inputFile));
 			fis.close();
 			return linesOK;
 		} catch (Exception e) {
@@ -589,6 +591,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		this.beds = beds;
 	}
 
+	public Sorter getSorter(InputStream in, OutputStream out) {
+		Sorter sorter= Sorter.create(in, out, true)
+		    .separator("\\s")
+		    .field(0, false)
+		    .field(1, true);
+		return sorter;
+	}
+	
 	// not static for fileSep
 	public File sortBED(File f) {
         InputStream in = null;
@@ -597,11 +607,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
             File outFile = File.createTempFile(f.getName() + "_", "_sorted");
             in = new BufferedInputStream(new FileInputStream(f));
             out = new BufferedOutputStream(new FileOutputStream(outFile));
-            Sorter.create(in, out, true)
-                    .separator("\\s")
-                    .field(0, false)
-                    .field(1, true)
-                    .sort();
+            getSorter(in, out).sort();
 			return outFile;
 			
         } catch (Exception e) {

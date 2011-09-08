@@ -1,4 +1,4 @@
-import fbi.commons.file.FileHelper;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;

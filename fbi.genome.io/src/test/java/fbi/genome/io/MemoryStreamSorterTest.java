@@ -1,6 +1,8 @@
-package fbi.commons.tools;
+package fbi.genome.io;
 
 import org.junit.Test;
+
+import fbi.genome.io.MemoryStreamSorter;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

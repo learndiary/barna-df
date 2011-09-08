@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Comparator;
@@ -19,7 +18,6 @@ import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.CharsequenceComparator;
 import fbi.commons.Execute;
 import fbi.commons.Log;
-import fbi.commons.tools.Sorter;
 
 /**
  * A class implementing the <code>BufferedBEDiterator</code> interface
@@ -30,143 +28,6 @@ import fbi.commons.tools.Sorter;
  */
 public class BufferedIteratorDisk implements BufferedIterator {
 
-	/**
-	 * Class for capsulating file copy processes: stream-to-file, 
-	 * file-to-stream, and stream-to-stream. The actual process of 
-	 * copying data from the source to the target can be executed
-	 * in parallel by implementing the <code>Callable</code>
-	 * interface.
-	 * 
-	 * @author Micha Sammeth (gmicha@gmail.com)
-	 */
-	static class Copier implements Callable<Void> {
-		
-		/**
-		 * Default size of the buffer used for copying data from 
-		 * the source to the target.
-		 */
-		public static int DEFAULT_BUFFER_SIZE= 100;
-		
-		/**
-		 * A source stream.
-		 */
-		InputStream inputStream;
-		/**
-		 * A target stream.
-		 */
-		OutputStream outputStream;
-		/**
-		 * A source file.
-		 */
-		File inputFile;
-		/**
-		 * A target file.
-		 */
-		File outputFile;
-		/**
-		 * The actual size of the buffer that is used to copy from
-		 * the source to the target.
-		 */
-		int bufferSize;
-		
-		/**
-		 * Constructor to copy from a source stream to a target stream,
-		 * employing a default buffer size.
-		 * @param inputStream the source stream
-		 * @param outputStream the target stream
-		 */
-		public Copier(InputStream inputStream, OutputStream outputStream) {
-			this(inputStream, outputStream, DEFAULT_BUFFER_SIZE);
-		}
-		/**
-		 * Constructor to copy from a source file to a target stream,
-		 * employing a default buffer size.
-		 * @param inputFile the source file
-		 * @param outputStream the target stream
-		 */
-		public Copier(File inputFile, OutputStream outputStream) {
-			this(inputFile, outputStream, DEFAULT_BUFFER_SIZE);
-		}
-		/**
-		 * Constructor to copy from a source stream to a target file,
-		 * employing a default buffer size.
-		 * @param inputStream the source stream
-		 * @param outputFile the target file
-		 */
-		public Copier(InputStream inputStream, File outputFile) {
-			this(inputStream, outputFile, DEFAULT_BUFFER_SIZE);
-		}
-		/**
-		 * Constructor to copy from a source stream to a target stream,
-		 * employing a custom buffer size.
-		 * @param inputStream the source stream
-		 * @param outputStream the target stream
-		 * @param bufferSize the size of the buffer used for copying
-		 */
-		public Copier(InputStream inputStream, OutputStream outputStream, int bufferSize) {
-			this.inputStream= inputStream;
-			this.outputStream= outputStream;
-			this.bufferSize= bufferSize;
-		}
-		
-		/**
-		 * Constructor to copy from a source file to a target stream,
-		 * employing a custom buffer size.
-		 * @param inputFile the source file
-		 * @param outputStream the target stream
-		 * @param bufferSize the size of the buffer used for copying
-		 */
-		public Copier(File inputFile, OutputStream outputStream, int bufferSize) {
-			this.inputFile= inputFile;
-			this.outputStream= outputStream;
-			this.bufferSize= bufferSize;
-		}
-		
-		/**
-		 * Constructor to copy from a source stream to a target file,
-		 * employing a custom buffer size.
-		 * @param inputStream the source stream
-		 * @param outputFile the target file
-		 * @param bufferSize the size of the buffer used for copying
-		 */
-		public Copier(InputStream inputStream, File outputFile, int bufferSize) {
-			this.inputStream= inputStream;
-			this.outputFile= outputFile;
-			this.bufferSize= bufferSize;
-		}
-		
-		/**
-		 * Determines the nature of source and target (i.e., whether 
-		 * streams or files have been provided), and implements the
-		 * copy process as reading/writing blocks of 
-		 * <code>bufferSize</code> from the source to the target, 
-		 * respectively.
-		 * @throws Exception
-		 */
-		@Override
-		public Void call() throws Exception {
-			
-			if (inputFile!= null) 
-				inputStream= new FileInputStream(inputFile);
-			if (outputFile!= null) 
-				outputStream= new FileOutputStream(outputFile);
-			
-			byte[] b= new byte[bufferSize];
-			while(inputStream.read(b)>= 0) {
-				int k= inputStream.read(b);
-				outputStream.write(b, 0, k);
-			}
-			
-			outputStream.flush();
-			if (inputFile!= null) 
-				inputStream.close();
-			if (outputFile!= null) 
-				outputStream.close();
-			
-			return null;
-		}
-	}
-	
 	/**
 	 * Inner comparator for string comparisons emplyoing the 
 	 * <code>CharSequence</code> interface. 

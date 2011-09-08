@@ -13,16 +13,17 @@ package fbi.genome.io.bed;
 
 //import gphase.LaVista;
 
-import fbi.commons.tools.ArrayUtils;
-import fbi.genome.io.gff.GFFReader;
-import fbi.genome.model.bed.BEDobject;
-import fbi.genome.model.gff.GFFObject;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.Vector;
+
+import fbi.commons.tools.ArrayUtils;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.gff.GFFReader;
+import fbi.genome.model.bed.BEDobject;
+import fbi.genome.model.gff.GFFObject;
 
 public class BedToGtfConverter {
 
@@ -51,7 +52,7 @@ public class BedToGtfConverter {
 		}
 		if (outFile== null) {
 			outFile= new fbi.genome.model.commons.MyFile(
-					inFile.getPathOnly()+ File.separator+
+					FileHelper.getPathOnly(inFile)+ File.separator+
 					inFile.getFileNameOnly()+ ".gtf");
 		}
 	}
@@ -79,7 +80,7 @@ public class BedToGtfConverter {
 			System.out.println("Converting..");
 			String src= inputFile.getFileNameOnly();
 			HashMap<String,Object> map= new HashMap<String,Object>(beds.length,1f);
-			new File(outputFile.getAbsolutePathWithoutExtension()+"_error.txt").delete();
+			new File(FileHelper.getAbsolutePathWithoutExtension(outputFile)+"_error.txt").delete();
 			for (int i = 0; i < beds.length; i++) {
 				
 				GFFObject[] gtfs= GFFObject.fromBed(beds[i]);
@@ -117,7 +118,7 @@ public class BedToGtfConverter {
 		}
 		if (map.get(evnt_tid)!= null) {
 			try {
-				BufferedWriter errorWriter= new BufferedWriter(new FileWriter(outputFile.getAbsolutePathWithoutExtension()+"_error.txt", true));
+				BufferedWriter errorWriter= new BufferedWriter(new FileWriter(FileHelper.getAbsolutePathWithoutExtension(outputFile)+"_error.txt", true));
 				errorWriter.write(evnt_tid+"\tdouble entry\n");
 				errorWriter.flush();
 				errorWriter.close();
@@ -130,7 +131,7 @@ public class BedToGtfConverter {
 		String[] ev_exon= evnt_tid.split("_");
 		if (ev_exon.length!= 2) {
 			try {
-				BufferedWriter errorWriter= new BufferedWriter(new FileWriter(outputFile.getAbsolutePathWithoutExtension()+"_error.txt", true));
+				BufferedWriter errorWriter= new BufferedWriter(new FileWriter(FileHelper.getAbsolutePathWithoutExtension(outputFile)+"_error.txt", true));
 				errorWriter.write(evnt_tid+"\twrong format <> 2 '_' delimited fields\n");
 				errorWriter.flush();
 				errorWriter.close();

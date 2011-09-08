@@ -11,6 +11,7 @@
 
 package fbi.commons.tools;
 
+
 /**
  * Implementations intercepting the object at specific points. For example,
  * the {@link StreamSorter} implementation can implement this interface to allow the user to intercept
