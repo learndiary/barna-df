@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fbi.commons.Log;
+import fbi.commons.StringUtils;
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.tools.NMDSimulator;
 
