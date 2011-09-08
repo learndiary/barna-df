@@ -20,10 +20,6 @@ package fbi.genome.model;
 //import genome.NMDSimulator;
 //import genome.SpliceSiteConservationComparator;
 
-import fbi.commons.tools.ArrayUtils;
-import fbi.genome.model.constants.Constants;
-import fbi.genome.model.tools.NMDSimulator;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -31,7 +27,9 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jfree.util.Log;
+import fbi.commons.Log;
+import fbi.commons.tools.ArrayUtils;
+import fbi.genome.model.tools.NMDSimulator;
 
 //import genome.tools.MyArray;
 //import genome.tools.ENCODE;
