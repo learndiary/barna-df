@@ -11,19 +11,38 @@
 
 package fbi.genome.io.gff;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import java.util.regex.Pattern;
+
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.DefaultIOWrapper;
-import fbi.genome.model.*;
+import fbi.genome.model.AbstractRegion;
+import fbi.genome.model.DirectedRegion;
+import fbi.genome.model.Exon;
+import fbi.genome.model.Gene;
+import fbi.genome.model.Species;
+import fbi.genome.model.SpliceSite;
+import fbi.genome.model.Transcript;
+import fbi.genome.model.Translation;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
-
-import java.io.*;
-import java.text.Collator;
-import java.util.*;
-import java.util.regex.Pattern;
 
 //import genome.tools.MyArray;
 //import org.apache.commons.collections.BidiMap;
@@ -1716,7 +1735,14 @@ public class GFFReader extends DefaultIOWrapper {
 		return true;
 	}
 	
-	public static long isApplicable(File inputFile, boolean clusterGenes) {
+	/**
+	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * @param inputFile the file from which is read
+	 * @param clusterGenes indicates whether native gene clustering is applied
+	 * @return number of lines read, or -(number of lines read) up to the unsorted
+	 * entry
+	 */
+	public long isApplicable(File inputFile, boolean clusterGenes) {
 		try {
 			return isApplicable(new FileInputStream(inputFile), clusterGenes, inputFile.length());
 		} catch (FileNotFoundException e) {
@@ -1724,7 +1750,16 @@ public class GFFReader extends DefaultIOWrapper {
 		}
 	}
 	
-	public static long isApplicable(InputStream inputStream, boolean clusterGenes, long size) {
+	/**
+	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * <b>Note:</b> does not close the given stream.
+	 * @param inputStream stream from which is read
+	 * @param clusterGenes indicates whether native gene clustering is applied
+	 * @param size total size of data in the stream, if known, otherwise <= 0
+	 * @return number of lines read, or -(number of lines read) up to the unsorted
+	 * entry
+	 */
+	public long isApplicable(InputStream inputStream, boolean clusterGenes, long size) {
 		
 		long bytesRead = 0l;
 		BufferedReader buffy = new BufferedReader(new InputStreamReader(inputStream));

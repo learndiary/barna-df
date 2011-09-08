@@ -11,6 +11,27 @@
 
 package fbi.genome.io.bed;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
+import java.util.concurrent.Future;
+
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.Progressable;
@@ -30,12 +51,6 @@ import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
-
-import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
-import java.util.concurrent.Future;
 
 public class BEDwrapper extends DefaultIOWrapper {
 
@@ -79,27 +94,31 @@ public class BEDwrapper extends DefaultIOWrapper {
 	
 	/**
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
-	 * @param inputStream stream from which is read
+	 * @param fileBED file from which is read
 	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
-	public static long isApplicable(File fileBED) {
+	public long isApplicable(File fileBED) {
 		try {
-			return isApplicable(new FileInputStream(fileBED), fileBED.length());
-		} catch (FileNotFoundException e) {
+			FileInputStream fis= new FileInputStream(fileBED);
+			long linesOK= isApplicable(fis, fileBED.length());
+			fis.close();
+			return linesOK;
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
 	/**
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * <b>Note:</b> does not close the given stream.
 	 * @param inputStream stream from which is read
 	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
-	public static long isApplicable(InputStream inputStream, long size) {
+	public long isApplicable(InputStream inputStream, long size) {
 		try {
             Log.progressStart("checking");
 			BufferedReader buffy= new BufferedReader(new InputStreamReader(inputStream), 10* 1024* 1024);

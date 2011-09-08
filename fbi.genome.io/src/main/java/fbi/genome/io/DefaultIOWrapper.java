@@ -11,12 +11,11 @@
 
 package fbi.genome.io;
 
-import fbi.commons.file.FileHelper;
-
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
 import java.util.Date;
+
+import fbi.commons.file.FileHelper;
 
 
 
@@ -26,14 +25,6 @@ import java.util.Date;
  * @author micha
  */
 public abstract class DefaultIOWrapper implements IOWrapper {
-	
-	public static long isApplicable(File file) {
-		return 0l;	// method stub to be overwritten by sub-classes
-	}
-	
-	public static long isApplicable(InputStream inputStream, long size) {
-		return 0l;	// method stub to be overwritten by sub-classes
-	}
 	
 	/**
 	 * File name and extension.
