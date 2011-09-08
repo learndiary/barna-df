@@ -1,23 +1,16 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Vector;
 
-import org.jfree.util.Log;
-
+import fbi.commons.Log;
 import fbi.genome.io.BufferedIterator;
-import fbi.genome.io.BufferedIteratorRAM;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
-import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Gene;
 import fbi.genome.model.SpliceSite;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
