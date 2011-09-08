@@ -12,11 +12,8 @@
 package fbi.genome.io.rna;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 import fbi.genome.model.constants.Constants;
-
-import javassist.compiler.SymbolTable;
 
 public class UniversalReadDescriptor {
 

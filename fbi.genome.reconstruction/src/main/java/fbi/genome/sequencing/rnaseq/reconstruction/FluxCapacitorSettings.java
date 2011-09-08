@@ -45,12 +45,10 @@ public class FluxCapacitorSettings extends ParameterSchema {
 		ParameterException parseException;
 		UniversalReadDescriptor descriptor;
 		 
-		@Override
 		protected void set(UniversalReadDescriptor value) {
 			descriptor= value;
 		}
 		
-		@Override
 		protected void parse(String value) throws ParameterException {
 			
 			descriptor= new UniversalReadDescriptor();
@@ -66,19 +64,16 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			
 		}
 		
-		@Override
 		protected void validate(ParameterSchema schema)
 				throws ParameterException {
 			if (parseException!= null)
 				throw parseException;
 		}
 
-		@Override
 		protected UniversalReadDescriptor get() {
 			return descriptor;
 		}
 		
-		@Override
 		public Parameter copy() {
 			// TODO Auto-generated method stub
 			return null;
@@ -200,7 +195,6 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * The temporary directory.
 	     */
 	    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "The temporary directory", null, new ParameterValidator() {
-            @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 if (file == null) {

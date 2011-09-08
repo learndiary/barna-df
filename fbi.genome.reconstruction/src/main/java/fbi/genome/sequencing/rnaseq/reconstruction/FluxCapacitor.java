@@ -1,5 +1,41 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Random;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
+import lpsolve.LpSolve;
+import lpsolve.VersionInfo;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
@@ -11,12 +47,17 @@ import fbi.commons.tools.CommandLine;
 import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.BufferedIteratorRAM;
+import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.io.bed.BEDDescriptorComparator;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gff.GFFReader;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
-import fbi.genome.model.*;
+import fbi.genome.model.ASEvent;
+import fbi.genome.model.DirectedRegion;
+import fbi.genome.model.Exon;
+import fbi.genome.model.Gene;
+import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.MyFile;
@@ -26,18 +67,6 @@ import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
-import lpsolve.LpSolve;
-import lpsolve.VersionInfo;
-
-import java.io.*;
-import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 
 public class FluxCapacitor implements ReadStatCalculator {
@@ -4990,14 +5019,22 @@ public class FluxCapacitor implements ReadStatCalculator {
 			return true;
 		}
 
-	public File fileInit(File inputFile) {
+	public File fileInit(File inputFile, DefaultIOWrapper wrapper) {
 		
 		isReadyGTF= false;
 		gtfReader= null;
+
+		long inputSize= inputFile.length();
+		InputStream iStream= FileHelper.openFile(inputFile);
+		long lines= wrapper.isApplicable(iStream, inputSize);
+		if (lines< 0)
+			;
+		
 		
 		// copy or deflate, if necessary: fGTForig -> fGTF
 		File targetFile= null;
 		byte compression= FileHelper.getCompression(inputFile);
+		InputStream istream= null;
 		if (copyLocal|| compression!= FileHelper.COMPRESSION_NONE) {
 			
 			String fname= null;
