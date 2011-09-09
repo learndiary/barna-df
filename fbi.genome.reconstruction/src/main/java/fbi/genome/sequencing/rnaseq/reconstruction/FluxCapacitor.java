@@ -43,15 +43,15 @@ import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
 import fbi.commons.tools.CommandLine;
+import fbi.genome.io.AbstractFileIOWrapper;
 import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.BufferedIteratorRAM;
 import fbi.genome.io.Copier;
-import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.io.FileHelper;
 import fbi.genome.io.bed.BEDDescriptorComparator;
 import fbi.genome.io.bed.BEDwrapper;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
 import fbi.genome.model.ASEvent;
@@ -2496,7 +2496,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				isSortedGTF= true;
 			else {
 				isSortedGTF= false;
-				File tmpGTF= getGTFreader().createSortedFile();
+				File tmpGTF= getGTFreader().sort();
 				if (tmpGTF== null)
 					return false;
 				//boolean bb= getFileGTF().delete();	// TODO do sth when false..
@@ -2571,7 +2571,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 				isSortedBED= true;
 			else {
 				isSortedBED= false;
-				File tmp= getBedReader().sortBED(fileBED);
+				File tmp= create(fileBED.getParentFile(), fileBED.getName()); 
+				getBedReader().sortBED(fileBED);
 				if (tmp== null)
 					return false;
 				//getFileBED().delete();
@@ -3928,10 +3929,10 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return epos;
 	}
 	
-	private GFFReader gtfReader;
-	public GFFReader getGTFreader() {
+	private GTFwrapper gtfReader;
+	public GTFwrapper getGTFreader() {
 		if (gtfReader == null) {
-			gtfReader= new GFFReader(fileGTF.getAbsolutePath());
+			gtfReader= new GTFwrapper(fileGTF.getAbsolutePath());
 //			if (gtfFirstTime&& (!cheatDisableFCheck)) {
 ////				System.err.println("[MICHA] Reactivate the sorting filecheck for the gtf.");
 //				if (gtfReader.isApplicable()) 
@@ -5044,7 +5045,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		}
 	}
 	
-	public File fileInit(File inputFile, DefaultIOWrapper wrapper) {
+	public File fileInit(File inputFile, AbstractFileIOWrapper wrapper) {
 		
 		// check whether sorted
 		boolean sort= false;
