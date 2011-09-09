@@ -147,9 +147,8 @@ public class GFFSorter {
      * @return transcriptMap map from the concatenated transcriptID+chromosome as key and the minimal global position as value
      * @throws Exception in case of any error
      */
-    Map<byte[], Integer> createTranscriptMap(File file) throws Exception{
+    Map<byte[], Integer> createTranscriptMap(File file, int[] fieldNrs) throws Exception{
     	
-        int[] fieldNrs= new int[]{0,3,6,-1};	// ,-1 for transcriptid
         IOHandler io = IOHandlerFactory.createDefaultHandler();
         try{
             // guess the file separator from input
@@ -255,12 +254,14 @@ public class GFFSorter {
      */
 	private void sortFile(File f, File outFile) throws Exception {
 		
-        Map<byte[], Integer> transcriptPositions = createTranscriptMap(f);
+        // attentionAttention, the nrs have to be sorted - look in find()
+        int[] fieldNrs= new int[]{0,3,6,-1};	// ,-1 for transcriptid
+        Map<byte[], Integer> transcriptPositions = createTranscriptMap(f, fieldNrs);
 		System.gc();
 
         FileInputStream fileInput = new FileInputStream(f);
         OutputStream outStr = new BufferedOutputStream(new FileOutputStream(outFile));
-        sortFile(fileInput, outStr, transcriptPositions);
+        sortFile(fileInput, outStr, fieldNrs, transcriptPositions);
         fileInput.close();
         if(outStr != null) try {outStr.close();} catch (IOException e) {}
 
@@ -274,7 +275,7 @@ public class GFFSorter {
      * @param ostream the target stream
      * @throws Exception in case of any errors
      */
-	private void sortFile(InputStream fileInput, OutputStream outStr, Map<byte[], Integer> transcriptPositions) throws Exception {
+	private void sortFile(InputStream fileInput, OutputStream outStr, int[] fieldNrs, Map<byte[], Integer> transcriptPositions) throws Exception {
         IOHandler io = IOHandlerFactory.createDefaultHandler();
         PipedOutputStream out = null;
         PipedInputStream in = null;
@@ -283,8 +284,6 @@ public class GFFSorter {
 
 
 		try {
-            // attentionAttention, the nrs have to be sorted - look in find()
-            int[] fieldNrs= new int[]{0,3,6,-1};	// ,-1 for transcriptid
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
 
             
