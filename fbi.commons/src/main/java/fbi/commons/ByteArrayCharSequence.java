@@ -12,6 +12,8 @@
 package fbi.commons;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Mutable string implementation with field support
@@ -68,6 +70,50 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
     final static int[] sizeTable = {9, 99, 999, 9999, 99999, 999999, 9999999,
             99999999, 999999999, Integer.MAX_VALUE};
 
+    
+    /**
+     * Split the given line and extract the field specified
+     *
+     * @param input the source line
+     * @param fieldNrs the field to extract
+     * @return fields extracted fields
+     */
+	public static ByteArrayCharSequence[] split(CharSequence input, Pattern pattern, int[] fieldNrs) {
+		System.err.println("spit");
+		int index = 0;
+		ByteArrayCharSequence[] result= new ByteArrayCharSequence[fieldNrs.length];
+		int mCtr= 0, fCtr= 0;
+		Matcher m= pattern.matcher(input);
+        while(m.find()) {
+        	if (fCtr< fieldNrs.length&& mCtr== fieldNrs[fCtr]) {
+        		ByteArrayCharSequence match = (ByteArrayCharSequence) input.subSequence(index, m.start());
+        		result[fCtr++]= match;
+        	}
+            index = m.end();
+            ++mCtr;
+        }
+        // last
+        if (fCtr< fieldNrs.length&& fieldNrs[fCtr]== mCtr)
+        	result[fCtr]= (ByteArrayCharSequence) input.subSequence(index, input.length());
+        return result;
+	}
+	
+    /**
+     * Merge the two strings to one byte[]
+     *
+     * @param tid first string
+     * @param chr second string
+     * @return bytes merged string as byte[]
+     */
+	public static byte[] merge(ByteArrayCharSequence tid, ByteArrayCharSequence chr) {
+		byte[] key = new byte[tid.length() + chr.length()];
+		System.arraycopy(tid.chars, tid.start, key, 0, tid.length());
+		System.arraycopy(chr.chars, chr.start, key, tid.length(), chr.length());
+		return key;
+	}
+
+
+	
     /**
      * All possible chars for representing a number as a String
      */
