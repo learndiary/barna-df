@@ -1,5 +1,5 @@
 import fbi.genome.io.FileHelper;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.splicegraph.Edge;
@@ -23,12 +23,12 @@ public class IntronRetriever {
 		
 		// hg19_splicedESTs_UCSC100525.gtf
 		File f= new File(args[0]);
-		GFFReader reader= new GFFReader(f.getAbsolutePath());
+		GTFwrapper reader= new GTFwrapper(f.getAbsolutePath());
 		if (!reader.isApplicable()) {
-			File tmpGTF= reader.createSortedFile();
+			File tmpGTF= reader.sort();
 			f= new File(args[0]+ "_sorted.gtf");
 			FileHelper.move(tmpGTF, f);
-			reader= new GFFReader(f.getAbsolutePath());
+			reader= new GTFwrapper(f.getAbsolutePath());
 		}
 		Gene[] genes= null;
 		try {			
