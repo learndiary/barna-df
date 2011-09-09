@@ -11,12 +11,11 @@
 
 package fbi.genome.io.bed;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -39,8 +38,8 @@ import fbi.commons.io.DevNullOutputStream;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.tools.ArrayUtils;
 import fbi.commons.tools.Interceptable;
+import fbi.genome.io.AbstractFileIOWrapper;
 import fbi.genome.io.BufferedBACSReader;
-import fbi.genome.io.DefaultIOWrapper;
 import fbi.genome.io.FileHelper;
 import fbi.genome.io.Sorter;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
@@ -50,10 +49,9 @@ import fbi.genome.io.rna.SolexaPairedEndDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
 
-public class BEDwrapper extends DefaultIOWrapper {
+public class BEDwrapper extends AbstractFileIOWrapper {
 
 	static void test() {
 		System.out.println(((byte) -1)| (byte) 1);
@@ -63,14 +61,19 @@ public class BEDwrapper extends DefaultIOWrapper {
 		System.out.println(-1&Integer.MAX_VALUE);
 	}
 	
+	/**
+	 * @deprecated
+	 */
+	ThreadedBufferedByteArrayStream readerB= null;
+	
 	BEDobject[] beds= null;
 	
-	File file;
+	public BEDwrapper(File inputFile) {
+		super(inputFile);
+	}
+	
 	public BEDwrapper(String newFilePath) {
-		super(newFilePath);
-		file = new File(newFilePath);
-		size = file.length();
-		fileSep= guessFileSep();
+		this(new File(newFilePath));
 	}
 	
 	HashSet<String> refIDset;
@@ -87,7 +90,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 	
 	@Override
 	public boolean isApplicable() {
-		long lines= isApplicable(new File(fPath+ File.separator+ fName));
+		long lines= isApplicable(inputFile);
 		if (lines< 0)
 			return false;
 		return true;
@@ -200,7 +203,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 			bedLines= Integer.MAX_VALUE;
 		Vector objV= new Vector();
 		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(this.fPath+MyFile.separator+this.fName));
+			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
 			for (String line= buffy.readLine();line!= null&& objV.size()< bedLines; line= buffy.readLine()) {
 				if (line== null)
 					break;
@@ -275,7 +278,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 			BufferedBACSReader buffy= getReaderBACS();
 			//for (cs= buffy.readLine(cs); cs.end!= 0; cs= buffy.readLine(cs)) {
 			while (buffy.readLine(cs)!= null) {
-				bytesRead+= cs.length()+ guessFileSep().length();
+				bytesRead+= cs.length()+ getLineSeparator().length();
 				++nrUniqueLinesRead;
 			}
 			close();
@@ -293,7 +296,7 @@ public class BEDwrapper extends DefaultIOWrapper {
 	
 	public int guessReadLen() {
 		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(fPath+ File.separator+ fName));
+			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
 			String line= buffy.readLine();
 			while(line.startsWith("track")|| line.startsWith("browser")) {
 				line= buffy.readLine();
@@ -402,9 +405,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			if (prog!= null)
 				prog.start("progress ");
 			int cnt= 0;
-			File f= new File(this.fPath+MyFile.separator+this.fName);
-			BufferedReader buffy= new BufferedReader(new FileReader(f));
-			long bRead= 0, bTot= f.length();
+			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
+			long bRead= 0, bTot= getInputSize();
 			int perc= 0;
 			for(String s; (s= buffy.readLine())!= null;++cnt,bRead+= s.length()+1) {
 				if (bRead*10d/bTot> perc) {
@@ -431,7 +433,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		
 		ReadDescriptor descriptor= null;
 		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(getAbsFileName()));
+			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
 			
 			String s;
 			while (((s= buffy.readLine())!= null)&&
@@ -475,10 +477,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			scanFileReadLines= 0;
 			countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
 			
-			File f= new File(this.fPath+MyFile.separator+this.fName);
-			buffy= new BufferedReader(new FileReader(f));
-			int sepLen= guessFileSep().length();
-			long bRead= 0, bTot= f.length();
+			buffy= new BufferedReader(new FileReader(getInputFile()));
+			int sepLen= getLineSeparator().length();
+			long bRead= 0, bTot= getInputSize();
 
 			out = new PipedOutputStream();
 			in = new PipedInputStream(out);
@@ -564,7 +565,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	
 	public void write(boolean append) {
 		try {
-			BufferedWriter buffy= new BufferedWriter(new FileWriter(this.fPath+MyFile.separator+this.fName, append));
+			BufferedWriter buffy= new BufferedWriter(new FileWriter(getInputFile(), append));
 			for (int i = 0; beds!= null&& i < beds.length&&beds[i]!= null; i++) {
 				buffy.write(beds[i].toString()+"\n");
 			}
@@ -599,16 +600,25 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		return sorter;
 	}
 	
-	// not static for fileSep
-	public File sortBED(File f) {
+	public void sortBED(File outputFile) {
+		try {
+			FileOutputStream fos = new FileOutputStream(outputFile);
+			sort(fos);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	@Override
+	public void sort(OutputStream outputStream) {
         InputStream in = null;
         OutputStream out = null;
         try {
-            File outFile = File.createTempFile(f.getName() + "_", "_sorted");
-            in = new BufferedInputStream(new FileInputStream(f));
-            out = new BufferedOutputStream(new FileOutputStream(outFile));
-            getSorter(in, out).sort();
-			return outFile;
+            FileInputStream iStream = new FileInputStream(getInputFile());
+            getSorter(iStream, outputStream).sort();
+			return;
 			
         } catch (Exception e) {
             Log.progressFailed("ERROR");
@@ -617,7 +627,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
             if(in != null ) try {in.close();} catch (IOException e) {}
             if(out != null ) try {out.close();} catch (IOException e) {}
         }
-        return null;
 	}
 
 	public ByteArrayCharSequence sweepToChromosome(CharSequence chr) {
@@ -629,7 +638,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			BufferedBACSReader buffy= getReaderBACS();
 			//for (cs= getReader().readLine(cs); cs.end!= 0; cs=getReader().readLine(cs)) {
 			while (buffy.readLine(cs)!= null) {
-				bytesRead+= cs.length()+guessFileSep().length();
+				bytesRead+= cs.length()+getLineSeparator().length();
 				++nrUniqueLinesRead;
 				if (cs.startsWith(chr))
 					return cs;
@@ -704,14 +713,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	}
 	
 	File baseFile;
-	File getFile() {
-		 if (baseFile == null) {
-			baseFile = new File(fPath+File.separator+fName);			
-		}
-
-		return baseFile;
-	}
-
 	public HashSet<String> getRefIDset() {
 		return refIDset;
 	}
@@ -740,7 +741,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	protected BufferedBACSReader getReaderBACS() {
 		if (readerC == null) {
 			try {
-				InputStream inputStream = new FileInputStream(file);
+				InputStream inputStream = new FileInputStream(inputFile);
 				inputStream.skip(bytesRead);
 				readerC= new BufferedBACSReader(inputStream);
 				//new ThreadedBufferedByteArrayStream(10* 1024* 1024, inputStream, true, false);
@@ -761,7 +762,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	protected ThreadedBufferedByteArrayStream getReader() {
 		if (readerB == null) {
 			try {
-				InputStream inputStream = new FileInputStream(file);
+				InputStream inputStream = new FileInputStream(inputFile);
 				inputStream.skip(bytesRead);
 				readerB= new ThreadedBufferedByteArrayStream(10* 1024* 1024, inputStream, true, false);
 				readerB.setCloseInputStream(false);
@@ -789,7 +790,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				BufferedBACSReader buffy= getReaderBACS();
 				ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
 				String lastChrRead= null;
-				guessFileSep();
+				getLineSeparator();
 				boolean inited= false;
 				if (reuse&& lastLine!= null) {
 					cs= lastLine;
@@ -807,7 +808,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					} else {
 						if (buffy.readLine(cs)== null)
 							break;	// EOF
-						bytesRead+= cs.length()+ fileSep.length();
+						bytesRead+= cs.length()+ lineSeparator.length();
 						++nrUniqueLinesRead;
 					}
 					
@@ -834,14 +835,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 									System.err.println("\t\n[OHLALA] line "+nrUniqueLinesRead+" has not "+identTok+" elements as the lines before!");
 									System.err.println("\t"+ cs.toString());
-									System.err.println("\tcheck file "+ fName);
+									System.err.println("\tcheck file "+ getInputFile().getName());
 								}
 							}
 						if (toks< 3) {
 							if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 								System.err.println("\t\n[OHNOO] line "+nrUniqueLinesRead+" has less than 3 token, I am skipping.");
 								System.err.println("\t"+ cs.toString());
-								System.err.println("\tcheck file "+ fName);
+								System.err.println("\tcheck file "+ getInputFile().getName());
 							}
 							continue;
 						}
@@ -863,13 +864,13 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							bytesRead= tmpBytes; 
 							--nrUniqueLinesRead;
 						}
-						addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
+						addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
 						return count;
 					}
 						
 					if (lastChrRead== null) {	// first line read in this batch
 						
-						addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
+						addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
 						
 						if (chr!= null&& !cs.subSequence(0, chr.length()).equals(chr)) {
 							if (mapChr.containsKey(chr)) {
@@ -889,7 +890,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 										buffy= getReaderBACS();
 										if (buffy.readLine(cs)== null)
 											break;
-										bytesRead+= cs.length()+ fileSep.length();
+										bytesRead+= cs.length()+ lineSeparator.length();
 										++nrUniqueLinesRead;
 										chrToki= cs.getToken(0).toString();
 										try {
@@ -922,7 +923,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 									cs= newCS;
 									chrToki= cs.getToken(0).toString();
 									addChr(chrToki,
-											bytesRead- cs.length()- guessFileSep().length(), 
+											bytesRead- cs.length()- getLineSeparator().length(), 
 											nrUniqueLinesRead-1);
 											
 									buffy= getReaderBACS();
@@ -949,7 +950,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								bytesRead= tmpBytes;
 								--nrUniqueLinesRead;
 							}
-							addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead);
+							addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead);
 							break;
 						} 
 					}
@@ -1038,7 +1039,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					BufferedBACSReader buffy= getReaderBACS();
 					ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
 					String lastChrRead= null;
-					guessFileSep();
+					getLineSeparator();
 					boolean inited= false;
 					if (reuse&& lastLine!= null) {
 						cs= lastLine;
@@ -1057,7 +1058,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							if (buffy.readLine(cs)== null)
 								break;	// EOF
 							cs.resetFind();
-							bytesRead+= cs.length()+ fileSep.length();
+							bytesRead+= cs.length()+ lineSeparator.length();
 							++nrUniqueLinesRead;
 						}
 						
@@ -1084,14 +1085,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 									if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 										System.err.println("\t\n[OHLALA] line "+nrUniqueLinesRead+" has not "+identTok+" elements as the lines before!");
 										System.err.println("\t"+ cs.toString());
-										System.err.println("\tcheck file "+ fName);
+										System.err.println("\tcheck file "+ getInputFile().getName());
 									}
 								}
 							if (toks< 3) {
 								if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 									System.err.println("\t\n[OHNOO] line "+nrUniqueLinesRead+" has less than 3 token, I am skipping.");
 									System.err.println("\t"+ cs.toString());
-									System.err.println("\tcheck file "+ fName);
+									System.err.println("\tcheck file "+ getInputFile().getName());
 								}
 								continue;
 							}
@@ -1112,14 +1113,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								--nrUniqueLinesRead;
 							}
 							
-							addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
+							addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
 							
 							return count;
 						}
 							
 						if (lastChrRead== null) {	// first line read in this batch
 							
-							addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead- 1);
+							addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
 							
 							if (chr!= null&& !cs.subSequence(0, chr.length()).equals(chr)) {
 								if (mapChr.containsKey(chr)) {
@@ -1140,7 +1141,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											if (buffy.readLine(cs)== null)
 												break;
 											//cs= new ByteArrayCharSequence(line);
-											bytesRead+= cs.length()+ fileSep.length();
+											bytesRead+= cs.length()+ lineSeparator.length();
 											++nrUniqueLinesRead;
 											chrToki= cs.getToken(0).toString();
 											try {
@@ -1172,7 +1173,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 										cs= newCS;
 										chrToki= cs.getToken(0).toString();
 										addChr(chrToki,
-												bytesRead- cs.length()- guessFileSep().length(), 
+												bytesRead- cs.length()- getLineSeparator().length(), 
 												nrUniqueLinesRead-1);
 												
 										buffy= getReaderBACS();
@@ -1199,7 +1200,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 									bytesRead= tmpBytes;
 									--nrUniqueLinesRead;
 								}
-								addChr(chrToki, bytesRead- cs.length()- guessFileSep().length(), nrUniqueLinesRead);
+								addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead);
 								break;
 							} 
 						}
@@ -1249,7 +1250,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		
 		ReadDescriptor descriptor= null;
 		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(getAbsFileName()));
+			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
 			
 			String s;
 			while (((s= buffy.readLine())!= null)&&

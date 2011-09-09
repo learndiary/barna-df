@@ -21,7 +21,7 @@ import java.util.Vector;
 
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.FileHelper;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.gff.GFFObject;
 
@@ -96,7 +96,7 @@ public class BedToGtfConverter {
 			
 			System.out.println("Writing..");
 			GFFObject[] gtfs= (GFFObject[]) ArrayUtils.toField(gtfV);
-			GFFReader writer= new GFFReader(outputFile.getAbsolutePath());
+			GTFwrapper writer= new GTFwrapper(outputFile.getAbsolutePath());
 			writer.setChromosomeWise(false);
 			// TODO rewrite
 //			writer.setGtfObj(gtfs);
