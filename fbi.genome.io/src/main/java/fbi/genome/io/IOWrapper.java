@@ -11,6 +11,8 @@
 
 package fbi.genome.io;
 
+import java.io.OutputStream;
+
 
 /**
  * Interface defining the default IO Wrapper.
@@ -22,4 +24,5 @@ public interface IOWrapper {
 	public void read();
 	public void write();
 	public boolean isApplicable();
+	public void sort(OutputStream outputStream);
 }

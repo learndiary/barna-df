@@ -11,7 +11,7 @@
 
 package fbi.genome.io;
 
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.*;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
@@ -37,7 +37,7 @@ public class SpliceGraphIO {
     public static void extractSpliceJunctions(int eFlankDon, int eFlankAcc, IntronModel iModel, File inF, File outF) {
         if (outF!= null&& outF.exists())
             outF.delete();
-        GFFReader reader= new GFFReader(inF.getAbsolutePath());
+        GTFwrapper reader= new GTFwrapper(inF.getAbsolutePath());
         Gene[] g= null;
         try {
             for (reader.read(); (g= reader.getGenes())!= null; reader.read()) {
@@ -389,11 +389,11 @@ public class SpliceGraphIO {
             }
 
 
-            GFFReader checkReader= new GFFReader(file.getAbsolutePath());
+            GTFwrapper checkReader= new GTFwrapper(file.getAbsolutePath());
             //System.err.println("DEBUG -- temporarily deactivated file check");
             if (!checkReader.isApplicable()) {
                 System.err.println("sorting input file, temporary directory "+System.getProperty(Constants.PROPERTY_TMPDIR));
-                file= checkReader.createSortedFile();
+                file= checkReader.sort();
                 System.err.println("Here is a sorted version of your file: "+file.getAbsolutePath());
             }
 

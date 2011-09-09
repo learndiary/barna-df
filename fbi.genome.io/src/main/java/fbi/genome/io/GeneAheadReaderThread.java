@@ -11,7 +11,7 @@
 
 package fbi.genome.io;
 
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.splicegraph.Graph;
 
@@ -22,12 +22,12 @@ import java.util.Date;
 */
 public class GeneAheadReaderThread extends Thread {
 
-        GFFReader reader;
+        GTFwrapper reader;
         Gene[] g;
         Graph.EventExtractorThread downstreamThread;
         boolean output= false, output2= true, checkIntrons= true;
 
-        public GeneAheadReaderThread(GFFReader newReader) {
+        public GeneAheadReaderThread(GTFwrapper newReader) {
             super();
             this.reader= newReader;
             reader.setSilent(true);
@@ -116,11 +116,11 @@ public class GeneAheadReaderThread extends Thread {
             this.g = g;
         }
 
-        public GFFReader getReader() {
+        public GTFwrapper getReader() {
             return reader;
         }
 
-        public void setReader(GFFReader reader) {
+        public void setReader(GTFwrapper reader) {
             this.reader = reader;
         }
 

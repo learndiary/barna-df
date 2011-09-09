@@ -12,7 +12,7 @@
 package fbi.genome.io;
 
 import fbi.genome.model.gff.GFFObject;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 
 import java.io.BufferedWriter;
@@ -39,13 +39,13 @@ public class DNA2RNA {
 	}
 	
 	
-	GFFReader annReader, inReader;
-	private GFFReader getAnnReader() {
+	GTFwrapper annReader, inReader;
+	private GTFwrapper getAnnReader() {
 		if (annReader == null) {
-			annReader = new GFFReader(annFile.getAbsolutePath());
+			annReader = new GTFwrapper(annFile.getAbsolutePath());
 			if (!annReader.isApplicable()) {
-				annFile= annReader.createSortedFile();
-				annReader = new GFFReader(annFile.getAbsolutePath());
+				annFile= annReader.sort();
+				annReader = new GTFwrapper(annFile.getAbsolutePath());
 			}
 				
 			annReader.setReadGene(true);
@@ -53,12 +53,12 @@ public class DNA2RNA {
 
 		return annReader;
 	}
-	private GFFReader getInReader() {
+	private GTFwrapper getInReader() {
 		if (inReader == null) {
-			inReader = new GFFReader(inFile.getAbsolutePath());
+			inReader = new GTFwrapper(inFile.getAbsolutePath());
 			if (!inReader.isApplicable()) {
-				inFile= inReader.createSortedFile();
-				inReader = new GFFReader(inFile.getAbsolutePath());
+				inFile= inReader.sort();
+				inReader = new GTFwrapper(inFile.getAbsolutePath());
 			}
 			inReader.setReadGene(false);
 			inReader.setReadGTF(true);
