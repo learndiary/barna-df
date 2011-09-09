@@ -79,7 +79,6 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      * @return fields extracted fields
      */
 	public static ByteArrayCharSequence[] split(CharSequence input, Pattern pattern, int[] fieldNrs) {
-		System.err.println("spit");
 		int index = 0;
 		ByteArrayCharSequence[] result= new ByteArrayCharSequence[fieldNrs.length];
 		int mCtr= 0, fCtr= 0;
