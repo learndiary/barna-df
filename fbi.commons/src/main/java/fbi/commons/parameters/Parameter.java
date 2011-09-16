@@ -30,6 +30,18 @@ public abstract class Parameter<T> {
         this.type = type;
         this.validator = validator;
     }
+    
+    /**
+     * Lazy clone constructor by micha.
+     * @param otherParameter
+     */
+    protected Parameter(Parameter<T> otherParameter) {
+    	this.name= otherParameter.name;
+        this.description = otherParameter.description;
+        this.defaultValue = otherParameter.defaultValue;
+        this.type = otherParameter.type;
+        this.validator = otherParameter.validator;
+    }
 
     public String getName() {
         return name;
