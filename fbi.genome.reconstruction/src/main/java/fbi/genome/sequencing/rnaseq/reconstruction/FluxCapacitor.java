@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -38,17 +37,19 @@ import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 import fbi.commons.Execute;
 import fbi.commons.Log;
+import fbi.commons.Log.Level;
 import fbi.commons.StringUtils;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.thread.ThreadedQWriter;
 import fbi.commons.tools.CommandLine;
 import fbi.genome.io.AbstractFileIOWrapper;
+import fbi.genome.io.AnnotationWrapper;
 import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.BufferedIteratorRAM;
-import fbi.genome.io.Copier;
 import fbi.genome.io.FileHelper;
+import fbi.genome.io.MappingWrapper;
 import fbi.genome.io.bed.BEDDescriptorComparator;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gtf.GTFwrapper;
@@ -68,10 +69,15 @@ import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
+import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 
 
 public class FluxCapacitor implements ReadStatCalculator {
 
+	public static enum SupportedFormatExtensions {
+		GTF, GFF, BED,
+	}
+		
 	class GTFreaderThread extends Thread {
 		
 		public GTFreaderThread() {
@@ -92,12 +98,10 @@ public class FluxCapacitor implements ReadStatCalculator {
 	public static boolean outputPbClusters= false;
 	public boolean pairedEnd= false, stranded= false, force= false;
 	int tolerance= 1000;	// +/- gene-near region
-	UniversalReadDescriptor descriptor;
-	
 	public static boolean 
 		cheatDoNotExit= false,
 		cheatLearn= false, 
-		cheatDisableFCheck= false,
+		cheatDisableFCheck= true,
 		cheatEnableCleanup= false,
 		cheatCopyFile= false,
 		doUseLocusNormalization= false;
@@ -201,7 +205,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				mapReadOrPairIDs= new HashSet<CharSequence>();
 				if (pairedEnd)
 					mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>();
-				attributes= descriptor.createAttributes();
+				attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes();
 			}
 			
 			
@@ -220,7 +224,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							//Graph myGraph= getGraph(this.gene);
 							AnnotationMapper mapper= new AnnotationMapper(this.gene);
 							//map(myGraph, this.gene, this.beds); 
-							mapper.map(this.beds, descriptor);
+							mapper.map(this.beds, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
 							nrReadsLoci+= mapper.nrMappingsLocus;
 							nrReadsMapped+= mapper.getNrMappingsMapped();
 							nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
@@ -1152,7 +1156,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						break;
 					if (beds[i].getStrand()< 0|| beds[i].getBlockCount()> 1)	// only non-split
 						continue; // only reads on forward strand can have a mate falling into transcript
-					a= descriptor.getAttributes(beds[i].getName(), a);	//Fasta.getReadID(beds[i].getName())
+					a= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(beds[i].getName(), a);	//Fasta.getReadID(beds[i].getName())
 					mapMates5.put(a.id, beds[i]);
 				}
 				int left= i;
@@ -1162,7 +1166,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						break;
 					if (beds[i].getStrand()>= 0|| beds[i].getBlockCount()> 1)	// only non-split
 						continue; // only reads on reverse strand can have a mate falling into transcript
-					a= descriptor.getAttributes(beds[i].getName(), a);	//Fasta.getReadID(beds[i].getName())
+					a= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(beds[i].getName(), a);	//Fasta.getReadID(beds[i].getName())
 					mapMates3.put(a.id, beds[i]);
 				}
 				int right= i;
@@ -1172,7 +1176,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					boolean contained= contains(tx, beds[i]);
 					if (!contained)
 						continue;
-					a= descriptor.getAttributes(beds[i].getName(), a);
+					a= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(beds[i].getName(), a);
 					CharSequence id= a.id; 
 					BEDobject2 bed= null;
 					if (beds[i].getStrand()< 0) {
@@ -1252,8 +1256,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 				
 				BEDobject2 bed1, bed2;
 				UniversalReadDescriptor.Attributes 
-					attributes= descriptor.createAttributes(), 
-					attributes2= descriptor.createAttributes();
+					attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes(), 
+					attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes();
 				int elen= tx.getExonicLength();	// this is the "effective" length, modify by extensions		
 //				if (elen< readLenMin)
 //					return;	// discards reads
@@ -1265,7 +1269,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					++nrReadsSingleLoci;
 					bed1= new BEDobject2(beds.next());
 					CharSequence tag= bed1.getName();
-					attributes= descriptor.getAttributes(tag, attributes);	
+					attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);	
 					if (pairedEnd) {
 						if (attributes.flag< 1)
 							Log.warn("Read ignored, error in readID: "+ tag);
@@ -1293,7 +1297,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						beds.mark();
 						while(beds.hasNext()) {
 							bed2= new BEDobject2(beds.next());
-							attributes2= descriptor.getAttributes(bed2.getName(), attributes2);
+							attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
 							if (attributes2== null)
 								continue;
 							if (!attributes.id.equals(attributes2.id))
@@ -1324,7 +1328,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 							}
 
 							m.add(bpoint1, bpoint2, -1, -1, elen);	// TODO rlen currently not used
-							addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO omit
+							//addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
 							
 							nrReadsSingleLociPairsMapped+= 2;
 							
@@ -1579,128 +1583,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	public static String version= null;
 	
-	
-	/**
-	 * @deprecated 
-	 * delegated linecount to BEDwrapper
-	 * readLength and max/min insert size to profiling
-	 * @return
-	 */
-	boolean prescan() {
-		
-		long t0= System.currentTimeMillis();
-		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("[PRESCAN] Checking read length(s)");
-		nrReadsAll= 0;
-		int[] lenMinMax= new int[] {Integer.MAX_VALUE, Integer.MIN_VALUE};
-        Log.progressStart("progress ");
-		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(fileBED));
-			File f= File.createTempFile(FluxCapacitorConstants.PFX_CAPACITOR, "prescanIDs");
-			BufferedWriter writer= new BufferedWriter(new FileWriter(f));
-			long bRead= 0, bTot= fileBED.length();
-			int perc= 0, lines= 0;
-			for(String s; (s= buffy.readLine())!= null;++nrReadsAll,bRead+= s.length()+1, ++lines) {
-                Log.progress(bRead, bTot);
-				if (s.charAt(0)== '#')
-					continue;
-
-				int i = 0, cnt= 0;
-
-				// check ID: untested, not here, too much overhead
-/*				for(++i; s.charAt(i)!= '\t'&& i< s.length(); ++i);	// 3rd sep
-				int nameStart= ++i;
-				if (i!= s.length()) {
-					++cnt;
-					for(; s.charAt(i)!= '\t'&& i< s.length(); ++i);	// 4th sep
-					if (i!= s.length())
-						++cnt; 
-				}
-				String name= null;
-				if (cnt>= 3&& i!= nameStart)
-					name= s.substring(nameStart,i);
-				
-				if (pairedEnd) {
-					if (name!= null) {
-						int flag= 0;
-						if ((flag= FMRD.getPE(name))!= 0) {
-							++nrMappingsValid;
-							if (flag== 1)
-								++nrMappingsP1;
-							else if (flag== 2)
-								++nrMappingsP2;
-						}
-						if (i!= s.length())
-							++cnt;
-					}
-				} else {
-					if (i!= s.length())
-						++nrMappingsValid;
-				}
-				if (cnt>= 3&& i!= nameStart) {
-					writer.write(name);
-					writer.write("\n");
-				}
-*/				
-				// get length
-				int nowC= cnt;
-				for (; i < s.length()&& cnt< (10- nowC); i++) {	// 11 field bsize
-					if (s.charAt(i)== '\t')
-							++cnt;
-				}
-				if (cnt== 10) {
-					cnt= 0;	// sum
-					while(true) {
-						int last= i;
-						for (; i < s.length()&& s.charAt(i)!= ','&& s.charAt(i)!= '\t'; ++i);
-						cnt+= Integer.parseInt(s.substring(last, i));
-						if (s.charAt(i)== '\t')
-							break;
-						else
-							++i;
-					}
-				} else {
-					i= 0; cnt= 0;
-					int last= 0, start= 0;
-					for (; cnt< 3&& i < s.length(); i++) {
-						if (s.charAt(i)== '\t') {
-							++cnt;
-							if (cnt== 2)
-								start= Integer.parseInt(s.substring(last, i));
-							else if (cnt== 3) {
-								cnt= Integer.parseInt(s.substring(last, i))- start;
-								break;
-							}
-							last= i+1;
-						}
-					}
-				}
-				if (cnt< lenMinMax[0])
-					lenMinMax[0]= cnt;
-				if (cnt> lenMinMax[1])
-					lenMinMax[1]= cnt;
-			}
-			buffy.close();
-			writer.flush();
-			writer.close();
-            Log.progressFinish();
-		} catch (Exception e) {
-            Log.progressFailed("ERROR");
-            Log.error("Error : " + e.getMessage(), e);
-			return false;
-		}
-				
-
-        Log.message("\ttook "+((System.currentTimeMillis()- t0)/ 1000)+" sec");
-        Log.message("\tfound "+nrReadsAll+" lines");
-        Log.message("\treadlength min "+lenMinMax[0]+", max "+ lenMinMax[1]+"\n");
-
-		readLenMin= lenMinMax[0];
-		
-		return true;
-	}
-
 	private void printStats(PrintStream p, String[] args) {
 		p.println("\n[HEHO] We are set, so let's go!");
 		p.print("\tcmd\t"+FluxCapacitorConstants.CLI_CMD);
@@ -1732,7 +1614,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			//if (Constants.globalPfx!= null)
 				//p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
 			p.print("\tQuantification File\t");
-			if (settings.get(FluxCapacitorSettings.STDOUT_FILE)== null)
+			if (fileOut== null)
 				p.println("stdout");
 			else {
 				p.println(settings.get(FluxCapacitorSettings.STDOUT_FILE).getCanonicalPath());
@@ -1861,38 +1743,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 				; // :)
 			}
 		}
-	}
-	
-	public boolean setFileReads(String path) {
-		File f= new File(path);
-		if (f.exists()&& !f.isDirectory()) {
-			fileBED= f;
-			return true;
-		}
-		return false;
-	}
-	
-	public boolean setFileReference(String path) {
-		File f= new File(path);
-		if (f.exists()&& !f.isDirectory()) {
-			fileGTF= f;
-			return true;
-		}
-		return false;
-	}
-	
-	public void setForce() {
-		force= true;
-	}
-	
-	public boolean setNameOutDir(String path) {
-		File f= new File(path);
-		if (f.exists()&& f.isDirectory()&& f.canWrite()) {
-			fileOutDir= f;
-			return true;
-		}
-		return false;
-
 	}
 	
 	static boolean doInstall= false;
@@ -2274,9 +2124,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 			System.err.println("\n[FINISHING] closing file handles and cleaning up");
 		
 		// remove temp files: ref and reads
-		boolean b= getBedReader().close();
+		boolean b= bedWrapper.close();
 		//b= getFileBED().delete();	// TODO deactivated cleanup
-		b= getGTFreader().close();
+		b= gtfReader.close();
 		//b= getFileGTF().delete();
 		
 //		if (fileOut!= null)
@@ -2455,6 +2305,21 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return base;
 	}
 	
+	
+	private void fileStats(AnnotationWrapper wrapper) {
+
+		Log.info(Constants.TAB+ wrapper.getNrGenes()+ " loci, "
+				+ wrapper.getNrTranscripts()+ " transcripts, "
+				+ wrapper.getNrExons()+ " exons.");
+	}
+
+
+	
+	/**
+	 * @deprecated 
+	 * @see fileInit(File, AbstractFileIOWrapper)
+	 * @return
+	 */
 	public boolean fileInitReference() {
 		
 		isReadyGTF= false;
@@ -2536,9 +2401,15 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	int nrBEDreads= -1, nrBEDmappings= -1;
 	private int checkBEDscanMappings= 0;
+	/**
+	 * @deprecated 
+	 * @see fileInit(File, AbstractFileIOWrapper)
+	 * @return
+	 */
 	public boolean fileInitBED() {
 
 		isReadyBED= false;
+		File fileBEDoriginal= settings.get(FluxCapacitorSettings.MAPPING_FILE);
 		
 		// check compression
 		byte compressionBED= FileHelper.getCompression(fileBEDoriginal);
@@ -2567,12 +2438,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 			isSortedBED= true;
 		} else {  
 			
-			if (getBedReader().isApplicable()) 
+			if (bedWrapper.isApplicable()) 
 				isSortedBED= true;
 			else {
 				isSortedBED= false;
 				File tmp= create(fileBED.getParentFile(), fileBED.getName()); 
-				getBedReader().sortBED(fileBED);
+				bedWrapper.sortBED(fileBED);
 				if (tmp== null)
 					return false;
 				//getFileBED().delete();
@@ -2605,7 +2476,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 				System.err.println("solexa");
 		}
 */
-		if(!getBedReader().checkReadDescriptor(descriptor))
+		if(!bedWrapper.checkReadDescriptor(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
 			return false;
 		
 		if (cheatDisableFCheck) {
@@ -2615,14 +2486,14 @@ public class FluxCapacitor implements ReadStatCalculator {
 			nrBEDmappings= 100000000;
 		} else {
 			getBedReader().scanFile();	
-			checkBEDscanMappings= getBedReader().getCountAll();
+			checkBEDscanMappings= getBedReader().getCountMappings();
 			nrBEDreads= getBedReader().getCountReads();
-			nrBEDmappings= getBedReader().getCountAll();
+			nrBEDmappings= getBedReader().getCountMappings();
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t"+ nrBEDreads+ " reads, "+ nrBEDmappings
-						+ " mappings: R-factor "+(getBedReader().getCountAll()/ (float) getBedReader().getCountReads()));
-				System.err.println("\t"+ getBedReader().getCountEntire()+ " entire, "+ getBedReader().getCountSplit()
-						+ " split mappings ("+ (getBedReader().getCountSplit()* 10f/ getBedReader().getCountAll())+ "%)");
+						+ " mappings: R-factor "+(getBedReader().getCountMappings()/ (float) getBedReader().getCountReads()));
+				System.err.println("\t"+ getBedReader().getCountContinuousMappings()+ " entire, "+ getBedReader().getCountSplitMappings()
+						+ " split mappings ("+ (getBedReader().getCountSplitMappings()* 10f/ getBedReader().getCountMappings())+ "%)");
 			}
 		}
 		
@@ -2706,76 +2577,68 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	public void run() {
 		
-		if (settings.get(FluxCapacitorSettings.STDOUT_FILE).exists()) {
-			 if (!CommandLine.confirm("[CAUTION] I overwrite the output file " + 
+		Log.setLogLevel(Level.INFO);
+		
+		// prepare output files
+		if (settings.get(FluxCapacitorSettings.STDOUT_FILE)!= null) {
+			File f= settings.get(FluxCapacitorSettings.STDOUT_FILE);
+			if (f.exists()&& !CommandLine.confirm(
+				     "[CAUTION] I overwrite the output file " + 
 					 settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() + 
-					 ", please confirm:\n\t(Yes,No,Don't know)")) {
-                exit(-1);
-            }
-		}		
-
-		if (!fileInit())
-			System.exit(-1);
-	
-		long t0= System.currentTimeMillis();
-		
-		//createBins(profileNr);		
-		
-		if (pairedEnd)
-			isizeV= new BinVector();
-		
-		
-		profileStub= null;
-/*		new int[BIN_LEN.length+ 1][];
-		for (int i = 0; i < profileStub.length; i++) {
-			//profileStub[i]= new int[i< BIN_LEN.length?BIN_LEN[i]:10000];
-			profileStub[i]= new int[20];
-		}
-*/		
-/*		if (strand== STRAND_ENABLED) {
-			profileStubRev= new int[BIN_LEN.length+ 1][];
-			for (int i = 0; i < profileStub.length; i++) {
-				//profileStubRev[i]= new int[i< BIN_LEN.length?BIN_LEN[i]:10000];
-				profileStubRev[i]= new int[20];
+			 		", please confirm:\n\t(Yes,No,Don't know)")) {
+				exit(-1);
 			}
+			if ((!f.getParentFile().exists())|| (!f.getParentFile().canWrite())) {
+				Log.error("Cannot write to output folder "+ f.getParent());
+				exit(-1);
+			}
+			
+			//Log.outputStream= new FileOutputStream(f);
+			fileOut= f; // TODO replace by the line above
 		}
-*/		
+
+		// prepare input files
+		AbstractFileIOWrapper wrapperAnnotation;
+		AbstractFileIOWrapper wrapperMappings;
+		if (cheatDisableFCheck) {
+			Log.warn("Development run, file check disabled !!!");
+			wrapperAnnotation= getWrapper(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
+			wrapperMappings= getWrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE));
+		} else {
+			wrapperAnnotation=
+				fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
+			fileStats((AnnotationWrapper) wrapperAnnotation);
+			
+			wrapperMappings= 
+				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
+			fileStats((MappingWrapper) wrapperMappings);
+
+		}
+		
+
+		// TODO parameters
+		pairedEnd= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
+				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
+		stranded= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
+				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
+		
+		// run
+		long t0= System.currentTimeMillis();
 		
 		// profiling
 		profile= getProfile();
 		if (profile== null) {
 			exit(-1);
 		}
-			
 		
-//		System.exit(0);
-		
-//		if (map)
-//			func.finish();
-		
-//		try {
-//			testWriter= new BufferedWriter(new FileWriter("P:\\rgasp1.3\\HepG2_new\\test.bed"));
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-		
-		
+		// reconstruction
 		explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
-		
-//		try {
-//			testWriter.flush();
-//			testWriter.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-		
+
 		
 		fileFinish();
 		
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			System.err.println("\n[TICTAC] I finished flux in "
-					+((System.currentTimeMillis()- t0)/ 1000)+" sec.\nCheers!");
-		}
+		Log.info("\n[TICTAC] I finished flux in "
+				+((System.currentTimeMillis()- t0)/ 1000)+" sec.\nCheers!");
 		
 		//System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
 	}
@@ -3071,13 +2934,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	public String getCompositeFName() {
-		if (fileGTF== null|| fileBED== null)
-			return null;
-		File f= fileGTF, g= fileBED;
-		if (fileGTForiginal!= null)
-			f= fileGTForiginal;
-		if (fileBED!= null)
-			g= fileBED;		
+		File f= settings.get(FluxCapacitorSettings.ANNOTATION_FILE), 
+			g= settings.get(FluxCapacitorSettings.MAPPING_FILE);
 		return MyFile.stripExtension(f.getName())+ "__"
 					+ MyFile.stripExtension(g.getName());
 	}
@@ -3540,10 +3398,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		nrMappingsP2= 0; 	
 
 	
-	boolean 
-		map= false, 
-		decompose= false, 
-		uniform= true;
+	boolean uniform= false;
 	long nrReadsAll= 0;
 	double costModelPar= Double.NaN;
 	float[] costBounds= new float[] {0.95f, Float.NaN};	// how much of the original observation can be subs/add
@@ -3930,9 +3785,31 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	private GTFwrapper gtfReader;
+	private AbstractFileIOWrapper getWrapperGTF(File inputFile) {
+		
+		gtfReader= new GTFwrapper(settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getAbsolutePath());
+		gtfReader.setNoIDs(null);
+		gtfReader.setReadGene(true);
+		gtfReader.setReadFeatures(new String[] {"exon","CDS"});
+		gtfReader.setReadAheadTranscripts(1);	// only one locus a time
+//		gtfReader.setReadAheadTranscripts(-1);
+//		gtfReader.setReadAll(true);
+		gtfReader.setGeneWise(true);
+		gtfReader.setPrintStatistics(false);
+		gtfReader.setReuse(true);
+		Transcript.removeGaps= false;
+		
+		return gtfReader;
+	}
+
+
+	/**
+	 * @deprecated
+	 * @return
+	 */
 	public GTFwrapper getGTFreader() {
 		if (gtfReader == null) {
-			gtfReader= new GTFwrapper(fileGTF.getAbsolutePath());
+			gtfReader= new GTFwrapper(settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getAbsolutePath());
 //			if (gtfFirstTime&& (!cheatDisableFCheck)) {
 ////				System.err.println("[MICHA] Reactivate the sorting filecheck for the gtf.");
 //				if (gtfReader.isApplicable()) 
@@ -3966,9 +3843,20 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 
 	private BEDwrapper bedWrapper; 
+	private AbstractFileIOWrapper getWrapperBED(File inputFile) {
+		bedWrapper= new BEDwrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
+
+		return bedWrapper;
+	}
+
+
+	/**
+	 * @deprecated
+	 * @return
+	 */
 	public BEDwrapper getBedReader() {
 		if (bedWrapper == null) {
-			bedWrapper= new BEDwrapper(fileBED.getAbsolutePath());
+			bedWrapper= new BEDwrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
 		}
 
 		return bedWrapper;
@@ -4050,7 +3938,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		try {
 			if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
 				// memory
-				BEDobject2[] beds= getBedReader().read(gene.getChromosome(), from, to);
+				BEDobject2[] beds= bedWrapper.read(gene.getChromosome(), from, to);
 				if (beds== null)
 					return null;
 				Arrays.sort(beds, getDescriptorComparator());
@@ -4061,12 +3949,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 				// read, maintain main thread			
 				PipedInputStream  pin= new PipedInputStream();
 		        PipedOutputStream pout= new PipedOutputStream(pin);
-				Comparator<CharSequence> c= new BEDDescriptorComparator(descriptor);
+				Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
 				BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, false, c,  
 						gene.getChromosome()+ ":"+ from+ "-"+ to);
 				biter.init();
 				iter= biter;
-				long count= getBedReader().read(pout, gene.getChromosome(), from, to);
+				long count= bedWrapper.read(pout, gene.getChromosome(), from, to);
 				pout.flush();
 				pout.close();
 				if (count== 0)
@@ -4087,12 +3975,20 @@ public class FluxCapacitor implements ReadStatCalculator {
 	BEDDescriptorComparator comp= null;
 	private Comparator<? super BEDobject2> getDescriptorComparator() {
 		if (comp == null) {
-			comp = new BEDDescriptorComparator(descriptor);
+			comp = new BEDDescriptorComparator(
+					settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
 		}
 
 		return comp;
 	}
 
+	/**
+	 * @deprecated
+	 * @param gene
+	 * @param handler
+	 * @param ostream
+	 * @return
+	 */
 	private int splitBedFile(Gene gene, SyncIOHandler2 handler, OutputStream ostream) {
 		
 		int start= gene.getStart();
@@ -4537,6 +4433,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return nrReadsSingleLociMapped;
 	}
 
+	/**
+	 * @deprecated 
+	 * @see fileInit(File, AbstractFileIOWrapper)
+	 * @return
+	 */
 	boolean fileInit() {
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 				System.err.println("\n[INITING] preparing input/output files");
@@ -4567,6 +4468,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 			return true;
 		}
 
+	/**
+	 * @deprecated 
+	 * @see fileInit(File, AbstractFileIOWrapper)
+	 * @return
+	 */
 	private boolean fileInitLocalOutput() {
 		
 		if (fileOut!= null) {
@@ -4577,14 +4483,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		}
 			
 		return true;
-	}
-
-	public File getFileBED() {
-		return fileBED;
-	}
-
-	public File getFileGTF() {
-		return fileGTF;
 	}
 
 	/**
@@ -4708,8 +4606,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 				else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
 					gtfReader.setKeepOriginalLines(true);
 				
-				getGTFreader().read();
-				Gene[] gene= null, geneNext= getGTFreader().getGenes();
+				gtfReader.read();
+				Gene[] gene= null, geneNext= gtfReader.getGenes();
 				
 				long tlast= System.currentTimeMillis();
 				boolean output= false;
@@ -4732,7 +4630,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					if ((gene= geneNext)== null)
 						break;
 					if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-						origLines= (Vector<String>) getGTFreader().getVLines().clone();	// TODO make array, trim..
+						origLines= (Vector<String>) gtfReader.getVLines().clone();	// TODO make array, trim..
 					
 					// http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
 					if (readerThread== null)
@@ -4745,7 +4643,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	//					} catch (InterruptedException e) {
 	//						; // :)
 	//					}
-					geneNext= getGTFreader().getGenes();
+					geneNext= gtfReader.getGenes();
 	
 					for (int i = 0; (gene!= null)&& i < gene.length; i++) {
 						
@@ -4767,7 +4665,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 								readObjects= 0;	
 								leftover= null;
 								// jump back
-								getBedReader().reset(gene[i].getChromosome());
+								bedWrapper.reset(gene[i].getChromosome());
 								lastStr= gene[i].getStrand();
 								lastEnd= -1;
 							}
@@ -4934,7 +4832,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					
 				}	// end iterate GTF
 				
-				getBedReader().finish();
+				bedWrapper.finish();
 				
 				while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
 					try {
@@ -4943,11 +4841,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 						; //:)
 					}
 	            Log.progressFinish(StringUtils.OK, true);
-				if (checkGTFscanExons> 0&& checkGTFscanExons!= getGTFreader().getNrExons())
-					System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ getGTFreader().getNrExons());
-				checkGTFscanExons= getGTFreader().getNrExons(); 
-				if (checkBEDscanMappings> 0&& checkBEDscanMappings!= getBedReader().getNrLines())
-					System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ getBedReader().getNrLines());
+				if (checkGTFscanExons> 0&& checkGTFscanExons!= gtfReader.getNrExons())
+					System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ gtfReader.getNrExons());
+				checkGTFscanExons= gtfReader.getNrExons(); 
+				if (checkBEDscanMappings> 0&& checkBEDscanMappings!= bedWrapper.getNrLines())
+					System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ bedWrapper.getNrLines());
 				//checkBEDscanMappings= getBedReader().getNrLines();
 				if (mode== FluxCapacitorConstants.MODE_LEARN) {
 	
@@ -4962,7 +4860,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 						//System.err.println(" OK.");
 						System.err.println("\tfirst round finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
 								+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
-								+ getBedReader().getNrLines()+ " mappings in file\n\t"
+								+ bedWrapper.getNrLines()+ " mappings in file\n\t"
 								+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
 								+ nrReadsSingleLociMapped+" mappings map to annotation\n\t"
 								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
@@ -4994,7 +4892,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 						System.err.println();
 						System.err.println("\treconstruction finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
-								+ getBedReader().getNrLines()+" mappings read from file\n\t"
+								+ bedWrapper.getNrLines()+" mappings read from file\n\t"
 								// no info, reads in redundantly many reads
 								//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
 								+ nrReadsMapped+ " mapping"+ (pairedEnd?" pairs":"s") +" map to annotation\n"
@@ -5045,65 +4943,102 @@ public class FluxCapacitor implements ReadStatCalculator {
 		}
 	}
 	
-	public File fileInit(File inputFile, AbstractFileIOWrapper wrapper) {
-		
-		// check whether sorted
-		boolean sort= false;
-		try {
-			InputStream iStream= FileHelper.openFile(inputFile);
-			if (!wrapper.isApplicable())
-				sort= true;
-			iStream.close();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		
-		// check whether new file is to be written
-		byte compression= FileHelper.getCompression(inputFile);
-		if (sort|| compression!= FileHelper.COMPRESSION_NONE) {
-			String fname= (sort?FileHelper.append(inputFile.getName(), "_sorted"):
-				FileHelper.append(inputFile.getName(),"",true,""));
-			File newFile= create(inputFile.getParentFile(), fname);
-			
-			// do it
-			try {
-				InputStream iStream= FileHelper.openFile(inputFile);
-				OutputStream oStream= new FileOutputStream(newFile);
-				if (sort) {
-					PipedInputStream pin= new PipedInputStream();
-					PipedOutputStream pout= new PipedOutputStream();
-					Copier c1= new Copier(iStream, pout);
-					c1.call();
-					
-				} else {
+	/**
+	 * Checks whether file is to be uncompressed and/or sorted.
+	 * 
+	 * @param inputFile
+	 * @param wrapper
+	 * @return
+	 */
+	public AbstractFileIOWrapper fileInit(File inputFile) {
+
+		// (1) unpack, if compressed
+		byte cb= FileHelper.getCompression(inputFile);
+		if (cb!= FileHelper.COMPRESSION_NONE) {
+			File f= new File(FileHelper.stripExtension(inputFile.getAbsolutePath()));
+			if (f.exists()) {
+				Log.println("Assuming file "+ f.getName()+" is a decompressed version of "+ inputFile.getName());
+			} else {
+				f= checkWrite(f);
+				try {
+					FileHelper.deflate(inputFile, f, cb);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
 				}
-				iStream.close();
-				oStream.flush();
-				oStream.close();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+				f.deleteOnExit();	// carefully, carefully, carefully
 			}
-			return newFile;
-		} else
-			return inputFile;
-		
-		// scan file
-/*		if (cheatDisableFCheck) {
-			System.err.println("\tTEST GTF scan disabled !!!");
-			getGTFreader();
-		} else {
-			gtfReader= null;	// reinit
-			getGTFreader().scanFile();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println(Constants.TAB+ getGTFreader().getNrGenes()+ " loci, "
-						+ getGTFreader().getNrTranscripts()+ " transcripts, "
-						+ getGTFreader().getNrExons()+ " exons.");
-			}
+			inputFile= f;
 		}
-		isReadyGTF= true;
+		
+		// (2) sort, if needed
+		AbstractFileIOWrapper wrapper= getWrapper(inputFile);
+		if (!wrapper.isApplicable()) {
+			File f= FileHelper.getSortedFile(inputFile);
+			if (f.exists()) {
+				Log.println("Assuming file "+ f.getName()+" is a sorted version of "+ inputFile.getName());
+			} else {
+				f= checkWrite(f);
+				wrapper.sort(f);
+				if (cb!= FileHelper.COMPRESSION_NONE)
+					inputFile.delete();	// carefully, carefully, carefully
+				if (!settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES))
+					inputFile.deleteOnExit();
+			}
+			inputFile= f;
+			wrapper= getWrapper(inputFile);
+		}
+		
+		// (3) scan
+		wrapper.scanFile();
+		if(wrapper.getNrInvalidLines()> 0)
+			Log.warn("Skipped "+ wrapper.getNrInvalidLines()+ " lines.");
+
+		return wrapper;
+	}
 	
-		return targetFile;
-*/		
+	private void fileStats(MappingWrapper wrapper) {
+
+		checkBEDscanMappings= wrapper.getCountMappings();
+		nrBEDreads= wrapper.getCountReads();
+		nrBEDmappings= wrapper.getCountMappings();
+		
+		Log.info("\t"+ nrBEDreads+ " reads, "+ nrBEDmappings
+					+ " mappings: R-factor "+(wrapper.getCountMappings()/ (float) wrapper.getCountReads()));
+		Log.info("\t"+ wrapper.getCountContinuousMappings()+ " entire, "+ wrapper.getCountSplitMappings()
+					+ " split mappings ("+ (wrapper.getCountSplitMappings()* 10f/ wrapper.getCountMappings())+ "%)");
+	}
+
+	private File checkWrite(File f) {
+		if (!f.canWrite()) {
+			Log.warn("Check permissions, cannot write decompressed file "+ f.getAbsolutePath());
+			f= new File(settings.get(FluxCapacitorSettings.TMP_DIR)+ File.separator+ f.getName());
+			Log.warn("Writing decompressed file to "+ f.getAbsolutePath());
+		}
+		return f;
+	}
+
+	private AbstractFileIOWrapper getWrapper(File inputFile) {
+		
+		String ext= FileHelper.getExtension(inputFile).toUpperCase();
+		SupportedFormatExtensions sup= null;
+		try {
+			sup= SupportedFormatExtensions.valueOf(ext);
+		} catch (Exception e) {
+			throw new RuntimeException("Unsupported file format "+ ext);
+		}
+		
+		
+		switch (sup) {
+		case GTF:
+		case GFF:
+			return getWrapperGTF(inputFile);
+
+		case BED:
+			return getWrapperBED(inputFile);
+			
+		}
+		
+		return null;	// make compiler happy
 	}
 
 }

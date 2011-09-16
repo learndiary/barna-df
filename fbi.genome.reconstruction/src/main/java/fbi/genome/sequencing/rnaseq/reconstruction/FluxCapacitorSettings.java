@@ -22,6 +22,63 @@ import fbi.genome.model.constants.Constants;
  */
 public class FluxCapacitorSettings extends ParameterSchema {
 
+	 protected static class UniversalReadDescriptorParameter extends Parameter<UniversalReadDescriptor> {
+		 	ParameterException parseException;
+			UniversalReadDescriptor descriptor;
+			
+			public UniversalReadDescriptorParameter() {
+				super("READ_DESCRIPTOR",
+					  " provides an expression how to parse the read IDs, or shorthand name ("
+						+ StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',')+ ")",
+					  null,
+					  UniversalReadDescriptor.class,
+					  null);
+			}
+			
+			public UniversalReadDescriptorParameter(UniversalReadDescriptorParameter anotherURDP) {
+				super(anotherURDP);
+				this.parseException= anotherURDP.parseException;
+				this.descriptor= anotherURDP.descriptor;
+			}
+			 
+			protected void set(UniversalReadDescriptor value) {
+				descriptor= value;
+			}
+			
+			protected void parse(String value) throws ParameterException {
+				
+				descriptor= new UniversalReadDescriptor();
+				
+				try {
+					descriptor.init(value);
+				} catch (RuntimeException e) {
+					parseException= new ParameterException(
+						this, value, e
+					);
+					throw parseException;
+				}
+				
+			}
+			
+			protected void validate(ParameterSchema schema)
+					throws ParameterException {
+				if (parseException!= null)
+					throw parseException;
+			}
+
+			protected UniversalReadDescriptor get() {
+				return descriptor;
+			}
+			
+			public Parameter copy() {
+				UniversalReadDescriptorParameter clone= 
+					new UniversalReadDescriptorParameter(this);  
+				
+				return clone;
+			}
+	 }
+	
+	
 	 /**
 	  * 
 	  * @author Micha Sammeth (gmicha@gmail.com)
@@ -34,51 +91,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 /**
 	  * Descriptor with parsing info for the read IDs.
 	  */
-	 public static final Parameter<UniversalReadDescriptor> READ_DESCRIPTOR = new Parameter<UniversalReadDescriptor>(
-			 "READ_DESCRIPTOR",
-			 " provides an expression how to parse the read IDs, or shorthand name ("
-			 	+ StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',')+ ")",
-			 null,
-			 UniversalReadDescriptor.class,
-			 null) {
-		
-		ParameterException parseException;
-		UniversalReadDescriptor descriptor;
-		 
-		protected void set(UniversalReadDescriptor value) {
-			descriptor= value;
-		}
-		
-		protected void parse(String value) throws ParameterException {
-			
-			descriptor= new UniversalReadDescriptor();
-			
-			try {
-				descriptor.init(value);
-			} catch (RuntimeException e) {
-				parseException= new ParameterException(
-					this, value, e
-				);
-				throw parseException;
-			}
-			
-		}
-		
-		protected void validate(ParameterSchema schema)
-				throws ParameterException {
-			if (parseException!= null)
-				throw parseException;
-		}
-
-		protected UniversalReadDescriptor get() {
-			return descriptor;
-		}
-		
-		public Parameter copy() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	};
+	 public static final Parameter<UniversalReadDescriptor> READ_DESCRIPTOR =
+		 	new UniversalReadDescriptorParameter();
 		 
 
 	 /**
@@ -165,6 +179,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
+                if (file== null)
+                	return;
                 if (!file.getParentFile().exists()) {
                     throw new ParameterException("Folder for log file " + file.getAbsolutePath() 
                     		+ " could not be found!");
