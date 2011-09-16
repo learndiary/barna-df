@@ -23,10 +23,14 @@ import java.io.PrintStream;
 public class Log {
 	
 	/**
-	 * Default log stream to which output is written.
+	 * Default stream to which logged messages are written.
 	 */
 	public static PrintStream logStream= System.err;
 	
+	/**
+	 * Default stream to which output is written.
+	 */
+	public static PrintStream outputStream= System.out;	
 
 	/**
      * Log levels
@@ -237,7 +241,7 @@ public class Log {
      * @param message the message
      */
     public static void println(String message) {
-        System.out.println(message);
+        outputStream.println(message);
     }
 
     /**
@@ -246,7 +250,7 @@ public class Log {
      * @param message the message
      */
     public static void print(String message) {
-        System.out.print(message);
+    	outputStream.print(message);
     }
 
 
