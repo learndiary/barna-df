@@ -45,6 +45,7 @@ import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.io.AbstractFileIOWrapper;
+import fbi.genome.io.AnnotationWrapper;
 import fbi.genome.io.FileHelper;
 import fbi.genome.io.Sorter;
 import fbi.genome.model.AbstractRegion;
@@ -76,7 +77,7 @@ import fbi.genome.model.gff.GFFObject;
  * @author micha
  *
  */
-public class GTFwrapper extends AbstractFileIOWrapper {
+public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapper {
 
     /**
      * Line splitter pattern
@@ -87,7 +88,6 @@ public class GTFwrapper extends AbstractFileIOWrapper {
      */
     static final Pattern TRANSCRIPTID_PATTERN = Pattern.compile(GFFObject.TRANSCRIPT_ID_TAG);
 
-    
     /**
      * Helper to compare entries based on their global position
      */
@@ -663,8 +663,6 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 		txPerLocus= new IntVector();
 		txLengths= new IntVector();
 
-
-
 		try {
 			read();
 			int chkGeneCnt= 0, chkTxCnt= 0, chkExonCnt= 0;
@@ -680,7 +678,7 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 				}
 				read();
 			}
-			System.err.println("[CHECK] read "+chkGeneCnt+" genes, "+chkTxCnt+" tx, "+chkExonCnt+" exons.");
+			//System.err.println("[CHECK] read "+chkGeneCnt+" genes, "+chkTxCnt+" tx, "+chkExonCnt+" exons.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -970,10 +968,7 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 			System.err.println("\nRead:\t" + readChrs + " chromosomes, "
 					+ readGenes + " genes, " + readTranscripts + " transcripts, "
 					+ readExons + " exons.");
-			System.err.println("Skip:\t" + skippedChr.size() + " chromosomes, "
-					+ skippedTranscripts.size() + " transcripts, "
-					+ skippedFeatures.size() + " features, " + skippedObjects
-					+ " objects.");
+			System.err.println("Skipped:\t" + skippedObjects+ " lines.");
 			System.err.print("Chromosomes:\t");
 			for (int i = 0; i < skippedChr.size(); i++)
 				System.err.print(skippedChr.elementAt(i) + " ");
@@ -1226,14 +1221,20 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 	}
 	
 	boolean readAll= false;
+	boolean warnFirstSkip= true;
 	public void read() {
 
 		BufferedReader buffy = getBuffy();
 		if (buffy== null)
 			return;
 		
+		if (bytesRead== 0) {
+			skippedObjects= 0;
+			warnFirstSkip= true;
+		}
+		
 		clustered = false;
-
+		
 		Vector gtfV = null;
 		if (readGTF)
 			gtfV = new Vector();
@@ -1297,8 +1298,10 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 				GFFObject obj= readBuildObject(line);
 				if (!checkObject(obj)) {	// object based criteria
 					++skippedObjects;
-					Log.warn("skipped line "+ obj);
-					
+					if (warnFirstSkip) {
+						Log.warn("skipped line "+ obj);
+						warnFirstSkip= false;
+					}
 					if (trpt!= null && geneWise
 							&& ((readAheadLimit> 0&& cnt== (readAheadLimit+1))|| (readAheadTranscripts> 0&& cntTrpt>= readAheadTranscripts))) {
 							// NO: wait for end of LOCUS !!! -> no overlap
@@ -1333,7 +1336,11 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 					//++readChrs;
 					if (lastChrID != null) { 						
 						if (!checkChromosome(chrID)) {
-							Log.warn("skipped chromosome "+ chrID);
+							++skippedObjects;
+							if (warnFirstSkip) {
+								Log.warn("skipped chromosome "+ chrID);
+								warnFirstSkip= false;
+							}
 							getReadChr().add(lastChrID);
 							ArrayUtils.addUnique(getSkippedChr(), chrID);
 							buffy= skipToNextChromosome(buffy, size, chrID);
@@ -2051,10 +2058,10 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
-	public long isApplicable(File inputFile, boolean clusterGenes) {
+	protected long isApplicable(File inputFile, boolean clusterGenes) {
 		try {
 			FileInputStream fis= new FileInputStream(inputFile);
-			long linesOK= isApplicable(fis, clusterGenes, FileHelper.getSize(inputFile));
+			long linesOK= isApplicable(fis, FileHelper.getSize(inputFile));
 			fis.close();
 			return linesOK;
 		} catch (Exception e) {
@@ -2071,7 +2078,7 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
-	public long isApplicable(InputStream inputStream, boolean clusterGenes, long size) {
+	protected long isApplicable(InputStream inputStream, long size) {
 		
 		long bytesRead = 0l;
 		BufferedReader buffy = new BufferedReader(new InputStreamReader(inputStream));
@@ -2572,6 +2579,11 @@ public class GTFwrapper extends AbstractFileIOWrapper {
 
 	public int getNrLinesRead() {
 		return nrLinesRead;
+	}
+
+	@Override
+	public int getNrInvalidLines() {
+		return skippedObjects;
 	}
 
 }

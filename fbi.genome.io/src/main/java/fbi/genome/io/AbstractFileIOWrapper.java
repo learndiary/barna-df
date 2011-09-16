@@ -21,7 +21,7 @@ import java.io.File;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public abstract class AbstractFileIOWrapper implements IOWrapper {
+public abstract class AbstractFileIOWrapper extends AbstractIOWrapper {
 	
 	/**
 	 * The file from which all data is read
@@ -113,4 +113,20 @@ public abstract class AbstractFileIOWrapper implements IOWrapper {
 	public long getBytesRead() {
 		return bytesRead;
 	}
+	
+	/**
+	 * Scans the underlying file and reads corresponding 
+	 * statistics.
+	 */
+	public abstract void scanFile();
+	
+	/**
+	 * Reports the number of invalid lines in the file encountered
+	 * from the file start to the current point by calls to 
+	 * the <code>read()</code> or <code>scanFile()</code> methods.
+	 * @see read, scanFile
+	 * @return the number of lines that have been rejected
+	 * so far while reading through the file.
+	 */
+	public abstract int getNrInvalidLines();
 }

@@ -41,6 +41,7 @@ import fbi.commons.tools.Interceptable;
 import fbi.genome.io.AbstractFileIOWrapper;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.FileHelper;
+import fbi.genome.io.MappingWrapper;
 import fbi.genome.io.Sorter;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
 import fbi.genome.io.rna.FMRD;
@@ -51,7 +52,7 @@ import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.constants.Constants;
 
-public class BEDwrapper extends AbstractFileIOWrapper {
+public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper {
 
 	static void test() {
 		System.out.println(((byte) -1)| (byte) 1);
@@ -429,11 +430,11 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	int countEntire;
 	int countSplit;
 	int countReads;
-	public boolean checkReadDescriptor(UniversalReadDescriptor descriptor2) {
-		
-		ReadDescriptor descriptor= null;
+	public boolean checkReadDescriptor(UniversalReadDescriptor descriptor) {
+
+		BufferedReader buffy= null;
 		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
+			buffy= new BufferedReader(new FileReader(getInputFile()));
 			
 			String s;
 			while (((s= buffy.readLine())!= null)&&
@@ -442,8 +443,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					|| s.startsWith(BROWSER)
 					|| s.startsWith(TRACK)));
 					
-			buffy.close();
-			
 			if (s== null)
 				return false;
 		
@@ -452,22 +451,33 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				return false;
 			
 			// check descriptor
-			if (descriptor2.getAttributes(ss[3], null)== null) {
+			if (descriptor.getAttributes(ss[3], null)== null) {
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[OHNO] Read descriptor "+descriptor2+" not applicable for read ID\n\t"+ 
+					System.err.println("[OHNO] Read descriptor "+descriptor+" not applicable for read ID\n\t"+ 
 							ss[3]);
 				return false;
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if (buffy!= null) 
+				try {
+					buffy.close();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
 		}
 			
 		return true;
 	}
 	
 	private int scanFileReadLines= 0;
-	public boolean scanFile() {
+	public void scanFile() {
+		
+		warnFirstSkip= true;
+		skippedLines= 0;
+		
         BufferedReader buffy = null;
         BufferedWriter tmpWriter = null;
         PipedInputStream in = null;
@@ -503,10 +513,16 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			for(String s; (s= buffy.readLine())!= null;bRead+= s.length()+ sepLen) {
                 if(!s.isEmpty())++countAll;
 				++nrUniqueLinesRead;
-				if (s.startsWith(BROWSER)|| s.startsWith(TRACK))
+				if (s.startsWith(BROWSER)|| s.startsWith(TRACK)) {
+					++skippedLines;
+					if (warnFirstSkip) {
+						Log.warn("Skipped control line: "+ cs.toString());
+						warnFirstSkip= false;
+					}
 					continue;
+				}
 				
-				// last col tells you whether it is a 
+				// last col tells you whether it is a split-mappings
 				int p= s.length();
 				while (p> 0&& Character.isWhitespace(s.charAt(--p))); // trailing ws
 				while (p> 0&& !Character.isWhitespace(s.charAt(--p)));
@@ -543,16 +559,20 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					String id= s.substring(from, to);
 					tmpWriter.write(id);
 					tmpWriter.write((int) '\n');
+				} else {
+					++skippedLines;
+					if (warnFirstSkip) {
+						Log.warn("Skipped too shortline: "+ s);
+						warnFirstSkip= false;
+					}
 				}
 			}
             tmpWriter.flush();
             tmpWriter.close();
             sorterFuture.get();
-			return true;
 			
 		} catch (Exception e) {
-            Log.error("Error while scanning BED file : " + e.getMessage(), e);
-			return false;
+			throw new RuntimeException(e);
 		}finally {
             if(buffy != null)try {buffy.close();} catch (IOException e) {}
             if(tmpWriter != null)try {tmpWriter.flush();tmpWriter.close();} catch (IOException e) {}
@@ -710,6 +730,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			readerC= null;
 			lastLine= null;
 		}
+		
 	}
 	
 	File baseFile;
@@ -721,15 +742,15 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		return nrUniqueLinesRead;
 	}
 
-	public int getCountAll() {
+	public int getCountMappings() {
 		return countAll;
 	}
 
-	public int getCountEntire() {
+	public int getCountContinuousMappings() {
 		return countEntire;
 	}
 
-	public int getCountSplit() {
+	public int getCountSplitMappings() {
 		return countSplit;
 	}
 
@@ -1026,8 +1047,15 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		return read(chr, start, end, null, os);
 	}
 	
+	int skippedLines= 0;
+	boolean warnFirstSkip= true;
 	protected long read(String chr, int start, int end, Vector<BEDobject2> objV, OutputStream os) {
-				
+		
+				if (bytesRead== 0) {
+					warnFirstSkip= true;
+					skippedLines= 0;
+				}
+		
 				if (mapChr.containsKey(chr)) {
 					if (mapChr.get(chr)== null)
 						return 0;
@@ -1080,19 +1108,20 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							int toks= cs.countTokens();
 							if (identTok< 0)
 								identTok= toks;
-							else
-								if (identTok!= toks&& false) {	// can be now, we read reads and split reads
-									if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-										System.err.println("\t\n[OHLALA] line "+nrUniqueLinesRead+" has not "+identTok+" elements as the lines before!");
-										System.err.println("\t"+ cs.toString());
-										System.err.println("\tcheck file "+ getInputFile().getName());
-									}
-								}
+//							else
+//								if (identTok!= toks&& false) {	// can be now, we read reads and split reads
+//									if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+//										System.err.println("\t\n[OHLALA] line "+nrUniqueLinesRead+" has not "+identTok+" elements as the lines before!");
+//										System.err.println("\t"+ cs.toString());
+//										System.err.println("\tcheck file "+ getInputFile().getName());
+//									}
+//								}
 							if (toks< 3) {
-								if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-									System.err.println("\t\n[OHNOO] line "+nrUniqueLinesRead+" has less than 3 token, I am skipping.");
-									System.err.println("\t"+ cs.toString());
-									System.err.println("\tcheck file "+ getInputFile().getName());
+								++skippedLines;
+								if (warnFirstSkip) {
+									Log.warn("\t\n[OHNOO] line "+nrUniqueLinesRead+" has less than 3 token, I am skipping."
+											+ "\t"+ cs.toString()+ "\tcheck file "+ getInputFile().getName());
+									warnFirstSkip= false;
 								}
 								continue;
 							}
@@ -1144,12 +1173,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											bytesRead+= cs.length()+ lineSeparator.length();
 											++nrUniqueLinesRead;
 											chrToki= cs.getToken(0).toString();
-											try {
-												bedStart= BEDobject.encodeInt(cs.getToken(1));
-												bedEnd= BEDobject.encodeInt(cs.getToken(2));
-											} catch (Exception e) {
-												System.err.println("[ERROR] encodeint:\n"+ cs.toString());
-											}
+											bedStart= BEDobject.encodeInt(cs.getToken(1));
+											bedEnd= BEDobject.encodeInt(cs.getToken(2));
 										} else {
 											reset(tmpBytes, nrUniqueLinesRead-1);
 											return count;
@@ -1187,8 +1212,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						}
 		
 						//line= line.trim();
-						if (cs.startsWith("browser")|| cs.startsWith("track")|| cs.length()< 1)
+						if (cs.startsWith("browser")|| cs.startsWith("track")|| cs.length()< 1) {
+							++skippedLines;
+							if (warnFirstSkip) {
+								Log.warn("Skipped control line: "+ cs.toString());
+								warnFirstSkip= false;
+							}
 							continue;
+						}
 						
 						if (lastChrRead== null)
 							lastChrRead= chrToki;
@@ -1288,6 +1319,11 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		}
 			
 		return descriptor;
+	}
+
+	@Override
+	public int getNrInvalidLines() {		
+		return skippedLines;
 	}
 
 }

@@ -62,6 +62,21 @@ public class FileHelper {
      */
     public static File tempDirectory;
 
+    /**
+     * Default suffix for sorted files
+     */
+    static final String SUFFIX_SORTED= "_sorted";
+
+    /**
+     * Creates a handle that points to a file appending the default
+     * sorted suffix.
+     * 
+     * @param inputFile the unsorted file
+     * @return the sorted file
+     */
+    public static File getSortedFile(File inputFile) {
+    	return new File(append(inputFile.getAbsolutePath(), SUFFIX_SORTED, false, null));
+    }
     
     /**
      * Returns a stream for reading from the given file. 
@@ -1068,21 +1083,48 @@ public class FileHelper {
         return true;
     }
 
+    /**
+     * Appends a suffix to a file's name that may include the fully qualified
+     * path, preserving the file extension after the suffix
+     * @param s the original file's name or path 
+     * @param sfx the suffix to be appended to the file's name
+     * @return the file name with the suffix appended before file extension,
+     * eventually including a fully qualified path prefix from the input
+     */
     public static String append(String s, String sfx) {
         return append(s, sfx, false, null);
     }
 
-    public static String append(String s, String sfx, boolean stripSfx, String newSfx) {
-        if (newSfx == null) {
-            newSfx = getExtension(s);
+    /**
+     * Generic method to append a suffix to a file's name, possibly qualified by 
+     * the full path, and/or to modify or remove it's file name extension.
+     * @param s the file's name or absolute path
+     * @param sfx the suffix to be appended at the end of the file name, before
+     * the extension
+     * @param stripExt flag indicating whether the current extension is to be 
+     * removed
+     * @param newExt optional string describing a new file extension 
+     * @return
+     */
+    public static String append(String s, String sfx, boolean stripExt, String newExt) {
+        if (newExt != null) {
+            newExt = '.' + newExt;
         }
-        newSfx = '.' + newSfx;
         int p = s.lastIndexOf('.');
         String nuFname = (p >= 0) ?
-                s.substring(0, p) + sfx + (stripSfx ? "" : (newSfx == null ? "" : newSfx)) :
-                s + sfx + newSfx;
+                s.substring(0, p) + (sfx== null? "": sfx) + (stripExt ? "" : (newExt == null ? s.substring(p+ 1) : newExt)) :
+                s + (sfx== null? "": sfx) + (newExt== null? "" : newExt);
 
         return nuFname;
+    }
+    
+    /**
+     * Truncates the file extension at the end of the string, if any.
+     * @param s a string describing a file name or o path
+     * @return the file name or path without the file's extension
+     */
+    public static String stripExtension(String s) {
+    	return append(s, null, true, null);
     }
 
     /**
