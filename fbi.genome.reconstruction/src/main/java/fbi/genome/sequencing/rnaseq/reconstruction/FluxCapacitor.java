@@ -3438,7 +3438,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 						System.err.println("[FATAL] Error occured during scanning\n\t"+ e.getMessage());
 				}
-				writeProfiles();
+				//writeProfiles(); // TODO
 			}
 		}
 		
