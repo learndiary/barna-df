@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -113,65 +114,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
 			System.err.println(pfx+ "I'm exiting.");
 		System.exit(code);
-	}
-	
-	/**
-	 * @deprecated
-	 * @return
-	 */
-	boolean checkPreliminaries() {
-		if (outputProfiles&& uniform) {
-			outputProfiles= false;
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[HEY] there are no profiles if you specify uniformal read distribution!\n"
-//						+ "\t(parameter ["+CLI_SHORT_PFX+ CLI_SHORT_UNIF+"|"+ CLI_LONG_PFX+ CLI_LONG_UNIF+"])");
-//			return false;
-		}
-		if (!(outputExon|| outputSJunction|| outputTranscript|| outputGene|| outputEvent)) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[WARNING] no features for output selected (["
-						+ FluxCapacitorConstants.CLI_SHORT_PFX+ FluxCapacitorConstants.CLI_SHORT_OUT+ "|"+ FluxCapacitorConstants.CLI_LONG_PFX+ FluxCapacitorConstants.CLI_LONG_OUT+ "] [ejtgv]");
-		}
-		if (outputExon|| outputSJunction|| outputTranscript|| outputGene|| outputEvent) {
-			if (!(outputObs|| outputPred|| outputBalanced)) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[UPS] no base specified for feature abundances");
-				return false;
-			}
-			if (!(outputAll|| outputSplit|| outputUnique)) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[UHLALA] no scope specified for feature abundances");
-				return false;
-			}
-			if (!(outputFreq|| outputRfreq|| outputRcov)) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[UHLALA] no measurement specified for feature abundances");
-				return false;
-			}
-		}
-		
-		if (fileOutDir== null&& (outputMapped|| outputNotmapped|| outputISize|| outputProfiles|| outputLP)) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[UPS] no filename specified, cannot output additional information");
-			return false;
-		}
-			
-		
-		if (outputISize&& !pairedEnd) {
-			outputISize= false;
-//			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-//				System.err.println("[AIAI] insert sizes are only available in paired end mode, parameter [" 
-//						+ Character.toString(CLI_SHORT_PFX)+ CLI_SHORT_PAIR+ "|"+ CLI_LONG_PFX+ CLI_LONG_PAIR+ "]");
-//			return false;
-		}
-		
-		if (strand== FluxCapacitorConstants.STRAND_SPECIFIC&& pairedEnd) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("[NONO] strand specific reads can (currently) not be mate pairs, no?!");
-			return false;
-		}
-		
-		return true;
 	}
 	
 	private static class StringArrayByFirstComparator implements Comparator<String[]> {
@@ -449,11 +391,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 								sb.append(";\n");
 							}
 							
-							try {
-								getWriter().write(sb.toString());
-							} catch (IOException e) {
-								e.printStackTrace();
-							} 
+							Log.print(sb.toString());
+							
 						} else if (feat.equals(Exon.GFF_FEATURE_EXON)&& outputExon) {
 							
 							StringBuilder sb= new StringBuilder(s); 
@@ -492,18 +431,10 @@ public class FluxCapacitor implements ReadStatCalculator {
 								sb.append(";\n");
 							}
 							
-							
-							try {
-								getWriter().write(sb.toString());
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
+
+							Log.print(sb.toString());
 						} else if (outputUnknown) {
-							try {
-								getWriter().write(s+ System.getProperty("line.separator"));
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
+							Log.print(s+ System.getProperty("line.separator"));
 						}
 					}
 				}
@@ -717,11 +648,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 					}
 				}
 					
-				try {
-					write(sb);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				Log.print(sb.toString());
 				
 			}
 	
@@ -1547,14 +1474,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 	public static String[] DEFAULT_PE_SFX= new String[] {"_1", "_2"};
 	
-	public File fileBED= null, 
-		fileGTF= null, 
-		fileOut= null, 
-		fileOutDir= null, 
-		fileOUToriginal= null, 
-		fileBEDoriginal= null, 
-		fileGTForiginal= null,
-		fileMappedReads= null,
+	public File fileMappedReads= null,
 		fileNotmappedReads= null,
 		fileProfile= null,
 		fileLPdir= null,
@@ -1614,7 +1534,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 			//if (Constants.globalPfx!= null)
 				//p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
 			p.print("\tQuantification File\t");
-			if (fileOut== null)
+			if (settings.get(FluxCapacitorSettings.STDOUT_FILE)== null)
 				p.println("stdout");
 			else {
 				p.println(settings.get(FluxCapacitorSettings.STDOUT_FILE).getCanonicalPath());
@@ -2120,86 +2040,15 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	void fileFinish() {
 
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-			System.err.println("\n[FINISHING] closing file handles and cleaning up");
-		
-		// remove temp files: ref and reads
+		// TODO close input should occur by reader or interface method 
 		boolean b= bedWrapper.close();
-		//b= getFileBED().delete();	// TODO deactivated cleanup
 		b= gtfReader.close();
-		//b= getFileGTF().delete();
 		
-//		if (fileOut!= null)
-//			appendFreq();
-
-		if (outputMapped) {
-			try {
-				getWriterMappedReads().flush();
-				getWriterMappedReads().close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}	
+		// close output
+		if (Log.outputStream!= System.out&& Log.outputStream!= System.err) 
+			Log.outputStream.close();
 		
-		if (outputNotmapped) {
-			try {
-				getWriterNotmappedReads().flush();
-				getWriterNotmappedReads().close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
-		if (outputLP) {
-			FileHelper.setSilent(false); 
-			String sfx= FileHelper.getCompressionExtension(FileHelper.COMPRESSION_GZIP);
-			// TODO re-add variable
-			File dst= null; // settings.fileLPzip; // new File(fileOutDir+ File.separator+ getNameLP()+ (sfx== null? "": Constants.DOT+ sfx));
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\tzipping "+ fileLPdir.getAbsolutePath()
-						+"\n\t->"+ dst.getAbsolutePath());
-			if (!FileHelper.zipFilesInDir(fileLPdir, dst)) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\n[PROBLEMS] encountered error during zipping, check file.");
-			} else {
-				FileHelper.rmDir(fileLPdir); // otherwise Mr. Proper
-			}
-		}
-		
-// 		if (compressionOut== FileHelper.COMPRESSION_NONE&& !copyLocal)
-//			return;
-
-		// move 
-		moveOrDeflate(fileOut, fileOUToriginal// new File(fileOutDir+ File.separator+ getNameOut())
-				, compressionOut);	
-
-		if (outputMapped) {
-			String sfx= FileHelper.getCompressionString(compressionBED);
-			moveOrDeflate(getFileMappedReads(), 
-					new File(fileOutDir+ File.separator+ getNameMappedReads()+ (sfx== null?"":Constants.DOT+sfx)), 
-					compressionBED);
-		}
-		
-		if (outputNotmapped) {
-			String sfx= FileHelper.getCompressionString(compressionBED);
-			moveOrDeflate(getFileNotMappedReads(), 
-					new File(fileOutDir+ File.separator+ getNameNotMappedReads()+ (sfx== null?"":Constants.DOT+sfx)), 
-					compressionBED);
-		}
-		if (outputISize) {
-			String sfx= FileHelper.getCompressionString(compressionOut);
-			moveOrDeflate(getFileISize(), 
-					new File(fileOutDir+ File.separator+ getNameISize()+ (sfx== null?"":Constants.DOT+sfx)), 
-					compressionOut);
-		}
-		// profile never moved
-/*		if (outputProfiles) 
-			moveOrDeflate(getFileProfile(), 
-					new File(fileOutDir+ File.separator+ getNameProfile()), 
-					FileHelper.COMPRESSION_NONE);	// already compressed
-*/					
-		
+		// TODO close files for non-/mapped reads, insert sizes, LPs, profiles  
 	}
 	
 	private boolean moveOrDeflate(File src, File dst,
@@ -2315,193 +2164,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 
 	
-	/**
-	 * @deprecated 
-	 * @see fileInit(File, AbstractFileIOWrapper)
-	 * @return
-	 */
-	public boolean fileInitReference() {
-		
-		isReadyGTF= false;
-		gtfReader= null;
-		
-		// copy or deflate, if necessary: fGTForig -> fGTF
-		File fileGTForiginal= settings.get(FluxCapacitorSettings.ANNOTATION_FILE);
-		File fileGTF= null;
-		compressionGTF= FileHelper.getCompression(fileGTForiginal);
-		if (copyLocal|| compressionGTF!= FileHelper.COMPRESSION_NONE) {
-			if (compressionGTF== FileHelper.COMPRESSION_NONE) 
-				fileGTF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ 
-						File.separator+ Constants.getGlobalPfx()+ "_"+ 
-						MyFile.getFileNameOnly(fileGTForiginal.getAbsolutePath()));
-			else 
-				fileGTF= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ 
-						File.separator+ Constants.getGlobalPfx()+ "_"+ 
-						MyFile.getFileNameOnly(fileGTForiginal.getAbsolutePath()));
-			
-			if (force|| !fileGTF.exists()) {
-				if (fileGTF.exists()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					Log.warn("\texisting file overwritten: "+ fileGTF.getAbsolutePath());
-				if(!copyOrDeflate(fileGTForiginal, fileGTF, compressionGTF))
-					return false;
-			} else {
-				Log.error("\tfile exists "+ fileGTF.getAbsolutePath());
-				return false;
-			}
-			settings.set(FluxCapacitorSettings.ANNOTATION_FILE, fileGTF);
-		} 
-		
-		// check sorting
-		if (cheatDisableFCheck) {
-			System.err.println("\tTEST Sort check disabled !!!");
-			isSortedGTF= true;
-		} else { 
-			
-			if (getGTFreader().isApplicable()) 
-				isSortedGTF= true;
-			else {
-				isSortedGTF= false;
-				File tmpGTF= getGTFreader().sort();
-				if (tmpGTF== null)
-					return false;
-				//boolean bb= getFileGTF().delete();	// TODO do sth when false..
-				this.fileGTF= tmpGTF;
-				if (outputSorted&& fileOutDir!= null) {
-					String ext= FileHelper.getCompressionExtension(compressionGTF);
-					String destFName= fileOutDir+ File.separator+ Constants.getGlobalPfx()+ "_"+ 
-										fileGTF.getName()+
-										(ext== null?"":Constants.DOT+ ext);
-					File destFile= new File(destFName);
-					if ((!force)&& !ensureFileCanWrite(destFile))
-						return false;
-					else if (!copyOrDeflate(tmpGTF, destFile,compressionGTF))
-						return false;
-				}
-			}
-		}
-		
-		// scan file
-		if (cheatDisableFCheck) {
-			System.err.println("\tTEST GTF scan disabled !!!");
-			getGTFreader();
-		} else {
-			gtfReader= null;	// reinit
-			getGTFreader().scanFile();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println(Constants.TAB+ getGTFreader().getNrGenes()+ " loci, "
-						+ getGTFreader().getNrTranscripts()+ " transcripts, "
-						+ getGTFreader().getNrExons()+ " exons.");
-			}
-		}
-		isReadyGTF= true;
-
-		return true;
-	}
-	
-	
 	int nrBEDreads= -1, nrBEDmappings= -1;
 	private int checkBEDscanMappings= 0;
-	/**
-	 * @deprecated 
-	 * @see fileInit(File, AbstractFileIOWrapper)
-	 * @return
-	 */
-	public boolean fileInitBED() {
-
-		isReadyBED= false;
-		File fileBEDoriginal= settings.get(FluxCapacitorSettings.MAPPING_FILE);
-		
-		// check compression
-		byte compressionBED= FileHelper.getCompression(fileBEDoriginal);
-		if (compressionBED== FileHelper.COMPRESSION_NONE&& !copyLocal)
-			fileBED= fileBEDoriginal;
-		else {	// copy/decompress local
-			if (compressionBED== FileHelper.COMPRESSION_NONE) 
-				fileBED= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ File.separator+ Constants.getGlobalPfx()+ "_"+ MyFile.getFileNameOnly(fileBEDoriginal.getAbsolutePath()));
-			else 
-				fileBED= new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ File.separator+ Constants.getGlobalPfx()+ "_"+ MyFile.getFileNameOnly(fileBEDoriginal.getAbsolutePath()));
-			if (force|| !fileBED.exists()) {
-				if (fileBED.exists()&& Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\texisting file overwritten: "+ fileBED.getAbsolutePath());
-				if(!copyOrDeflate(fileBEDoriginal, fileBED, compressionBED))
-					return false;
-			} else {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("\tfile seems exists and no overwrite forced: "+ fileBED.getAbsolutePath());
-			}
-		}
-
-		
-		// check sorting
-		if (cheatDisableFCheck) {
-			System.err.println("\tTEST sort check disabled !!!");
-			isSortedBED= true;
-		} else {  
-			
-			if (bedWrapper.isApplicable()) 
-				isSortedBED= true;
-			else {
-				isSortedBED= false;
-				File tmp= create(fileBED.getParentFile(), fileBED.getName()); 
-				bedWrapper.sortBED(fileBED);
-				if (tmp== null)
-					return false;
-				//getFileBED().delete();
-				this.fileBED= tmp;
-				if (outputSorted&& fileOutDir!= null) {
-					String destFName= fileOutDir+ File.separator+ Constants.getGlobalPfx()+ "_"+ 
-										MyFile.append(fileBED.getName(), "_sorted", false, 
-												FileHelper.getCompressionExtension(this.compressionBED));
-					File destFile= new File(destFName);
-					compressionBED= FileHelper.COMPRESSION_NONE;
-					if ((!force)&& !ensureFileCanWrite(destFile))
-						return false;
-					else if (!copyOrDeflate(tmp, destFile, compressionBED))
-						return false;
-				}
-			}
-		}
-		
-		
-		// scan file
-		bedWrapper= null;
-/*		descriptor= getBedReader().checkReadDescriptor(pairedEnd, stranded);
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-			System.err.print("\tread descriptor ");
-			if (descriptor== null)
-				System.err.println("none");
-			else if (descriptor instanceof FMRD)
-				System.err.println("flux");
-			else if (descriptor instanceof SolexaDescriptor)
-				System.err.println("solexa");
-		}
-*/
-		if(!bedWrapper.checkReadDescriptor(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
-			return false;
-		
-		if (cheatDisableFCheck) {
-			System.err.println("\tTEST file scan disabled, reads= mappings= 1M !!!");
-			checkBEDscanMappings= 100000000;
-			nrBEDreads= 100000000;
-			nrBEDmappings= 100000000;
-		} else {
-			getBedReader().scanFile();	
-			checkBEDscanMappings= getBedReader().getCountMappings();
-			nrBEDreads= getBedReader().getCountReads();
-			nrBEDmappings= getBedReader().getCountMappings();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+ nrBEDreads+ " reads, "+ nrBEDmappings
-						+ " mappings: R-factor "+(getBedReader().getCountMappings()/ (float) getBedReader().getCountReads()));
-				System.err.println("\t"+ getBedReader().getCountContinuousMappings()+ " entire, "+ getBedReader().getCountSplitMappings()
-						+ " split mappings ("+ (getBedReader().getCountSplitMappings()* 10f/ getBedReader().getCountMappings())+ "%)");
-			}
-		}
-		
-		isReadyBED= true;
-		
-		return true;
-	}
-	
 	public boolean isInputReady() {
 		return (isReadyBED&& isReadyGTF); 
 	}
@@ -2588,13 +2252,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 			 		", please confirm:\n\t(Yes,No,Don't know)")) {
 				exit(-1);
 			}
-			if ((!f.getParentFile().exists())|| (!f.getParentFile().canWrite())) {
-				Log.error("Cannot write to output folder "+ f.getParent());
-				exit(-1);
-			}
 			
-			//Log.outputStream= new FileOutputStream(f);
-			fileOut= f; // TODO replace by the line above
+			try {
+				Log.outputStream= new PrintStream(new FileOutputStream(f));
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		// prepare input files
@@ -2714,12 +2377,14 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 
 	static boolean miss= false;
+	/**
+	 * @deprecated 
+	 */
 	void appendFreq() {
-		
+
+		File fileOut= settings.get(FluxCapacitorSettings.STDOUT_FILE);
 		if (fileOut== null)
 			return;
-		
-		long t0= System.currentTimeMillis();
 		
 		double[] appendLengths= new double[3];
 		double[][] appendReads= new double[3][];
@@ -2849,18 +2514,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 
             Log.progressFinish();
 
-			if (fileOUToriginal== null) {
-				if (!FileHelper.move(fileTmp, fileOut)) {
-                    Log.error("[FAILED] Cannot move file!");
-					System.exit(-1);
-				}
-			} else {
-				fileOut= fileTmp;
-			}
-				
-				
-
-            Log.progressFinish();
 
 //			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) { 
 //				Constants.progress.setValue(0);
@@ -2929,7 +2582,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	public float calcRPKM(float reads, int len) {
-		float rpkm= (float) ((reads/ (double) len)* (1000000000l/ (double) nrBEDreads));
+		float rpkm= (float) ((reads/ (double) len)* (1000000000l/ (double) (nrBEDreads< 0? 1: nrBEDreads)));
 		return rpkm;
 	}
 	
@@ -2947,14 +2600,49 @@ public class FluxCapacitor implements ReadStatCalculator {
 		String sfx= FileHelper.getCompressionExtension(compressionProfiles);
 		return fName+ FluxCapacitorConstants.SFX_PROFILES+ (sfx== null? "": Constants.DOT+ sfx);
 	}
+	
+	/**
+	 * 
+	 * @param parent
+	 * @param temporary
+	 * @return
+	 */
+	protected File createFile(File location, String name, String extension, boolean temporary) {
+		
+		if (location== null)
+			location= settings.get(FluxCapacitorSettings.TMP_DIR);
+		else {
+			if (!location.isDirectory())
+				location= location.getParentFile();
+			if (!location.canWrite())
+				location= settings.get(FluxCapacitorSettings.TMP_DIR);
+		}
+
+		File f= null;
+		try {
+			f= File.createTempFile(name, extension, location);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		
+		if (temporary)
+			f.deleteOnExit();
+		
+		return f;
+	}
+	
 	public File getFileProfile() {
 		if (fileProfile == null) {
 			String s= getNameProfile();
 			if (s== null)
 				return null;
-			fileProfile=  
-				new File(fileOutDir+ File.separator+ getCompositeFName()+ "_profiles."
-						+ FileHelper.getCompressionExtension(FileHelper.COMPRESSION_ZIP));
+			
+			
+			fileProfile=  createFile(
+					settings.get(FluxCapacitorSettings.MAPPING_FILE), 
+					FileHelper.stripExtension(settings.get(FluxCapacitorSettings.MAPPING_FILE).getName()), 
+					"prf", 
+					false);
 				//createTempFile(s, FileHelper.getCompressionExtension(FileHelper.COMPRESSION_ZIP));
 				
 //				new File(System.getProperty(Constants.PROPERTY_TMPDIR)+ File.separator 
@@ -2971,16 +2659,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return getCompositeFName()+ Constants.DOT+ FluxCapacitorConstants.SFX_GTF;
 	}
 	
-	public File getFileOut() {
-		if (fileOut == null) {
-			String fName= getCompositeFName();
-			if (fName== null)
-				return null;
-			fileOut= createTempFile(getNameOut(), null);
-		}
-
-		return fileOut;
-	}
+	
 	
 	private String getNameISize() {
 		String s= getCompositeFName();
@@ -3445,9 +3124,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 		if (profile== null)
 			return null;
 		// check
-		for (int i = 0; i < profile.masters.length; i++) {
-			if (profile.masters[i].hasEmptyPositions())
-				profile.masters[i].fill();
+		for (int i = 0; i < profile.getMasters().length; i++) {
+			if (profile.getMasters()[i].hasEmptyPositions())
+				profile.getMasters()[i].fill();
 		}
 		
 
@@ -3477,34 +3156,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	private BufferedWriter writer= null;
-	private BufferedWriter getWriter() {
-		if (writer == null) {
-			try {
-				if (getFileOut()== null)
-					writer= new BufferedWriter(new OutputStreamWriter(System.out));
-				else 
-					writer= new BufferedWriter(new FileWriter(getFileOut(), true), bufferSize);
-				
-			} catch (Exception e) {
-				return null;
-			}
-		}
-
-		return writer;
-	}
-	
 	private ThreadedQWriter qwriter= null;
-	private ThreadedQWriter getQWriter() {
-		if (qwriter == null) {
-			qwriter = new ThreadedQWriter(getWriter());
-			qwriter.setLimitBytes(100000000);
-			qwriter.start();
-		}
-
-		return qwriter;
-	}
-
-/*	private Sammy sammy= null;
+	/*	private Sammy sammy= null;
 	private Sammy getSammy() {
 		if (sammy == null) {
 			sammy = new Sammy(fileBED, fileMappings, false);
@@ -3548,21 +3201,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	
-	// synchronize writes block of output in file !
-	void write(StringBuilder sb) throws Exception {
-		
-		// sync: 680 sec
-		// threaded: 680 sec
-		// single files: 720 sec
-		synchronized (getWriter()) {
-			BufferedWriter writer= getWriter();	
-			writer.write(sb.toString());
-			//writer.flush();
-		}
-//		getQWriter().add(sb);
-//		getQWriter().interrupt();
-	}
-
 	private Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>();
 	
 	static AtomicLong along= new AtomicLong((0L ^ 0x5DEECE66DL) & ((1L << 48) - 1));
@@ -3886,7 +3524,7 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	private File getFileProfiles(int binIdx) {
-		return new File(fileOut.getAbsolutePath()+"_bin_"+profileBoundaries[binIdx]);
+		return new File(settings.get(FluxCapacitorSettings.STDOUT_FILE).getAbsolutePath()+"_bin_"+profileBoundaries[binIdx]);
 	}
 	
 	
@@ -4434,58 +4072,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 
 	/**
-	 * @deprecated 
-	 * @see fileInit(File, AbstractFileIOWrapper)
-	 * @return
-	 */
-	boolean fileInit() {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("\n[INITING] preparing input/output files");
-			
-			// init file names
-			File f= new File(System.getProperty(Constants.PROPERTY_TMPDIR));
-			if (!f.exists()) {
-				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[AHUUU] Temporary directory does not exist:\n\t"
-							+ System.getProperty(Constants.PROPERTY_TMPDIR));
-				return false;
-			}
-			
-			boolean returnVal= fileInitReference();
-			if (!returnVal)
-				return false;
-			
-			returnVal= fileInitBED();
-			if (!returnVal)
-				return false;
-			
-			if (copyLocal) {
-				returnVal= fileInitLocalOutput();
-				if (!returnVal)
-					return false;
-			}
-			
-			return true;
-		}
-
-	/**
-	 * @deprecated 
-	 * @see fileInit(File, AbstractFileIOWrapper)
-	 * @return
-	 */
-	private boolean fileInitLocalOutput() {
-		
-		if (fileOut!= null) {
-			fileOUToriginal= fileOut;
-			String name= MyFile.getFileNameOnly(fileOut.getAbsolutePath());
-			String ext= MyFile.getExtension(fileOut.getAbsolutePath());
-			fileOut= createTempFile(name, ext);
-		}
-			
-		return true;
-	}
-
-	/**
 	 * @deprecated check whether further neeeded
 	 * @param gene
 	 * @param mode
@@ -4882,8 +4468,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 						} catch (Exception e) {
 							; //:)
 						}
-					getWriter().flush();
-					getWriter().close();
 	
 	//					if (fileMappings!= null)
 	//						getSammy().close();
@@ -4959,13 +4543,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 			if (f.exists()) {
 				Log.println("Assuming file "+ f.getName()+" is a decompressed version of "+ inputFile.getName());
 			} else {
-				f= checkWrite(f);
+				f= createFile(f.getAbsoluteFile(), f.getName(), null, true);
 				try {
 					FileHelper.deflate(inputFile, f, cb);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
-				f.deleteOnExit();	// carefully, carefully, carefully
 			}
 			inputFile= f;
 		}
@@ -4977,12 +4560,13 @@ public class FluxCapacitor implements ReadStatCalculator {
 			if (f.exists()) {
 				Log.println("Assuming file "+ f.getName()+" is a sorted version of "+ inputFile.getName());
 			} else {
-				f= checkWrite(f);
+				f= createFile(f, f.getName(), FileHelper.getExtension(f), 
+						!settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES));
 				wrapper.sort(f);
+				if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES))
+					f.renameTo(FileHelper.getSortedFile(inputFile));
 				if (cb!= FileHelper.COMPRESSION_NONE)
 					inputFile.delete();	// carefully, carefully, carefully
-				if (!settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES))
-					inputFile.deleteOnExit();
 			}
 			inputFile= f;
 			wrapper= getWrapper(inputFile);
