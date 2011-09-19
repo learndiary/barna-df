@@ -16,6 +16,9 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
             <includes>
                 <include>*:jar</include>
             </includes>
+            <excludes>
+                <exclude>fbi:distribution</exclude>
+            </excludes>
         </dependencySet>
         <dependencySet>
             <includes>
