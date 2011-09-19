@@ -11,14 +11,20 @@
 
 package fbi.commons.parameters;
 
-import fbi.commons.Log;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import fbi.commons.Log;
 
 /**
  * A parameter schema is a set of parameters that can be parsed and validated.
@@ -140,42 +146,25 @@ public abstract class ParameterSchema {
     }
 
     /**
-     * Write the parameter set to the given string
+     * Write the parameter set to a string
      *
      * @param out the target stream
      */
-    public void write(OutputStream out) {
-        BufferedWriter writer = null;
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(out));
-
-
-            for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
-                Parameter p = entry.getValue();
-                String name = entry.getKey();
-                if (p.getDescription() != null) {
-                    writer.write("# " + cleanDescription(p.getDescription()) + "\n");
-                }
-                writer.write("#\n");
-                String valuesString = p.getValuesString();
-                if (valuesString != null && !valuesString.isEmpty()) {
-                    writer.write("# " + cleanDescription(valuesString) + " default: " + (p.getDefault() != null ? p.getDefault() : "") + "\n");
-                }
-                Object o = get(p);
-                writer.write(name + "\t" + (o != null ? o : "") + "\n");
-                writer.write("\n");
-            }
-        } catch (IOException e) {
-            try {writer.close();} catch (IOException ignore) {}
-        }finally {
-            if(writer != null){
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+    @Override
+    public String toString() {
+    	StringBuilder sb= new StringBuilder();
+        for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
+            Parameter p = entry.getValue();
+            String name = entry.getKey();
+            Object o = get(p);
+            if (o== null) 
+            	continue;
+            sb.append(name);
+            sb.append(" ");
+            sb.append(o.toString());
+            sb.append("\n");
         }
+        return sb.toString();
     }
 
     /**
@@ -231,6 +220,45 @@ public abstract class ParameterSchema {
     }
 
     /**
+	 * Write the parameter set to the given stream
+	 *
+	 * @param out the target stream
+	 */
+	public void write(OutputStream out) {
+	    BufferedWriter writer = null;
+	    try {
+	        writer = new BufferedWriter(new OutputStreamWriter(out));
+	
+	
+	        for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
+	            Parameter p = entry.getValue();
+	            String name = entry.getKey();
+	            if (p.getDescription() != null) {
+	                writer.write("# " + cleanDescription(p.getDescription()) + "\n");
+	            }
+	            writer.write("#\n");
+	            String valuesString = p.getValuesString();
+	            if (valuesString != null && !valuesString.isEmpty()) {
+	                writer.write("# " + cleanDescription(valuesString) + " default: " + (p.getDefault() != null ? p.getDefault() : "") + "\n");
+	            }
+	            Object o = get(p);
+	            writer.write(name + "\t" + (o != null ? o : "") + "\n");
+	            writer.write("\n");
+	        }
+	    } catch (IOException e) {
+	        try {writer.close();} catch (IOException ignore) {}
+	    }finally {
+	        if(writer != null){
+	            try {
+	                writer.close();
+	            } catch (IOException e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    }
+	}
+
+	/**
      * Replace all newlines with \n# to stay in comment mode
      *
      * @param s the source
