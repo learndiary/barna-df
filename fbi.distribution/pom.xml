@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>fbi</groupId>
+    <artifactId>distribution</artifactId>
+    <version>1.0</version>
+    <description>
+        Assembly descriptor to package Flux applications
+    </description>
+
+    <contributors>
+        <contributor>
+            <name>Thasso Griebel</name>
+            <email>thasso.griebel@googlemail.com</email>
+        </contributor>
+    </contributors>
+
+    <licenses>
+        <license>
+            <name>European Union Public Licence (EUPL)</name>
+            <url>http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.distribution</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.distribution</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.distribution</developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>fenris</id>
+            <name>fenris-releases</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>fenris</id>
+            <name>fenris-snapshots</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>
