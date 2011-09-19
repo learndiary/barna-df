@@ -28,7 +28,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			
 			public UniversalReadDescriptorParameter() {
 				super("READ_DESCRIPTOR",
-					  " provides an expression how to parse the read IDs, or shorthand name ("
+					  " Expression how to parse the read IDs, or one of the shorthand names ("
 						+ StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',')+ ")",
 					  null,
 					  UniversalReadDescriptor.class,
@@ -100,7 +100,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	  */
 	 public static final Parameter<AnnotationMapping> ANNOTATION_MAPPING = Parameters.enumParameter(
 			 "ANNOTATION_MAPPING", 
-			 " specifying information of the read descriptor that will be used for annotation mapping", 
+			 " Information from the read descriptor that will be used for annotation mapping", 
 			 AnnotationMapping.SINGLE, 
 			 new ParameterValidator() {
 			        @Override

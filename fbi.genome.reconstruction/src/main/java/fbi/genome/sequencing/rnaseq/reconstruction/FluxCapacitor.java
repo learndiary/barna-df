@@ -15,7 +15,6 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +26,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
@@ -36,13 +34,18 @@ import java.util.zip.ZipOutputStream;
 
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
+
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
+import org.cyclopsgroup.jcli.annotation.Option;
+
 import fbi.commons.Execute;
 import fbi.commons.Log;
-import fbi.commons.Log.Level;
 import fbi.commons.StringUtils;
+import fbi.commons.flux.FluxTool;
+import fbi.commons.options.HelpPrinter;
 import fbi.commons.system.SystemInspector;
 import fbi.commons.thread.SyncIOHandler2;
-import fbi.commons.thread.ThreadedQWriter;
 import fbi.commons.tools.CommandLine;
 import fbi.genome.io.AbstractFileIOWrapper;
 import fbi.genome.io.AnnotationWrapper;
@@ -61,7 +64,6 @@ import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Exon;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
-import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
@@ -71,9 +73,17 @@ import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
 import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
+import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 
 
-public class FluxCapacitor implements ReadStatCalculator {
+/**
+ * Flux Tool that implements the simulation pipeline
+ *
+ * @author Micha Sammeth (gmicha@gmail.com)
+ *
+ */
+@Cli(name = "capacitor", description = "Flux Capacitor")
+public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 
 	public static enum SupportedFormatExtensions {
 		GTF, GFF, BED,
@@ -270,31 +280,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 			}
 			
 	
-			private boolean writeMappedRead(BEDobject o) {
-				if (getFileMappedReads()== null)
-					return false;
-				try {
-					getWriterMappedReads().write(o.toString()+ "\n");
-					return true;
-				} catch (IOException e) {			
-					e.printStackTrace();
-					return false;
-				}
-			}
-			
-			private boolean writeNotmappedRead(BEDobject o) {
-				if (getFileNotMappedReads()== null)
-					return false;
-				try {
-					getWriterNotmappedReads().write(o.toString()+ "\n");
-					return true;
-				} catch (IOException e) {
-					e.printStackTrace();
-					return false;
-				}
-			}
-			
-			
 			private void outputGFF(Graph g, ASEvent[] events, GraphLPsolver2 solver) {
 				++nrLoci;
 				if (solver!= null) 
@@ -1339,89 +1324,23 @@ public class FluxCapacitor implements ReadStatCalculator {
 		Execute.initialize(2);
 		
 		try {
-			readProperties(); 
-			
-			boolean showGUI= false;
-			if (args== null|| args.length== 0) {
-				if (showGUI) {
-					FluxCapacitor.loadLibraries();
-					//FluxCapacitorGUI.createGUI();
-				} else
-					printUsage();
-			}
-			
-			final FluxCapacitor myCapacitor= new FluxCapacitor();
-			if (args!= null&& args.length== 1) {
-				if (args[0].equalsIgnoreCase("--install")) {
-					install();
-					System.exit(0);
-				} else if (args[0].equalsIgnoreCase("--help")) {
-					printUsage();
-					System.exit(0);
-				} else
-					myCapacitor.init(args);
-			}
-			
-//			myCapacitor.init2(args);
-//			if (myCapacitor.isHelpRequested()) {
-//				printUsage();
-//				System.exit(0);
-//			}	
-//			wellcome();
-//			if (doInstall) {
-//				install();
-//				System.exit(0);
-//			}
-			
-//			if (!myCapacitor.checkPreliminaries())
-//				System.exit(-1);
-			
-			if (cheatEnableCleanup) {
-				Runtime.getRuntime().addShutdownHook(new Thread("MrProper") {
-				    public void run() { 
-				    	FileHelper.cleanup(System.getProperty(Constants.PROPERTY_TMPDIR), 
-				    			Constants.globalPfx== null?FluxCapacitorConstants.PFX_CAPACITOR+ "."+ myCapacitor.getRunID():Constants.globalPfx+ "_",
-				    			null,
-				    			Constants.verboseLevel> Constants.VERBOSE_SHUTUP?System.err:null); 
-				    }
-				});
-			} 
-			
-			// found 1 temporary files with prefix capacitor,...
-/*			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				File dir= new File(System.getProperty(Constants.PROPERTY_TMPDIR));
-				String[] fNames= dir.list();
-				Vector<File> v= new Vector<File>(), vSort= new Vector<File>();
-				for (int i = 0; i < fNames.length; i++) {
-					File f= new File(dir+ File.separator+ fNames[i]);
-					if (fNames[i].contains(PFX_CAPACITOR))
-						v.add(f);
-					else if (fNames[i].contains("sort"))
-						vSort.add(f);
-				}
-				
-				if (v.size()> 0&& !myCapacitor.force) 
-					removeZombies(v, PFX_CAPACITOR);
-				if (vSort.size()> 0&& !myCapacitor.force) 
-					removeZombies(v, "sort");
-				
-			}
-*/			
-			
+
 			int ok= loadLibraries();
 			if (ok< 0) 
 				exit(-1);
 			
-			if (Constants.verboseLevel>= Constants.VERBOSE_NORMAL) 
-				myCapacitor.printStats(System.err, args);
+
+			final FluxCapacitor myCapacitor= new FluxCapacitor();
+			myCapacitor.setFile(new File(args[0]));
 			
 		    // run
 			try {
-				myCapacitor.run();
+				myCapacitor.call();
 			} catch (Throwable XXX) {
 				XXX.printStackTrace();
 				System.exit(0);
 			}
+			
 		} catch (Throwable t) {
 			if (t instanceof Exception)
 				((Exception) t).printStackTrace();
@@ -1474,6 +1393,11 @@ public class FluxCapacitor implements ReadStatCalculator {
 
 	public static String[] DEFAULT_PE_SFX= new String[] {"_1", "_2"};
 	
+	/**
+	 * The parameter file.
+	 */
+	protected File file= null;
+	
 	public File fileMappedReads= null,
 		fileNotmappedReads= null,
 		fileProfile= null,
@@ -1503,44 +1427,41 @@ public class FluxCapacitor implements ReadStatCalculator {
 	
 	public static String version= null;
 	
-	private void printStats(PrintStream p, String[] args) {
-		p.println("\n[HEHO] We are set, so let's go!");
-		p.print("\tcmd\t"+FluxCapacitorConstants.CLI_CMD);
-		for (int i = 0; i < args.length; i++) 
-			p.print(" "+args[i]);
-		p.println();
+	private void printStats() {
+		Log.info("HEHO", "We are set, so let's go!");
+		// TODO
+		// settings.write(Log.logStream);		
+		StringBuilder sb;
 		
-		try {
-			// INPUT
-			p.println("\tINPUT");
-			p.println("\t"+ FluxCapacitorSettings.ANNOTATION_FILE.getName()+
-					"\t"+ settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getCanonicalPath());
-			p.println("\t"+ FluxCapacitorSettings.MAPPING_FILE.getName()+ 
-					"\t"+ settings.get(FluxCapacitorSettings.MAPPING_FILE).getCanonicalPath());
-			p.println("\t"+ FluxCapacitorSettings.READ_DESCRIPTOR.getName()+ 
-					"\t"+ settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-			// TODO
-			//p.println("\t"+CLI_LONG_VERBOSE+"\t"+Constants.VERBOSE_KEYWORDS[Constants.verboseLevel]);
-			//if (copyLocal)
-			//	p.println("\t"+FluxCapacitorParameters.PAR_COPY_INPUT);
-			p.println("\t"+ settings.SORT_IN_RAM.getName()+ "\t"+ 
-					(settings.get(FluxCapacitorSettings.SORT_IN_RAM)));
-			
-			// OUTPUT
-			p.println("\tOUTPUT");
-			p.println("\t"+ FluxCapacitorSettings.TMP_DIR.getName()+ 
-					"\t"+ settings.get(FluxCapacitorSettings.TMP_DIR).getAbsolutePath());
-			// TODO
-			//if (Constants.globalPfx!= null)
-				//p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
-			p.print("\tQuantification File\t");
-			if (settings.get(FluxCapacitorSettings.STDOUT_FILE)== null)
-				p.println("stdout");
-			else {
-				p.println(settings.get(FluxCapacitorSettings.STDOUT_FILE).getCanonicalPath());
-				if (compressionOut!= FileHelper.COMPRESSION_NONE)
-					p.println("\t"+ FluxCapacitorConstants.CLI_LONG_COMPRESSION+ "\t"+ FileHelper.COMPRESSION_KEYWORDS[compressionOut]);
-			}
+		// INPUT
+		Log.info(FluxCapacitorSettings.ANNOTATION_FILE.getName(),
+				settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getAbsolutePath());
+		Log.info(FluxCapacitorSettings.MAPPING_FILE.getName(), 
+				settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
+		Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), 
+				settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString());
+		// TODO
+		//p.println("\t"+CLI_LONG_VERBOSE+"\t"+Constants.VERBOSE_KEYWORDS[Constants.verboseLevel]);
+		//if (copyLocal)
+		//	p.println("\t"+FluxCapacitorParameters.PAR_COPY_INPUT);
+		Log.info(settings.SORT_IN_RAM.getName(),
+				Boolean.toString(settings.get(FluxCapacitorSettings.SORT_IN_RAM)));
+		
+		// OUTPUT
+		Log.info(FluxCapacitorSettings.TMP_DIR.getName(),
+				settings.get(FluxCapacitorSettings.TMP_DIR).getAbsolutePath());
+		// TODO
+		//if (Constants.globalPfx!= null)
+			//p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
+		sb= new StringBuilder();
+		if (settings.get(FluxCapacitorSettings.STDOUT_FILE)== null)
+			sb.append("stdout");
+		else {
+			sb.append(settings.get(FluxCapacitorSettings.STDOUT_FILE).getAbsolutePath());
+			if (compressionOut!= FileHelper.COMPRESSION_NONE)
+				sb.append("\t"+ FluxCapacitorConstants.CLI_LONG_COMPRESSION+ "\t"+ FileHelper.COMPRESSION_KEYWORDS[compressionOut]);
+		}
+		Log.info(settings.STDOUT_FILE.getName(), sb.toString());
 /*			p.print("\tfeatures:\t");
 			if (outputExon)
 				p.print("Exons ");
@@ -1595,25 +1516,23 @@ public class FluxCapacitor implements ReadStatCalculator {
 			}
 */
 			// ALGORITHM
-			p.println("\tADDITIONAL");
 			//p.println("\t"+ CLI_LONG_THREAD+" "+ maxThreads);
-			p.print("\tRead Distribution\t");
-			if (uniform)
-				p.println("uniform");
-			else if (fileProfile!= null&& fileProfile.exists())
-				p.println("from profiles in "+ fileProfile.getAbsolutePath());
-			else {
-				p.print("profiling is carried out");
-				if (fileProfile!= null)
-					p.println(" and stored in "+ fileProfile.getAbsolutePath());
-				else
-					p.println();
-			}
-			
-			if (stranded)
-				p.println("\tstrand information considered.");
-			if (pairedEnd)
-				p.println("\tmate pairing information considered");
+//		sb= new StringBuilder("Read Distribution\t");
+//		if (uniform)
+//			sb.append("uniform");
+//		else if (fileProfile!= null&& fileProfile.exists())
+//			sb.append("from profiles in "+ fileProfile.getAbsolutePath());
+//		else {
+//			sb.append("profiling is carried out");
+//			if (fileProfile!= null)
+//				sb.append(" and stored in "+ fileProfile.getAbsolutePath());
+//		}
+//		Log.info(sb.toString());
+		
+		if (stranded)
+			Log.info("\tstrand information considered.");
+		if (pairedEnd)
+			Log.info("\tmate pairing information considered");
 			
 
 /*			p.print("\t"+ CLI_LONG_COST_MODEL+" "+GraphLPsolver.COSTS_NAMES[costModel]);
@@ -1630,26 +1549,12 @@ public class FluxCapacitor implements ReadStatCalculator {
 			p.println("\t"+ CLI_LONG_STRAND+" "+ strandSpecific);
 */
 			
-		} catch (IOException e) {
-			; // :)
-		}
-		
 //		if (pairedEnd)
 //			p.println("\t"+CLI_LONG_PAIR+"\t"+insertMinMax[0]+","+insertMinMax[1]);
 		//System.err.println("\t"+CLI_LONG_NOISE+"\t"+Float.toString(1- GraphLPsolver.min_read_rest_frac));
 		
-		p.println();
-
 	}
 	
-	private final static Random rndLuser= new Random();
-	private String errorMissingArgument(String string) {
-		return FluxCapacitorConstants.L_USER_COMMENTS[rndLuser.nextInt(FluxCapacitorConstants.L_USER_COMMENTS.length)]
-		       + "You forgot to give me an argument for the parameter "
-		       + string+ "!";
-		
-	}
-
 	private static String readSystemIn() {
 		StringBuffer sb= new StringBuffer();
 		int in;
@@ -1866,178 +1771,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	
-	static {
-        try {
-            Method m;
-            m = FluxCapacitor.class.getDeclaredMethod("setFileReads", new Class[]{String.class});
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_SRA, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_SRA, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_SRA.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_SRA},
-                    "set file containing Short Reads Archive (mandatory!)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setFileReference", new Class[]{String.class});
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_REF, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_REF, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_REF.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_REF},
-                    "set file with REFerence annotation (mandatory!)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setNameOutDir", new Class[]{String.class});
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_FILENAME, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_FILENAME, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_FILENAME.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_FILENAME},
-                    "set output fileName prefix (default stdout)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setForce", null);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_FORCE, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_FORCE, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_FILENAME.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_FILENAME},
-                    "set force (no overwrite checks)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setInstall", (Class[]) null);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_INSTALL, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_INSTALL},
-                    "installs the basic wrapper script (no reads are mapped)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setJVM", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_JVM, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_JVM},
-                    "set a specific Java Virtual Machine home (installation)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setLib", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_LIB, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_LIB},
-                    "set path to native libraries (installation)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setBatch", (Class[]) null);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_BATCH, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_BATCH, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_BATCH.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_BATCH},
-                    "set Batch mode, suppresses file checks and stderr communication\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setUniformal", (Class[]) null);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_UNIF, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_UNIF, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_UNIF.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_UNIF},
-                    "set uniformal distribution no profiling step is carried out\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setPairedEnd", (Class[]) null);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_PAIR, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_PAIR, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_PAIR.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_PAIR}, "set input paired ends, " +
-                    "read name expected in FMRD format (see http://fluxcapacitor.wikidot.com/formats:fmrd)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setProfile", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_PROFILE, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_PAIR.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_PAIR}, "set profile name");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setOutput", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_OUT, m);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_OUT, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_OUT.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_OUT},
-                    "select output from [acdefijkgmnoprstuv]\n"
-                            + "a All (scope)\n"
-                            + "c Coverage (measure)\n"
-                            + "d preDiction (base)\n"
-                            + "e Exon (feature)\n"
-                            + "f Frequency (measure)\n"
-                            + "i Insert size (additional, paired-end only)\n"
-                            + "j splice Junction (feature)\n"
-                            + "k Keepsorted (additional)\n"
-                            + "g Gene (feature)\n"
-                            + "m Mapped (additional)\n"
-                            + "n Notmapped (additional)\n"
-                            + "o Observed (base)\n"
-                            + "p Profiles (additional)\n"
-                            + "r Relative frequency (measure)\n"
-                            + "s Split (scope)\n"
-                            + "t Transcript (feature)\n"
-                            + "u Unique (scope)\n"
-                            + "v eVents (feature)\n"
-            );
-            // g gene, l linear program, m mate-edges, x exon-junctions
-
-            m = FluxCapacitor.class.getDeclaredMethod("setHelp", (Class[]) null);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_HELP, m);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_HELP, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_HELP.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_HELP},
-                    "print help summary");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setLogLevel", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_VERBOSE, m);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_VERBOSE, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_VERBOSE.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_VERBOSE},
-                    "set verbose level (SILENT, VERBOSE, ERRORS, DEBUG)");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setThreads", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_THREAD, m);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_THREAD, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_THREAD.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_THREAD}, "set multi-thread mode, provide number of threads\n" +
-                    "(time gain only with complex linear programs, otherwise default=1 recommended)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setLocal", (Class[]) null);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_LOCAL, m);
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_LOCAL, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_LOCAL.toString(), FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_LOCAL},
-                    "work locally, i.e., copy all files to the temporary directory\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setTempDir", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_TMP, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_TMP},
-                    "set path to the temporary directory\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setTempPfx", new Class[]{String.class});
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_TPX, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_TPX},
-                    "set prefix for temporary files\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setCompression", new Class[]{String.class});
-            FluxCapacitorConstants.cliShortMap.put(FluxCapacitorConstants.CLI_SHORT_COMPRESSION, m);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_COMPRESSION, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_SHORT_PFX + FluxCapacitorConstants.CLI_SHORT_COMPRESSION.toString(),
-                    FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_COMPRESSION},
-                    "set compression method for output files (output file, mapped read-mappings, not-mapped read-mappings, insert sizes)\n");
-
-            m = FluxCapacitor.class.getDeclaredMethod("setStrandSpecific", (Class[]) null);
-            FluxCapacitorConstants.cliLongMap.put(FluxCapacitorConstants.CLI_LONG_SSPECIFIC, m);
-            FluxCapacitorConstants.cliExplMap.put(new String[]{FluxCapacitorConstants.CLI_LONG_PFX + FluxCapacitorConstants.CLI_LONG_SSPECIFIC},
-                    "set strand specific reads (default: strand information disregarded/disabled)\n");
-
-        } catch (NoSuchMethodException e) {
-            ; // :)
-        }
-        FluxCapacitorConstants.SHELL_NONE = 0;
-    }
-
 	
-	private boolean move(File src, File dest) {
-		if (FileHelper.move(src, dest)) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t"+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());
-			}
-			return true;
-		} else { 
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\tfailed, output in:\n\t"+ src.getAbsolutePath());
-			}
-			return false;
-		}
-	}
 	
-	private boolean copy(File src, File dest) {
-		if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-			System.err.println("\t"+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());
-		try {
-            Log.progressStart("copying");
-			FileHelper.fastChannelCopy(src, dest, false);
-
-			Log.progressFinish(StringUtils.OK, true);
-			return true;
-		} catch (IOException e) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println(e.getMessage());;
-			return false;
-		}
-	}
 	void fileFinish() {
 
 		// TODO close input should occur by reader or interface method 
@@ -2051,72 +1786,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		// TODO close files for non-/mapped reads, insert sizes, LPs, profiles  
 	}
 	
-	private boolean moveOrDeflate(File src, File dst,
-			byte compression) {
-		
-		if (dst== null) {
-			if (compression!= FileHelper.COMPRESSION_NONE)
-				return moveDeflate(src, src, compression, false);
-		} else {
-			if (compression== FileHelper.COMPRESSION_NONE)
-				return move(src, dst);
-			else
-				return moveDeflate(src, dst, compression, false);
-		}
-		return true;
-	}
-
-	private boolean copyOrDeflate(File src, File dest,
-			byte compression) {
-		
-		if (dest== null) {
-			if (compression!= FileHelper.COMPRESSION_NONE)
-				return moveDeflate(src, src, compression, true);
-		} else {
-			if (compression== FileHelper.COMPRESSION_NONE)
-				return copy(src, dest);
-			else
-				return moveDeflate(src, dest, compression, true);
-		}
-		return true;
-	}
-
-	private boolean moveDeflate(File src, File dest,
-			byte compression, boolean copy) {
-		try {
-			if (src.getAbsolutePath().equals(dest.getAbsolutePath())) 
-				dest= new File(dest.getAbsolutePath()+ Constants.DOT+ FileHelper.getCompressionExtension(compression));
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t"+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());			
-			FileHelper.deflate(src, dest, compression);
-			if (!copy) {
-				if (!src.delete())
-					return false;
-			}
-			return true;
-		} catch (Exception e) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\n[AIII] Problems during deflate: "+ e.getMessage());
-				e.printStackTrace();
-			}
-			return false;
-		}
-	}
-
-	private boolean copyInflate(File src, File dest,
-			byte compression) {
-		try {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\tinflate "+ src.getAbsolutePath()+ "\n\t->"+ dest.getAbsolutePath());
-			}
-			FileHelper.inflate(src, dest, compression);
-			return true;
-		} catch (Exception e) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				System.err.println("\n[AIII] Problems during inflate");
-			return false;
-		}
-	}
 	private static String createID() {
 		SimpleDateFormat format= new SimpleDateFormat("yyMMddHHmmssSSSS");
 		return format.format(new Date());
@@ -2239,9 +1908,22 @@ public class FluxCapacitor implements ReadStatCalculator {
 	int profileNr= 3; 
 	BufferedWriter testWriter;
 	
-	public void run() {
+	@Override
+	public Void call() throws Exception {
+
+		// TODO not here
+		if (loadLibraries()< 0)
+			System.exit(-1);
 		
-		Log.setLogLevel(Level.INFO);
+		// load parameters
+        if (file == null || !file.exists()) {
+            throw new RuntimeException("I have no parameter file and I want to scream!");
+        }
+        try {
+            settings = FluxCapacitorSettings.createSettings(file);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
+        }
 		
 		// prepare output files
 		if (settings.get(FluxCapacitorSettings.STDOUT_FILE)!= null) {
@@ -2285,16 +1967,16 @@ public class FluxCapacitor implements ReadStatCalculator {
 		stranded= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
 				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 		
+		printStats();
+		
 		// run
 		long t0= System.currentTimeMillis();
-		
-		// profiling
+
 		profile= getProfile();
 		if (profile== null) {
 			exit(-1);
 		}
 		
-		// reconstruction
 		explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
 		
@@ -2304,6 +1986,8 @@ public class FluxCapacitor implements ReadStatCalculator {
 				+((System.currentTimeMillis()- t0)/ 1000)+" sec.\nCheers!");
 		
 		//System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
+		
+		return null;
 	}
 
 	private Profile readProfiles(File fileProfileOriginal) {
@@ -2653,14 +2337,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return fileProfile;
 	}
 	
-	private String getNameOut() {
-		if (getCompositeFName()== null)
-			return null;
-		return getCompositeFName()+ Constants.DOT+ FluxCapacitorConstants.SFX_GTF;
-	}
-	
-	
-	
 	private String getNameISize() {
 		String s= getCompositeFName();
 		if (s== null)
@@ -2866,6 +2542,47 @@ public class FluxCapacitor implements ReadStatCalculator {
 		
 	}
 	
+    /**
+     * Set the parameter file
+     *
+     * @param file parameter file
+     */
+    @Option(name = "p", longName = "parameter", description = "specify parameter file (PAR file)", displayName = "file", required = true)
+    public void setFile(File file) {
+        this.file = file;
+    }
+    
+    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+
+        if(isPrintParameters()){
+            FluxSimulatorSettings settings = new FluxSimulatorSettings();
+            settings.write(System.out);
+            return false;
+        }
+
+        if (getFile() == null) {
+            Log.error("");
+            Log.error("No parameter file specified !");
+            Log.error("\n");
+            printer.print(toolArguments);
+            return false;
+        }
+        if (!getFile().canRead()) {
+            Log.error("");
+            Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
+            Log.error("\n");
+            printer.print(toolArguments);
+            return false;
+        }
+
+        return true;
+    }
+
+	
+	private boolean isPrintParameters() {
+		return printParameters;
+	}
+
 	public static byte mapFileType= FluxCapacitorConstants.FORMAT_SAM;
 	private void writeMapFileSam(Graph g, Edge e, DirectedRegion[] regs, DirectedRegion[][] contRegs) {
 		
@@ -3082,12 +2799,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	double costModelPar= Double.NaN;
 	float[] costBounds= new float[] {0.95f, Float.NaN};	// how much of the original observation can be subs/add
 	int[] profileBoundaries;
-	private int getBinIdx(int len) {
-		int p= Arrays.binarySearch(profileBoundaries, len);
-		p= (p<0)?-p-1:p;
-		return p;
-	}
-	
 	Profile getProfile() {
 		if (uniform) {
 			profile= new Profile(this);
@@ -3138,35 +2849,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		isizeV.incrTuple(isize);
 	}
 	
-	private String getAttributeOF(double val, GraphLPsolver solver, int readCount) {
-
-		StringBuilder sb= new StringBuilder(FluxCapacitorConstants.GTF_ATTRIBUTE_PVAL);
-		sb.append(" \"");
-		if (val > FluxCapacitorConstants.BIG|| solver== null) {
-			if (val> FluxCapacitorConstants.BIG)
-				System.currentTimeMillis();
-			sb.append(" \""+FluxCapacitorConstants.VALUE_NA+ "\";" );
-		} else {
-			val= val/ (val+ readCount);
-			sb.append(StringUtils.fprint(val, 2));
-			sb.append("\";");
-		}
-		
-		return sb.toString();
-	}
-	
-	private BufferedWriter writer= null;
-	private ThreadedQWriter qwriter= null;
-	/*	private Sammy sammy= null;
-	private Sammy getSammy() {
-		if (sammy == null) {
-			sammy = new Sammy(fileBED, fileMappings, false);
-			sammy.getHeader();
-		}
-
-		return sammy;
-	}
-*/	
 	double getControl(Graph g, Transcript t) {
 		Node[] nn= g.getNodesInGenomicOrder();
 		long[] part= g.encodeTset(new Transcript[] {t}); // TODO method that takes single transcript
@@ -3201,8 +2883,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	
-	private Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>();
-	
 	static AtomicLong along= new AtomicLong((0L ^ 0x5DEECE66DL) & ((1L << 48) - 1));
 	private static int c= 0;
 	private double factor() {
@@ -3223,7 +2903,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 		
 
-	private static final float[] rpkm_1= new float[3], rpkm_2= new float[3];
 	Vector<Edge> edgeColl1= new Vector<Edge>(), edgeColl2= new Vector<Edge>();
 	int[][] containerIntA1A1= new int[1][];
 	{ containerIntA1A1[0]= new int[1]; }
@@ -3343,32 +3022,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return sum;
 	}
 
-	private void append(StringBuilder sb, String s1,
-			String s2, String s3, String s4, String s5, String s6, String s7) {
-		
-		sb.append(s1);
-		sb.append(s2);
-		sb.append(s3);
-		sb.append(s4);
-		sb.append(s5);
-		sb.append(s6);
-		sb.append(s7);
-	}
-
-	private Vector<Vector<Edge>> clearEdgeContainer(int nr) {
-		for (int i = 0; i< eeV.size()&& i < nr; i++) 
-			eeV.elementAt(i).removeAllElements();
-		for (int i= eeV.size(); i< nr; ++i)
-			eeV.add(new Vector<Edge>());
-//		if (containerIntA1A1== null) 
-//			containerIntA1A1= new int[1][];
-//		if (containerIntA1A1[0]== null) {
-//			System.out.println("clear container");
-//			containerIntA1A1[0]= new int[1];
-//		}
-		return eeV;
-	}
-	
 	int[] insertMinMax= null;
 	private int[] getExonicPos(Transcript tx, BEDobject2 bed, int tlen) {
 		int gstart= bed.getStart();	// getAbsoluteStart();	// fuck 0-base in bed
@@ -3500,7 +3153,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return bedWrapper;
 	}
 	
-	private BufferedWriter writerISize;
 	private boolean writeISizes() {
 		
 		try {
@@ -3528,37 +3180,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 	
 	
-
-	private int bufferSize= 50000000;
-	private BufferedWriter writerMappedReads, writerUnmappedReads;
-	private BufferedWriter getWriterMappedReads() {
-		if (writerMappedReads == null&& getFileMappedReads()!= null) {
-			try {
-				writerMappedReads = new BufferedWriter(new FileWriter(fileMappedReads), bufferSize);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		return writerMappedReads;
-	}
-	private BufferedWriter getWriterNotmappedReads() {
-		if (writerUnmappedReads == null&& getFileNotMappedReads()!= null) {
-			try {
-				writerUnmappedReads = new BufferedWriter(new FileWriter(fileNotmappedReads), bufferSize);
-			} catch (IOException e) {				
-				e.printStackTrace();
-			}
-		}
-
-		return writerUnmappedReads;
-	}
-	
-	private BufferedWriter writerMappings;
-	
-
-	
-	private String readLenGuessedFrom;
 
 	int[][] profileStub, profileStubRev;
 	/**
@@ -3645,6 +3266,13 @@ public class FluxCapacitor implements ReadStatCalculator {
 	}
 
 
+	/**
+	 * @deprecated refactor to SpliceGraph
+	 * @param g
+	 * @param insertMinMax
+	 * @param readLen
+	 * @return
+	 */
 	public int addPE(Graph g, int[] insertMinMax, int readLen) {
 
 			// HashMap<String, TProfile> supaMap, 
@@ -4071,79 +3699,9 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return nrReadsSingleLociMapped;
 	}
 
-	/**
-	 * @deprecated check whether further neeeded
-	 * @param gene
-	 * @param mode
-	 * @return
-	 */
-	private BEDobject2[] readBedFile(Gene gene, byte mode) {
-		
-		int start= gene.getStart();
-		int end= gene.getEnd();
-		if (gene.getStrand()< 0) {
-			start= -start;
-			end= -end;
-		}
-		//ByteArrayCharSequence chr= new ByteArrayCharSequence(gene.getChromosome());
-		
-		assert(start>= 0&&end>= 0&&start<= end);
-		
-		//BEDobject[] beds= getBedReader().read_old(gene.getChromosome(), start, end);
-		BEDobject2[] beds= getBedReader().read(gene.getChromosome(), start, end);
-		if (beds== null)
-			return null;
-		
-		return beds;
-		
-	}
-
 	FluxCapacitorSettings settings= null;
-	void init(String[] args) {
-
-		if (args== null|| args.length< 1) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("[MISSING] Please specify a parameter file.");
-			}
-			System.exit(-1);
-		}
-		
-		File f= new File(args[0]);
-		if (!f.exists()) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("[UPS] Parameter file does not appear to exist "+ f.getAbsolutePath());
-			}
-		}
-		
-		Log.setLogLevel(Log.Level.ERROR);
-		
-        try {
-            settings = FluxCapacitorSettings.createSettings(f);
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to load settings from " + f + "\n\n " + e.getMessage(), e);
-        }
-
-//		FluxCapacitorParameters pars= FluxCapacitorParameters.create(f);
-//		if (pars== null|| !pars.check()) 
-//			System.exit(-1);
-//		this.fileGTForiginal= pars.fileAnnotation;
-//		this.fileBEDoriginal= pars.fileMappings;
-//		this.fileProfile= pars.fileProfile;
-//		if (fileProfile!= null)
-//			uniform= false;
-//		this.pairedEnd= pars.pairedEnd;
-//		this.stranded= pars.stranded;
-//		this.descriptor= pars.descriptor;
-//		this.fileOut= pars.fileStdOut;
-//		this.copyLocal= pars.ioInTemp;
-//		if (pars.fileLPzip!= null) {
-//			//this.fileLPdir= pars.fileLP;
-//			this.outputLP= true;
-//		}
-//		
-//		this.outputSorted= pars.fileMappingsSorted!= null; 
-//		this.pars= pars;
-	}
+	protected boolean printParameters;
+	
 
 	public boolean explore(byte mode) {
 	
@@ -4592,15 +4150,6 @@ public class FluxCapacitor implements ReadStatCalculator {
 					+ " split mappings ("+ (wrapper.getCountSplitMappings()* 10f/ wrapper.getCountMappings())+ "%)");
 	}
 
-	private File checkWrite(File f) {
-		if (!f.canWrite()) {
-			Log.warn("Check permissions, cannot write decompressed file "+ f.getAbsolutePath());
-			f= new File(settings.get(FluxCapacitorSettings.TMP_DIR)+ File.separator+ f.getName());
-			Log.warn("Writing decompressed file to "+ f.getAbsolutePath());
-		}
-		return f;
-	}
-
 	private AbstractFileIOWrapper getWrapper(File inputFile) {
 		
 		String ext= FileHelper.getExtension(inputFile).toUpperCase();
@@ -4625,5 +4174,20 @@ public class FluxCapacitor implements ReadStatCalculator {
 		return null;	// make compiler happy
 	}
 
+	public File getFile() {
+		return file;
+	}
+
+    /**
+     * Enable default parameter printing
+     *
+     * @param printParameters enable disable
+     */
+    @Option(name = "o", longName = "printParameters", description = "Print default parameters", required = false)
+    public void setPrintParameters(final boolean printParameters) {
+        this.printParameters = printParameters;
+    }
+
+    
 }
  
