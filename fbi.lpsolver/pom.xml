@@ -10,6 +10,19 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <excludes>
+                        <exclude>linux/**</exclude>
+                        <exclude>osx/**</exclude>
+                        <exclude>win/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
             <!--
              Assembly plugin to create the actual bundle
             -->

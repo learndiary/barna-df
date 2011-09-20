@@ -107,7 +107,7 @@ public class LPSolverLoader {
         // files should exist now, load
         if(libFile.exists())
             System.load(libFile.getAbsolutePath());
-        if(libFile.exists())
+        if(libjFile.exists())
             System.load(libjFile.getAbsolutePath());
 
         // check

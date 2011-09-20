@@ -115,22 +115,22 @@ public class LpSolveTest {
 		problem.deleteLp();
 		if (file.exists()) file.delete();
 	}
-    @Test
-	public void testReadWriteLpNative() throws Exception {
-		String filename = "model_���.lp";	// use german native chars in filename
-		File file = new File(filename);
-		if (file.exists()) file.delete();
-
-		LpSolve problem = setupProblem();
-		problem.writeLp(filename);
-		assertTrue(file.exists());
-		problem.deleteLp();
-
-		problem = LpSolve.readLp(filename, LpSolve.NORMAL, "Testmodel LP");
-		verifyProblem(problem);
-		problem.deleteLp();
-		if (file.exists()) file.delete();
-	}
+//    @Test
+//	public void testReadWriteLpNative() throws Exception {
+//		String filename = "model_üä.lp";	// use german native chars in filename
+//		File file = new File(filename);
+//		if (file.exists()) file.delete();
+//
+//		LpSolve problem = setupProblem();
+//		problem.writeLp(filename);
+//		assertTrue(file.exists());
+//		problem.deleteLp();
+//
+//		problem = LpSolve.readLp(filename, LpSolve.NORMAL, "Testmodel LP");
+//		verifyProblem(problem);
+//		problem.deleteLp();
+//		if (file.exists()) file.delete();
+//	}
     @Test
 	public void testReadWriteMps() throws Exception {
 		String filename = "testmodel.mps";
