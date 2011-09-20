@@ -1924,7 +1924,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			try {
 				Log.outputStream= new PrintStream(new FileOutputStream(f));
 			} catch (FileNotFoundException e) {
-				throw new RuntimeException(e);
+				Log.warn("Cannot write log file to "+ f.getAbsolutePath());	// let it on stderr?!
 			}
 		}
 
@@ -3968,17 +3968,63 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		AbstractFileIOWrapper wrapper= getWrapper(inputFile);
 		if (!wrapper.isApplicable()) {
 			File f= FileHelper.getSortedFile(inputFile);
-			if (f.exists()) {
-				Log.println("Assuming file "+ f.getName()+" is a sorted version of "+ inputFile.getName());
-			} else {
-				f= createFile(f, !settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES));
+			File lock= FileHelper.getLockFile(f);
+
+			if (f.exists()&& !lock.exists()) {
+				
+				Log.warn("Assuming file "+ f.getName()+" is a sorted version of "+ inputFile.getName());
+				
+			} else {	// we have to sort
+				
+				boolean lockCreated= false;
+				if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES)) {	// try to store in original
+					
+					if (lock.exists()) {	// switch to sorting to temp
+						Log.warn("Seems that another process is just sorting file "+ inputFile+
+								"\nremove lock file "+ lock.getName()+" if dead leftover."+
+								"\nContinuing with sorting to temporary file "+ 
+								(f= createTempFile(f, 
+										FileHelper.getFileNameWithoutExtension(f), 
+										FileHelper.getExtension(f),
+										false)).getAbsolutePath());
+						
+					} else if (!f.getParentFile().canWrite()) {	// sort to temp, but do not delete (parameter)
+						Log.warn("Cannot write sorted file to "+ f.getAbsolutePath()+
+								"\nContinuing with sorting to temporary file "+ 
+								(f= createTempFile(f, 
+										FileHelper.getFileNameWithoutExtension(f), 
+										FileHelper.getExtension(f),
+										false)).getAbsolutePath());
+						
+					} else {	// sort to default sorted file
+						try {
+							lock.createNewFile();
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+						lockCreated= true;
+					}
+					
+				} else {	// do not keep sorted files, sort to temp and delete on exit
+					f= createTempFile(f, 
+							FileHelper.getFileNameWithoutExtension(f), 
+							FileHelper.getExtension(f),
+							true);
+				}
+
+				// doit
 				wrapper.sort(f);
-				if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES))
-					f.renameTo(FileHelper.getSortedFile(inputFile));
+				
+				// if locked
+				if (lockCreated)
+					lock.delete();
+
+				// if unzipped before
 				if (cb!= FileHelper.COMPRESSION_NONE)
-					inputFile.delete();	// carefully, carefully, carefully
+					inputFile.delete();	// carefully
+				
+				inputFile= f;
 			}
-			inputFile= f;
 			wrapper= getWrapper(inputFile);
 		}
 		
