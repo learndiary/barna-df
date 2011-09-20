@@ -112,7 +112,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	public static boolean 
 		cheatDoNotExit= false,
 		cheatLearn= false, 
-		cheatDisableFCheck= true,
+		cheatDisableFCheck= false,
 		cheatEnableCleanup= false,
 		cheatCopyFile= false,
 		doUseLocusNormalization= false;
@@ -1799,20 +1799,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		return runID;
 	}
 	
-	private File createTempFile(String id, String ext) {
-		String s= System.getProperty(Constants.PROPERTY_TMPDIR)
-				+ File.separator
-				+ (Constants.globalPfx== null?"":Constants.globalPfx+ "_")
-				+ FluxCapacitorConstants.PFX_CAPACITOR
-				+ "."
-				+ getRunID()
-				+ "."+ id
-				+ (ext== null?"": "."+ ext);
-		File f= new File(s);
-		f.deleteOnExit();
-		return f;
-	}
-	
 	static String createFileName(String base, byte compression) {
 		if (compression== FileHelper.COMPRESSION_NONE) 
 			return base;
@@ -2083,7 +2069,10 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return;
 			
 			BufferedReader buffy= new BufferedReader(new FileReader(fileOut));
-			File fileTmp= createTempFile(fileOut.getName()+"__append", MyFile.getExtension(fileOut.getName())); 
+			File fileTmp= createTempFile(null,
+					fileOut.getName()+"__append", 
+					MyFile.getExtension(fileOut.getName()),
+					true); 
 //				(fileOUToriginal== null)? 
 //					File.createTempFile(PFX_CAPACITOR, "gtf"): fileOUToriginal;
 			BufferedWriter writer= new BufferedWriter(new FileWriter(fileTmp));
@@ -2286,13 +2275,22 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	}
 	
 	/**
+	 * Creates a temporary file in the location provided, iff write access is 
+	 * available there. Otherwise the file is created in the custom or system
+	 * temporary directory. 
 	 * 
-	 * @param parent
-	 * @param temporary
-	 * @return
+	 * @param location a file in the target directory or the directory itself,
+	 * may be <code>null</code>
+	 * @param name prefix of the file to be created, class name is appended
+	 * at the beginning
+	 * @param extension (optional) suffix of the temporary file that is created
+	 * @param deleteOnExit flag for calling the <code>deleteOnExit()</code> 
+	 * method for the file
+	 * @return a temporary file according to the specifications
 	 */
-	protected File createFile(File location, String name, String extension, boolean temporary) {
+	protected File createTempFile(File location, String name, String extension, boolean deleteOnExit) {
 		
+		// get location
 		if (location== null)
 			location= settings.get(FluxCapacitorSettings.TMP_DIR);
 		else {
@@ -2302,14 +2300,32 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				location= settings.get(FluxCapacitorSettings.TMP_DIR);
 		}
 
+		// get name
+		if (name== null)
+			name= getClass().getSimpleName();
+		else
+			name= getClass().getSimpleName()+ "_"+ name;
+		
 		File f= null;
 		try {
-			f= File.createTempFile(name, extension, location);
+			f= FileHelper.createTempFile(name, extension, location);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 		
-		if (temporary)
+		return createFile(f, deleteOnExit);
+	}
+	
+	/**
+	 * Control gateway for file creation from the main class, 
+	 * adds a hook for delete on exit in case.
+	 * 
+	 * @param f the file that has been created
+	 * @param deleteOnExit flag to mark for deletion on exit
+	 * @return
+	 */
+	protected File createFile(File f, boolean deleteOnExit) {
+		if (deleteOnExit)
 			f.deleteOnExit();
 		
 		return f;
@@ -2322,7 +2338,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return null;
 			
 			
-			fileProfile=  createFile(
+			fileProfile=  createTempFile(
 					settings.get(FluxCapacitorSettings.MAPPING_FILE), 
 					FileHelper.stripExtension(settings.get(FluxCapacitorSettings.MAPPING_FILE).getName()), 
 					"prf", 
@@ -2343,24 +2359,14 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			return null;
 		return s+ FluxCapacitorConstants.SFX_INSERTSIZE+ Constants.DOT+ "txt";
 	}
-	
-	public File getFileISize() {
 		
-		if (fileISize == null) {
-			fileISize = createTempFile(getNameISize(), null);
-		}
-
-		return fileISize;
-		
-	}
-	
 	private String getNameLP() {
 		return getCompositeFName()+ FluxCapacitorConstants.SFX_LP;
 	}
 	
 	public File getFileLP() {
 		if (fileLPdir == null) {
-			fileLPdir= createTempFile(getNameLP(), null);
+			fileLPdir= createTempFile(null, getNameLP(), null, false);
 			if (fileLPdir.exists())
 				fileLPdir.delete();
 			boolean b= fileLPdir.mkdir();
@@ -2383,24 +2389,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			return null;
 		return s+ FluxCapacitorConstants.SFX_NOTMAPPED+ Constants.DOT+ FluxCapacitorConstants.SFX_BED;
 	}
-	public File getFileMappedReads() {
-		if (fileMappedReads == null) {
-			fileMappedReads= createTempFile(
-					getNameMappedReads(),
-					FluxCapacitorConstants.SFX_BED);
-		}
-
-		return fileMappedReads;
-	}
-		
-	public File getFileNotMappedReads() {
-		if (fileNotmappedReads == null) {
-			fileNotmappedReads = createTempFile(getNameNotMappedReads(), null);
-		}
-
-		return fileNotmappedReads;
-	}
-	
 	private void writeProfiles() {
 		try {
 			long t0= System.currentTimeMillis();
@@ -3078,7 +3066,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	private GTFwrapper gtfReader;
 	private AbstractFileIOWrapper getWrapperGTF(File inputFile) {
 		
-		gtfReader= new GTFwrapper(settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getAbsolutePath());
+		gtfReader= new GTFwrapper(inputFile.getAbsolutePath());
 		gtfReader.setNoIDs(null);
 		gtfReader.setReadGene(true);
 		gtfReader.setReadFeatures(new String[] {"exon","CDS"});
@@ -3135,7 +3123,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 
 	private BEDwrapper bedWrapper; 
 	private AbstractFileIOWrapper getWrapperBED(File inputFile) {
-		bedWrapper= new BEDwrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
+		bedWrapper= new BEDwrapper(inputFile.getAbsolutePath());
 
 		return bedWrapper;
 	}
@@ -3153,10 +3141,14 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		return bedWrapper;
 	}
 	
+	/**
+	 * @deprecated
+	 * @return
+	 */
 	private boolean writeISizes() {
 		
 		try {
-			FileOutputStream fos = new FileOutputStream(getFileISize());
+			FileOutputStream fos = new FileOutputStream("");	// TODO
 		    ZipOutputStream zos = new ZipOutputStream(fos);
 			zos.putNextEntry(new ZipEntry(FileHelper.getFileNameWithoutExtension(
 					fileISize.getAbsolutePath())));
@@ -3209,8 +3201,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				PipedInputStream  pin= new PipedInputStream();
 		        PipedOutputStream pout= new PipedOutputStream(pin);
 				Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-				BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, false, c,  
-						gene.getChromosome()+ ":"+ from+ "-"+ to);
+				File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to, "bed", true);
+				BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, c);
 				biter.init();
 				iter= biter;
 				long count= bedWrapper.read(pout, gene.getChromosome(), from, to);
@@ -3711,10 +3703,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			nrReadsWrongLength= 0;
 			nrMappingsWrongStrand= 0;
 			
-			BEDobject2[] leftover= null;
-			
-			SyncIOHandler2 handler= new SyncIOHandler2(10* 1024* 1024);
-			
 			if (mode== FluxCapacitorConstants.MODE_LEARN) {
 				nrReadsSingleLoci= 0;
 				nrReadsSingleLociMapped= 0;
@@ -3781,33 +3769,16 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						readerThread= new GTFreaderThread();
 					//readerThread.start();
 					readerThread.run();
-	//				while (readerThread!= null&& readerThread.isAlive())
-	//					try {
-	//						readerThread.join();
-	//					} catch (InterruptedException e) {
-	//						; // :)
-	//					}
 					geneNext= gtfReader.getGenes();
 	
 					for (int i = 0; (gene!= null)&& i < gene.length; i++) {
 						
-						//System.gc();
-						//Thread.yield();
-	//					if (i>= 1500) { 
-	//						int c= 0;
-	//						while (c!= '\n') {
-	//							System.err.println("start?");
-	//							c= System.in.read();
-	//						}
-	//					}
-							
 						
 						// flop strand
 						if (lastChr.equals(gene[i].getChromosome())) {
 							if (lastStr!= gene[i].getStrand()) {
 								//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
 								readObjects= 0;	
-								leftover= null;
 								// jump back
 								bedWrapper.reset(gene[i].getChromosome());
 								lastStr= gene[i].getStrand();
@@ -3816,17 +3787,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						} else {						// flop chr
 							//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
 							readObjects= 0;
-							leftover= null;
 							lastChr= gene[i].getChromosome();
 							lastStr= gene[i].getStrand();
 							lastEnd= -1;
 						}
 					
-	//					for (int j = 0; j < gene[i].getTranscripts().length; j++) {
-	//						if (gene[i].getTranscripts()[j].getTranscriptID().equals("ENST00000391372"))
-	//							System.currentTimeMillis();
-	//					}
-						
 						if (gene[i].getTranscriptCount()== 1)
 							++nrSingleTranscriptLoci;
 						else if (mode== FluxCapacitorConstants.MODE_LEARN)
@@ -3851,107 +3816,18 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						}
 						tol= 0;
 						start= Math.max(1, start- tol);
-						end= end+ tol;					
-	/*					if (lastEnd< 0)
-							start= Math.max(1, start- tol);
-						else {
-							start= Math.max(lastEnd+ 1, start- tol);
-						}
-						if (geneNext== null|| (!geneNext[0].getChromosome().equals(gene[i].getChromosome()))
-								|| (geneNext[0].getStrand()!= gene[i].getStrand()))
-							end+= tol;
-						else {
-							int next= Math.abs(geneNext[0].getStart());
-							end= Math.min(end+ tol, end+ ((next- end)/ 2));
-						}
-						lastEnd= end;
-	*/			
+						end= end+ tol;
 						
-	//					if (false&& geneNext[0].getGeneID().equals("chr19:1609293-1652326C"))
-	//						System.currentTimeMillis();
-	
 						beds= readBedFile(gene[i], start, end, mode);
 						
-	/*					if (false&& leftover!= null) {
-							BEDobject2[] nuBeds= 
-								new BEDobject2[leftover.length+ (beds== null? 0: beds.length)];
-							System.arraycopy(leftover, 0, nuBeds, 0, leftover.length);
-							if (beds!= null) 
-								System.arraycopy(beds, 0, nuBeds, leftover.length, beds.length);
-							beds= nuBeds;
-							leftover= null;
-						}
-	*/					
-					
-	//					if (geneNext[0].getGeneID().equals("chr12:58213712-58240747C"))
-	//						System.currentTimeMillis();
-						
-						if (beds!= null) {
-							
-	/*						if (false&& geneNext!= null&& geneNext[0].getChromosome().equals(gene[i].getChromosome())
-									&& geneNext[0].getStrand()== gene[i].getStrand()) {
-	
-								int bp= Math.abs(geneNext[0].getStart())- tol;
-								if (bp< end) {
-									int p= beds.length- 1;
-									for(;p>= 0;--p) {
-										if (beds[p].getStart()< bp)
-											break;
-									}
-									if (p< 0)
-										p= 0;	// take all
-									leftover= new BEDobject2[beds.length- p];
-									for (int j = p; j < beds.length; j++) 
-										leftover[j- p]= beds[j];
-									readObjects+= beds.length- p;
-								}
-							} else
-	*/						 	//TODO beds.size() no longer available
-								//readObjects+= beds.size();
-	//						if (beds.length> 0&& mode== MODE_RECONSTRUCT)
-	//							System.err.println(gene[i].toUCSCString()+ " "+ beds.length);
-						}
-						
-	//					if (i>= 1500)
-	//						System.err.println("read "+beds.length+" objects");
-						
 						if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null) {
-	//						if (Constants.progress!= null) 
-	//							Constants.progress.setString(profiling+ gene[i].getGeneID());
 							solve(gene[i], beds, false);
-						}
-						else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-	
-							// check length
-	//						for (int k = 0; readLenMin> 0&& beds!= null&& k < beds.length; k++) {
-	//							int tmpLen= beds[k].getLength();
-	//							
-	//							if (tmpLen!= readLenMin) {
-	//								
-	//								++nrReadsWrongLength;								
-	//								//int diff= tmpLen- readLenMin;	// was set to min
-	//								beds[k]= null;
-	//								/*boolean b= beds[k].trim(beds[k].getStrand()< 0, diff); // (-) always from start, (+) always from end, regardless gene.strand
-	//								if (!b) {
-	//									if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-	//										System.err.println("[HEY] mapping length "+tmpLen+" < minReadLen "+readLenMin+"!");
-	//									beds[k]= null;
-	//								} else try {assert(beds[k].length()== readLenMin);} catch (AssertionError err) {
-	//									if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-	//										System.err.println("[OOPS] failed to trim bed from "+tmpLen+" to "+readLenMin+":\n\t"+ beds[k]);
-	//									beds[k]= null;
-	//								}*/
-	//								
-	//							}
-	//								
-	//						}
-							
-	//						if (Constants.progress!= null) {
-	//							Constants.progress.setString(decomposing);	// + gene[i].getGeneID()
-	//						}
-							
+						} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
 							solve(gene[i], beds, true); 
 						}
+						
+						if (beds instanceof BufferedIteratorDisk)
+							((BufferedIteratorDisk) beds).getTmpFile().delete();
 							
 						if (output) {
 							System.out.println(gene[i].getChromosome()+ " "+
@@ -4062,30 +3938,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		}
 
 	/**
-	 * Creates a new file, either as the child of the given parent 
-	 * directory, or, in the user/system temporary files folder. 
-	 * @param parent the parent directory
-	 * @param fileName the name of the file
-	 * @return the new file
-	 */
-	File create(File parent, String fileName) {
-		
-		try {
-			File file= null;
-			if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES)) {
-				file= new File(parent, fileName);
-			} else {	// write temp file to user/system temp			
-				file= FileHelper.createTempFile(
-						FileHelper.getFileNameWithoutExtension(fileName), 
-						FileHelper.getExtension(fileName));
-			}
-			return file;
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	/**
 	 * Checks whether file is to be uncompressed and/or sorted.
 	 * 
 	 * @param inputFile
@@ -4101,14 +3953,15 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			if (f.exists()) {
 				Log.println("Assuming file "+ f.getName()+" is a decompressed version of "+ inputFile.getName());
 			} else {
-				f= createFile(f.getAbsoluteFile(), f.getName(), null, true);
+				f= createTempFile(f.getAbsoluteFile(), FileHelper.getFileNameWithoutExtension(f), FileHelper.getExtension(f), true);
 				try {
-					FileHelper.deflate(inputFile, f, cb);
+					FileHelper.inflate(inputFile, f, cb);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
 			}
 			inputFile= f;
+			inputFile.deleteOnExit();	// carefully
 		}
 		
 		// (2) sort, if needed
@@ -4118,8 +3971,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			if (f.exists()) {
 				Log.println("Assuming file "+ f.getName()+" is a sorted version of "+ inputFile.getName());
 			} else {
-				f= createFile(f, f.getName(), FileHelper.getExtension(f), 
-						!settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES));
+				f= createFile(f, !settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES));
 				wrapper.sort(f);
 				if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES))
 					f.renameTo(FileHelper.getSortedFile(inputFile));

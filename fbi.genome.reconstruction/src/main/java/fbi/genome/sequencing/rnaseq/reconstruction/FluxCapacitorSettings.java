@@ -196,13 +196,14 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
-                if (file == null) {
+/*                if (file == null) {
                     throw new ParameterException("You have to specify an file for profiles");
                 }
                 if (!file.exists()) {
                     throw new ParameterException("The file for profiles " + file.getAbsolutePath() 
                     		+ " could not be found!");
                 }
+*/                
 
             }
         });
@@ -210,7 +211,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    /**
 	     * The temporary directory.
 	     */
-	    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "The temporary directory", null, new ParameterValidator() {
+	    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "The temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 if (file == null) {
