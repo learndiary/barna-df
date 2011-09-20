@@ -1809,8 +1809,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
             in = new PipedInputStream(out);
             writer= new BufferedWriter(new OutputStreamWriter(out));
 
-            sorterThread = Sorter.create(in, outStr, true)
-                    .separator("\\s")
+            sorterThread = Sorter.create(in, outStr, true, "\\s")
                     .field(0, false) // chr
                     .field(6, false) // strand
                     .field(new GlobalTranscriptPositionComparator(transcriptPositions, new int[]{fieldNrs[0], fieldNrs[3]}))

@@ -123,12 +123,14 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
 
     /**
      * Create a line comparator that wraps around another comparator
+     * using a specific separator.
      *
      * @param comparator parent comparator
      */
-    public LineComparator(Comparator<T> comparator) {
+    public LineComparator(String separator, Comparator<T> comparator) {
         this.parent = comparator;
         this.numerical = false;
+        this.separator= separator;
     }
 
 
@@ -259,14 +261,6 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
      */
 	public List<Comparator<T>> getSubComparators() {
 		return subComparators;
-	}
-	
-	/**
-	 * Sets a new separator string for this <code>LineComparator</code>.
-	 * @param newSeparator a new separator string
-	 */
-	public void separator(String newSeparator) {
-		this.separator= newSeparator;
 	}
 }
 

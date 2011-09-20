@@ -241,7 +241,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 			
 			if (inputFile== null) {
 				FileOutputStream fos= new FileOutputStream(tmpFile);
-				Sorter s= Sorter.create(inputStream, fos, true)
+				Sorter s= Sorter.create(inputStream, fos, true, null)
 					.field(comparator);
 				this.captain= s.sortInBackground();
 
@@ -255,7 +255,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 						Copier copy= new Copier(inputFile, pout);
 						Future future1= Execute.getExecutor().submit(copy);
 						FileOutputStream fos= new FileOutputStream(tmpFile);
-						Sorter s= Sorter.create(pin, fos, true)
+						Sorter s= Sorter.create(pin, fos, true, null)
 							.field(comparator);
 						Future future2= s.sortInBackground();
 						future1.get();

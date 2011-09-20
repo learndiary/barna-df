@@ -1,11 +1,7 @@
 package fbi.genome.io;
 
-import fbi.commons.Execute;
-import fbi.genome.io.Sorter;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,8 +10,11 @@ import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import fbi.commons.Execute;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -50,7 +49,7 @@ public class SorterTest {
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            Sorter.create(in, out, true).field(0, false).sort();
+            Sorter.create(in, out, true, null).field(0, false).sort();
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -70,7 +69,7 @@ public class SorterTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try {
-            Sorter.create(in, out, true).field(0, false).sort();
+            Sorter.create(in, out, true, null).field(0, false).sort();
             String outString = new String(out.toByteArray());
             assertEquals(
                     "\n"+
@@ -92,7 +91,7 @@ public class SorterTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try {
-            Sorter.create(in, out, true).field(2, true).sort();
+            Sorter.create(in, out, true, null).field(2, true).sort();
 
             String outString = new String(out.toByteArray());
             assertEquals(
@@ -110,7 +109,7 @@ public class SorterTest {
     public void testSmallSortThreaded(){
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Future future = Sorter.create(in, out, true).field(0, false).sortInBackground();
+        Future future = Sorter.create(in, out, true, null).field(0, false).sortInBackground();
         try {
             future.get();
         } catch (InterruptedException e) {
@@ -136,7 +135,7 @@ public class SorterTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try {
-            Sorter.create(in, out, true).field(new Comparator<CharSequence>() {
+            Sorter.create(in, out, true, null).field(new Comparator<CharSequence>() {
                 @Override
                 public int compare(final CharSequence o1, final CharSequence o2) {
                     return o1.toString().compareTo(o2.toString());

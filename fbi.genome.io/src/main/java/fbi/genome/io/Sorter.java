@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -41,6 +40,8 @@ import fbi.commons.tools.LineComparator;
  */
 public class Sorter {
 
+	public static final String SEPARATOR_DEFAULT= "\t";
+	
     /**
      * The input stream
      */
@@ -56,7 +57,7 @@ public class Sorter {
     /**
      * The separator character
      */
-    private String separator = "\t";
+    private String separator = SEPARATOR_DEFAULT;
     /**
      * List of line comparators
      */
@@ -75,11 +76,12 @@ public class Sorter {
      * @param out    the output stream
      * @param silent be silent
      */
-    private Sorter(InputStream in, OutputStream out, boolean silent) {
+    private Sorter(InputStream in, OutputStream out, boolean silent, String separator) {
         this.in = in;
         this.out = out;
         this.silent = silent;
-
+        this.separator = separator;
+        
         if (this.out == null) {
             // create dev null output
             this.out = new DevNullOutputStream();
@@ -89,42 +91,6 @@ public class Sorter {
     }
 
     /**
-     * Set the field separator, propagate for all hitherto 
-     * registered comparators if applicable.
-     *
-     * @param separator field separator
-     * @return sorter this sorter
-     */
-    public Sorter separator(String separator) {
-        this.separator = separator;
-        if (comparators!= null) {
-        	Iterator<LineComparator> iter= comparators.iterator();
-        	while(iter.hasNext()) {
-        		LineComparator comparator= iter.next();
-        		separatorPropagation(comparator);
-        	}
-        }
-        
-        return this;
-    }
-    
-    /**
-     * Propagates <code>this</code> instance's separator through
-     * all registered comparators.
-     * @param comparator current comparator that is propagated by
-     * the recursion
-     */
-    protected void separatorPropagation(LineComparator comparator) {
-    	comparator.separator(this.separator);
-		if (comparator.getSubComparators()!= null) {
-        	Iterator<LineComparator> iter= comparator.getSubComparators().iterator();
-        	while (iter.hasNext())
-        		separatorPropagation(iter.next());
-		}
-    }
-    
-
-    /**
      * Sort by given field
      *
      * @param field   the field index
@@ -132,6 +98,18 @@ public class Sorter {
      * @return sorter this sorter
      */
     public Sorter field(int field, boolean numeric) {
+    	return field(this.separator, field, numeric);
+    }
+    
+    /**
+     * Sort by given field using a specific separator
+     *
+     * @param separator custom separator string
+     * @param field   the field index
+     * @param numeric is the field numeric
+     * @return sorter this sorter
+     */
+    public Sorter field(String separator, int field, boolean numeric) {
         comparators.add(new LineComparator(numeric, separator, field));
         return this;
     }
@@ -143,21 +121,44 @@ public class Sorter {
      * @return sorter this sorter
      */
     public Sorter field(int... fields) {
+    	return field(this.separator, fields);
+    }
+    
+    /**
+     * Sort by merged fields. All specified fields are merged and teh concatenated string is compared
+     * employing a custom separator
+     *
+     * @param separator custom separator
+     * @param fields the fields
+     * @return sorter this sorter
+     */
+    public Sorter field(String separator, int... fields) {
         comparators.add(new LineComparator(separator, fields));
         return this;
     }
 
     /**
-     * Use a custom comparator
+     * Use a custom comparator and the default separator
      *
      * @param comparator the comparator
      * @return sorter this sorter
      */
     public Sorter field(Comparator<? extends CharSequence> comparator) {
+    	return field(this.separator, comparator);
+    }
+    
+    /**
+     * Use a custom comparator and a custom separator
+     *
+     * @param separator custom separator
+     * @param comparator the comparator
+     * @return sorter this sorter
+     */
+    public Sorter field(String separator, Comparator<? extends CharSequence> comparator) {
         if (comparator == null) {
             throw new NullPointerException("Null comparator is not permitted");
         }
-        comparators.add(new LineComparator(comparator));
+        comparators.add(new LineComparator(separator, comparator));
         return this;
     }
 
@@ -232,10 +233,13 @@ public class Sorter {
      * @param in     the input stream
      * @param out    the output stream
      * @param silent be silent
+     * @param separator the separator used to tokenize the line
      * @return sorter the sorter
      */
-    public static Sorter create(InputStream in, OutputStream out, boolean silent) {
-        return new Sorter(in, out, silent);
+    public static Sorter create(InputStream in, OutputStream out, boolean silent, String separator) {
+    	if (separator== null)
+    		separator= SEPARATOR_DEFAULT;
+        return new Sorter(in, out, silent, separator);
     }
 
     /**

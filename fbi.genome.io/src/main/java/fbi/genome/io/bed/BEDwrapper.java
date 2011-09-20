@@ -495,8 +495,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			in = new PipedInputStream(out);
 			tmpWriter= new BufferedWriter(new OutputStreamWriter(out));
 
-            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true)
-                    .separator("\\s")
+            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true, "\\s")
                     .field(0, false)
                     .addInterceptor(new Interceptable.Interceptor<String>() {
                         String lastLine= null;
@@ -613,8 +612,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	}
 
 	public Sorter getSorter(InputStream in, OutputStream out) {
-		Sorter sorter= Sorter.create(in, out, true)
-		    .separator("\\s")
+		Sorter sorter= Sorter.create(in, out, true, "\\s")
 		    .field(0, false)
 		    .field(1, true);
 		return sorter;
