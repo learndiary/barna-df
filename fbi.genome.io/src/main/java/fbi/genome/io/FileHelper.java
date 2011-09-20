@@ -63,6 +63,11 @@ public class FileHelper {
     static final String SUFFIX_SORTED= "_sorted";
 
     /**
+     * Custom temp directory
+     */
+    public static File tempDirectory;
+
+    /**
      * Creates a handle that points to a file appending the default
      * sorted suffix.
      * 
@@ -1133,6 +1138,19 @@ public class FileHelper {
     	return append(s, null, true, null);
     }
 
+    /**
+     * Creates a temp file using the name as prefix and appending an optional extension
+     *
+     * @param name the name
+     * @param ext  the extension (null permitted)
+     * @return file temp file
+     * @throws IOException in case of any errors
+     */
+    public static File createTempFile(String name, String ext) throws IOException {
+        File dir = tempDirectory;
+        if(dir == null) dir = new File(System.getProperty("java.io.tmpdir"));
+        return File.createTempFile(name, ext, dir);
+    }
     /**
      * Creates a temp file using the name as prefix and appending an optional extension
      *
