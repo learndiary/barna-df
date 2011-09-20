@@ -12,18 +12,32 @@
 package fbi.genome.io;
 
 
-import fbi.commons.Execute;
-import fbi.commons.Log;
-import fbi.commons.tools.Interceptable;
-import fbi.commons.tools.LineComparator;
-import fbi.commons.tools.Interceptable.Interceptor;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
+import fbi.commons.Execute;
+import fbi.commons.Log;
+import fbi.commons.tools.Interceptable;
+import fbi.commons.tools.LineComparator;
 
 /**
  * Implements an external R-Way merge sort by creating sorted chunks, writing them to disk and
@@ -192,7 +206,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
                     File chunk = null;
                     if(out == null){
 
-                        chunk = FileHelper.createTempFile("chunk", ".srt");
+                        chunk = FileHelper.createTempFile("chunk", ".srt", null);
                         chunk.deleteOnExit();
                         out = new FileOutputStream(chunk);
                     }
@@ -362,7 +376,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         comparator.reset();
 
         // write the file
-        File file = FileHelper.createTempFile("sort", ".srt");
+        File file = FileHelper.createTempFile("sort", ".srt", null);
         file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10 * 1024);
         for (String line : lines) {
