@@ -58,11 +58,6 @@ public class FileHelper {
     public static final byte COMPRESSION_NONE = 0, COMPRESSION_ZIP = 1, COMPRESSION_GZIP = 2;
 
     /**
-     * Custom temp directory
-     */
-    public static File tempDirectory;
-
-    /**
      * Default suffix for sorted files
      */
     static final String SUFFIX_SORTED= "_sorted";
@@ -1135,7 +1130,7 @@ public class FileHelper {
      * @return file temp file
      * @throws IOException in case of any errors
      */
-    public static File createTempFile(String name, String ext) throws IOException {
+    public static File createTempFile(String name, String ext, File tempDirectory) throws IOException {
         if (ext != null && ext.length() > 0 && !ext.startsWith(".")) {
             ext = "." + ext;
         }
@@ -1144,5 +1139,23 @@ public class FileHelper {
         } else {
             return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "", tempDirectory);
         }
+    }
+    
+    /**
+     * Creates a temporary directory
+     *
+     * @param prefix the prefix of the directory name
+     * @param suffix the suffix of the directory name
+     * @param File the parent directory
+     * @return File temporary directory
+     * @throws Exception in case of any errors
+     */
+    public static File createTempDir(String prefix, String suffix, File parent) throws Exception {
+    	File f= File.createTempFile(prefix, suffix, parent);
+    	if (!f.delete())
+    		return null;
+    	if (!f.mkdir())
+    		return null;
+    	return f;
     }
 }
