@@ -218,10 +218,20 @@ public class FileHelper {
         return "";
     }
 
+    /**
+     * Unpacks a source file to a destination file. In case of multi-file archives (e.g., ZIP), 
+     * the first file is unpacked to the destination.
+     * @param src source file
+     * @param dest destination file
+     * @param compression compressed format identifier
+     * @throws Exception something went wrong
+     */
     public static void inflate(File src, File dest, byte compression) throws Exception {
         InflaterInputStream in = null;
         if (compression == COMPRESSION_ZIP) {
-            in = new ZipInputStream(new FileInputStream(src));
+            ZipInputStream zin = new ZipInputStream(new FileInputStream(src));
+            zin.getNextEntry();
+            in= zin;
         } else if (compression == COMPRESSION_GZIP) {
             in = new MultiMemberGZIPInputStream(new FileInputStream(src)); // GZIPInputStream
         }
@@ -232,7 +242,7 @@ public class FileHelper {
         int bufSize = 65536;
         BufferedOutputStream buffy = new BufferedOutputStream(new FileOutputStream(dest), bufSize);
         byte[] buf = new byte[bufSize];
-        int rec = 0, perc = 0;
+        int rec = 0;
         long read = 0, max = src.length() * 10;
 
         Log.progressStart("\tinflating");
@@ -1007,7 +1017,7 @@ public class FileHelper {
 
     public static String getCompressionExtension(byte compression) {
         if (compression == COMPRESSION_NONE) {
-            return "";
+            return null;	// null better than empty string, branch for empty suffixes
         }
         if (compression == COMPRESSION_ZIP) {
             return SFX_ZIP;
@@ -1102,12 +1112,13 @@ public class FileHelper {
      * @return
      */
     public static String append(String s, String sfx, boolean stripExt, String newExt) {
-        if (newExt != null) {
+
+    	if (newExt != null&& !newExt.startsWith(".")) 
             newExt = '.' + newExt;
-        }
         int p = s.lastIndexOf('.');
+        
         String nuFname = (p >= 0) ?
-                s.substring(0, p) + (sfx== null? "": sfx) + (stripExt ? "" : (newExt == null ? s.substring(p+ 1) : newExt)) :
+                s.substring(0, p) + (sfx== null? "": sfx) + (stripExt ? "" : s.substring(p)) + (newExt == null ? "" : newExt) :
                 s + (sfx== null? "": sfx) + (newExt== null? "" : newExt);
 
         return nuFname;
