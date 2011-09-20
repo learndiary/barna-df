@@ -1007,7 +1007,7 @@ public class FileHelper {
 
     public static String getCompressionExtension(byte compression) {
         if (compression == COMPRESSION_NONE) {
-            return null;
+            return "";
         }
         if (compression == COMPRESSION_ZIP) {
             return SFX_ZIP;
