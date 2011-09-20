@@ -54,7 +54,7 @@ public class DistanceMeasurer {
 	// pile chr pos F/R
 	static long getDistances(File f, int pile, boolean sameStrand, int uDistance, int dDistance, PrintStream ps) {
 		long nrPiles= 0;
-		BufferedIteratorDisk iter= new BufferedIteratorDisk(f, true);
+		BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
 		ByteArrayCharSequence cs= null;
 		long t0= System.currentTimeMillis();
 		int ctr= 0;
