@@ -1,26 +1,27 @@
 package fbi.genome.io.bed;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Arrays;
 import java.util.Comparator;
 
-import org.junit.Test;
-import org.junit.BeforeClass;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
-import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.BufferedIteratorDisk;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.bed.BEDobject2;
-import static junit.framework.Assert.*;
 
 public class BEDiteratorDiskTest {
 
@@ -62,7 +63,9 @@ public class BEDiteratorDiskTest {
 			//for (int i = 0; i < beds.length; i++) {
 			//	System.out.println(beds[i]);
 			//}
-			BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, false, comp);
+			File tmpFile= File.createTempFile(getClass().getSimpleName(), "bed");
+			tmpFile.deleteOnExit();
+			BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, comp);
 			biter.init();
 			
 			OutputStreamWriter writer= new OutputStreamWriter(pout);
@@ -81,9 +84,10 @@ public class BEDiteratorDiskTest {
 				assertEquals(obj, bedSorted[i++]);
 			}
 			assertTrue(i== 4);
+			tmpFile.delete();
 			
 		} catch (Exception e) {
-			; // :)
+			throw new RuntimeException(e); 
 		}
 	}
 	
@@ -105,8 +109,7 @@ public class BEDiteratorDiskTest {
 			
 			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
-			Comparator<CharSequence> comp= new BEDDescriptorComparator(descriptor);
-			BufferedIteratorDisk biter= new BufferedIteratorDisk(x, true);
+			BufferedIteratorDisk biter= new BufferedIteratorDisk(x);
 			biter.init();
 			
 			int tstL= 0, tstC= 0;

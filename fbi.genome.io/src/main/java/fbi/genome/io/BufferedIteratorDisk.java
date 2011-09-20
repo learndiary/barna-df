@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import fbi.commons.ByteArrayCharSequence;
-import fbi.commons.CharsequenceComparator;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 
@@ -51,25 +50,6 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 */
 	Future captain; // allow flexible types of different Callables
 	/**
-	 * The directory where the sorted file is created.
-	 * @see tmpFile
-	 * @see prefix 
-	 */
-	File directory;
-	/**
-	 * The prefix of the sorted file.
-	 * @see directory
-	 * @see tmpFile
-	 */
-	String prefix;
-	/**
-	 * The suffix of the sorted file.
-	 * @see tmpFile
-	 * @see prefix
-	 * @see directory
-	 */
-	String suffix=".bed";
-	/**
 	 * A file with BED lines provided as input. 
 	 */
 	File inputFile;
@@ -77,11 +57,6 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * A stream with BED lines provided as input.
 	 */
 	InputStream inputStream;
-	/**
-	 * Flag indicated whether the BED lines from 
-	 * the input are already sorted.
-	 */
-	boolean sorted= false;
 	/**
 	 * Internal reader instance.
 	 */
@@ -106,141 +81,93 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	boolean inited= false;
 	
 	/**
-	 * Creates an instance with BED lines read from a stream. As no 
-	 * comparator is provided, <code>CharsequenceComparator</code>
-	 * is used as default.
-	 * @param istream the input stream
-	 * @param sorted flag to indicate whether BED lines are sorted
+	 * Creates an instance with <i>sorted</i> BED lines read from a stream
+	 * and written to the intermediate file.
+	 * 
+	 * @param istream input stream with <b>sorted</b> lines
+	 * @param tmpFile temporary file storing the content of the input stream
 	 */
-	public BufferedIteratorDisk(InputStream istream, boolean sorted) {
-		this(istream, sorted, CharsequenceComparator.DEFAULT_CHARSEQUENCE_COMPARATOR, -1, null, null);
+	public BufferedIteratorDisk(InputStream istream, File tmpFile) {
+		this(istream, tmpFile, null, -1);
 	}
 	
 	/**
-	 * Creates an instance with BED lines read from a stream and 
-	 * sorted according to a custom <code>Comparator</code>.
-	 * @param istream the input stream
-	 * @param sorted flag to indicate whether BED lines are sorted
-	 * @param comparator the comparator that is used for sorting
+	 * Creates an instance with <i>unsorted</i> BED lines read from a stream
+	 * and sorted to the intermediate file employing the comparator provided.
+	 * 
+	 * @param istream input stream with <b>unsorted</b> lines
+	 * @param tmpFile temporary file storing the content of the input stream
+	 * @param comparator rules of comparison
 	 */
-	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator) {
-		this(istream, sorted, comparator, -1, null, null);
+	public BufferedIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator) {
+		this(istream, tmpFile, comparator, -1);
 	}
 	
 	/**
-	 * Creates an instance with BED lines read from a stream and 
-	 * sorted according to a custom <code>Comparator</code>. 
-	 * Additionally the capacity of the buffer used for reading can 
-	 * be declared (>0).
-	 * @param istream the input stream
-	 * @param sorted flag to indicate whether BED lines are sorted
-	 * @param comparator the comparator that is used for sorting
-	 * @param capacity value specifying the capacity of the reader
+	 * Creates an instance with <i>unsorted</i> BED lines read from a stream
+	 * and sorted to the intermediate file employing the comparator provided
+	 * and a certain capacity in bytes for the reading buffer.
+	 * 
+	 * @param istream input stream with <b>unsorted</b> lines
+	 * @param tmpFile temporary file storing the content of the input stream
+	 * @param comparator rules of comparison
+	 * @param capacity capacity of the reader
 	 * @see #reader
 	 */
-	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, int capacity) {
-		this(istream, sorted, comparator, capacity, null, null);
-	}
-	
-	/**
-	 * Creates an instance with BED lines read from a stream and 
-	 * sorted according to a custom <code>Comparator</code>. 
-	 * Additionally the capacity of the buffer used for reading (>0),
-	 * and the prefix of the sorted file can be declared. 
-	 * @param istream the input stream
-	 * @param sorted flag to indicate whether BED lines are sorted
-	 * @param comparator the comparator that is used for sorting
-	 * @param capacity value specifying the capacity of the reader
-	 * @param prefix the prefix of the sorted file's name
-	 * @see #reader
-	 * @see #tmpFile
-	 */
-	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, String prefix) {
-		this(istream, sorted, comparator, -1, prefix, null);
-	}
-	
-	/**
-	 * Creates an instance with BED lines read from a stream and 
-	 * sorted according to a custom <code>Comparator</code>. 
-	 * Additionally the capacity of the buffer used for reading (>0),
-	 * and directory and prefix of the sorted file can be declared. 
-	 * @param istream the input stream
-	 * @param sorted flag to indicate whether BED lines are sorted
-	 * @param comparator the comparator that is used for sorting
-	 * @param capacity value specifying the capacity of the reader
-	 * @param prefix the prefix of the sorted file's name
-	 * @param directory folder where the sorted file is created
-	 * @see #reader
-	 * @see #tmpFile
-	 * @see #directory
-	 */
-	public BufferedIteratorDisk(InputStream istream, boolean sorted, Comparator<CharSequence> comparator, int capacity, String prefix, File directory) {		
+	public BufferedIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
 		this.inputStream= istream;
-		this.sorted= sorted;
+		this.tmpFile= tmpFile;
 		this.comparator= comparator;
-		this.prefix= prefix;
-		this.directory= directory;
 		this.capacity= capacity;
 	}
 	
 	/**
-	 * Creates an instance with BED lines read from a file.
-	 * @param inputFile the input file
-	 * @param sorted flag to indicate whether BED lines are sorted
+	 * Creates an instance with BED lines read from a file that is
+	 * <i>already sorted</i>.
+	 * @param inputFile <b>already sorted</b> input file
 	 */
-	public BufferedIteratorDisk(File inputFile, boolean sorted) {
-		this(inputFile, sorted, -1, null, null);
+	public BufferedIteratorDisk(File inputFile) {
+		this(inputFile, null, null, -1);
 	}
 	
 	/**
-	 * Creates an instance with BED lines read from a file. 
-	 * Additionally the number of bytes used for the read-buffer
-	 * can be declared.
-	 * @param inputFile the input file
-	 * @param sorted flag to indicate whether BED lines are sorted
+	 * Creates an instance with BED lines read from a file that is
+	 * <i>already sorted</i>, using the given number of bytes as
+	 * reading buffer capacity.
+	 * @param inputFile <b>already sorted</b> input file
 	 * @param capacity number of bytes used for the reading buffer
 	 */
-	public BufferedIteratorDisk(File inputFile, boolean sorted, int capacity) {
-		this(inputFile, sorted, capacity, null, null);
+	public BufferedIteratorDisk(File inputFile, int capacity) {
+		this(inputFile, null, null, capacity);
 	}
 	
 	/**
-	 * Creates an instance with BED lines read from a file. 
-	 * Additionally the number of bytes used for the read-buffer,
-	 * and the sorted file's name and directory can be declared.
-	 * @param inputFile the input file
-	 * @param sorted flag to indicate whether BED lines are sorted
-	 * @param capacity number of bytes used for the reading buffer
-	 * @param prefix prefix of the sorted file's name
-	 * @param directory folder where the sorted file is created 
+	 * Creates an instance with BED lines read from an <i>unsorted
+	 * file</i> and sorts it to a temporary file employing the 
+	 * given <code>Comparator</code> instance.
+	 * @param inputFile <b>unsorted</b> input file
+	 * @param tmpFile intermediate <b>sorted</b> file that is created
+	 * @param comparator comparison applied for sorting 
 	 */
-	public BufferedIteratorDisk(File inputFile, boolean sorted, int capacity, String prefix, File directory) {
+	public BufferedIteratorDisk(File inputFile, File tmpFile, Comparator<CharSequence> comparator) {
+		this(inputFile, tmpFile, comparator, -1);
+	}
+	
+	/**
+	 * Creates an instance with BED lines read from an <i>unsorted
+	 * file</i> and sorts it to a temporary file employing the 
+	 * given <code>Comparator</code> instance and the given 
+	 * number of bytes as reading buffer capacity.
+	 * @param inputFile <b>unsorted</b> input file
+	 * @param tmpFile intermediate <b>sorted</b> file that is created
+	 * @param comparator comparison applied for sorting 
+	 * @param capacity number of bytes used for the reading buffer
+	 */
+	public BufferedIteratorDisk(File inputFile, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
 		this.inputFile= inputFile;
-		this.sorted= sorted;
-		this.prefix= prefix;
-		this.directory= directory;
+		this.tmpFile= tmpFile;
 		this.capacity= capacity;
-	}
-	
-	/**
-	 * Creates a <code>File</code> instance according to the provided 
-	 * parameters <code>prefix</code> and <code>directory</code>. The
-	 * suffix is fixed to &quot;.bed&quot;
-	 * @return a file handle of the temporary file that is iterated 
-	 */
-	protected File createTmpFile() {
-		String pfx= (prefix== null?this.getClass().getName() : prefix);
-		try {
-			if (directory== null)
-				return File.createTempFile(pfx, suffix);
-			else
-				return File.createTempFile(pfx, suffix, directory);
-		} catch (IOException e) {
-			Log.error("Couldn't create temporary file "+ pfx+ "*"+ suffix+
-					" in "+ (directory== null? System.getProperty("java.io.tmpdir"): directory.getAbsolutePath()));
-			e.printStackTrace(Log.logStream);
-			return null;
-		}
+		this.comparator= comparator;
 	}
 	
 	/**
@@ -253,7 +180,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @throws IOException
 	 * @see #init()
 	 */
-	protected File getTmpFile() throws ExecutionException, IOException {
+	public File getTmpFile() throws ExecutionException, IOException {
 		
 		if (!inited) 
 			init();
@@ -289,11 +216,13 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	public void init() throws FileNotFoundException, IOException {
 		if (inputStream== null&& inputFile== null) 
 			Log.error("No input data");
+
+		if (tmpFile== null&& (!(comparator== null&& inputFile!= null)))
+			throw new RuntimeException("Temporary file required for iterating");
 		
-		if (sorted) {
+		if (comparator== null) {	// assume sorted
 			// save sorted stream to file
 			if (inputFile== null) {				
-				tmpFile= createTmpFile();
 				Copier copy= new Copier(inputStream, tmpFile);
 				this.captain= Execute.getExecutor().submit(copy);
 				
@@ -311,7 +240,6 @@ public class BufferedIteratorDisk implements BufferedIterator {
 		} else {	// unsorted
 			
 			if (inputFile== null) {
-				tmpFile= createTmpFile();
 				FileOutputStream fos= new FileOutputStream(tmpFile);
 				Sorter s= Sorter.create(inputStream, fos, true)
 					.field(comparator);
@@ -319,7 +247,6 @@ public class BufferedIteratorDisk implements BufferedIterator {
 
 			} else {
 				
-				tmpFile= createTmpFile();
 				Callable<Void> callme= new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
