@@ -58,6 +58,11 @@ public class FileHelper {
     public static final byte COMPRESSION_NONE = 0, COMPRESSION_ZIP = 1, COMPRESSION_GZIP = 2;
 
     /**
+     * Default suffix for locked files
+     */
+    static final String SUFFIX_LOCK= "lock";
+    
+    /**
      * Default suffix for sorted files
      */
     static final String SUFFIX_SORTED= "_sorted";
@@ -67,6 +72,18 @@ public class FileHelper {
      */
     public static File tempDirectory;
 
+    
+    /**
+     * Returns a handle for the default lock file that is created when 
+     * the provided file is about to be generated.
+     * 
+     * @param inputFile the unsorted file
+     * @return the sorted file
+     */
+    public static File getLockFile(File inputFile) {
+    	return new File(inputFile.getAbsolutePath()+ "."+ SUFFIX_LOCK);
+    }
+    
     /**
      * Creates a handle that points to a file appending the default
      * sorted suffix.
