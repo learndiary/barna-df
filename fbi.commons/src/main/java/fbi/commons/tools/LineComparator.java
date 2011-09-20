@@ -11,7 +11,11 @@
 
 package fbi.commons.tools;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Compares strings and supports field splitting and number parsing.
@@ -247,5 +251,22 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
             }
         }
     }
+
+    /**
+     * Returns all subcomparators currently registered for this  
+     * <code>LineComparator</code>.
+     * @return all subcomparators currently registered
+     */
+	public List<Comparator<T>> getSubComparators() {
+		return subComparators;
+	}
+	
+	/**
+	 * Sets a new separator string for this <code>LineComparator</code>.
+	 * @param newSeparator a new separator string
+	 */
+	public void separator(String newSeparator) {
+		this.separator= newSeparator;
+	}
 }
 

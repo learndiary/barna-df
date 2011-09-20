@@ -11,21 +11,21 @@
 
 package fbi.genome.io;
 
-import fbi.commons.io.DevNullOutputStream;
-import fbi.commons.tools.Interceptable;
-import fbi.commons.tools.LineComparator;
-import fbi.commons.tools.Interceptable.Interceptor;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import fbi.commons.io.DevNullOutputStream;
+import fbi.commons.tools.Interceptable;
+import fbi.commons.tools.LineComparator;
 
 /**
  * The Sorter follows the Builder pattern. Use the {@link #create(java.io.InputStream, java.io.OutputStream, boolean)}
@@ -89,15 +89,40 @@ public class Sorter {
     }
 
     /**
-     * Set the field separator
+     * Set the field separator, propagate for all hitherto 
+     * registered comparators if applicable.
      *
      * @param separator field separator
      * @return sorter this sorter
      */
     public Sorter separator(String separator) {
         this.separator = separator;
+        if (comparators!= null) {
+        	Iterator<LineComparator> iter= comparators.iterator();
+        	while(iter.hasNext()) {
+        		LineComparator comparator= iter.next();
+        		separatorPropagation(comparator);
+        	}
+        }
+        
         return this;
     }
+    
+    /**
+     * Propagates <code>this</code> instance's separator through
+     * all registered comparators.
+     * @param comparator current comparator that is propagated by
+     * the recursion
+     */
+    protected void separatorPropagation(LineComparator comparator) {
+    	comparator.separator(this.separator);
+		if (comparator.getSubComparators()!= null) {
+        	Iterator<LineComparator> iter= comparator.getSubComparators().iterator();
+        	while (iter.hasNext())
+        		separatorPropagation(iter.next());
+		}
+    }
+    
 
     /**
      * Sort by given field
