@@ -24,5 +24,8 @@ class SimpleTest{
         println "EXIT: ${process.exitValue()}"
         println "STDERR: ${process.err.text}"
         println "STDOUT: ${process.in.text}"
+
+        // alternative to combine wait and stdout
+        println "ls ${parameter}".execute().text
     }
 }
