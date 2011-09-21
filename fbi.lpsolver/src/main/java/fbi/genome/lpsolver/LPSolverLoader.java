@@ -105,10 +105,17 @@ public class LPSolverLoader {
         //}
 
         // files should exist now, load
-        if(libFile.exists())
+        /*
+        CAP-7 Make sure we only load the shared library on windows
+        as we have single JNI library for OSX and LInux
+         */
+        if(libFile.exists() && !OSChecker.isMac() && !OSChecker.isLinux()){
             System.load(libFile.getAbsolutePath());
-        if(libjFile.exists())
+        }
+
+        if(libjFile.exists()){
             System.load(libjFile.getAbsolutePath());
+        }
 
         // check
         VersionInfo versionInfo = LpSolve.lpSolveVersion();
