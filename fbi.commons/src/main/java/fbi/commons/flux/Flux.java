@@ -74,12 +74,7 @@ public class Flux {
      */
     public static void main(String[] args) {
         // load java.util.logger configuration
-        try{
-            LogManager.getLogManager().readConfiguration(Flux.class.getResourceAsStream("/logging.properties"));
-        } catch (Exception ex) {
-            Log.error("Unable to load java.util.logging configuration, you might see some strange messages!");
-        }
-
+        Log.initialize();
         /*
         Read properties
          */

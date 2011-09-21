@@ -12,6 +12,7 @@
 package fbi.commons;
 
 import java.io.PrintStream;
+import java.util.logging.LogManager;
 
 /**
  * Defines constants and current logging level.
@@ -30,9 +31,9 @@ public class Log {
 	/**
 	 * Default stream to which output is written.
 	 */
-	public static PrintStream outputStream= System.out;	
+	public static PrintStream outputStream= System.out;
 
-	/**
+    /**
      * Log levels
      */
     public static enum Level {
@@ -76,6 +77,20 @@ public class Log {
      * Is the logger interactive
      */
     private static boolean interactive = true;
+
+    /**
+     * Initialize the Log and load some default configurations
+     *
+     * @since 1.6
+     */
+    public static void initialize() {
+        try{
+            LogManager.getLogManager().readConfiguration(Log.class.getResourceAsStream("/logging.properties"));
+        } catch (Exception ex) {
+            Log.error("Unable to load java.util.logging configuration, you might see some strange messages!");
+        }
+
+    }
 
     /**
      * Translates a string to the proper log level or throws an {@link IllegalArgumentException}
