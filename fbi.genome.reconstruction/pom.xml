@@ -193,5 +193,17 @@
         </plugins>
     </build>
 
+    <distributionManagement>
+        <repository>
+            <id>fenris</id>
+            <name>fenris-releases</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>fenris</id>
+            <name>fenris-snapshots</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
