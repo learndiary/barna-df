@@ -114,6 +114,20 @@ GETTING STARTED
     # this also sets the upper limit to 2 gig
     export FLUX_MEM="2048M"; flux -t capacitor -p ....
 
+* LPSolver libraries
+
+    The Capacitor comes with bundled versions of the LPSolve library for Windows, Linux and Mac OS X.
+    In case the bundled libraries are not compatible with your system our you want to use a custom version
+    of the library, you have to specify two environment variables
+
+    export LPSOLVER_JNI=/usr/local/lib/liblpsolve55j.so
+
+    export LPSOLVER_LIB=/usr/local/lib/liblpsolve55.so
+
+    to specify teh ABSOLUTE paths to both the shared library (liblpsolve55) and the Java Native Interface
+    library (liblpsolve55j). Sources can be downloaded from http://sourceforge.net/projects/lpsolve.
+    Note that you have to build both the lpsolve library and the java binding.
+
 * All pages related to the program are reachable from the program homepage
 
 	http://flux.sammeth.net
