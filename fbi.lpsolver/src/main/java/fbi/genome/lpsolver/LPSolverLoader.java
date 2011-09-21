@@ -88,7 +88,7 @@ public class LPSolverLoader {
             // copy
             try {
                 URL dylib = LPSolverLoader.class.getResource("/" + dir + "/" + bits + "/" + name);
-                if(!OSChecker.isMac()){ // mac os is a single jnilib file
+                if(!OSChecker.isMac() && !OSChecker.isLinux()){ // mac os is a single jnilib file
                     write2File(dylib, libFile);
                 }
             } catch (IOException e) {
