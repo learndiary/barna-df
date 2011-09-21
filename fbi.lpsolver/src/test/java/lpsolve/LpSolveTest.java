@@ -26,8 +26,14 @@ import static junit.framework.Assert.*;
 public class LpSolveTest {
 
     @BeforeClass
-    public static void setUp() throws Exception {
-        LPSolverLoader.load();
+    public static void setUp() {
+        try{
+            LPSolverLoader.load();
+        }catch (Exception err){
+            err.printStackTrace();
+            fail();
+        }
+
     }
 
     /**

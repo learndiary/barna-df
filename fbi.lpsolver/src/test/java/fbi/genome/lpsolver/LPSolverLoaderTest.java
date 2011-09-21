@@ -11,14 +11,23 @@
 
 package fbi.genome.lpsolver;
 
+import java.io.File;
+
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class LPSolverLoaderTest {
+
     @org.junit.Test
     public void testLoad() throws Exception {
-        assertTrue(LPSolverLoader.load());
+        try{
+            LPSolverLoader.load();
+        }catch (Exception error){
+            error.printStackTrace();
+            fail();
+        }
     }
 }

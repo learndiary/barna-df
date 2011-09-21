@@ -3415,24 +3415,19 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		Log.info("PRE-CHECK","I am checking availability of the required lpsolve JNI libs.");
 		VersionInfo lpVer= null;
 		try {
-
-            // first check the operating system
-//			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_LIB_NAME);
-//			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_JNI_NAME);
             LPSolverLoader.load();
 			lpVer= LpSolve.lpSolveVersion();
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-				System.err.println("\t* JNI in java library path");
-				System.err.println("\t* successfully loaded lpsolve JNI (version "+lpVer.getMajorversion()+"."+lpVer.getMinorversion()
+				Log.info("PRE-CHECK", "\t* successfully loaded lpsolve JNI (version "+lpVer.getMajorversion()+"."+lpVer.getMinorversion()
 						+",release "+lpVer.getRelease()+",build "+lpVer.getBuild()+(miss?";":"")+")\n");
 			}
 			return 0;
-		} catch (UnsatisfiedLinkError e) {
-			e.printStackTrace();
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) 
-				System.err.println("\t* there are no lpsolve libraries in the java library path");
+		} catch (Exception e) {
+            Log.error("Error while loading native libraries: " + e.getMessage());
+            Log.error("You can try to set the environment variables " + LPSolverLoader.ENV_JNI + " for \n" +
+                    "the JNI library and " + LPSolverLoader.ENV_LIB + " for the shared object library to support \n" +
+                    "your operating system. The sources for the LPSolver can be found @ http://sourceforge.net/projects/lpsolve");
 		}
-		
 		return -1;
 	}
 	

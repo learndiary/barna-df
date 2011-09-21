@@ -152,15 +152,9 @@
              Assembly plugin to create the actual bundle
             -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.2</version>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <finalName>${project.name}-${project.version}</finalName>
-                    <descriptors>
-                        <descriptor>src/main/assembly/simulator.xml</descriptor>
-                    </descriptors>
-                </configuration>
+                <version>2.2.1</version>
                 <executions>
                     <execution>
                         <id>make-unix</id>
@@ -168,6 +162,13 @@
                             <goal>single</goal>
                         </goals>
                         <phase>package</phase>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>${project.name}-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/main/assembly/simulator.xml</descriptor>
+                            </descriptors>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -175,20 +176,27 @@
     </build>
 
     <dependencies>
+
+        <dependency>
+            <groupId>fbi</groupId>
+            <artifactId>distribution</artifactId>
+            <version>1.1-SNAPSHOT</version>
+        </dependency>
+
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.commons</artifactId>
-            <version>1.5</version>
+            <version>1.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.model</artifactId>
-            <version>1.2</version>
+            <version>1.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.io</artifactId>
-            <version>1.3</version>
+            <version>1.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -201,8 +209,8 @@
 
     <repositories>
         <repository>
-            <id>Fernis</id>
-            <name>Fernis</name>
+            <id>fenris</id>
+            <name>fenris</name>
             <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
         </repository>
     </repositories>
