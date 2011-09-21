@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fbi</groupId>
@@ -10,10 +8,9 @@
     <name>Flux-Capacitor</name>
 
     <scm>
-        <url>svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</url>
-        <connection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</connection>
-        <developerConnection>scm:svn:svn+ssh://10.3.231.21/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction
-        </developerConnection>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.reconstruction</developerConnection>
     </scm>
 
     <properties>
