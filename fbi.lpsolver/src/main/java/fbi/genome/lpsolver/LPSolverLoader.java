@@ -27,6 +27,16 @@ import java.net.URL;
  */
 public class LPSolverLoader {
     /**
+     * Indicate load status for this VM
+     */
+    private static boolean IS_LOADED = false;
+    /**
+     * If load failed once, we set this to true
+     */
+    private static boolean TRIED_LOADING = false;
+
+
+    /**
      * Library name on linux
      */
     private static String FILENAME_LX="liblpsolve55.so";
@@ -57,6 +67,8 @@ public class LPSolverLoader {
      * @return success true if loaded
      */
     public static boolean load(){
+        if(TRIED_LOADING) return IS_LOADED;
+        TRIED_LOADING = true;
         String bits = OSChecker.is64bit() ? "64":"32";
 
         String name = null;
@@ -92,6 +104,8 @@ public class LPSolverLoader {
                     write2File(dylib, libFile);
                 }
             } catch (IOException e) {
+                TRIED_LOADING = true;
+                IS_LOADED = true;
                 throw new RuntimeException("Unable to copy library to filesystem! " + e.getMessage(), e);
             }
         //}
@@ -119,7 +133,7 @@ public class LPSolverLoader {
 
         // check
         VersionInfo versionInfo = LpSolve.lpSolveVersion();
-        return versionInfo != null;
+        return (IS_LOADED = versionInfo != null);
     }
 
     /**
