@@ -1,16 +1,23 @@
 package fbi.genome.io.tools;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.util.Random;
 
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
-import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
+import fbi.genome.io.FileHelper;
 
 /**
  * Class to create a subset of line from a file. 
@@ -39,7 +46,7 @@ public class Subsetter implements FluxTool<Void> {
 	/**
 	 * Number of lines to be subset.
 	 */
-	int number= -1;
+	int numberLines= -1;
 
 	/**
 	 * Set the input file from which is read.
@@ -56,7 +63,7 @@ public class Subsetter implements FluxTool<Void> {
 	 */
 	@Option(name = "n", longName = "number", description = "Number of lines to be subset", required = true)
 	public void setNumber(int number) {
-		this.number= number;
+		this.numberLines= number;
 	}
 	
 	/**
@@ -82,24 +89,113 @@ public class Subsetter implements FluxTool<Void> {
 	 */
 	@Override
 	public Void call() throws Exception {
-		Execute.initialize(1);
 		
-		// init output 
+		// init output, if file
 		if (output!= null) 
 			Log.outputStream= new PrintStream(output);
 
-		// get total line count
-		if (inputLines<= 0) 
-			;
-			
-		Execute.shutdown();
+		// doit
+		subset(input, inputLines, Log.outputStream, numberLines);
+		
+		// close output, if file
+		if (output!= null)
+			Log.outputStream.close();
+		
 		return null;
 	}
+	
+	/**
+	 * Subsets the number of lines in a file to extract (about) a desired number.
+	 * @param inputFile file from which line superset are read
+	 * @param inputLines number of liens in the input file, set to <=0 if unknown 
+	 * @param ostream stream to which the subset of lines retrieved from the input
+	 * is written
+	 * @param numberLines number of lines to be extracted from the input, has to be 
+	 * strictly <= inputLines
+	 */
+	public static void subset(File inputFile, int inputLines, OutputStream ostream, int numberLines) {
+		
+		// get total line count
+		if (inputLines<= 0) 
+			inputLines= FileHelper.countLines(inputFile);
+		if (numberLines>= inputLines) 
+			throw new RuntimeException("Number of lines in subset has to be strictly less " +
+					"than number of lines in the input ("+ numberLines+ " >= "+ inputLines+ ")");
 
+		// subset
+		BufferedReader buffy= null;
+		BufferedWriter writer= null;
+		try {
+			
+			buffy= new BufferedReader(new FileReader(inputFile));
+			writer= new BufferedWriter(new OutputStreamWriter(ostream));
+			double p= numberLines/ (2* (double) inputLines);
+			Random random= new Random();
+			for (String s= null, last= null; (s= buffy.readLine())!= null;last= s) {
+				double t= random.nextDouble();
+				if (t> p) 
+					continue;
+				
+				String[] ss= s.split("\\s");
+				if (ss[3].charAt(ss[3].length()- 3)== 'S') {
+					writer.write(s+ "\n");
+					s= buffy.readLine();
+					writer.write(s+ "\n");
+				} else if (last!= null) {
+					writer.write(last+ "\n");
+					writer.write(s+ "\n");
+				}
+			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			if (buffy!= null)
+				try {
+					buffy.close();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			if (writer!= null)
+				try {
+					writer.flush();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+		}
+	}
+
+	/**
+	 * Check parameters.
+	 */
 	@Override
 	public boolean validateParameters(HelpPrinter printer,
 			ArgumentProcessor toolArguments) {
-		// Log.error
+		if (!input.exists()) {
+			Log.error("Cannot find input file "+ input.getAbsolutePath());
+			return false;
+		}
+		
+		if (!input.canRead()) {
+			Log.error("Cannot read from input file "+ input.getAbsolutePath());
+			return false;
+		}
+		
+		if (output!= null&& output.exists()) {
+			Log.error("Output file exists "+ output.getAbsolutePath());
+			return false;
+		}
+		
+		if (output!= null&& !output.getParentFile().exists()) {
+			Log.error("Parent folder for output does not exist "+ output.getParentFile().getAbsolutePath());
+			return false;
+		}
+		
+		if (output!= null&& output.canWrite()) {
+			Log.error("Cannot write to "+ output.getAbsolutePath());
+			return false;
+		}
+		
 		return true;
 	}
 	
