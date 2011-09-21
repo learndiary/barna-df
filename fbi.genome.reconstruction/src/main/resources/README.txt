@@ -1,12 +1,13 @@
-FLUX SIMULATOR
+FLUX CAPACITOR
 ==============
 
 
 DESCRIPTION
 -----------
 
-The Flux Simulator is a program to simulate in silico RNAseq experiments as
-carried out adopting new sequencing technologies.
+The Flux Capacitor is a program to quantify expressed sequence features 
+(e.g., genes or transcripts) from transcriptome interrogations by 
+short read sequencing.
 
 
 REQUIREMENTS
@@ -14,7 +15,7 @@ REQUIREMENTS
 
 * java 1.6 or higher installed
 
-* approx 1Gb of RAM
+* approx 1Gb of RAM (when SORT_IN_RAM false, see below)
 
 * enough hard disk space for whatever you plan to do
 
@@ -22,49 +23,33 @@ REQUIREMENTS
 CHANGES
 ---------------
 
-FluxSimulator RC4
-    -fixed problem with disabling the PCR distriubution
-    -fixed windows startup problems
-    -fixed BED sorter issue
+FluxCapacitor 1.0 RC1
 
-FluxSimulator RC3
-
-    -fixed issue #58 - made sure all buffers are flushed before moving files
-    -fixed issue #61 - temp directory is passed to FileUtils
-    -fixed issue #60 - added documentation
-    -fixed issue #48 - fastq output and new error model - you need an error model for for fasta/fastq now
-                       NOTE : the FASTQ paramter is called FASTA now. If set to true, a fasta file will
-                       be generated. If in addition ERR_FILE is specified, a fastq file is generated,
-                       where the actual sequences incorporate errors.
-    -added the ability to specify size distributions using normal distributions with mean and sd (i.e. N(200,20))
-    -added PCR with a combined GC filtering step
-    -added quality error models and a tool to create such models (currently only from GEM file)
-
-
-
-FluxSimulator RC2
-
-    -fixed issue #55 and allow to disable TSS_MEAN by setting it to NaN
-    -fixed issue #57 - the GTF sorter
-    -added an amplification step and removed RT_GC_LO parameter. Now, GC content
-     is weighted in amplification. The amplification consists of three parameters:
-      * PCR_ROUNDS - the number of rounds (set this to 0 to disable amplification)
-      * GC_MEAN and GC_SD - mean and standard deviation for the GC content distribution
-
+    -fixed issue #11 - all chromosomes from the input annotation are considered now
+    -fixed issue #12 and issue #30 - installation problems and issues with native 
+    library loading: pre-compiled libraries for Linux-, OSX- (Intel) and Windows-
+    platforms are provided for download. In most system configurations libraries 
+    are loaded without any special requirement, otherwise they can be set via 
+    environment variables.
+    -fixed issue#19 - Read identifier formats can now be defined by a flexible 
+    expression system.
+    -fixed issue #27 - Revised file-IO handling. 
+	-fixed issue #63 - Limit RAM-memory usage: From Flux Capacitor v1.0 RC1 on, the 
+	program's memory consumption can be made constant by user parameter (SORT_IN_RAM 
+	false).
 
 GETTING STARTED
 ---------------
 
 * unpack
 
- If you can read this, you obviously managed to unpack the FluxSimulator :) Welcome
- (not necessarily vice versa, sufficient condition)
+ If you can read this, you obviously managed to unpack the Flux Capacitor :) Welcome
 
  You will find the executable in the bin/ folder
 
     flux.bat     Windows
 
-    flux         UNIX clones and Mac OS X
+    flux         UNIX clones and Mac OSX
 
 
 * Run
@@ -73,45 +58,35 @@ GETTING STARTED
 
      flux --help
 
-    To start a specific tool and see its parameters, use
+    The Flux Capacitor is one of the tools in the Flux Package, further information 
+    on each of the tools can be retrieved by the command pattern
 
      flux --t <toolname> --help
 
-    for example
+    for instance in the case of the Flux Capacitor
 
-     flux -t simulator --help
+     flux -t capacitor --help
 
 * Parameters
 
-    The FluxSimulator reads its configuration from a parameter file specified with
+    The Flux Capacitor reads its configuration from a parameter file specified with
     the -p command line parameter (see next section)
 
     To get a list and descriptions for all available parameters, use
 
-    flux -t simulator --printParameters
+    flux -t capacitor --printParameters
 
     to create a file with an exhaustive list of parameters and their default values,
     pipe the output to a file
 
-     flux -t simulator --printParameters > myparameters.par
+     flux -t capacitor --printParameters > myparameters.par
 
 
-    NOTE that all file parameters, e.g. the location of the genome or the .gtf annotation file,
+    NOTE that all file parameters, e.g. the location of the annotation or the mapping file,
     can be specified as either absolute or relative path names; in the latter case the path
     is relative to the location of the parameter file.
-    Also, in contrast to previous versions, all result files (i.e. .pro, .lib, .bed, .fasta)
-    are created in the same directory and with the same name as the parameter file, for instance:
 
-    foo.par
-
-    creates the default results as
-
-    foo.pro, foo.lib, and foo.bed
-
-    You can still explicitly set the output file names in the parameter file with corresponding values
-    for e.g. PRO_FILE_NAME.
-
-* Example
+* Example (XXX Micha edits here XXX)
 
     To get a complete sample project including annotations and the genome, download
 
@@ -128,23 +103,24 @@ GETTING STARTED
 
 * Memory
 
-    In case you run into out of memory issues, you can increase the memory size used by
-    the simulator using the environment variable FLUX_MEM, for example:
+    In case you run into out of memory issues--especially when setting parameter 
+    SORT_IN_RAM to YES--you can increase the memory size used by the Flux 
+    Capacitor using the environment variable FLUX_MEM, for example:
 
     # this sets the upper limit to 2 gig
-    export FLUX_MEM="2G"; flux -t simulator -p ....
+    export FLUX_MEM="2G"; flux -t capacitor -p ....
 
 
     # this also sets the upper limit to 2 gig
-    export FLUX_MEM="2048M"; flux -t simulator -p ....
+    export FLUX_MEM="2048M"; flux -t capacitor -p ....
 
 * All pages related to the program are reachable from the program homepage
 
 	http://flux.sammeth.net
 	
-* Especially, have a look at the documentation of the FLUX SIMULATOR at
+* Especially, have a look at the documentation of the Flux Capacitor at
 
-	http://fluxcapacitor.wikidot.com/simulator
+	http://fluxcapacitor.wikidot.com/capacitor
 
 * If you encounter any bugs, use the bugtracking system at
 
@@ -161,4 +137,4 @@ or leave me an email.
 
 The FluxDev-Team
 
-Micha and Thasso
+Thasso and Micha
