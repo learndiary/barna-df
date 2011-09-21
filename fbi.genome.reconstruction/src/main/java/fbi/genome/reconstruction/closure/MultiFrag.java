@@ -1,21 +1,12 @@
 /*
- * Epos Phylogeny Framework
- * Copyright (C) 2009.  University of Jena
+ * This file is part of the Flux Library.
  *
- * This file is part of Epos.
- *
- * Epos is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Epos is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Epos.  If not, see <http://www.gnu.org/licenses/>;.
+ * The code of the Flux Library may be freely distributed and modified under the terms of the
+ * European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+ * Copyright for the code is held jointly by the individual authors, who should be listed
+ * in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+ * include results produced by the Flux Library are liable to reference the Work,
+ * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
 package fbi.genome.reconstruction.closure;
