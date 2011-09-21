@@ -13,7 +13,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
-import fbi.commons.file.FileHelper;
+import fbi.genome.io.FileHelper;
 
 import java.io.*;
 import java.util.Map;

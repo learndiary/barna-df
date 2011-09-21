@@ -15,10 +15,10 @@ import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
-import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
@@ -26,10 +26,12 @@ import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import fbi.genome.sequencing.rnaseq.simulation.PWM;
 import fbi.genome.sequencing.rnaseq.simulation.Profiler;
 import fbi.genome.sequencing.rnaseq.simulation.ProfilerFile;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.*;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.Distributions;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
+import fbi.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
 import fbi.genome.sequencing.rnaseq.simulation.tools.PCRDistributionsTool;
 import org.apache.commons.math.random.RandomDataImpl;
-import org.bouncycastle.jce.PKCS10CertificationRequest;
 
 import java.io.*;
 import java.net.URL;
@@ -252,9 +254,9 @@ public class Fragmenter implements Callable<Void> {
      *
      * @return reader the GFF reader
      */
-    private GFFReader createGFFReader() {
+    private GTFwrapper createGFFReader() {
         File ref_file = settings.get(FluxSimulatorSettings.REF_FILE);
-        GFFReader gffReader = new GFFReader(ref_file.getAbsolutePath());
+        GTFwrapper gffReader = new GTFwrapper(ref_file.getAbsolutePath());
         gffReader.setSilent(true);
         gffReader.setStars(false);
 //        if (!gffReader.isApplicable()) {
@@ -305,7 +307,7 @@ public class Fragmenter implements Callable<Void> {
 
         if (mapTxSeq == null) {
             mapTxSeq = new HashMap<CharSequence, CharSequence>(10000);
-            GFFReader reader = createGFFReader();
+            GTFwrapper reader = createGFFReader();
             if (settings.get(FluxSimulatorSettings.GEN_DIR) != null) {
                 Graph.overrideSequenceDirPath = settings.get(FluxSimulatorSettings.GEN_DIR).getAbsolutePath();
             }

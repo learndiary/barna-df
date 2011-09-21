@@ -13,7 +13,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
-import fbi.genome.io.gff.GFFSorter;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.sequencing.rnaseq.simulation.tools.GTFSorterTool;
 import org.junit.*;
 
@@ -48,7 +48,8 @@ public class GtfSorterTest {
         File out = File.createTempFile("sortertest", ".out");
         try{
             File in = new File(getClass().getResource("/sort-err56.gtf").getFile());
-            GFFSorter.sort(in, out);
+            GTFwrapper w = new GTFwrapper(in);
+            w.sort(out);
 
             // check the result
             BufferedReader reader = new BufferedReader(new FileReader(out));
@@ -74,7 +75,9 @@ public class GtfSorterTest {
             File in = new File(getClass().getResource("/mutations.gtf").getFile());
             if(!in.exists()) return;
 
-            GFFSorter.sort(in, out);
+            GTFwrapper w = new GTFwrapper(in);
+            w.sort(out);
+
 
             // check the result
             BufferedReader reader = new BufferedReader(new FileReader(out));

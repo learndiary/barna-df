@@ -2,7 +2,7 @@ package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Execute;
 import fbi.commons.Log;
-import fbi.commons.file.FileHelper;
+import fbi.genome.io.FileHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

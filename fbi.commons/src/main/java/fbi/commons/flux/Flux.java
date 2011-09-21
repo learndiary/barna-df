@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.logging.LogManager;
 
 
 /**
@@ -72,6 +73,13 @@ public class Flux {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        // load java.util.logger configuration
+        try{
+            LogManager.getLogManager().readConfiguration(Flux.class.getResourceAsStream("/logging.properties"));
+        } catch (Exception ex) {
+            Log.error("Unable to load java.util.logging configuration, you might see some strange messages!");
+        }
+
         /*
         Read properties
          */

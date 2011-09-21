@@ -1,17 +1,15 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.Random;
-
-import org.junit.Assert;
-import org.junit.Test;
-import static junit.framework.Assert.*;
-
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.Random;
+
+import static junit.framework.Assert.assertEquals;
 
 public class SequencerTest {
 
@@ -22,7 +20,7 @@ public class SequencerTest {
 		int maxBoundary= 100; // nt added at beginning/end of tx
 		Random rand= new Random();
 		
-		GFFReader reader= new GFFReader(new File(
+		GTFwrapper reader= new GTFwrapper(new File(
 				getClass().getResource("/sacCer2_sgdGene_fromUCSC110329.gtf").getFile()).getAbsolutePath());
 		Gene[] genes;
 		for (reader.read(); (genes=reader.getGenes())!= null; reader.read()) {

@@ -12,11 +12,11 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
 import fbi.commons.Log;
-import fbi.commons.file.FileHelper;
 import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
 import fbi.commons.tools.CommandLine;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.sequencing.rnaseq.simulation.fragmentation.Fragmenter;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
@@ -372,7 +372,7 @@ public class SimulationPipeline implements FluxTool<Void> {
         // Fix Issue #58 and make sure the sorted file is used and differs in name
         String sortedFileName = settings.get(FluxSimulatorSettings.PRO_FILE).getParent() + File.separator + FileHelper.append(refFile.getName(), "_sorted");
         File sorted = new File(sortedFileName);
-        GFFReader gffReader = new GFFReader(refFile.getAbsolutePath());
+        GTFwrapper gffReader = new GTFwrapper(refFile.getAbsolutePath());
         // make sure the gtf is valid and sorted
         Log.info("Checking GTF file");
         if (!gffReader.isApplicable()) {
@@ -381,7 +381,7 @@ public class SimulationPipeline implements FluxTool<Void> {
             // okey its not sorted, check if there is a sorted version
 
             if (sorted.exists()) {
-                gffReader = new GFFReader(sortedFileName);
+                gffReader = new GTFwrapper(sortedFileName);
                 if (gffReader.isApplicable()) {
                     // found a sorted file
                     // inform the user and switch
@@ -395,10 +395,10 @@ public class SimulationPipeline implements FluxTool<Void> {
             }
             // sort the file
             Log.warn("GTF FILE", "The GTF reference file given is not sorted, sorting it right now...");
-            gffReader = new GFFReader(refFile.getAbsolutePath());
+            gffReader = new GTFwrapper(refFile.getAbsolutePath());
             gffReader.setStars(true);
             gffReader.setSilent(false);
-            gffReader.createSortedFile(sorted);
+            gffReader.sort(sorted);
             gffReader.close();
             settings.setRefFile(sorted);
 

@@ -14,7 +14,6 @@ package fbi.genome.sequencing.rnaseq.simulation.tools;
 import com.thoughtworks.xstream.XStream;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
-import fbi.commons.file.FileHelper;
 import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
@@ -23,8 +22,8 @@ import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
-import java.util.Enumeration;
-import java.util.zip.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Tool to create PCR distributions

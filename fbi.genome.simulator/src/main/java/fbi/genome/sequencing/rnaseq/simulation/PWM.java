@@ -11,9 +11,9 @@
 
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import fbi.commons.file.FileHelper;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.bed.BEDwrapper;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
@@ -294,13 +294,13 @@ public class PWM implements WeightMatrix {
 
             int flank5 = 10, flank3 = 20;
 
-            GFFReader anoReader = new GFFReader(fileGTF);
+            GTFwrapper anoReader = new GTFwrapper(fileGTF);
             if (!anoReader.isApplicable()) {
                 System.err.println("\tsorting GTF file");
-                File f = anoReader.createSortedFile();
+                File f = anoReader.sort();
                 System.err.println("\tsorted file in " + f.getAbsolutePath());
                 ref = f.getAbsolutePath();
-                anoReader = new GFFReader(f.getAbsolutePath());
+                anoReader = new GTFwrapper(f.getAbsolutePath());
             }
             System.err.println();
 
@@ -314,7 +314,8 @@ public class PWM implements WeightMatrix {
                 bedReader = new BEDwrapper(fileBed);
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
-                    File f = bedReader.sortBED(new File(fileBed));
+                    File f = new File(fileBed);
+                    bedReader.sortBED(f);
                     if (FileHelper.move(f, ff, null)) {
                         fileBed = ff.getAbsolutePath();
                     } else {
@@ -629,13 +630,13 @@ public class PWM implements WeightMatrix {
         try {
             int flank5 = 10, flank3 = 20;
 
-            GFFReader anoReader = new GFFReader(fileGTF);
+            GTFwrapper anoReader = new GTFwrapper(fileGTF);
             if (!anoReader.isApplicable()) {
                 System.err.println("\tsorting GTF file");
-                File f = anoReader.createSortedFile();
+                File f = anoReader.sort();
                 System.err.println("\tsorted file in " + f.getAbsolutePath());
                 ref = f.getAbsolutePath();
-                anoReader = new GFFReader(f.getAbsolutePath());
+                anoReader = new GTFwrapper(f.getAbsolutePath());
             }
             System.err.println();
 
@@ -649,7 +650,8 @@ public class PWM implements WeightMatrix {
                 bedReader = new BEDwrapper(fileBed);
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
-                    File f = bedReader.sortBED(new File(fileBed));
+                    File f = new File(fileBed);
+                    bedReader.sortBED(f);
                     if (FileHelper.move(f, ff, null)) {
                         fileBed = ff.getAbsolutePath();
                     } else {

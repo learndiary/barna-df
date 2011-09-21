@@ -12,11 +12,10 @@
 package fbi.genome.sequencing.rnaseq.simulation.tools;
 
 import fbi.commons.Log;
-import fbi.commons.file.FileHelper;
-import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.bed.BEDwrapper;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
@@ -76,13 +75,13 @@ public class PWMExtractor {  //implements FluxTool {
     //@Override
     public Object call() throws Exception {
         int flank5 = 10, flank3 = 20;
-        GFFReader anoReader = new GFFReader(gtfFile.getAbsolutePath());
+        GTFwrapper anoReader = new GTFwrapper(gtfFile.getAbsolutePath());
         if (!anoReader.isApplicable()) {
             Log.message("\tsorting GTF file");
-            File f = anoReader.createSortedFile();
+            File f = anoReader.sort();
             Log.message("\tsorted file in " + f.getAbsolutePath());
             gtfFile = f;
-            anoReader = new GFFReader(f.getAbsolutePath());
+            anoReader = new GTFwrapper(f.getAbsolutePath());
         }
         Log.message("");
 
@@ -96,7 +95,9 @@ public class PWMExtractor {  //implements FluxTool {
             bedReader = new BEDwrapper(bedFile.getAbsolutePath());
             if (!bedReader.isApplicable()) {
                 Log.message("\tsorting BED file");
-                File f = bedReader.sortBED(bedFile);
+
+                File f = FileHelper.createTempFile("bed-sort", "bed");
+                bedReader.sortBED(f);
                 if (FileHelper.move(f, ff, null)) {
                     bedFile = ff;
                 } else {

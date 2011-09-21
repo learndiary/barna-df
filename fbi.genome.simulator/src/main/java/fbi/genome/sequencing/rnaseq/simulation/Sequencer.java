@@ -14,19 +14,19 @@ package fbi.genome.sequencing.rnaseq.simulation;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
-import fbi.commons.file.FileHelper;
 import fbi.commons.io.IOHandler;
 import fbi.commons.io.IOHandlerFactory;
-import fbi.genome.sequencing.rnaseq.simulation.error.MarkovErrorModel;
-import fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.io.rna.FMRD;
 import fbi.genome.model.Exon;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
+import fbi.genome.sequencing.rnaseq.simulation.error.MarkovErrorModel;
 import fbi.genome.sequencing.rnaseq.simulation.error.ModelPool;
+import fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel;
 
 import java.io.*;
 import java.util.Arrays;
@@ -242,7 +242,7 @@ public class Sequencer implements Callable<Void> {
         try {
             Log.progressStart("sequencing");
 
-            GFFReader reader = new GFFReader(referenceFile.getAbsolutePath());
+            GTFwrapper reader = new GTFwrapper(referenceFile.getAbsolutePath());
             reader.setReadAheadLimit(500);
             reader.setSilent(true);
             reader.setStars(true);

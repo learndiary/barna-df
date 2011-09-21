@@ -14,10 +14,10 @@ package fbi.genome.sequencing.rnaseq.simulation;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
-import fbi.commons.file.FileHelper;
 import fbi.commons.file.ReverseFileReader;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.ThreadedBufferedByteArrayStream;
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.commons.Distribution;
 import fbi.genome.model.commons.IntVector;
@@ -182,7 +182,7 @@ public class Profiler implements Callable<Void> {
      * @throws Exception in case of any errors
      */
     private void readAnnotation() throws Exception {
-        GFFReader reader = createGTFReader();
+        GTFwrapper reader = createGTFReader();
 
         Log.progressStart("Reading reference annotation");
 
@@ -725,9 +725,9 @@ public class Profiler implements Callable<Void> {
      *
      * @return reader ready to use reader on a sorted valid GTF file
      */
-    private GFFReader createGTFReader() {
+    private GTFwrapper createGTFReader() {
         File currentRefFile = settings.get(FluxSimulatorSettings.REF_FILE);
-        GFFReader gffReader = new GFFReader(currentRefFile.getAbsolutePath());
+        GTFwrapper gffReader = new GTFwrapper(currentRefFile.getAbsolutePath());
         // make sure the gtf is valid and sorted
         if (!gffReader.isApplicable()) {
             gffReader.close();

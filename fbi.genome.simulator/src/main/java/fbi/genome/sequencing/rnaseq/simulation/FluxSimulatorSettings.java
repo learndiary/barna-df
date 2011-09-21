@@ -11,9 +11,8 @@
 
 package fbi.genome.sequencing.rnaseq.simulation;
 
-
-import fbi.commons.file.FileHelper;
 import fbi.commons.parameters.*;
+import fbi.genome.io.FileHelper;
 
 import java.io.File;
 import java.io.FileInputStream;

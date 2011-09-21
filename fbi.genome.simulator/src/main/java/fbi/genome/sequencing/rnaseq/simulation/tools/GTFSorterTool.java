@@ -15,7 +15,7 @@ import fbi.commons.Log;
 import fbi.commons.StringUtils;
 import fbi.commons.flux.FluxTool;
 import fbi.commons.options.HelpPrinter;
-import fbi.genome.io.gff.GFFSorter;
+import fbi.genome.io.gtf.GTFwrapper;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -68,7 +68,8 @@ public class GTFSorterTool implements FluxTool {
     @Override
     public Object call() throws Exception {
         Log.progressStart("Sorting " + getIntFile().getName());
-        GFFSorter.sort(intFile, outFile);
+        GTFwrapper w= new GTFwrapper(intFile);
+        w.sort(outFile);
         Log.progressFinish(StringUtils.OK, true);
         return null;
     }

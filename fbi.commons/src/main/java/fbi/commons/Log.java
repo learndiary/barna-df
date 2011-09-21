@@ -128,8 +128,18 @@ public class Log {
      * @param error   the error (null permitted)
      */
     public static void debug(String message, Throwable error) {
+        Log.debug("DEBUG", message, error);
+    }
+    /**
+     * Log a debug message and print the stacktrace of the error
+     *
+     * @param prefix prefix
+     * @param message the message
+     * @param error   the error (null permitted)
+     */
+    public static void debug(String prefix, String message, Throwable error) {
         if (logLevel.level >= Log.Level.DEBUG.level) {
-            logStream.println("[DEBUG] " + message);
+            logStream.println("["+prefix+ "] " + message);
             if (error != null) {
                 error.printStackTrace(logStream);
             }
