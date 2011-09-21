@@ -88,7 +88,7 @@ public class LPSolverLoader {
             // copy
             try {
                 URL dylib = LPSolverLoader.class.getResource("/" + dir + "/" + bits + "/" + name);
-                if(!OSChecker.isMac() && !OSChecker.isLinux()){ // mac os is a single jnilib file
+                if(!OSChecker.isMac() ){ // mac os is a single jnilib file
                     write2File(dylib, libFile);
                 }
             } catch (IOException e) {
@@ -109,7 +109,7 @@ public class LPSolverLoader {
         CAP-7 Make sure we only load the shared library on windows
         as we have single JNI library for OSX and LInux
          */
-        if(libFile.exists() && !OSChecker.isMac() && !OSChecker.isLinux()){
+        if(libFile.exists() && !OSChecker.isMac()){
             System.load(libFile.getAbsolutePath());
         }
 
