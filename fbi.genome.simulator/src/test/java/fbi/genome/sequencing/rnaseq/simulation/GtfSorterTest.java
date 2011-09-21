@@ -14,7 +14,6 @@ package fbi.genome.sequencing.rnaseq.simulation;
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
 import fbi.genome.io.gtf.GTFwrapper;
-import fbi.genome.sequencing.rnaseq.simulation.tools.GTFSorterTool;
 import org.junit.*;
 
 import java.io.BufferedReader;
