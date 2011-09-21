@@ -86,20 +86,20 @@ GETTING STARTED
     can be specified as either absolute or relative path names; in the latter case the path
     is relative to the location of the parameter file.
 
-* Example (XXX Micha edits here XXX)
+* Example
 
     To get a complete sample project including annotations and the genome, download
 
-      http://fluxcapacitor.googlecode.com/files/fluxsimulator_demo_yeast-1.0.tar.gz
+      http://fluxcapacitor.googlecode.com/files/fluxcapacitor_demo_mouse-1.0.tar.gz
 
 	and extract the file
 
-	  tar xzvf fluxsimulator_demo_yeast-1.0.tar.gz
+	  tar xzvf fluxcapacitor_demo_mouse-1.0.tar.gz
 
-	this will create a demo folder with GTF annotations and the genomic sequences +
-	a set of parameters files. Now, to start the simulator do:
+	this will create a demo folder with GTF annotation, the mapped reads' file and
+	a parameter file. Now, to start the capacitor do:
 
-	flux -t simulator -p yeast_demo.par
+	flux -t capacitor -p mouse_demo.par
 
 * Memory
 
