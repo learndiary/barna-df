@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import fbi.commons.StringUtils;
+import fbi.commons.parameters.FileNameParser;
 import fbi.commons.parameters.Parameter;
 import fbi.commons.parameters.ParameterException;
 import fbi.commons.parameters.ParameterSchema;
 import fbi.commons.parameters.ParameterValidator;
 import fbi.commons.parameters.Parameters;
+import fbi.genome.io.FileHelper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.constants.Constants;
 
@@ -89,6 +91,26 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 }
 	 
 	 /**
+	 * Helper class to allow us to parse file names relative to a parent directory
+	 */
+	static class RelativePathParser implements FileNameParser {
+	    /**
+	     * the Parent directory
+	     */
+	    File parentDir = null;
+	
+	    @Override
+	    public File parse(String string) {
+	        return FileHelper.fromRelative(string, parentDir);
+	    }
+	}
+	
+    /**
+     * Helper to parse relative filenames
+     */
+    private static RelativePathParser relativePathParser = new RelativePathParser();
+
+	/**
 	  * Descriptor with parsing info for the read IDs.
 	  */
 	 public static final Parameter<UniversalReadDescriptor> READ_DESCRIPTOR =
@@ -137,7 +159,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        });
+        }, relativePathParser);
 
 	    /**
 	     * The file containing the mapped reads.
@@ -155,7 +177,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        });
+        }, relativePathParser);
 
 	    /**
 	     * The file for default output.
@@ -170,7 +192,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        });
+        }, relativePathParser);
 
 	    /**
 	     * The log file.
@@ -187,7 +209,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        });
+        }, relativePathParser);
 
 	    /**
 	     * The file where profiles are stored in.
@@ -206,7 +228,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 */                
 
             }
-        });
+        }, relativePathParser);
 
 	    /**
 	     * The temporary directory.
@@ -243,6 +265,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	        try {
 
 	            FluxCapacitorSettings settings = new FluxCapacitorSettings();
+	            relativePathParser.parentDir = f.getParentFile();
 	            settings.parameterFile = f;
 	            in = new FileInputStream(f);
 	            settings.parse(in);

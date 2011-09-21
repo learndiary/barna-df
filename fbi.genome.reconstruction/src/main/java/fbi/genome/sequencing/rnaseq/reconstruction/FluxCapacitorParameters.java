@@ -11,17 +11,19 @@
 
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+
 import fbi.commons.Log;
 import fbi.genome.io.FileHelper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.model.constants.Constants;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-
 /**
  * Flux Capacitor settings
+ * @deprecated replaced by FluxCapacitorSettings, just use for porting the rest of
+ * parameters
  */
 public class FluxCapacitorParameters {
 
