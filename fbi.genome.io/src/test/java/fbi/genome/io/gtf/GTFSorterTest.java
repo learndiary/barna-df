@@ -78,4 +78,21 @@ public class GTFSorterTest {
             s.close();
         }
     }
+
+    @Test
+    public void testSpikeSorting() throws IOException{
+        GTFwrapper wrapper= new GTFwrapper(new File(GTFSorterTest.class.getResource("/spikes.gtf").getFile()).getAbsolutePath());
+        File sortedFile = wrapper.sort();
+        BufferedReader s = new BufferedReader(new FileReader(sortedFile));
+        String l1;
+        try{
+            int c = 0;
+            while( (l1 = s.readLine()) != null){
+                System.out.println(l1);
+            }
+        }finally {
+            s.close();
+        }
+
+    }
 }

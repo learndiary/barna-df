@@ -1880,7 +1880,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
     	int index = 0;
 		Matcher m= SPLITTER_PATTERN.matcher(input);
 	    for(int mCtr= 0;m.find();index= m.end(), mCtr++) {
-	    	if (mCtr< 9) 
+	    	if (mCtr< 8)
 	    		continue;	    	
 	    	CharSequence match = input.subSequence(index, m.start());
 	    	Matcher m2= TRANSCRIPTID_PATTERN.matcher(match);
