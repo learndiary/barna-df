@@ -32,6 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import fbi.genome.lpsolver.LPSolverLoader;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
@@ -73,7 +74,7 @@ import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
 import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
+
 
 
 /**
@@ -2543,7 +2544,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
     public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
 
         if(isPrintParameters()){
-            FluxSimulatorSettings settings = new FluxSimulatorSettings();
+            FluxCapacitorSettings settings = new FluxCapacitorSettings();
             settings.write(System.out);
             return false;
         }
@@ -3416,14 +3417,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		try {
 
             // first check the operating system
-
-
-
-
-			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_LIB_NAME);
-			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_JNI_NAME);
-
-
+//			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_LIB_NAME);
+//			System.loadLibrary(FluxCapacitorConstants.LPSOLVE_JNI_NAME);
+            LPSolverLoader.load();
 			lpVer= LpSolve.lpSolveVersion();
 			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 				System.err.println("\t* JNI in java library path");
