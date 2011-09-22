@@ -129,22 +129,14 @@ public class Subsetter implements FluxTool<Void> {
 			
 			buffy= new BufferedReader(new FileReader(inputFile));
 			writer= new BufferedWriter(new OutputStreamWriter(ostream));
-			double p= numberLines/ (2* (double) inputLines);
+			double p= numberLines/ (double) inputLines;
 			Random random= new Random();
-			for (String s= null, last= null; (s= buffy.readLine())!= null;last= s) {
+			for (String s= null; (s= buffy.readLine())!= null;) {
 				double t= random.nextDouble();
 				if (t> p) 
 					continue;
 				
-				String[] ss= s.split("\\s");
-				if (ss[3].charAt(ss[3].length()- 3)== 'S') {
-					writer.write(s+ "\n");
-					s= buffy.readLine();
-					writer.write(s+ "\n");
-				} else if (last!= null) {
-					writer.write(last+ "\n");
-					writer.write(s+ "\n");
-				}
+				writer.write(s+ "\n");
 			}
 			
 		} catch (Exception e) {
@@ -197,6 +189,70 @@ public class Subsetter implements FluxTool<Void> {
 		}
 		
 		return true;
+	}
+
+	/**
+	 * Subsets the number of lines in a file to extract (about) a desired number.
+	 * NOTE: Ensures read pairs are retrieved, requires sorting according to some
+	 * read identifier scheme.
+	 * @deprecated works, but make it general before production
+	 * @param inputFile file from which line superset are read
+	 * @param inputLines number of liens in the input file, set to <=0 if unknown 
+	 * @param ostream stream to which the subset of lines retrieved from the input
+	 * is written
+	 * @param numberLines number of lines to be extracted from the input, has to be 
+	 * strictly <= inputLines
+	 */
+	public static void subsetPairs(File inputFile, int inputLines, OutputStream ostream, int numberLines) {
+		
+		// get total line count
+		if (inputLines<= 0) 
+			inputLines= FileHelper.countLines(inputFile);
+		if (numberLines>= inputLines) 
+			throw new RuntimeException("Number of lines in subset has to be strictly less " +
+					"than number of lines in the input ("+ numberLines+ " >= "+ inputLines+ ")");
+	
+		// subset
+		BufferedReader buffy= null;
+		BufferedWriter writer= null;
+		try {
+			
+			buffy= new BufferedReader(new FileReader(inputFile));
+			writer= new BufferedWriter(new OutputStreamWriter(ostream));
+			double p= numberLines/ (2* (double) inputLines);
+			Random random= new Random();
+			for (String s= null, last= null; (s= buffy.readLine())!= null;last= s) {
+				double t= random.nextDouble();
+				if (t> p) 
+					continue;
+				
+				String[] ss= s.split("\\s");
+				if (ss[3].charAt(ss[3].length()- 3)== 'S') {
+					writer.write(s+ "\n");
+					s= buffy.readLine();
+					writer.write(s+ "\n");
+				} else if (last!= null) {
+					writer.write(last+ "\n");
+					writer.write(s+ "\n");
+				}
+			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			if (buffy!= null)
+				try {
+					buffy.close();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			if (writer!= null)
+				try {
+					writer.flush();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+		}
 	}
 	
 }
