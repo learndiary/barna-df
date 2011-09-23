@@ -11,7 +11,6 @@
 
 package fbi.genome.reconstruction.closure;
 
-import java.io.Serializable;
 
 /**
  * @author micha
@@ -21,11 +20,19 @@ import java.io.Serializable;
  * To enable and disable the creation of type comments go to
  * Window>Preferences>Java>Code Generation.
  */
-class Sequence implements Serializable{
+class Sequence {
 
 	int longueur;
 
 	int[] aligSetNbr, predAligSetPos, succAligSetPos;
 
-    private static final long serialVersionUID = -1508750140766762796L;
+    public Sequence() {
+	}
+    
+    public Sequence(Sequence aSequence) {
+    	longueur= aSequence.longueur;
+    	aligSetNbr= Closure.clone(aSequence.aligSetNbr);
+    	predAligSetPos= Closure.clone(aSequence.predAligSetPos);
+    	succAligSetPos= Closure.clone(aSequence.succAligSetPos);
+	}
 }
