@@ -125,7 +125,22 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
                 }
             }, relativePathParser);
-    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")));
+    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
+            /*
+             * ISSUE IO-11 is related to this, we have to make sure the TMP dir exists and is writabel
+             */
+            File tmp = parameterSchema.get(TMP_DIR);
+            if(tmp == null){
+                throw new ParameterException("No temp directory specified!");
+            }
+            if(!tmp.canWrite()){
+                throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
+            }
+
+        }
+    });
     public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE", "Error model file\n" +
             "\n" +
             "You can use the default models '35' or '76' for the corresponding read lengths or\n" +
