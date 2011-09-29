@@ -142,15 +142,19 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			        	UniversalReadDescriptor d= schema.get(READ_DESCRIPTOR);
 			        	AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
 			        	
+			        	// paired read descriptor requires paired-end descriptor, not vice versa
 			        	if ((!d.isPaired())&& (a.equals(AnnotationMapping.PAIRED)|| a.equals(AnnotationMapping.COMBINED)))
 			        		throw new ParameterException("Annotation mapping "+a + " requires a paired-end read descriptor!");
+			        	// stranded annotation mapping requires stranded descriptor, not vice versa
 			        	if ((!d.isStranded())&& a.equals(AnnotationMapping.STRANDED))
 			        		throw new ParameterException("Annotation mapping "+a + " requires a stranded read descriptor!");
 			        	if (a.equals(AnnotationMapping.COMBINED)&&
-			        			(!(d.toString().equals(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE)))
-			        			|| d.toString().equals(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE))))
+			        			(!(d.toString().contains(UniversalReadDescriptor.TAG_MATE1SENSE)
+			        			|| d.toString().contains(UniversalReadDescriptor.TAG_MATE2SENSE)))) {
+			        		
 			        		throw new ParameterException("Annotation mapping "+a + " requires a read descriptor "
 			        				+ UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE+ " or "+ UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE+ "!");
+			        	}
 			        }
 	    	});
 	 

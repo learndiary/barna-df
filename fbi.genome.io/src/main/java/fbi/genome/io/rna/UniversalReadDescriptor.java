@@ -35,21 +35,21 @@ public class UniversalReadDescriptor {
 		}
 	}
 	
-	static String TAG_ID= "ID";
-	static String TAG_PAIR= "MATE"; 
-	static String TAG_STRAND= "STRAND";
-	static String TAG_MATE1SENSE= "MATE1SENSE";
-	static String TAG_MATE2SENSE= "MATE2SENSE";
+	public static String TAG_ID= "ID";
+	public static String TAG_PAIR= "MATE"; 
+	public static String TAG_STRAND= "STRAND";
+	public static String TAG_MATE1SENSE= "MATE1SENSE";
+	public static String TAG_MATE2SENSE= "MATE2SENSE";
 
-	static char SYMBOL_TAG_LEFT= '{';
-	static char SYMBOL_TAG_RIGHT= '}';
-	static char SYMBOL_OPT_LEFT= '(';
-	static char SYMBOL_OPT_RIGHT= ')';
-	static char SYMBOL_SET_LEFT= '[';
-	static char SYMBOL_SET_RIGHT= ']';
-	static char SYMBOL_ESCAPE= '\\';
-	static char SYMBOL_STAR= '*';
-	static char SYMBOL_QUESTION= '?';
+	public static char SYMBOL_TAG_LEFT= '{';
+	public static char SYMBOL_TAG_RIGHT= '}';
+	public static char SYMBOL_OPT_LEFT= '(';
+	public static char SYMBOL_OPT_RIGHT= ')';
+	public static char SYMBOL_SET_LEFT= '[';
+	public static char SYMBOL_SET_RIGHT= ']';
+	public static char SYMBOL_ESCAPE= '\\';
+	public static char SYMBOL_STAR= '*';
+	public static char SYMBOL_QUESTION= '?';
 
 	public static String 
 		DESCRIPTORID_SIMPLE= "SIMPLE", 
