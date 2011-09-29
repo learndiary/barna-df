@@ -258,6 +258,10 @@ public class FluxCapacitorSettings extends ParameterSchema {
                     throw new ParameterException("The temporary directory " + file.getAbsolutePath() 
                     		+ " could not be found!");
                 }
+                if (!file.canWrite()) {
+                    throw new ParameterException("The temporary directory " + file.getAbsolutePath()
+                    		+ " is not writable!");
+                }
 
             }
         });

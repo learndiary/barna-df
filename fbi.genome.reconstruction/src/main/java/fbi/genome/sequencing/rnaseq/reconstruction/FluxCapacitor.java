@@ -1922,6 +1922,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
         } catch (Exception e) {
             throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
         }
+
+        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
 		
 		// prepare output files
 		if (settings.get(FluxCapacitorSettings.STDOUT_FILE)!= null) {
