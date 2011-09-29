@@ -1,5 +1,6 @@
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import fbi.commons.parameters.ParameterException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,6 +32,16 @@ public class FluxSimulatorSettingsTest {
         } catch (Exception e) {
             e.printStackTrace();
             fail();
+        }
+    }
+    @Test
+    public void testTmpDirWritableChecks(){
+        try {
+            FluxSimulatorSettings s1 = FluxSimulatorSettings.createSettings(new File(FluxSimulatorTest.class.getResource("/test_tmp_dir.par").getFile()));
+            fail();
+        } catch (Exception e) {
+            if(! (e instanceof ParameterException)) fail();
+            assertEquals("The temp-directory /some/unknown/directory does not exist or is not writable!", e.getMessage());
         }
     }
 
