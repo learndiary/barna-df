@@ -1167,7 +1167,7 @@ public class FileHelper {
      * @throws IOException in case of any errors
      */
     public static File createTempFile(String name, String ext) throws IOException {
-        return File.createTempFile(name, ext, tempDirectory);
+        return createTempFile(name, ext, tempDirectory);
     }
     /**
      * Creates a temp file using the name as prefix and appending an optional extension
@@ -1177,14 +1177,14 @@ public class FileHelper {
      * @return file temp file
      * @throws IOException in case of any errors
      */
-    public static File createTempFile(String name, String ext, File tempDirectory) throws IOException {
+    public static File createTempFile(String name, String ext, File tmpDir) throws IOException {
         if (ext != null && ext.length() > 0 && !ext.startsWith(".")) {
             ext = "." + ext;
         }
-        if (tempDirectory == null) {
-            return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "");
-        } else {
+        if (tmpDir == null) {
             return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "", tempDirectory);
+        } else {
+            return File.createTempFile(name, ext != null && ext.length() > 0 ? ext : "", tmpDir);
         }
     }
     
@@ -1198,7 +1198,7 @@ public class FileHelper {
      * @throws Exception in case of any errors
      */
     public static File createTempDir(String prefix, String suffix, File parent) throws Exception {
-    	File f= File.createTempFile(prefix, suffix, parent);
+    	File f= createTempFile(prefix, suffix, parent);
     	if (!f.delete())
     		return null;
     	if (!f.mkdir())
