@@ -68,9 +68,12 @@ public class FileHelper {
     static final String SUFFIX_SORTED= "_sorted";
 
     /**
-     * Custom temp directory
+     * Temporary directory for creating files in order to not rely on 
+     * <code>File.createTempFile()</code> calls when modifying the property
+     * &quot;java.io.tmpdir&quot; default is system tempdir, can be 
+     * overwritten by user.
      */
-    public static File tempDirectory;
+    public static File tempDirectory= new File(System.getProperty("java.io.tmpdir"));
 
     
     /**
@@ -1164,9 +1167,7 @@ public class FileHelper {
      * @throws IOException in case of any errors
      */
     public static File createTempFile(String name, String ext) throws IOException {
-        File dir = tempDirectory;
-        if(dir == null) dir = new File(System.getProperty("java.io.tmpdir"));
-        return File.createTempFile(name, ext, dir);
+        return File.createTempFile(name, ext, tempDirectory);
     }
     /**
      * Creates a temp file using the name as prefix and appending an optional extension

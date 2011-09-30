@@ -376,7 +376,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         comparator.reset();
 
         // write the file
-        File file = FileHelper.createTempFile("sort", ".srt", null);
+        File file = FileHelper.createTempFile("sort", ".srt");	// use user dir
         file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new FileWriter(file), 10 * 1024);
         for (String line : lines) {
