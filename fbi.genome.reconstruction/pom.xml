@@ -36,7 +36,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.genome.io</artifactId>
-            <version>1.5-SNAPSHOT</version>
+            <version>1.5</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
