@@ -15,6 +15,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <Build-Version>${project.version}</Build-Version>
+        <buildNumber>${env.BUILD_NUMBER}</buildNumber>
+        <Flux-JDK>1.6</Flux-JDK>
     </properties>
 
 
@@ -159,6 +163,24 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0-alpha-2</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.outputDirectory}/flux.properties</outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
 
             <!--
              Assembly plugin to create the actual bundle
