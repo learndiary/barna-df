@@ -17,21 +17,29 @@ import fbi.genome.io.BufferedIteratorDisk;
 public class DistanceMeasurer {
 
 	public static void main(String[] args) {
+		
 		Execute.initialize(2);
-		File input= null; // new File("/Users/micha/projects/demassy/download/R209_K4Me3_IP2_2-2.aln");
-		int pile= 1;
+		
+		// config
+		// # /Users/micha/projects/demassy/download/R209_K4Me3_IP2_2-2_sorted.aln
+		// # IP5300109chrall.aln
+		File input= new File("/Users/micha/projects/demassy/download/IP5300109chrall_sorted.aln");
+		int pile= 3;		
 		boolean sameStrand= true;
-		int uDist= 1000, dDist= 1000;
-		if (sameStrand&& uDist!= 0) {
+		int distance= 1000; 
+		
+		// uDist, dDist= 1000;		
+/*		if (sameStrand&& uDist!= 0) {
 			System.err.println("same strand, set upstream distance to 0");
 			uDist= 0;
 		}
+*/		
 		
 		PrintStream ps= null;
 		try {
 			ps= new PrintStream(new FileOutputStream(input.getParent()+
 					File.separator+ input.getName().substring(0, input.getName().lastIndexOf("."))+
-					(sameStrand?"_phase":"_dist")+ "_pile"+ pile+ "-"+ uDist+ "_"+dDist+ ".txt"));
+					(sameStrand?"_phase":"_dist")+ "_pile"+ pile+ "-"+ distance+ ".txt"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -39,7 +47,7 @@ public class DistanceMeasurer {
 		
 
 		
-		getDistances(input, pile, sameStrand, uDist, dDist, ps);
+		getDistances(input, pile, sameStrand, distance, ps);
 		
 		try {
 			ps.flush();
@@ -52,7 +60,7 @@ public class DistanceMeasurer {
 	}
 	
 	// pile chr pos F/R
-	static long getDistances(File f, int pile, boolean sameStrand, int uDistance, int dDistance, PrintStream ps) {
+	static long getDistances_copy(File f, int pile, boolean sameStrand, int uDistance, int dDistance, PrintStream ps) {
 		long nrPiles= 0;
 		BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
 		ByteArrayCharSequence cs= null;
@@ -92,9 +100,9 @@ public class DistanceMeasurer {
 			
 			iter.mark();
 			if (sameStrand) {
-				getDistances(iter, pile, chr, pos, forward, dDistance, 1, 0, ps);
+				getDistances_copy(iter, pile, chr, pos, forward, dDistance, 1, 0, ps);
 			} else {	// opposite strand
-				getDistances(iter, pile, chr, pos, !forward, (forward?dDistance:uDistance), (forward?1:-1), (forward?26:-26), ps);
+				getDistances_copy(iter, pile, chr, pos, !forward, (forward?dDistance:uDistance), (forward?1:-1), (forward?26:-26), ps);
 			}
 			iter.reset();
 			jumped= true;
@@ -126,8 +134,8 @@ public class DistanceMeasurer {
 		
 	}
 
-	static private void getDistances(BufferedIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
-			boolean forward, int dist, int factor, int summand, PrintStream ps) {
+	static private void getDistances_copy(BufferedIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
+			boolean forward, int dist, int summand, int factor, PrintStream ps) {
 		
 		while (iter.hasNext()) {
 			ByteArrayCharSequence cs= iter.next();
@@ -142,7 +150,6 @@ public class DistanceMeasurer {
 			int diff= (pos2- pos+ summand);
 			if (diff> dist)
 				break;
-			diff*= factor;
 			boolean forward2= false;
 			if (cs.getToken(3).equals("F"))
 				forward2= true;
@@ -154,6 +161,90 @@ public class DistanceMeasurer {
 		}
 		
 	}
+
+	// pile chr pos F/R
+		static long getDistances(File f, int pile, boolean sameStrand, int distance, PrintStream ps) {
+			long nrPiles= 0;
+			BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
+			ByteArrayCharSequence cs= null;
+			long t0= System.currentTimeMillis();
+			int ctr= 0;
+			boolean jumped= false;
+			while(iter.hasNext()) {
+				++ctr;
+				if (ctr%100000== 0)
+					System.err.println(ctr);
+				// check pile
+				cs= iter.next();
+				if (jumped) {
+	//				if (!check(cs, ctr))
+	//					System.currentTimeMillis();
+					jumped= false;
+				}
+				int p= cs.getTokenInt(0);
+				if (p< pile)
+					continue;
+				++nrPiles;
+				
+				// get attributes
+				ByteArrayCharSequence chr= cs.getToken(1).cloneCurrentSeq();
+				int pos= -1;
+				pos= cs.getTokenInt(2);
+				
+				boolean forward= false;
+				if (cs.getToken(3).equals("F"))
+					forward= true;
+				
+				// for distogram, consider only F
+				// phasogram both
+				if ((!sameStrand)&& (!forward))
+					continue;
+				
+				iter.mark();
+				if (sameStrand) {
+					getDistances(iter, pile, chr, pos, 
+							forward, distance, 0, ps);
+				} else {	// opposite strand
+					getDistances(iter, pile, chr, pos, 
+							!forward, distance, (forward?26:-26), ps);	// can only be forward
+				}
+				iter.reset();
+				jumped= true;
+				
+			}
+			
+			System.err.println("found "+ nrPiles+ " piles, took "+ (System.currentTimeMillis()- t0)/ 1000+ " sec.");
+			return nrPiles;
+		}
+
+		static private void getDistances(BufferedIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
+				boolean forward, int dist, int offset, PrintStream ps) {
+			
+			while (iter.hasNext()) {
+				ByteArrayCharSequence cs= iter.next();
+				// get attributes
+				int p= cs.getTokenInt(0);
+				if (p< pile)
+					continue;
+				ByteArrayCharSequence chr2= cs.getToken(1).cloneCurrentSeq();
+				if (!chr2.equals(chr))
+					break;
+				int pos2= cs.getTokenInt(2);
+				int diff= (pos2- pos+ offset);
+				if (diff> dist)
+					break;
+				
+				boolean forward2= false;
+				if (cs.getToken(3).equals("F"))
+					forward2= true;
+				if (forward2!= forward)
+					continue;
+				
+				// valid 
+				ps.println(Integer.toString(Math.abs(diff)));
+			}
+			
+		}
 	
 	
 }
