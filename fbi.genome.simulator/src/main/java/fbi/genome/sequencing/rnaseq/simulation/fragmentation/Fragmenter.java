@@ -11,6 +11,24 @@
 
 package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
+import org.apache.commons.math.random.RandomDataImpl;
+
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Execute;
 import fbi.commons.Log;
@@ -31,13 +49,6 @@ import fbi.genome.sequencing.rnaseq.simulation.distributions.Distributions;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
 import fbi.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
 import fbi.genome.sequencing.rnaseq.simulation.tools.PCRDistributionsTool;
-import org.apache.commons.math.random.RandomDataImpl;
-
-import java.io.*;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 
 public class Fragmenter implements Callable<Void> {
@@ -409,7 +420,7 @@ public class Fragmenter implements Callable<Void> {
                 rw = IOHandlerFactory.createDefaultHandler();
                 rw.addStream(fis);
 
-                File tmpWriteFile = File.createTempFile("Fragmenter-write", ".tmp");
+                File tmpWriteFile = FileHelper.createTempFile("Fragmenter-write", ".tmp");
                 fos = new BufferedWriter(new FileWriter(tmpWriteFile));
 
 
@@ -644,7 +655,7 @@ public class Fragmenter implements Callable<Void> {
 
         try {
             Log.progressStart("Initializing Fragmentation File");
-            tmpFile = File.createTempFile("Fragmenter-tmp", ".tmp");
+            tmpFile = FileHelper.createTempFile("Fragmenter-tmp", ".tmp");
             fos = new BufferedWriter(new FileWriter(tmpFile));
             //molInit = 0;
             int profileSize = profiler.size();

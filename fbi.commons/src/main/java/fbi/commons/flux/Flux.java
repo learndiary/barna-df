@@ -11,9 +11,20 @@
 
 package fbi.commons.flux;
 
-import fbi.commons.Execute;
-import fbi.commons.Log;
-import fbi.commons.options.HelpPrinter;
+import java.io.File;
+import java.io.FilePermission;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.security.AccessControlException;
+import java.security.Permission;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
 import org.cyclopsgroup.caff.ref.AccessFailureException;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
@@ -24,15 +35,9 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.logging.LogManager;
+import fbi.commons.Execute;
+import fbi.commons.Log;
+import fbi.commons.options.HelpPrinter;
 
 
 /**
@@ -73,6 +78,12 @@ public class Flux {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+    	
+    	// set a system manager
+    	SecurityManager sm= getSecurityManager();
+    	if (sm!= null)
+    		System.setSecurityManager(sm);
+    	
         // load java.util.logger configuration
         Log.initialize();
         /*
@@ -201,7 +212,47 @@ public class Flux {
         }
     }
 
-    private static void printFluxHelp(List<FluxTool> tools, ArgumentProcessor fluxArguments, PrintWriter out, HelpPrinter printer) {
+    /**
+     * Sets a <code>SecurityManager</code> when required by property
+     * variables.
+     * @return a security manager or <code>null</code> if none is needed
+     */
+    protected static SecurityManager getSecurityManager() {
+    	
+    	final Properties props= System.getProperties();
+    	Iterator iter= props.keySet().iterator();
+    	boolean createSM= false;
+    	for(;iter.hasNext()&& !createSM;) 
+    		if (iter.next().toString().startsWith("flux.io.deny"))
+    			createSM= true;
+    	if (!createSM)
+    		return null;
+    	
+		SecurityManager sm= new SecurityManager() {
+			File systemTemp= new File(System.getProperty("java.io.tmpdir"));
+			@Override
+			public void checkPermission(Permission perm) {
+				checkPermission(perm, null);
+			};
+			@Override
+			public void checkPermission(Permission perm, Object context) {
+				if (perm instanceof FilePermission) {
+					if (props.containsKey("flux.io.deny.tmpdir")
+								&& (perm.getActions().contains("write"))) {
+							File f= new File(perm.getName());
+							if (!(f.exists()|| f.isDirectory()))
+								f= f.getParentFile();
+							if (f.equals(systemTemp))
+								throw new AccessControlException("access denied", perm);
+					}
+				}
+			}
+		};
+
+		return sm;
+	}
+
+	private static void printFluxHelp(List<FluxTool> tools, ArgumentProcessor fluxArguments, PrintWriter out, HelpPrinter printer) {
         // show general help
         //fluxArguments.printHelp(out);
         printer.print(fluxArguments);
@@ -226,7 +277,13 @@ public class Flux {
 
         // scan the classpath to find tools
         List<FluxTool> tools = new ArrayList<FluxTool>();
-        List<URL> fbiUrls = new ArrayList<URL>(ClasspathHelper.getUrlsForPackagePrefix("fbi"));
+        List<URL> fbiUrls = null;
+        try {
+        	fbiUrls= new ArrayList<URL>(ClasspathHelper.getUrlsForPackagePrefix("fbi"));
+        } catch (Throwable t) {
+        	System.err.println(t);
+        	System.currentTimeMillis();
+        }
 
         ConfigurationBuilder config = new ConfigurationBuilder();
         config.useParallelExecutor();

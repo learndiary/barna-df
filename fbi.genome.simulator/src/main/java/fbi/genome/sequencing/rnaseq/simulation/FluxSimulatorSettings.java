@@ -11,13 +11,18 @@
 
 package fbi.genome.sequencing.rnaseq.simulation;
 
-import fbi.commons.parameters.*;
-import fbi.genome.io.FileHelper;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import fbi.commons.parameters.FileNameParser;
+import fbi.commons.parameters.Parameter;
+import fbi.commons.parameters.ParameterException;
+import fbi.commons.parameters.ParameterSchema;
+import fbi.commons.parameters.ParameterValidator;
+import fbi.commons.parameters.Parameters;
+import fbi.genome.io.FileHelper;
 
 /**
  * Flux Simulator settings
@@ -135,6 +140,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if(tmp == null){
                 throw new ParameterException("No temp directory specified!");
             }
+            System.err.println(">>> checkign write for "+ tmp+ "\n>>> "+System.getProperty("java.io.tmpdir"));
             if(!tmp.canWrite()){
                 throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
             }
@@ -144,7 +150,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE", "Error model file\n" +
             "\n" +
             "You can use the default models '35' or '76' for the corresponding read lengths or\n" +
-            "specify a custom error model file\n", "", new ParameterValidator(){
+            "specify a custom error model file\n", null, new ParameterValidator(){
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             String v = schema.get(FluxSimulatorSettings.ERR_FILE);

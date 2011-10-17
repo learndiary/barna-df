@@ -11,6 +11,24 @@
 
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
 import fbi.commons.StringUtils;
@@ -27,16 +45,6 @@ import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.sequencing.rnaseq.simulation.error.MarkovErrorModel;
 import fbi.genome.sequencing.rnaseq.simulation.error.ModelPool;
 import fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel;
-
-import java.io.*;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Sequence the library
@@ -90,7 +98,7 @@ public class Sequencer implements Callable<Void> {
         Log.info("SEQUENCING", "getting the reads");
         File inFile = settings.get(FluxSimulatorSettings.LIB_FILE);
 
-        File zipFile = File.createTempFile("sim", "master.gz");
+        File zipFile = FileHelper.createTempFile("sim", "master.gz");
         zipFile.deleteOnExit();
 
         /*
@@ -250,7 +258,7 @@ public class Sequencer implements Callable<Void> {
             // vars
             Gene[] g;
 
-            File tmpFile = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
+            File tmpFile = FileHelper.createTempFile("flux", NAME_SEQ);
             File tmpFasta = null;
 
             File genomeDir = settings.get(FluxSimulatorSettings.GEN_DIR);
@@ -259,7 +267,7 @@ public class Sequencer implements Callable<Void> {
             boolean hasErrorModel = errorModelFile != null && errorModelFile.trim().length() > 0;
 
             if (genomeDir != null && fasta) {
-                tmpFasta = File.createTempFile("flux", NAME_SEQ, settings.get(FluxSimulatorSettings.TMP_DIR));
+                tmpFasta = FileHelper.createTempFile("flux", NAME_SEQ);
                 Graph.overrideSequenceDirPath = genomeDir.getAbsolutePath();
             }
 
