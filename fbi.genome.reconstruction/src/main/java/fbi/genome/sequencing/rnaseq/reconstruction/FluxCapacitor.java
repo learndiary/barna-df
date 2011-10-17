@@ -43,7 +43,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import fbi.genome.lpsolver.LPSolverLoader;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
@@ -71,6 +70,8 @@ import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
+import fbi.genome.io.state.MappingWrapperState;
+import fbi.genome.lpsolver.LPSolverLoader;
 import fbi.genome.model.ASEvent;
 import fbi.genome.model.DirectedRegion;
 import fbi.genome.model.Exon;
@@ -3203,9 +3204,10 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		try {
 			if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
 				// memory
-				BEDobject2[] beds= bedWrapper.read(gene.getChromosome(), from, to);
-				if (beds== null)
+				MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
+				if (state.result== null)
 					return null;
+				BEDobject2[] beds= (BEDobject2[]) state.result;
 				Arrays.sort(beds, getDescriptorComparator());
 				iter= new BufferedIteratorRAM(beds);
 				
@@ -3219,17 +3221,15 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, c);
 				biter.init();
 				iter= biter;
-				long count= bedWrapper.read(pout, gene.getChromosome(), from, to);
+				MappingWrapperState state= bedWrapper.read(pout, gene.getChromosome(), from, to);
 				pout.flush();
 				pout.close();
-				if (count== 0)
+				if (state.count== 0)
 					return null;
 			}			
 		} catch (IOException e) {
 			throw new RuntimeException(
-				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to,
-				e
-			);
+				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to, e);
 		}
         
 		return iter;
@@ -3987,7 +3987,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						Log.warn("Seems that another process is just sorting file "+ inputFile+
 								"\nremove lock file "+ lock.getName()+" if dead leftover."+
 								"\nContinuing with sorting to temporary file "+ 
-								(f= createTempFile(f, 
+								(f= createTempFile(f, 	// access to non-Temp
 										FileHelper.getFileNameWithoutExtension(f), 
 										FileHelper.getExtension(f),
 										false)).getAbsolutePath());
@@ -3995,7 +3995,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					} else if (!f.getParentFile().canWrite()) {	// sort to temp, but do not delete (parameter)
 						Log.warn("Cannot write sorted file to "+ f.getAbsolutePath()+
 								"\nContinuing with sorting to temporary file "+ 
-								(f= createTempFile(f, 
+								(f= createTempFile(f, // access to non-Temp
 										FileHelper.getFileNameWithoutExtension(f), 
 										FileHelper.getExtension(f),
 										false)).getAbsolutePath());
@@ -4010,7 +4010,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					}
 					
 				} else {	// do not keep sorted files, sort to temp and delete on exit
-					f= createTempFile(f, 
+					f= createTempFile(null, 
 							FileHelper.getFileNameWithoutExtension(f), 
 							FileHelper.getExtension(f),
 							true);
