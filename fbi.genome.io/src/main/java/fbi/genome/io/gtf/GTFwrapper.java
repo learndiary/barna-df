@@ -2238,7 +2238,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
                 Log.progressFinish(StringUtils.OK, true);
             }
 
-		} catch (IOException e) {
+		} catch (Exception e) {
             if(size> 0){	// TODO !silent && stars
                 Log.progressFailed("ERROR");
             }

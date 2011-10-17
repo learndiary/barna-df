@@ -48,6 +48,7 @@ import fbi.genome.io.rna.FMRD;
 import fbi.genome.io.rna.ReadDescriptor;
 import fbi.genome.io.rna.SolexaPairedEndDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor;
+import fbi.genome.io.state.MappingWrapperState;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.constants.Constants;
@@ -1023,12 +1024,16 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
-	public BEDobject2[] read(String chr, int start, int end) {
-		Vector<BEDobject2> objV= new Vector<BEDobject2>();
-		long count= read(chr, start, end, objV, null);
-		if (count== 0)
-			return null;
-		return toObjects(objV);
+	public MappingWrapperState read(String chr, int start, int end) {
+		MappingWrapperState state= new MappingWrapperState();
+		state.result= new Vector<BEDobject2>();
+		state.count= 0;
+		read(chr, start, end, null, state);
+		if (state.count== 0)
+			state.result= null;
+		else
+			state.result= toObjects((Vector<BEDobject2>) state.result);
+		return state;
 	}
 	
 	/**
@@ -1041,26 +1046,36 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
-	public long read(OutputStream os, String chr, int start, int end) {
-		return read(chr, start, end, null, os);
+	public MappingWrapperState read(OutputStream os, String chr, int start, int end) {
+		return read(chr, start, end, os, null);
 	}
 	
 	int skippedLines= 0;
 	boolean warnFirstSkip= true;
-	protected long read(String chr, int start, int end, Vector<BEDobject2> objV, OutputStream os) {
+	protected MappingWrapperState read(String chr, int start, int end, OutputStream os, MappingWrapperState state) {
+	
+				if (state== null)
+					state= new MappingWrapperState();
+				// else 
+				state.count= 0l;
+				state.state= MappingWrapperState.STATE_OK;
+				state.result= new Vector<BEDobject2>();
+				state.nextChr= null;
 		
 				if (bytesRead== 0) {
 					warnFirstSkip= true;
 					skippedLines= 0;
 				}
 		
+				state.count= 0l;
 				if (mapChr.containsKey(chr)) {
-					if (mapChr.get(chr)== null)
-						return 0;
+					if (mapChr.get(chr)== null) {
+						state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;
+						return state;
+					}
 				}  
 					
 				--start;	// convert to bed coordinate
-				long count= 0l;
 				try {
 					BufferedBACSReader buffy= getReaderBACS();
 					ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
@@ -1081,8 +1096,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							inited= false;
 						} else {
 							lastLine= cs.cloneCurrentSeq();
-							if (buffy.readLine(cs)== null)
-								break;	// EOF
+							if (buffy.readLine(cs)== null) {
+								state.state= MappingWrapperState.STATE_END_OF_FILE;
+								return state;	// EOF
+							}
 							cs.resetFind();
 							bytesRead+= cs.length()+ lineSeparator.length();
 							++nrUniqueLinesRead;
@@ -1132,7 +1149,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							e.printStackTrace();
 						}
 						
-						if (chrToki.compareTo(chr)> 0) {	// 090520 check whether reads too far
+						if (chrToki.compareTo(chr)> 0) {	// end of chromosome reached
 							if (reuse)
 								lastLine= cs;
 							else {
@@ -1142,7 +1159,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							
 							addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
 							
-							return count;
+							state.state= MappingWrapperState.STATE_END_OF_CHROMOSOME;
+							state.nextChr= chrToki;
+							return state;
 						}
 							
 						if (lastChrRead== null) {	// first line read in this batch
@@ -1158,7 +1177,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											bytesRead= tmpBytes;
 											--nrUniqueLinesRead;
 										}
-										return count;
+										state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;
+										return state;
 									} else {
 										if (mapChr.get(chr)[0]> tmpBytes) { 	// only jump forward, never back
 											long[] bytesNlines= mapChr.get(chr);
@@ -1175,7 +1195,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											bedEnd= BEDobject.encodeInt(cs.getToken(2));
 										} else {
 											reset(tmpBytes, nrUniqueLinesRead-1);
-											return count;
+											state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;	// ?
+											state.nextChr= chrToki;
+											return state;
 										}
 									}
 								} else {
@@ -1189,7 +1211,9 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											--nrUniqueLinesRead;
 											readerB= null;
 										}
-										return count; 
+										state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;
+										state.nextChr= chrToki;
+										return state; 
 									} else {
 										
 										this.cs= newCS;
@@ -1250,20 +1274,21 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								bytesRead= tmpBytes;
 								--nrUniqueLinesRead;
 							}
-
-							return count;
+							state.state= MappingWrapperState.STATE_OK; // ? more info ? out of range ?
+							state.nextChr= chrToki;
+							return state;
 						}
 						
 						// create object
 						if (os== null) {
-							BEDobject2 bed= new BEDobject2(cs); 
-							objV.add(bed);
-							++count;
+							BEDobject2 bed= new BEDobject2(cs);
+							((Vector<BEDobject2>) state.result).add(bed);
+							++state.count;
 						} else {
 							os.write(cs.chars);
 							os.write(Constants.NL);
 							//os.flush();
-							count+= cs.chars.length+ 1; 
+							state.count+= cs.chars.length+ 1; 
 						}
 		
 					}
@@ -1272,7 +1297,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					e.printStackTrace();
 				}
 
-				return count;
+				return state;
 			}
 
 	public ReadDescriptor checkReadDescriptor(boolean pairedEnd) {
@@ -1322,6 +1347,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	@Override
 	public int getNrInvalidLines() {		
 		return skippedLines;
+	}
+
+	public HashMap<String, long[]> getMapChr() {
+		return mapChr;
 	}
 
 }
