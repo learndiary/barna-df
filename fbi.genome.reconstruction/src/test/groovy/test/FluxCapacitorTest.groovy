@@ -1,5 +1,35 @@
-
+	
 package test
+
+import static junit.framework.Assert.assertEquals
+import static junit.framework.Assert.assertTrue
+
+import java.io.BufferedReader
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
+import java.util.concurrent.Future
+import java.util.zip.GZIPOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
+import org.junit.AfterClass
+import org.junit.BeforeClass
+import org.junit.Test
+
+import fbi.commons.Execute
+import fbi.genome.io.FileHelper
+import fbi.genome.io.Sorter
+import fbi.genome.io.rna.UniversalReadDescriptor
+import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings
+import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping
+
 
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
@@ -54,15 +84,13 @@ class FluxCapacitorTest{
 	protected File bedFile= null;
 	
 	
-	
 	private void initFileNames(byte compressionGTF, byte compressionBED) throws Exception {
 		// set up file structure
-		tmpDir= new File(System.getProperty("java.io.tmpdir"));
-		anoDir= FileHelper.createTempDir(getClass().getSimpleName(), subdirAnnotation, tmpDir);
+		anoDir= FileHelper.createTempDir(getClass().getSimpleName(), subdirAnnotation, null);
 		anoDir.deleteOnExit();
-		mapDir= FileHelper.createTempDir(getClass().getSimpleName(), subdirMappings, tmpDir);
+		mapDir= FileHelper.createTempDir(getClass().getSimpleName(), subdirMappings, null);
 		mapDir.deleteOnExit();
-		outFile= File.createTempFile(getClass().getSimpleName(), suffixOutput, tmpDir);	// for checking later on write protection on anoDir
+		outFile= File.createTempFile(getClass().getSimpleName(), suffixOutput, null);	// for checking later on write protection on anoDir
 		outFile.delete();
 		parFile= File.createTempFile(getClass().getSimpleName(), suffixParameter, anoDir);
 		gtfFile= new File(FileHelper.append(anoDir.getAbsolutePath()+ File.separator+
@@ -142,6 +170,8 @@ class FluxCapacitorTest{
 				AnnotationMapping.PAIRED);
 		settings.set(FluxCapacitorSettings.STDOUT_FILE,
 				outFile);
+		if (tmpDir!= null)
+			settings.set(FluxCapacitorSettings.TMP_DIR, tmpDir);
 		
 		BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile));
 		buffy.write(settings.toString());
@@ -150,48 +180,29 @@ class FluxCapacitorTest{
 		parFile.deleteOnExit();
 	}
 
-	protected void runCapacitor() throws Exception{
+	protected String runCapacitor() throws Exception{
 		
 		// start process
-		String cmd= "java -cp "+System.getProperty("java.class.path")+
-			"-Xmx1G -Djava.library.path=/Users/micha/workspace/Genome/lib/native/lpsolve55/osx/x86/64 fbi.commons.flux.Flux -t capacitor -p "+parFile.getAbsolutePath()
+		// start process
+		String cmd= "java -cp "+System.getProperty("java.class.path")
+		if (tmpDir!= null)
+			cmd+= " -Dflux.io.deny.tmpdir=yes"
+		cmd+= " -Xmx1G fbi.commons.flux.Flux -t capacitor -p "+parFile.getAbsolutePath()
+		
 		Process process= cmd.execute()
 		process.waitFor()
-		
-		// current stderr output
-//		[INFO] 	7897 reads, 8009 mappings: R-factor 1.0141826
-//		[INFO] 	6145 entire, 1864 split mappings (2.3273816%)
-//		
-//		1 single transcript loci
-//		8009 mappings in file
-//		566 mappings fall in single transcript loci
-//		283 mappings map to annotation
-//		1172 mappings in annotation-mapped pairs
-//		40,75 min/max read length
-//		
-//		8009 mappings read from file
-//		8044 mapping pairs map to annotation
-//		0 pairs without tx evidence
-//		208 pairs in wrong orientation
-//		0 single mappings forced
-//	
-//		4 transcripts, 4 detected
-		
-//		println "EXIT: ${process.exitValue()}"
-//		println "STDOUT: ${process.in.text}"
-//		// alternative to combine wait and stdout
-//		println "ls ${parameter}".execute().text
 
-		String stderr= "STDERR: ${process.err.text}"
-		assertTrue(stderr.contains("8009"))
-		assertTrue(stderr.contains("8044"))
-		
 		// internal start
-//		FluxCapacitor capacitor= new FluxCapacitor();
-//		capacitor.setFile(parFile);
-//		Future<Void> captain= Execute.getExecutor().submit(capacitor);
-//		captain.get();
-//		outFile.deleteOnExit();
+		//		FluxCapacitor capacitor= new FluxCapacitor();
+		//		capacitor.setFile(parFile);
+		//		Future<Void> captain= Execute.getExecutor().submit(capacitor);
+		//		captain.get();
+		//		outFile.deleteOnExit();
+		
+		String stderr= "STDERR: ${process.err.text}"
+		return stderr;
+		
+		
 	}
 
 	protected void initFiles(byte compressionGTF, int sortGTF, boolean writeProtectGTF,
@@ -218,10 +229,46 @@ class FluxCapacitorTest{
 		}
 	}
 			
-	void assertFiles(int nrFilesInGTF, int nrFilesInBED) {
+	static final String[] STDERR_MAPPED= ["8009","8044"]
+	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
+	
+	void assertFiles(int nrFilesInGTF, int nrFilesInBED, String stderr, String[] occurrences) {
+		
+		
+		// current stderr output
+		//		[INFO] 	7897 reads, 8009 mappings: R-factor 1.0141826
+		//		[INFO] 	6145 entire, 1864 split mappings (2.3273816%)
+		//
+		//		1 single transcript loci
+		//		8009 mappings in file
+		//		566 mappings fall in single transcript loci
+		//		283 mappings map to annotation
+		//		1172 mappings in annotation-mapped pairs
+		//		40,75 min/max read length
+		//
+		//		8009 mappings read from file
+		//		8044 mapping pairs map to annotation
+		//		0 pairs without tx evidence
+		//		208 pairs in wrong orientation
+		//		0 single mappings forced
+		//
+		//		4 transcripts, 4 detected
+				
+		//		println "EXIT: ${process.exitValue()}"
+		//		println "STDOUT: ${process.in.text}"
+		//		// alternative to combine wait and stdout
+		//		println "ls ${parameter}".execute().text
+		for (int i = 0; i < occurrences.length; i++) {
+			assertTrue(stderr.contains(occurrences[i]))
+		}
+		
+		
+		
+		
 		assertTrue(gtfFile.exists());
 		assertTrue(bedFile.exists());
-		assertTrue(outFile.exists());
+		if (occurrences!= STDERR_ACCESS_DENIED)
+			assertTrue(outFile.exists());
 		String[] files= anoDir.list();
 		assertTrue(files.length== nrFilesInGTF);	// annotation+ parameter+ output
 		files= mapDir.list();
@@ -254,9 +301,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -283,9 +330,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -312,9 +359,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 	
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -341,9 +388,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -370,9 +417,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -399,9 +446,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -428,9 +475,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -457,9 +504,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -486,9 +533,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -515,9 +562,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					true);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(3, 2);
+			assertFiles(3, 2, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -544,9 +591,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					true);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -573,9 +620,9 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			runCapacitor();
+			String stderr= runCapacitor();
 			
-			assertFiles(2, 1);
+			assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -586,5 +633,35 @@ class FluxCapacitorTest{
 
 	}
 
+	@Test
+	public void testTmpDir() {
+		try {
+			
+			// create tmp dir
+			tmpDir= new File(System.getProperty("java.io.tmpdir"));// FileHelper.createTempDir(getClass().getSimpleName(), "aTempDir", null);
+			
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED,
+					true,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED,
+					true,
+					// keep sorted
+					false);
+
+			String stderr= runCapacitor();
+			
+			assertFiles(2, 1, stderr, STDERR_ACCESS_DENIED);
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+	}
 
 }
