@@ -140,7 +140,6 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if(tmp == null){
                 throw new ParameterException("No temp directory specified!");
             }
-            System.err.println(">>> checkign write for "+ tmp+ "\n>>> "+System.getProperty("java.io.tmpdir"));
             if(!tmp.canWrite()){
                 throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
             }
