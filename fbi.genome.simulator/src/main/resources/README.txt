@@ -22,6 +22,10 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator RC5
+    -fixed Issue Issue 68: TMP_DIR parameter ignored - the user applied tmp folder should be used and
+     debug tool added, just in case.
+
 FluxSimulator RC4
     -fixed problem with disabling the PCR distriubution
     -fixed windows startup problems
