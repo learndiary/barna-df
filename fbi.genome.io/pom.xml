@@ -53,7 +53,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.commons</artifactId>
-            <version>1.7-SNAPSHOT</version>
+            <version>1.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>fbi</groupId>
