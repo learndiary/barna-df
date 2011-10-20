@@ -23,6 +23,13 @@ import java.util.Map;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class LineComparator<T extends CharSequence> implements Comparator<T> {
+
+	/**
+	 * temporarily de-activate hashing
+	 * @deprecated not supported in future API
+	 */
+	public static boolean cache= true;
+	
     /**
      * The fields to use for comparison
      */
@@ -44,7 +51,7 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
     /**
      * Optional parent comparator
      */
-    private Comparator<T> parent;
+    private Comparator<T> delegate;
 
     /**
      * Cache separator splits
@@ -74,7 +81,7 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                 }
             }
         }
-        this.parent = copy.parent;
+        this.delegate = copy.delegate;
     }
 
     /**
@@ -122,40 +129,42 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
     }
 
     /**
-     * Create a line comparator that wraps around another comparator
-     * using a specific separator.
+     * Create a line comparator stub that uses a specific separator
+     * and wraps around another comparator to which comparison 
+     * calls are delegated.
      *
      * @param comparator parent comparator
      */
-    public LineComparator(String separator, Comparator<T> comparator) {
-        this.parent = comparator;
-        this.numerical = false;
-        this.separator= separator;
+    public LineComparator(Comparator<T> comparator) {
+        this.delegate = comparator;
+        this.numerical= false; // dummy init to make compiler happy
     }
 
 
     /**
-     * Add a sub comparator that is used if this comparator would returns 0
+     * Add a sub comparator that is used if this comparator would return 0
      *
      * @param comparator the sub comparator
+     * @return <code>this</code> instance with the new child comparator
      */
-    public void addComparator(Comparator<T> comparator) {
+    public LineComparator<T> addComparator(Comparator<T> comparator) {
         if (comparator != null) {
             if (subComparators == null) {
                 subComparators = new ArrayList<Comparator<T>>();
             }
             subComparators.add(comparator);
         }
+        return this;
     }
 
-
     public int compare(final T o1, final T o2) {
+
         // check for empty string
         if (o1.length() == 0 || o2.length() == 0) {
             return o1.toString().compareTo(o2.toString());
         }
         int result = 0;
-        if (parent == null) {
+        if (delegate == null) {
             String s1 = o1.toString();
             String s2 = o2.toString();
 
@@ -178,11 +187,13 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                     // split fields
                     if(c1 == null){
                         s1 = o1.toString().split(separator)[field[0]];
-                        splitCache.put(o1, s1);
+                        if (cache)
+                        	splitCache.put(o1, s1);
                     }
                     if(c2 == null){
                         s2 = o2.toString().split(separator)[field[0]];
-                        splitCache.put(o2, s2);
+                        if (cache)
+                        	splitCache.put(o2, s2);
                     }
                 } else if (field.length > 1) {
                     // merge multiple fields
@@ -192,7 +203,8 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                         for (int i : field) {
                             s1 += o1_split[i];
                         }
-                        splitCache.put(o1, s1);
+                        if (cache)
+                        	splitCache.put(o1, s1);
                     }
 
                     if(c2 == null){
@@ -201,7 +213,8 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                         for (int i : field) {
                             s2 += o2_split[i];
                         }
-                        splitCache.put(o2, s2);
+                        if (cache)
+                        	splitCache.put(o2, s2);
                     }
                 }
 
@@ -211,15 +224,19 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                         // try integer first
                         int i1 = Integer.parseInt(s1);
                         int i2 = Integer.parseInt(s2);
-                        splitCache.put(o1, new Double(i1));
-                        splitCache.put(o2, new Double(i2));
+                        if (cache) {
+	                        splitCache.put(o1, new Double(i1));
+	                        splitCache.put(o2, new Double(i2));
+                        }
                         result = i1 - i2;
                     } catch (NumberFormatException e) {
                         // ok integer failed ... lets try double
                         double d1 = Double.parseDouble(s1);
                         double d2 = Double.parseDouble(s2);
-                        splitCache.put(o1, new Double(d1));
-                        splitCache.put(o2, new Double(d2));
+                        if (cache) {
+	                        splitCache.put(o1, new Double(d1));
+	                        splitCache.put(o2, new Double(d2));
+                        }
                         result = Double.compare(d1, d2);
                     }
                 } else {
@@ -227,7 +244,7 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                 }
             }
         } else {
-            result = parent.compare(o1, o2);
+            result = delegate.compare(o1, o2);
         }
         /*
         If result is 0 check the sub comparators

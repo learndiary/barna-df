@@ -1,8 +1,9 @@
 package fbi.commons.tools;
 
-import org.junit.Test;
-
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+
+import org.junit.Test;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -56,5 +57,23 @@ public class LineComparatorTest {
 
     }
 
+    @Test
+    public void testComposites() {
+        String s1 = "1\t0";
+        String s2 = "1\t1";
+        
+        LineComparator<CharSequence> c1= new LineComparator<CharSequence>(true, "\t", 0);
+        LineComparator<CharSequence> c2= new LineComparator<CharSequence>(true, "\t", 1);
+        LineComparator<CharSequence> c3= new LineComparator<CharSequence>(c1)
+        	.addComparator(new LineComparator<CharSequence>(c2));
+        
+        assertEquals(0, c1.compare(s1, s2));
+        assertEquals(-1, c2.compare(s1, s2));
+        assertEquals(1, c2.compare(s2, s1));
+        
+        assertEquals(-1, c3.compare(s1, s2));
+        assertEquals(1, c3.compare(s2, s1));
+
+    }
 
 }

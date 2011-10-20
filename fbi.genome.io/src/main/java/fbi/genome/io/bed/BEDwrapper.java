@@ -15,8 +15,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,6 +36,7 @@ import fbi.commons.io.DevNullOutputStream;
 import fbi.commons.thread.SyncIOHandler2;
 import fbi.commons.tools.ArrayUtils;
 import fbi.commons.tools.Interceptable;
+import fbi.commons.tools.LineComparator;
 import fbi.genome.io.AbstractFileIOWrapper;
 import fbi.genome.io.BufferedBACSReader;
 import fbi.genome.io.FileHelper;
@@ -70,12 +69,34 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	
 	BEDobject[] beds= null;
 	
-	public BEDwrapper(File inputFile) {
+	/**
+	 * Creates an instance using a given file and
+	 * line comparator.
+	 * @param inputFile file to use
+	 * @param comparator comparator describing required file
+	 * sorting 
+	 */
+	public BEDwrapper(File inputFile, LineComparator<CharSequence> comparator) {
 		super(inputFile);
+		this.comparator= comparator;
 	}
 	
-	public BEDwrapper(String newFilePath) {
-		this(new File(newFilePath));
+	/**
+	 * Creates an instance using a specific file 
+	 * and the default comparator.
+	 * @param inputFile
+	 */
+	public BEDwrapper(File inputFile) {
+		this(inputFile, COMPARATOR_DEFAULT);
+	}
+	
+	/**
+	 * Creates an instance using a specific path to a file 
+	 * and the default line comparator.
+	 * @param absolutePath path to the file the wrapper is based on
+	 */
+	public BEDwrapper(String absolutePath) {
+		this(new File(absolutePath));
 	}
 	
 	HashSet<String> refIDset;
@@ -107,13 +128,24 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 */
 	public long isApplicable(File inputFile) {
 		
+		FileInputStream fis= null;
 		try {
-			FileInputStream fis= new FileInputStream(inputFile);
-			long linesOK= isApplicable(fis, FileHelper.getSize(inputFile));
-			fis.close();
+			fis= new FileInputStream(inputFile);
+			long linesOK= -1;
+			if (comparator== COMPARATOR_DEFAULT)
+				linesOK= isApplicableDefault(fis, FileHelper.getSize(inputFile));
+			else
+				linesOK= isApplicable(fis, FileHelper.getSize(inputFile));
 			return linesOK;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (fis!= null)
+				try {
+					fis.close();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 		}
 	}
 	
@@ -126,14 +158,17 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 * entry
 	 */
 	public long isApplicable(InputStream inputStream, long size) {
+		
+		boolean cacheState= comparator.cache;
+		comparator.cache= false;
+		
 		try {
             Log.progressStart("checking");
 			BufferedReader buffy= new BufferedReader(new InputStreamReader(inputStream), 10* 1024* 1024);
 			long rowCtr= 0;
 			long bRead= 0;
-			String lastC= null, nowC= null;
-			int lastP= -1, nowP= -1;
-			HashSet<String> setChr= new HashSet<String>();
+			String lastRow= null;
+			
 			for (String s= buffy.readLine(); s!= null; s= buffy.readLine()) {
 				++rowCtr;
 				bRead+= s.length()+ 1;
@@ -144,46 +179,19 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 				if (s.startsWith("track")|| s.startsWith("browser"))
 					continue;
 
-				int i= 0, len= s.length();
-				char c= ' ';
-				for (;i < len; i++) {
-					c= s.charAt(i);
-					if (c== ' '|| c== '\t')
-						break;
-				}
-				nowC= s.substring(0, i);
-				//addRefID(nowC);
-				while (i< len&& (c== ' '|| c== '\t'))
-					c= s.charAt(++i);
-				int p= i;
-				for (;i < len; i++) {
-					c= s.charAt(i);
-					if (c== ' '|| c== '\t')
-						break;
-				}
-				nowP= BEDobject.encodeInt(s, p, i);
-				
-				// avoid String.split(), not efficient
-				boolean ascendingChr= false, chrYetRead= false;
-				if (lastC!= null) {
-					ascendingChr= lastC.compareTo(nowC)< 0;
-					if (ascendingChr) {
-						if (setChr.contains(nowC))
-							chrYetRead= true;
-						setChr.add(nowC);
-					}
+				if (lastRow== null) {
+					lastRow= s;
+					continue;
 				}
 				
-				if ((!chrYetRead)&& (ascendingChr|| lastP<= nowP)) {					
-					lastC= nowC;
-					lastP= nowP;
-					nowC= null;
-				} else {
+				if (comparator.compare(lastRow, s)> 0) {
 					Log.info("\n\tunsorted in line "+rowCtr+".");
-					//clearRefIDs();
 					buffy.close();
 					return (-rowCtr);
 				}
+				
+				lastRow= s;
+				
 			}
 			buffy.close();
             Log.progressFinish(Constants.OK, true);
@@ -192,6 +200,8 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 		} catch (Exception e) {
             Log.progressFailed(" ERROR.");
             throw new RuntimeException(e);
+		} finally {
+			comparator.cache= cacheState; 
 		}
 	}
 
@@ -349,6 +359,10 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	private int identTok= -1;
 	private static final String TRACK= "track", BROWSER= "browser";
 	private ByteArrayCharSequence lastLine= null;
+	private static final LineComparator<CharSequence> COMPARATOR_DEFAULT=
+		new LineComparator<CharSequence>(false, "\t", 0)
+				.addComparator(new LineComparator<CharSequence>(true, "\t", 1)); 
+	
 	boolean reuse= true;
 	
 	private boolean addChr(String chrToki, long bytes, int lines) {
@@ -426,6 +440,11 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		}
 		return -1;
 	}
+	
+	/**
+	 * Sorting rules for that file.
+	 */
+	LineComparator<CharSequence> comparator;
 	
 	int countAll;
 	int countEntire;
@@ -613,21 +632,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	}
 
 	public Sorter getSorter(InputStream in, OutputStream out) {
-		Sorter sorter= Sorter.create(in, out, true, "\\s")
-		    .field(0, false)
-		    .field(1, true);
+		Sorter sorter= Sorter.create(in, out, true, "\t")
+			.field(comparator);
+			
 		return sorter;
-	}
-	
-	public void sortBED(File outputFile) {
-		try {
-			FileOutputStream fos = new FileOutputStream(outputFile);
-			sort(fos);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 	}
 	
 	@Override
@@ -1351,6 +1359,80 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 
 	public HashMap<String, long[]> getMapChr() {
 		return mapChr;
+	}
+
+	/**
+	 * @deprecated maybe a bit more efficient, assumes tradtional BED
+	 * sorting hierachy of fields 1,2,3
+	 */
+	private long isApplicableDefault(InputStream inputStream, long size) {
+		try {
+	        Log.progressStart("checking");
+			BufferedReader buffy= new BufferedReader(new InputStreamReader(inputStream), 10* 1024* 1024);
+			long rowCtr= 0;
+			long bRead= 0;
+			String lastC= null, nowC= null;
+			int lastP= -1, nowP= -1;
+			HashSet<String> setChr= new HashSet<String>();
+			for (String s= buffy.readLine(); s!= null; s= buffy.readLine()) {
+				++rowCtr;
+				bRead+= s.length()+ 1;
+	
+				if (size> 0)
+					Log.progress(bRead, size);
+	
+				if (s.startsWith("track")|| s.startsWith("browser"))
+					continue;
+	
+				int i= 0, len= s.length();
+				char c= ' ';
+				for (;i < len; i++) {
+					c= s.charAt(i);
+					if (c== ' '|| c== '\t')
+						break;
+				}
+				nowC= s.substring(0, i);
+				//addRefID(nowC);
+				while (i< len&& (c== ' '|| c== '\t'))
+					c= s.charAt(++i);
+				int p= i;
+				for (;i < len; i++) {
+					c= s.charAt(i);
+					if (c== ' '|| c== '\t')
+						break;
+				}
+				nowP= BEDobject.encodeInt(s, p, i);
+				
+				// avoid String.split(), not efficient
+				boolean ascendingChr= false, chrYetRead= false;
+				if (lastC!= null) {
+					ascendingChr= lastC.compareTo(nowC)< 0;
+					if (ascendingChr) {
+						if (setChr.contains(nowC))
+							chrYetRead= true;
+						setChr.add(nowC);
+					}
+				}
+				
+				if ((!chrYetRead)&& (ascendingChr|| lastP<= nowP)) {					
+					lastC= nowC;
+					lastP= nowP;
+					nowC= null;
+				} else {
+					Log.info("\n\tunsorted in line "+rowCtr+".");
+					//clearRefIDs();
+					buffy.close();
+					return (-rowCtr);
+				}
+			}
+			buffy.close();
+	        Log.progressFinish(Constants.OK, true);
+				
+			return rowCtr;
+		} catch (Exception e) {
+	        Log.progressFailed(" ERROR.");
+	        throw new RuntimeException(e);
+		}
 	}
 
 }

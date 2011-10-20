@@ -158,7 +158,7 @@ public class Sorter {
         if (comparator == null) {
             throw new NullPointerException("Null comparator is not permitted");
         }
-        comparators.add(new LineComparator(separator, comparator));
+        comparators.add(new LineComparator(comparator));
         return this;
     }
 
