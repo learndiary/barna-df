@@ -234,7 +234,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 						return null;
 					}
 				};
-				this.captain= Execute.getExecutor().submit(callme);
+				this.captain= null; // TODO deadlocks: Execute.getExecutor().submit(callme);
 			}
 			
 		} else {	// unsorted
@@ -336,7 +336,8 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 */
 	@Override
 	public ByteArrayCharSequence next() {
-		
+		if (!hasNext())
+			return null;
 		try {
 			reader= getReader(-1);
 			cs= reader.readLine(cs);

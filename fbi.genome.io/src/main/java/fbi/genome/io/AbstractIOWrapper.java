@@ -2,6 +2,7 @@ package fbi.genome.io;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 public abstract class AbstractIOWrapper implements IOWrapper {
 
@@ -11,12 +12,20 @@ public abstract class AbstractIOWrapper implements IOWrapper {
 	 * sent
 	 */
 	public void sort(File outputFile) {
+		
+		FileOutputStream fos= null;
 		try {
-			FileOutputStream fos= new FileOutputStream(outputFile);
+			fos= new FileOutputStream(outputFile);
 			sort(fos);
-			fos.close();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			try {
+				if (fos!= null)
+					fos.close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 

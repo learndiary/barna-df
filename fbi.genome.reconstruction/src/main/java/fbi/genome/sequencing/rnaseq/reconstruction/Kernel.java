@@ -45,6 +45,40 @@ public class Kernel {
 		
 		return f;
 	}
+	/**
+	 * 
+	 * @param v half the window size (!!!)
+	 * @param F
+	 * @return
+	 */
+	public static double[] getTriweightKernel(int v, double F) {
+		double[] f= new double[2* v+ 1];
+		// http://en.wikipedia.org/wiki/Kernel_(statistics)
+		// 3/(2* windowsize) * (1- u^2)
+		// u= -1+ (idx/ (w-1))* 2
+		double csum= 0;
+		for (int i = -v; i <= v; ++i) {
+			double uw= -i/(double) v;
+			double k= (1d- (uw* uw));
+			double k3= k* k* k;
+			f[v+ i]= k3;
+			csum+= k3;
+		}
+		if (csum!= F) {
+			double csum2= 0;
+			double frac= csum/ F;
+			for (int i = 0; i < f.length; ++i) {
+				f[i]/= frac;
+				csum2+= f[i];
+			}
+			csum= csum2;
+			//System.err.println(csum2);
+		}
+		// must be, sometimes its 0.9999999999...
+		//assert(csum== 1);
+		
+		return f;
+	}
 	
 	public static int smoothen(byte kernel, int w, int[] b) {
 		

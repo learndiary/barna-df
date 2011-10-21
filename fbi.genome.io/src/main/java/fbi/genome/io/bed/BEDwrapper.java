@@ -78,7 +78,7 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 */
 	public BEDwrapper(File inputFile, LineComparator<CharSequence> comparator) {
 		super(inputFile);
-		this.comparator= comparator;
+		this.comparator= (comparator== null? COMPARATOR_DEFAULT: comparator);
 	}
 	
 	/**
@@ -359,9 +359,20 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	private int identTok= -1;
 	private static final String TRACK= "track", BROWSER= "browser";
 	private ByteArrayCharSequence lastLine= null;
-	private static final LineComparator<CharSequence> COMPARATOR_DEFAULT=
+	/**
+	 * Default comparator, sort (1) chromosome, (2) position.
+	 */
+	public static final LineComparator<CharSequence> COMPARATOR_DEFAULT=
 		new LineComparator<CharSequence>(false, "\t", 0)
 				.addComparator(new LineComparator<CharSequence>(true, "\t", 1)); 
+	/**
+	 * Default comparator for read pairing, sort (1) chromosome, (2) name,
+	 * (3) position.
+	 */
+	public static final LineComparator<CharSequence> COMPARATOR_PAIRED_END=
+		new LineComparator<CharSequence>(false, "\t", 0)
+			.addComparator(new LineComparator<CharSequence>(false, "\t", 3))
+					.addComparator(new LineComparator<CharSequence>(true, "\t", 1));
 	
 	boolean reuse= true;
 	
@@ -622,6 +633,28 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		// TODO Auto-generated method stub
 		test();
 	}
+	
+	public static File getSortedFile(File inputFile, File tmpFile, LineComparator<CharSequence> comparator) {
+		
+		BEDwrapper wrapper= new BEDwrapper(inputFile, comparator);
+		
+		if (!wrapper.isApplicable()) {
+			if (tmpFile== null)
+				try {
+					tmpFile= FileHelper.createTempFile(
+							FileHelper.stripExtension(inputFile.getName()), 
+							FileHelper.getExtension(inputFile));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			wrapper.sort(tmpFile);
+			
+			inputFile= tmpFile;
+		}
+
+		return inputFile;
+	}
+
 
 	public BEDobject[] getBeds() {
 		return beds;
