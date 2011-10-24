@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -110,7 +111,7 @@ public class Sorter {
      * @return sorter this sorter
      */
     public Sorter field(String separator, int field, boolean numeric) {
-        comparators.add(new LineComparator(numeric, separator, field));
+        addComparator(new LineComparator(numeric, separator, field));
         return this;
     }
 
@@ -133,7 +134,7 @@ public class Sorter {
      * @return sorter this sorter
      */
     public Sorter field(String separator, int... fields) {
-        comparators.add(new LineComparator(separator, fields));
+        addComparator(new LineComparator(separator, fields));
         return this;
     }
 
@@ -158,7 +159,7 @@ public class Sorter {
         if (comparator == null) {
             throw new NullPointerException("Null comparator is not permitted");
         }
-        comparators.add(new LineComparator(comparator));
+        addComparator(new LineComparator(comparator));
         return this;
     }
 
@@ -268,6 +269,16 @@ public class Sorter {
             }
         }
         return s;
+    }
+
+    /**
+     * INTERNAL: add a line comparator and enable caching
+     *
+     * @param comparator the comparator
+     */
+    protected void addComparator(LineComparator comparator){
+        comparator.setCache(new HashMap());
+        this.comparators.add(comparator);
     }
 
 

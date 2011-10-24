@@ -11,25 +11,28 @@
 
 package fbi.commons.tools;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
- * Compares strings and supports field splitting and number parsing.
+ * Compares strings and supports field splitting and number parsing. The implementations default is NOT to
+ * cache any values, but if you intend to use this in scenarios where the field values will be accessed
+ * multiple times, you might want to provide a cache using {@link #setCache(java.util.Map)}.
+ * <p>
+ *     Also note that you can speed up the line splitting gif your separator is only a single character. In
+ *     that case a manual split is performed and regexp usage is avoided.
+ * </p>
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class LineComparator<T extends CharSequence> implements Comparator<T> {
+    /**
+     * Split types
+     */
+    private static enum SplitType {
+        Regexp, Character
+    }
 
-	/**
-	 * temporarily de-activate hashing
-	 * @deprecated not supported in future API
-	 */
-	public static boolean cache= true;
-	
     /**
      * The fields to use for comparison
      */
@@ -41,7 +44,12 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
     /**
      * Field separator
      */
-    private String separator = "\\t";
+    private String separator = "\t";
+
+    /**
+     * How to split the string
+     */
+    private SplitType splitType = null;
 
     /**
      * Possible list of sub comparators that are used if
@@ -54,9 +62,9 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
     private Comparator<T> delegate;
 
     /**
-     * Cache separator splits
+     * Optional cache that caches field values
      */
-    private Map<CharSequence, Object> splitCache = new HashMap<CharSequence, Object>();
+    private Map<T, Object> cache;
 
 
     /**
@@ -64,24 +72,27 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
      *
      * @param copy the source
      */
-    public LineComparator(LineComparator<T> copy){
+    public LineComparator(LineComparator<T> copy) {
         super();
         this.field = new int[copy.field.length];
-        System.arraycopy(copy.field, 0, this.field,0, copy.field.length);
+        System.arraycopy(copy.field, 0, this.field, 0, copy.field.length);
         this.numerical = copy.numerical;
 
         this.separator = copy.separator;
-        if(copy.subComparators != null){
+        if (copy.subComparators != null) {
             this.subComparators = new ArrayList<Comparator<T>>();
             for (Comparator<? extends CharSequence> cc : copy.subComparators) {
-                if(cc instanceof LineComparator){
-                    this.subComparators.add(new LineComparator((LineComparator<T>)cc));
-                }else{
+                if (cc instanceof LineComparator) {
+                    this.subComparators.add(new LineComparator((LineComparator<T>) cc));
+                } else {
                     this.subComparators.add((Comparator<T>) cc);
                 }
             }
         }
         this.delegate = copy.delegate;
+        if(copy.getCache() != null){
+            setCache(new HashMap<T, Object>());
+        }
     }
 
     /**
@@ -130,14 +141,14 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
 
     /**
      * Create a line comparator stub that uses a specific separator
-     * and wraps around another comparator to which comparison 
+     * and wraps around another comparator to which comparison
      * calls are delegated.
      *
      * @param comparator parent comparator
      */
     public LineComparator(Comparator<T> comparator) {
         this.delegate = comparator;
-        this.numerical= false; // dummy init to make compiler happy
+        this.numerical = false; // dummy init to make compiler happy
     }
 
 
@@ -157,6 +168,31 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
         return this;
     }
 
+    /**
+     * Get the cached value for s
+     *
+     * @param s the key
+     * @return value the cached value or null
+     */
+    public Object get(T s) {
+        if (cache != null) {
+            return cache.get(s);
+        }
+        return null;
+    }
+
+    /**
+     * Put a value in the cache
+     *
+     * @param s the key
+     * @param o the value
+     */
+    public void put(T s, Object o) {
+        if (cache != null) {
+            cache.put(s, o);
+        }
+    }
+
     public int compare(final T o1, final T o2) {
 
         // check for empty string
@@ -168,53 +204,49 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
             String s1 = o1.toString();
             String s2 = o2.toString();
 
-            Object c1 = splitCache.get(o1);
-            Object c2 = splitCache.get(o2);
+            Object c1 = get(o1);
+            Object c2 = get(o2);
 
             boolean gotResult = false;
-            if(numerical && c1 != null && c2 != null){
-                result = Double.compare((Double)c1, (Double)c2);
+            if (numerical && c1 != null && c2 != null) {
+                result = Double.compare((Double) c1, (Double) c2);
                 gotResult = true;
-            }else{
-                if(c1 != null) s1 = c1.toString();
-                if(c2 != null) s2 = c2.toString();
+            } else {
+                if (c1 != null) s1 = c1.toString();
+                if (c2 != null) s2 = c2.toString();
             }
 
 
-            if(!gotResult){
+            if (!gotResult) {
                 // one field specified
                 if (field.length == 1 && field[0] >= 0) {
                     // split fields
-                    if(c1 == null){
-                        s1 = o1.toString().split(separator)[field[0]];
-                        if (cache)
-                        	splitCache.put(o1, s1);
+                    if (c1 == null) {
+                        s1 = split(o1.toString())[field[0]];//o1.toString().split(separator)[field[0]];
+                        put(o1, s1);
                     }
-                    if(c2 == null){
-                        s2 = o2.toString().split(separator)[field[0]];
-                        if (cache)
-                        	splitCache.put(o2, s2);
+                    if (c2 == null) {
+                        s2 = split(o2.toString())[field[0]];//o2.toString().split(separator)[field[0]];
+                        put(o2, s2);
                     }
                 } else if (field.length > 1) {
                     // merge multiple fields
                     // merge o1 fields
-                    if(c1 == null){
-                        String[] o1_split = o1.toString().split(separator);
+                    if (c1 == null) {
+                        String[] o1_split = split(o1.toString());//o1.toString().split(separator);
                         for (int i : field) {
                             s1 += o1_split[i];
                         }
-                        if (cache)
-                        	splitCache.put(o1, s1);
+                        put(o1, s1);
                     }
 
-                    if(c2 == null){
+                    if (c2 == null) {
                         // merge o2 fields
-                        String[] o2_split = o2.toString().split(separator);
+                        String[] o2_split = split(o2.toString());//o2.toString().split(separator);
                         for (int i : field) {
                             s2 += o2_split[i];
                         }
-                        if (cache)
-                        	splitCache.put(o2, s2);
+                        put(o2, s2);
                     }
                 }
 
@@ -224,19 +256,15 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
                         // try integer first
                         int i1 = Integer.parseInt(s1);
                         int i2 = Integer.parseInt(s2);
-                        if (cache) {
-	                        splitCache.put(o1, new Double(i1));
-	                        splitCache.put(o2, new Double(i2));
-                        }
+                        put(o1, new Double(i1));
+                        put(o2, new Double(i2));
                         result = i1 - i2;
                     } catch (NumberFormatException e) {
                         // ok integer failed ... lets try double
                         double d1 = Double.parseDouble(s1);
                         double d2 = Double.parseDouble(s2);
-                        if (cache) {
-	                        splitCache.put(o1, new Double(d1));
-	                        splitCache.put(o2, new Double(d2));
-                        }
+                        put(o1, new Double(d1));
+                        put(o2, new Double(d2));
                         result = Double.compare(d1, d2);
                     }
                 } else {
@@ -260,24 +288,97 @@ public class LineComparator<T extends CharSequence> implements Comparator<T> {
         return result;
     }
 
-    public void reset(){
-        splitCache.clear();
-        if(subComparators != null){
+    public void reset() {
+        if (cache != null) {
+            cache.clear();
+        }
+        if (subComparators != null) {
             for (Comparator<? extends CharSequence> subComparator : subComparators) {
-                if(subComparator instanceof LineComparator){
-                    ((LineComparator)subComparator).reset();
+                if (subComparator instanceof LineComparator) {
+                    ((LineComparator) subComparator).reset();
                 }
             }
         }
     }
 
     /**
-     * Returns all subcomparators currently registered for this  
+     * Returns all subcomparators currently registered for this
      * <code>LineComparator</code>.
+     *
      * @return all subcomparators currently registered
      */
-	public List<Comparator<T>> getSubComparators() {
-		return subComparators;
-	}
+    public List<Comparator<T>> getSubComparators() {
+        return subComparators;
+    }
+
+
+    /**
+     * Split the given string using a manual character comparison split
+     * or a regexp, based on the separator
+     *
+     * @param string the string to split
+     * @return splits the splitted string
+     */
+    protected String[] split(String string) {
+        if (splitType == null) {
+            // find out how to split
+            if (separator.length() == 1) {
+                splitType = SplitType.Character;
+            } else {
+                splitType = SplitType.Regexp;
+            }
+        }
+
+        String[] split = null;
+        if (splitType == SplitType.Character) {
+            ArrayList<String> splits = new ArrayList<String>();
+            // max field to get
+            int max = -1;
+            for (int i : field) {
+                max = Math.max(i + 1, max);
+            }
+
+            char sc = separator.charAt(0);
+            int s = 0;
+            int field = 0;
+            for (int i = 0; i < string.length(); i++) {
+                if (string.charAt(i) == sc) {
+                    // split
+                    if (s == i) splits.add("");
+                    else splits.add(string.substring(s, i));
+                    s = i + 1;
+                    field++;
+                    if (splits.size() >= max || field >= max) break;
+                }
+            }
+            // add final
+            if (splits.size() < max) {
+                splits.add(string.substring(s));
+            }
+            split = splits.toArray(new String[splits.size()]);
+        }else{
+            split = string.split(separator);
+        }
+
+        return split;
+    }
+
+    /**
+     * Get the current cache or null
+     * @return cache cache or null
+     */
+    public Map<T, Object> getCache() {
+        return cache;
+    }
+
+    /**
+     * Set the cache. The implementation does NOT cache by default, you
+     * have to explicitly provide a cache here to enable field value caching
+     *
+     * @param cache the cache
+     */
+    public void setCache(Map<T, Object> cache) {
+        this.cache = cache;
+    }
 }
 

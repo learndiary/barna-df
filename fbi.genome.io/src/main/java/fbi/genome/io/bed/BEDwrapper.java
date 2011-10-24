@@ -158,11 +158,9 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 * entry
 	 */
 	public long isApplicable(InputStream inputStream, long size) {
-		
-		boolean cacheState= comparator.cache;
-		comparator.cache= false;
-		
-		try {
+
+        LineComparator clone = new LineComparator(comparator);
+        try {
             Log.progressStart("checking");
 			BufferedReader buffy= new BufferedReader(new InputStreamReader(inputStream), 10* 1024* 1024);
 			long rowCtr= 0;
@@ -184,7 +182,7 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 					continue;
 				}
 				
-				if (comparator.compare(lastRow, s)> 0) {
+				if (clone.compare(lastRow, s)> 0) {
 					Log.info("\n\tunsorted in line "+rowCtr+".");
 					buffy.close();
 					return (-rowCtr);
@@ -200,8 +198,6 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 		} catch (Exception e) {
             Log.progressFailed(" ERROR.");
             throw new RuntimeException(e);
-		} finally {
-			comparator.cache= cacheState; 
 		}
 	}
 

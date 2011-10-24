@@ -5,6 +5,8 @@ import static junit.framework.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -73,7 +75,40 @@ public class LineComparatorTest {
         
         assertEquals(-1, c3.compare(s1, s2));
         assertEquals(1, c3.compare(s2, s1));
-
     }
 
+    @Test
+    public void testCustomSplits() throws Exception {
+        {
+            String s = "A\tB\t\tC";
+            LineComparator lc = new LineComparator("\t", 0, 1, 2, 3);
+            System.out.println(Arrays.toString(lc.split(s)));
+            assertTrue(Arrays.deepEquals(new String[]{"A", "B", "", "C"}, lc.split(s) ));
+        }
+        {
+            String s = "\tA\tB\t\tC";
+            LineComparator lc = new LineComparator("\t", 0, 1, 2, 3,4);
+            System.out.println(Arrays.toString(lc.split(s)));
+            assertTrue(Arrays.deepEquals(new String[]{"","A", "B", "", "C"}, lc.split(s) ));
+        }
+        {
+            String s = "\tA\tB\t\tC\t";
+            LineComparator lc = new LineComparator("\t", 0, 1, 2, 3,4,5);
+            System.out.println(Arrays.toString(lc.split(s)));
+            assertTrue(Arrays.deepEquals(new String[]{"","A", "B", "", "C", ""}, lc.split(s) ));
+        }
+        {
+            String s = "\tA\tB\t\tC\t";
+            LineComparator lc = new LineComparator("\t", 0, 1, 2);
+            System.out.println(Arrays.toString(lc.split(s)));
+            assertTrue(Arrays.deepEquals(new String[]{"","A", "B"}, lc.split(s) ));
+        }
+        {
+            String s = "\tA\tB\t\tC\t";
+            LineComparator lc = new LineComparator("\t", 2, 3, 4);
+            System.out.println(Arrays.toString(lc.split(s)));
+            assertTrue(Arrays.deepEquals(new String[]{"", "A","B","", "C"}, lc.split(s) ));
+        }
+
+    }
 }
