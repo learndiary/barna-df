@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import fbi.commons.ByteArrayCharSequence;
@@ -32,6 +33,7 @@ import fbi.genome.sequencing.rnaseq.reconstruction.Kernel;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
+@Cli(name = "mapdist", description = "Mapping distribution")
 public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 
 	public static void main(String[] args) {
@@ -85,6 +87,12 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 	 */
 	public ChipSeqMappingAnalyzer(File inputFile) {
 		this.fileInput= inputFile;		
+	}
+	
+	/**
+	 * Empty constructor to comply with FluxTool implementation.
+	 */
+	public ChipSeqMappingAnalyzer() {		
 	}
 	
 	/**
@@ -395,16 +403,18 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 
 	public boolean validateParameters(HelpPrinter printer,
 			ArgumentProcessor toolArguments) {
+		if (parameters== null) {
+			System.err.println("I have no parameter file and I want to scream!");
+			return false;
+		}
+		
 		if (parameters.get(ChipSeqSettings.FILE_INPUT)== null|| !parameters.get(ChipSeqSettings.FILE_INPUT).canWrite()) {
 			System.err.println("Invalid input file "+ parameters.get(ChipSeqSettings.FILE_INPUT).getAbsolutePath());
 			return false;
 		} else
 			fileInput= parameters.get(ChipSeqSettings.FILE_INPUT);
 		
-		if (parameters.get(ChipSeqSettings.READ_DESCRIPTOR)== null) {
-			System.err.println("Missing read descriptor!");
-			return false;
-		} else {
+		if (parameters.get(ChipSeqSettings.READ_DESCRIPTOR)!= null) {
 			descriptor= new UniversalReadDescriptor();
 			try {
 				descriptor.init(parameters.get(ChipSeqSettings.READ_DESCRIPTOR));

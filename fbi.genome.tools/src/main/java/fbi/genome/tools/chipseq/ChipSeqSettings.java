@@ -62,8 +62,8 @@ public class ChipSeqSettings extends ParameterSchema {
 	    public static final Parameter<Integer> DISTO_PEAK_MAIN_LEFT = Parameters.intParameter("DISTO_PEAK_MAIN_LEFT", "left flank of main peak");
 	    public static final Parameter<Integer> DISTO_PEAK_MAIN_RIGHT = Parameters.intParameter("DISTO_PEAK_MAIN_RIGHT", "right flank of main peak");
 	    public static final Parameter<Integer> DISTO_PEAK_MAIN_MAX = Parameters.intParameter("DISTO_PEAK_MAIN_MAXPOS", "position with maximum in main peak");
-	    public static final Parameter<Integer> DISTO_PEAK_SEC_LEFT = Parameters.intParameter("DISTO_PEAK_MAIN_MAXPOS", "position with maximum secondary peak to the left of main peak");
-	    public static final Parameter<Integer> DISTO_PEAK_SEC_RIGHT = Parameters.intParameter("DISTO_PEAK_MAIN_MAXPOS", "position with maximum secondary peak to the right of main peak");
+	    public static final Parameter<Integer> DISTO_PEAK_SEC_LEFT = Parameters.intParameter("DISTO_PEAK_SEC_LEFT", "position with maximum secondary peak to the left of main peak");
+	    public static final Parameter<Integer> DISTO_PEAK_SEC_RIGHT = Parameters.intParameter("DISTO_PEAK_SEC_RIGHT", "position with maximum secondary peak to the right of main peak");
 
 	}
 

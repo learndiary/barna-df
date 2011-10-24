@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import fbi.commons.Execute;
@@ -33,6 +34,7 @@ import fbi.genome.sequencing.rnaseq.reconstruction.Kernel;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
+@Cli(name = "nfind", description = "Nucleosome finder")
 public class NucleosomeFinder implements FluxTool<Void> {
 	
 	public static final byte MODE_MONONUCLEOSOME= 1;
@@ -158,6 +160,12 @@ public class NucleosomeFinder implements FluxTool<Void> {
 			e.printStackTrace();
 		}
 		Execute.shutdown();
+	}
+	
+	/**
+	 * Empty constructor to comply with FluxTool implementation.
+	 */
+	public NucleosomeFinder() {
 	}
 	
 	public NucleosomeFinder(File file) {
