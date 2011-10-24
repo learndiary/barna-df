@@ -302,7 +302,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
                     System.gc();
 
 
-                    // wait for fobs
+                    // wait for jobs
                     while (jobs.size() >= 4){
                         List<Future<SorterFile>> remove = new ArrayList<Future<SorterFile>>();
                         for (Future<SorterFile> job : jobs) {
