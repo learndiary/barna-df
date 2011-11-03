@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fbi</groupId>
+    <artifactId>fbi.dist</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <scm>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.dist</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.dist</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.dist</developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <Build-Version>${project.version}</Build-Version>
+        <buildNumber>${env.BUILD_NUMBER}</buildNumber>
+        <Flux-JDK>1.6</Flux-JDK>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>fbi</groupId>
+            <artifactId>fbi.genome.simulator</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>fbi</groupId>
+            <artifactId>fbi.genome.reconstruction</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>fbi</groupId>
+            <artifactId>fbi.genome.tools</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>fbi</groupId>
+            <artifactId>distribution</artifactId>
+            <version>1.1</version>
+        </dependency>
+    </dependencies>
+
+
+    <repositories>
+        <repository>
+            <id>Fernis</id>
+            <name>Fernis</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
+        </repository>
+    </repositories>
+
+
+    <build>
+        <plugins>
+            <!--
+             Assembly plugin to create the actual bundle
+            -->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <appendAssemblyId>true</appendAssemblyId>
+                            <finalName>${project.name}-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/main/assembly/capacitor.xml</descriptor>
+                                <descriptor>src/main/assembly/win.xml</descriptor>
+                                <descriptor>src/main/assembly/lx.xml</descriptor>
+                                <descriptor>src/main/assembly/osx.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>fenris</id>
+            <name>fenris-releases</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>fenris</id>
+            <name>fenris-snapshots</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
+</project>
