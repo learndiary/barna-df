@@ -44,9 +44,21 @@
             <version>4.3.1</version>
             <scope>test</scope>
         </dependency>
-        
     </dependencies>
-    
+
+
+    <scm>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.tools</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.tools</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.tools</developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <Build-Version>${project.version}</Build-Version>
+        <Flux-JDK>1.6</Flux-JDK>
+    </properties>
+
      <repositories>
         <repository>
             <id>Fernis</id>
@@ -54,5 +66,18 @@
             <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
         </repository>
     </repositories>
-    
+
+    <distributionManagement>
+        <repository>
+            <id>fenris</id>
+            <name>fenris-releases</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>fenris</id>
+            <name>fenris-snapshots</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>
