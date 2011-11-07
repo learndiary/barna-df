@@ -1,11 +1,5 @@
 package fbi.genome.astalavista.statistics;
 
-import fbi.genome.model.gff.GFFObject;
-import fbi.genome.io.gff.GFFReader;
-import fbi.genome.model.ASEvent;
-import fbi.genome.model.commons.MyFile;
-import fbi.genome.model.constants.Constants;
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -27,6 +21,12 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import net.maizegenetics.pal.statistics.FisherExact;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.gtf.GTFwrapper;
+import fbi.genome.model.ASEvent;
+import fbi.genome.model.commons.MyFile;
+import fbi.genome.model.constants.Constants;
+import fbi.genome.model.gff.GFFObject;
 
 public class EventDavid extends Thread {
 
@@ -1302,8 +1302,10 @@ public class EventDavid extends Thread {
 	}
 
 	private String getKappaFName() {
-		String fname= MyFile.getPathOnly(inFile.getAbsolutePath())+ File.separator+ MyFile.getFileNameWithoutExtension(inFile.getAbsolutePath())+
-		SFX_KAPPA+ SFX_TBL; 
+		String fname= inFile.getParent()
+				+ File.separator
+				+ FileHelper.getFileNameWithoutExtension(inFile.getAbsolutePath())+
+				SFX_KAPPA+ SFX_TBL; 
 		return fname;
 	}
 	
@@ -2062,7 +2064,7 @@ public class EventDavid extends Thread {
 			}
 			
 			File f= (background)?bgFile:inFile;
-			GFFReader reader= new GFFReader(f.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(f.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setReadFeatures(new String[]{"as_event", "ds_event"});
@@ -2177,7 +2179,7 @@ public class EventDavid extends Thread {
 		
 		// get all genes of events
 		try {
-			GFFReader reader= new GFFReader(annFile.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(annFile.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setLimitGTFObs(100);
@@ -2470,7 +2472,7 @@ public class EventDavid extends Thread {
 	private void readEventsAnnotation(boolean first, Vector<String> rowIDsVec, HashMap<String,HashSet<Integer>> idsInUse) {
 		
 		try {
-			GFFReader reader= new GFFReader(annFile.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(annFile.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setLimitGTFObs(100);

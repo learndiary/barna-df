@@ -11,10 +11,6 @@
 
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
-import fbi.commons.tools.ArrayUtils;
-import fbi.genome.model.Transcript;
-import fbi.genome.model.splicegraph.Graph;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Arrays;
@@ -23,6 +19,10 @@ import java.util.HashSet;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import fbi.commons.tools.ArrayUtils;
+import fbi.genome.model.Transcript;
+import fbi.genome.model.splicegraph.SpliceGraph;
 
 public class TProfileFunction {
 
@@ -259,7 +259,7 @@ public class TProfileFunction {
 
 	}
 
-	public TSuperProfile getMasterProfile(Graph g, Transcript t, int len, 
+	public TSuperProfile getMasterProfile(SpliceGraph g, Transcript t, int len, 
 			int readLen, int[] insertMinMax, int reads, boolean strandSpecific, boolean pairedEnd) {
 
 		int lenBin= 0;

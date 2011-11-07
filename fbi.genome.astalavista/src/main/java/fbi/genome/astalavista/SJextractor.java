@@ -4,7 +4,6 @@ import java.io.File;
 
 import fbi.genome.io.SpliceGraphIO;
 import fbi.genome.model.IntronModel;
-import fbi.genome.model.splicegraph.Graph;
 
 public class SJextractor {
 

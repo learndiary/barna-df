@@ -11,8 +11,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.gff.GFFObject;
-import fbi.genome.io.gff.GFFReader;
 
 
 /**
@@ -113,7 +113,7 @@ public class ProteinAnnotator {
 			System.err.print("annotating ");
 			System.err.flush();
 			BufferedWriter writer= new BufferedWriter(new FileWriter(outFile));
-			GFFReader reader= new GFFReader(inFile.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(inFile.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setReadAheadLimit(1);
@@ -317,7 +317,7 @@ public class ProteinAnnotator {
 			System.err.print("annotating ");
 			System.err.flush();
 			BufferedWriter writer= new BufferedWriter(new FileWriter(outFile));
-			GFFReader reader= new GFFReader(inFile.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(inFile.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setReadAheadLimit(1);
@@ -415,7 +415,7 @@ public class ProteinAnnotator {
 			System.err.print("annotating ");
 			System.err.flush();
 			BufferedWriter writer= new BufferedWriter(new FileWriter(outFile));
-			GFFReader reader= new GFFReader(inFile.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(inFile.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setReadAheadLimit(1);

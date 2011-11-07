@@ -23,11 +23,11 @@ import fbi.genome.model.SpliceSite;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
+import fbi.genome.model.splicegraph.SpliceGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
 
-public class AnnotationMapper extends Graph {
+public class AnnotationMapper extends SpliceGraph {
 
 	public long nrMappingsLocus= 0;
 	public long nrMappingsMapped= 0;

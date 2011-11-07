@@ -11,11 +11,11 @@
 
 package fbi.genome.io;
 
+import java.util.Date;
+
 import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
-import fbi.genome.model.splicegraph.Graph;
-
-import java.util.Date;
+import fbi.genome.model.splicegraph.SpliceGraph;
 
 /**
 * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -24,7 +24,7 @@ public class GeneAheadReaderThread extends Thread {
 
         GTFwrapper reader;
         Gene[] g;
-        Graph.EventExtractorThread downstreamThread;
+        SpliceGraph.EventExtractorThread downstreamThread;
         boolean output= false, output2= true, checkIntrons= true;
 
         public GeneAheadReaderThread(GTFwrapper newReader) {
@@ -88,7 +88,7 @@ public class GeneAheadReaderThread extends Thread {
 //					if (!reader.getGenes()[0].getChromosome().equals("chr1"))
 //						break; 	// DEBUG !!!
 
-                downstreamThread= new Graph.EventExtractorThread(this);
+                downstreamThread= new SpliceGraph.EventExtractorThread(this);
                 downstreamThread.setOutput(output);
                 downstreamThread.setOutput2(output2);
                 downstreamThread.setG(g);
@@ -100,11 +100,11 @@ public class GeneAheadReaderThread extends Thread {
 
         }
 
-        public Graph.EventExtractorThread getDownstreamThread() {
+        public SpliceGraph.EventExtractorThread getDownstreamThread() {
             return downstreamThread;
         }
 
-        public void setDownstreamThread(Graph.EventExtractorThread downstreamThread) {
+        public void setDownstreamThread(SpliceGraph.EventExtractorThread downstreamThread) {
             this.downstreamThread = downstreamThread;
         }
 

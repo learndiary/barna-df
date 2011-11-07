@@ -1,8 +1,8 @@
 package fbi.genome.astalavista;
 
-import fbi.genome.io.gff.GFFReader;
+import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
-import fbi.genome.model.splicegraph.Graph;
+import fbi.genome.model.splicegraph.SpliceGraph;
 
 public class PrimerDesigner {
 
@@ -18,13 +18,13 @@ public class PrimerDesigner {
 		int minIntronLen= 200; // because of artifacts 
 		
 		try {
-			GFFReader reader= new GFFReader("P:\\annotation\\hg18\\hg18_EnsemblGenes_fromUCSC090615_sorted.gtf");
+			GTFwrapper reader= new GTFwrapper("P:\\annotation\\hg18\\hg18_EnsemblGenes_fromUCSC090615_sorted.gtf");
 			reader.setReadGTF(true);
 			
 			Gene[] g;
 			for (reader.read(); (g= reader.getGenes())!= null; reader.read()) {
 				for (int i = 0; i < g.length; i++) {
-					Graph gr= new Graph(g[i]);
+					SpliceGraph gr= new SpliceGraph(g[i]);
 					gr.constructGraph();
 					gr.transformToFragmentGraph();
 					gr.getVariations(minAmpl, maxAmpl, minPlen, maxPlen, minPovl, seqLen, minIntronLen);

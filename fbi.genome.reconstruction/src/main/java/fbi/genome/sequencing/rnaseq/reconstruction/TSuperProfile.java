@@ -11,13 +11,13 @@
 
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
+import java.util.Vector;
+
 import fbi.genome.model.Transcript;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Graph;
+import fbi.genome.model.splicegraph.SpliceGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
-
-import java.util.Vector;
 
 public class TSuperProfile {
 
@@ -50,14 +50,14 @@ public void addProfile(TProfile pro) {
 	}
 	
 	int[] countedReads= null;
-	public int getReads(Graph g, Transcript t, int x, int readLen, int[] insertMinMax) {
+	public int getReads(SpliceGraph g, Transcript t, int x, int readLen, int[] insertMinMax) {
 		
 		if (countedReads == null) {
 			countedReads = new int[v.size()];
 			
 			Vector<Vector<Edge>> vv= new Vector<Vector<Edge>>(1);
 			vv.add(new Vector<Edge>());
-			g.getRPK(t, false, Graph.ETYPE_AL, vv);
+			g.getRPK(t, false, SpliceGraph.ETYPE_AL, vv);
 			long[] sig= g.encodeTset(t);
 			
 			for (int i = 0; i < countedReads.length; i++) 
@@ -67,15 +67,15 @@ public void addProfile(TProfile pro) {
 			if (elen>= readLen) {
 				for (int j = 0; j < vv.elementAt(0).size(); j++) {
 					Edge e= vv.elementAt(0).elementAt(j);
-					long[] inter= Graph.intersect(sig, e.getTranscripts());
-					if (Graph.isNull(inter))
+					long[] inter= SpliceGraph.intersect(sig, e.getTranscripts());
+					if (SpliceGraph.isNull(inter))
 						continue;
 					
 					if (insertMinMax!= null) {
 						for (int k = 0; e.getSuperEdges()!= null&& k < e.getSuperEdges().size(); k++) {
 							SuperEdge se= e.getSuperEdges().elementAt(k);
-							inter= Graph.intersect(se.getTranscripts(), sig);
-							if (!se.isPend()|| se.getEdges()[0]!= e|| Graph.isNull(inter))
+							inter= SpliceGraph.intersect(se.getTranscripts(), sig);
+							if (!se.isPend()|| se.getEdges()[0]!= e|| SpliceGraph.isNull(inter))
 								continue;
 							int[] bounds= se.getFrac(t, readLen);
 							double[] relBounds= GraphLPsolver.bounds2rel(bounds, elen- readLen);
@@ -102,15 +102,15 @@ public void addProfile(TProfile pro) {
 			if (elen>= readLen) {
 				for (int j = 0; j < vv.elementAt(0).size(); j++) {
 					Edge e= vv.elementAt(0).elementAt(j);
-					long[] inter= Graph.intersect(sig, e.getTranscripts());
-					if (Graph.isNull(inter))
+					long[] inter= SpliceGraph.intersect(sig, e.getTranscripts());
+					if (SpliceGraph.isNull(inter))
 						continue;
 					
 					if (insertMinMax!= null) {
 						for (int k = 0; e.getSuperEdges()!= null&& k < e.getSuperEdges().size(); k++) {
 							SuperEdge se= e.getSuperEdges().elementAt(k);
-							inter= Graph.intersect(se.getTranscripts(), sig);
-							if (!se.isPend()|| se.getEdges()[0]!= e|| Graph.isNull(inter))
+							inter= SpliceGraph.intersect(se.getTranscripts(), sig);
+							if (!se.isPend()|| se.getEdges()[0]!= e|| SpliceGraph.isNull(inter))
 								continue;
 							int[] bounds= se.getFrac(t, readLen);
 							double[] relBounds= GraphLPsolver.bounds2rel(bounds, elen- readLen);
@@ -154,19 +154,19 @@ public void addProfile(TProfile pro) {
 		return sum;
 	}
 	
-	public int getReads(Graph g, Transcript t, int readLen, int[] insertMinMax) {
+	public int getReads(SpliceGraph g, Transcript t, int readLen, int[] insertMinMax) {
 		int sum= 0;
 		for (int i = 0; i < v.size(); i++) 
 			sum+= getReads(g, t, i, readLen, insertMinMax);
 		return sum;
 	}
-	public double getArea(Graph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
+	public double getArea(SpliceGraph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
 		return getAreaFrac(g, t, relPos, readLen, insertMinMax, dir, false);
 	}
-	public double getAreaFrac(Graph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
+	public double getAreaFrac(SpliceGraph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
 		return getAreaFrac(g, t, relPos, readLen, insertMinMax, dir, true);
 	}
-	double getAreaFrac(Graph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir, boolean divide) {
+	double getAreaFrac(SpliceGraph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir, boolean divide) {
 		
 		int[] coords= new int[relPos.length];
 		double sum= 0, total= 0;

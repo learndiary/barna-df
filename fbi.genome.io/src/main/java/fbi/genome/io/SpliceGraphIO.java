@@ -11,16 +11,21 @@
 
 package fbi.genome.io;
 
-import fbi.genome.io.gtf.GTFwrapper;
-import fbi.genome.model.*;
-import fbi.genome.model.commons.MyFile;
-import fbi.genome.model.constants.Constants;
-import fbi.genome.model.splicegraph.Graph;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.Writer;
 import java.util.Date;
+
+import fbi.genome.io.gtf.GTFwrapper;
+import fbi.genome.model.ASEvent;
+import fbi.genome.model.Gene;
+import fbi.genome.model.Graph;
+import fbi.genome.model.IntronModel;
+import fbi.genome.model.Species;
+import fbi.genome.model.Transcript;
+import fbi.genome.model.commons.MyFile;
+import fbi.genome.model.constants.Constants;
+import fbi.genome.model.splicegraph.SpliceGraph;
 
 /**
  * IO methods to create a spliece graph
@@ -42,7 +47,7 @@ public class SpliceGraphIO {
         try {
             for (reader.read(); (g= reader.getGenes())!= null; reader.read()) {
                 for (int i = 0; i < g.length; i++) {
-                    Graph gr= new Graph(g[i]);
+                	SpliceGraph gr= new SpliceGraph(g[i]);
                     gr.constructGraph();
                     gr.writeSpliceJunctionSeqs(eFlankDon, eFlankAcc, iModel, outF);
                 }
@@ -63,39 +68,39 @@ public class SpliceGraphIO {
             buffy.write("# started\t"+new Date(System.currentTimeMillis())+"\n");
             buffy.write("# input\t"+inputFile.getAbsolutePath()+"\n");
             buffy.write("# output");
-            if (!Graph.writeStdOut)
+            if (!SpliceGraph.writeStdOut)
                 buffy.write("\t"+outputFname+"\n");
             else
                 buffy.write("\tstdout\n");
             if (fbi.genome.model.Graph.overrideSequenceDirPath== null) {
                 if (DEBUG)
-                    buffy.write("# genome\t"+ Graph.EventExtractorThread.species+"\n");
+                    buffy.write("# genome\t"+ SpliceGraph.EventExtractorThread.species+"\n");
             } else
                 buffy.write("# genome\t"+ fbi.genome.model.Graph.overrideSequenceDirPath+"\n");
-            buffy.write("# dimension\t"+ Graph.EventExtractorThread.n+"\n");
-            buffy.write("# internalOnly\t"+ Graph.onlyInternal +"\n");
+            buffy.write("# dimension\t"+ SpliceGraph.EventExtractorThread.n+"\n");
+            buffy.write("# internalOnly\t"+ SpliceGraph.onlyInternal +"\n");
             //buffy.write("# canonicalSS "+canonicalSS+"\n");
             //buffy.write("# acceptableIntrons "+acceptableIntrons+"\n");
-            if (Graph.acceptableIntrons)
-                buffy.write("# intronConfidenceLevel "+Graph.intronConfidenceLevel+"\n");
-            if (!Graph.onlyInternal)
+            if (SpliceGraph.acceptableIntrons)
+                buffy.write("# intronConfidenceLevel "+SpliceGraph.intronConfidenceLevel+"\n");
+            if (!SpliceGraph.onlyInternal)
                 buffy.write("# edgeConfidenceLevel "+ Transcript.getEdgeConfidenceLevel()+"\n");
             buffy.write("# as_events\t");
-            if (Graph.retrieveASEvents)
+            if (SpliceGraph.retrieveASEvents)
                 buffy.write("true");
             else
                 buffy.write("false");
             buffy.write("\n");
-            if (Graph.retrieveDSEvents) {
+            if (SpliceGraph.retrieveDSEvents) {
                 buffy.write("# ds_events\t");
-                if (Graph.retrieveDSEvents)
+                if (SpliceGraph.retrieveDSEvents)
                     buffy.write("true");
                 else
                     buffy.write("false");
             }
             buffy.write("\n");
             buffy.write("# vs_events\t");
-            if (Graph.retrieveVSEvents)
+            if (SpliceGraph.retrieveVSEvents)
                 buffy.write("true");
             else
                 buffy.write("false");
@@ -202,13 +207,13 @@ public class SpliceGraphIO {
                     continue;
                 }
                 if (args[i].equals("-s")|| args[i].equals("--seqsite")) {
-                    Graph.outputSeq= true;
+                    SpliceGraph.outputSeq= true;
                     continue;
                 }
                 if (args[i].equals("-o")|| args[i].equals("--output")) {
                     String s= args[++i];
                     if (s.equalsIgnoreCase("stdout"))
-                        Graph.writeStdOut= true;
+                        SpliceGraph.writeStdOut= true;
                     else
                         outputFname= s+".gz";
                     continue;
@@ -229,9 +234,9 @@ public class SpliceGraphIO {
                         }
                         Species spe= new Species(s[0]);
                         spe.setGenomeVersion(s[1]);
-                        Graph.EventExtractorThread.setSpecies(spe);
+                        SpliceGraph.EventExtractorThread.setSpecies(spe);
                     }
-                    Graph.acceptableIntrons= true;
+                    SpliceGraph.acceptableIntrons= true;
                     continue;
                 }
 
@@ -240,7 +245,7 @@ public class SpliceGraphIO {
                         int x= Integer.parseInt(args[++i]);
                         if (x< -1|| ((x> -1)&& (x< 2)))
                             System.err.println(args[i]+" is not a valid dimension, ignored");
-                        Graph.EventExtractorThread.n= x;
+                        SpliceGraph.EventExtractorThread.n= x;
                     } catch (NumberFormatException e) {
                         System.err.println(args[i]+" is not a valid dimension, ignored"); // :)
                     }
@@ -265,19 +270,19 @@ public class SpliceGraphIO {
                     continue;
                 }
                 if (args[i].equals("-ds")) {
-                    Graph.retrieveDSEvents= false;
+                    SpliceGraph.retrieveDSEvents= false;
                     continue;
                 }
                 if (args[i].equals("+ds")) {
-                    Graph.retrieveDSEvents= true;
+                    SpliceGraph.retrieveDSEvents= true;
                     continue;
                 }
                 if (args[i].equals("-as")) {
-                    Graph.retrieveASEvents= false;
+                    SpliceGraph.retrieveASEvents= false;
                     continue;
                 }
                 if (args[i].equals("+as")) {
-                    Graph.retrieveASEvents= true;
+                    SpliceGraph.retrieveASEvents= true;
                     continue;
                 }
                 if (args[i].equalsIgnoreCase("-nmd")) {
@@ -286,28 +291,28 @@ public class SpliceGraphIO {
                 }
 
                 if (args[i].equals("+vs")) {
-                    Graph.retrieveVSEvents= true;
+                    SpliceGraph.retrieveVSEvents= true;
                     continue;
                 }
                 if (args[i].equals("-vs")) {
-                    Graph.retrieveVSEvents= false;
+                    SpliceGraph.retrieveVSEvents= false;
                     continue;
                 }
                 if (args[i].equals("-ext")) {
-                    Graph.onlyInternal= true;	// net false
+                    SpliceGraph.onlyInternal= true;	// net false
                     continue;
                 }
                 if (args[i].equals("+ext")) {
-                    Graph.onlyInternal= false;
+                    SpliceGraph.onlyInternal= false;
                     continue;
                 }
                 if (args[i].equalsIgnoreCase("-ic")|| args[i].equalsIgnoreCase("--intronConfidence")) {
                     if (i+1== args.length)
                         System.err.println("You did not provide an intron confidence.");
                     try {
-                        Graph.intronConfidenceLevel= Byte.parseByte(args[i+1]);
+                        SpliceGraph.intronConfidenceLevel= Byte.parseByte(args[i+1]);
                         ++i;	// ignore if missing
-                        Graph.acceptableIntrons= true;
+                        SpliceGraph.acceptableIntrons= true;
                     } catch (NumberFormatException e) {
                         System.err.println("Intron confidence must be an integer value, you gave me "+args[i+1]);
                     }
@@ -350,12 +355,12 @@ public class SpliceGraphIO {
                 System.exit(-1);
             }
 
-            if ((Graph.canonicalSS|| Graph.acceptableIntrons)&& fbi.genome.model.Graph.overrideSequenceDirPath== null) {
+            if ((SpliceGraph.canonicalSS|| SpliceGraph.acceptableIntrons)&& fbi.genome.model.Graph.overrideSequenceDirPath== null) {
                 System.err.println("You want me to check introns for valid/canonical splice sites, but you did not provide a valid sequence directory");
                 System.exit(-1);
             }
 
-            if (outputFname== null&& (!Graph.writeStdOut)) {
+            if (outputFname== null&& (!SpliceGraph.writeStdOut)) {
                 outputFname= file.getAbsolutePath()+"_astalavista.gtf.gz";
             }
             if (outputFname!= null&& new MyFile(outputFname).exists()) {

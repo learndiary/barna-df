@@ -29,8 +29,8 @@ import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
+import fbi.genome.model.splicegraph.SpliceGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
 
 /**
@@ -48,7 +48,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	static boolean debug= false;
 
 	
-	Graph g= null;
+	SpliceGraph g= null;
 	LpSolve lpSolve= null;
 	Hashtable<Object,int[]> constraintHash= null;	// for synchronizing different accesses to same constraints
 	public int constraintCtr= 0;
@@ -62,12 +62,12 @@ public class GraphLPsolver implements ReadStatCalculator {
 	boolean flow= true;
 	int nrMappingsObs= 0;
 	
-	public GraphLPsolver(Graph aGraph, int readLen, int realReads) {
+	public GraphLPsolver(SpliceGraph aGraph, int readLen, int realReads) {
 		this.g= aGraph;
 		this.readLen= readLen;
 		this.nrMappingsObs= realReads;
 	}
-	public GraphLPsolver(Graph aGraph, int readLen, int[] insertMinMax, int realReads, 
+	public GraphLPsolver(SpliceGraph aGraph, int readLen, int[] insertMinMax, int realReads, 
 			boolean considerBothStrands, boolean pairedEnd) {
 		this(aGraph, readLen, realReads);
 		this.costSplitWC= considerBothStrands;
@@ -664,7 +664,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	
 	static int nrUnderPredicted= 0, nrOverPredicted= 0;
 	private double fracs= 0;
-	public double getReadsAvg(Vector<Edge> v, byte dir, Graph g, long[] sig, boolean excl, boolean normalized) {
+	public double getReadsAvg(Vector<Edge> v, byte dir, SpliceGraph g, long[] sig, boolean excl, boolean normalized) {
 		
 		double reads= 0, fracSum= 0;
 		for (int i = 0; i < v.size(); i++) {
@@ -673,8 +673,8 @@ public class GraphLPsolver implements ReadStatCalculator {
 				continue;
 
 			long[] trpts= e.getTranscripts();
-			long[] inter= Graph.intersect(trpts,sig);
-			if (Graph.isNull(inter)|| (excl&& !Graph.equalSet(trpts, sig)))
+			long[] inter= SpliceGraph.intersect(trpts,sig);
+			if (SpliceGraph.isNull(inter)|| (excl&& !SpliceGraph.equalSet(trpts, sig)))
 				continue;	// here, and for superedges !!!
 
 			fracs= 0d;
@@ -704,8 +704,8 @@ public class GraphLPsolver implements ReadStatCalculator {
 	double getReadsAvgCalc(Edge e, byte dir, long[] sig, boolean excl, int cnt, boolean normalized) {
 		
 		long[] trpts= e.getTranscripts();
-		long[] inter= Graph.intersect(trpts,sig);
-		if (Graph.isNull(inter)|| (excl&& !Graph.equalSet(trpts, sig)))
+		long[] inter= SpliceGraph.intersect(trpts,sig);
+		if (SpliceGraph.isNull(inter)|| (excl&& !SpliceGraph.equalSet(trpts, sig)))
 			return 0d;
 		Transcript[] t= g.decodeTset(inter);
 
@@ -759,10 +759,10 @@ public class GraphLPsolver implements ReadStatCalculator {
 		return reads;
 	}
 
-	public double getReadsAvg_old(Vector<Edge> v, byte dir, Graph g, long[] sigExcl) {
+	public double getReadsAvg_old(Vector<Edge> v, byte dir, SpliceGraph g, long[] sigExcl) {
 		double sum= 0;
 		for (int i = 0; i < v.size(); i++) {
-			if (sigExcl!= null&& !Graph.isNull(Graph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
+			if (sigExcl!= null&& !SpliceGraph.isNull(SpliceGraph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
 				continue;
 
 			double partsum= 0;
@@ -857,7 +857,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		for (int i = 0; i < n.length; i++) {
 			for (int j = 0; j < n[i].getOutEdges().size(); j++) {
 				Edge e= n[i].getOutEdges().elementAt(j);
-				if (!e.isExonic()|| Graph.isNull(Graph.intersect(e.getTranscripts(), sig)))
+				if (!e.isExonic()|| SpliceGraph.isNull(SpliceGraph.intersect(e.getTranscripts(), sig)))
 					continue;
 				//double x= profile.getAreaFrac(e.getFrac(t, readLen), readLen, TProfile.DIR_FORWARD);
 				//System.out.println(" "+x+" "+e);
@@ -872,7 +872,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 				for (int k = 0; e.getSuperEdges()!= null&& 
 								k < e.getSuperEdges().size(); k++) {
 					SuperEdge se= e.getSuperEdges().elementAt(k);
-					if (se.getEdges()[0]!= e|| Graph.isNull(Graph.intersect(se.getTranscripts(), sig)))
+					if (se.getEdges()[0]!= e|| SpliceGraph.isNull(SpliceGraph.intersect(se.getTranscripts(), sig)))
 						continue;
 					if ((se.isPend()&& pairedEnd)|| ((!se.isPend())&& (!pairedEnd))) { 
 						frag= se.getFrac(t, readLen);
@@ -886,7 +886,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 					}
 					if (((!se.isPend())&& (pairedEnd)))
 						for (int m = 0; se.getSuperEdges()!= null&& m < se.getSuperEdges().size(); m++) {
-							if (Graph.isNull(Graph.intersect(se.getSuperEdges().elementAt(m).getTranscripts(), sig)))
+							if (SpliceGraph.isNull(SpliceGraph.intersect(se.getSuperEdges().elementAt(m).getTranscripts(), sig)))
 							frag= se.getSuperEdges().elementAt(m).getFrac(t, readLen);
 							len+= frag[1]- frag[0]+ 1;
 							val+= profile.getAreaFrac(g, t,
@@ -1240,7 +1240,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		for (int i = 0; i < n.length; i++) {
 			for (int j = 0; j < n[i].getOutEdges().size(); j++) {
 				Edge e= n[i].getOutEdges().elementAt(j);
-				if (!e.isExonic()|| Graph.isNull(Graph.intersect(e.getTranscripts(), sig)))
+				if (!e.isExonic()|| SpliceGraph.isNull(SpliceGraph.intersect(e.getTranscripts(), sig)))
 					continue;
 				//double x= profile.getAreaFrac(e.getFrac(t, readLen), readLen, TProfile.DIR_FORWARD);
 				//System.out.println(" "+x+" "+e);
@@ -1258,7 +1258,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 				for (int k = 0; e.getSuperEdges()!= null&& 
 								k < e.getSuperEdges().size(); k++) {
 					SuperEdge se= e.getSuperEdges().elementAt(k);
-					if (se.getEdges()[0]!= e|| Graph.isNull(Graph.intersect(se.getTranscripts(), sig)))
+					if (se.getEdges()[0]!= e|| SpliceGraph.isNull(SpliceGraph.intersect(se.getTranscripts(), sig)))
 						continue;
 					if ((se.isPend()&& pairedEnd)|| ((!se.isPend())&& (!pairedEnd))) { 
 						frag= se.getFrac(t, readLen);
@@ -1273,7 +1273,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 					}
 					if (((!se.isPend())&& (pairedEnd)))
 						for (int m = 0; se.getSuperEdges()!= null&& m < se.getSuperEdges().size(); m++) {
-							if (Graph.isNull(Graph.intersect(se.getSuperEdges().elementAt(m).getTranscripts(), sig)))
+							if (SpliceGraph.isNull(SpliceGraph.intersect(se.getSuperEdges().elementAt(m).getTranscripts(), sig)))
 								continue;
 							frag= se.getSuperEdges().elementAt(m).getFrac(t, readLen);
 							len+= frag[1]- frag[0]+ 1;
@@ -1294,7 +1294,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		return val;
 	}
 	
-	public double getAllExpectedFracs(Graph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
+	public double getAllExpectedFracs(SpliceGraph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
 		Transcript[] t= g.decodeTset(partition);
 		double val= 0d;
 		for (int i = 0; i < t.length; i++) {

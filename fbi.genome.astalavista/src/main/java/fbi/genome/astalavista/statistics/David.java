@@ -1,9 +1,5 @@
 package fbi.genome.astalavista.statistics;
 
-import fbi.genome.model.gff.GFFObject;
-import fbi.genome.io.gff.GFFReader;
-import fbi.genome.model.commons.MyFile;
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -22,6 +18,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
+
+import fbi.genome.io.gtf.GTFwrapper;
+import fbi.genome.model.commons.MyFile;
+import fbi.genome.model.gff.GFFObject;
 
 public class David extends Thread {
 
@@ -1702,7 +1702,7 @@ public class David extends Thread {
 			}
 			
 			File f= (background)?bgFile:inFile;
-			GFFReader reader= new GFFReader(f.getAbsolutePath());
+			GTFwrapper reader= new GTFwrapper(f.getAbsolutePath());
 			reader.setReadGene(false);
 			reader.setReadGTF(true);
 			reader.setReadFeatures(new String[]{"as_event", "ds_event"});

@@ -29,7 +29,7 @@ import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Graph;
+import fbi.genome.model.splicegraph.SpliceGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
 
 /**
@@ -47,7 +47,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	static boolean debug= false;
 
 	
-	Graph g= null;
+	SpliceGraph g= null;
 	LpSolve lpSolve= null;
 	Hashtable<Object,int[]> constraintHash= null;	// for synchronizing different accesses to same constraints
 	public int constraintCtr= 0;
@@ -61,12 +61,12 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	boolean flow= true;
 	int nrMappingsObs= 0;
 	
-	public GraphLPsolver2(Graph aGraph, int readLen, int realReads) {
+	public GraphLPsolver2(SpliceGraph aGraph, int readLen, int realReads) {
 		this.g= aGraph;
 		this.readLen= readLen;
 		this.nrMappingsObs= realReads;
 	}
-	public GraphLPsolver2(Graph aGraph, int readLen, int[] insertMinMax, int realReads, 
+	public GraphLPsolver2(SpliceGraph aGraph, int readLen, int[] insertMinMax, int realReads, 
 			boolean considerBothStrands, boolean pairedEnd) {
 		this(aGraph, readLen, realReads);
 		this.costSplitWC= considerBothStrands;
@@ -637,7 +637,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	
 	static int nrUnderPredicted= 0, nrOverPredicted= 0;
 	private double fracs= 0;
-	public double getReadsAvg(Vector<Edge> v, byte dir, Graph g, long[] sig, boolean excl, boolean normalized) {
+	public double getReadsAvg(Vector<Edge> v, byte dir, SpliceGraph g, long[] sig, boolean excl, boolean normalized) {
 		
 		double reads= 0, fracSum= 0;
 		for (int i = 0; i < v.size(); i++) {
@@ -646,8 +646,8 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 				continue;
 
 			long[] trpts= e.getTranscripts();
-			long[] inter= Graph.intersect(trpts,sig);
-			if (Graph.isNull(inter)|| (excl&& !Graph.equalSet(trpts, sig)))
+			long[] inter= SpliceGraph.intersect(trpts,sig);
+			if (SpliceGraph.isNull(inter)|| (excl&& !SpliceGraph.equalSet(trpts, sig)))
 				continue;	// here, and for superedges !!!
 
 			fracs= 0d;
@@ -677,8 +677,8 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	double getReadsAvgCalc(Edge e, byte dir, long[] sig, boolean excl, int cnt, boolean normalized) {
 		
 		long[] trpts= e.getTranscripts();
-		long[] inter= Graph.intersect(trpts,sig);
-		if (Graph.isNull(inter)|| (excl&& !Graph.equalSet(trpts, sig)))
+		long[] inter= SpliceGraph.intersect(trpts,sig);
+		if (SpliceGraph.isNull(inter)|| (excl&& !SpliceGraph.equalSet(trpts, sig)))
 			return 0d;
 		Transcript[] t= g.decodeTset(inter);
 
@@ -732,10 +732,10 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		return reads;
 	}
 
-	public double getReadsAvg_old(Vector<Edge> v, byte dir, Graph g, long[] sigExcl) {
+	public double getReadsAvg_old(Vector<Edge> v, byte dir, SpliceGraph g, long[] sigExcl) {
 		double sum= 0;
 		for (int i = 0; i < v.size(); i++) {
-			if (sigExcl!= null&& !Graph.isNull(Graph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
+			if (sigExcl!= null&& !SpliceGraph.isNull(SpliceGraph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
 				continue;
 
 			double partsum= 0;
@@ -1196,7 +1196,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	public void setFileLPdir(File dir) {
 		this.fileLPdir = dir;
 	}
-	public double getAllExpectedFracs(Graph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
+	public double getAllExpectedFracs(SpliceGraph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
 		Transcript[] t= g.decodeTset(partition);
 		double val= 0d;
 		for (int i = 0; i < t.length; i++) {
@@ -1231,7 +1231,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		// iterate super-edges
 		for (int j = 0; e.getSuperEdges()!= null&& j < e.getSuperEdges().size(); j++) {
 			SuperEdge se= e.getSuperEdges().elementAt(j);
-			if (Graph.isNull(Graph.intersect(se.getTranscripts(), sig)))
+			if (SpliceGraph.isNull(SpliceGraph.intersect(se.getTranscripts(), sig)))
 				continue;
 			// sense/anti-sense.. e must be first/last in super-edge
 			if ((sense&& se.getEdges()[0]!= e)|| ((!sense)&& se.getEdges()[se.getEdges().length- 1]!= e))
@@ -1257,7 +1257,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 			for (int k = 0; se.getSuperEdges()!= null&& k < se.getSuperEdges().size(); k++) {
 				SuperEdge se2= se.getSuperEdges().elementAt(k);
 				assert(se2.isPend());
-				if (Graph.isNull(Graph.intersect(se2.getTranscripts(), sig)))
+				if (SpliceGraph.isNull(SpliceGraph.intersect(se2.getTranscripts(), sig)))
 					continue;
 				// sense/anti-sense.. e must be first/last in super-edge
 				if ((sense&& se2.getEdges()[0]!= se)|| ((!sense)&& se2.getEdges()[se2.getEdges().length- 1]!= se))
