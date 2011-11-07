@@ -9,7 +9,7 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package fbi.genome.sequencing.rnaseq.reconstruction;
+package fbi.genome.sequencing.rnaseq.graph;
 
 import java.util.Arrays;
 import java.util.Vector;

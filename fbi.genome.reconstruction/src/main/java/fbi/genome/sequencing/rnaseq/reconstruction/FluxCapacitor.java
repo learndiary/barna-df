@@ -85,6 +85,7 @@ import fbi.genome.model.splicegraph.Edge;
 import fbi.genome.model.splicegraph.Graph;
 import fbi.genome.model.splicegraph.Node;
 import fbi.genome.model.splicegraph.SuperEdge;
+import fbi.genome.sequencing.rnaseq.graph.AnnotationMapper;
 import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 
 
