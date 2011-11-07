@@ -41,13 +41,13 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		Execute.initialize(2);
 		
 		File f= new File(			
-			//"/Users/micha/projects/demassy/download/IP5300109chrall_sorted.bed"
-			"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY.bed"
+			"/Users/micha/projects/demassy/download/IP5300109chrall_sorted.bed"
+			//"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY.bed"
 		);
 				
 		ChipSeqMappingAnalyzer myRun= new ChipSeqMappingAnalyzer(f);
-		myRun.descriptor= new UniversalReadDescriptor();
-		myRun.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+//		myRun.descriptor= new UniversalReadDescriptor();
+//		myRun.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 				
 		Future<int[]> captain= Execute.getExecutor().submit(myRun);
 		int[] distr= null;

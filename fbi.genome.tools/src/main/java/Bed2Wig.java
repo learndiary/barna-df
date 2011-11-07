@@ -1,17 +1,36 @@
-import fbi.commons.ByteArrayCharSequence;
-import fbi.genome.io.BufferedByteArrayReader;
-import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.commons.IntVector;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+
+import fbi.commons.ByteArrayCharSequence;
+import fbi.genome.io.BufferedByteArrayReader;
+import fbi.genome.io.FileHelper;
+import fbi.genome.model.bed.BEDobject2;
+import fbi.genome.model.commons.IntVector;
 
 
 public class Bed2Wig {
 
+	static void myMain() {
+		File dir= new File("/Users/micha/projects/demassy/download_new/regions");
+		String[]  ss= dir.list();
+		for (int i = 0; i < ss.length; i++) {
+			if (!ss[i].endsWith("_reads.sorted.bed"))
+				continue;
+			File fin= new File(dir.getAbsolutePath()+ File.separator+ ss[i]);
+			File fout= FileHelper.replaceSfx(fin, ".bgraph");
+			
+			System.err.println(fin.getName());
+			bed2wig(fin, fout);
+		}
+	}
+	
 	public static void main(String[] args) {
+		
+		if (1== 1)
+			myMain();
 		
 		if (args== null|| args.length!= 2) {
 			System.err.println("Usage: Bed2Wig [input.bed] [output.wig]");
@@ -28,16 +47,24 @@ public class Bed2Wig {
 		
 		bed2wig(bedFile, wigFile);
 	}
+	
+	/**
+	 * assumes sorted by (1) chr, (2) start position
+	 * @param in
+	 * @param out
+	 */
 	static void bed2wig(File in, File out) {
 		try {
 			//BufferedReader buffy= new BufferedReader(new FileReader(in));
+			if (out.exists())
+				out.delete();
 			BufferedByteArrayReader buffy= new BufferedByteArrayReader();
 			FileInputStream istream= new FileInputStream(in);
 			ByteArrayCharSequence cs= new ByteArrayCharSequence(300);
 			IntVector v= new IntVector(10000, 10000);
 			int start= -1;
 			int ctr= 0;
-			String chr= null;
+			String chr= null, lastChr= null;			
 			while(buffy.readLine(istream, cs)!= null) {
 				++ctr;
 				if (ctr% 1000== 0) {
@@ -45,9 +72,13 @@ public class Bed2Wig {
 					System.err.flush();
 				}
 				BEDobject2 obj= new BEDobject2(cs);
-				if (start== -1) {
+				chr= obj.getChr().toString();
+				
+				if (!chr.equals(lastChr)) {
+					writeBedGraph(in.getName(), lastChr, start, v, out);
+					v.removeAll();
 					start= obj.getStart();
-					chr= obj.getChr().toString();
+					lastChr= chr;
 				}
 				if (obj.getBlockCount()< 2) {
 					for (int i = obj.getStart(); i < obj.getEnd(); i++) {
@@ -66,21 +97,98 @@ public class Bed2Wig {
 				}
 			}
 			istream.close();
-			
-			// write
-			BufferedWriter writer= new BufferedWriter(new FileWriter(out));
+
+			writeBedGraph(in.getName(), lastChr, start, v, out);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void writeFixedStep(String name, String chr, int start, IntVector v, File out) {
+		
+		// write
+		try {
+			boolean header= !out.exists();
+			BufferedWriter writer= new BufferedWriter(new FileWriter(out, true));
 			++start;
-			writer.write("track type=wiggle_0 name="+in.getName()+"\n");
-			writer.write("fixedStep chrom="+chr+" start="+start+" step=1\n");
+			if (header) {
+				writer.write("track type=wiggle_0 name="+ name+ "\n");
+				writer.write("fixedStep chrom="+chr+" start="+start+" step=1\n");
+			}
 			for (int i = 0; i < v.size(); i++) {
 				writer.write(Integer.toString(v.get(i)));
 				writer.write("\n");
 			}
 			writer.flush();
 			writer.close();
-			
-		} catch (Exception e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
+	
+	/**
+	 * @deprecated not implemented
+	 * @param name
+	 * @param chr
+	 * @param start
+	 * @param v
+	 * @param out
+	 */
+	private static void writeVariableStep(String name, String chr, int start, IntVector v, File out) {
+		
+		// write
+		try {
+			boolean header= !out.exists();
+			BufferedWriter writer= new BufferedWriter(new FileWriter(out, true));
+			++start;
+			if (header) {
+				writer.write("track type=wiggle_0 name="+ name+ "\n");
+				writer.write("variableStep chrom="+chr+" start="+start+" step=1\n");
+			}
+			for (int i = 0; i < v.size(); i++) {
+				writer.write(Integer.toString(v.get(i)));
+				writer.write("\n");
+			}
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private static void writeBedGraph(String name, String chr, int start, IntVector v, File out) {
+		
+		// write
+		try {
+			boolean header= !out.exists();
+			BufferedWriter writer= new BufferedWriter(new FileWriter(out, true));
+			++start;
+			if (header) {
+				writer.write("track type=bedGraph name=\""+ name+ "\" description=\""+ name+"\" " +
+						"visibility=dense color=200,100,0 altColor=0,100,200 priority=20\n");
+			}
+			for (int i = 0; i < v.size(); i++) {
+				int val= v.get(i);
+				int j = i+1;
+				for (; j < v.size(); j++) 
+					if (v.get(j)!= val)
+						break;
+				
+				if (val!= 0) 
+					writer.write(chr+ " "+ (start+ i)+ " "+ (start+ j)+" "+ Integer.toString(val)+ "\n");
+				
+				i= (j-1);
+			}
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
+
 }
