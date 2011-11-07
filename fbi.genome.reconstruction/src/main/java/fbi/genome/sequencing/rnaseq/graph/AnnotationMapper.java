@@ -29,13 +29,13 @@ import fbi.genome.model.splicegraph.SuperEdge;
 
 public class AnnotationMapper extends Graph {
 
-	long nrMappingsLocus= 0;
-	long nrMappingsMapped= 0;
-	long nrMappingsNotMapped= 0;
-	long nrMappingsNotMappedAsPair= 0;
-	long nrMappingsWrongStrand= 0;
-	long nrMappingsWrongPairOrientation= 0;
-	long nrMappingsLocusMultiMaps= 0;
+	public long nrMappingsLocus= 0;
+	public long nrMappingsMapped= 0;
+	public long nrMappingsNotMapped= 0;
+	public long nrMappingsNotMappedAsPair= 0;
+	public long nrMappingsWrongStrand= 0;
+	public long nrMappingsWrongPairOrientation= 0;
+	public long nrMappingsLocusMultiMaps= 0;
 	public AnnotationMapper(Gene gene) {
 		super(gene);
 		constructGraph();
@@ -198,7 +198,7 @@ public class AnnotationMapper extends Graph {
 	
 	public void map(BufferedIterator beds, UniversalReadDescriptor descriptor2) {
 
-			if (beds== null)
+			if (beds== null) 
 				return;
 		
 			// init
