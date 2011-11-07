@@ -1,4 +1,4 @@
-import fbi.genome.model.splicegraph.Graph;
+import fbi.genome.model.splicegraph.SpliceGraph;
 
 
 public class Test {
@@ -21,7 +21,7 @@ public class Test {
 			}
 		}
 		
-		for(int idx= -1; (idx= Graph.getNextTxIdx(a, idx))!= -1; ){
+		for(int idx= -1; (idx= SpliceGraph.getNextTxIdx(a, idx))!= -1; ){
 			System.out.println(idx);
 		}
 		

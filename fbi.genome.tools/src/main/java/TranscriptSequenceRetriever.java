@@ -3,7 +3,7 @@ import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Graph;
+import fbi.genome.model.splicegraph.SpliceGraph;
 import fbi.genome.model.splicegraph.Node;
 
 import java.io.File;
@@ -56,7 +56,7 @@ public class TranscriptSequenceRetriever {
 		
 	}
 	
-	public static void outputIntrons(Graph g, PrintStream p) {
+	public static void outputIntrons(SpliceGraph g, PrintStream p) {
 		
 		Node[] n= g.getNodesInGenomicOrder();
 		for (int i = 0; i < n.length; i++) {

@@ -3,7 +3,7 @@ import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Graph;
+import fbi.genome.model.splicegraph.SpliceGraph;
 import fbi.genome.model.splicegraph.Node;
 
 import java.io.File;
@@ -35,7 +35,7 @@ public class IntronRetriever {
 			PrintStream outF= new PrintStream(new FileOutputStream(args[0]+"_introns.gtf"));
 			for(reader.read(); (genes= reader.getGenes())!= null; reader.read()) {
 				for (int i = 0; i < genes.length; i++) {
-					Graph g= new Graph(genes[i]);
+					SpliceGraph g= new SpliceGraph(genes[i]);
 					g.constructGraph();
 					outputIntrons(g, outF);
 				}
@@ -49,7 +49,7 @@ public class IntronRetriever {
 		
 	}
 	
-	public static void outputIntrons(Graph g, PrintStream p) {
+	public static void outputIntrons(SpliceGraph g, PrintStream p) {
 		
 		Node[] n= g.getNodesInGenomicOrder();
 		for (int i = 0; i < n.length; i++) {
