@@ -91,7 +91,7 @@ import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.Annotat
 
 
 /**
- * Flux Tool that implements the simulation pipeline
+ * Flux Tool that implements the simulation pipeline.
  *
  * @author Micha Sammeth (gmicha@gmail.com)
  *
