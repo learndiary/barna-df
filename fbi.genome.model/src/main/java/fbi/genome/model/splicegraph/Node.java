@@ -195,7 +195,7 @@ public class Node {
 			for (; j < tuple.length; j++) {
 				int k= 0;
 				for (; k < forbiddenCombinations.elementAt(j).size(); k++) {
-					if (Graph.isNull(Graph.intersect(tuple[j].getTranscripts(), forbiddenCombinations.elementAt(i).elementAt(k))))
+					if (SpliceGraph.isNull(SpliceGraph.intersect(tuple[j].getTranscripts(), forbiddenCombinations.elementAt(i).elementAt(k))))
 						break;
 				}
 				if (k< forbiddenCombinations.elementAt(j).size())

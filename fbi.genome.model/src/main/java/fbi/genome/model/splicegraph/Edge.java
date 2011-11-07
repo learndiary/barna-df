@@ -203,7 +203,7 @@ public class Edge {
 		return res;
 	}
 	
-	public void printCoverage(PrintStream p, Graph g, int minMapLen, int maxMapLen) {
+	public void printCoverage(PrintStream p, SpliceGraph g, int minMapLen, int maxMapLen) {
 		
 		// assume exonic
 		int start= getTail().getSite().getPos(), end= getHead().getSite().getPos();
@@ -356,7 +356,7 @@ public class Edge {
 	public boolean equals(Object obj) {
 		Edge e= (Edge) obj;
 		if (getTail().equals(e.getTail())&& getHead().equals(e.getHead())
-				&& Graph.equalSet(getTranscripts(), e.getTranscripts())
+				&& SpliceGraph.equalSet(getTranscripts(), e.getTranscripts())
 				&& isExonic()== isExonic()		// multiple edges exonic, intronic for eg intron retention
 				&& isIntronic()== isIntronic())	
 			return true;
