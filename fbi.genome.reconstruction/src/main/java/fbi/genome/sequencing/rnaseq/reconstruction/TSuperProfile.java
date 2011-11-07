@@ -78,7 +78,7 @@ public void addProfile(TProfile pro) {
 							if (!se.isPend()|| se.getEdges()[0]!= e|| SplicingGraph.isNull(inter))
 								continue;
 							int[] bounds= se.getFrac(t, readLen);
-							double[] relBounds= GraphLPsolver2.bounds2rel(bounds, elen- readLen);
+							double[] relBounds= GraphLPsolver.bounds2rel(bounds, elen- readLen);
 							for (int i = 0; i < countedReads.length; i++) {
 								bounds= rel2absolute(relBounds, v.elementAt(i).length());
 								countedReads[i]+= v.elementAt(i).getArea(bounds, readLen, insertMinMax, FluxCapacitorConstants.BYTE_0);
@@ -86,7 +86,7 @@ public void addProfile(TProfile pro) {
 						}
 					} else {
 						int[] bounds= e.getFrac(t, readLen);
-						double[] relBounds= GraphLPsolver2.bounds2rel(bounds, elen- readLen);
+						double[] relBounds= GraphLPsolver.bounds2rel(bounds, elen- readLen);
 						for (int i = 0; i < countedReads.length; i++) {
 							bounds= rel2absolute(relBounds, v.elementAt(i).length());
 							countedReads[i]+= v.elementAt(i).getArea(bounds, readLen, insertMinMax, FluxCapacitorConstants.BYTE_0);
@@ -113,7 +113,7 @@ public void addProfile(TProfile pro) {
 							if (!se.isPend()|| se.getEdges()[0]!= e|| SplicingGraph.isNull(inter))
 								continue;
 							int[] bounds= se.getFrac(t, readLen);
-							double[] relBounds= GraphLPsolver2.bounds2rel(bounds, elen- readLen);
+							double[] relBounds= GraphLPsolver.bounds2rel(bounds, elen- readLen);
 							double frac= getAreaFrac(g, t, relBounds, readLen, insertMinMax, FluxCapacitorConstants.BYTE_0);
 							test+= frac;
 		//					if (debug) {
@@ -125,7 +125,7 @@ public void addProfile(TProfile pro) {
 						}
 					} else {
 						int[] bounds= e.getFrac(t, readLen);
-						double[] relBounds= GraphLPsolver2.bounds2rel(bounds, elen- readLen);
+						double[] relBounds= GraphLPsolver.bounds2rel(bounds, elen- readLen);
 						double frac= getAreaFrac(g, t, relBounds, readLen, insertMinMax, FluxCapacitorConstants.BYTE_0);
 						test+= frac;
 					}

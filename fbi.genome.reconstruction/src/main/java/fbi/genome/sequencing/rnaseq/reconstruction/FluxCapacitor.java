@@ -197,7 +197,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 							nrPairsNoTxEvidence+= mapper.getNrMappingsNotMappedAsPair();
 							nrPairsWrongOrientation+= mapper.getNrMappingsWrongPairOrientation();
 							
-							GraphLPsolver2 mySolver= null;
+							GraphLPsolver mySolver= null;
 							// != mapReadOrPairIDs.size()> 0, does also count singles
 //							if (nrMappingsReadsOrPairs> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE			
 //								mySolver= getSolver(myGraph, nrMappingsReadsOrPairs* 2); // not: getMappedReadcount()
@@ -294,7 +294,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			}
 			
 	
-			private void outputGFF(SplicingGraph g, ASEvent[] events, GraphLPsolver2 solver) {
+			private void outputGFF(SplicingGraph g, ASEvent[] events, GraphLPsolver solver) {
 				++nrLoci;
 				if (solver!= null) 
 					++nrLociExp;
@@ -666,9 +666,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				this.threadBefore = threadBefore;
 			}
 	
-			private GraphLPsolver2 getSolver(AnnotationMapper mapper, int mappedReads) {
+			private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 			
-				GraphLPsolver2 solver= new GraphLPsolver2(mapper, readLenMin, 
+				GraphLPsolver solver= new GraphLPsolver(mapper, readLenMin, 
 						pairedEnd?insertMinMax:null, mappedReads, 
 						(strand== FluxCapacitorConstants.STRAND_ENABLED), 
 						pairedEnd);
@@ -684,7 +684,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return solver;
 			}
 	
-			private String getGTF(StringBuilder sb, ASEvent event, SplicingGraph g, GraphLPsolver2 solver, boolean unsolvedSystem, 
+			private String getGTF(StringBuilder sb, ASEvent event, SplicingGraph g, GraphLPsolver solver, boolean unsolvedSystem, 
 						double perM, String pv, HashMap<Object,Double> tExpMap) {
 					
 			//		for (int i = 0; i < eeV.size(); i++) 
@@ -715,7 +715,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private String getGTF(StringBuilder sb, Edge e, long[][] sig, SplicingGraph g, GraphLPsolver2 solver, 
+			private String getGTF(StringBuilder sb, Edge e, long[][] sig, SplicingGraph g, GraphLPsolver solver, 
 						double perM) {
 					
 					Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
@@ -845,7 +845,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private String getGTF(StringBuilder sb, Exon exon, Transcript t, SplicingGraph g, GraphLPsolver2 solver, boolean unsolvedSystem, 
+			private String getGTF(StringBuilder sb, Exon exon, Transcript t, SplicingGraph g, GraphLPsolver solver, boolean unsolvedSystem, 
 						double perM, String pv, boolean attributesOnly) {
 	
 					if (!attributesOnly) {
@@ -871,7 +871,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private String getGTF(StringBuilder sb, Gene gene, SplicingGraph g, GraphLPsolver2 solver, double perM, String pv) {
+			private String getGTF(StringBuilder sb, Gene gene, SplicingGraph g, GraphLPsolver solver, double perM, String pv) {
 				
 				//clearEdgeContainer(1);
 				Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
@@ -892,7 +892,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return sb.toString();
 			}	
 			
-			private String getGTF(StringBuilder sb, Transcript t, GraphLPsolver2 solver, SplicingGraph g, double perM, String pv, boolean attributesOnly) {
+			private String getGTF(StringBuilder sb, Transcript t, GraphLPsolver solver, SplicingGraph g, double perM, String pv, boolean attributesOnly) {
 					
 					GFFObject obj= GFFObject.createGFFObject(t);
 					sb.append(obj.toString());
@@ -915,7 +915,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private double getGTFappend(StringBuilder sb, SplicingGraph g, GraphLPsolver2 solver, Vector<Vector<Edge>> eeV, double perM, long[][] tid) {
+			private double getGTFappend(StringBuilder sb, SplicingGraph g, GraphLPsolver solver, Vector<Vector<Edge>> eeV, double perM, long[][] tid) {
 					
 					invariantTestObsSplitFreq= 0; 
 					invariantTestPredSplitFreq= 0;
@@ -2760,7 +2760,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	}
 
 	
-	byte costModel= GraphLPsolver2.COSTS_LINEAR;
+	byte costModel= GraphLPsolver.COSTS_LINEAR;
 	byte costSplit= 1;
 	
 	String runID= null;
