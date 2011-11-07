@@ -11,10 +11,10 @@
 
 package fbi.genome.model.bed;
 
+import java.util.Comparator;
+
 import fbi.commons.ByteArrayCharSequence;
 import fbi.genome.model.Graph;
-
-import java.util.Comparator;
 
 public class BEDobject2 extends ByteArrayCharSequence {
 
@@ -115,8 +115,14 @@ public class BEDobject2 extends ByteArrayCharSequence {
 				strand= 0;
 			
 			// 6: thickStart, 7: thickEnd, 8: itemRGB
-			
-			blockCount= (byte) getTokenInt(9);
+			if (p2+ 2>= end)
+				return;
+			blockCount= 0;
+			try {
+				blockCount= (byte) getTokenInt(9);
+			} catch (IllegalArgumentException e) {
+				blockCount= 0;
+			}
 			if (blockCount< 0) {
 				blockCount= 0;	// no blocks
 				return;
