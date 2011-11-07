@@ -22,7 +22,7 @@ import java.util.zip.ZipOutputStream;
 
 import fbi.commons.tools.ArrayUtils;
 import fbi.genome.model.Transcript;
-import fbi.genome.model.splicegraph.SpliceGraph;
+import fbi.genome.model.splicegraph.SplicingGraph;
 
 public class TProfileFunction {
 
@@ -259,7 +259,7 @@ public class TProfileFunction {
 
 	}
 
-	public TSuperProfile getMasterProfile(SpliceGraph g, Transcript t, int len, 
+	public TSuperProfile getMasterProfile(SplicingGraph g, Transcript t, int len, 
 			int readLen, int[] insertMinMax, int reads, boolean strandSpecific, boolean pairedEnd) {
 
 		int lenBin= 0;

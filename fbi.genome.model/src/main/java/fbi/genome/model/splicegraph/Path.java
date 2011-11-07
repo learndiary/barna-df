@@ -91,7 +91,7 @@ public class Path {
 		if (transcripts== null)
 			transcripts= newEdge.transcripts;
 		else
-			transcripts= SpliceGraph.intersect(transcripts, newEdge.transcripts);
+			transcripts= SplicingGraph.intersect(transcripts, newEdge.transcripts);
 	}
 	
 	public int length() {

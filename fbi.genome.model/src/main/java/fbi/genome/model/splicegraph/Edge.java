@@ -124,8 +124,11 @@ public class Edge {
 		head.addInEdge(this);
 	}
 	
+	/**
+	 * Dummy constructor for subclasses.
+	 * @see SuperEdge
+	 */
 	protected Edge() {
-		
 	}
 
 	public Node getHead() {
@@ -203,7 +206,7 @@ public class Edge {
 		return res;
 	}
 	
-	public void printCoverage(PrintStream p, SpliceGraph g, int minMapLen, int maxMapLen) {
+	public void printCoverage(PrintStream p, SplicingGraph g, int minMapLen, int maxMapLen) {
 		
 		// assume exonic
 		int start= getTail().getSite().getPos(), end= getHead().getSite().getPos();
@@ -356,7 +359,7 @@ public class Edge {
 	public boolean equals(Object obj) {
 		Edge e= (Edge) obj;
 		if (getTail().equals(e.getTail())&& getHead().equals(e.getHead())
-				&& SpliceGraph.equalSet(getTranscripts(), e.getTranscripts())
+				&& SplicingGraph.equalSet(getTranscripts(), e.getTranscripts())
 				&& isExonic()== isExonic()		// multiple edges exonic, intronic for eg intron retention
 				&& isIntronic()== isIntronic())	
 			return true;

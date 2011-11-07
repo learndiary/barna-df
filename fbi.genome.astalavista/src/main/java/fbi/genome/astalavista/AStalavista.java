@@ -2,7 +2,7 @@ package fbi.genome.astalavista;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
-import fbi.genome.model.splicegraph.SpliceGraph;
+import fbi.genome.model.splicegraph.SplicingGraph;
 
 
 public class AStalavista {
@@ -13,7 +13,7 @@ public class AStalavista {
 		new HashMap<String, Class>(1,1f);
 	public final static String commandValidStr= "asta lavista sort extractSJ extractAttributes";
 	// TODO took out GFFSorter.class to make it work with current code
-	public final static Class[] commandClass= new Class[] {SpliceGraph.class, null, SJextractor.class, AttributeExtractor.class};	// null= LaVista.class
+	public final static Class[] commandClass= new Class[] {SplicingGraph.class, null, SJextractor.class, AttributeExtractor.class};	// null= LaVista.class
 	public static String commandDescription= "The command to be executed. ";
 	static {
 		

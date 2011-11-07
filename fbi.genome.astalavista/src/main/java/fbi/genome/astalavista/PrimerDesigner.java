@@ -2,7 +2,7 @@ package fbi.genome.astalavista;
 
 import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
-import fbi.genome.model.splicegraph.SpliceGraph;
+import fbi.genome.model.splicegraph.SplicingGraph;
 
 public class PrimerDesigner {
 
@@ -24,7 +24,7 @@ public class PrimerDesigner {
 			Gene[] g;
 			for (reader.read(); (g= reader.getGenes())!= null; reader.read()) {
 				for (int i = 0; i < g.length; i++) {
-					SpliceGraph gr= new SpliceGraph(g[i]);
+					SplicingGraph gr= new SplicingGraph(g[i]);
 					gr.constructGraph();
 					gr.transformToFragmentGraph();
 					gr.getVariations(minAmpl, maxAmpl, minPlen, maxPlen, minPovl, seqLen, minIntronLen);

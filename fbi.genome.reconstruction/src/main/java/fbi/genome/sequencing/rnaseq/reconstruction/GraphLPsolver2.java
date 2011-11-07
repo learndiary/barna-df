@@ -29,8 +29,9 @@ import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.SpliceGraph;
+import fbi.genome.model.splicegraph.SplicingGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
+import fbi.genome.sequencing.rnaseq.graph.AnnotationMapper;
 
 /**
  * ok, this version gives freedom to the expectation model.
@@ -46,9 +47,15 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	public final static double DBL_MOST_LITTLE_VAL= 0.000000001, MY_INFINITY= 100;
 	static boolean debug= false;
 
+	/**
+	 * Splicing graph with mapped reads.
+	 */
+	protected AnnotationMapper aMapper= null;
 	
-	SpliceGraph g= null;
-	LpSolve lpSolve= null;
+	/**
+	 * Linear Program solver.
+	 */
+	protected LpSolve lpSolve= null;
 	Hashtable<Object,int[]> constraintHash= null;	// for synchronizing different accesses to same constraints
 	public int constraintCtr= 0;
 	int restrNr= 0;	// for restrictions
@@ -61,14 +68,14 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	boolean flow= true;
 	int nrMappingsObs= 0;
 	
-	public GraphLPsolver2(SpliceGraph aGraph, int readLen, int realReads) {
-		this.g= aGraph;
+	public GraphLPsolver2(AnnotationMapper aMapper, int readLen, int realReads) {
+		this.aMapper= aMapper;
 		this.readLen= readLen;
 		this.nrMappingsObs= realReads;
 	}
-	public GraphLPsolver2(SpliceGraph aGraph, int readLen, int[] insertMinMax, int realReads, 
+	public GraphLPsolver2(AnnotationMapper aMapper, int readLen, int[] insertMinMax, int realReads, 
 			boolean considerBothStrands, boolean pairedEnd) {
-		this(aGraph, readLen, realReads);
+		this(aMapper, readLen, realReads);
 		this.costSplitWC= considerBothStrands;
 		this.pairedEnd= pairedEnd;
 		this.insertMinMax= insertMinMax;
@@ -139,7 +146,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 				p.print("\t"+Integer.toString(a));
 				//p.print("\t"+Integer.toString(b));
 				//p.print("\t"+Double.toString(((double) a)/((double) b)));
-				Transcript[] t= g.decodeTset(e.getTranscripts());
+				Transcript[] t= aMapper.decodeTset(e.getTranscripts());
 				for (int j = 0; j < t.length; j++) 
 					p.print("\t"+t[j].getTranscriptID());				
 			} else if (oo instanceof Transcript) {
@@ -310,9 +317,9 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	private int[] allTrptIdx= null;
 	int[] getAllTrptIdx() {
 		if (allTrptIdx == null) {
-			allTrptIdx = new int[g.trpts.length];
-			for (int i = 0; i < g.trpts.length; i++) 
-				allTrptIdx[i]= getConstraintHash().get(g.trpts[i])[0];
+			allTrptIdx = new int[aMapper.trpts.length];
+			for (int i = 0; i < aMapper.trpts.length; i++) 
+				allTrptIdx[i]= getConstraintHash().get(aMapper.trpts[i])[0];
 			Arrays.sort(allTrptIdx);
 		}
 
@@ -353,7 +360,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		}
 		
 		int nrRestr= costSplitWC? 2: 1, offset= 0;
-		Transcript[] tt= g.decodeTset(e.getTranscripts());
+		Transcript[] tt= aMapper.decodeTset(e.getTranscripts());
 		for (int i = 0; i < nrRestr; i++, offset+= restrEdgeConstr) {
 
 			byte dir= i== 0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD;
@@ -372,13 +379,13 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 				double val= reads/ (double) sum;
 				totVal+= val;
 				if (val< 0|| Double.isNaN(val)|| Double.isInfinite(val)) { 
-					System.err.println("invalid val "+Double.toString(val)+" "+g.trpts[0]+" "+e);
+					System.err.println("invalid val "+Double.toString(val)+" "+aMapper.trpts[0]+" "+e);
 				}
 				int tOffset= getConstraintHash().get(tt[j])[0]- t[0];	// gotta be consecutive
 				reuseVal[restrEdgeConstr+ tOffset]= val;
 			}
 			if (totVal== 0) {
-				System.err.println("edge with 0 expectation! "+g.trpts[0]+" "+e);
+				System.err.println("edge with 0 expectation! "+aMapper.trpts[0]+" "+e);
 				if (1== 1)
 					continue; // TODO !!! we throw it out ?!! brutal...
 				
@@ -592,14 +599,14 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		if (matrixMap == null) {
 			matrixMap = new HashMap<String, UniversalMatrix>();
 			int lenSum= 0;
-			for (int i = 0; i < g.trpts.length; i++) 
-				lenSum+= g.trpts[i].getExonicLength();
-			float avgLen= lenSum/ g.trpts.length;
-			float rpk= g.getMappedReads()* 1000f/ avgLen;
-			for (int i = 0; i < g.trpts.length; i++) {
-				int tlen= g.trpts[i].getExonicLength();
+			for (int i = 0; i < aMapper.trpts.length; i++) 
+				lenSum+= aMapper.trpts[i].getExonicLength();
+			float avgLen= lenSum/ aMapper.trpts.length;
+			float rpk= aMapper.getMappedReads()* 1000f/ avgLen;
+			for (int i = 0; i < aMapper.trpts.length; i++) {
+				int tlen= aMapper.trpts[i].getExonicLength();
 				UniversalMatrix m= profile.getMatrix(tlen, rpk);
-				matrixMap.put(g.trpts[i].getTranscriptID(), m);
+				matrixMap.put(aMapper.trpts[i].getTranscriptID(), m);
 			}
 		}
 
@@ -625,7 +632,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 
 	
 	public double getReads(Vector<Edge> v, byte dir, long[] sig, boolean normalized) {
-		return getReadsAvg(v, dir, g, sig, false, normalized);
+		return getReadsAvg(v, dir, aMapper, sig, false, normalized);
 	}
 	
 	public static double[] bounds2rel(int[] bounds, int len) {
@@ -637,7 +644,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	
 	static int nrUnderPredicted= 0, nrOverPredicted= 0;
 	private double fracs= 0;
-	public double getReadsAvg(Vector<Edge> v, byte dir, SpliceGraph g, long[] sig, boolean excl, boolean normalized) {
+	public double getReadsAvg(Vector<Edge> v, byte dir, SplicingGraph g, long[] sig, boolean excl, boolean normalized) {
 		
 		double reads= 0, fracSum= 0;
 		for (int i = 0; i < v.size(); i++) {
@@ -646,8 +653,8 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 				continue;
 
 			long[] trpts= e.getTranscripts();
-			long[] inter= SpliceGraph.intersect(trpts,sig);
-			if (SpliceGraph.isNull(inter)|| (excl&& !SpliceGraph.equalSet(trpts, sig)))
+			long[] inter= SplicingGraph.intersect(trpts,sig);
+			if (SplicingGraph.isNull(inter)|| (excl&& !SplicingGraph.equalSet(trpts, sig)))
 				continue;	// here, and for superedges !!!
 
 			fracs= 0d;
@@ -677,10 +684,10 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	double getReadsAvgCalc(Edge e, byte dir, long[] sig, boolean excl, int cnt, boolean normalized) {
 		
 		long[] trpts= e.getTranscripts();
-		long[] inter= SpliceGraph.intersect(trpts,sig);
-		if (SpliceGraph.isNull(inter)|| (excl&& !SpliceGraph.equalSet(trpts, sig)))
+		long[] inter= SplicingGraph.intersect(trpts,sig);
+		if (SplicingGraph.isNull(inter)|| (excl&& !SplicingGraph.equalSet(trpts, sig)))
 			return 0d;
-		Transcript[] t= g.decodeTset(inter);
+		Transcript[] t= aMapper.decodeTset(inter);
 
 		// (de?)normalize from transcript coverage
 		int length= -1;
@@ -711,7 +718,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 			} else {
 				TSuperProfile supa= null; // getSuperProfileMap().get(t[j].getTranscriptID());
 				double[] relBounds= bounds2rel(bounds, t[j].getExonicLength()- readLen);
-				double frac= supa.getAreaFrac(g, t[j], relBounds, readLen, insertMinMax, dir);
+				double frac= supa.getAreaFrac(aMapper, t[j], relBounds, readLen, insertMinMax, dir);
 				fracs+= frac;
 				reads+= (cnt* pred* nf* frac);
 	//			if (t[j].getTranscriptID().endsWith("RA")) {
@@ -732,10 +739,10 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		return reads;
 	}
 
-	public double getReadsAvg_old(Vector<Edge> v, byte dir, SpliceGraph g, long[] sigExcl) {
+	public double getReadsAvg_old(Vector<Edge> v, byte dir, SplicingGraph g, long[] sigExcl) {
 		double sum= 0;
 		for (int i = 0; i < v.size(); i++) {
-			if (sigExcl!= null&& !SpliceGraph.isNull(SpliceGraph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
+			if (sigExcl!= null&& !SplicingGraph.isNull(SplicingGraph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
 				continue;
 
 			double partsum= 0;
@@ -811,7 +818,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 
 	private double getMaxPlus(Edge e, Transcript t) {
 		
-		double x= g.getMaxFlux(readLen);
+		double x= aMapper.getMaxFlux(readLen);
 		int[] a= e.getFrac(t, readLen);
 		int len= a[1]- a[0]+ 1;
 		x*= len;
@@ -847,7 +854,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		String tmpOutFName= null;
 		if (fileLPdir!= null) {
 			tmpOutFName= fileLPdir+ File.separator
-				+ g.trpts[0].getGene().getGeneID().replace(":", "_")
+				+ aMapper.trpts[0].getGene().getGeneID().replace(":", "_")
 				+ SFX_LPOUT;
 		}
 		try {
@@ -917,7 +924,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		if (debug) {
 			System.err.flush(); // doesnt work
 			p= System.out;
-			for (int i = 0; i < g.trpts.length; i++) {
+			for (int i = 0; i < aMapper.trpts.length; i++) {
 				; //getAllPercent(g.trpts[i]);
 			}
 		}
@@ -951,9 +958,9 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 			
 			p.println();
 			p.println("Transcripts:");
-			for (int i = 0; i < g.trpts.length; i++) {
-				p.print(g.trpts[i].getTranscriptID()+"\t");
-				SpliceSite[] ss= g.trpts[i].getSpliceSitesAll();
+			for (int i = 0; i < aMapper.trpts.length; i++) {
+				p.print(aMapper.trpts[i].getTranscriptID()+"\t");
+				SpliceSite[] ss= aMapper.trpts[i].getSpliceSitesAll();
 				for (int j = 0; j < ss.length; j++) 
 					p.print(ss[j].toString());
 				p.println();
@@ -1011,7 +1018,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		trptExprHash= new HashMap<Object,Double>(result.length, 1f);
 		
 		// transcripts
- 		Transcript[] trpts= g.trpts;
+ 		Transcript[] trpts= aMapper.trpts;
 		for (int i = 0; i < trpts.length; i++) { 
 			int[] c= getConstraintHash().get(trpts[i]);
 			double x= result[restrNr+c[0]];
@@ -1045,7 +1052,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		trptExprHash= new HashMap<Object,Double>();
 		
 		// transcripts
- 		Transcript[] trpts= g.trpts;
+ 		Transcript[] trpts= aMapper.trpts;
  		double sum= 0;
 		for (int i = 0; i < trpts.length; i++) { 
 			int c= tMap.get(trpts[i].getTranscriptID());
@@ -1144,7 +1151,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 			constraintHash= new Hashtable<Object,int[]>();
 			
 			// edges
-			Edge[] edges= g.getExonicEdgesInGenomicOrder();
+			Edge[] edges= aMapper.getExonicEdgesInGenomicOrder();
 			for (int i = 0; i < edges.length; i++) {
 				if (!edges[i].isExonic())
 					continue;
@@ -1184,7 +1191,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 			
 			// transcripts
 			//System.err.println("hash "+constraintHash.size());
-			Transcript[] trpts= g.trpts;
+			Transcript[] trpts= aMapper.trpts;
 			for (int i = 0; i < trpts.length; i++) 
 				constraintHash.put(trpts[i],new int[] {++constraintCtr});
 	
@@ -1196,7 +1203,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 	public void setFileLPdir(File dir) {
 		this.fileLPdir = dir;
 	}
-	public double getAllExpectedFracs(SpliceGraph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
+	public double getAllExpectedFracs(SplicingGraph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
 		Transcript[] t= g.decodeTset(partition);
 		double val= 0d;
 		for (int i = 0; i < t.length; i++) {
@@ -1231,7 +1238,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		// iterate super-edges
 		for (int j = 0; e.getSuperEdges()!= null&& j < e.getSuperEdges().size(); j++) {
 			SuperEdge se= e.getSuperEdges().elementAt(j);
-			if (SpliceGraph.isNull(SpliceGraph.intersect(se.getTranscripts(), sig)))
+			if (SplicingGraph.isNull(SplicingGraph.intersect(se.getTranscripts(), sig)))
 				continue;
 			// sense/anti-sense.. e must be first/last in super-edge
 			if ((sense&& se.getEdges()[0]!= e)|| ((!sense)&& se.getEdges()[se.getEdges().length- 1]!= e))
@@ -1257,7 +1264,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 			for (int k = 0; se.getSuperEdges()!= null&& k < se.getSuperEdges().size(); k++) {
 				SuperEdge se2= se.getSuperEdges().elementAt(k);
 				assert(se2.isPend());
-				if (SpliceGraph.isNull(SpliceGraph.intersect(se2.getTranscripts(), sig)))
+				if (SplicingGraph.isNull(SplicingGraph.intersect(se2.getTranscripts(), sig)))
 					continue;
 				// sense/anti-sense.. e must be first/last in super-edge
 				if ((sense&& se2.getEdges()[0]!= se)|| ((!sense)&& se2.getEdges()[se2.getEdges().length- 1]!= se))
@@ -1299,7 +1306,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		
 		
 		// transcript constraint variables
-		Transcript[] trpts= g.trpts;
+		Transcript[] trpts= aMapper.trpts;
 		IntVector v= null, w= null, u= null;
 		HashMap<String, Integer> tMap= null;
 		if (count)
@@ -1322,7 +1329,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 		}
 		
 		// iterate edges
-		Edge[] edges= g.getExonicEdgesInGenomicOrder();
+		Edge[] edges= aMapper.getExonicEdgesInGenomicOrder();
 		if (!count) {
 			mapCCheck= new HashMap<String, Double>();
 			for (int i = 0; i < trpts.length; i++) 
@@ -1334,7 +1341,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 				continue;
 			
 			// the base edge
-			Transcript[] tt= g.decodeTset(e.getTranscripts());
+			Transcript[] tt= aMapper.decodeTset(e.getTranscripts());
 			// sense/anti
 			for (int sa= 0; sa< 2; ++sa) {
 				
@@ -1346,7 +1353,7 @@ public class GraphLPsolver2 implements ReadStatCalculator {
 					} else if (p!= null)
 						p.print(e+"\t"+(sa==0?"sense":"asense")+"\t"+tt[x]+"\t");
 
-					long[] sig= g.encodeTset(tt[x]);
+					long[] sig= aMapper.encodeTset(tt[x]);
 					getConstraints(e, sig, v, mapE, sa== 0, count);
 					
 					// add transcript constraint
