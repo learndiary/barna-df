@@ -15,9 +15,10 @@ import java.util.Vector;
 
 import fbi.genome.model.Transcript;
 import fbi.genome.model.constants.Constants;
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.AbstractEdge;
 import fbi.genome.model.splicegraph.SplicingGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
+import fbi.genome.sequencing.rnaseq.graph.AnnotationMapper;
 
 public class TSuperProfile {
 
@@ -50,13 +51,13 @@ public void addProfile(TProfile pro) {
 	}
 	
 	int[] countedReads= null;
-	public int getReads(SplicingGraph g, Transcript t, int x, int readLen, int[] insertMinMax) {
+	public int getReads(AnnotationMapper g, Transcript t, int x, int readLen, int[] insertMinMax) {
 		
 		if (countedReads == null) {
 			countedReads = new int[v.size()];
 			
-			Vector<Vector<Edge>> vv= new Vector<Vector<Edge>>(1);
-			vv.add(new Vector<Edge>());
+			Vector<Vector<AbstractEdge>> vv= new Vector<Vector<AbstractEdge>>(1);
+			vv.add(new Vector<AbstractEdge>());
 			g.getRPK(t, false, SplicingGraph.ETYPE_AL, vv);
 			long[] sig= g.encodeTset(t);
 			
@@ -66,7 +67,7 @@ public void addProfile(TProfile pro) {
 			int elen= t.getExonicLength();
 			if (elen>= readLen) {
 				for (int j = 0; j < vv.elementAt(0).size(); j++) {
-					Edge e= vv.elementAt(0).elementAt(j);
+					AbstractEdge e= vv.elementAt(0).elementAt(j);
 					long[] inter= SplicingGraph.intersect(sig, e.getTranscripts());
 					if (SplicingGraph.isNull(inter))
 						continue;
@@ -101,7 +102,7 @@ public void addProfile(TProfile pro) {
 			double test= 0d;
 			if (elen>= readLen) {
 				for (int j = 0; j < vv.elementAt(0).size(); j++) {
-					Edge e= vv.elementAt(0).elementAt(j);
+					AbstractEdge e= vv.elementAt(0).elementAt(j);
 					long[] inter= SplicingGraph.intersect(sig, e.getTranscripts());
 					if (SplicingGraph.isNull(inter))
 						continue;
@@ -154,19 +155,19 @@ public void addProfile(TProfile pro) {
 		return sum;
 	}
 	
-	public int getReads(SplicingGraph g, Transcript t, int readLen, int[] insertMinMax) {
+	public int getReads(AnnotationMapper g, Transcript t, int readLen, int[] insertMinMax) {
 		int sum= 0;
 		for (int i = 0; i < v.size(); i++) 
 			sum+= getReads(g, t, i, readLen, insertMinMax);
 		return sum;
 	}
-	public double getArea(SplicingGraph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
+	public double getArea(AnnotationMapper g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
 		return getAreaFrac(g, t, relPos, readLen, insertMinMax, dir, false);
 	}
-	public double getAreaFrac(SplicingGraph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
+	public double getAreaFrac(AnnotationMapper g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir) {
 		return getAreaFrac(g, t, relPos, readLen, insertMinMax, dir, true);
 	}
-	double getAreaFrac(SplicingGraph g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir, boolean divide) {
+	double getAreaFrac(AnnotationMapper g, Transcript t, double[] relPos, int readLen, int[] insertMinMax, byte dir, boolean divide) {
 		
 		int[] coords= new int[relPos.length];
 		double sum= 0, total= 0;

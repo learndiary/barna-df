@@ -11,7 +11,7 @@
 
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.SimpleEdge;
 
 import java.util.Comparator;
 

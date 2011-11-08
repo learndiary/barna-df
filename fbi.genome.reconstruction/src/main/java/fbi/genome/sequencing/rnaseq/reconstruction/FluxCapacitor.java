@@ -81,11 +81,12 @@ import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
-import fbi.genome.model.splicegraph.Edge;
-import fbi.genome.model.splicegraph.Node;
+import fbi.genome.model.splicegraph.AbstractEdge;
+import fbi.genome.model.splicegraph.SimpleEdge;
 import fbi.genome.model.splicegraph.SplicingGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
 import fbi.genome.sequencing.rnaseq.graph.AnnotationMapper;
+import fbi.genome.sequencing.rnaseq.graph.MappingsInterface;
 import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 
 
@@ -294,7 +295,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			}
 			
 	
-			private void outputGFF(SplicingGraph g, ASEvent[] events, GraphLPsolver solver) {
+			private void outputGFF(AnnotationMapper g, ASEvent[] events, GraphLPsolver solver) {
 				++nrLoci;
 				if (solver!= null) 
 					++nrLociExp;
@@ -517,8 +518,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						
 						// SJ
 						if (outputSJunction) {
-							Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
-							eeV.add(new Vector<Edge>());
+							Vector<Vector<AbstractEdge>> eeV= new Vector<Vector<AbstractEdge>>(5,5);
+							eeV.add(new Vector<AbstractEdge>());
 							g.getRPK(tt[i], pairedEnd, SplicingGraph.ETYPE_SJ, eeV);
 							long[][] sig= new long[][]{g.encodeTset(tt[i])};
 							for (int j = 0; j < eeV.elementAt(0).size(); j++) { 
@@ -626,20 +627,20 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	
 				// FRAGMENTS and XJUNCTIONS
 				if (false&& solver!= null) {
-					ArrayList<Edge> cc= new ArrayList<Edge>();
+					ArrayList<AbstractEdge> cc= new ArrayList<AbstractEdge>();
 					if (solver!= null) {
 						Iterator<Object> iter= solver.getConstraintHash().keySet().iterator();
 						while (iter.hasNext()) {
 							Object o= iter.next();
-							if (o instanceof Edge)
-								cc.add((Edge) o);
+							if (o instanceof SimpleEdge)
+								cc.add((SimpleEdge) o);
 						}
 					}
-					Collections.sort(cc, Edge.getDefaultPositionComparator());
+					Collections.sort(cc, SimpleEdge.getDefaultPositionComparator());
 	
-					Iterator<Edge> iter= cc.iterator();
+					Iterator<AbstractEdge> iter= cc.iterator();
 					while (iter.hasNext()) {
-						Edge e= iter.next();
+						AbstractEdge e= iter.next();
 						// no INTRONS
 						if ((!(e instanceof SuperEdge))&& (!e.isExonic()))
 							continue;
@@ -684,14 +685,14 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return solver;
 			}
 	
-			private String getGTF(StringBuilder sb, ASEvent event, SplicingGraph g, GraphLPsolver solver, boolean unsolvedSystem, 
+			private String getGTF(StringBuilder sb, ASEvent event, AnnotationMapper g, GraphLPsolver solver, boolean unsolvedSystem, 
 						double perM, String pv, HashMap<Object,Double> tExpMap) {
 					
 			//		for (int i = 0; i < eeV.size(); i++) 
 			//			eeV.elementAt(i).removeAllElements();
-					Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
+					Vector<Vector<AbstractEdge>> eeV= new Vector<Vector<AbstractEdge>>(5,5);
 					while (eeV.size()< event.getDimension()) 
-						eeV.add(new Vector<Edge>());
+						eeV.add(new Vector<AbstractEdge>());
 					
 					g.getRPK(event, pairedEnd, SplicingGraph.ETYPE_AL, eeV);
 					sb.append(event.toStringGTF());
@@ -715,11 +716,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private String getGTF(StringBuilder sb, Edge e, long[][] sig, SplicingGraph g, GraphLPsolver solver, 
+			private String getGTF(StringBuilder sb, AbstractEdge e, long[][] sig, SplicingGraph g, GraphLPsolver solver, 
 						double perM) {
 					
-					Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
-					eeV.add(new Vector<Edge>(1));
+					Vector<Vector<AbstractEdge>> eeV= new Vector<Vector<AbstractEdge>>(5,5);
+					eeV.add(new Vector<AbstractEdge>(1));
 					eeV.elementAt(0).add(e);
 					
 					sb.append(g.trpts[0].getChromosome());
@@ -845,7 +846,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private String getGTF(StringBuilder sb, Exon exon, Transcript t, SplicingGraph g, GraphLPsolver solver, boolean unsolvedSystem, 
+			private String getGTF(StringBuilder sb, Exon exon, Transcript t, AnnotationMapper g, GraphLPsolver solver, boolean unsolvedSystem, 
 						double perM, String pv, boolean attributesOnly) {
 	
 					if (!attributesOnly) {
@@ -857,8 +858,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			//			eeV.add(new Vector<Edge>());
 			//		else
 			//			eeV.elementAt(0).removeAllElements();
-					Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
-					eeV.add(new Vector<Edge>());
+					Vector<Vector<AbstractEdge>> eeV= new Vector<Vector<AbstractEdge>>(5,5);
+					eeV.add(new Vector<AbstractEdge>());
 					
 					//if (g.readCount> 0) // get lengths
 					g.getRPK(exon, t, pairedEnd, SplicingGraph.ETYPE_AL, eeV);
@@ -871,11 +872,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private String getGTF(StringBuilder sb, Gene gene, SplicingGraph g, GraphLPsolver solver, double perM, String pv) {
+			private String getGTF(StringBuilder sb, Gene gene, AnnotationMapper g, GraphLPsolver solver, double perM, String pv) {
 				
 				//clearEdgeContainer(1);
-				Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
-				eeV.add(new Vector<Edge>());
+				Vector<Vector<AbstractEdge>> eeV= new Vector<Vector<AbstractEdge>>(5,5);
+				eeV.add(new Vector<AbstractEdge>());
 				
 				GFFObject obj= GFFObject.createGFFObject(gene);
 				sb.append(obj.toString());
@@ -892,13 +893,13 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return sb.toString();
 			}	
 			
-			private String getGTF(StringBuilder sb, Transcript t, GraphLPsolver solver, SplicingGraph g, double perM, String pv, boolean attributesOnly) {
+			private String getGTF(StringBuilder sb, Transcript t, GraphLPsolver solver, AnnotationMapper g, double perM, String pv, boolean attributesOnly) {
 					
 					GFFObject obj= GFFObject.createGFFObject(t);
 					sb.append(obj.toString());
 	
-					Vector<Vector<Edge>> eeV= new Vector<Vector<Edge>>(5,5);
-					eeV.add(new Vector<Edge>());
+					Vector<Vector<AbstractEdge>> eeV= new Vector<Vector<AbstractEdge>>(5,5);
+					eeV.add(new Vector<AbstractEdge>());
 					//if (g.readCount> 0) // get lengths 
 					g.getRPK(t, pairedEnd, SplicingGraph.ETYPE_AL, eeV);
 			
@@ -915,7 +916,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return sb.toString();
 				}
 	
-			private double getGTFappend(StringBuilder sb, SplicingGraph g, GraphLPsolver solver, Vector<Vector<Edge>> eeV, double perM, long[][] tid) {
+			private double getGTFappend(StringBuilder sb, SplicingGraph g, GraphLPsolver solver, Vector<Vector<AbstractEdge>> eeV, double perM, long[][] tid) {
 					
 					invariantTestObsSplitFreq= 0; 
 					invariantTestPredSplitFreq= 0;
@@ -2588,7 +2589,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	}
 
 	public static byte mapFileType= FluxCapacitorConstants.FORMAT_SAM;
-	private void writeMapFileSam(SplicingGraph g, Edge e, DirectedRegion[] regs, DirectedRegion[][] contRegs) {
+	private void writeMapFileSam(SplicingGraph g, SimpleEdge e, DirectedRegion[] regs, DirectedRegion[][] contRegs) {
 		
 		return;
 		
@@ -2854,40 +2855,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		isizeV.incrTuple(isize);
 	}
 	
-	double getControl(SplicingGraph g, Transcript t) {
-		Node[] nn= g.getNodesInGenomicOrder();
-		long[] part= g.encodeTset(new Transcript[] {t}); // TODO method that takes single transcript
-		double sum= 0d;
-		for (int i = 0; i < nn.length; i++) {
-			for (int j = 0; j < nn[i].getOutEdges().size(); j++) {
-				Edge e= nn[i].getOutEdges().elementAt(j);
-				if (SplicingGraph.isNull(SplicingGraph.intersect(e.getTranscripts(), part)))
-					continue;
-				Transcript[] tt= g.decodeTset(e.getTranscripts());	// TODO method that returns int nr
-				sum+= (e.getReadNr()/ (double) tt.length);
-				
-				for (int k = 0; e.getSuperEdges()!= null&& k < e.getSuperEdges().size(); k++) {
-					SuperEdge se= e.getSuperEdges().elementAt(k);
-					if (SplicingGraph.isNull(SplicingGraph.intersect(se.getTranscripts(), part)))
-						continue;
-					tt= g.decodeTset(se.getTranscripts());
-					sum+= (se.getReadNr()/ (double) tt.length);
-					
-					for (int m = 0; se.getSuperEdges()!= null&& m < se.getSuperEdges().size(); m++) {
-						SuperEdge sse= se.getSuperEdges().elementAt(m);
-						if (SplicingGraph.isNull(SplicingGraph.intersect(sse.getTranscripts(), part)))
-							continue;
-						tt= g.decodeTset(sse.getTranscripts());
-						sum+= (sse.getReadNr()/ (double) tt.length);
-					}
-				}
-				
-			}
-		}
-		return sum;
-	}
-	
-	
 	static AtomicLong along= new AtomicLong((0L ^ 0x5DEECE66DL) & ((1L << 48) - 1));
 	private static int c= 0;
 	private double factor() {
@@ -2908,16 +2875,16 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	}
 		
 
-	Vector<Edge> edgeColl1= new Vector<Edge>(), edgeColl2= new Vector<Edge>();
+	Vector<SimpleEdge> edgeColl1= new Vector<SimpleEdge>(), edgeColl2= new Vector<SimpleEdge>();
 	int[][] containerIntA1A1= new int[1][];
 	{ containerIntA1A1[0]= new int[1]; }
 	long[][] containerLongA1A= new long[1][];
 	boolean keepTmpSorted= false;
 	
-	public double getLength(SplicingGraph g, Vector<Edge> v, long[] sig, boolean exclusive) {
+	public double getLength(SplicingGraph g, Vector<AbstractEdge> v, long[] sig, boolean exclusive) {
 		double len= 0; 
 		for (int i = 0; i < v.size(); i++) {
-			Edge e= v.elementAt(i);
+			AbstractEdge e= v.elementAt(i);
 			long[] trpts= e.getTranscripts();
 			long[] inter= SplicingGraph.intersect(trpts, sig);
 			if (SplicingGraph.isNull(inter)|| (exclusive&& !SplicingGraph.equalSet(sig, trpts)))
@@ -2956,10 +2923,10 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		return len; 
 	}
 	
-	public double getReads(Vector<Edge> v, byte dir, long[] sig, boolean normalized) {
+	public double getReads(Vector<AbstractEdge> v, byte dir, long[] sig, boolean normalized) {
 		int sum= 0;
 		for (int i = 0; i < v.size(); i++) {
-			Edge e= v.elementAt(i);
+			AbstractEdge e= v.elementAt(i);
 			long[] inter= SplicingGraph.intersect(e.getTranscripts(), sig);
 			if (SplicingGraph.isNull(inter)|| !e.isExonic())
 				continue;
@@ -2974,24 +2941,24 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						if (se.getEdges()[k]== v.elementAt(i))
 							++cnt;
 					if (dir>= 0)
-						sum+= cnt* se.getReadNr();
+						sum+= cnt* ((MappingsInterface) se).getMappings().getReadNr();
 					if (dir<= 0)
-						sum+= cnt* se.getRevReadNr();
+						sum+= cnt* ((MappingsInterface) se).getMappings().getRevReadNr();
 				}
 			} else {
 				if (dir>= 0)
-					sum+= e.getReadNr();
+					sum+= ((MappingsInterface) e).getMappings().getReadNr();
 				if (dir<= 0)
-					sum+= e.getRevReadNr();
+					sum+= ((MappingsInterface) e).getMappings().getRevReadNr();
 			}
 		}
 		return sum;
 	}
 	
-	public double getReadsAvg(Vector<Edge> v, byte dir, SplicingGraph g, long[] sig, boolean excl, boolean normalized) {
+	public double getReadsAvg(Vector<AbstractEdge> v, byte dir, SplicingGraph g, long[] sig, boolean excl, boolean normalized) {
 		double sum= 0;
 		for (int i = 0; i < v.size(); i++) {
-			Edge e= v.elementAt(i);
+			AbstractEdge e= v.elementAt(i);
 			long[] trpts= v.elementAt(i).getTranscripts();
 			long[] inter= SplicingGraph.intersect(trpts, sig);
 			if (SplicingGraph.isNull(inter)|| (excl&& !SplicingGraph.equalSet(sig, trpts))|| !e.isExonic())
@@ -3010,15 +2977,15 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						if (se.getEdges()[k]== e)
 							++cnt;
 					if (dir>= 0)
-						sum+= (se.getReadNr()* mult* cnt)/ sf;
+						sum+= (((MappingsInterface) se).getMappings().getReadNr()* mult* cnt)/ sf;
 					if (dir<= 0)
-						sum+= (se.getRevReadNr()* mult* cnt)/ sf;
+						sum+= (((MappingsInterface) se).getMappings().getRevReadNr()* mult* cnt)/ sf;
 				}
 			} else {
 				if (dir>= 0)
-					sum+= (e.getReadNr()* mult)/ sf;
+					sum+= (((MappingsInterface) e).getMappings().getReadNr()* mult)/ sf;
 				if (dir<= 0)
-					sum+= (e.getRevReadNr()* mult)/ sf;
+					sum+= (((MappingsInterface) e).getMappings().getRevReadNr()* mult)/ sf;
 			}
 			
 			System.currentTimeMillis();
@@ -3273,115 +3240,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		
 	}
 
-
-	/**
-	 * @deprecated refactor to SpliceGraph
-	 * @param g
-	 * @param insertMinMax
-	 * @param readLen
-	 * @return
-	 */
-	public int addPE(SplicingGraph g, int[] insertMinMax, int readLen) {
-
-			// HashMap<String, TProfile> supaMap, 
-			
-			Edge[] edges= g.getExonicEdgesInGenomicOrder();
-			
-			int ctr= 0;
-			for (int i = 0; i < edges.length; i++) {	// e1
-				int p0= edges[i].getHead().getSite().getPos();
-				long[] t0= edges[i].getTranscripts();
-				for (int j = i; j< edges.length; ++j) {	// e2
-					long[] inter_E_E= SplicingGraph.intersect(t0, edges[j].getTranscripts());
-					if (SplicingGraph.isNull(inter_E_E))
-						continue;
-					int p1= edges[j].getHead().getSite().getPos();
-					long[] supp= g.getSupport(edges[i], edges[j], readLen, insertMinMax, inter_E_E);
-					// connect edge x edge
-					if (!SplicingGraph.isNull(supp)&& edges[i].length()>= readLen&& edges[j].length()>= readLen) {
-						Edge[] ee= new Edge[] {edges[i], edges[j]};
-//						Arrays.sort(ee, g.defaultEdgeCoordComparator);
-						g.createPairedEnd(ee, supp);
-						++ctr;
-						/*double exp= getAllExpectedFracs(g, supaMap, supp, ee, readLen);
-						if (exp> 0) {
-							g.createPairedEnd(ee, supp);
-							++ctr;
-						}*/
-					}
-	
-					for (int k = 0; edges[i].getSuperEdges()!= null&& k < edges[i].getSuperEdges().size(); ++k) {	// se1
-						SuperEdge se= edges[i].getSuperEdges().elementAt(k);
-						if (se.isPend()|| se.getEdges()[0]!= edges[i])
-							continue;
-						int pSE0= se.getLastEJ();
-						long[] t1= se.getTranscripts();
-						
-						// connect ej x edge
-						long[] inter_SE_E= SplicingGraph.intersect(se.getTranscripts(), edges[j].getTranscripts());
-						if (SplicingGraph.isNull(inter_SE_E))
-							continue;
-						supp= g.getSupport(se, edges[j], readLen, insertMinMax, inter_SE_E);	// pSE0, p1
-						if (!SplicingGraph.isNull(supp)&& edges[j].length()>= readLen) {
-							Edge[] ee= new Edge[] {se, edges[j]};
-//							Arrays.sort(ee, g.defaultEdgeCoordComparator);
-							g.createPairedEnd(ee, supp);
-							++ctr;
-							/*double exp= getAllExpectedFracs(g, supaMap, supp, ee, readLen); 
-							if (exp> 0) {
-								g.createPairedEnd(ee, supp);
-								++ctr;
-							}*/
-						}
-	
-						for (int m = 0; edges[j].getSuperEdges()!= null&& m < edges[j].getSuperEdges().size(); m++) { // se2
-							
-							SuperEdge se2= edges[j].getSuperEdges().elementAt(m);
-							if (se2.isPend()|| se2.getEdges()[se2.getEdges().length- 1]!= edges[j])
-								continue;
-							
-							long[] inter_E_SE= SplicingGraph.intersect(t0, se2.getTranscripts());
-							if (SplicingGraph.isNull(inter_E_SE))
-								continue;
-							// connect edge x ej
-							int pSE1= se2.getFirstEJ();	//TODOapprox 
-							supp= g.getSupport(edges[i], se2, readLen, insertMinMax, inter_E_SE);	// p0, pSE1
-							if (!SplicingGraph.isNull(supp)&& edges[i].length()>= readLen) {
-								Edge[] ee= new Edge[] {edges[i], se2};
-//								Arrays.sort(ee, g.defaultEdgeCoordComparator);
-								g.createPairedEnd(ee, supp);
-								++ctr;
-								/*double exp= getAllExpectedFracs(g, supaMap, supp, ee, readLen);
-								if (exp> 0) {
-									g.createPairedEnd(ee, supp);
-									++ctr;
-								}*/
-							}
-							
-							// connect ej X ej
-							long[] inter_SE_SE= SplicingGraph.intersect(t1,se2.getTranscripts());
-							supp= g.getSupport(se, se2, readLen, insertMinMax, inter_SE_SE);	// pSE0, pSE1
-							if (!SplicingGraph.isNull(supp)) {
-								Edge[] ee= new Edge[] {se, se2};
-//								Arrays.sort(ee, g.defaultEdgeCoordComparator);
-								g.createPairedEnd(ee,supp);
-								++ctr;
-								/*double exp= getAllExpectedFracs(g, supaMap, supp, ee, readLen);							
-								if (exp> 0) {
-									g.createPairedEnd(ee,supp);
-									getAllExpectedFracs(g, supaMap, supp, ee, readLen); // TODO delme
-									++ctr;
-								}*/
-							}
-						}
-					}
-					
-						
-				}
-			}
-
-			return ctr;
-		}
 
 	static void readProperties() {
 		String wrapper= System.getProperty(Constants.PROPERTY_KEY_WRAPPER_BASE);

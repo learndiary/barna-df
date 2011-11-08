@@ -28,10 +28,12 @@ import fbi.genome.model.Transcript;
 import fbi.genome.model.commons.DoubleVector;
 import fbi.genome.model.commons.IntVector;
 import fbi.genome.model.constants.Constants;
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.AbstractEdge;
+import fbi.genome.model.splicegraph.SimpleEdge;
 import fbi.genome.model.splicegraph.SplicingGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
 import fbi.genome.sequencing.rnaseq.graph.AnnotationMapper;
+import fbi.genome.sequencing.rnaseq.graph.MappingsInterface;
 
 /**
  * ok, this version gives freedom to the expectation model.
@@ -139,9 +141,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 			p.print(ids[i]+"\tC"+c[0]);
 			for (int j = 1; j < c.length; j++) 
 				p.print("\tC"+c[j]);
-			if (oo instanceof Edge) {
-				Edge e= (Edge) oo;
-				int a= e.getReadNr();
+			if (oo instanceof SimpleEdge) {
+				SimpleEdge e= (SimpleEdge) oo;
+				int a= ((MappingsInterface) e).getMappings().getReadNr();
 				//int b= e.getPossReadNr();
 				p.print("\t"+Integer.toString(a));
 				//p.print("\t"+Integer.toString(b));
@@ -237,7 +239,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 			Object o= iter.next();
 			cols+= ((int[]) getConstraintHash().get(o)).length;
 		
-			if (o instanceof Edge)
+			if (o instanceof SimpleEdge)
 				++rows;
 			else if (o instanceof Region)
 				++rows;
@@ -298,7 +300,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 * @param e
 	 * @return
 	 */
-	int[] getConstraintIDs(Edge e) {
+	int[] getConstraintIDs(AbstractEdge e) {
 		
 		int size= 2; // plus minus
 		if (costUseMultimap)	// 
@@ -338,7 +340,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 */
 	private int[] reuseIdx;
 	private double[] reuseVal;
-	void setConstraints(Edge e) {
+	void setConstraints(SimpleEdge e) {
 		
 		int[] a= getConstraintHash().get(e);
 		assert(a!= null);
@@ -401,9 +403,11 @@ public class GraphLPsolver implements ReadStatCalculator {
 			
 			// create restrictions
 			if (writeFile)
-				writeRowLP(reuseIdx, reuseVal, LpSolve.EQ, i==1?e.getRevReadNr():e.getReadNr());
+				writeRowLP(reuseIdx, reuseVal, LpSolve.EQ, i==1?
+						((MappingsInterface) e).getMappings().getRevReadNr(): ((MappingsInterface) e).getMappings().getReadNr());
 			else
-				addConstraintToLp(reuseIdx, reuseVal, LpSolve.EQ, i==1?e.getRevReadNr():e.getReadNr());
+				addConstraintToLp(reuseIdx, reuseVal, LpSolve.EQ, i==1?
+						((MappingsInterface) e).getMappings().getRevReadNr(): ((MappingsInterface) e).getMappings().getReadNr());
 			++restrNr;
 			
 		}	// restriction iterator: i
@@ -418,7 +422,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 * @param baseSize size of W/C cluster
 	 * @param e
 	 */
-	private void setConstraintsCostsConstant(int[] a, int baseSize, Edge e) {
+	private void setConstraintsCostsConstant(int[] a, int baseSize, SimpleEdge e) {
 		
 		// costs
 		for (int i = 0; i < (a.length/ baseSize); i++) { // w/o multimap, commonly handled elsewhere
@@ -431,7 +435,8 @@ public class GraphLPsolver implements ReadStatCalculator {
 				// adjust bounds				
 				if (costBounds!= null&& j== costSplit- 1) 	// last split, use stabi
 					try {
-						long obs= i== 0? e.getReadNr(): e.getRevReadNr();
+						long obs= i== 0? ((MappingsInterface) e).getMappings().getReadNr(): 
+							((MappingsInterface) e).getMappings().getRevReadNr();
 						double obs1= obs== 0? 1: obs;
 						double div= obs1/ costSplit;
 						double maxSub= div, maxAdd= div;
@@ -460,9 +465,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 * @return
 	 * @deprecated debug
 	 */
-	private void setConstraintsCostsLogarithmical(int[] a, int baseLen, Edge e) {
+	private void setConstraintsCostsLogarithmical(int[] a, int baseLen, SimpleEdge e) {
 						
-		long obs= e.getReadNr();
+		long obs= ((MappingsInterface) e).getMappings().getReadNr();
 		double obs1= (obs==0)?1:obs;
 		double incr= obs1/ costSplit;
 		
@@ -564,7 +569,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 * @param t
 	 * @return
 	 */
-	private double calcEdgeError(Edge e, Transcript t) {
+	private double calcEdgeError(SimpleEdge e, Transcript t) {
 		/*double tcov= getTrptExprHash().get(t.getTranscriptID()).doubleValue();
 		int possReads= e.getPossReadNr();
 		int[] c= getConstraintHash().get(e);
@@ -631,7 +636,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	}
 
 	
-	public double getReads(Vector<Edge> v, byte dir, long[] sig, boolean normalized) {
+	public double getReads(Vector<AbstractEdge> v, byte dir, long[] sig, boolean normalized) {
 		return getReadsAvg(v, dir, aMapper, sig, false, normalized);
 	}
 	
@@ -644,11 +649,11 @@ public class GraphLPsolver implements ReadStatCalculator {
 	
 	static int nrUnderPredicted= 0, nrOverPredicted= 0;
 	private double fracs= 0;
-	public double getReadsAvg(Vector<Edge> v, byte dir, SplicingGraph g, long[] sig, boolean excl, boolean normalized) {
+	public double getReadsAvg(Vector<AbstractEdge> v, byte dir, SplicingGraph g, long[] sig, boolean excl, boolean normalized) {
 		
 		double reads= 0, fracSum= 0;
 		for (int i = 0; i < v.size(); i++) {
-			Edge e= v.elementAt(i);
+			AbstractEdge e= v.elementAt(i);
 			if (!e.isExonic())
 				continue;
 
@@ -681,7 +686,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	}
 	
 
-	double getReadsAvgCalc(Edge e, byte dir, long[] sig, boolean excl, int cnt, boolean normalized) {
+	double getReadsAvgCalc(AbstractEdge e, byte dir, long[] sig, boolean excl, int cnt, boolean normalized) {
 		
 		long[] trpts= e.getTranscripts();
 		long[] inter= SplicingGraph.intersect(trpts,sig);
@@ -739,7 +744,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		return reads;
 	}
 
-	public double getReadsAvg_old(Vector<Edge> v, byte dir, SplicingGraph g, long[] sigExcl) {
+	public double getReadsAvg_old(Vector<SimpleEdge> v, byte dir, SplicingGraph g, long[] sigExcl) {
 		double sum= 0;
 		for (int i = 0; i < v.size(); i++) {
 			if (sigExcl!= null&& !SplicingGraph.isNull(SplicingGraph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
@@ -748,9 +753,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 			double partsum= 0;
 			double sf= g.decodeCount(v.elementAt(i).getTranscripts());
 			if (dir>= 0)
-				partsum+= v.elementAt(i).getReadNr();
+				partsum+= ((MappingsInterface) v.elementAt(i)).getMappings().getReadNr();
 			if (dir<= 0)
-				partsum+= v.elementAt(i).getRevReadNr();
+				partsum+= ((MappingsInterface) v.elementAt(i)).getMappings().getRevReadNr();
 			int[]  a= getConstraintHash().get(v.elementAt(i));
 			if (a== null)
 				return 0;
@@ -816,13 +821,14 @@ public class GraphLPsolver implements ReadStatCalculator {
 		this.flow = flow;
 	}
 
-	private double getMaxPlus(Edge e, Transcript t) {
+	private double getMaxPlus(SimpleEdge e, Transcript t) {
 		
 		double x= aMapper.getMaxFlux(readLen);
 		int[] a= e.getFrac(t, readLen);
 		int len= a[1]- a[0]+ 1;
 		x*= len;
-		x-= e.getReadNr()+ e.getRevReadNr();
+		x-= ((MappingsInterface) e).getMappings().getReadNr()
+			+ ((MappingsInterface) e).getMappings().getRevReadNr();
 		assert(x> 0);
 		return x;
 	}
@@ -983,7 +989,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		Iterator iter= getConstraintHash().keySet().iterator();
 		while (iter.hasNext()) {
 			Object o= iter.next();
-			if (!(o instanceof Edge))
+			if (!(o instanceof SimpleEdge))
 				continue;
 			p.print(o);
 			p.print(":\t\t");
@@ -1030,11 +1036,12 @@ public class GraphLPsolver implements ReadStatCalculator {
 		// edges
 		Object[] keys= constraintHash.keySet().toArray();
 		for (int i = 0; i < keys.length; i++) {
-			if (!(keys[i] instanceof Edge))
+			if (!(keys[i] instanceof SimpleEdge))
 				continue;
-			Edge e= (Edge) keys[i];
+			SimpleEdge e= (SimpleEdge) keys[i];
 			int[] c= constraintHash.get(e);
-			trptExprHash.put(e, e.getReadNr()+e.getRevReadNr()+result[restrNr+ c[0]]- result[restrNr+ c[1]]);
+			trptExprHash.put(e, ((MappingsInterface) e).getMappings().getReadNr()
+					+ ((MappingsInterface) e).getMappings().getRevReadNr()+result[restrNr+ c[0]]- result[restrNr+ c[1]]);
 		}
 			
 		return trptExprHash;
@@ -1101,10 +1108,10 @@ public class GraphLPsolver implements ReadStatCalculator {
 		Iterator iter= getConstraintHash().keySet().iterator();
 		while (iter.hasNext()) {
 			Object o= iter.next();
-			if (!(o instanceof Edge))
+			if (!(o instanceof SimpleEdge))
 				continue;	// skip transcripts
 
-			Edge e= (Edge) o;
+			SimpleEdge e= (SimpleEdge) o;
 			assert(e.length()!= 0);	// can happen aparently, if substracting from neigbor pos
 			
 			setConstraints(e);
@@ -1151,7 +1158,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 			constraintHash= new Hashtable<Object,int[]>();
 			
 			// edges
-			Edge[] edges= aMapper.getExonicEdgesInGenomicOrder();
+			AbstractEdge[] edges= aMapper.getExonicEdgesInGenomicOrder();
 			for (int i = 0; i < edges.length; i++) {
 				if (!edges[i].isExonic())
 					continue;
@@ -1203,7 +1210,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	public void setFileLPdir(File dir) {
 		this.fileLPdir = dir;
 	}
-	public double getAllExpectedFracs(SplicingGraph g, HashMap<String, TSuperProfile> supaMap, long[] partition, Edge[] edges, int readLen) {
+	public double getAllExpectedFracs(AnnotationMapper g, HashMap<String, TSuperProfile> supaMap, long[] partition, SimpleEdge[] edges, int readLen) {
 		Transcript[] t= g.decodeTset(partition);
 		double val= 0d;
 		for (int i = 0; i < t.length; i++) {
@@ -1218,8 +1225,8 @@ public class GraphLPsolver implements ReadStatCalculator {
 	}
 	
 	
-	private void getConstraints(Edge e, long[] sig, IntVector v,
-			HashMap<Edge, IntVector> mapE, boolean sense, boolean count) {
+	private void getConstraints(AbstractEdge e, long[] sig, IntVector v,
+			HashMap<AbstractEdge, IntVector> mapE, boolean sense, boolean count) {
 		
 		// for the edge itself
 		IntVector w= mapE.get(e);
@@ -1329,14 +1336,14 @@ public class GraphLPsolver implements ReadStatCalculator {
 		}
 		
 		// iterate edges
-		Edge[] edges= aMapper.getExonicEdgesInGenomicOrder();
+		AbstractEdge[] edges= aMapper.getExonicEdgesInGenomicOrder();
 		if (!count) {
 			mapCCheck= new HashMap<String, Double>();
 			for (int i = 0; i < trpts.length; i++) 
 				mapCCheck.put(trpts[i].getTranscriptID(), 0d);
 		}
 		for (int i = 0; i < edges.length; i++) {
-			Edge e= edges[i];
+			AbstractEdge e= edges[i];
 			if (!e.isExonic())
 				continue;
 			
@@ -1345,7 +1352,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 			// sense/anti
 			for (int sa= 0; sa< 2; ++sa) {
 				
-				HashMap<Edge, IntVector> mapE= new HashMap<Edge, IntVector>();	// BUG?
+				HashMap<AbstractEdge, IntVector> mapE= new HashMap<AbstractEdge, IntVector>();	// BUG?
 				
 				for (int x = 0; x < tt.length; ++x) {
 					if (!count) {
@@ -1366,16 +1373,16 @@ public class GraphLPsolver implements ReadStatCalculator {
 						int tlen= tt[x].getExonicLength();
 						UniversalMatrix m= profile.getMatrix(tlen);
 						double f= m.getFrac(
-									tt[x].getExonicPosition(e.getFrac(true)),
-									tt[x].getExonicPosition(e.getFrac(false)),
+									tt[x].getExonicPosition(((SimpleEdge) e).getDelimitingPos(true)),
+									tt[x].getExonicPosition(((SimpleEdge) e).getDelimitingPos(false)),
 									tlen,
 									sa== 0?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
 						//System.err.println(f);
 						if (Double.isInfinite(f)|| Double.isNaN(f)) {
 							System.err.println("infinite value");
 							f= m.getFrac(
-									tt[x].getExonicPosition(e.getFrac(true)),
-									tt[x].getExonicPosition(e.getFrac(false)),
+									tt[x].getExonicPosition(((SimpleEdge) e).getDelimitingPos(true)),
+									tt[x].getExonicPosition(((SimpleEdge) e).getDelimitingPos(false)),
 									tlen,
 									sa== 0?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
 						}
@@ -1400,7 +1407,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 				} // iterate transcripts
 				
 				// add edge constraints
-				Edge[] ee= new Edge[mapE.size()];
+				AbstractEdge[] ee= new AbstractEdge[mapE.size()];
 				mapE.keySet().toArray(ee);
 				
 				// total obs
@@ -1413,12 +1420,13 @@ public class GraphLPsolver implements ReadStatCalculator {
 				}
 */				
 				for (int j = 0; j < ee.length; j++) {
-					Edge f= ee[j];
+					AbstractEdge f= ee[j];
 					
 //					if (f.toString().equals("-1611848--1611703^-1611848--1609293]PE"))
 //						System.currentTimeMillis();
 					boolean paird= (f instanceof SuperEdge)&& ((SuperEdge) f).isPend();
-					int nr= ((paird|| sa== 0)? f.getReadNr(): f.getRevReadNr());
+					int nr= ((paird|| sa== 0)? ((MappingsInterface) f).getMappings().getReadNr()
+							: ((MappingsInterface) f).getMappings().getRevReadNr());
 					v= mapE.remove(f);
 					if (count)
 						constraintCtr+= 2;

@@ -13,12 +13,12 @@ package fbi.genome.sequencing.rnaseq.reconstruction;
 
 import java.util.Vector;
 
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.AbstractEdge;
 import fbi.genome.model.splicegraph.SplicingGraph;
 
 public interface ReadStatCalculator {
 
-	double getReads(Vector<Edge> v, byte dir, long[] sigExcl, boolean normalized);
+	double getReads(Vector<AbstractEdge> v, byte dir, long[] sigExcl, boolean normalized);
 	
-	double getReadsAvg(Vector<Edge> v, byte dir, SplicingGraph g, long[] sig, boolean exclusive, boolean normalized);
+	double getReadsAvg(Vector<AbstractEdge> v, byte dir, SplicingGraph g, long[] sig, boolean exclusive, boolean normalized);
 }

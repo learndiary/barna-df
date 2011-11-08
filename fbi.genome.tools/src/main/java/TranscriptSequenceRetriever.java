@@ -2,7 +2,7 @@ import fbi.genome.io.FileHelper;
 import fbi.genome.io.gtf.GTFwrapper;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.SimpleEdge;
 import fbi.genome.model.splicegraph.SplicingGraph;
 import fbi.genome.model.splicegraph.Node;
 
@@ -61,7 +61,7 @@ public class TranscriptSequenceRetriever {
 		Node[] n= g.getNodesInGenomicOrder();
 		for (int i = 0; i < n.length; i++) {
 			for (int j = 0; n[i].getOutEdges()!= null&& j < n[i].getOutEdges().size(); j++) {
-				Edge e= n[i].getOutEdges().elementAt(j);
+				SimpleEdge e= n[i].getOutEdges().elementAt(j);
 				if (!e.isIntronic())
 					continue;
 				StringBuilder sb= new StringBuilder(g.trpts[0].getChromosome());

@@ -12,16 +12,16 @@
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
 import fbi.genome.model.Transcript;
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.SimpleEdge;
 
 public class Partition {
 
-	Edge e;
+	SimpleEdge e;
 	Transcript t;
 	String id;
 	
 	
-	public Partition(Edge e, Transcript t) {
+	public Partition(SimpleEdge e, Transcript t) {
 		this.e= e;
 		this.t= t;
 		this.id= e.toString()+ t.toString();

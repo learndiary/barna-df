@@ -22,11 +22,11 @@ import java.util.Stack;
 
 public class Path {
 	long[] transcripts= null;
-	Stack<Edge> edgeStack;
+	Stack<AbstractEdge> edgeStack;
 	int length= 0;
 	
 	protected Path clonePath() {
-		Path p= new Path((Stack<Edge>) this.edgeStack.clone());
+		Path p= new Path((Stack<AbstractEdge>) this.edgeStack.clone());
 		p.length= this.length;
 		//p.sourceEdge= this.sourceEdge;
 		p.transcripts= this.transcripts;
@@ -37,12 +37,12 @@ public class Path {
 		return edgeStack.isEmpty();
 	}
 	
-	private Path(Stack<Edge> edgeM) {
+	private Path(Stack<AbstractEdge> edgeM) {
 		edgeStack= edgeM;
 	}
 
 	public Path() {
-		edgeStack= new Stack<Edge>();
+		edgeStack= new Stack<AbstractEdge>();
 	}
 
 	public long[] getTranscripts() {
@@ -54,10 +54,10 @@ public class Path {
 	}
 	
 	public String toString() {
-		Iterator<Edge> iter= edgeStack.iterator();
+		Iterator<AbstractEdge> iter= edgeStack.iterator();
 		StringBuffer sb= new StringBuffer();
 		while (iter.hasNext()) {
-			Edge e= iter.next();
+			AbstractEdge e= iter.next();
 			if (sb.length()== 0) {
 				sb.append(e.getTail());
 				sb.append(",");
@@ -73,11 +73,11 @@ public class Path {
 		return sb.toString();
 	}
 	
-	public Edge getSinkEdge() {
+	public AbstractEdge getSinkEdge() {
 		return (edgeStack== null)?null:edgeStack.peek();
 	}
 	
-	public Edge removeSinkEdge() {
+	public AbstractEdge removeSinkEdge() {
 		return (edgeStack== null)?null:edgeStack.pop();
 	}
 	
@@ -85,7 +85,7 @@ public class Path {
 		return (edgeStack== null)?null:edgeStack.peek().head;
 	}	
 
-	public void addEdge(Edge newEdge, int newLen) {
+	public void addEdge(AbstractEdge newEdge, int newLen) {
 		edgeStack.push(newEdge);
 		length+= newLen;
 		if (transcripts== null)

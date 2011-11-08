@@ -12,6 +12,7 @@
 package fbi.genome.sequencing.rnaseq.graph;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -19,15 +20,20 @@ import fbi.commons.Log;
 import fbi.genome.io.BufferedIterator;
 import fbi.genome.io.rna.UniversalReadDescriptor;
 import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
+import fbi.genome.model.ASEvent;
+import fbi.genome.model.DirectedRegion;
+import fbi.genome.model.Exon;
 import fbi.genome.model.Gene;
 import fbi.genome.model.SpliceSite;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject;
 import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.splicegraph.Edge;
+import fbi.genome.model.splicegraph.AbstractEdge;
 import fbi.genome.model.splicegraph.Node;
+import fbi.genome.model.splicegraph.SimpleEdge;
 import fbi.genome.model.splicegraph.SplicingGraph;
 import fbi.genome.model.splicegraph.SuperEdge;
+import fbi.genome.model.splicegraph.SuperEdge.EdgeTuple;
 
 public class AnnotationMapper extends SplicingGraph {
 
@@ -40,6 +46,9 @@ public class AnnotationMapper extends SplicingGraph {
 	public long nrMappingsLocusMultiMaps= 0;
 	
 	long mappedReads= 0;
+	HashMap<String, Vector<DirectedRegion[]>[]> mapPend;
+	double maxFlux= -1;
+	HashMap<EdgeTuple,SuperEdge> pendHash= new HashMap<EdgeTuple,SuperEdge>();
 
 	public AnnotationMapper(Gene gene) {
 		super(gene);
@@ -49,9 +58,9 @@ public class AnnotationMapper extends SplicingGraph {
 
 	}
 	
-	public Edge getEdge(BEDobject2 obj) {
+	public AbstractEdge getEdge(BEDobject2 obj) {
 			
-		Vector<Edge> v= edgeVector; //new Vector<Edge>();
+		Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
 		v.removeAllElements();
 		
 		Node[] nodes= getNodesInGenomicOrder();
@@ -98,9 +107,9 @@ public class AnnotationMapper extends SplicingGraph {
 			
 			while (n.getSite().getPos()< prime3||
 					(n.getSite().isLeftFlank()&& n.getSite().getPos()<= prime3)) {
-				Vector<Edge> outEdges= n.getOutEdges();
+				Vector<SimpleEdge> outEdges= n.getOutEdges();
 				int sizeB4= v.size();
-				Edge iEdge= null;
+				SimpleEdge iEdge= null;
 				for (int j = 0; j < outEdges.size(); j++) {
 					if (outEdges.elementAt(j).isExonic()) {							
 						v.add(outEdges.elementAt(j));	// there can only be one exonic outedge
@@ -137,7 +146,7 @@ public class AnnotationMapper extends SplicingGraph {
 		}
 		
 		assert(v.size()!= 0);
-		Edge[] ve= new Edge[v.size()];
+		SimpleEdge[] ve= new SimpleEdge[v.size()];
 		for (int i = 0; i < ve.length; i++) 
 			ve[i]= v.elementAt(i);
 		Arrays.sort(ve, SuperEdge.getDefaultEdgeByTailComparator());	// sort for comparison
@@ -148,7 +157,7 @@ public class AnnotationMapper extends SplicingGraph {
 		for (int j = 0; seV!= null&& j < seV.size(); j++) {
 			if (seV.elementAt(j).isPend())
 				continue;
-			Edge[] e= seV.elementAt(j).getEdges();	// these are sorted
+			AbstractEdge[] e= seV.elementAt(j).getEdges();	// these are sorted
 			if (e.length!= ve.length)
 				continue;
 			int k;
@@ -235,7 +244,7 @@ public class AnnotationMapper extends SplicingGraph {
 				attributes= getAttributes(dobject, descriptor2, attributes);
 				if (paired&& attributes.flag== 2)	// don't iterate twice, for counters
 					continue;
-				Edge target= getEdge2(dobject);
+				AbstractEdge target= getEdge2(dobject);
 				if (target== null) {
 					++nrMappingsNotMapped;
 					continue;	// couldn't map
@@ -263,7 +272,7 @@ public class AnnotationMapper extends SplicingGraph {
 						if (attributes2== null|| attributes2.flag== 1)
 							continue;
 
-						Edge target2= getEdge2(dobject2);
+						AbstractEdge target2= getEdge2(dobject2);
 						if (target2== null) {
 							++nrMappingsNotMapped;
 							continue;
@@ -290,8 +299,8 @@ public class AnnotationMapper extends SplicingGraph {
 						}
 						
 						// find common super-edge
-						Vector<Edge> w= new Vector<Edge>();
-						if (target.getFrac(true)< target2.getFrac(true)) {
+						Vector<AbstractEdge> w= new Vector<AbstractEdge>();
+						if (target.getDelimitingPos(true)< target2.getDelimitingPos(true)) {
 							w.add(target);
 							w.add(target2);
 						} else {
@@ -303,7 +312,7 @@ public class AnnotationMapper extends SplicingGraph {
 							nrMappingsNotMappedAsPair+= 2;
 							continue;	
 						}
-						se.incrReadNr();
+						((SuperEdgeMappings) se).getMappings().incrReadNr();
 						nrMappingsMapped+= 2;	
 					}
 					beds.reset();
@@ -311,9 +320,9 @@ public class AnnotationMapper extends SplicingGraph {
 				} else {	// single reads, strand already checked
 					boolean sense= trpts[0].getStrand()== dobject.getStrand();	// TODO get from edge
 					if (sense)
-						target.incrReadNr();
+						((MappingsInterface) target).getMappings().incrReadNr();
 					else
-						target.incrRevReadNr();
+						((MappingsInterface) target).getMappings().incrRevReadNr();
 					++nrMappingsMapped;
 				}
 			}
@@ -334,9 +343,9 @@ public class AnnotationMapper extends SplicingGraph {
 		return nrMappingsWrongPairOrientation;
 	}
 
-	public Edge getEdge_old(BEDobject obj) {
+	public AbstractEdge getEdge_old(BEDobject obj) {
 				
-				Vector<Edge> v= edgeVector; //new Vector<Edge>();
+				Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
 				v.removeAllElements();
 				
 				Node[] nodes= getNodesInGenomicOrder();
@@ -367,9 +376,9 @@ public class AnnotationMapper extends SplicingGraph {
 					
 					while (n.getSite().getPos()< prime3||
 							(n.getSite().isLeftFlank()&& n.getSite().getPos()<= prime3)) {
-						Vector<Edge> outEdges= n.getOutEdges();
+						Vector<SimpleEdge> outEdges= n.getOutEdges();
 						int sizeB4= v.size();
-						Edge iEdge= null;
+						SimpleEdge iEdge= null;
 						for (int j = 0; j < outEdges.size(); j++) {
 							if (outEdges.elementAt(j).isExonic()) {							
 								v.add(outEdges.elementAt(j));	// there can only be one exonic outedge
@@ -406,7 +415,7 @@ public class AnnotationMapper extends SplicingGraph {
 				}
 				
 				assert(v.size()!= 0);
-				Edge[] ve= new Edge[v.size()];
+				SimpleEdge[] ve= new SimpleEdge[v.size()];
 				for (int i = 0; i < ve.length; i++) 
 					ve[i]= v.elementAt(i);
 				Arrays.sort(ve, SuperEdge.getDefaultEdgeByTailComparator());	// sort for comparison
@@ -415,7 +424,7 @@ public class AnnotationMapper extends SplicingGraph {
 				Vector<SuperEdge> seV= ve[0].getSuperEdges();		
 				SuperEdge se= null;
 				for (int j = 0; seV!= null&& j < seV.size(); j++) {
-					Edge[] e= seV.elementAt(j).getEdges();	// these are sorted
+					AbstractEdge[] e= seV.elementAt(j).getEdges();	// these are sorted
 					if (e.length!= ve.length)
 						continue;
 					int k;
@@ -454,7 +463,7 @@ public class AnnotationMapper extends SplicingGraph {
 		 * @param obj
 		 * @return
 		 */
-		public Edge getEdge2(BEDobject2 obj) {
+		public AbstractEdge getEdge2(BEDobject2 obj) {
 			
 			int bcount= obj.getBlockCount();
 			int bstart= obj.getStart()+ 1, bend= obj.getEnd();	// to normal space
@@ -462,7 +471,7 @@ public class AnnotationMapper extends SplicingGraph {
 	
 			if (bcount< 2) {
 				
-				Edge e= getEdge2(bstart, bend);
+				AbstractEdge e= getEdge2(bstart, bend);				
 				return e;
 				
 			} else {	// split-maps
@@ -474,7 +483,7 @@ public class AnnotationMapper extends SplicingGraph {
 				int size= obj.getNextBlockSize(), 			
 					size2= obj.getNextBlockSize();	// ask for all
 				
-				Edge e= getEdge2(bstart, bstart+ size- 1);
+				AbstractEdge e= getEdge2(bstart, bstart+ size- 1);
 				if (e== null)
 					return null;
 				else {
@@ -484,7 +493,7 @@ public class AnnotationMapper extends SplicingGraph {
 						return null;
 				}
 				
-				Edge f= getEdge2(bend- size2+ 1, bend);
+				AbstractEdge f= getEdge2(bend- size2+ 1, bend);
 				if (f== null)
 					return null;
 				else {
@@ -522,11 +531,11 @@ public class AnnotationMapper extends SplicingGraph {
 				if (part== null)
 					return null;
 				
-				Vector<Edge> v= new Vector<Edge>();
+				Vector<AbstractEdge> v= new Vector<AbstractEdge>();
 				if (e instanceof SuperEdge) {
 					SuperEdge se= (SuperEdge) e;
 					assert(!se.isPend());
-					Edge[] ee= se.getEdges();
+					AbstractEdge[] ee= se.getEdges();
 					for (int i = 0; i < ee.length; i++) 
 						v.add(ee[i]);
 				} else
@@ -534,7 +543,7 @@ public class AnnotationMapper extends SplicingGraph {
 				if (f instanceof SuperEdge) {
 					SuperEdge se= (SuperEdge) f;
 					assert(!se.isPend());
-					Edge[] ee= se.getEdges();
+					AbstractEdge[] ee= se.getEdges();
 					for (int i = 0; i < ee.length; i++) 
 						v.add(ee[i]);
 				} else
@@ -553,9 +562,9 @@ public class AnnotationMapper extends SplicingGraph {
 		 * @param bend end on positive strand
 		 * @return
 		 */
-		public Edge getEdge2(int bstart, int bend) {
+		public AbstractEdge getEdge2(int bstart, int bend) {
 			
-			Vector<Edge> v= new Vector<Edge>();
+			Vector<AbstractEdge> v= new Vector<AbstractEdge>();
 			int[] su= getSpliceUniverse();
 			Node[] nodes= getNodesInGenomicOrder();
 			
@@ -609,10 +618,10 @@ public class AnnotationMapper extends SplicingGraph {
 				if (head.getOutEdges().size()<= 0)
 					System.currentTimeMillis();
 				assert(head.getOutEdges().size()> 0);
-				Iterator<Edge> iter= head.getOutEdges().iterator();
+				Iterator<SimpleEdge> iter= head.getOutEdges().iterator();
 				boolean found= false;
 				while (iter.hasNext()) {
-					Edge e= iter.next();
+					SimpleEdge e= iter.next();
 					if (!e.isExonic())
 						continue;
 					v.add(e);
@@ -644,6 +653,255 @@ public class AnnotationMapper extends SplicingGraph {
 
 	public void setMappedReads(long mappedReads) {
 		this.mappedReads = mappedReads;
+	}
+
+	public HashMap<String, Vector<DirectedRegion[]>[]> getMapPend() {
+		if (mapPend == null) {
+			mapPend = new HashMap<String, Vector<DirectedRegion[]>[]>();
+		}
+	
+		return mapPend;
+	}
+
+	public double getMaxFlux(int readLen) {
+		if (maxFlux< 0) {
+			Iterator<SimpleEdge> iter= edgeHash.values().iterator();
+			while (iter.hasNext()) {
+				SimpleEdge e= iter.next();
+				double x= ((MappingsInterface) e).getMappings().getReadNr()
+						+ ((MappingsInterface) e).getMappings().getRevReadNr();
+				Transcript[] t= decodeTset(e.getTranscripts());
+				int[] a= e.getFrac(t[0], readLen);
+				x/= a[1]- a[0]+ 1;
+				maxFlux= Math.max(maxFlux, x);
+			}
+		}
+	
+		return maxFlux;
+	}
+
+	
+	@Override
+	protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
+		SimpleEdgeMappings e= new SimpleEdgeMappings(v, w);
+		e.setTranscripts(newTset);
+		return e;
+	}
+	
+	@Override
+	protected SuperEdge createSuperEdge(AbstractEdge[] newEdges,
+			long[] newTset, boolean isPairedEnd) {
+		SuperEdgeMappings se= new SuperEdgeMappings(newEdges, newTset, isPairedEnd);
+		return se;
+	}
+	
+	public SuperEdge createPairedEnd(SimpleEdge[] edges, long[] supp) {
+	//		Arrays.sort(edges, defaultEdgeCoordComparator);
+			
+	//		if (edges[0].toString().equals("29723937-29723996^29723996^29724085-")
+	//				&& edges[1].toString().equals("29724085-29724132]"))
+	//				System.currentTimeMillis();
+	
+			EdgeTuple tuple= new EdgeTuple(edges);
+			if (pendHash.containsKey(tuple))
+				return pendHash.get(tuple);
+			SuperEdge se= createSuperEdge(edges, supp, true);
+	//		if (se.toString().equals("62162119[62162495[62162258[62162495[PE"))
+	//			System.currentTimeMillis();
+			pendHash.put(tuple, se);
+			return se;
+	}
+
+	public void getRPK(ASEvent event, boolean pend, byte etype, Vector<Vector<AbstractEdge>> v) {
+	
+		SpliceSite[][] c= event.getSpliceChains();
+		int[] maxLen= new int[2];
+		for (int i = 0; i < c.length; i++) {
+			int lastPos= event.getSrc().getPos();
+			for (int j = 0; j < c[i].length; lastPos= c[i][j++].getPos()) {
+				if (c[i][j].isRightFlank())
+					maxLen[i]+= c[i][j].getPos()- lastPos+ 1;
+			}
+			if (event.getSnk().isRightFlank())
+				maxLen[i]+= event.getSnk().getPos()- lastPos+ 1; 
+		}
+		Transcript[][] t= event.getTranscripts();
+		long[][] sig= new long[event.getDimension()][];
+		for (int i = 0; i < sig.length; i++) 
+			sig[i]= encodeTset(t[i]);
+		Node srcNode= getNode(event.getSrc());
+		for (int i = 0; i < event.getDimension(); i++) 
+			getRPK(srcNode, sig[i], null, maxLen[i], pend, etype, v.elementAt(i));
+		
+		// add junctions
+		Node snkNode= getNode(event.getSnk());
+		SimpleEdge[] e= new SimpleEdge[2];
+		for (int i = 0; i < srcNode.getInEdges().size(); i++) {
+			if (srcNode.getInEdges().elementAt(i).isExonic()) {
+				e[0]= srcNode.getInEdges().elementAt(i);
+				break;
+			}
+		}
+		for (int i = 0; i < snkNode.getOutEdges().size(); i++) {
+			if (snkNode.getOutEdges().elementAt(i).isExonic()) {
+				e[1]= snkNode.getOutEdges().elementAt(i);
+				break;
+			}
+		}
+		
+		for (int x = 0; x < e.length; x++) {
+			if (e[x]== null)
+				continue;
+			for (int i = 0; e[x].getSuperEdges()!= null&& i < e[x].getSuperEdges().size(); i++) {
+				SuperEdge se= e[x].getSuperEdges().elementAt(i);
+				if ((!pend)&& se.isPend())
+					continue;
+				add(se, sig, v);
+				if (pend)
+					for (int j = 0; se.getSuperEdges()!= null&& j < se.getSuperEdges().size(); j++) 
+						add(se.getSuperEdges().elementAt(j), sig, v);
+			}
+		}
+	}
+
+	public void getRPK(Exon exon, Transcript tx, boolean pend, byte etype, Vector<Vector<AbstractEdge>> v) {
+		
+		long[] sig= encodeTset(new Transcript[] {tx});
+		int maxLen= exon.getLength();
+		Node n= getNode(exon.getAcceptor());
+		
+		getRPK(n, sig, null, maxLen, pend, etype, v.elementAt(0));
+		
+	}
+
+	public void getRPK(Gene g, boolean pend, byte edgeType, Vector<Vector<AbstractEdge>> v) {
+			
+			Iterator<SimpleEdge> i= getEdgeHash().values().iterator();
+			while (i.hasNext()) {
+				SimpleEdge e= i.next();
+				if (!(e.isExonic()))	// || e.isIntronic()
+					continue;
+				//if (!pend) {
+					if (checkEtype(edgeType, e))
+						v.elementAt(0).add(e);
+				//}
+				for (int j = 0; e.getSuperEdges()!= null
+								&& j < e.getSuperEdges().size(); j++) {
+					SuperEdge se= (SuperEdge) e.getSuperEdges().elementAt(j);
+					if (se.getEdges()[0]!= e)
+						continue;
+	//				if (se.isPend()) {
+	//					if (pend&& checkEtype(edgeType, se))
+	//						v.elementAt(0).add(se);
+	//				} else {
+	//					if (pend) 
+	//						for (int k = 0; se.getSuperEdges()!= null
+	//									&& k < se.getSuperEdges().size(); k++) {
+	//							if (checkEtype(edgeType, se))
+	//								v.elementAt(0).add(se.getSuperEdges().elementAt(k));
+	//						}
+	//					else { // EE- or SJ
+	//						if (checkEtype(edgeType, se))
+	//							v.elementAt(0).add(se);
+	//					}
+	//				}
+					if (se.isPend()) 
+						continue;
+					if (checkEtype(edgeType, se))
+						v.elementAt(0).add(se);
+				}
+			}
+		}
+
+	/*
+		 * 							int sf= decodeCount(e.getSuperEdges().elementAt(j).getTranscripts());
+								if (forward>= 0) {
+									int v= e.getSuperEdges().elementAt(j).getReadNr();
+									val[0]+= v;	
+									val[1]+= v/ (float) sf;
+								}
+			assert(len== val[2]);	// must be composed of complete blocks
+			assert(val[1]% 1== 0);
+			if (!exon.getDonor().isTES())
+				val[2]-= readLen- 1;
+	
+		 */
+		public void getRPK(Node n, long[] sig, long[] noSig, int maxLen, boolean pend, byte etype, Vector<AbstractEdge> v) {
+			
+			int len= 0;
+			while(len< maxLen) {
+				SimpleEdge e= null;
+				int i = 0;
+				for (; len< maxLen&& i < n.getOutEdges().size(); i++) {
+					if ((!n.getOutEdges().elementAt(i).isExonic())
+							|| isNull(intersect(sig, n.getOutEdges().elementAt(i).getTranscripts())))
+						continue;
+					e= n.getOutEdges().elementAt(i);
+					len+= e.length();
+					// don't add paired-ends, always single
+	//				if ((!pend)&&
+					if (
+							(noSig== null|| isNull(intersect(e.getTranscripts(), noSig)))
+							&& (checkEtype(etype, e)))
+						v.add(e);
+	//				if (len> rpk[1])
+	//					System.currentTimeMillis();
+					for (int j = 0; e.getSuperEdges()!= null&& j < e.getSuperEdges().size(); j++) {
+						SuperEdge se= e.getSuperEdges().elementAt(j);					
+						if (se.getEdges()[0]!= e|| 
+								(noSig!= null&& !isNull(intersect(e.getTranscripts(), noSig))))
+							continue;
+						if (se.length()+ len> maxLen&& !se.isPend())
+							continue;
+						// don't add super-edges
+						//if (((se.isPend()&& pend)|| ((!se.isPend())&& (!pend)))
+						if ((!se.isPend())
+								&& checkEtype(etype, se))
+							v.add(se);
+						if (se.isPend())	// && !pend
+							continue;
+						
+						// dont add super-edges
+	//					if (pend&& (!se.isPend())) {
+	//						for (int k = 0; se.getSuperEdges()!= null&& k < se.getSuperEdges().size(); k++) {
+	//							SuperEdge sse= se.getSuperEdges().elementAt(k); 
+	//							if (sse.getEdges()[0]!= se)
+	//								continue;
+	//							assert(se.getSuperEdges().elementAt(k).isPend());
+	//							if ((noSig== null
+	//									|| isNull(intersect(e.getTranscripts(), noSig)))
+	//									&& checkEtype(etype, sse))
+	//								v.add(sse);
+	//						}
+	//					}
+					}
+					n= e.getHead();
+					i= -1;
+				}
+				if (len< maxLen&& i== n.getOutEdges().size()) {
+					Node o= null;
+					for (int j = 0; j < n.getOutEdges().size(); j++) {
+						SimpleEdge f= n.getOutEdges().elementAt(j);
+						if (f.isExonic()|| (isNull(intersect(sig, f.getTranscripts()))))
+							continue;
+						if (o== null|| f.getHead().getSite().getPos()< o.getSite().getPos())
+							o= f.getHead();
+					}
+					assert(o!= null);
+					n= o;
+				}
+					
+			}
+			assert(len== maxLen);
+		}
+
+	public void getRPK(Transcript tx, boolean pend, byte etype, Vector<Vector<AbstractEdge>> v) {
+		
+		long[] sig= encodeTset(new Transcript[] {tx});
+		int maxLen= tx.getExonicLength();
+		Node n= getNode(tx.getExons()[0].getAcceptor());
+		
+		getRPK(n, sig, null, maxLen, pend, etype, v.elementAt(0));
 	}
 
 }

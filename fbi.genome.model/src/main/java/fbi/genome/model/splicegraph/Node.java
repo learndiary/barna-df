@@ -36,21 +36,21 @@ public class Node {
 	
 	SpliceSite site;
 	long[] transcripts= null;
-	Vector<Edge> outEdges= new Vector<Edge>(2);	// 2,1f
-	Vector<Edge> inEdges= new Vector<Edge>(2);	// 2,1f
+	Vector<SimpleEdge> outEdges= new Vector<SimpleEdge>(2);	// 2,1f
+	Vector<SimpleEdge> inEdges= new Vector<SimpleEdge>(2);	// 2,1f
 	boolean processed= false;	// coloring for contracting graph
 	HashMap<Node, Vector<Path>> fromNodeMap= new HashMap<Node, Vector<Path>>();
-	HashMap<Edge, Vector<Edge>> outPartitionMap= null;
+	HashMap<SimpleEdge, Vector<SimpleEdge>> outPartitionMap= null;
 	Vector<Vector<long[]>> forbiddenCombinations= null;
 	int outPartitionSize= 0;
 	Vector<Partition> partitions= new Vector();
 	
-	private HashMap<Vector<Edge>, Vector<Path>> mapVecEdgeVecPath;
+	private HashMap<Vector<SimpleEdge>, Vector<Path>> mapVecEdgeVecPath;
 	private Vector<Vector<Path>> vecVecPath;
-	private HashMap<Edge, Edge> mapEdgeEdge;
-	private Iterator<Edge> iterEdge;
-	private HashMap<Vector<Edge>, Vector<Edge>> mapVecEdgeVecEdge;
-	private Iterator<Vector<Edge>> iterVecEdge;
+	private HashMap<SimpleEdge, SimpleEdge> mapEdgeEdge;
+	private Iterator<SimpleEdge> iterEdge;
+	private HashMap<Vector<SimpleEdge>, Vector<SimpleEdge>> mapVecEdgeVecEdge;
+	private Iterator<Vector<SimpleEdge>> iterVecEdge;
 	//private mapVecEdgeVecPath;
 	
 	public Node(SpliceSite newSite, long[] newTranscripts) {
@@ -77,13 +77,13 @@ public class Node {
 	}
 	
 	
-	public HashMap<Edge, Vector<Edge>> getOutPartitionMap() {
+	public HashMap<SimpleEdge, Vector<SimpleEdge>> getOutPartitionMap() {
 		if (outPartitionMap == null) {
-			outPartitionMap = new HashMap<Edge, Vector<Edge>>(outEdges.size());
-			Iterator<Edge> iter= getOutEdges().iterator();
+			outPartitionMap = new HashMap<SimpleEdge, Vector<SimpleEdge>>(outEdges.size());
+			Iterator<SimpleEdge> iter= getOutEdges().iterator();
 			while (iter.hasNext()) {
-				Edge e= iter.next();
-				Vector<Edge> v= new Vector<Edge>(1);
+				SimpleEdge e= iter.next();
+				Vector<SimpleEdge> v= new Vector<SimpleEdge>(1);
 				v.add(e);
 				outPartitionMap.put(e,v);
 			}
@@ -109,19 +109,19 @@ public class Node {
 		return getSite().equals(((Node) obj).getSite());
 	}
 	
-	public void addOutEdge(Edge e) {
+	public void addOutEdge(SimpleEdge e) {
 		outEdges.add(e);
 	}
 	
-	public void addInEdge(Edge e) {
+	public void addInEdge(SimpleEdge e) {
 		inEdges.add(e);
 	}
 
-	public Vector<Edge> getInEdges() {
+	public Vector<SimpleEdge> getInEdges() {
 		return inEdges;
 	}
 
-	public Vector<Edge> getOutEdges() {
+	public Vector<SimpleEdge> getOutEdges() {
 		return outEdges;
 	}
 	
@@ -133,15 +133,15 @@ public class Node {
 		return getPartitions(inEdges);
 	}
 	
-	Vector<long[]> getPartitions(Collection<Edge> e) {
+	Vector<long[]> getPartitions(Collection<SimpleEdge> e) {
 		Vector<long[]> v= new Vector<long[]>(e.size());
-		Iterator<Edge> edgeIter= e.iterator();
+		Iterator<SimpleEdge> edgeIter= e.iterator();
 		while (edgeIter.hasNext())
 			v.add(edgeIter.next().getTranscripts());
 		return v;
 	}
 	
-	public void removeInEdge(Edge e) {
+	public void removeInEdge(SimpleEdge e) {
 		for (int i = 0; i < inEdges.size(); i++) {
 			if (inEdges.elementAt(i)== e) {
 				inEdges.remove(i);	// do not use equals()
@@ -150,7 +150,7 @@ public class Node {
 		}
 	}
 	
-	public void removeOutEdge(Edge e) {
+	public void removeOutEdge(SimpleEdge e) {
 		for (int i = 0; i < outEdges.size(); i++) {
 			if (outEdges.elementAt(i)== e) {
 				outEdges.remove(i);	// do not use equals()
@@ -213,7 +213,7 @@ public class Node {
 		forbiddenCombinations.add(partition);
 	}
 	
-	public void mergePartitions_test(Vector<Edge> splits) {
+	public void mergePartitions_test(Vector<SimpleEdge> splits) {
 		
 //		Iterator<Edge> iterEdge= splits.iterator();
 //		while (iterEdge.hasNext()) {

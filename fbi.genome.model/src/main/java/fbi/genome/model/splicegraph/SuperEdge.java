@@ -11,16 +11,15 @@
 
 package fbi.genome.model.splicegraph;
 
+import java.util.Comparator;
+
 import fbi.genome.model.SpliceSite;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.constants.Constants;
-//import genome.lp.Function;
 
-import java.util.Comparator;
-
-public class SuperEdge extends Edge {
-	public static class EdgeByTailComparator implements Comparator<Edge> {
-		public int compare(Edge arg0, Edge arg1) {
+public class SuperEdge extends AbstractEdge {
+	public static class EdgeByTailComparator implements Comparator<SimpleEdge> {
+		public int compare(SimpleEdge arg0, SimpleEdge arg1) {
 			if (arg0.getTail().getSite().getPos()< arg1.getTail().getSite().getPos())
 				return -1;
 			if (arg0.getTail().getSite().getPos()> arg1.getTail().getSite().getPos())
@@ -29,9 +28,9 @@ public class SuperEdge extends Edge {
 		}
 	}
 	static EdgeByTailComparator defaultEdgeByTailComparator= new EdgeByTailComparator();
-	static class EdgeTuple {
-		public Edge[] edges;
-		public EdgeTuple(Edge[] edges) {
+	public static class EdgeTuple {
+		public SimpleEdge[] edges;
+		public EdgeTuple(SimpleEdge[] edges) {
 			this.edges= edges;
 		}
 		@Override
@@ -57,17 +56,17 @@ public class SuperEdge extends Edge {
 	}
 	
 	static EdgeTuple first= null;
-	Edge[] edges= null;
-	Edge[] phantomEdges= null;
+	AbstractEdge[] edges= null;
+	SimpleEdge[] phantomEdges= null;
 	boolean pend= false;
 		
-	
+
 	/**
 	 * @param edges
 	 * @param g
 	 * @param pend
 	 */
-	public SuperEdge(Edge[] edges, long[] supp, boolean pend) {
+	public SuperEdge(AbstractEdge[] edges, long[] supp, boolean pend) {
 
 		setEdges(edges);// this(edges);	// also sets transcript set
 		setTranscripts(supp);
@@ -101,11 +100,11 @@ public class SuperEdge extends Edge {
 		System.currentTimeMillis();
 	}
 
-	public Edge[] getEdges() {
+	public AbstractEdge[] getEdges() {
 		return edges;
 	}
 	
-	public static int getFirstEJ(Edge[] edges) {
+	public static int getFirstEJ(AbstractEdge[] edges) {
 		int pos= edges[0].getHead().getSite().getPos();
 		if (edges[0].getHead().getSite().isLeftFlank())
 			--pos;
@@ -117,7 +116,7 @@ public class SuperEdge extends Edge {
 	}
 		
 	
-	public static int getLastEJ(Edge[] edges) {
+	public static int getLastEJ(AbstractEdge[] edges) {
 		int pos= edges[edges.length-1].getTail().getSite().getPos();
 		if (edges[edges.length-1].getTail().getSite().isRightFlank())
 			++pos;
@@ -139,7 +138,7 @@ public class SuperEdge extends Edge {
 		return true;
 	}
 	
-	public void setEdges(Edge[] edges) {
+	public void setEdges(AbstractEdge[] edges) {
 //		long[] trpts= edges[0].getTranscripts();
 		for (int i = 0; i < edges.length; i++) 
 			edges[i].addSuperEdge(this);
@@ -165,14 +164,15 @@ public class SuperEdge extends Edge {
 	public static EdgeByTailComparator getDefaultEdgeByTailComparator() {
 		return defaultEdgeByTailComparator;
 	}
-	
-	public Edge[] getPhantomEdges() {
+
+	/**
+	 * @deprecated uses explicit Edge constructor
+	 */
+	SimpleEdge[] getPhantomEdges() {
 		if (phantomEdges == null) {
-			phantomEdges = new Edge[edges.length];
+			phantomEdges = new SimpleEdge[edges.length];
 			for (int i = 0; i < phantomEdges.length; i++) {
-				phantomEdges[i]= new Edge();
-				phantomEdges[i].tail= edges[i].tail;
-				phantomEdges[i].head= edges[i].head;
+				phantomEdges[i]= new SimpleEdge(edges[i].tail, edges[i].head);
 			}
 		}
 
@@ -194,20 +194,19 @@ public class SuperEdge extends Edge {
 	}
 	
 	@Override
-	public int getMapLength(Transcript tx, int maxMapLength) {
+	public int getNtLength(Transcript tx, int mapLength) {
 		if (isPend()) {
 			System.err.println("what about pends");
 			return -1;
 			
 		} else {
-			int start= tx.getExonicPosition(edges[0].getTail().getSite().getPos()),
-				first= tx.getExonicPosition(edges[0].getHead().getSite().getPos()),
-				last= tx.getExonicPosition(edges[edges.length- 1].getTail().getSite().getPos()),
-				end= tx.getExonicPosition(edges[edges.length- 1].getHead().getSite().getPos());
-			return Math.min(Math.min(last- start, end- first)+ 1, maxMapLength);
+			int first= tx.getExonicPosition(edges[0].getHead().getSite().getPos()),
+				last= tx.getExonicPosition(edges[edges.length- 1].getTail().getSite().getPos());
+			return ((first+ mapLength)- (last- mapLength));
 		}
 	}
-	public int getEffLength(byte dir, int mapLenMax) {
+	
+	public int getEffLength(Transcript tx, byte dir, int mapLenMax) {
 
 		System.err.println("check effLen");
 		assert(dir== Constants.DIR_FORWARD^ dir== Constants.DIR_BACKWARD);
@@ -230,41 +229,6 @@ public class SuperEdge extends Edge {
 		return effLen;
 	}
 	
-	public double getNtCoverage(Transcript tx, byte dir, int mapLenMax) {
-		
-		if (isPend()) {
-			System.err.println("check pend");
-			double cov= getReadNr();
-			if (dir== Constants.DIR_BOTH) {
-				cov*= 2;
-				cov/= getEffLength(Constants.DIR_FORWARD, mapLenMax)+ 
-						getEffLength(Constants.DIR_BACKWARD, mapLenMax);
-			} else if (dir== Constants.DIR_FORWARD)
-				cov/= getEffLength(Constants.DIR_FORWARD, mapLenMax);
-			else if (dir== Constants.DIR_BACKWARD)
-				cov/= getEffLength(Constants.DIR_FORWARD, mapLenMax);
-			else
-				assert(false);
-			return cov;
-		} else
-			return super.getNtCoverage(tx, dir, mapLenMax);
-		
-	}
-	
-	@Override
-	public int getNtLength(Transcript tx, int mapLength) {
-		if (isPend()) {
-			System.err.println("what about pends");
-			return -1;
-			
-		} else {
-			int first= tx.getExonicPosition(edges[0].getHead().getSite().getPos()),
-				last= tx.getExonicPosition(edges[edges.length- 1].getTail().getSite().getPos());
-			return ((first+ mapLength)- (last- mapLength));
-		}
-	}
-
-
 	@Override
 	/**
 	 * compare additionally the set of edges
@@ -276,7 +240,7 @@ public class SuperEdge extends Edge {
 		SuperEdge se= ((SuperEdge) obj);
 		if (isPend()!= se.isPend())
 			return false;
-		Edge[] e= se.getEdges();
+		AbstractEdge[] e= se.getEdges();
 		if (e.length!= edges.length)
 			return false;
 		for (int i = 0; i < e.length; i++) {
@@ -291,7 +255,7 @@ public class SuperEdge extends Edge {
 	 * @param genomicPos
 	 * @return
 	 */
-	private Edge findEdge(int genomicPos) {
+	private AbstractEdge findEdge(int genomicPos) {
 		if (genomicPos< edges[0].getTail().getSite().getPos()
 				|| genomicPos> edges[edges.length- 1].getHead().getSite().getPos())
 			return null;
@@ -329,7 +293,7 @@ public class SuperEdge extends Edge {
 	}
 	
 
-	public static int[] getPEfrac(Transcript t, int readLen, Edge[] edges, byte dir) {
+	public static int[] getPEfrac(Transcript t, int readLen, AbstractEdge[] edges, byte dir) {
 		assert(edges.length== 2);
 		int[] left= edges[0].getFrac(t, readLen,dir);
 		int[] right= edges[1].getFrac(t, readLen,dir);
@@ -337,7 +301,7 @@ public class SuperEdge extends Edge {
 		return new int[] {left[0], left[1], right[0], right[1]};
 	}
 	
-	public static int[] getFrac(Transcript t, int readLen, Edge[] edges, byte dir) {
+	public static int[] getFrac(Transcript t, int readLen, AbstractEdge[] edges, byte dir) {
 		int[] res= null;
 		int start= t.getExonicPosition(getFirstEJ(edges));
 		int end= t.getExonicPosition(getLastEJ(edges));
@@ -409,39 +373,6 @@ public class SuperEdge extends Edge {
 	}
 	
 	
-	@Override
-	public float[] getCoverage(boolean sense, int minMapLen, int maxMapLen) {
-//		if (isPend()) {
-//			if (sense)
-//				return edges[0].getCoverage(sense, minMapLen, maxMapLen);
-//			else
-//				return edges[edges.length- 1].getCoverage(sense, minMapLen, maxMapLen);
-//		} else
-		return super.getCoverage(sense, minMapLen, maxMapLen);
-	}
-	
-	public float getCoverage(int p, boolean sense, int minMapLen, int maxMapLen) {
-		
-		assert(isExonic());
-		
-		int start= getGpos(sense, true, minMapLen, maxMapLen);
-		int end= getGpos(sense, false, minMapLen, maxMapLen);
-		if(p< start|| p> end)
-			return -1;
-		
-		float[] a= getCoverage(sense, minMapLen, maxMapLen);
-		if (a== null)
-			return -1;
-		
-		int sStart= getGpos(sense, true, minMapLen, maxMapLen), sEnd= getGpos(sense, false, minMapLen, maxMapLen);
-		if (p< sStart|| p> sEnd)
-			return -1;
-		if ((sense&& coverage== null)|| ((!sense)&& coverageRev== null))
-			return 0;
-		return sense?coverage[p- sStart]:coverageRev[p- sStart]; 
-		
-	}
-	
 	public Node getTail() {
 		return edges[0].getTail();
 	}
@@ -482,7 +413,7 @@ public class SuperEdge extends Edge {
 	 * @param edges
 	 * @return
 	 */
-	public static int[] getPEfrac(Transcript t, int readLen, Edge[] edges) {
+	public static int[] getPEfrac(Transcript t, int readLen, AbstractEdge[] edges) {
 		assert(edges.length== 2);
 		int[] left= edges[0].getFrac(t, readLen);
 		int[] right= edges[1].getFrac(t, readLen);
@@ -497,7 +428,7 @@ public class SuperEdge extends Edge {
 	 * @param edges
 	 * @return
 	 */
-	public static int[] getFrac(Transcript t, int readLen, Edge[] edges) {
+	public static int[] getFrac(Transcript t, int readLen, AbstractEdge[] edges) {
 			int[] res= null;
 			int start= t.getExonicPosition(getFirstEJ(edges));
 			int end= t.getExonicPosition(getLastEJ(edges));
