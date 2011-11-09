@@ -1,3 +1,4 @@
+package fbi.genome.tools.overlap;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -141,7 +142,7 @@ public class Intersector implements FluxTool<Void>{
 						} else {	// intersect
 							// overlap
 							int minStart= (start1< start2? start1: start2);
-							int maxEnd= (end1< end2? end1: end2);
+							int maxEnd= (end1< end2? end2: end1);
 
 							// obs: there are max. 3 blocks produced, 
 							// less iff start1== start2, or end1== end2
@@ -149,8 +150,11 @@ public class Intersector implements FluxTool<Void>{
 							// block1 (minStart,maxStart)
 							int start= minStart;
 							int end= (start1== minStart? start2: start1);
-							if (start!= end)
-								bedTmp= write(start, end++, bed1, oneCode, bed2, twoCode, writer);
+							if (start!= end) 
+								bedTmp= write(start, end++, 
+										start== start1? bed1: bed2, 
+										start== start1? oneCode: twoCode, 
+										null, -1, writer);
 							// block2 (maxStart,minEnd)
 							start= end;
 							end= (end1== maxEnd? end2: end1);
@@ -160,7 +164,10 @@ public class Intersector implements FluxTool<Void>{
 							start= end;
 							end= (end1== maxEnd? end1: end2);
 							if (start!= end)
-								bedTmp= write(start, end++, bed1, oneCode, bed2, twoCode, writer);
+								bedTmp= write(start, end++, 
+										maxEnd== end1? bed1: bed2, 
+										maxEnd== end1? oneCode: twoCode, 
+										null, twoCode, writer);
 
 							// consume completely divided,
 							// set other to rest
@@ -227,12 +234,18 @@ public class Intersector implements FluxTool<Void>{
 		bed.setStart(start);
 		bed.setEnd(end);
 		int code1= oneCode> 0? oneCode: Integer.parseInt(bed1.getName().toString());
-		int code2= twoCode> 0? twoCode: Integer.parseInt(bed2.getName().toString());
+		int code2= 0;
+		if (bed2!= null)
+			code2= twoCode> 0? twoCode: Integer.parseInt(bed2.getName().toString());
 		int code= code1+ code2;
 		bed.setName(Integer.toString(code));
 		int len= end- start;
-		int score= (int) ((bed1.getScore()* len/ (float) bed1.length()) 
-				+ (bed2.getScore()* len/ (float) bed2.length()));
+		int score= (int) (bed1.getScore()* len/ (float) bed1.getLength());
+		if (bed2!= null) {
+			score+= (bed2.getScore()* len/ (float) bed2.getLength());
+			score/= 2;	// arit. average of rel. weight for both overlapping parts
+		}
+
 		bed.setScore(score> 1000? 1000: score);
 		bed.setStrand((byte) 1);
 		

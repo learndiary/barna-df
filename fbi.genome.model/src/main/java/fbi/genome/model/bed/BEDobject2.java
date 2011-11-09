@@ -159,6 +159,11 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			replaceCurrField(chr);
 		}
 	}
+	
+	/**
+	 * Sets the &quot;start&quot;field of the bed object.<br>
+	 * @param x new start position
+	 */
 	public void setStart(int x) {
 		bedStart= x;
 		if (end== chrP2) {
@@ -174,9 +179,17 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			replace(1, start);
 		}
 	}
+	
+	/**
+	 * Sets the &quot;end&quot;field of the bed object.<br>
+	 * <b>Note</b>: counts the number of fields that are initialized 
+	 * so far, consider calling append when successively building 
+	 * a BED string.
+	 * @param x new end position
+	 */
 	public void setEnd(int x) {
 		bedEnd= x;
-		if (end== chrP2) {
+		if (countTokens()< 3) {
 			assert(cnt== 1&& p2== end);
 			p1= end+ 1;
 			append(x);
