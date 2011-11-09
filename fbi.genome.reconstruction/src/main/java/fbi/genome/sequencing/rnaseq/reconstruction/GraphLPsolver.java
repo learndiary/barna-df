@@ -388,7 +388,6 @@ public class GraphLPsolver implements ReadStatCalculator {
 			}
 			if (totVal== 0) {
 				System.err.println("edge with 0 expectation! "+aMapper.trpts[0]+" "+e);
-				if (1== 1)
 					continue; // TODO !!! we throw it out ?!! brutal...
 				
 			}
@@ -607,7 +606,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 			for (int i = 0; i < aMapper.trpts.length; i++) 
 				lenSum+= aMapper.trpts[i].getExonicLength();
 			float avgLen= lenSum/ aMapper.trpts.length;
-			float rpk= aMapper.getMappedReads()* 1000f/ avgLen;
+			float rpk= aMapper.getNrMappingsMapped()* 1000f/ avgLen;
 			for (int i = 0; i < aMapper.trpts.length; i++) {
 				int tlen= aMapper.trpts[i].getExonicLength();
 				UniversalMatrix m= profile.getMatrix(tlen, rpk);

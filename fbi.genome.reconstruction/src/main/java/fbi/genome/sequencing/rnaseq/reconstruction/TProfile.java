@@ -11,16 +11,12 @@
 
 package fbi.genome.sequencing.rnaseq.reconstruction;
 
-import fbi.genome.model.splicegraph.SimpleEdge;
-
 import java.util.Comparator;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
+import fbi.genome.model.constants.Constants;
 
 public class TProfile {
 
-	private static int profileCtr= 0;
-	
 	public static class Tuple {
 		int x= 0, y= 0, count= 1;
 		public Tuple(int x, int y) {

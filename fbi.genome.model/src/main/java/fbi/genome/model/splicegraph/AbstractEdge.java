@@ -128,6 +128,14 @@ public abstract class AbstractEdge {
 		this.tail = tail;
 	}
 
+	/**
+	 * Retrieves the last included position on the left
+	 * respectively the right flank of the edge.
+	 * @param tail <code>true</code> if left flank, 
+	 * <code>false</code> otherwise
+	 * @return genomic position of the last included 
+	 * flank position
+	 */
 	public int getDelimitingPos(boolean tail) {
 		if (tail) {
 			int pos= getTail().getSite().getPos();

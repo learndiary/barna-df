@@ -11,10 +11,6 @@
 
 package fbi.genome.lpsolver;
 
-import lpsolve.LpSolve;
-import lpsolve.VersionInfo;
-import sun.rmi.runtime.Log;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

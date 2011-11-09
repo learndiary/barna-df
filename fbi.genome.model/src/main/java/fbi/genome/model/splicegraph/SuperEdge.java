@@ -54,11 +54,17 @@ public class SuperEdge extends AbstractEdge {
 			return val; //(edges[0].toString()+ edges[1].toString()).hashCode();
 		}
 	}
-	
-	static EdgeTuple first= null;
+
+	/**
+	 * Edge set comprised by <code>this</code> instance of
+	 * Superedge.
+	 */
 	AbstractEdge[] edges= null;
-	SimpleEdge[] phantomEdges= null;
-	boolean pend= false;
+	
+	/**
+	 * Flag marking non-contiguous set of edges.
+	 */
+	boolean pairedEnd= false;
 		
 
 	/**
@@ -166,20 +172,6 @@ public class SuperEdge extends AbstractEdge {
 	}
 
 	/**
-	 * @deprecated uses explicit Edge constructor
-	 */
-	SimpleEdge[] getPhantomEdges() {
-		if (phantomEdges == null) {
-			phantomEdges = new SimpleEdge[edges.length];
-			for (int i = 0; i < phantomEdges.length; i++) {
-				phantomEdges[i]= new SimpleEdge(edges[i].tail, edges[i].head);
-			}
-		}
-
-		return phantomEdges;
-	}
-
-	/**
 	 * length that spans from last nt before 1st splice junction
 	 * to nt after last splice junction
 	 */
@@ -250,25 +242,6 @@ public class SuperEdge extends AbstractEdge {
 		return true;
 	}
 
-	/**
-	 * finds (exonic) edge containing <code>genomicPos</code>
-	 * @param genomicPos
-	 * @return
-	 */
-	private AbstractEdge findEdge(int genomicPos) {
-		if (genomicPos< edges[0].getTail().getSite().getPos()
-				|| genomicPos> edges[edges.length- 1].getHead().getSite().getPos())
-			return null;
-		int i;
-		for (i = 0; i < edges.length; ++i) 
-			if (edges[i].getTail().getSite().getPos()> genomicPos)
-				break;
-		assert(i>= 0&& i<= edges.length);
-		if (genomicPos> edges[i- 1].getHead().getSite().getPos())
-			return null;
-		return edges[i- 1];		
-	}
-
 	public String toString() {
 		StringBuffer sb= new StringBuffer();	// getTail().getSite().toString()
 		for (int i = 0; i < edges.length; i++) {
@@ -285,11 +258,11 @@ public class SuperEdge extends AbstractEdge {
 	}
 
 	public boolean isPend() {
-		return pend;
+		return pairedEnd;
 	}
 
 	public void setPend(boolean pend) {
-		this.pend = pend;
+		this.pairedEnd = pend;
 	}
 	
 
@@ -302,9 +275,11 @@ public class SuperEdge extends AbstractEdge {
 	}
 	
 	public static int[] getFrac(Transcript t, int readLen, AbstractEdge[] edges, byte dir) {
+		
 		int[] res= null;
 		int start= t.getExonicPosition(getFirstEJ(edges));
 		int end= t.getExonicPosition(getLastEJ(edges));
+		
 		// TODO changed from (start-rDelta)
 		// int eDelta= end- start+ 1;	
 		// int rDelta= readLen- eDelta;
@@ -340,7 +315,7 @@ public class SuperEdge extends AbstractEdge {
 		assert(edges.length>= 2);
 		
 		// paired-end
-		if (pend) {
+		if (pairedEnd) {
 			if (sense)
 				return edges[0].getGpos(sense, start, minMapLen, maxMapLen);
 			else
@@ -352,7 +327,7 @@ public class SuperEdge extends AbstractEdge {
 		int interSum= 0;
 		for (int i = 1; i < edges.length- 1; i++) 
 			interSum+= edges[i].length();
-		int maxOverhang= maxMapLen- interSum- 2, minOverhang= minMapLen- interSum- 2; 
+		// int maxOverhang= maxMapLen- interSum- 2, minOverhang= minMapLen- interSum- 2; 
 		if (sense) {
 			if (start)
 				p= Math.max(edges[0].getTail().getSite().getPos(), 
