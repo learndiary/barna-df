@@ -118,11 +118,12 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      */
     private final static byte[] digits = {
             48, 49, 50, 51, 52, 53,
-            54, 55, 56, 57, 97, 98,
-            99, 100, 101, 102, 103, 104,
-            105, 106, 107, 108, 109, 110,
-            111, 112, 113, 114, 115, 116,
-            117, 118, 119, 120, 121, 122
+            54, 55, 56, 57
+//            , 97, 98,
+//            99, 100, 101, 102, 103, 104,
+//            105, 106, 107, 108, 109, 110,
+//            111, 112, 113, 114, 115, 116,
+//            117, 118, 119, 120, 121, 122
     };
     /**
      * The characters array
@@ -365,6 +366,24 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
         return subSequence(p1, p2);
     }
 
+    /**
+     * Get the field at the given index and parse it to an floating point number.
+     * An exception is triggered if either the field does not exist or
+     * the value could not be parsed
+     *
+     * @param fieldNr the field index
+     * @return value floating point value of the field
+     */
+    public float getTokenFloat(int fieldNr) {
+        if (fieldNr < 0) {
+            throw new IllegalArgumentException("Field index < 0");
+        }
+
+        if(find(fieldNr)){
+            return parseFloat(p1, p2);            
+        }
+        throw new IllegalArgumentException("Field " + fieldNr + " not found");
+    }
     /**
      * Get the field at the given index and parse it to an Integer.
      * An exception is triggered if either the field does not exist or
@@ -751,6 +770,65 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
         return val;
     }
 
+    /**
+     * Parse the floating point value for the sequence between
+     * from (inclusive) and to (exclusive)
+     *
+     * @param from the start index (inclusive)
+     * @param to the end index (exclusive)
+     * @return value the floating point value
+     */
+    public float parseFloat(final int from, final int to) {
+    	
+    	final int len   = to- from;
+    	float     ret   = 0f;         // return value
+    	int       pos   = from;       // read pointer position
+    	int       part  = 0;          // the current part (int, float and sci parts of the number)
+    	boolean   neg   = false;      // true if part is a negative number
+     
+    	// find start
+    	while (pos < to && (chars[pos] < '0' || chars[pos] > '9') && chars[pos] != '-' && chars[pos] != '.')
+    		++pos;
+     
+    	// sign
+    	if (chars[pos] == '-') { 
+    		neg = true; 
+    		pos++; 
+    	}
+     
+    	// integer part
+    	while (pos < to && !(chars[pos] > '9' || chars[pos] < '0'))
+    		part = part*10 + (chars[pos++] - '0');
+    	ret = neg ? (float)(part*-1) : (float)part;
+     
+    	// float part
+    	if (pos < to && chars[pos] == '.') {
+    		pos++;
+    		int mul = 1;
+    		part = 0;
+    		while (to < len && !(chars[pos] > '9' || chars[pos] < '0')) {
+    			part = part*10 + (chars[pos] - '0'); 
+    			mul*=10; pos++;
+    		}
+    		ret = neg ? ret - (float)part / (float)mul : ret + (float)part / (float)mul;
+    	}
+     
+    	// scientific part
+    	if (pos < to && (chars[pos] == 'e' || chars[pos] == 'E')) {
+    		pos++;
+    		neg = (chars[pos] == '-'); pos++;
+    		part = 0;
+    		while (pos < to && !(chars[pos] > '9' || chars[pos] < '0')) {
+    			part = part*10 + (chars[pos++] - '0'); 
+    		}
+    		if (neg)
+    			ret = ret / (float)Math.pow(10, part);
+    		else
+    			ret = ret * (float)Math.pow(10, part);
+    	}	
+    	return ret;
+    }
+    
     /**
      * Parse the integer value for the sequence between
      * from (inclusive) and to (exclusive)

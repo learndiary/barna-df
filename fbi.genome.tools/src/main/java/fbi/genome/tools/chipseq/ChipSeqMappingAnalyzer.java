@@ -45,7 +45,8 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 			//"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY.bed"
 		);
 				
-		ChipSeqMappingAnalyzer myRun= new ChipSeqMappingAnalyzer(f);
+		ChipSeqMappingAnalyzer myRun= new ChipSeqMappingAnalyzer();
+		myRun.fileInput= f;
 //		myRun.descriptor= new UniversalReadDescriptor();
 //		myRun.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 				
@@ -70,9 +71,14 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 	UniversalReadDescriptor descriptor= null;
 	
 	/**
-	 * The input file.
+	 * Default input file.
 	 */
 	File fileInput;
+	
+	/**
+	 * Default output file.
+	 */
+	File fileOutput;
 	
 	/**
 	 * The program run parameters.
@@ -80,14 +86,6 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 	ChipSeqSettings parameters;
 	
 	int maxInsertSize= 1000;
-	
-	/**
-	 * Creates an instance based on the given file with mappings.
-	 * @param inputFile file with mappings
-	 */
-	public ChipSeqMappingAnalyzer(File inputFile) {
-		this.fileInput= inputFile;		
-	}
 	
 	/**
 	 * Empty constructor to comply with FluxTool implementation.
@@ -101,16 +99,38 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 	 * @param inputFile file with mappings
 	 * @param descriptor parsing instructions for read IDs
 	 */
-	public ChipSeqMappingAnalyzer(File inputFile, UniversalReadDescriptor descriptor) {
-		this(inputFile);	
+	public ChipSeqMappingAnalyzer(File inputFile, File outputFile, UniversalReadDescriptor descriptor) {
+		this();
+		this.fileInput= inputFile;
+		this.fileOutput= outputFile;
 		this.descriptor= descriptor;
 	}
 	
 	public int[] call() throws Exception {
 		
+		// copy run parameters
+		if (parameters!= null) {
+			if (fileInput== null)
+				fileInput= parameters.get(ChipSeqSettings.FILE_INPUT);
+			if (descriptor== null) {
+				descriptor= new UniversalReadDescriptor();
+				try {
+					descriptor.init(parameters.get(ChipSeqSettings.READ_DESCRIPTOR));
+				} catch (Exception e) {
+					descriptor= null;
+				}
+			}
+			if (fileOutput== null)
+				fileOutput= parameters.get(ChipSeqSettings.FILE_OUTPUT);
+		}
+		if (descriptor== null) {
+			descriptor= new UniversalReadDescriptor();
+			descriptor.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+		}
+			
+		
 		// sort
-		File sortedInput= fileInput;
-		sortedInput= BEDwrapper.getSortedFile(fileInput, null, 
+		File sortedInput= BEDwrapper.getSortedFile(fileInput, null, 
 				((descriptor!= null&& descriptor.isPaired())?BEDwrapper.COMPARATOR_PAIRED_END:null));
 		System.gc();
 		Thread.yield();
@@ -126,15 +146,19 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		return bounds;
 	}
 
+	protected static File getFileOutput(File inputFile) {
+		File f= new File(FileHelper.append(inputFile.getAbsolutePath(), 
+				"_peaks", true, ".txt"));
+		return f;
+	}
 
 	private void output(int[] bounds) {
 
 		BufferedWriter writer= null;
 		try {
-			File f= parameters== null? null: parameters.get(ChipSeqSettings.FILE_OUTPUT);
+			File f= fileOutput;
 			if (f== null)
-				f= new File(FileHelper.append(fileInput.getAbsolutePath(), 
-						"_peaks", true, ".txt"));
+				f= getFileOutput(fileInput);
 			System.err.println("writing peak descriptions to "+ f.getAbsolutePath());
 			writer= new BufferedWriter(new FileWriter(f));
 			int mid= (bounds.length- 1)/ 2;
@@ -219,7 +243,7 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
 		BEDobject2 bed1= null, bed2= null;
 		int ctr= 0;
-		boolean pairedEnd= (descriptor!= null&& descriptor.isPaired());
+		boolean pairedEnd= descriptor.isPaired();
 		Attributes att1= null, att2= null;
 		IntVector multiPairs= null;
 		long max= 100000000; // HiSeq lane mappings

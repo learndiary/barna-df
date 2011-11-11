@@ -52,7 +52,7 @@
         <dependency>
             <groupId>fbi</groupId>
             <artifactId>fbi.commons</artifactId>
-            <version>1.6</version>
+            <version>1.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

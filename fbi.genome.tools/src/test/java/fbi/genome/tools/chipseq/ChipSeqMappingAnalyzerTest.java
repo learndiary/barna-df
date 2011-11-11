@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import fbi.commons.Execute;
@@ -33,7 +31,8 @@ public class ChipSeqMappingAnalyzerTest {
         File f = new File(ChipSeqMappingAnalyzerTest.class.getResource("/Paired_sorted_chrY.bed").getFile());
         long start = System.currentTimeMillis();
         // instantiate and run
-        ChipSeqMappingAnalyzer myRun = new ChipSeqMappingAnalyzer(f);
+        ChipSeqMappingAnalyzer myRun = new ChipSeqMappingAnalyzer();
+        myRun.fileInput= f; 
         myRun.descriptor = new UniversalReadDescriptor();
         myRun.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 

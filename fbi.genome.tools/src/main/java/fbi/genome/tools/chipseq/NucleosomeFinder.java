@@ -147,7 +147,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 //		myFinder.coreLength= 150;
 		
 		NucleosomeFinder myFinder= new NucleosomeFinder(new File(
-				"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY.bed"));
+				//"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY_testchrx.bed"));
+				"/Users/micha/projects/demassy/download_new/transfer/B6+K4me3+200511.sorted.bed"));
 		myFinder.descriptor= new UniversalReadDescriptor();
 		myFinder.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 
@@ -180,8 +181,10 @@ public class NucleosomeFinder implements FluxTool<Void> {
 				((descriptor!= null&& descriptor.isPaired())?BEDwrapper.COMPARATOR_PAIRED_END:null));
 
 		// distribution parameters
-		ChipSeqMappingAnalyzer distanceDistr= new ChipSeqMappingAnalyzer(sortedInput);
-		distanceDistr.descriptor= this.descriptor;
+		ChipSeqMappingAnalyzer distanceDistr= new ChipSeqMappingAnalyzer(
+				sortedInput,
+				ChipSeqMappingAnalyzer.getFileOutput(fileMappings),
+				descriptor);
 		Future<int[]> captain= Execute.getExecutor().submit(distanceDistr);
 		int[] distr= null;
 		try {
@@ -221,6 +224,31 @@ public class NucleosomeFinder implements FluxTool<Void> {
 			max= process(chr, dyld, windowKernelFlank, windowOuterFlank, max);
 			
 		}
+		
+		try {
+			getWriterPeaks().flush();
+			getWriterPeaks().close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if (outStringency) {
+			try {
+				getWriterStringency().flush();
+				getWriterStringency().close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		if (outOccupancy) {
+			try {
+				getWriterOccupancy().flush();
+				getWriterOccupancy().close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		return null;
 		
 	}
@@ -252,23 +280,6 @@ public class NucleosomeFinder implements FluxTool<Void> {
 			max= max2;
 		else if (max2> max)
 			System.err.println("max increased: "+ max+ " -> "+ max2);
-		if (outStringency) {
-			try {
-				getWriterStringency().flush();
-				getWriterStringency().close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		if (outOccupancy) {
-			try {
-				getWriterOccupancy().flush();
-				getWriterOccupancy().close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
 		
 		// predict
 		predictDYLD(dyld, chr, max, coreLength);
@@ -350,13 +361,6 @@ public class NucleosomeFinder implements FluxTool<Void> {
 						"Nuc"+ fill(counter++, 8), (max> maxScore? 1000: 1000* max/maxScore));
 		}
 
-		try {
-			getWriterPeaks().flush();
-			getWriterPeaks().close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
 	}
 
 	void writeBED(BufferedWriter writer, String chr, int start,
@@ -679,15 +683,26 @@ public class NucleosomeFinder implements FluxTool<Void> {
 
 	public boolean validateParameters(HelpPrinter printer,
 			ArgumentProcessor toolArguments) {
-		// TODO Auto-generated method stub
-		return false;
+		if (fileMappings== null|| descriptor== null)
+			return false;
+		return true;
 	}
 	
-    @Option(name = "p", longName = "parameter", description = "specify parameter file", displayName = "file", required = true)
+    @Option(name = "i", longName = "input", description = "set input mappings file (BED)", displayName = "input", required = true)
     public void setParameters(File file) {
-        this.fileParameters = file;
+        this.fileMappings= file;
     }
 
+    @Option(name = "d", longName = "descriptor", description = "set read descriptor", displayName = "descriptor", required = true)
+    public void setDescriptor(String descriptor) {
+    	this.descriptor= new UniversalReadDescriptor();
+    	try {
+    		this.descriptor.init(UniversalReadDescriptor.getDescriptor(descriptor));
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		this.descriptor= null;
+    	}
+    }
 	
 	
 }

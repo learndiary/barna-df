@@ -31,19 +31,26 @@ public class Intersector implements FluxTool<Void>{
 		File parFile= null;
 		
 		try {
-			parFile= FileHelper.createTempFile(
-					Intersector.class.getSimpleName(), 
-					"tst_overlap.par");
+			parFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/bed/overlap.par"); 
+				
+//				FileHelper.createTempFile(
+//					Intersector.class.getSimpleName(), 
+//					"tst_overlap.par");
 			BufferedWriter writer= new BufferedWriter(new FileWriter(parFile));
-			writer.write("/Users/micha/projects/demassy/download_new/tst2.txt.peak_peak.bed_clean\n");
-			writer.write("/Users/micha/projects/demassy/download_new/tst3.txt.peak_peak.bed_clean\n");
+//			writer.write("/Users/micha/projects/demassy/download_new/tst2.txt.peak_peak.bed_clean\n");
+//			writer.write("/Users/micha/projects/demassy/download_new/tst3.txt.peak_peak.bed_clean\n");
+			String dir= "/Users/micha/projects/demassy/download_new/cisgenome/bed/";
+			writer.write(dir+ "B6_200511_input.txt.peak_sorted.bed\n");
+			writer.write(dir+ "B6_230611_input.txt.peak_sorted.bed\n");
+			writer.write(dir+ "RJ2_190511_input.txt.peak_sorted.bed\n");
+			writer.write(dir+ "RJ2_220611_input.txt.peak_sorted.bed\n");
 			writer.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
 		
-		File outFile= new File("/Users/micha/projects/demassy/download_new/tst_overlap_out.bed");
+		File outFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/bed/overlap.bed");
 		
 		Execute.initialize(2);
 
@@ -304,7 +311,7 @@ public class Intersector implements FluxTool<Void>{
 				tmpFile= FileHelper.createTempFile(this.getClass().getSimpleName(), ".bed");
 				ctr*= 2;
 				
-				intersect(f0, ctr, f, (ctr* 2), tmpFile);
+				intersect(f0, -1, f, (ctr* 2), tmpFile);
 
 				f0.delete();
 			}

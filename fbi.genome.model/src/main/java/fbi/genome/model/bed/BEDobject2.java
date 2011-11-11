@@ -99,7 +99,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			} else
 				return;
 			
-			score= getTokenInt(4);
+			score= getScore();
 			if (score< 0) {
 				score= -1;
 			}
@@ -138,7 +138,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	}
 	
 	public boolean isInited() {
-		return (bedStart>= 0&& bedEnd>= 0&& chrP2>= 0);
+		return (bedStart>= 0&& bedEnd>= 0&& chrP2>= 0&& nameP1>= 0&& nameP2>= 0);
 	}
 	
 	public void setChromosome(CharSequence chr) {
@@ -146,12 +146,11 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			assert(end== start);
 			append(chr);
 			ensureLength(start, 1);
-			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 			cnt= 0;
 			p1= start;
 			p2= end;
 			chrP2= (byte) end;
-			cnt= 0;
+			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 		} else {
 			p1= start;
 			p2= chrP2;
@@ -166,7 +165,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	 */
 	public void setStart(int x) {
 		bedStart= x;
-		if (end== chrP2) {
+		if (countTokens()< 2) {
 			p1= end+ 1;
 			append(x);
 			ensureLength(end, 1);
@@ -216,9 +215,13 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			nameP2= (byte) (p2= end);
 			cnt= 3;
 		} else {
+			if (!isInited())
+				init();
 			p1= nameP1; p2= nameP2;
 			cnt= 3;
 			replaceCurrField(name);
+			nameP1= (byte) p1;
+			nameP2= (byte) p2;
 		}
 	}
 	
@@ -505,13 +508,15 @@ public class BEDobject2 extends ByteArrayCharSequence {
 		return super.toString();
 	}
 	public int getScore() {
-//		int p= getNameP2();
-//		int i = p+1;
-//		for (;i < a.length; i++) {
-//			if (i== '\t')
-//				break;
-//		}
-		int x= getTokenInt(4);
+		
+		int x= -1;
+		try {
+			x= getTokenInt(4);
+		} catch (NumberFormatException e) {
+			float f= getTokenFloat(4);
+			x= (int) f; 
+		}
+		
 		return x; 
 	}
 	public BEDobject2 getNext() {
