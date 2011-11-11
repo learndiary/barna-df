@@ -11,19 +11,25 @@
 
 package fbi.genome.sequencing.rnaseq.simulation;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Vector;
+
 import fbi.genome.io.FileHelper;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gtf.GTFwrapper;
+import fbi.genome.io.state.MappingWrapperState;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
 import fbi.genome.model.commons.IntVector;
-
-import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Vector;
 
 public class PWM implements WeightMatrix {
     double[][] pwm = null;
@@ -315,7 +321,7 @@ public class PWM implements WeightMatrix {
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
                     File f = new File(fileBed);
-                    bedReader.sortBED(f);
+                    bedReader.sort(f);
                     if (FileHelper.move(f, ff, null)) {
                         fileBed = ff.getAbsolutePath();
                     } else {
@@ -347,7 +353,8 @@ public class PWM implements WeightMatrix {
                     }
                     ++cntTrpt;
                     Transcript t = genes[i].getTranscripts()[0];
-                    BEDobject2[] beds = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
+                    MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                    BEDobject2[] beds = (BEDobject2[]) state.result;
                     if (beds == null) {
                         continue;
                     }
@@ -651,7 +658,7 @@ public class PWM implements WeightMatrix {
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
                     File f = new File(fileBed);
-                    bedReader.sortBED(f);
+                    bedReader.sort(f);
                     if (FileHelper.move(f, ff, null)) {
                         fileBed = ff.getAbsolutePath();
                     } else {
@@ -689,7 +696,9 @@ public class PWM implements WeightMatrix {
                     }
                     ++cntTrpt;
                     Transcript t = genes[i].getTranscripts()[0];
-                    BEDobject2[] beds = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
+                    
+                    MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                    BEDobject2[] beds = (BEDobject2[]) state.result;
                     if (beds == null) {
                         continue;
                     }

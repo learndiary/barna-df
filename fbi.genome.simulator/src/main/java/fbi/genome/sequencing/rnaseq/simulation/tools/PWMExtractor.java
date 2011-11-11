@@ -11,21 +11,22 @@
 
 package fbi.genome.sequencing.rnaseq.simulation.tools;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Option;
+
 import fbi.commons.Log;
 import fbi.commons.options.HelpPrinter;
 import fbi.genome.io.FileHelper;
 import fbi.genome.io.bed.BEDwrapper;
 import fbi.genome.io.gtf.GTFwrapper;
+import fbi.genome.io.state.MappingWrapperState;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 
 /**
  * Count and print breakpoint distribution
@@ -97,7 +98,7 @@ public class PWMExtractor {  //implements FluxTool {
                 Log.message("\tsorting BED file");
 
                 File f = FileHelper.createTempFile("bed-sort", "bed");
-                bedReader.sortBED(f);
+                bedReader.sort(f);
                 if (FileHelper.move(f, ff, null)) {
                     bedFile = ff;
                 } else {
@@ -129,7 +130,9 @@ public class PWMExtractor {  //implements FluxTool {
                 }
                 ++cntTrpt;
                 Transcript t = genes[i].getTranscripts()[0];
-                BEDobject2[] beds = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
+                
+                MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                BEDobject2[] beds = (BEDobject2[]) state.result;
                 if (beds == null) {
                     continue;
                 }
