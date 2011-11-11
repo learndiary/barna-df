@@ -147,8 +147,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 //		myFinder.coreLength= 150;
 		
 		NucleosomeFinder myFinder= new NucleosomeFinder(new File(
-				//"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY_testchrx.bed"));
-				"/Users/micha/projects/demassy/download_new/transfer/B6+K4me3+200511.sorted.bed"));
+				"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY_testchrx.bed"));
+				//"/Users/micha/projects/demassy/download_new/transfer/B6+K4me3+200511.sorted.bed"));
 		myFinder.descriptor= new UniversalReadDescriptor();
 		myFinder.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 

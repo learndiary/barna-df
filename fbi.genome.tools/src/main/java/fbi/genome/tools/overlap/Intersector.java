@@ -265,8 +265,12 @@ public class Intersector implements FluxTool<Void>{
 	private ByteArrayCharSequence ctrBuf= new ByteArrayCharSequence(10);
 	private void write(BEDobject2 bed, int ocode, BufferedWriter writer) {
 		
+		if (bed.getName().length()< 5)
+			System.currentTimeMillis();
 		if (ocode> 0)
 			bed.setName(Integer.toString(ocode));	// TODO make BACS to work with single chars
+		if (bed.countTokens()< 6)
+			System.currentTimeMillis();
 		charBuf= bed.toCharArray(charBuf);		
 		try {
 			writer.write(charBuf, 0, bed.length());

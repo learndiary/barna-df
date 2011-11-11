@@ -158,7 +158,8 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		try {
 			File f= fileOutput;
 			if (f== null)
-				f= getFileOutput(fileInput);
+				f= new File(FileHelper.append(fileInput.getAbsolutePath(), 
+						"_peaks", true, ".txt"));
 			System.err.println("writing peak descriptions to "+ f.getAbsolutePath());
 			writer= new BufferedWriter(new FileWriter(f));
 			int mid= (bounds.length- 1)/ 2;
