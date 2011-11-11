@@ -510,6 +510,13 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	public int getScore() {
 		
 		int x= -1;
+		
+		if (find(4)) {
+			if (p1+ 1== p2&& chars[p1]== 46)
+				return 0; // value in case of a '.'
+		} else 
+			return 0;	// value in case of no score field
+		
 		try {
 			x= getTokenInt(4);
 		} catch (NumberFormatException e) {
