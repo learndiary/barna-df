@@ -147,8 +147,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 //		myFinder.coreLength= 150;
 		
 		NucleosomeFinder myFinder= new NucleosomeFinder(new File(
-				"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY_testchrx.bed"));
-				//"/Users/micha/projects/demassy/download_new/transfer/B6+K4me3+200511.sorted.bed"));
+				//"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY_testchrx.bed"));
+				"/Users/micha/projects/demassy/download_new/transfer/B6+K4me3+200511.sorted.bed_3K"));
 		myFinder.descriptor= new UniversalReadDescriptor();
 		myFinder.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 
@@ -206,23 +206,74 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		double max= -1;
 		MappingWrapperState state= null;
 		BEDwrapper bedReader= new BEDwrapper(sortedInput);
+		bedReader.setMaxBEDObjects(1000);
 		
+		Vector<BEDobject2> v= new Vector<BEDobject2>();
+		Attributes a= descriptor.createAttributes();
+		float[] dyld= null;
+		ctrReads= 0;
+		ctrDylds= 0;
+
 		for(;state== null|| state.state!= MappingWrapperState.STATE_END_OF_FILE; chr= state.nextChr) {
+			
+			// input
 			state= bedReader.read(chr, 1, Integer.MAX_VALUE);
 			if (state.result== null)
 				continue;
 
-			// get dyld positions
-			float[] dyld= nextDYLD((BEDobject2[]) state.result);
+			// concatenate with left-over
+			BEDobject2[] beds= (BEDobject2[]) state.result;
 			state.result= null;
+			if (v.size()> 0) {
+				if (descriptor.getAttributes(beds[0].getName(), a).id.equals(
+						descriptor.getAttributes(v.elementAt(0).getName(), a))) {
+					BEDobject2[] b= new BEDobject2[v.size()+ beds.length];
+					for (int i = 0; i < v.size(); i++) 
+						b[i]= v.elementAt(i);
+					System.arraycopy(beds, 0, b, v.size(), beds.length);
+					beds= b;
+				} else
+					v.removeAllElements();
+			}
+			
+			// get dyld positions
+			dyld= nextDYLD(dyld, beds, v.size());
+			
+			
+			// save bucket with last read ID			
+			if (chr.equals(state.nextChr)) {
+				CharSequence id= descriptor.getAttributes(beds[beds.length- 1].getName(), a).id;
+				int x= beds.length- 2;
+				while (x> 0&& descriptor.getAttributes(beds[x--].getName(), a).id.equals(id));
+				if (x> 0)
+					x+= 2;
+				else {
+					if (v.size()> 0&& 
+							!descriptor.getAttributes(v.elementAt(v.size()- 1).getName(), a).id.equals(id))
+						v.removeAllElements();
+				}
+				for (int i = x; i < beds.length; i++) 
+					v.add(beds[x]);
+				beds= null;
+				System.gc();
+				
+				continue;	// chr not finished yet
+			}
+			
+			// else..
+			v.removeAllElements();
+			beds= null;
 			System.gc();
 			System.err.println("\tfound: "+ ctrReads+ " reads, "+ ctrDylds+ " dylds");
+			ctrReads= 0;
+			ctrDylds= 0;
+
 			if (dyld== null)
 				continue;
 			
 			// calculate stringency
 			max= process(chr, dyld, windowKernelFlank, windowOuterFlank, max);
-			
+			dyld= null;
 		}
 		
 		try {
@@ -553,9 +604,9 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		return writerPeaks;
 	}
 	
-	float[] nextDYLD(BEDobject2[] beds) {
+	float[] nextDYLD(float[]  dyld, BEDobject2[] beds, int x) {
 
-		// init
+		// get max
 		int max= -1;
 		for (int i = 0; i < beds.length; i++) {
 			int p= beds[i].getEnd();
@@ -564,13 +615,21 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		}
 		if (max< 0)
 			return null;
-		float[] dyld= new float[max];
 		
+		// init
+		if (dyld== null)
+			dyld= new float[max];
+		else if (max> dyld.length) {
+			float[] d= new float[max];
+			System.arraycopy(dyld, 0, d, 0, dyld.length);
+			dyld= d;
+			System.gc();
+		}
+		
+		// mark dyld centers
 		boolean pairedEnd= descriptor!= null&& descriptor.isPaired();
 		BEDobject2 bed1, bed2;
 		Attributes at1= null, at2= null;
-		ctrReads= 0;
-		ctrDylds= 0;
 		for (int i = 0; i < beds.length; i++) {
 			
 			++ctrReads;
@@ -581,6 +640,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 				if (at1.flag!= 1)
 					continue;
 				for (int j = i+1; j < beds.length; j++) {
+					if (i< x&& j< x)
+						continue;	// skip left-over
 					at2= descriptor.getAttributes(beds[j].getName(), at2);
 					if (!at1.id.equals(at2.id))
 						break;
@@ -605,6 +666,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 						continue;	// start pairs only in correct orientation
 					bed1= beds[i];					
 					for (int j = i+1; j < beds.length; j++) {
+						if (i< x&& j< x)
+							continue;	// skip left-over
 						if (beds[j].getStrand()> 0)
 							continue;
 						bed2= beds[j];
@@ -614,8 +677,11 @@ public class NucleosomeFinder implements FluxTool<Void> {
 						markDYLD(dyld, bed1, bed2);
 					}
 
-				} else
+				} else {
+					if (i< x)
+						continue;	// skip left-over
 					markDYLD(dyld, beds[i], null);
+				}
 			}
 		}
 		
