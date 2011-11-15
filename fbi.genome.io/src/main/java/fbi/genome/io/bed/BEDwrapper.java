@@ -1185,7 +1185,20 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
+
+						// limit on objects that are read
+						if (state.count>= maxBEDobjects) {
+							state.nextChr= chrToki;
+							if (reuse)
+								lastLine= cs;
+							else {
+								bytesRead= tmpBytes; 
+								--nrUniqueLinesRead;
+							}
+							return state;
+						}
 						
+
 						if (chrToki.compareTo(chr)> 0) {	// end of chromosome reached
 							if (reuse)
 								lastLine= cs;
@@ -1462,6 +1475,12 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	        Log.progressFailed(" ERROR.");
 	        throw new RuntimeException(e);
 		}
+	}
+
+	int maxBEDobjects= Integer.MAX_VALUE;
+	
+	public void setMaxBEDObjects(int i) {
+		maxBEDobjects= i;
 	}
 
 }
