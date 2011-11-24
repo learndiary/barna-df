@@ -13,12 +13,12 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
             <outputDirectory>lib</outputDirectory>
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
             <excludes>
-                <exclude>fbi:distribution</exclude>
+                <exclude>barna:barna.distribution</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
             <includes>
-                <include>fbi:distribution</include>
+                <include>barna:barna.distribution</include>
             </includes>
             <unpack>true</unpack>
             <fileMode>755</fileMode>
@@ -32,8 +32,8 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
 
     <fileSets>
         <fileSet>
-            <directory>src/main/resources</directory>
-            <outputDirectory>doc</outputDirectory>
+            <directory>src/main/distribution</directory>
+            <outputDirectory>.</outputDirectory>
             <includes>
                 <include>README*</include>
                 <include>LICENSE*</include>

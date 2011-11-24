@@ -52,18 +52,43 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <Build-Version>${project.version}</Build-Version>
         <Flux-JDK>1.6</Flux-JDK>
-
-        <barna.commons.version>1.8-SNAPSHOT</barna.commons.version>
-        <barna.model.version>1.4-SNAPSHOT</barna.model.version>
-        <barna.io.version>1.6-SNAPSHOT</barna.io.version>
-        <barna.distribution.version>1.2</barna.distribution.version>
-        <barna.lpsolver.version>1.1-SNAPSHOT</barna.lpsolver.version>
-
-        <barna.simulator.version>1.0-SNAPSHOT</barna.simulator.version>
-        <barna.astalavista.version>1.0-SNAPSHOT</barna.astalavista.version>
-        <barna.capacitor.version>1.0-SNAPSHOT</barna.capacitor.version>
-        <barna.tools.version>1.0-SNAPSHOT</barna.tools.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>Development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <barna.commons.version>1.8-SNAPSHOT</barna.commons.version>
+                <barna.model.version>1.4-SNAPSHOT</barna.model.version>
+                <barna.io.version>1.6-SNAPSHOT</barna.io.version>
+                <barna.distribution.version>1.2</barna.distribution.version>
+                <barna.lpsolver.version>1.1-SNAPSHOT</barna.lpsolver.version>
+
+                <barna.simulator.version>1.0-SNAPSHOT</barna.simulator.version>
+                <barna.astalavista.version>1.0-SNAPSHOT</barna.astalavista.version>
+                <barna.capacitor.version>1.0-SNAPSHOT</barna.capacitor.version>
+                <barna.tools.version>1.0-SNAPSHOT</barna.tools.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>Deployment</id>
+            <properties>
+                <barna.commons.version>1.8-SNAPSHOT</barna.commons.version>
+                <barna.model.version>1.4-SNAPSHOT</barna.model.version>
+                <barna.io.version>1.6-SNAPSHOT</barna.io.version>
+                <barna.distribution.version>1.2</barna.distribution.version>
+                <barna.lpsolver.version>1.1-SNAPSHOT</barna.lpsolver.version>
+
+                <barna.simulator.version>1.0-SNAPSHOT</barna.simulator.version>
+                <barna.astalavista.version>1.0-SNAPSHOT</barna.astalavista.version>
+                <barna.capacitor.version>1.0-SNAPSHOT</barna.capacitor.version>
+                <barna.tools.version>1.0-SNAPSHOT</barna.tools.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <modules>
         <module>barna.distribution</module>
