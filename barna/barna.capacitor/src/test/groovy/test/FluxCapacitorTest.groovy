@@ -233,7 +233,8 @@ class FluxCapacitorTest{
 	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
 	
 	void assertFiles(int nrFilesInGTF, int nrFilesInBED, String stderr, String[] occurrences) {
-		
+
+        System.out.println("Error output : " + stderr);
 		
 		// current stderr output
 		//		[INFO] 	7897 reads, 8009 mappings: R-factor 1.0141826
