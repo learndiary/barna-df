@@ -55,6 +55,7 @@
     </properties>
 
     <modules>
+        <module>barna.distribution</module>
         <module>barna.commons</module>
         <module>barna.model</module>
         <module>barna.io</module>
@@ -94,6 +95,11 @@
                 <groupId>barna</groupId>
                 <artifactId>barna.simulator</artifactId>
                 <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>barna</groupId>
+                <artifactId>barna.distribution</artifactId>
+                <version>1.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
