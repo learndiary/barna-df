@@ -9,7 +9,7 @@
     </parent>
     <artifactId>barna.distribution</artifactId>
     <name>Barna - Distribution</name>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.5-SNAPSHOT</version>
 
     <description>
         Assembly descriptor to package Flux applications
