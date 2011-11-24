@@ -9,6 +9,7 @@
     </parent>
     <artifactId>barna.lpsolver</artifactId>
     <name>Barna - LPSolver</name>
+    <version>${barna.lpsolver.version}</version>
     <description>
         LP-Solver library
     </description>

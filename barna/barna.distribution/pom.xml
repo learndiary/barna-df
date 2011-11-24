@@ -11,6 +11,7 @@
     </parent>
     <artifactId>barna.distribution</artifactId>
     <name>Barna - Distribution</name>
+    <version>${barna.distribution.version}</version>
 
     <description>
         Assembly descriptor to package Flux applications

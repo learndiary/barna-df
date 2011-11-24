@@ -17,12 +17,12 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
                 <include>*:jar</include>
             </includes>
             <excludes>
-                <exclude>fbi:distribution</exclude>
+                <exclude>barna:barna.distribution</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
             <includes>
-                <include>fbi:distribution</include>
+                <include>barna:barna.distribution</include>
             </includes>
             <unpack>true</unpack>
             <fileMode>755</fileMode>
@@ -38,20 +38,12 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
     <fileSets>
         <fileSet>
             <directory>src/main/distribution</directory>
-            <outputDirectory>doc</outputDirectory>
+            <outputDirectory>.</outputDirectory>
             <includes>
                 <include>README*</include>
                 <include>LICENSE*</include>
                 <include>APACHE_LICENSE.txt</include>
             </includes>
-        </fileSet>
-        <fileSet>
-            <directory>src/main/bin</directory>
-            <outputDirectory>bin</outputDirectory>
-            <includes>
-                <include>*</include>
-            </includes>
-            <fileMode>755</fileMode>
         </fileSet>
     </fileSets>
 </assembly>

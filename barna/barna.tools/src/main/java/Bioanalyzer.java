@@ -30,7 +30,7 @@ public class Bioanalyzer {
 				try {
 					// read values bit by bit
 					yValue = (double) lEDIStream.readFloat();
-					// use values É
+					// use values
 				} catch (EOFException e) {
 					endOfStream = true;
 				} catch (IOException e) {

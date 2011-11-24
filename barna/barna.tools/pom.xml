@@ -11,7 +11,7 @@
     </parent>
     <artifactId>barna.tools</artifactId>
     <name>Barna - Tools</name>
-
+    <version>${barna.tools.version}</version>
 
     <dependencies>
         <dependency>

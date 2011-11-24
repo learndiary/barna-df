@@ -18,10 +18,16 @@
     </parent>
     <artifactId>barna.simulator</artifactId>
     <name>Barna - Flux Simulator</name>
+    <version>${barna.simulator.version}</version>
 
     <description>
         The Flux Simulator
     </description>
+
+    <properties>
+        <package.name>FluxSimulator</package.name>
+    </properties>
+
     <build>
         <plugins>
             <!--
@@ -111,7 +117,7 @@
                         <phase>package</phase>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <finalName>${project.name}-${project.version}</finalName>
+                            <finalName>${package.name}-${project.version}</finalName>
                             <descriptors>
                                 <descriptor>src/main/assembly/simulator.xml</descriptor>
                             </descriptors>

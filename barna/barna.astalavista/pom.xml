@@ -12,6 +12,7 @@
     </parent>
     <artifactId>barna.astalavista</artifactId>
     <name>Barna - Astalavista</name>
+    <version>${barna.astalavista.version}</version>
 
 
     <dependencies>

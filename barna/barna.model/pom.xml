@@ -20,6 +20,7 @@
     </parent>
     <artifactId>barna.model</artifactId>
     <name>Barna - Model</name>
+    <version>${barna.model.version}</version>
     <description>
         The Model library contains basic data models
     </description>
