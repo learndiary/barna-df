@@ -38,7 +38,7 @@
                 <version>2.2</version>
                 <configuration>
                     <appendAssemblyId>true</appendAssemblyId>
-                    <finalName>${project.name}-${project.version}</finalName>
+                    <finalName>${artifactId}-${project.version}</finalName>
                     <descriptors>
                         <descriptor>src/main/assembly/lpsolver-lx.xml</descriptor>
                         <descriptor>src/main/assembly/lpsolver-osx.xml</descriptor>
