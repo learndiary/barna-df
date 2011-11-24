@@ -17,6 +17,7 @@
     <artifactId>barna</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>Barna parent module</name>
+    <packaging>pom</packaging>
 
     <description>
         Barna parent module
@@ -55,13 +56,20 @@
 
     <modules>
         <module>barna.commons</module>
+        <module>barna.model</module>
     </modules>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.commons</artifactId>
                 <version>1.8-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>barna</groupId>
+                <artifactId>barna.model</artifactId>
+                <version>1.4-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
