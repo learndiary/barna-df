@@ -13,8 +13,8 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
             <outputDirectory>lib</outputDirectory>
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
             <excludes>
-                <exclude>fbi:distribution</exclude>
-                <exclude>fbi:fbi.lpsolver</exclude>
+                <exclude>barna:barna.distribution</exclude>
+                <exclude>barna:barna.lpsolver</exclude>
             </excludes>
         </dependencySet>
 
@@ -22,17 +22,17 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
             <outputDirectory>lib</outputDirectory>
             <outputFileNameMapping>${artifact.artifactId}-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
             <includes>
-                <include>fbi:fbi.lpsolver</include>
+                <include>barna:barna.lpsolver</include>
             </includes>
             <excludes>
-                <exclude>fbi:fbi.lpsolver:*:osx</exclude>
-                <exclude>fbi:fbi.lpsolver:*:win</exclude>
+                <exclude>barna:barna.lpsolver:*:osx</exclude>
+                <exclude>barna:barna.lpsolver:*:win</exclude>
             </excludes>
         </dependencySet>
 
         <dependencySet>
             <includes>
-                <include>fbi:distribution</include>
+                <include>barna:barna.distribution</include>
             </includes>
             <unpack>true</unpack>
             <fileMode>755</fileMode>
@@ -46,8 +46,8 @@ http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 ">
 
     <fileSets>
         <fileSet>
-            <directory>src/main/resources</directory>
-            <outputDirectory>doc</outputDirectory>
+            <directory>src/main/distribution</directory>
+            <outputDirectory>.</outputDirectory>
             <includes>
                 <include>README*</include>
                 <include>LICENSE*</include>

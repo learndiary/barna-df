@@ -11,6 +11,11 @@
     <name>Barna - Flux Capacitor</name>
     <version>${barna.capacitor.version}</version>
 
+    <properties>
+        <package.name>FluxCapacitor</package.name>
+    </properties>
+
+
     <dependencies>
         <dependency>
             <groupId>barna</groupId>
@@ -150,7 +155,7 @@
                         <phase>package</phase>
                         <configuration>
                             <appendAssemblyId>true</appendAssemblyId>
-                            <finalName>${project.name}-${project.version}</finalName>
+                            <finalName>${package.name}-${project.version}</finalName>
                             <descriptors>
                                 <descriptor>src/main/assembly/capacitor.xml</descriptor>
                                 <descriptor>src/main/assembly/win.xml</descriptor>
