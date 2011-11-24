@@ -8,14 +8,12 @@
   ~ in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
   ~ include results produced by the Flux Library are liable to reference the Work,
   ~ see the Flux Library homepage <http://flux.sammeth.net> for more information.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>barna</groupId>
     <artifactId>barna</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <name>Barna parent module</name>
     <packaging>pom</packaging>
 
@@ -107,22 +105,22 @@
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.simulator</artifactId>
-                <version>${barna.simulator.version}</version>
+                <version>1.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.astalavista</artifactId>
-                <version>${barna.astalavista.version}</version>
+                <version>1.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.tools</artifactId>
-                <version>${barna.tools.version}</version>
+                <version>1.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.capacitor</artifactId>
-                <version>${barna.capacitor.version}</version>
+                <version>1.1-SNAPSHOT</version>
             </dependency>
 
 
@@ -131,44 +129,44 @@
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.commons</artifactId>
-                <version>${barna.commons.version}</version>
+                <version>1.9-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.model</artifactId>
-                <version>${barna.model.version}</version>
+                <version>1.5-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.io</artifactId>
-                <version>${barna.io.version}</version>
+                <version>1.7-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.distribution</artifactId>
-                <version>${barna.distribution.version}</version>
+                <version>1.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.lpsolver</artifactId>
-                <version>${barna.lpsolver.version}</version>
+                <version>1.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.lpsolver</artifactId>
-                <version>${barna.lpsolver.version}</version>
+                <version>1.2-SNAPSHOT</version>
                 <classifier>lx</classifier>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.lpsolver</artifactId>
-                <version>${barna.lpsolver.version}</version>
+                <version>1.2-SNAPSHOT</version>
                 <classifier>osx</classifier>
             </dependency>
             <dependency>
                 <groupId>barna</groupId>
                 <artifactId>barna.lpsolver</artifactId>
-                <version>${barna.lpsolver.version}</version>
+                <version>1.2-SNAPSHOT</version>
                 <classifier>win</classifier>
             </dependency>
 
