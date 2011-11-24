@@ -188,7 +188,8 @@ class FluxCapacitorTest{
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
 		cmd+= " -Xmx1G fbi.commons.flux.Flux -t capacitor -p "+parFile.getAbsolutePath()
-		
+
+        System.out.println("Try executing : " + cmd);
 		Process process= cmd.execute()
 		process.waitFor()
 
