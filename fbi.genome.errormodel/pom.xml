@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This file is part of the Flux Library.
+  ~
+  ~ The code of the Flux Library may be freely distributed and modified under the terms of the
+  ~ European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+  ~ Copyright for the code is held jointly by the individual authors, who should be listed
+  ~ in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+  ~ include results produced by the Flux Library are liable to reference the Work,
+  ~ see the Flux Library homepage <http://flux.sammeth.net> for more information.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fbi</groupId>
+    <artifactId>fbi.genome.errormodel</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+
+    <scm>
+        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel</url>
+        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel</connection>
+        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/fbi.genome.errormodel
+        </developerConnection>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>fbi</groupId>
+            <artifactId>fbi.genome.simulator</artifactId>
+            <version>1.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.3.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>Fernis</id>
+            <name>Fernis</name>
+            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <findbugsXmlOutput>true</findbugsXmlOutput>
+                    <findbugsXmlWithMessages>true</findbugsXmlWithMessages>
+                    <xmlOutput>true</xmlOutput>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

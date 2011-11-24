@@ -1,0 +1,10 @@
+chr1	hg19_knownGene	exon	34612	35174	0.000000	-	.	gene_id "uc001aak.2"; transcript_id "uc001aak.2"; 
+chr1	hg19_knownGene	exon	35277	35481	0.000000	-	.	gene_id "uc001aak.2"; transcript_id "uc001aak.2"; 
+chr1	hg19_knownGene	exon	35721	36081	0.000000	-	.	gene_id "uc001aak.2"; transcript_id "uc001aak.2"; 
+chr1	hg19_knownGene	exon	236615	237877	0.000000	-	.	gene_id "uc010nxt.1"; transcript_id "uc010nxt.1"; 
+chr1	hg19_knownGene	exon	89295	90404	0.000000	-	.	gene_id "uc010nxt.1"; transcript_id "uc010nxt.1"; 
+chr1	hg19_knownGene	exon	137839	139228	0.000000	-	.	gene_id "uc001aam.3"; transcript_id "uc001aam.3"; 
+chr1	hg19_knownGene	exon	621098	622034	0.000000	-	.	gene_id "uc010nxv.1"; transcript_id "uc010nxv.1"; 
+chr1	hg19_knownGene	stop_codon	621099	621101	0.000000	-	.	gene_id "uc010nxv.1"; transcript_id "uc010nxv.1"; 
+chr1	hg19_knownGene	CDS	621102  622034	0.000000	-	0	gene_id "uc010nxv.1"; transcript_id "uc010nxv.1"; 
+chr1	hg19_knownGene	start_codon	622032	622034	0.000000	-	.	gene_id "uc010nxv.1"; transcript_id "uc010nxv.1";
