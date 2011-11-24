@@ -18,6 +18,7 @@
     </parent>
     <artifactId>barna.io</artifactId>
     <name>Barna - IO</name>
+    <version>${barna.io.version}</version>
 
     <description>
         The Barna IO library contains basic IO infrastructure

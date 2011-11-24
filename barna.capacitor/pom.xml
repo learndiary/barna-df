@@ -9,6 +9,7 @@
     </parent>
     <artifactId>barna.capacitor</artifactId>
     <name>Barna - Flux Capacitor</name>
+    <version>${barna.capacitor.version}</version>
 
     <dependencies>
         <dependency>
