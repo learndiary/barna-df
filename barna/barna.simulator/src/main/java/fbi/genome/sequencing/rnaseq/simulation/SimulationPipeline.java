@@ -373,6 +373,12 @@ public class SimulationPipeline implements FluxTool<Void> {
         // Fix Simulator-8 and make sure we use a path relative to the parameters file
         String sortedFileName = settings.getParameterFile().getParent() + File.separator + FileHelper.append(refFile.getName(), "_sorted");
         File sorted = new File(sortedFileName);
+        // the sorted file will not be gzipped
+        if(sortedFileName.toLowerCase().endsWith(".gz")){
+            sorted = new File(sortedFileName.substring(0, sortedFileName.length()-3));
+        }
+
+
         GTFwrapper gffReader = new GTFwrapper(refFile.getAbsolutePath());
         // make sure the gtf is valid and sorted
         Log.info("Checking GTF file");
