@@ -37,6 +37,7 @@ import java.util.Vector;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import fbi.commons.ByteArrayCharSequence;
 import fbi.commons.Log;
@@ -499,7 +500,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		try {
 			BufferedReader buffy;
 			if (getInputFile() != null)
-				buffy = new BufferedReader(new FileReader(getInputFile()));
+				buffy = new BufferedReader(getReader());
 			else
 				buffy = new BufferedReader(new InputStreamReader(inputStream));
 			String line;
@@ -575,7 +576,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		if (getInputFile() != null) {
 			try {
 				size = getInputSize();
-				inputStream = new FileInputStream(getInputFile());
+				inputStream = getInputStream();
 				inputStream.skip(bytesRead);
 				buffy = new BufferedReader(new InputStreamReader(inputStream));
 				// buffy= new BufferedReader(new FileReader(file));
@@ -597,7 +598,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 								+ " not found for sweeping in "+ getInputFile().getName());
 						break;
 					} else {
-						buffy = new BufferedReader(new FileReader(getInputFile()));
+						buffy = new BufferedReader(getReader());
 						reset();
 						line = buffy.readLine();
 						reset = true; // only once
@@ -723,7 +724,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 								+ " not found for sweeping "+ getInputFile().getName());
 						break;
 					} else {
-						buffy = new BufferedReader(new FileReader(getInputFile()));
+						buffy = new BufferedReader(getReader());
 						reset();
 						line = buffy.readLine();
 						reset = true; // only once
@@ -1658,7 +1659,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		HashMap<String, String> hash= null;
 
 		try {
-			BufferedReader buffy = new BufferedReader(new FileReader(getInputFile()));
+			BufferedReader buffy = new BufferedReader(getReader());
 			String s= null; StringTokenizer st;
 			while (buffy.ready()) {
 				s= buffy.readLine();
@@ -1725,8 +1726,13 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * @return a file handle to which data has been written
 	 */
 	public File sort() {
-		File sortedFile= new File(
-				FileHelper.append(inputFile.getAbsolutePath(), "_sorted", false, null));
+		File sortedFile= new File(FileHelper.append(inputFile.getAbsolutePath(), "_sorted", false, null));
+        // this alwasy creates unzipped files, so
+        // we have to remove any .gz extensions!
+        if(sortedFile.getName().toLowerCase().endsWith(".gz")){
+            String fn = sortedFile.getAbsolutePath();
+            sortedFile = new File(fn.substring(0, fn.length()-3));
+        }
 		sort(sortedFile);
         return sortedFile;
 	}
@@ -1820,7 +1826,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			HashSet<String> setInvalidTx= new HashSet<String>();
 			int nrInvalidLines= 0;
 
-			FileInputStream fileInput = new FileInputStream(inputFile);
+			InputStream fileInput = getInputStream();
             io.addStream(fileInput);
 
             while (io.readLine(fileInput,cs) != -1){
@@ -1932,7 +1938,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			MyArrayHashMap<byte[], Integer> transcriptPositions = new MyArrayHashMap<byte[], Integer>(estIDCount);
 			transcriptPositions.setIncrementSize((int) (estIDCount * 0.3));
 
-            FileInputStream reader = new FileInputStream(inputFile);
+            InputStream reader = getInputStream();
             io.addStream(reader);
 
             ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
@@ -2018,7 +2024,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		if (inputFile== null)
 			return;
 		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(inputFile));
+			BufferedReader buffy= new BufferedReader(getReader());
 			String s= buffy.readLine();
 			String[] ss= s.split("\\s");
 			for (int i = 9; i < ss.length; i+=2) {
@@ -2059,7 +2065,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 */
 	protected long isApplicable(File inputFile, boolean clusterGenes) {
 		try {
-			FileInputStream fis= new FileInputStream(inputFile);
+			InputStream fis= getInputStream();
 			long linesOK= isApplicable(fis, FileHelper.getSize(inputFile));
 			fis.close();
 			return linesOK;

@@ -816,22 +816,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		return scanFileReadLines;
 	}
 
-	protected ThreadedBufferedByteArrayStream getReader() {
-		if (readerB == null) {
-			try {
-				InputStream inputStream = new FileInputStream(inputFile);
-				inputStream.skip(bytesRead);
-				readerB= new ThreadedBufferedByteArrayStream(10* 1024* 1024, inputStream, true, false);
-				readerB.setCloseInputStream(false);
-				//reader = new BufferedReader(new InputStreamReader(inputStream));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	
-		return readerB;
-	}
-
 	public int get(String chr, int start, int end, SyncIOHandler2 handler, OutputStream ostream) {
 			
 			int count= 0;
