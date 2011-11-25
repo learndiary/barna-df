@@ -359,7 +359,7 @@ public class Sequencer implements Callable<Void> {
         int p1 = obj2.getNameP1(), p2 = obj2.getNameP2();
         cs.ensureLength(0, 1 + (p2 - p1));
         byte[] b = cs.chars;
-        b[0] = (babes == null || true) ? BYTE_GT : BYTE_AT;
+        b[0] = (babes == null) ? BYTE_GT : BYTE_AT;
         ++cs.end;
         assert (p1 > 0 && p2 > 0);
         System.arraycopy(a, p1, b, 1, (p2 - p1));
