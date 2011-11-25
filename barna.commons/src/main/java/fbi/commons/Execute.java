@@ -13,6 +13,7 @@ package fbi.commons;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class that provides a configured executor to run stuff in a background task.
@@ -37,10 +38,22 @@ public class Execute {
      */
     public static void shutdown(){
         if(executor != null){
+            executor.shutdown();
+            try {
+                executor.awaitTermination(30, TimeUnit.MINUTES);
+            } catch (InterruptedException ignore) {
+                // ignore
+            }
             executor.shutdownNow();
             executor = null;
             if(shutdown != null){
-                Runtime.getRuntime().removeShutdownHook(shutdown);
+                try{
+                    Runtime.getRuntime().removeShutdownHook(shutdown);
+                }catch (IllegalStateException inShutdown){
+                    if(!inShutdown.getMessage().equals("Shutdown in progress")){
+                        throw inShutdown;
+                    }
+                }
             }
             shutdown = null;
         }
@@ -69,7 +82,10 @@ public class Execute {
      */
     public static ExecutorService getExecutor(){
         if(executor == null){
-            throw new RuntimeException("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!");
+            Log.warn("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!\n" +
+                    "The executor will be initialized with 2 threads now!");
+            initialize(2);
+            //throw new RuntimeException("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!");
         }
         return executor;
     }

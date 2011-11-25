@@ -11,8 +11,8 @@
 
 package fbi.genome.io;
 
-import java.io.File;
-
+import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 
 /**
@@ -129,4 +129,39 @@ public abstract class AbstractFileIOWrapper extends AbstractIOWrapper {
 	 * so far while reading through the file.
 	 */
 	public abstract int getNrInvalidLines();
+
+
+    /**
+     * Opens a new {@link InputStream} on the input file. This
+     * does NOT create any buffered streams, but handles gzip
+     * files
+     *
+     *
+     * @return inputStream a new input stream on the input file
+     * @throws IOException in case the file is not found or the gzip stream could not be created
+     * @since 1.0
+     */
+    protected InputStream getInputStream() throws IOException {
+        if(inputFile == null ) throw new NullPointerException("No input file specified");
+        InputStream inputStream = new FileInputStream(inputFile);
+        if(inputFile.getName().toLowerCase().endsWith(".gz")){
+            inputStream = new GZIPInputStream(inputStream);
+        }
+        return inputStream;
+    }
+
+    /**
+     * Opens a new {@link Reader} on the input file. This
+     * does NOT create any buffered streams, but handles gzip
+     * files
+     *
+     * @return reader a new reader on the input file
+     * @throws IOException in case the file is not found or the gzip reader could not be created
+     * @since 1.0
+     */
+    protected Reader getReader() throws IOException {
+        return new InputStreamReader(getInputStream());
+    }
+
+
 }
