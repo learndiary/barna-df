@@ -370,7 +370,8 @@ public class SimulationPipeline implements FluxTool<Void> {
     protected void sortGTFReference() {
         File refFile = settings.get(FluxSimulatorSettings.REF_FILE);
         // Fix Issue #58 and make sure the sorted file is used and differs in name
-        String sortedFileName = settings.get(FluxSimulatorSettings.PRO_FILE).getParent() + File.separator + FileHelper.append(refFile.getName(), "_sorted");
+        // Fix Simulator-8 and make sure we use a path relative to the parameters file
+        String sortedFileName = settings.getParameterFile().getParent() + File.separator + FileHelper.append(refFile.getName(), "_sorted");
         File sorted = new File(sortedFileName);
         GTFwrapper gffReader = new GTFwrapper(refFile.getAbsolutePath());
         // make sure the gtf is valid and sorted
