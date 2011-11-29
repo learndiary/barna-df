@@ -862,10 +862,11 @@ public class Fragmenter implements Callable<Void> {
         if (s != null) {
             File f = new File(s);
             if (f.exists()) {
+                Log.debug("Reading filter distribution from : " + s );
                 try {
                     return new AbstractDistribution[]{EmpiricalDistribution.create(f, min, max, nrBins, fragFile)};
-                } catch (IOException e) {
-                    throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage(), e);
+                } catch (Exception e) {
+                    throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage() + " from " + s, e);
                 }
             } else {
                 throw new RuntimeException("Unable to find size distribution " + s);
