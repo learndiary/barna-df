@@ -579,7 +579,7 @@ public class FileHelper {
             }
             return cntLines;
         } catch (Exception e) {
-            ; // :)
+            Log.error("Error while counting lines in " + file.getAbsolutePath(), e);
         } finally {
             if (buffy != null) {
                 try {
@@ -1193,8 +1193,7 @@ public class FileHelper {
      *
      * @param prefix the prefix of the directory name
      * @param suffix the suffix of the directory name
-     * @param File the parent directory
-     * @return File temporary directory
+     * @param parent the parent directory
      * @throws Exception in case of any errors
      */
     public static File createTempDir(String prefix, String suffix, File parent) throws Exception {
