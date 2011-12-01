@@ -28,8 +28,9 @@ public class Intersector implements FluxTool<Void>{
 
 	public static void main(String[] args) {
 		
-		File parFile= null;
-		
+		File parFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/overlap_may_b50_w10_c3_june_b50_w10_c2.5");
+
+/*		
 		try {
 			parFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/bed/overlap.par"); 
 				
@@ -49,8 +50,8 @@ public class Intersector implements FluxTool<Void>{
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		
-		File outFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/bed/overlap.bed");
+*/		
+		File outFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/overlap_may_b50_w10_c3_june_b50_w10_c2.5.bed");
 		
 		Execute.initialize(2);
 
@@ -116,6 +117,16 @@ public class Intersector implements FluxTool<Void>{
 				bed2= new BEDobject2(buf2);
 			while (bed1!= null|| bed2!= null) {
 
+//				if (two.getName().contains("RJ2_220611_input")) { 
+//					System.currentTimeMillis();
+//					if (bed2!= null&& 
+//						((bed2.getChr().equals("chr1")
+//						&& bed2.getStart()>= 186430000
+//						&& bed2.getEnd()<=186450000))
+//						|| (!bed2.getChr().equals("chr1")))
+//					System.currentTimeMillis();
+//				}
+				
 				if (bed1== null) {
 					write(bed2, twoCode, writer);
 					bed2= null;
@@ -233,6 +244,14 @@ public class Intersector implements FluxTool<Void>{
 		}
 	}
 
+	private String toBinaryString(int d) {
+		StringBuilder b= new StringBuilder(Integer.toBinaryString(d));
+		for (int i = b.length(); i < parFileNr; i++) 
+			b.insert(0, '0');
+		b.reverse();
+		return b.toString();
+	}
+	
 	private BEDobject2 write(int start, int end, BEDobject2 bed1, int oneCode,
 			BEDobject2 bed2, int twoCode, BufferedWriter writer) {
 		
@@ -240,12 +259,26 @@ public class Intersector implements FluxTool<Void>{
 		bed.setChromosome(bed1.getChr());
 		bed.setStart(start);
 		bed.setEnd(end);
-		int code1= oneCode> 0? oneCode: Integer.parseInt(bed1.getName().toString());
+//		int code1= oneCode> 0? oneCode: Integer.parseInt(bed1.getName().toString());
+		int code1= oneCode;
+		if (oneCode<= 0) {
+			String s= bed1.getName().toString();
+			int p= s.indexOf(':');
+			code1= Integer.parseInt(s.substring(0, p));
+		}
 		int code2= 0;
-		if (bed2!= null)
-			code2= twoCode> 0? twoCode: Integer.parseInt(bed2.getName().toString());
+		if (bed2!= null) {
+//			code2= twoCode> 0? twoCode: Integer.parseInt(bed2.getName().toString());
+			code2= twoCode;
+			if (twoCode<= 0) {
+				String s= bed2.getName().toString();
+				int p= s.indexOf(':');
+				code2= Integer.parseInt(s.substring(0, p));
+			}
+
+		}
 		int code= code1+ code2;
-		bed.setName(Integer.toString(code));
+		bed.setName(Integer.toString(code)+ ":"+ toBinaryString(code));
 		int len= end- start;
 		int score= (int) (bed1.getScore()* len/ (float) bed1.getLength());
 		if (bed2!= null) {
@@ -265,12 +298,10 @@ public class Intersector implements FluxTool<Void>{
 	private ByteArrayCharSequence ctrBuf= new ByteArrayCharSequence(10);
 	private void write(BEDobject2 bed, int ocode, BufferedWriter writer) {
 		
-		if (bed.getName().length()< 5)
-			System.currentTimeMillis();
-		if (ocode> 0)
-			bed.setName(Integer.toString(ocode));	// TODO make BACS to work with single chars
-		if (bed.countTokens()< 6)
-			System.currentTimeMillis();
+		if (ocode> 0) {
+			bed.setName(Integer.toString(ocode)+ ":"+ toBinaryString(ocode));	// TODO make BACS to work with single chars
+		}
+		String s= bed.getName().toString();
 		charBuf= bed.toCharArray(charBuf);		
 		try {
 			writer.write(charBuf, 0, bed.length());
@@ -286,6 +317,11 @@ public class Intersector implements FluxTool<Void>{
 	protected File parFile;
 	
 	/**
+	 * Number of file entries in the parameter file.
+	 */
+	protected int parFileNr= 0;
+	
+	/**
 	 * Output file to which the intersected bed is written.
 	 */
 	protected File outFile;
@@ -297,6 +333,7 @@ public class Intersector implements FluxTool<Void>{
 	public Void call() throws Exception {
 
 		BufferedReader buffy= null;
+		parFileNr= FileHelper.countLines(parFile);
 		try {
 			buffy= new BufferedReader(new FileReader(parFile));
 			
