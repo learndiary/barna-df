@@ -74,7 +74,7 @@ public class Fragmenter implements Callable<Void> {
      * Map from global ID to molecule count. This is later used to add mol counts to
      * the profile
      */
-    private Map<ByteArrayCharSequence, Long> mapFrags;
+    private Map<CharSequence, Number> mapFrags;
     private Map<CharSequence, CharSequence> mapTxSeq = null;
 
     AbstractDistribution originalDist = null;
@@ -110,7 +110,7 @@ public class Fragmenter implements Callable<Void> {
         File libraryFile = settings.get(FluxSimulatorSettings.LIB_FILE);
         if (libraryFile.exists()) {
             Log.message("[LIBRARY] Library file exists, skipping...");
-            return null;
+            return null; 
         }
 
 
@@ -170,7 +170,7 @@ public class Fragmenter implements Callable<Void> {
         // count transcripts and initialize the fragments map
         File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
         int nbTx = FileHelper.countLines(profilerFile);
-        mapFrags = new Hashtable<ByteArrayCharSequence, Long>(nbTx, 1f);
+        mapFrags = new Hashtable<CharSequence, Number>(nbTx, 1f);
 
         FluxSimulatorSettings.Substrate substrate = settings.get(FluxSimulatorSettings.FRAG_SUBSTRATE);
         FluxSimulatorSettings.FragmentationMethod fragMode = settings.get(FluxSimulatorSettings.FRAG_METHOD);
@@ -253,7 +253,7 @@ public class Fragmenter implements Callable<Void> {
         Log.message("\tCopied results to " + libraryFile.getAbsolutePath());
 
         // todo : do this in every step
-        if (!ProfilerFile.appendProfile(profilerFile, ProfilerFile.PRO_COL_NR_FRG, mapFrags)) {
+        if (!ProfilerFile.appendProfile(profilerFile, ProfilerFile.PRO_COL_NR_FRG, mapFrags, true)) {
             throw new RuntimeException();
         }
         return null;
@@ -623,7 +623,7 @@ public class Fragmenter implements Callable<Void> {
         if (mapFrags.containsKey(clone)) {
             // 20101215: whyever, dont use in put clause
             // see tstCurMol and tstNewMol divergence
-            long otherVal = mapFrags.get(string) + i;
+            long otherVal = mapFrags.get(string).longValue() + i;
             mapFrags.put(clone, otherVal);
         } else {
             mapFrags.put(clone, i);

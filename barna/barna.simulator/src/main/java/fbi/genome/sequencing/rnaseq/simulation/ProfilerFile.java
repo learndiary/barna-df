@@ -16,6 +16,8 @@ import fbi.commons.Log;
 import fbi.genome.io.FileHelper;
 
 import java.io.*;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -24,6 +26,10 @@ import java.util.Map;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class ProfilerFile {
+    /**
+     * Coverage attributes column
+     */
+    public static final int PRO_COL_NR_COV = 10;
     /**
      * Sequence column
      */
@@ -65,13 +71,24 @@ public class ProfilerFile {
      *
      * @param proFile the profile
      * @param colNr   the column to write to (must be {@literal > 3})
-     * @param counts  map from profile entry id to the absolute count
+     * @param map  hash mapping profile entry id to a <code>Number</code>
+     * @param writeFrac additionally write fraction of sum-of-values for each line
      * @return success true if successfully updated
      */
-    public static boolean appendProfile(File proFile, int colNr, Map<ByteArrayCharSequence, Long> counts) {
+    public static boolean appendProfile(File proFile, int colNr, Map<CharSequence, Number> map, boolean writeFrac) {
         if (colNr <= 3) {
             throw new IllegalArgumentException("You can not append to column <= 3!");
         }
+        Iterator iter= map.values().iterator();
+        if (!iter.hasNext())
+            throw new IllegalArgumentException("Empty map");
+        if (!(iter.next() instanceof Number))
+            throw new IllegalArgumentException("Map values are not subclassing java.lang.Number");
+        iter= map.keySet().iterator();
+        if (!(iter.next() instanceof CharSequence))
+        	throw new IllegalArgumentException("Map keys are not implementing java.lang.CharSequence");
+
+        
         BufferedReader buffy = null;
         BufferedWriter wright = null;
 
@@ -81,9 +98,11 @@ public class ProfilerFile {
             /**
              * Count fragments
              */
-            long total = 0;
-            for (final Long aLong : counts.values()) {
-                total += aLong;
+            double total = 0;
+            if (writeFrac) {
+	            for (final Object aLong : map.values()) {
+	                total += ((Number) aLong).doubleValue();
+	            }
             }
 
             /*
@@ -126,13 +145,19 @@ public class ProfilerFile {
                 //String id = token[0] + "@" + token[1];
                 key.clear();
                 key.append(token[0] + "@" + token[1]);
-                if (total > 0 && counts.containsKey(key)) {
-                    long absCnt = counts.get(key);
-                    double relFreq = absCnt / (double) total;
-                    wright.write(Double.toString(relFreq));
-                    wright.write(PRO_FILE_SEP);
-                    wright.write(Long.toString(absCnt));
+                if (map.containsKey(key)) {
+                    Number absCnt = (Number) map.get(key);
+                    if (writeFrac&& total> 0) {
+	                    double relFreq = absCnt.doubleValue() / (double) total;
+	                    wright.write(Double.toString(relFreq));
+	                    wright.write(PRO_FILE_SEP);
+                    }
+                    wright.write(absCnt.toString());
                 } else {
+                    if (writeFrac&& total> 0) {
+                        wright.write(nullStr);
+	                    wright.write(PRO_FILE_SEP);
+                    }
                     wright.write(nullStr);
                 }
                 // write final newline
