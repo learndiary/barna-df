@@ -345,7 +345,7 @@ public class Profiler implements Callable<Void> {
             /*
             Append expression information to profile file
              */
-            Map<ByteArrayCharSequence, Long> map = new HashMap<ByteArrayCharSequence, Long>(size());
+            Map<CharSequence, Number> map = new HashMap<CharSequence, Number>(size(), 1f);
             for (int i = 0; i < size(); i++) {
                 if (molecules[i] != 0) {
                     ByteArrayCharSequence locNtid = locIDs[i].cloneCurrentSeq();
@@ -354,8 +354,8 @@ public class Profiler implements Callable<Void> {
                     map.put(locNtid, molecules[i]);
                 }
             }
-            if (!ProfilerFile.appendProfile(settings.get(FluxSimulatorSettings.PRO_FILE), ProfilerFile.PRO_COL_NR_MOL, map)) {
-                throw new RuntimeException("Unable to append data to profile file!");
+            if (!ProfilerFile.appendProfile(settings.get(FluxSimulatorSettings.PRO_FILE), ProfilerFile.PRO_COL_NR_MOL, map, true)) {
+                throw new RuntimeException("Unable to append data to profile file!"); 
             }
             return sumMol;
         } catch (Exception e) {

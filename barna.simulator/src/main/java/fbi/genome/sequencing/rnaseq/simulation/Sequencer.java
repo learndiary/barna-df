@@ -22,7 +22,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
@@ -54,7 +56,7 @@ public class Sequencer implements Callable<Void> {
     public final static String NAME_SEQ = "Sequencing";
     static final String SFX_FASTA = "fasta", SFX_FASTQ = "fastq";
     private static final byte BYTE_a = 97, BYTE_t = 116;
-
+    
     private static final ByteArrayCharSequence CHR_POLYA = new ByteArrayCharSequence("polyA");
     /**
      * Helper to create only one instance for the initial profiler map
@@ -76,9 +78,9 @@ public class Sequencer implements Callable<Void> {
 
     /**
      * Map passed to the profiler mapping from global id to
-     * read count
+     * other attributes (read count, coverage attributes...)
      */
-    private Hashtable<ByteArrayCharSequence, Long> map;
+    private Hashtable<CharSequence, Number[]> map;
     /**
      * Read probability
      */
@@ -271,7 +273,7 @@ public class Sequencer implements Callable<Void> {
                 Graph.overrideSequenceDirPath = genomeDir.getAbsolutePath();
             }
 
-            map = new Hashtable<ByteArrayCharSequence, Long>(profiler.size());
+            map = new Hashtable<CharSequence, Number[]>(profiler.size(), 1f);
 
             // init IO
             int readLength = settings.get(FluxSimulatorSettings.READ_LENGTH);
@@ -330,7 +332,22 @@ public class Sequencer implements Callable<Void> {
                 FileHelper.move(tmpFasta, fileFASTA);
                 Log.progressFinish();
             }
-            ProfilerFile.appendProfile(settings.get(FluxSimulatorSettings.PRO_FILE), ProfilerFile.PRO_COL_NR_SEQ, map);
+            
+            // write profile
+            for (int i = 0; i < 3; i++) {
+            	Iterator<CharSequence> iter= map.keySet().iterator();
+            	HashMap<CharSequence, Number> map2= new HashMap<CharSequence, Number>(map.size(), 1f);
+            	while(iter.hasNext()) {
+            		CharSequence id= iter.next();
+            		Number[] n= map.get(id);
+            		map2.put(id, n[i]);
+            	}
+                ProfilerFile.appendProfile(settings.get(
+                		FluxSimulatorSettings.PRO_FILE), 
+                		ProfilerFile.PRO_COL_NR_SEQ+ i, 
+                		map2, i== 0);
+			}
+             
             return true;
         } catch (Exception e) {
             Log.error("Error while sequencing : " + e.getMessage(), e);
@@ -616,7 +633,16 @@ public class Sequencer implements Callable<Void> {
         return totalReads;
     }
 
-    /**
+    private Number[] getNumbersInit() {
+		Number[] n= new Number[3];
+		n[0]= new Long(0);
+		n[1]= new Double(0);
+		n[1]= new Double(0);
+	
+		return n;
+	}
+
+	/**
      * Process reads and pass them to the writer
      */
     class Processor {
@@ -661,6 +687,13 @@ public class Sequencer implements Callable<Void> {
          * The zip file
          */
         private ZipFile zip;
+        
+        /**
+         * Temporary array for transcript coverage
+         */
+        private int[] tmpCoverage= null; 
+
+
 
         public Processor(SequenceWriter writer, boolean pairedEnd, final File zipFile, final Hashtable<CharSequence, ZipEntry> zipHash) throws IOException {
             this.writer = writer;
@@ -674,12 +707,20 @@ public class Sequencer implements Callable<Void> {
         }
 
         public void process(Gene gene) {
-            if (gene == null) {
+            
+        	if (gene == null) {
                 throw new NullPointerException("Null gene not permitted");
             }
+            
+            // process every transcript in the gene
             String baseID = gene.getGeneID() + FluxSimulatorSettings.SEP_LOC_TID;
             for (int j = 0; j < gene.getTranscripts().length; j++) {
                 Transcript t = gene.getTranscripts()[j];
+                int elen= t.getExonicLength();
+                if (tmpCoverage== null|| tmpCoverage.length< elen) 
+                	tmpCoverage= new int[elen];
+                else
+                	Arrays.fill(tmpCoverage, 0);
                 String compID = baseID + t.getTranscriptID();
 
 
@@ -687,7 +728,6 @@ public class Sequencer implements Callable<Void> {
                 if (ze == null) {
                     continue;    // not in frg file
                 }
-                boolean transcriptWritten = false;
 
 
                 InputStream is = null;
@@ -703,30 +743,31 @@ public class Sequencer implements Callable<Void> {
                         int fstart = cs.getTokenInt(0);
                         int fend = cs.getTokenInt(1);
                         int dups = cs.getTokenInt(3);
-                        dups = Math.max(dups, 1);
+                        // TODO ++dups ?
+                        dups = Math.max(dups, 1);	// file provides nr. of duplicates, not molecules
 
 
                         double q = p * dups;
-                        int frags = (int) q;
+                        int frags = (int) q;	
                         double rest = q-frags;
 
                         // write fragments
-                        for(int dd = 0; dd<frags;dd++){
+                        for(int dd = 0; dd< frags;dd++){
                             fragments++;
-                            k++;
+                            ++k;
                             if(pairedEnd){
                                 int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
-                                writer.writeRead(true, dir,t, fstart, fend, k);
+                                writer.writeRead(true, dir,t, tmpCoverage, fstart, fend, k);
                                 ++cntPlus;
 
-                                writer.writeRead(false, dir==1?2:1, t, fstart, fend, k);
+                                writer.writeRead(false, dir==1?2:1, t, tmpCoverage, fstart, fend, k);
                                 ++cntMinus;
                             }else{
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true, 0 ,t, fstart, fend, k);
+                                    writer.writeRead(true, 0 ,t, tmpCoverage, fstart, fend, k);
                                     ++cntPlus;
                                 }else{
-                                    writer.writeRead(false, 0, t, fstart, fend, k);
+                                    writer.writeRead(false, 0, t, tmpCoverage, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
@@ -738,24 +779,26 @@ public class Sequencer implements Callable<Void> {
                         if (r < rest) {
                             if(pairedEnd){
                                 int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
-                                writer.writeRead(true, dir, t, fstart, fend, k);
+                                writer.writeRead(true, dir, t, tmpCoverage, fstart, fend, k);
                                 ++cntPlus;
 
-                                writer.writeRead(false,dir==1?2:1, t, fstart, fend, k);
+                                writer.writeRead(false,dir==1?2:1, t, tmpCoverage, fstart, fend, k);
                                 ++cntMinus;
                             }else{
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true,0, t, fstart, fend, k);
+                                    writer.writeRead(true,0, t, tmpCoverage, fstart, fend, k);
                                     ++cntPlus;
                                 }else{
-                                    writer.writeRead(false,0, t, fstart, fend, k);
+                                    writer.writeRead(false,0, t, tmpCoverage, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
                             ++k;
                             fragments++;
                         }
-                    }
+                    } // end all fragments
+                
+                // catch I/O errors
                 } catch (IOException e) {
                     Log.error("Error while reading zip entry in sequencer: " + e.getMessage(), e);
                 } finally {
@@ -774,10 +817,54 @@ public class Sequencer implements Callable<Void> {
                         }
                     }
                 }
-            }
+
+                Number[] n= null;
+                if (map.containsKey(compID))
+                	n= map.get(compID);
+                else {
+                	n= Sequencer.this.getNumbersInit();
+                	map.put(compID, n);
+                }
+
+                // chi-square
+                double avgCov= 0d;
+                for (int i = 0; i < elen; i++) 
+					avgCov+= tmpCoverage[i];
+                avgCov/= elen;
+                double x2= 0d;
+                for (int i = 0; i < elen; i++) 
+					x2+= (tmpCoverage[i]- avgCov)* (tmpCoverage[i]- avgCov);
+				x2/= avgCov;
+				n[1]= new Double(x2);
+                
+				// CV
+				double mean= 0;
+				for (int i = 0; i < elen; i++) {
+					if (tmpCoverage[i]== 0)
+						continue;
+					double a= tmpCoverage[i];
+					// Anscombe residuals [Hansen et al. 2010]
+					// a= (3d/ 2d)* (Math.pow(tmpCoverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d)
+					mean+= a;
+				}
+				double cv= 0;
+				for (int i = 0; i < elen; i++) {
+					if (tmpCoverage[i]== 0)
+						continue;
+					cv+= (tmpCoverage[i]- mean)* (tmpCoverage[i]- mean);
+				}
+				cv/= mean;
+				cv= Math.sqrt(cv);
+				n[2]= new Double(cv);
+                
+            }	// end all transcripts
         }
 
+        /**
+         * Closes the zip stream and de-allocates temporary arrays.
+         */
         public void close() {
+        	tmpCoverage= null;
             if (zip != null) {
                 try {
                     zip.close();
@@ -851,7 +938,7 @@ public class Sequencer implements Callable<Void> {
          * @param k      the molecule number
          * @throws IOException in case of any errors
          */
-        public void writeRead(boolean left,int pairedEndSide, Transcript t, int fstart, int fend, int k) throws IOException {
+        public void writeRead(boolean left,int pairedEndSide, Transcript t, int[] cov, int fstart, int fend, int k) throws IOException {
             byte absDir = (byte) (t.getStrand() >= 0 ? 1 : -1);
             byte antiDir = (byte) (t.getStrand() >= 0 ? -1 : 1);
 
@@ -862,16 +949,30 @@ public class Sequencer implements Callable<Void> {
             }
 
             // update profiler counts
-            // todo: use the profiler to get the global ID ?
+            // TODO use the profiler to get the global ID ?
             ByteArrayCharSequence id = new ByteArrayCharSequence(t.getGene().getGeneID() + FluxSimulatorSettings.SEP_LOC_TID + t.getTranscriptID());
-            if (map.containsKey(id)) {
-                map.put(id, map.get(id) + 1);
-            } else {
-                map.put(id, long0);
+            Number[] n= null;
+            if (map.containsKey(id)) 
+            	n= map.get(id);
+            else {
+            	n= getNumbersInit();
+            	map.put(id, n);
             }
+            n[0]= new Long(n[0].longValue()+ 1);
+            
 
             totalReads++;
 
+            // coverage stats
+            if (left) {
+            	for (int i = Math.max(fstart, 0); i < Math.max(Math.min(fstart + rLen - 1, fend), 0); i++) {
+					++cov[i];
+				}
+            } else {
+            	for (int i = Math.max(Math.max(fend - rLen + 1, fstart), 0); i< Math.max(0, fend); i++) {
+					++cov[i];
+				}
+            }
 
             // bed object
             if (bedOut != null) {
@@ -879,12 +980,12 @@ public class Sequencer implements Callable<Void> {
             	int polyA= 0;
                 if (left) {
                     polyA = createRead(obj,
-                            fstart, Math.min(fstart + settings.get(FluxSimulatorSettings.READ_LENGTH) - 1, fend),     // start, end
+                            fstart, Math.min(fstart + rLen - 1, fend),     // start, end
                             t, k, absDir,
                             fstart, fend, left, pairedEndSide);
                 } else {
                     polyA = createRead(obj,
-                            Math.max(fend - settings.get(FluxSimulatorSettings.READ_LENGTH) + 1, fstart), fend,     // start, end
+                            Math.max(fend - rLen + 1, fstart), fend,     // start, end
                             t, k, antiDir,
                             fstart, fend, left, pairedEndSide);
                 }
