@@ -161,6 +161,7 @@ public class Fragmenter implements Callable<Void> {
         rndPA = new Random();
         rndPlusMinus = new Random();
         File tmpFile = writeInitialFile();
+        String tmpFilePath = tmpFile.getAbsolutePath();
         if (tmpFile == null) {
             return null;
         }
@@ -230,7 +231,7 @@ public class Fragmenter implements Callable<Void> {
             }
             AbstractDistribution eDist = filterDist[0];
             if (filterDist[0] instanceof EmpiricalDistribution) {
-                originalDist = parseFilterDistribution(tmpFile.getAbsolutePath(),((EmpiricalDistribution) eDist).getMin(), ((EmpiricalDistribution) eDist).getMax(), ((EmpiricalDistribution) eDist).getBins().length, true)[0];
+                originalDist = parseFilterDistribution(tmpFilePath,((EmpiricalDistribution) eDist).getMin(), ((EmpiricalDistribution) eDist).getMax(), ((EmpiricalDistribution) eDist).getBins().length, true)[0];
                 ((EmpiricalDistribution) eDist).normalizeToPrior((EmpiricalDistribution) originalDist);
             }
             mode = parseFilterSampling(settings.get(FluxSimulatorSettings.SIZE_SAMPLING));
@@ -562,22 +563,15 @@ public class Fragmenter implements Callable<Void> {
                     }
 
                 }
-                try {
-                	fis.close();
-				} catch (IOException e) {
-					throw new RuntimeException("couldn't close file "+ tmpFile.getAbsolutePath(), e);
-				}
-                try {
-                	fos.close();
-				} catch (IOException e) {
-					throw new RuntimeException("couldn't close file "+ tmpWriteFile.getAbsolutePath(), e);
-				}
-                if (!tmpFile.delete()) {                	
-                    throw new IOException("Couldn't delete source");
-                }
-                if (!tmpWriteFile.renameTo(tmpFile)) {
-                    throw new IOException("Couldn't move file");
-                }
+
+                // close all streams
+                try {fis.close();} catch (IOException e) {throw new RuntimeException("couldn't close file "+ tmpFile.getAbsolutePath(), e);}
+                try {fos.close();} catch (IOException e) {throw new RuntimeException("couldn't close file "+ tmpWriteFile.getAbsolutePath(), e);}
+                rw.close();
+
+
+                if (!tmpFile.delete()) {throw new IOException("Couldn't delete source");}
+                if (!tmpWriteFile.renameTo(tmpFile)) {throw new IOException("Couldn't move file");}
 
 
                 Log.progressFinish(StringUtils.OK, true);
