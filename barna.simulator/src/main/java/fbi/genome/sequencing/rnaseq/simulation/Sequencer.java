@@ -334,17 +334,24 @@ public class Sequencer implements Callable<Void> {
             }
             
             // write profile
+            HashMap<CharSequence, Number> map2= null;
             for (int i = 0; i < 3; i++) {
             	Iterator<CharSequence> iter= map.keySet().iterator();
-            	HashMap<CharSequence, Number> map2= new HashMap<CharSequence, Number>(map.size(), 1f);
+            	if (map2== null)
+            		map2= new HashMap<CharSequence, Number>(map.size(), 1f);
+            	else
+            		map2.clear();
             	while(iter.hasNext()) {
             		CharSequence id= iter.next();
             		Number[] n= map.get(id);
             		map2.put(id, n[i]);
             	}
+            	int colNr= ProfilerFile.PRO_COL_NR_SEQ+ i;
+            	if (i> 0)
+            		++colNr; // add. col fraction
                 ProfilerFile.appendProfile(settings.get(
                 		FluxSimulatorSettings.PRO_FILE), 
-                		ProfilerFile.PRO_COL_NR_SEQ+ i, 
+                		colNr, 
                 		map2, i== 0);
 			}
              
