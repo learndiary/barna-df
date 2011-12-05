@@ -571,12 +571,12 @@ public class FileHelper {
      */
     public static int countLines(File file) {
         BufferedReader buffy = null;
+        int cntLines = 0;
         try {
-            int cntLines = 0;
             buffy = new BufferedReader(new FileReader(file));
             for (String s; (s = buffy.readLine()) != null; ++cntLines) {
-                ;
             }
+            Log.debug("Counted " + cntLines + " in " + file.getAbsolutePath());
             return cntLines;
         } catch (Exception e) {
             Log.error("Error while counting lines in " + file.getAbsolutePath(), e);
@@ -585,10 +585,13 @@ public class FileHelper {
                 try {
                     buffy.close();
                 } catch (IOException ignore) {
-                    // ignore
+                    Log.debug("Error while closing reader in fiel line counter : "+ ignore.getMessage());
                 }
             }
         }
+        Log.debug("Unable to count lines in " + file.getAbsolutePath());
+        Log.debug("File exists ? " + file.exists());
+        Log.debug("File size : " + file.length());
         return -1;
     }
 

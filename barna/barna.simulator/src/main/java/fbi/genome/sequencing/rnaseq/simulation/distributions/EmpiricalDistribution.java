@@ -11,6 +11,7 @@
 
 package fbi.genome.sequencing.rnaseq.simulation.distributions;
 
+import fbi.commons.Log;
 import fbi.genome.io.FileHelper;
 import fbi.genome.model.commons.DoubleVector;
 
@@ -177,7 +178,9 @@ public class EmpiricalDistribution extends AbstractDistribution {
     }
 
     public static EmpiricalDistribution create(File f, double min, double max, int nrBins, boolean fragFile) throws FileNotFoundException, IOException {
-        return create(FileHelper.countLines(f.getAbsolutePath()), new FileInputStream(f), min, max, nrBins, fragFile);
+        int lineCount = FileHelper.countLines(f.getAbsolutePath());
+        Log.debug("Creating empirical distribution, counted lines : "+lineCount + " in "+ f.getAbsolutePath());
+        return create(lineCount, new FileInputStream(f), min, max, nrBins, fragFile);
     }
 
     public static EmpiricalDistribution create(int size, InputStream f, double min, double max, int nrBins, boolean fragFile) throws IOException {
