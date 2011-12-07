@@ -44,6 +44,7 @@ import fbi.genome.model.Gene;
 import fbi.genome.model.Graph;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
+import fbi.genome.model.commons.Coverage;
 import fbi.genome.sequencing.rnaseq.simulation.error.MarkovErrorModel;
 import fbi.genome.sequencing.rnaseq.simulation.error.ModelPool;
 import fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel;
@@ -696,12 +697,10 @@ public class Sequencer implements Callable<Void> {
         private ZipFile zip;
         
         /**
-         * Temporary array for transcript coverage
+         * Coverage profile of a sequenced transcript.
          */
-        private int[] tmpCoverage= null; 
-
-
-
+        private Coverage coverage= null;
+        
         public Processor(SequenceWriter writer, boolean pairedEnd, final File zipFile, final Hashtable<CharSequence, ZipEntry> zipHash) throws IOException {
             this.writer = writer;
             this.pairedEnd = pairedEnd;
@@ -724,10 +723,10 @@ public class Sequencer implements Callable<Void> {
             for (int j = 0; j < gene.getTranscripts().length; j++) {
                 Transcript t = gene.getTranscripts()[j];
                 int elen= t.getExonicLength();
-                if (tmpCoverage== null|| tmpCoverage.length< elen) 
-                	tmpCoverage= new int[elen];
+                if (coverage== null)
+                	coverage= new Coverage(elen);
                 else
-                	Arrays.fill(tmpCoverage, 0);
+                	coverage.reset(elen);
                 String compID = baseID + t.getTranscriptID();
 
 
@@ -764,17 +763,17 @@ public class Sequencer implements Callable<Void> {
                             ++k;
                             if(pairedEnd){
                                 int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
-                                writer.writeRead(true, dir,t, tmpCoverage, fstart, fend, k);
+                                writer.writeRead(true, dir,t, coverage, fstart, fend, k);
                                 ++cntPlus;
 
-                                writer.writeRead(false, dir==1?2:1, t, tmpCoverage, fstart, fend, k);
+                                writer.writeRead(false, dir==1?2:1, t, coverage, fstart, fend, k);
                                 ++cntMinus;
                             }else{
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true, 0 ,t, tmpCoverage, fstart, fend, k);
+                                    writer.writeRead(true, 0 ,t, coverage, fstart, fend, k);
                                     ++cntPlus;
                                 }else{
-                                    writer.writeRead(false, 0, t, tmpCoverage, fstart, fend, k);
+                                    writer.writeRead(false, 0, t, coverage, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
@@ -786,17 +785,17 @@ public class Sequencer implements Callable<Void> {
                         if (r < rest) {
                             if(pairedEnd){
                                 int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
-                                writer.writeRead(true, dir, t, tmpCoverage, fstart, fend, k);
+                                writer.writeRead(true, dir, t, coverage, fstart, fend, k);
                                 ++cntPlus;
 
-                                writer.writeRead(false,dir==1?2:1, t, tmpCoverage, fstart, fend, k);
+                                writer.writeRead(false,dir==1?2:1, t, coverage, fstart, fend, k);
                                 ++cntMinus;
                             }else{
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true,0, t, tmpCoverage, fstart, fend, k);
+                                    writer.writeRead(true,0, t, coverage, fstart, fend, k);
                                     ++cntPlus;
                                 }else{
-                                    writer.writeRead(false,0, t, tmpCoverage, fstart, fend, k);
+                                    writer.writeRead(false,0, t, coverage, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
@@ -832,62 +831,19 @@ public class Sequencer implements Callable<Void> {
                 	n= Sequencer.this.getNumbersInit();
                 	map.put(compID, n);
                 }
-
                 // chi-square, exclude 0-positions
-                double avgCov= 0d;
-                for (int i = 0; i < elen; i++) {
-                	if (tmpCoverage[i]== 0)
-                		continue;
-					avgCov+= tmpCoverage[i];
-                }
-                avgCov/= elen;
-                double x2= 0d;
-                for (int i = 0; i < elen; i++) { 
-                	if (tmpCoverage[i]== 0)
-                		continue;
-					x2+= (tmpCoverage[i]- avgCov)* (tmpCoverage[i]- avgCov);
-                }
-				x2/= avgCov;
-				n[1]= new Long(Math.round(x2));
-                
+				n[1]= new Long(coverage.getChiSquare(true));
 				// CV, exclude 0-positions
-				double mean= 0, min= Double.MAX_VALUE;
-				int cnt= 0;
-				for (int i = 0; i < elen; i++) {
-					if (tmpCoverage[i]== 0)
-						continue;
-					++cnt;
-					double a= tmpCoverage[i];
-					// Anscombe residuals [Hansen et al. 2010]
-					a= (3d/ 2d)* (Math.pow(tmpCoverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
-					mean+= a;
-					if (a< min)
-						min= a;
-				}
-				mean/= cnt;
-				mean+= 2* Math.abs(min);
-				double cv= 0;
-				for (int i = 0; i < elen; i++) {
-					if (tmpCoverage[i]== 0)
-						continue;
-					double a= tmpCoverage[i];
-					a= (3d/ 2d)* (Math.pow(tmpCoverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
-					a+= 2* Math.abs(min);
-					cv+= (a- mean)* (a- mean);
-				}
-				cv/= cnt;
-				cv= Math.sqrt(cv);	// sdev
-				cv/= mean;
-				n[2]= new Double(cv);
+				n[2]= new Double(coverage.getCV(true));
                 
             }	// end all transcripts
         }
 
         /**
-         * Closes the zip stream and de-allocates temporary arrays.
+         * Closes the zip stream and de-allocates no longer needed objects.
          */
         public void close() {
-        	tmpCoverage= null;
+        	coverage= null;
             if (zip != null) {
                 try {
                     zip.close();
@@ -961,7 +917,7 @@ public class Sequencer implements Callable<Void> {
          * @param k      the molecule number
          * @throws IOException in case of any errors
          */
-        public void writeRead(boolean left,int pairedEndSide, Transcript t, int[] cov, int fstart, int fend, int k) throws IOException {
+        public void writeRead(boolean left,int pairedEndSide, Transcript t, Coverage cov, int fstart, int fend, int k) throws IOException {
             byte absDir = (byte) (t.getStrand() >= 0 ? 1 : -1);
             byte antiDir = (byte) (t.getStrand() >= 0 ? -1 : 1);
 
@@ -989,11 +945,11 @@ public class Sequencer implements Callable<Void> {
             // coverage stats
             if (left) {
             	for (int i = Math.max(fstart, 0); i < Math.max(Math.min(fstart + rLen - 1, fend), 0); i++) {
-					++cov[i];
+            		cov.increment(i);
 				}
             } else {
             	for (int i = Math.max(Math.max(fend - rLen + 1, fstart), 0); i< Math.max(0, fend); i++) {
-					++cov[i];
+					cov.increment(i);
 				}
             }
 
