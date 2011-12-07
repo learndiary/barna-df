@@ -1265,6 +1265,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					} else {	// single reads						
 						m.add(bpoint1, -1, elen, 
 								bed1.getStrand()== tx.getStrand()?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
+						
 					}
 
 				} // iterate bed objects

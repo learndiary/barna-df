@@ -229,7 +229,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    /**
 	     * The file where profiles are stored in.
 	     */
-	    public static final Parameter<File> PROFILE_FILE = Parameters.fileParameter("PROFILE_FILE", "The file to which profiles are stored", null, new ParameterValidator() {
+	    public static final Parameter<File> COVERAGE_FILE = Parameters.fileParameter("COVERAGE_FILE", "The file to which coverage profiles are stored", null, new ParameterValidator() {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
