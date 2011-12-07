@@ -833,35 +833,51 @@ public class Sequencer implements Callable<Void> {
                 	map.put(compID, n);
                 }
 
-                // chi-square
+                // chi-square, exclude 0-positions
                 double avgCov= 0d;
-                for (int i = 0; i < elen; i++) 
+                for (int i = 0; i < elen; i++) {
+                	if (tmpCoverage[i]== 0)
+                		continue;
 					avgCov+= tmpCoverage[i];
+                }
                 avgCov/= elen;
                 double x2= 0d;
-                for (int i = 0; i < elen; i++) 
+                for (int i = 0; i < elen; i++) { 
+                	if (tmpCoverage[i]== 0)
+                		continue;
 					x2+= (tmpCoverage[i]- avgCov)* (tmpCoverage[i]- avgCov);
+                }
 				x2/= avgCov;
-				n[1]= new Double(x2);
+				n[1]= new Long(Math.round(x2));
                 
-				// CV
-				double mean= 0;
+				// CV, exclude 0-positions
+				double mean= 0, min= Double.MAX_VALUE;
+				int cnt= 0;
 				for (int i = 0; i < elen; i++) {
 					if (tmpCoverage[i]== 0)
 						continue;
+					++cnt;
 					double a= tmpCoverage[i];
 					// Anscombe residuals [Hansen et al. 2010]
-					// a= (3d/ 2d)* (Math.pow(tmpCoverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d)
+					a= (3d/ 2d)* (Math.pow(tmpCoverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
 					mean+= a;
+					if (a< min)
+						min= a;
 				}
+				mean/= cnt;
+				mean+= 2* Math.abs(min);
 				double cv= 0;
 				for (int i = 0; i < elen; i++) {
 					if (tmpCoverage[i]== 0)
 						continue;
-					cv+= (tmpCoverage[i]- mean)* (tmpCoverage[i]- mean);
+					double a= tmpCoverage[i];
+					a= (3d/ 2d)* (Math.pow(tmpCoverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
+					a+= 2* Math.abs(min);
+					cv+= (a- mean)* (a- mean);
 				}
+				cv/= cnt;
+				cv= Math.sqrt(cv);	// sdev
 				cv/= mean;
-				cv= Math.sqrt(cv);
 				n[2]= new Double(cv);
                 
             }	// end all transcripts

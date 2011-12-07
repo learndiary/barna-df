@@ -16,6 +16,7 @@ import fbi.commons.Log;
 import fbi.genome.io.FileHelper;
 
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -79,19 +80,59 @@ public class ProfilerFile {
         if (colNr <= 3) {
             throw new IllegalArgumentException("You can not append to column <= 3!");
         }
-        Iterator iter= map.values().iterator();
-        if (!iter.hasNext())
+        if (map.size()== 0)
             throw new IllegalArgumentException("Empty map");
-        if (!(iter.next() instanceof Number))
-            throw new IllegalArgumentException("Map values are not subclassing java.lang.Number");
-        iter= map.keySet().iterator();
-        if (!(iter.next() instanceof CharSequence))
-        	throw new IllegalArgumentException("Map keys are not implementing java.lang.CharSequence");
 
-        
         BufferedReader buffy = null;
         BufferedWriter wright = null;
-
+        
+        DecimalFormat df = null, df2= null;
+        Iterator<Number> iter= map.values().iterator();
+        Number n= iter.next();
+        // get 3 significant digits for floats
+        if (n instanceof Double|| n instanceof Float) {
+        	double min= n.doubleValue()== 0? Double.MAX_VALUE: n.doubleValue();
+        	while (iter.hasNext()) {
+        		double dn= iter.next().doubleValue();
+        		if (dn> 0&& dn< min)
+        			min= dn;
+        	}
+        	StringBuilder sb= new StringBuilder("####0.");
+        	if (min!= Double.MAX_VALUE) {
+	        	double base= 1/ 10;
+	        	for (int i= 0; i< 3;base/= 10) {
+	        		sb.append("0");
+	        		if (base< min)
+	        			++i;
+	        	}
+        	}
+        	
+        	df= new DecimalFormat(sb.toString());
+        }
+        // 3 significant digits for fraction
+        if (writeFrac) {
+        	iter= map.values().iterator();
+        	double sum= 0d, min= Double.MAX_VALUE;
+        	while (iter.hasNext()) {
+        		double dn= iter.next().doubleValue();
+        		if (dn< min&& dn> 0)
+        			min= dn;
+        		sum+= dn;
+        	}
+        	
+        	StringBuilder sb= new StringBuilder("####0.");
+        	if (min!= Double.MAX_VALUE) {
+	        	double base= 1/ 10;
+	        	for (int i= 0; i< 3;base/= 10) {
+	        		sb.append("0");
+	        		if (base< min)
+	        			++i;
+	        	}
+        	}
+        	
+        	df2= new DecimalFormat(sb.toString());
+        }
+        
         try {
             Log.progressStart("Updating .pro file ");
 
@@ -116,6 +157,7 @@ public class ProfilerFile {
             String[] token;
             long bytesRead = 0;
             long bytesTotal = proFile.length();
+            // limit floats to 3 significant decimals
             String nullStr = Double.toString(0d) + PRO_FILE_SEP + Long.toString(0);
 
             ByteArrayCharSequence key = new ByteArrayCharSequence(100);
@@ -149,10 +191,13 @@ public class ProfilerFile {
                     Number absCnt = (Number) map.get(key);
                     if (writeFrac&& total> 0) {
 	                    double relFreq = absCnt.doubleValue() / (double) total;
-	                    wright.write(Double.toString(relFreq));
+	                    wright.write(df2.format(relFreq));
 	                    wright.write(PRO_FILE_SEP);
                     }
-                    wright.write(absCnt.toString());
+                    if (absCnt instanceof Double|| absCnt instanceof Float)
+                    	wright.write(df.format(absCnt.doubleValue()));
+                    else
+                    	wright.write(absCnt.toString());
                 } else {
                     if (writeFrac&& total> 0) {
                         wright.write(nullStr);
