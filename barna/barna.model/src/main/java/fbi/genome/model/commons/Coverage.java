@@ -126,4 +126,16 @@ public class Coverage {
     	
 		return cv;
     }
+
+    /**
+     * Computes the fraction of transcript that is covered.
+     * @return proportion of transcript covered
+     */
+	public float getFractionCovered() {
+		int cnt= 0;
+		for (int i = 0; i < length; i++) 
+			++cnt;
+		float f= cnt/ (float) length;
+		return f;
+	}
 }
