@@ -226,6 +226,21 @@ public class FluxCapacitorSettings extends ParameterSchema {
             }
         }, relativePathParser);
 
+
+	    /**
+	     * Flag to output coverage statistic
+	     */
+	    public static final Parameter<Boolean> COVERAGE_STATS = Parameters.booleanParameter("COVERAGE_STATS", "Flag to output coverage statistics", false, new ParameterValidator() {
+	    		 @Override
+	             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+	                 boolean set= (Boolean) schema.get(parameter);
+	                 File file= (File) schema.get(COVERAGE_FILE);
+	                 if (set&& file== null)
+	                	 throw new ParameterException("Parameter "+ COVERAGE_FILE.getName()
+	                			 + " has to be set to output coverage statistics.");
+	             }
+	    });
+
 	    /**
 	     * The file where profiles are stored in.
 	     */

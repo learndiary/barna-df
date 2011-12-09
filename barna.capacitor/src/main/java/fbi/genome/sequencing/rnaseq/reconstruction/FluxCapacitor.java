@@ -78,6 +78,7 @@ import fbi.genome.model.Exon;
 import fbi.genome.model.Gene;
 import fbi.genome.model.Transcript;
 import fbi.genome.model.bed.BEDobject2;
+import fbi.genome.model.commons.Coverage;
 import fbi.genome.model.commons.MyFile;
 import fbi.genome.model.constants.Constants;
 import fbi.genome.model.gff.GFFObject;
@@ -1175,6 +1176,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				return true;
 			}
 			
+			Coverage coverage= null;
 			
 			private void learn(Transcript tx, BufferedIterator beds) {
 							
@@ -1190,6 +1192,12 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 //					return;	// discards reads
 				
 				UniversalMatrix m= profile.getMatrix(elen);
+				if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+					if (coverage== null)
+						coverage= new Coverage(elen);
+					else
+						coverage.reset(elen);
+				}
 				
 				while (beds.hasNext()) {
 					
@@ -1255,6 +1263,20 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 							}
 
 							m.add(bpoint1, bpoint2, -1, -1, elen);	// TODO rlen currently not used
+							// update coverage
+							if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+								if (bpoint1< bpoint2) {
+									for (int i = bpoint1; i < bpoint1+ bed1.length(); i++) 
+										coverage.increment(i);
+									for (int i = bpoint2- bed2.length()+ 1; i <= bpoint2; i++) 
+										coverage.increment(i);
+								} else {
+									for (int i = bpoint2; i < bpoint2+ bed2.length(); i++) 
+										coverage.increment(i);
+									for (int i = bpoint1- bed1.length()+ 1; i <= bpoint1; i++) 
+										coverage.increment(i);
+								}
+							}
 							//addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
 							
 							nrReadsSingleLociPairsMapped+= 2;
@@ -1265,13 +1287,36 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					} else {	// single reads						
 						m.add(bpoint1, -1, elen, 
 								bed1.getStrand()== tx.getStrand()?Constants.DIR_FORWARD:Constants.DIR_BACKWARD);
-						
+						// update coverage
+						if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+							if (bed1.getStrand()== tx.getStrand()) {
+								for (int i = bpoint1; i < bpoint1+ bed1.length(); i++) 
+									coverage.increment(i);
+							} else {
+								for (int i = bpoint1- bed1.length()+ 1; i <= bpoint1; i++) 
+									coverage.increment(i);
+							}
+						}
 					}
 
 				} // iterate bed objects
 				
 
+				// output coverage stats
+				if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+					writeCoverageStats(
+							tx.getGene().getGeneID(),
+							tx.getTranscriptID(),
+							tx.isCoding(),
+							tx.getExonicLength(),
+							pairedEnd? nrReadsSingleLociPairsMapped: nrReadsSingleLociMapped,
+							coverage.getFractionCovered(),
+							coverage.getChiSquare(true),
+							coverage.getCV(true));
+				}
 			}
+
+
 		}
 
 	static void printUsage() {
@@ -2443,6 +2488,41 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		}
 	}
 	
+	File fileTmpCovStats= null;
+	private BufferedWriter writerTmpCovStats= null;
+	
+	/**
+	 * Writes coverage statistics of a transcript to disk
+	 * @param geneID locus identifier
+	 * @param transcriptID transcript identifier
+	 * @param cds flag to indicate whether transcript has an annotated ORF
+	 * @param length (processed) length of the transcript 
+	 * @param i
+	 * @param fractionCovered
+	 * @param chiSquare
+	 * @param cv
+	 */
+	private void writeCoverageStats(String geneID, String transcriptID,
+			boolean cds, int length, int nrReads,
+			float fracCov, long chiSquare, double cv) {
+		
+		try {
+			if (fileTmpCovStats== null) 
+				fileTmpCovStats= FileHelper.createTempFile("tmpCovStats", ".pro");
+			if (writerTmpCovStats== null)
+				writerTmpCovStats= new BufferedWriter(new FileWriter(fileTmpCovStats));
+			writerTmpCovStats.write(
+				geneID+ "\t"+ transcriptID+ "\t"+ (cds? "CDS": "NC")+ "\t"
+				+ Integer.toString(length)+ "\t"+ Integer.toString(nrReads)+ "\t"
+				+ Float.toString(fracCov)+ "\t"+ Long.toString(chiSquare)+ "\t"
+				+ Float.toString((float) cv)+ "\n"
+			);
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/**
 	 * @deprecated
 	 * Writes out all profiles, heavy disk activity.
@@ -3739,6 +3819,15 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					if (pairedEnd&& func.getTProfiles()!= null) {
 						insertMinMax= getInsertMinMax();
 					}
+					if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
+						try {
+							writerTmpCovStats.close();
+							writerTmpCovStats= null;
+							System.err.println(fileTmpCovStats.getAbsolutePath());
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+						
 	
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 						
