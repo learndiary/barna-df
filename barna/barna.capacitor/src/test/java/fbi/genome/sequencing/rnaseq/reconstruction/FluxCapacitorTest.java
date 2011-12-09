@@ -130,10 +130,10 @@ public class FluxCapacitorTest {
 				AnnotationMapping.PAIRED);
 		settings.set(FluxCapacitorSettings.STDOUT_FILE, 
 				outFile);
-		settings.set(FluxCapacitorSettings.COVERAGE_STATS, 
-				true);
-		settings.set(FluxCapacitorSettings.COVERAGE_FILE, 
-				new File("xxx"));
+//		settings.set(FluxCapacitorSettings.COVERAGE_STATS, 
+//				true);
+//		settings.set(FluxCapacitorSettings.COVERAGE_FILE, 
+//				new File(anoDir.getAbsolutePath()+ File.separator+ getClass().getSimpleName()+ "_coverage.txt"));
 		
 		BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile));
 		buffy.write(settings.toString());

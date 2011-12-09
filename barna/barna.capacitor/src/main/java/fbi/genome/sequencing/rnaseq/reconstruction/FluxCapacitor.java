@@ -1839,12 +1839,25 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		// TODO close input should occur by reader or interface method 
 		boolean b= bedWrapper.close();
 		b= gtfReader.close();
-		
+
+		if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+			if (FileHelper.move(
+					fileTmpCovStats, 
+					settings.get(FluxCapacitorSettings.COVERAGE_FILE))) {
+				fileTmpCovStats.delete();
+				Log.info("Coverage statistics in "+ settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
+			} else
+				Log.warn("Failed to move coverage statistics to "+  
+						settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath()+ "\n"
+						+ "\tinformation in "+ fileTmpCovStats.getAbsolutePath());
+		}
+
+		// TODO close files for non-/mapped reads, insert sizes, LPs, profiles  
+
 		// close output
 		if (Log.outputStream!= System.out&& Log.outputStream!= System.err) 
 			Log.outputStream.close();
 		
-		// TODO close files for non-/mapped reads, insert sizes, LPs, profiles  
 	}
 	
 	private static String createID() {
@@ -3819,11 +3832,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					if (pairedEnd&& func.getTProfiles()!= null) {
 						insertMinMax= getInsertMinMax();
 					}
+					// close coverage writer
 					if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
 						try {
 							writerTmpCovStats.close();
 							writerTmpCovStats= null;
-							System.err.println(fileTmpCovStats.getAbsolutePath());
 						} catch (Exception e) {
 							throw new RuntimeException(e);
 						}

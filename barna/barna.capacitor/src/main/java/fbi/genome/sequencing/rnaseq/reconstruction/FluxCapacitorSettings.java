@@ -248,15 +248,11 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
-/*                if (file == null) {
-                    throw new ParameterException("You have to specify an file for profiles");
+                // if set for writing, check whether the parent directory is valid
+                if ((file != null)&& (!file.exists())&& ((!file.getParentFile().exists())|| (!file.getParentFile().canWrite()))) {
+                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath() 
+                    		+ " to write coverage file "+ file.getName()+ " cannot be found or is write-protected.");
                 }
-                if (!file.exists()) {
-                    throw new ParameterException("The file for profiles " + file.getAbsolutePath() 
-                    		+ " could not be found!");
-                }
-*/                
-
             }
         }, relativePathParser);
 
