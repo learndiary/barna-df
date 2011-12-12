@@ -134,7 +134,8 @@ public class Coverage {
 	public float getFractionCovered() {
 		int cnt= 0;
 		for (int i = 0; i < length; i++) 
-			++cnt;
+			if (coverage[i]> 0)
+				++cnt;
 		float f= cnt/ (float) length;
 		return f;
 	}
