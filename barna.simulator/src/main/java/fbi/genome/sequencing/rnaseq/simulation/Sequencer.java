@@ -91,6 +91,11 @@ public class Sequencer implements Callable<Void> {
      */
     private int totalReads = -1;
 
+    /**
+     * Number of fields written to .PRO file.
+     */
+    private int proFields= 4;
+    
     public Sequencer(FluxSimulatorSettings settings, Profiler profiler) {
         this.settings = settings;
         this.profiler = profiler;
@@ -336,7 +341,7 @@ public class Sequencer implements Callable<Void> {
             
             // write profile
             HashMap<CharSequence, Number> map2= null;
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < proFields; i++) {
             	Iterator<CharSequence> iter= map.keySet().iterator();
             	if (map2== null)
             		map2= new HashMap<CharSequence, Number>(map.size(), 1f);
@@ -641,15 +646,6 @@ public class Sequencer implements Callable<Void> {
         return totalReads;
     }
 
-    private Number[] getNumbersInit() {
-		Number[] n= new Number[3];
-		n[0]= new Long(0);
-		n[1]= new Double(0);
-		n[1]= new Double(0);
-	
-		return n;
-	}
-
 	/**
      * Process reads and pass them to the writer
      */
@@ -738,6 +734,7 @@ public class Sequencer implements Callable<Void> {
 
                 InputStream is = null;
                 BufferedReader buffy = null;
+                int tmpFrags= fragments;
                 try {
                     is = zip.getInputStream(ze);
                     buffy = new BufferedReader(new InputStreamReader(is));
@@ -828,13 +825,18 @@ public class Sequencer implements Callable<Void> {
                 if (map.containsKey(compID))
                 	n= map.get(compID);
                 else {
-                	n= Sequencer.this.getNumbersInit();
+            		n= new Number[proFields];
                 	map.put(compID, n);
                 }
+                // reads produced 
+                int fragsNew= fragments- tmpFrags;
+                n[0]= new Integer(pairedEnd? 2* fragsNew: fragsNew);
+                // covered positions
+                n[1]= new Double(coverage.getFractionCovered());
                 // chi-square, exclude 0-positions
-				n[1]= new Long(coverage.getChiSquare(true));
+				n[2]= new Long(coverage.getChiSquare(true));
 				// CV, exclude 0-positions
-				n[2]= new Double(coverage.getCV(true));
+				n[3]= new Double(coverage.getCV(true));
                 
             }	// end all transcripts
         }
@@ -930,16 +932,6 @@ public class Sequencer implements Callable<Void> {
             // update profiler counts
             // TODO use the profiler to get the global ID ?
             ByteArrayCharSequence id = new ByteArrayCharSequence(t.getGene().getGeneID() + FluxSimulatorSettings.SEP_LOC_TID + t.getTranscriptID());
-            Number[] n= null;
-            if (map.containsKey(id)) 
-            	n= map.get(id);
-            else {
-            	n= getNumbersInit();
-            	map.put(id, n);
-            }
-            n[0]= new Long(n[0].longValue()+ 1);
-            
-
             totalReads++;
 
             // coverage stats
