@@ -86,8 +86,10 @@ public class ProfilerFile {
         BufferedReader buffy = null;
         BufferedWriter wright = null;
         
-        DecimalFormat df = null, df2= null;
-        Iterator<Number> iter= map.values().iterator();
+        //DecimalFormat df = null, df2= null;
+        
+        // debug
+/*        Iterator<Number> iter= map.values().iterator();
         Number n= iter.next();
         // get 3 significant digits for floats
         if (n instanceof Double|| n instanceof Float) {
@@ -132,7 +134,7 @@ public class ProfilerFile {
         	
         	df2= new DecimalFormat(sb.toString());
         }
-        
+*/        
         try {
             Log.progressStart("Updating .pro file ");
 
@@ -191,11 +193,11 @@ public class ProfilerFile {
                     Number absCnt = (Number) map.get(key);
                     if (writeFrac&& total> 0) {
 	                    double relFreq = absCnt.doubleValue() / (double) total;
-	                    wright.write(df2.format(relFreq));
+	                    wright.write(Double.toString(relFreq));	// df2.format(relFreq)
 	                    wright.write(PRO_FILE_SEP);
                     }
                     if (absCnt instanceof Double|| absCnt instanceof Float)
-                    	wright.write(df.format(absCnt.doubleValue()));
+                    	wright.write(absCnt.toString());	// df.format(absCnt.doubleValue())
                     else
                     	wright.write(absCnt.toString());
                 } else {
