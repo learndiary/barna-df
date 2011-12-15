@@ -113,7 +113,7 @@ public class Subsetter implements FluxTool<Void> {
 	 * @param numberLines number of lines to be extracted from the input, has to be 
 	 * strictly <= inputLines
 	 */
-	public static void subset(File inputFile, int inputLines, OutputStream ostream, int numberLines) {
+	public static void subset(File inputFile, long inputLines, OutputStream ostream, int numberLines) {
 		
 		// get total line count
 		if (inputLines<= 0) 
@@ -203,7 +203,7 @@ public class Subsetter implements FluxTool<Void> {
 	 * @param numberLines number of lines to be extracted from the input, has to be 
 	 * strictly <= inputLines
 	 */
-	public static void subsetPairs(File inputFile, int inputLines, OutputStream ostream, int numberLines) {
+	public static void subsetPairs(File inputFile, long inputLines, OutputStream ostream, int numberLines) {
 		
 		// get total line count
 		if (inputLines<= 0) 

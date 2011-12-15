@@ -251,7 +251,9 @@ public class MarkovErrorModel implements FluxTool {
         Read read = null;
         int sum = limit;
         if (sum <= 0) {
-            sum = FileHelper.countLines(getFile());
+            long ll = FileHelper.countLines(getFile());
+            if(ll > Integer.MAX_VALUE) throw new RuntimeException("Unable to cache " + ll + " elements... value > Integer.MAX_VALUE");
+            sum = (int) ll;
         }
         while ((read = reader.parseNext(false)) != null && (limit < 0 || c < limit)) {
             if (read.getMappings() == null || read.getMappings().size() == 0) {

@@ -24,9 +24,11 @@ public class EmpiricalDistributionTest {
     public void testPropabilityAndFrequency() throws Exception {
         double[] dist = new double[]{1.0,2.0,2.0,3.0};
 
-        double[] edist = EmpiricalDistribution.bin(dist, 3);
-
-
+        double[] edist = new double[3];
+        for (int i = 0; i < dist.length; i++) {
+            double v = dist[i];
+            EmpiricalDistribution.addToBin(v, edist, 1.0, 3.0);
+        }
         EmpiricalDistribution distribution = new EmpiricalDistribution(edist, 1.0, 3.0, 2.0);
 
 

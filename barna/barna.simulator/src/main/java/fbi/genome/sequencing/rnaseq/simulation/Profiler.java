@@ -301,7 +301,9 @@ public class Profiler implements Callable<Void> {
         Log.progressStart("profiling");
         try {
             if (ids == null) {
-                ids = new ByteArrayCharSequence[FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath())];
+                long lines = FileHelper.countLines(settings.get(FluxSimulatorSettings.PRO_FILE).getCanonicalPath());
+                if(lines > Integer.MAX_VALUE) throw new RuntimeException("Unable to cache " + lines + " elements... value > Integer.MAX_VALUE");
+                ids = new ByteArrayCharSequence[(int) lines];
                 len = new int[ids.length];
             }
             double sumRF = 0;
@@ -441,7 +443,9 @@ public class Profiler implements Callable<Void> {
         ThreadedBufferedByteArrayStream buffy = null;
         try {
             Log.progressStart("initializing profiler ");
-            int lines = FileHelper.countLines(profileFile);
+            long ll = FileHelper.countLines(profileFile);
+            if(ll > Integer.MAX_VALUE) throw new RuntimeException("Unable to cache " + ll + " elements... value > Integer.MAX_VALUE");
+            int lines = (int) ll;
             int separatorLength = Math.min(1, FileHelper.guessFileSep(profileFile).length());
 
             /*
