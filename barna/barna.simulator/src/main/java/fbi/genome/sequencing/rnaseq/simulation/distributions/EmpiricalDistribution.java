@@ -572,7 +572,6 @@ public class EmpiricalDistribution extends AbstractDistribution {
                 if(!Double.isNaN(x)){
                     min = Math.min(min, x);
                     max = Math.max(max, x);
-                    lineCount++;
                 }
             }
         } catch (Exception e) {

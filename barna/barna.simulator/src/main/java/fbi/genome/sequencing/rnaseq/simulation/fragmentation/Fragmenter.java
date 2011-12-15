@@ -11,12 +11,7 @@
 
 package fbi.genome.sequencing.rnaseq.simulation.fragmentation;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -94,6 +89,11 @@ public class Fragmenter implements Callable<Void> {
      */
     private long maxLength;
 
+    /**
+     * The current number of fragments in the fragments file
+     */
+    private long currentNumberOfFragments;
+
 
     public Fragmenter(FluxSimulatorSettings settings, Profiler profiler) {
         this.settings = settings;
@@ -134,7 +134,7 @@ public class Fragmenter implements Callable<Void> {
                 sizeDistFuture = Execute.getExecutor().submit(new Callable<EmpiricalDistribution>() {
                     @Override
                     public EmpiricalDistribution call() throws Exception {
-                        return parseFilterDistribution(finalDistName, Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, false);
+                        return parseFilterDistribution(finalDistName);
                     }
                 });
             }else{
@@ -230,7 +230,7 @@ public class Fragmenter implements Callable<Void> {
                 }
             }
 
-            originalDist = parseFilterDistribution(tmpFilePath, filterDist.getMin(), filterDist.getMax(), filterDist.getBins().length, true);
+            originalDist = readFragmentSizeDistribution(tmpFilePath, currentNumberOfFragments, filterDist.getMin(), filterDist.getMax());
             filterDist.normalizeToPrior((EmpiricalDistribution) originalDist);
 
             mode = parseFilterSampling(settings.get(FluxSimulatorSettings.SIZE_SAMPLING));
@@ -522,6 +522,10 @@ public class Fragmenter implements Callable<Void> {
                 Log.progressStart("Processing Fragments");
 
 
+                /**
+                 * SIMULATOR-18 keep track of written fragments
+                 */
+                currentNumberOfFragments = 0;
                 while (rw.readLine(fis, cs) > 0) {
                     // progress
                     byteNow += cs.length() + 1;
@@ -558,6 +562,7 @@ public class Fragmenter implements Callable<Void> {
                             // write the fragment
                             fos.write(frag.toString());
                             fos.write("\n");
+                            currentNumberOfFragments++;
                         }
                     }
 
@@ -840,6 +845,37 @@ public class Fragmenter implements Callable<Void> {
     }
 
     /**
+     * If a file is given, this reads the distribution from the file, one value per line. Otherwise
+     * this returns the default size distribution
+     *
+     * @param file the file or null for default distribution
+     * @return dist size distribution
+     */
+    static EmpiricalDistribution parseFilterDistribution(String file) {
+
+        if (file != null) {
+            File f = new File(file);
+            if (!f.exists() || !f.canRead()) {
+                throw new RuntimeException("Unable to find size distribution " + file);
+            }
+            Log.debug("Reading filter distribution from : " + file );
+            try {
+                return EmpiricalDistribution.create(f, Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, EmpiricalDistribution.LINE_PARSER_SINGLE_VALUE);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage() + " from " + file, e);
+            }
+        } else {
+            // load the default
+            URL url = Fragmenter.class.getResource("/expAll.isizes");
+            try {
+                // get the attributes ?
+                return EmpiricalDistribution.create(url.openStream(), 209208, 1, 297, GEL_NB_BINS_LENGTH, EmpiricalDistribution.LINE_PARSER_SINGLE_VALUE);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage(), e);
+            }
+        }
+    }
+    /**
      * Parses the distribution argument, either a path to a file with an empirical
      * description of the function, or a set of analytically described functions.
      * <p/>
@@ -847,56 +883,35 @@ public class Fragmenter implements Callable<Void> {
      * Currently function parsing is disabled and this will
      * </p>
      *
-     * @param s string describing the distribution
-     * @return a (set of) distributions as initialized from the argument
+     * @param fragmentFile string describing the distribution
+     * @return dist the fragment size distribution
      */
-    static EmpiricalDistribution parseFilterDistribution(String s, double min, double max, int nrBins, boolean fragFile) {
-
-        if (s != null) {
-            File f = new File(s);
-            if (f.exists()) {
-                Log.debug("Reading filter distribution from : " + s );
-                try {
-                    EmpiricalDistribution.LineParser parser = EmpiricalDistribution.LINE_PARSER_SINGLE_VALUE;
-                    if(fragFile){
-                        // create custom parser for the fragmentation file
-                        parser = new EmpiricalDistribution.LineParser() {
-                            @Override
-                            public double parse(String line) {
-                                if(line.trim().isEmpty()) return Double.NaN;
-                                String[] ss = line.split("\\s");
-                                return Double.parseDouble(ss[1]) - Double.parseDouble(ss[0]) + 1;
-                            }
-                        };
-                    }
-
-
-                    return EmpiricalDistribution.create(f, min, max, nrBins, parser);
-                } catch (Exception e) {
-                    throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage() + " from " + s, e);
+    static EmpiricalDistribution readFragmentSizeDistribution(String fragmentFile, long numberOfFragments, double min, double max) {
+        Log.debug("Reading fragment distribution from : " + fragmentFile);
+        FileInputStream inputStream = null;
+        try {
+            // create custom parser for the fragmentation file
+            EmpiricalDistribution.LineParser parser = new EmpiricalDistribution.LineParser() {
+                @Override
+                public double parse(String line) {
+                    if (line.trim().isEmpty()) return Double.NaN;
+                    String[] ss = line.split("\\s");
+                    return Double.parseDouble(ss[1]) - Double.parseDouble(ss[0]) + 1;
                 }
-            } else {
-                throw new RuntimeException("Unable to find size distribution " + s);
-            }
-        } else {
-            // load the default
-            URL url = Fragmenter.class.getResource("/expAll.isizes");
+            };
+            inputStream = new FileInputStream(new File(fragmentFile));
+            return EmpiricalDistribution.create(inputStream, numberOfFragments, min, max, GEL_NB_BINS_LENGTH, parser);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to read fragment size distribution : " + e.getMessage() + " from " + fragmentFile, e);
+        } finally {
             try {
-                // get the attributes ?
-                return EmpiricalDistribution.create(url.openStream(), 209208, 1, 297, nrBins, EmpiricalDistribution.LINE_PARSER_SINGLE_VALUE);
+                if(inputStream != null){
+                    inputStream.close();
+                }
             } catch (IOException e) {
-                throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage(), e);
+                Log.error("Error while closing input stream on " + fragmentFile, e);
             }
         }
-
-        // no file
-//        String[] ss = s.split("\\+");
-//        AbstractDistribution[] d = new AbstractDistribution[ss.length];
-//        for (int i = 0; i < ss.length; i++) {
-//            d[i] = parseFilterDistributionFunction(ss[i]);
-//        }
-//
-//        return d;
     }
 
     /**
