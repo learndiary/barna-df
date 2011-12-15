@@ -566,12 +566,13 @@ public class FileHelper {
      * Reads the complete file and counts the line numbers. Error are catched and this returns -1 if
      * the number of lines could not be counted successfully.
      *
+     *
      * @param file the filename
      * @return lines the number of lines or -1 in case of any errors
      */
-    public static int countLines(File file) {
+    public static long countLines(File file) {
         BufferedReader buffy = null;
-        int cntLines = 0;
+        long cntLines = 0;
         try {
             buffy = new BufferedReader(new FileReader(file));
             for (String s; (s = buffy.readLine()) != null; ++cntLines) {
@@ -602,7 +603,7 @@ public class FileHelper {
      * @param fileName the filename
      * @return lines the number of lines or -1 in case of any errors
      */
-    public static int countLines(String fileName) {
+    public static long countLines(String fileName) {
         return countLines(new File(fileName));
     }
 

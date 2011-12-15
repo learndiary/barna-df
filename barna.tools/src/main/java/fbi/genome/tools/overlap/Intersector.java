@@ -333,7 +333,9 @@ public class Intersector implements FluxTool<Void>{
 	public Void call() throws Exception {
 
 		BufferedReader buffy= null;
-		parFileNr= FileHelper.countLines(parFile);
+        long ll = FileHelper.countLines(parFile);
+        if(ll > Integer.MAX_VALUE) throw new RuntimeException(ll + " value > Integer.MAX_VALUE");
+        parFileNr= (int) ll;
 		try {
 			buffy= new BufferedReader(new FileReader(parFile));
 			

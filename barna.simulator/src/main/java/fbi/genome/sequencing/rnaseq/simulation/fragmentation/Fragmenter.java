@@ -170,7 +170,9 @@ public class Fragmenter implements Callable<Void> {
         // do it
         // count transcripts and initialize the fragments map
         File profilerFile = settings.get(FluxSimulatorSettings.PRO_FILE);
-        int nbTx = FileHelper.countLines(profilerFile);
+        long ll = FileHelper.countLines(profilerFile);
+        if(ll > Integer.MAX_VALUE) throw new RuntimeException(ll + " value > Integer.MAX_VALUE");
+        int nbTx = (int) ll;
         mapFrags = new Hashtable<CharSequence, Number>(nbTx, 1f);
 
         FluxSimulatorSettings.Substrate substrate = settings.get(FluxSimulatorSettings.FRAG_SUBSTRATE);
@@ -328,7 +330,9 @@ public class Fragmenter implements Callable<Void> {
             double polyaScale = settings.get(FluxSimulatorSettings.POLYA_SCALE);
 
             try {
-                int total = FileHelper.countLines(settings.get(FluxSimulatorSettings.REF_FILE));
+                long ll = FileHelper.countLines(settings.get(FluxSimulatorSettings.REF_FILE));
+                if(ll > Integer.MAX_VALUE) throw new RuntimeException(ll + " value > Integer.MAX_VALUE");
+                int total = (int) ll;
                 reader.read();
                 Log.progressStart("preparing reads");
 

@@ -108,7 +108,7 @@ public class EmpiricalDistribution extends AbstractDistribution {
      * @param min minimum value
      * @param max maximum value
      */
-    private static void addToBin(double value, double[] bins, double min, double max){
+    public static void addToBin(double value, double[] bins, double min, double max){
         assert (!(Double.isNaN(min) || Double.isNaN(max)));
         if(value < min || value > max) return;
         int nrBins = bins.length;
