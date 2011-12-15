@@ -16,6 +16,7 @@ import fbi.genome.io.FileHelper;
 import fbi.genome.model.commons.DoubleVector;
 
 import java.io.*;
+import java.util.Arrays;
 
 /**
  * An empirical distribution stored in a histogram.
@@ -23,6 +24,10 @@ import java.io.*;
  * @author micha
  */
 public class EmpiricalDistribution extends AbstractDistribution {
+    /**
+     * Default parser that treats a non empty line as a single double value
+     */
+    public static final LineParser LINE_PARSER_SINGLE_VALUE = new SingleValueLineParser();
 
     /**
      * Minimum, maximum of the underlying distribution.
@@ -88,15 +93,33 @@ public class EmpiricalDistribution extends AbstractDistribution {
             //int p= (int) Math.round((b.length- 1)* ((a[i]- min)/ range));
             double pfloat = (a[i] - min) / binSize;
             int p = (int) Math.round(pfloat);
-
-            if (a[i] == 58) {
-                System.currentTimeMillis();
-            }
             p = (int) ((nrBins - 1) * ((a[i] - min) / (double) (max - min)));
             ++b[p];
         }
 
         return b;
+    }
+
+    /**
+     * Adds the value value to the bins if it is wihtin range.
+     *
+     * @param value the value
+     * @param bins the bins
+     * @param min minimum value
+     * @param max maximum value
+     */
+    private static void addToBin(double value, double[] bins, double min, double max){
+        assert (!(Double.isNaN(min) || Double.isNaN(max)));
+        if(value < min || value > max) return;
+        int nrBins = bins.length;
+        double binSize = (max - min) / (nrBins - 1);
+        double bin = (value-min)/binSize;
+        /*
+        We use bin with values from >= x to < x+range so we
+        have to round here
+         */
+        int binPosition = (int) Math.round(bin);
+        ++bins[binPosition];
     }
 
     public static double[] bin(double[] a, int nrBins) {
@@ -169,66 +192,91 @@ public class EmpiricalDistribution extends AbstractDistribution {
         }
     }
 
-    public static EmpiricalDistribution create(File f, boolean fragFile) throws FileNotFoundException, IOException {
-        return create(f, Double.NaN, Double.NaN, -1, fragFile);
+    /**
+     * Creates a new distribution from the given file, using the line parser to
+     * resolve the values.
+     * <p>
+     *     NOTE that this iterates the file twice !!!
+     *     First iteration counts lines and computes min/max if they are not given (Double.NaN) before
+     *     the second interation creates the distribution
+     * </p>
+     * @param f the file
+     * @param min the min value or Doubel.NaN to force computation of min value
+     * @param max the max value or Doubel.NaN to force computation of max value
+     * @param nrBins number of bins
+     * @param lineParser the line parser
+     * @return dist the distribution
+     * @throws IOException in case of error while reading the data
+     */
+    public static EmpiricalDistribution create(File f, double min, double max, int nrBins, LineParser lineParser) throws IOException {
+        if(f == null) throw new NullPointerException("NULL file not permitted");
+        if(!f.exists()) throw new IllegalArgumentException("Unknown file : " + f.getAbsolutePath());
+        if(!f.canRead()) throw new IllegalArgumentException("Unable to read from " + f.getAbsolutePath());
+        if(lineParser == null) throw new NullPointerException("NULL line parser not permitted");
+
+        /**
+         * To enable IO-15 we have to make sure we also get the values if min or max is not set
+         * so we can not use the FileUtils.countLines() here
+         */
+        DistributionAttributes attributes = getAttributes(f, lineParser);
+        if(Double.isNaN(max)) max = attributes.getMax();
+        if(Double.isNaN(min)) min = attributes.getMin();
+        long lineCount = attributes.getSize();
+        if(lineCount == 0){
+            throw new IllegalArgumentException("Empirical distribution can not be created from an empty file !");
+        }
+        Log.debug("Creating empirical distribution, counted lines : "+lineCount + " in "+ f.getAbsolutePath() + " with min : " + min + " and max : " + max);
+        return create(new FileInputStream(f),lineCount, min, max, nrBins, lineParser);
     }
 
-    public static EmpiricalDistribution create(File f, int nrBins, boolean fragFile) throws FileNotFoundException, IOException {
-        return create(f, Double.NaN, Double.NaN, nrBins, fragFile);
-    }
-
-    public static EmpiricalDistribution create(File f, double min, double max, int nrBins, boolean fragFile) throws FileNotFoundException, IOException {
-        int lineCount = FileHelper.countLines(f.getAbsolutePath());
-        Log.debug("Creating empirical distribution, counted lines : "+lineCount + " in "+ f.getAbsolutePath());
-        return create(lineCount, new FileInputStream(f), min, max, nrBins, fragFile);
-    }
-
-    public static EmpiricalDistribution create(int size, InputStream f, double min, double max, int nrBins, boolean fragFile) throws IOException {
-        int total = 0;
-        String[] ss;
-        //int ll= FileHelper.countLines(f.getAbsolutePath());
-        DoubleVector v = new DoubleVector(size, 1);
-
-        BufferedReader buffy = new BufferedReader(new InputStreamReader(f));
-        for (String s = null; (s = buffy.readLine()) != null; ++total) {
-            //Log.progress(current, size);
-            ss = s.split("\\s");
-            double x = (fragFile ? Double.parseDouble(ss[1]) - Double.parseDouble(ss[0]) + 1
-                    : Double.parseDouble(ss[0]));
-            // TODO allow multiplier field
-            if ((Double.isNaN(min) || x >= min) && (Double.isNaN(max) || x <= max)) {
-                v.add(x);
-            }
+    /**
+     * Creates a new distribution from the data read from the input stream.
+     * <p>
+     *     NOTE that ALL values have to be specified. If you want to get the attributes,
+     *     use {@link #getAttributes(java.io.Reader, fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution.LineParser)}
+     *     to get the line count and min/max value from your data stream.
+     * </p>
+     * @param f the input stream
+     * @param size number of elements
+     * @param min the min value
+     * @param max the max value
+     * @param nrBins the number of bins
+     * @param lineParser the line parser
+     * @return dist the distribution
+     * @throws IOException in case of IO error while reading data
+     */
+    public static EmpiricalDistribution create(InputStream f, long size, double min, double max, int nrBins, LineParser lineParser) throws IOException {
+        if(size <= 0){
+            throw new IllegalArgumentException("Empirical distribution can not be created from an empty file !");
         }
-        buffy.close();
+        if(Double.isNaN(min) || Double.isNaN(max)){
+            throw new IllegalArgumentException("When reading from an input stream, you have to specify min and max " +
+                    "values, because we can not reopen the stream easily and therefore can not compute the values " +
+                    "dynamically!");
+        }
 
-        // get attributes
-        double[] a = v.toDoubleArray();
-        double sum = 0d, lo = Double.MAX_VALUE, hi = Double.MIN_VALUE, mean = Double.NaN;
-        for (int i = 0; i < a.length; i++) {
-            if (a[i] < lo) {
-                lo = a[i];
-            }
-            if (a[i] > hi) {
-                hi = a[i];
-            }
-            sum += a[i];
-        }
-        mean = sum / a.length;
-
-        // perform binning
-        if (Double.isNaN(min)) {
-            min = lo;
-        }
-        if (Double.isNaN(max)) {
-            max = hi;
-        }
         if (nrBins < 1) {
             nrBins = (int) ((max - min) + 1);
         }
-        double[] h = bin(a, min, max, nrBins);
-        System.currentTimeMillis();
-        return new EmpiricalDistribution(h, lo, hi, mean);
+        double sum = 0d;
+        long count = 0l;
+        double[] bins = new double[nrBins];
+        double mean;
+        BufferedReader buffy = new BufferedReader(new InputStreamReader(f));
+        for (String s = null; (s = buffy.readLine()) != null;) {
+            double x = lineParser.parse(s);
+            if(!Double.isNaN(x) && x >= min && x <= max){
+                // add to bin
+                addToBin(x, bins, min, max);
+                // add to stats
+                count++;
+                sum += x;
+            }
+        }
+        buffy.close();
+        // compute the mean
+        mean = sum / count;
+        return new EmpiricalDistribution(bins, min, max, mean);
     }
 
     /**
@@ -422,4 +470,122 @@ public class EmpiricalDistribution extends AbstractDistribution {
         return fmax;
     }
 
+
+    /*
+    IO-17 Add custom line parser interface to remove dependency to fragmenter file layout
+     */
+    /**
+     * Implementations parse a single string to a double value
+     */
+    public static interface LineParser{
+        /**
+         * Parse the given line and return the double value or return Double.NaN if
+         * the line does not resolve to a double value
+         *
+         * @param line the line
+         * @return value the double value or Double.NaN
+         */
+        double parse(String line);
+    }
+
+    /**
+     * Parses a line as single double value
+     */
+    public static class SingleValueLineParser implements LineParser{
+        @Override
+        public double parse(String line) {
+            if(line.trim().isEmpty()) return Double.NaN;
+            return Double.parseDouble(line);
+        }
+    }
+
+    /**
+     * Contains information about a distribution. We use this to wrap
+     * min/max and size before we create the distribution from a data source.
+     */
+    public static class DistributionAttributes{
+        private double min = Double.NaN;
+        private double max = Double.NaN;
+        private long size = 0;
+
+        private DistributionAttributes(double min, double max, long size) {
+            this.min = min;
+            this.max = max;
+            this.size = size;
+        }
+
+        public double getMin() {
+            return min;
+        }
+
+        public double getMax() {
+            return max;
+        }
+
+        public long getSize() {
+            return size;
+        }
+    }
+
+    /**
+     * Reads all content from the given file and uses the line parser to create
+     * basic attributes such as min and max value and the number of lines.
+     *
+     * @param file the file
+     * @param parser the line parser
+     * @return attributes the basic attributes
+     * @throws FileNotFoundException in case the file was not found
+     */
+    public static DistributionAttributes getAttributes(File file, LineParser parser) throws FileNotFoundException {
+        if(file == null) throw new NullPointerException("NULL file not permitted");
+        if(parser == null) throw new NullPointerException("NULL line parser not permitted");
+        if(!file.exists()) throw new FileNotFoundException("Unknown file : " + file.getAbsolutePath());
+        if(!file.canRead()) throw new IllegalArgumentException("Unable to read from " + file.getAbsolutePath());
+        return getAttributes(new FileReader(file), parser);
+    }
+
+    /**
+     * Reads all content from the given reader and uses the line parser to create
+     * basic attributes such as min and max value and the number of lines.
+     * <p>
+     * NOTE that the reader is closed after a call to this method.
+     * </p>
+     *
+     * @param reader the content
+     * @param parser the line parser
+     * @return attributes basic distribution attributes
+     */
+    public static DistributionAttributes getAttributes(Reader reader, LineParser parser) {
+        /**
+         * To enable IO-15 we have to make sure we also get the values if min or max is not set
+         * so we can not use the FileUtils.countLines() here
+         */
+        long lineCount = 0;
+        BufferedReader buffy = null;
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+
+        try {
+            buffy = new BufferedReader(reader);
+            for (String s; (s = buffy.readLine()) != null; ++lineCount) {
+                double x = parser.parse(s);
+                if(!Double.isNaN(x)){
+                    min = Math.min(min, x);
+                    max = Math.max(max, x);
+                    lineCount++;
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error while counting lines for empirical distribution creation", e);
+        } finally {
+            if (buffy != null) {
+                try {buffy.close();} catch (IOException ignore) {
+                    Log.debug("Error while closing reader while " +
+                            "counting lines for empirical distribution : "
+                            + ignore.getMessage());
+                }
+            }
+        }
+        return new DistributionAttributes(min, max, lineCount);
+    }
 }

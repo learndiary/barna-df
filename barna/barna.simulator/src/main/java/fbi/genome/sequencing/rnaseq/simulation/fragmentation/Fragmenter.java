@@ -27,6 +27,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import fbi.genome.sequencing.rnaseq.simulation.distributions.*;
 import org.apache.commons.math.random.RandomDataImpl;
 
 import fbi.commons.ByteArrayCharSequence;
@@ -44,10 +45,6 @@ import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import fbi.genome.sequencing.rnaseq.simulation.PWM;
 import fbi.genome.sequencing.rnaseq.simulation.Profiler;
 import fbi.genome.sequencing.rnaseq.simulation.ProfilerFile;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.Distributions;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
-import fbi.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
 import fbi.genome.sequencing.rnaseq.simulation.tools.PCRDistributionsTool;
 
 
@@ -78,7 +75,7 @@ public class Fragmenter implements Callable<Void> {
     private Map<CharSequence, CharSequence> mapTxSeq = null;
 
     AbstractDistribution originalDist = null;
-    AbstractDistribution[] filterDist = null;
+    EmpiricalDistribution filterDist = null;
 
     RandomDataImpl rndTSS;
     Random rndPA, rndPlusMinus;
@@ -117,7 +114,7 @@ public class Fragmenter implements Callable<Void> {
         // if filtering is enabled, load the size distribution in background
         // just a minor improvement, but still
         // size selection
-        Future<AbstractDistribution[]> sizeDistFuture = null;
+        Future<EmpiricalDistribution> sizeDistFuture = null;
         if (settings.get(FluxSimulatorSettings.FILTERING)) {
             String distribution = settings.get(FluxSimulatorSettings.SIZE_DISTRIBUTION);
 
@@ -134,9 +131,9 @@ public class Fragmenter implements Callable<Void> {
                 }
 
                 final String finalDistName = distName;
-                sizeDistFuture = Execute.getExecutor().submit(new Callable<AbstractDistribution[]>() {
+                sizeDistFuture = Execute.getExecutor().submit(new Callable<EmpiricalDistribution>() {
                     @Override
-                    public AbstractDistribution[] call() throws Exception {
+                    public EmpiricalDistribution call() throws Exception {
                         return parseFilterDistribution(finalDistName, Double.NaN, Double.NaN, GEL_NB_BINS_LENGTH, false);
                     }
                 });
@@ -144,9 +141,12 @@ public class Fragmenter implements Callable<Void> {
                 // try to parse the string to a distribution
                 try{
                     AbstractDistribution dist = Distributions.parseDistribution(distribution);
-                    filterDist = new AbstractDistribution[]{dist};
-
-                    Log.info("Size Distribution : "+ dist.toString());
+                    if(dist instanceof NormalDistribution){
+                        filterDist = new EmpiricalDistribution((NormalDistribution) dist, GEL_NB_BINS_LENGTH, 4d );
+                    }else{
+                        throw new RuntimeException("Distribution " + filterDist + " can not be converted to empirical distribution!");
+                    }
+                    Log.info("Size Distribution : "+ filterDist.toString());
                 }catch (Exception e){
                     throw new RuntimeException("Unable to parse size distribution from " + distribution, e);
                 }
@@ -229,11 +229,10 @@ public class Fragmenter implements Callable<Void> {
                     throw new RuntimeException("Something went wrong! There is no size distribution !");
                 }
             }
-            AbstractDistribution eDist = filterDist[0];
-            if (filterDist[0] instanceof EmpiricalDistribution) {
-                originalDist = parseFilterDistribution(tmpFilePath,((EmpiricalDistribution) eDist).getMin(), ((EmpiricalDistribution) eDist).getMax(), ((EmpiricalDistribution) eDist).getBins().length, true)[0];
-                ((EmpiricalDistribution) eDist).normalizeToPrior((EmpiricalDistribution) originalDist);
-            }
+
+            originalDist = parseFilterDistribution(tmpFilePath, filterDist.getMin(), filterDist.getMax(), filterDist.getBins().length, true);
+            filterDist.normalizeToPrior((EmpiricalDistribution) originalDist);
+
             mode = parseFilterSampling(settings.get(FluxSimulatorSettings.SIZE_SAMPLING));
             if ((!process(mode, tmpFile))) {
                 return null;
@@ -433,13 +432,13 @@ public class Fragmenter implements Callable<Void> {
                 FragmentProcessor processor = null;
                 switch (mode) {
                     case MODE_FILT_REJ:
-                        processor = new FragmentFilterRejection(filterDist, true);
+                        processor = new FragmentFilterRejection(new AbstractDistribution[]{filterDist}, true);
                         break;
                     case MODE_FILT_ACC:
-                        processor = new FragmentFilterRejection(filterDist, false);
+                        processor = new FragmentFilterRejection(new AbstractDistribution[]{filterDist}, false);
                         break;
                     case MODE_FILT_MH:
-                        processor = new FragmentFilterMCMC(originalDist, filterDist);
+                        processor = new FragmentFilterMCMC(originalDist, new AbstractDistribution[]{filterDist});
                         break;
                     case MODE_NEBU:
                         // determine C
@@ -851,14 +850,28 @@ public class Fragmenter implements Callable<Void> {
      * @param s string describing the distribution
      * @return a (set of) distributions as initialized from the argument
      */
-    public static AbstractDistribution[] parseFilterDistribution(String s, double min, double max, int nrBins, boolean fragFile) {
+    static EmpiricalDistribution parseFilterDistribution(String s, double min, double max, int nrBins, boolean fragFile) {
 
         if (s != null) {
             File f = new File(s);
             if (f.exists()) {
                 Log.debug("Reading filter distribution from : " + s );
                 try {
-                    return new AbstractDistribution[]{EmpiricalDistribution.create(f, min, max, nrBins, fragFile)};
+                    EmpiricalDistribution.LineParser parser = EmpiricalDistribution.LINE_PARSER_SINGLE_VALUE;
+                    if(fragFile){
+                        // create custom parser for the fragmentation file
+                        parser = new EmpiricalDistribution.LineParser() {
+                            @Override
+                            public double parse(String line) {
+                                if(line.trim().isEmpty()) return Double.NaN;
+                                String[] ss = line.split("\\s");
+                                return Double.parseDouble(ss[1]) - Double.parseDouble(ss[0]) + 1;
+                            }
+                        };
+                    }
+
+
+                    return EmpiricalDistribution.create(f, min, max, nrBins, parser);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage() + " from " + s, e);
                 }
@@ -869,7 +882,8 @@ public class Fragmenter implements Callable<Void> {
             // load the default
             URL url = Fragmenter.class.getResource("/expAll.isizes");
             try {
-                return new AbstractDistribution[]{EmpiricalDistribution.create(209208, url.openStream(), min, max, nrBins, fragFile)};
+                // get the attributes ?
+                return EmpiricalDistribution.create(url.openStream(), 209208, 1, 297, nrBins, EmpiricalDistribution.LINE_PARSER_SINGLE_VALUE);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to read size filter distribution : " + e.getMessage(), e);
             }
