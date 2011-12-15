@@ -51,57 +51,8 @@ public class EmpiricalDistribution extends AbstractDistribution {
     double[] a = null;
 
 
-    public static void main(String[] args) {
-        double[] a = new double[300];
-        double min = 1, max = a.length;
-        for (int i = 0; i < a.length; i++) {
-            a[i] = (i + 1);
-        }
-        int nrBins = (int)
-                Math.ceil((Math.log(a.length) / Math.log(2)) + 1);    //Sturges formula
-        bin(a, min, max, nrBins);
-    }
-
     /**
-     * Creates from array <code>a</code> a new array with <code>nrBins</code> bins
-     * between <code>min</code> and <code>max</code>.
-     *
-     * @param a      the original array
-     * @param min    minimum value to be included in the new array
-     * @param max    maximum value to be included in the new array
-     * @param nrBins number of elements in the new array
-     * @return
-     */
-    public static double[] bin(double[] a, double min, double max, int nrBins) {
-
-//		nrBins= (int) 
-//			Math.ceil((Math.log(a.length)/ Math.log(2))+ 1);	// Sturges' estimation
-
-        assert (!(Double.isNaN(min) || Double.isNaN(max)));
-        double range = max - min; //(Math.ceil(max))- Math.floor(min));
-
-        double[] b = new double[nrBins];
-        for (int i = 0; i < b.length; ++i) {
-            b[i] = 0;
-        }
-        double binSize = range / (nrBins - 1);
-        for (int i = 0; i < a.length; ++i) {
-            if (a[i] < min || a[i] > max) {
-                continue;
-            }
-            // getbin
-            //int p= (int) Math.round((b.length- 1)* ((a[i]- min)/ range));
-            double pfloat = (a[i] - min) / binSize;
-            int p = (int) Math.round(pfloat);
-            p = (int) ((nrBins - 1) * ((a[i] - min) / (double) (max - min)));
-            ++b[p];
-        }
-
-        return b;
-    }
-
-    /**
-     * Adds the value value to the bins if it is wihtin range.
+     * Adds the value value to the bins if it is within range.
      *
      * @param value the value
      * @param bins the bins
@@ -120,19 +71,6 @@ public class EmpiricalDistribution extends AbstractDistribution {
          */
         int binPosition = (int) Math.round(bin);
         ++bins[binPosition];
-    }
-
-    public static double[] bin(double[] a, int nrBins) {
-        double min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
-        for (int i = 0; i < a.length; i++) {
-            if (a[i] < min) {
-                min = a[i];
-            }
-            if (a[i] > max) {
-                max = a[i];
-            }
-        }
-        return bin(a, min, max, nrBins);
     }
 
     /**
