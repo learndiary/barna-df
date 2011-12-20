@@ -87,7 +87,7 @@ class FluxSimulatorTest {
 		String cmd= "java -cp "+System.getProperty("java.class.path")
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
-		cmd+= " -Xmx1G barna.commons.flux.Flux -t simulator -p "+parFile.getAbsolutePath()
+		cmd+= " -Xmx1G barna.commons.launcher.Flux -t simulator -p "+parFile.getAbsolutePath()
 
 		Process process= cmd.execute()
 		process.waitFor()

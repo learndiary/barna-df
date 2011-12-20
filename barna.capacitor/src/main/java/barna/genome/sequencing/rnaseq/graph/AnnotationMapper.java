@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.graph;
 
-import barna.commons.Log;
+import barna.commons.log.Log;
 import barna.genome.io.BufferedIterator;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
@@ -188,7 +188,7 @@ public class AnnotationMapper extends SplicingGraph {
 			return null;
 		}
 		if (d.isStranded()&& attributes.strand< 0) {
-			Log.warn("Error in read ID: could not find strand in "+ tag);
+			Log.warn("Error in read ID: could not find strand in " + tag);
 			return null;
 		}
 		return attributes;

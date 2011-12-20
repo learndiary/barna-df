@@ -2,10 +2,10 @@ package barna.genome.tools.chipseq;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.commons.Log;
-import barna.commons.Log.Level;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
+import barna.commons.log.Log.Level;
 import barna.genome.io.BufferedIteratorDisk;
 import barna.genome.io.FileHelper;
 import barna.genome.io.bed.BEDwrapper;
@@ -120,8 +120,12 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 					descriptor= null;
 				}
 			}
-			if (fileOutput== null)
+			if (fileOutput== null){
 				fileOutput= parameters.get(ChipSeqSettings.FILE_OUTPUT);
+                if(fileOutput == null || fileOutput.isDirectory()){
+                    throw new RuntimeException("You have to specify the FILE_OUTPUT parameter");
+                }
+            }
 		}
 		if (descriptor== null) {
 			descriptor= new UniversalReadDescriptor();

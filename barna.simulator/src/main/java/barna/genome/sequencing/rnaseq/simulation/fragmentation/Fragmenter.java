@@ -15,10 +15,10 @@ package barna.genome.sequencing.rnaseq.simulation.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.commons.Log;
-import barna.commons.StringUtils;
 import barna.commons.io.IOHandler;
 import barna.commons.io.IOHandlerFactory;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
 import barna.genome.model.Gene;

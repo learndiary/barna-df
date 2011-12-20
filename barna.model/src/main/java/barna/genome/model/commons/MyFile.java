@@ -12,7 +12,7 @@
 package barna.genome.model.commons;
 
 
-import barna.commons.StringUtils;
+import barna.commons.utils.StringUtils;
 
 import java.io.PrintStream;
 

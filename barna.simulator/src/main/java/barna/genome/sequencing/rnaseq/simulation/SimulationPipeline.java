@@ -11,10 +11,10 @@
 
 package barna.genome.sequencing.rnaseq.simulation;
 
-import barna.commons.Log;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
-import barna.commons.tools.CommandLine;
+import barna.commons.launcher.CommandLine;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
 import barna.genome.sequencing.rnaseq.simulation.fragmentation.Fragmenter;

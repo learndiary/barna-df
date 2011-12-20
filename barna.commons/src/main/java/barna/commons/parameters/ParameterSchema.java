@@ -11,7 +11,7 @@
 
 package barna.commons.parameters;
 
-import barna.commons.Log;
+import barna.commons.log.Log;
 
 import java.io.*;
 import java.lang.reflect.Field;

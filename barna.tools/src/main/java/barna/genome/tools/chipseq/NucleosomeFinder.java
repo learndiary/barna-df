@@ -2,8 +2,8 @@ package barna.genome.tools.chipseq;
 
 
 import barna.commons.Execute;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
 import barna.genome.io.FileHelper;
 import barna.genome.io.bed.BEDwrapper;
 import barna.genome.io.rna.UniversalReadDescriptor;

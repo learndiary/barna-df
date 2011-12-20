@@ -11,8 +11,8 @@
 
 package barna.genome.sequencing.rnaseq.simulation.tools;
 
-import barna.commons.Log;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
 import barna.genome.io.FileHelper;
 import barna.genome.io.bed.BEDwrapper;
 import barna.genome.io.gtf.GTFwrapper;

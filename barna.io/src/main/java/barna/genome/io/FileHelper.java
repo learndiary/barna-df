@@ -12,9 +12,9 @@
 package barna.genome.io;
 
 
-import barna.commons.Log;
-import barna.commons.StringUtils;
-import barna.commons.file.MultiMemberGZIPInputStream;
+import barna.commons.io.MultiMemberGZIPInputStream;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;

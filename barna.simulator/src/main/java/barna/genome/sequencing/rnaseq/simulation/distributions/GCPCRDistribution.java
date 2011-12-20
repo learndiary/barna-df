@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.simulation.distributions;
 
-import barna.commons.Log;
+import barna.commons.log.Log;
 
 /**
  * Create a set of {@link PCRDistribution} instances.
@@ -73,7 +73,7 @@ public class GCPCRDistribution {
         bin = Math.max(0, bin); // in case gc_p is 0
 
         for(int i = 0; i< distributions[bin].v.length; i++){
-            Log.println(i+" "+distributions[bin].v[i] +"");
+            Log.println(i + " " + distributions[bin].v[i] + "");
         }
     }
 

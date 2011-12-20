@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.commons.Log;
+import barna.commons.log.Log;
 import barna.genome.io.FileHelper;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.model.constants.Constants;
@@ -222,8 +222,8 @@ public class FluxCapacitorParameters {
 					else if (ll[1].equalsIgnoreCase(PAR_NO))
 						pars.sortInRam= false;
 					else
-						Log.error("Invalid value "+ ll[1]+ ", please use "+ PAR_YES+ " or "+
-								PAR_NO+ " to specify a value for "+ PAR_SORT_IN_RAM);
+						Log.error("Invalid value " + ll[1] + ", please use " + PAR_YES + " or " +
+                                PAR_NO + " to specify a value for " + PAR_SORT_IN_RAM);
 				} else {
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 						System.err.println("[UNKNOWN] I couldnt understand parameter "+ ll[0]);

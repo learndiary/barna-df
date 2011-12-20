@@ -2,8 +2,8 @@ package barna.genome.tools.overlap;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
 import barna.genome.io.BufferedBACSReader;
 import barna.genome.io.FileHelper;
 import barna.genome.model.bed.BEDobject2;
@@ -18,7 +18,7 @@ import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 
 @Cli(name = "isect", description = "Intersector")
-public class Intersector implements FluxTool<Void>{
+public class Intersector implements FluxTool<Void> {
 
 	public static void main(String[] args) {
 		

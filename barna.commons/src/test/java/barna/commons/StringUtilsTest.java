@@ -1,5 +1,6 @@
 package barna.commons;
 
+import barna.commons.utils.StringUtils;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;

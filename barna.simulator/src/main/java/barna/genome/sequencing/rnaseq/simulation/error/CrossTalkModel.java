@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.simulation.error;
 
-import barna.commons.TableFormatter;
+import barna.commons.utils.TableFormatter;
 
 import java.util.Arrays;
 import java.util.List;

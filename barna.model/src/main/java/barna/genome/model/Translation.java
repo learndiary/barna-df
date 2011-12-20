@@ -17,7 +17,7 @@
  */
 package barna.genome.model;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.model.commons.IntVector;
 
 import java.util.Arrays;

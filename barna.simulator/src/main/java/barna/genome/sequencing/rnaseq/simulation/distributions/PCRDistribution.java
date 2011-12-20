@@ -11,8 +11,8 @@
 
 package barna.genome.sequencing.rnaseq.simulation.distributions;
 
-import barna.commons.Log;
-import barna.commons.StringUtils;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 import org.apache.commons.math.special.Gamma;
 
 import java.util.Arrays;

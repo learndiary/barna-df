@@ -1,8 +1,8 @@
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.commons.Log;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
 import barna.genome.io.BufferedIteratorDisk;
 import barna.genome.io.FileHelper;
 import barna.genome.io.bed.BEDwrapper;

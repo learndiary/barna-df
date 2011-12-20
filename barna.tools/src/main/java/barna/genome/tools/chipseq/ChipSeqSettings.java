@@ -1,8 +1,6 @@
 package barna.genome.tools.chipseq;
 
-import barna.commons.parameters.Parameter;
-import barna.commons.parameters.ParameterSchema;
-import barna.commons.parameters.Parameters;
+import barna.commons.parameters.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,7 +48,17 @@ public class ChipSeqSettings extends ParameterSchema {
 	    }
 	    
 	    public static final Parameter<File> FILE_INPUT = Parameters.fileParameter("FILE_INPUT", "input file");
-	    public static final Parameter<File> FILE_OUTPUT = Parameters.fileParameter("FILE_OUTPUT", "primary output file");
+	    public static final Parameter<File> FILE_OUTPUT = Parameters.fileParameter("FILE_OUTPUT", "primary output file", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = schema.get(FILE_OUTPUT);
+                if(file == null){
+                    throw new ParameterException(parameter, null, "Please specify the FILE_OUTPUT parameter");
+                }else if(file.isDirectory()){
+                    throw new ParameterException(parameter, file.getAbsolutePath(), "FILE_OUTPUT parameter is a directory, please specify a file");
+                }
+            }
+        });
 	    public static final Parameter<File> FILE_OUTPUT2 = Parameters.fileParameter("FILE_OUTPUT2", "secondary output file");
 	    public static final Parameter<File> FILE_OUTPUT3 = Parameters.fileParameter("FILE_OUTPUT3", "tertiary output file");
 

@@ -17,7 +17,7 @@
  */
 package barna.genome.model;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.model.constants.Constants2;
 
 import java.io.File;

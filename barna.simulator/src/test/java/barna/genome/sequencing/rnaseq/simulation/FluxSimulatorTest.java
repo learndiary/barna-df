@@ -1,7 +1,7 @@
 package barna.genome.sequencing.rnaseq.simulation;
 
-import barna.commons.flux.Flux;
-import barna.commons.flux.FluxTool;
+import barna.commons.launcher.Flux;
+import barna.commons.launcher.FluxTool;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

@@ -11,8 +11,8 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.commons.StringUtils;
 import barna.commons.parameters.*;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.model.constants.Constants;

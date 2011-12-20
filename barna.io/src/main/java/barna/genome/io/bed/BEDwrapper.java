@@ -12,13 +12,13 @@
 package barna.genome.io.bed;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.Log;
 import barna.commons.Progressable;
 import barna.commons.io.DevNullOutputStream;
+import barna.commons.log.Log;
 import barna.commons.thread.SyncIOHandler2;
-import barna.commons.tools.ArrayUtils;
-import barna.commons.tools.Interceptable;
-import barna.commons.tools.LineComparator;
+import barna.commons.utils.ArrayUtils;
+import barna.commons.utils.Interceptable;
+import barna.commons.utils.LineComparator;
 import barna.genome.io.*;
 import barna.genome.io.rna.FMRD;
 import barna.genome.io.rna.ReadDescriptor;

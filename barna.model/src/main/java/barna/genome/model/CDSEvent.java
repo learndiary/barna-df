@@ -11,7 +11,7 @@
 
 package barna.genome.model;
 
-import barna.commons.StringUtils;
+import barna.commons.utils.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
