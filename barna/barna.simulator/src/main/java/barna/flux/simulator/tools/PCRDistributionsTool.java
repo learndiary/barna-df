@@ -16,6 +16,7 @@ import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.flux.simulator.distributions.GCPCRDistribution;
+import barna.flux.simulator.distributions.PCRDistribution;
 import com.thoughtworks.xstream.XStream;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
@@ -185,7 +186,7 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
         GCPCRDistribution dist = GCPCRDistribution.create(getBins(), getGenerations());
         Log.info("PCR", "Distributions created. Writing output.");
 
-        XStream s = new XStream();
+        XStream s = createXStream();
         OutputStream out = new GZIPOutputStream(new FileOutputStream(getOutputFile()));
         s.toXML(dist, out);
         out.close();
@@ -203,8 +204,15 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
      */
     public static GCPCRDistribution load(InputStream input) throws  Exception{
         InputStream inputStream = new GZIPInputStream(input);
-        XStream ss = new XStream();
-        Object o = ss.fromXML(inputStream);
+        Object o = createXStream().fromXML(inputStream);
         return (GCPCRDistribution) o;
+    }
+
+    private static XStream createXStream() {
+        XStream ss = new XStream();
+        // make sure we use refactor save aliases
+        ss.alias("GCPCRDistribution", GCPCRDistribution.class);
+        ss.alias("PCRDistribution", PCRDistribution.class);
+        return ss;
     }
 }
