@@ -7,10 +7,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -101,5 +102,73 @@ public class SmallSimulationsTest {
         // check read count
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
     }
+    @Test
+    public void testStatisticsOutput(){
+        // disable any questions
+        Log.setInteractive(false);
+        final StringWriter stringWriter = new StringWriter();
+        PrintStream printStream = new PrintStream(new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                stringWriter.write(b);
+            }
+        });
+        Log.outputStream = printStream;
+        Log.logStream = printStream;
+        // the setting file
+        File settings = new File(getClass().getResource("/test_output_stats.par").getFile());
 
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(true);
+        pipeline.setSequence(true);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+        try {
+            stringWriter.close();
+            String allLines = stringWriter.toString();
+            BufferedReader reader = new BufferedReader(new StringReader(allLines));
+            long fragments =-1;
+            long reads =-1;
+
+            Pattern fragP = Pattern.compile("\\s+(\\d+).*fragments found.*");
+            Pattern readP = Pattern.compile("\\s+(\\d+).*reads sequenced.*");
+            for(String l = reader.readLine(); l != null; l = reader.readLine()){
+                Matcher m = fragP.matcher(l);
+                if(m.matches()){
+                    fragments = Long.parseLong(m.group(1));
+                }
+                m = readP.matcher(l);
+                if(m.matches()){
+                    reads = Long.parseLong(m.group(1));
+                }
+            }
+            assertTrue(reads != -1);
+            assertTrue(fragments != -1);
+            assertTrue(fragments != reads);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+
+        // check read count
+        //assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+    }
+
+    @Test
+    public void testpattern() throws Exception {
+
+        Pattern fragP = Pattern.compile("\\s+(\\d+) fragments found");
+        Matcher m = fragP.matcher("  123 fragments found");
+        assertTrue(m.matches());
+        System.out.println(m.group(1));
+
+    }
 }

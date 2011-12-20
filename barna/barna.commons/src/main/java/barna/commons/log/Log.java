@@ -72,8 +72,9 @@ public class Log {
 
     /**
      * The console progress
+     * WARNING use {@link #progressable()} to access the instance
      */
-    private static final Progressable progress = new PrintstreamProgressable(logStream);
+    private static Progressable progressableInstance;
 
     /**
      * Is the logger interactive
@@ -288,7 +289,7 @@ public class Log {
      */
     public static void progressStart(String message) {
         if (logLevel.level >= Log.Level.INFO.level) {
-            progress.start(message);
+            progressable().start(message);
         }
     }
 
@@ -297,7 +298,7 @@ public class Log {
      */
     private static void progress() {
         if (logLevel.level >= Log.Level.INFO.level) {
-            progress.progress();
+            progressable().progress();
         }
     }
 
@@ -309,8 +310,8 @@ public class Log {
      */
     public static void progress(long currentValue, long maxValue) {
         if (logLevel.level >= Log.Level.INFO.level) {
-            int preStep = (int) Math.ceil((double) maxValue / progress.steps());
-            while (currentValue < maxValue && progress.currentStep() < progress.steps() && progress.currentStep() * preStep <= currentValue) {
+            int preStep = (int) Math.ceil((double) maxValue / progressable().steps());
+            while (currentValue < maxValue && progressable().currentStep() < progressable().steps() && progressable().currentStep() * preStep <= currentValue) {
                 progress();
             }
         }
@@ -322,7 +323,7 @@ public class Log {
      */
     public static void progressFinish() {
         if (logLevel.level >= Log.Level.INFO.level) {
-            progress.finish();
+            progressable().finish();
         }
     }
 
@@ -334,7 +335,7 @@ public class Log {
      */
     public static void progressFinish(String msg, boolean time) {
         if (logLevel.level >= Log.Level.INFO.level) {
-            progress.finish(msg, time);
+            progressable().finish(msg, time);
         }
     }
 
@@ -345,7 +346,7 @@ public class Log {
      */
     public static void progressFailed(String msg) {
         if (logLevel.level >= Log.Level.INFO.level) {
-            progress.failed(msg);
+            progressable().failed(msg);
         }
     }
 
@@ -355,7 +356,7 @@ public class Log {
      * @return steps the number of steps provided by the progress
      */
     public static int progressSteps() {
-        return progress.steps();
+        return progressable().steps();
     }
 
     /**
@@ -374,5 +375,17 @@ public class Log {
      */
     public static void setInteractive(boolean interactive) {
         Log.interactive = interactive;
+    }
+
+    /**
+     * Lazy load the progressable instance to enable switching the log stream
+     *
+     * @return progressable the progressable
+     */
+    private static Progressable progressable(){
+        if(progressableInstance == null){
+            progressableInstance = new PrintstreamProgressable(logStream);
+        }
+        return progressableInstance;
     }
 }
