@@ -107,7 +107,7 @@ public class Sequencer implements Callable<Void> {
 
         File referenceFile = settings.get(FluxSimulatorSettings.REF_FILE);
 
-        sequence(zipFile, referenceFile);
+        sequence(zipFile, referenceFile, noOfFragments);
         return null;
     }
 
@@ -157,7 +157,7 @@ public class Sequencer implements Callable<Void> {
                 cs.resetFind();
                 ByteArrayCharSequence id = cs.getToken(2);
                 int dups = cs.getTokenInt(3);
-                nrOfFrags+=dups;
+                nrOfFrags+=Math.max(1, dups);
                 if (!id.equals(lastID)) {
                     zipOut.putNextEntry(new ZipEntry(id.toString()));
                     lastID = id.cloneCurrentSeq();
@@ -165,7 +165,8 @@ public class Sequencer implements Callable<Void> {
                 zipOut.write(cs.chars, cs.start, cs.length());
                 zipOut.write(BYTE_NL);
             }
-            Log.progressFinish(lines + " lines zipped ("+nrOfFrags +" fragments)", true);
+            Log.progressFinish(StringUtils.OK, true);
+            Log.message("\t"+lines + " lines zipped ("+nrOfFrags +" fragments)");
         } finally {
             io.close();
             if (zipOut != null) {
@@ -237,7 +238,7 @@ public class Sequencer implements Callable<Void> {
     }
 
 
-    boolean sequence(File zipFile, File referenceFile) {
+    boolean sequence(File zipFile, File referenceFile, long numberOfFragments) {
         if (zipFile == null) {
             throw new NullPointerException("NULL initial file not permitted!");
         }
@@ -301,7 +302,7 @@ public class Sequencer implements Callable<Void> {
 
             Log.progressFinish();
             Log.message("");
-            Log.message("\t" + processor.fragments + " fragments found");
+            Log.message("\t" +  numberOfFragments+ " fragments found");
             Log.message("\t" + writer.totalReads + " reads sequenced");
             Log.message("\t" + writer.countPolyAReads + " reads fall in poly-A tail");
             Log.message("\t" + writer.countTruncatedReads + " truncated reads");
@@ -667,10 +668,6 @@ public class Sequencer implements Callable<Void> {
          */
         private Random rndFiftyFifty = new Random();
         /**
-         * Count fragments processed
-         */
-        private int fragments = 0;
-        /**
          * Count sens reads written
          */
         private int cntPlus = 0;
@@ -725,7 +722,7 @@ public class Sequencer implements Callable<Void> {
 
                 InputStream is = null;
                 BufferedReader buffy = null;
-                int tmpFrags= fragments;
+                int readsSequenced = 0;
                 try {
                     is = zip.getInputStream(ze);
                     buffy = new BufferedReader(new InputStreamReader(is));
@@ -747,7 +744,7 @@ public class Sequencer implements Callable<Void> {
 
                         // write fragments
                         for(int dd = 0; dd< frags;dd++){
-                            fragments++;
+                            readsSequenced++;
                             ++k;
                             if(pairedEnd){
                                 int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
@@ -788,7 +785,7 @@ public class Sequencer implements Callable<Void> {
                                 }
                             }
                             ++k;
-                            fragments++;
+                            readsSequenced++;
                         }
                     } // end all fragments
                 
@@ -819,9 +816,8 @@ public class Sequencer implements Callable<Void> {
             		n= new Number[proFields];
                 	map.put(compID, n);
                 }
-                // reads produced 
-                int fragsNew= fragments- tmpFrags;
-                n[0]= new Integer(pairedEnd? 2* fragsNew: fragsNew);
+                // reads produced
+                n[0]= new Integer(pairedEnd? 2* readsSequenced: readsSequenced);
                 // covered positions
                 n[1]= new Double(coverage.getFractionCovered());
                 // chi-square, exclude 0-positions
