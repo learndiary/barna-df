@@ -1,8 +1,9 @@
-package barna.genome.io.bed;
+package barna.io.bed;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.genome.io.BufferedIteratorDisk;
+import barna.genome.io.bed.BEDDescriptorComparator;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.model.bed.BEDobject2;
 import org.junit.AfterClass;

@@ -1,6 +1,7 @@
-package barna.genome.io;
+package barna.io;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.genome.io.BufferedBACSReader;
 import org.junit.Test;
 
 import java.io.BufferedReader;
