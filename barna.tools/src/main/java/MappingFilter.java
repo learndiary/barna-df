@@ -1,3 +1,18 @@
+import barna.commons.ByteArrayCharSequence;
+import barna.commons.Execute;
+import barna.commons.Log;
+import barna.commons.flux.FluxTool;
+import barna.commons.options.HelpPrinter;
+import barna.genome.io.BufferedIteratorDisk;
+import barna.genome.io.FileHelper;
+import barna.genome.io.bed.BEDwrapper;
+import barna.genome.io.rna.UniversalReadDescriptor;
+import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
+import barna.genome.model.bed.BEDobject2;
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
+import org.cyclopsgroup.jcli.annotation.Option;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -5,22 +20,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
-
-import fbi.commons.ByteArrayCharSequence;
-import fbi.commons.Execute;
-import fbi.commons.Log;
-import fbi.commons.flux.FluxTool;
-import fbi.commons.options.HelpPrinter;
-import fbi.genome.io.BufferedIteratorDisk;
-import fbi.genome.io.FileHelper;
-import fbi.genome.io.bed.BEDwrapper;
-import fbi.genome.io.rna.UniversalReadDescriptor;
-import fbi.genome.io.rna.UniversalReadDescriptor.Attributes;
-import fbi.genome.model.bed.BEDobject2;
 
 /**
  * Class to filter mappings according to custom criteria.

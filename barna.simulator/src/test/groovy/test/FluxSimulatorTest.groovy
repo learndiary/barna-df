@@ -1,20 +1,10 @@
 package test;
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
-
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
-
-import static org.junit.Assert.*
-
-import java.io.File
-
+import barna.genome.io.FileHelper
+import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings
 import org.junit.Test
-
-import fbi.genome.io.FileHelper
-import fbi.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings
+import static org.junit.Assert.assertTrue
 
 class FluxSimulatorTest {
 
@@ -97,7 +87,7 @@ class FluxSimulatorTest {
 		String cmd= "java -cp "+System.getProperty("java.class.path")
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
-		cmd+= " -Xmx1G fbi.commons.flux.Flux -t simulator -p "+parFile.getAbsolutePath()
+		cmd+= " -Xmx1G barna.commons.flux.Flux -t simulator -p "+parFile.getAbsolutePath()
 
 		Process process= cmd.execute()
 		process.waitFor()

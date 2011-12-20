@@ -1,10 +1,10 @@
-import fbi.genome.io.FileHelper;
-import fbi.genome.io.gtf.GTFwrapper;
-import fbi.genome.model.Gene;
-import fbi.genome.model.Transcript;
-import fbi.genome.model.splicegraph.SimpleEdge;
-import fbi.genome.model.splicegraph.SplicingGraph;
-import fbi.genome.model.splicegraph.Node;
+import barna.genome.io.FileHelper;
+import barna.genome.io.gtf.GTFwrapper;
+import barna.genome.model.Gene;
+import barna.genome.model.Transcript;
+import barna.genome.model.splicegraph.Node;
+import barna.genome.model.splicegraph.SimpleEdge;
+import barna.genome.model.splicegraph.SplicingGraph;
 
 import java.io.File;
 import java.io.FileOutputStream;

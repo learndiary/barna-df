@@ -47,4 +47,4 @@ if [ -n "$TMPDIR" ]; then
   MISC="-Djava.io.tmpdir="$TMPDIR
 fi
 
-java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC -cp $cp fbi.commons.flux.Flux "$@"
+java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC -cp $cp barna.commons.flux.Flux "$@"
