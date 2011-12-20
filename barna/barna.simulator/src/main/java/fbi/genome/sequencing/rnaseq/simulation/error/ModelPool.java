@@ -95,7 +95,10 @@ public class ModelPool {
                 if ( random <= pe) {
                     // mutate using crosstalk
                     a[seqStart + i] = (byte) errorModel.getCrossTalk().getTransition(quality, (char) a[seqStart + i], random);
-                    sumMutations++;
+                    // SIMULATOR-29 make sure we count only for "real" mutations
+                    if (a[seqStart + i] != character){
+                        sumMutations++;
+                    }
                 }
 
                 // if fastq, write quality value
