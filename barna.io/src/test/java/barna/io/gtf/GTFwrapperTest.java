@@ -1,6 +1,5 @@
 package barna.io.gtf;
 
-import barna.genome.io.gtf.GTFwrapper;
 import org.junit.Test;
 
 import java.io.File;

@@ -1,7 +1,6 @@
 package barna.io;
 
 import barna.commons.Execute;
-import barna.genome.io.Sorter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

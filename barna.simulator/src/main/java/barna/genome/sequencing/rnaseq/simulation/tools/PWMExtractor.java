@@ -13,10 +13,10 @@ package barna.genome.sequencing.rnaseq.simulation.tools;
 
 import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
-import barna.genome.io.FileHelper;
-import barna.genome.io.bed.BEDwrapper;
-import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.io.state.MappingWrapperState;
+import barna.io.FileHelper;
+import barna.io.bed.BEDwrapper;
+import barna.io.gtf.GTFwrapper;
+import barna.io.state.MappingWrapperState;
 import barna.model.Gene;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;

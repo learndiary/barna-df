@@ -1,6 +1,6 @@
 package barna.genome.sequencing.rnaseq.simulation;
 
-import barna.genome.io.gtf.GTFwrapper;
+import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;

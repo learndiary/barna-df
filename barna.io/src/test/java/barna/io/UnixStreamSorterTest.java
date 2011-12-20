@@ -1,8 +1,6 @@
 package barna.io;
 
 import barna.commons.Execute;
-import barna.genome.io.StreamSorter;
-import barna.genome.io.UnixStreamSorter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

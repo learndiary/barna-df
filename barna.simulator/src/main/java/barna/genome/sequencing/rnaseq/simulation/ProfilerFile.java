@@ -13,7 +13,7 @@ package barna.genome.sequencing.rnaseq.simulation;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.log.Log;
-import barna.genome.io.FileHelper;
+import barna.io.FileHelper;
 
 import java.io.*;
 import java.util.Map;

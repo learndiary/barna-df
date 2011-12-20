@@ -1,7 +1,7 @@
 package barna.genome.astalavista.statistics;
 
-import barna.genome.io.FileHelper;
-import barna.genome.io.gtf.GTFwrapper;
+import barna.io.FileHelper;
+import barna.io.gtf.GTFwrapper;
 import barna.model.ASEvent;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;

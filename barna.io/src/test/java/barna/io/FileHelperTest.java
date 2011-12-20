@@ -1,6 +1,5 @@
 package barna.io;
 
-import barna.genome.io.FileHelper;
 import org.junit.Test;
 
 import java.io.File;

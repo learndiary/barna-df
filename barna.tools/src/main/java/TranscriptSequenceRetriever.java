@@ -1,5 +1,5 @@
-import barna.genome.io.FileHelper;
-import barna.genome.io.gtf.GTFwrapper;
+import barna.io.FileHelper;
+import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.Transcript;
 import barna.model.splicegraph.Node;

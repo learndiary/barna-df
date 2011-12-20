@@ -1,8 +1,8 @@
 package test;
 
 
-import barna.genome.io.FileHelper
 import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings
+import barna.io.FileHelper
 import org.junit.Test
 import static org.junit.Assert.assertTrue
 

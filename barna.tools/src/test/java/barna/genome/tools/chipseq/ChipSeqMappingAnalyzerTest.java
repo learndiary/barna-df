@@ -2,8 +2,8 @@ package barna.genome.tools.chipseq;
 
 import barna.commons.Execute;
 import barna.commons.launcher.Flux;
-import barna.genome.io.FileHelper;
-import barna.genome.io.rna.UniversalReadDescriptor;
+import barna.io.FileHelper;
+import barna.io.rna.UniversalReadDescriptor;
 import org.junit.Test;
 
 import java.io.BufferedWriter;

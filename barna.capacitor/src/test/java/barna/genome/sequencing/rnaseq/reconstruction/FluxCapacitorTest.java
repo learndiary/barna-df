@@ -1,10 +1,10 @@
 package barna.genome.sequencing.rnaseq.reconstruction;
 
 import barna.commons.Execute;
-import barna.genome.io.FileHelper;
-import barna.genome.io.Sorter;
-import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
+import barna.io.FileHelper;
+import barna.io.Sorter;
+import barna.io.rna.UniversalReadDescriptor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

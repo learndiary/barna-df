@@ -1,6 +1,6 @@
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.genome.io.BufferedIteratorDisk;
+import barna.io.BufferedIteratorDisk;
 
 import java.io.*;
 
