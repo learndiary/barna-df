@@ -9,26 +9,26 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.sequencing.rnaseq.simulation.tools;
+package barna.flux.simulator.distributions;
 
-import barna.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
+import barna.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
+import barna.genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
 import org.junit.Test;
 
-import java.io.InputStream;
-
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class PCRDistributionsToolTest {
+public class NormalDistributionTest {
 
     @Test
-    public void testLoadDefault() throws Exception {
-        InputStream inputStream = getClass().getResource("/pcr_15_20.dat").openStream();
-        GCPCRDistribution def = PCRDistributionsTool.load(inputStream);
-        assertNotNull(def);
-        assertEquals(15, def.getGenerations());
+    public void testName() throws Exception {
+        NormalDistribution d = new NormalDistribution(0, 1, false);
+        EmpiricalDistribution e = new EmpiricalDistribution(d, 1000, 4.0);
+        assertEquals(0.0, e.getP(0), 0.000001);
+        assertEquals(0.0, e.getP(1), 0.000001);
+        assertEquals(0.0031, e.getP(0.5), 0.0001);
+        assertEquals(0.999, e.getSum(), 0.001);
     }
 }

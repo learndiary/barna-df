@@ -1,5 +1,6 @@
-package barna.genome.sequencing.rnaseq.simulation;
+package barna.flux.simulator;
 
+import barna.genome.sequencing.rnaseq.simulation.Sequencer;
 import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.Transcript;
@@ -52,8 +53,8 @@ public class SequencerTest {
 						int end= (left? fragStart+ readLen- 1: fragEnd);
 						assert(start<= end);
 						BEDobject2 obj= new BEDobject2();
-						int polyA= Sequencer.createRead(obj, start, end, t, k, 
-								absDir, fragStart, fragEnd, left, 1);
+						int polyA= Sequencer.createRead(obj, start, end, t, k,
+                                absDir, fragStart, fragEnd, left, 1);
 						
 						assertEquals(readLen, obj.getLength());
 						int bedLeft= t.getGenomicPosition(start);

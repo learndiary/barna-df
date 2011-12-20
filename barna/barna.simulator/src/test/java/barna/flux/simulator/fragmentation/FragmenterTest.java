@@ -1,6 +1,7 @@
-package barna.genome.sequencing.rnaseq.simulation.fragmentation;
+package barna.flux.simulator.fragmentation;
 
 import barna.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
+import barna.genome.sequencing.rnaseq.simulation.fragmentation.Fragmenter;
 import org.junit.Test;
 
 import java.io.IOException;

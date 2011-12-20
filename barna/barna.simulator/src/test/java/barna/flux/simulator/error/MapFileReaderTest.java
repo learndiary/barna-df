@@ -9,8 +9,10 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.sequencing.rnaseq.simulation.error;
+package barna.flux.simulator.error;
 
+import barna.genome.sequencing.rnaseq.simulation.error.MapFileReader;
+import barna.genome.sequencing.rnaseq.simulation.error.Read;
 import barna.model.Qualities;
 import org.junit.BeforeClass;
 import org.junit.Test;
