@@ -12,7 +12,7 @@
 package barna.genome.sequencing.rnaseq.simulation;
 
 import barna.commons.parameters.*;
-import barna.genome.io.FileHelper;
+import barna.io.FileHelper;
 
 import java.io.File;
 import java.io.FileInputStream;

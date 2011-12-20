@@ -12,7 +12,6 @@
 package barna.io.gtf;
 
 import barna.commons.Execute;
-import barna.genome.io.gtf.GTFwrapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -2,7 +2,7 @@ package barna.genome.sequencing.rnaseq.simulation;
 
 import barna.commons.Execute;
 import barna.commons.log.Log;
-import barna.genome.io.FileHelper;
+import barna.io.FileHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

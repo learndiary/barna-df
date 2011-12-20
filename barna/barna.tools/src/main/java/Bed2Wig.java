@@ -1,6 +1,6 @@
 import barna.commons.ByteArrayCharSequence;
-import barna.genome.io.BufferedByteArrayReader;
-import barna.genome.io.FileHelper;
+import barna.io.BufferedByteArrayReader;
+import barna.io.FileHelper;
 import barna.model.bed.BEDobject2;
 import barna.model.commons.IntVector;
 

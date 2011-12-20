@@ -2,11 +2,11 @@
 package test
 
 import barna.commons.Execute
-import barna.genome.io.FileHelper
-import barna.genome.io.Sorter
-import barna.genome.io.rna.UniversalReadDescriptor
 import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings
 import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping
+import barna.io.FileHelper
+import barna.io.Sorter
+import barna.io.rna.UniversalReadDescriptor
 import java.util.concurrent.Future
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry

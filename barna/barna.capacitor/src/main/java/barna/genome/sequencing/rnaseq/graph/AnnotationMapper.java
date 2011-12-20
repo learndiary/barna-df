@@ -12,9 +12,9 @@
 package barna.genome.sequencing.rnaseq.graph;
 
 import barna.commons.log.Log;
-import barna.genome.io.BufferedIterator;
-import barna.genome.io.rna.UniversalReadDescriptor;
-import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
+import barna.io.BufferedIterator;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDobject2;
 import barna.model.splicegraph.*;

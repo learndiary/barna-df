@@ -12,7 +12,6 @@
 package barna.io.bed;
 
 import barna.commons.Execute;
-import barna.genome.io.bed.BEDwrapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

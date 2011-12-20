@@ -1,6 +1,6 @@
 package barna.genome.astalavista;
 
-import barna.genome.io.gtf.GTFwrapper;
+import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.splicegraph.SplicingGraph;
 

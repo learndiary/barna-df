@@ -1,7 +1,6 @@
 package barna.io.rna;
 
-import barna.genome.io.rna.UniversalReadDescriptor;
-import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
+import barna.io.rna.UniversalReadDescriptor.Attributes;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

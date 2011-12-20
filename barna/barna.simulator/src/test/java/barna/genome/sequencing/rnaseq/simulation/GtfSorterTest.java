@@ -13,7 +13,7 @@ package barna.genome.sequencing.rnaseq.simulation;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.genome.io.gtf.GTFwrapper;
+import barna.io.gtf.GTFwrapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

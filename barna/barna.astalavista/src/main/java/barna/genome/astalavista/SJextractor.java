@@ -1,6 +1,6 @@
 package barna.genome.astalavista;
 
-import barna.genome.io.SpliceGraphIO;
+import barna.io.SpliceGraphIO;
 import barna.model.IntronModel;
 
 import java.io.File;
