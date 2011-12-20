@@ -1,6 +1,8 @@
-package barna.genome.sequencing.rnaseq.reconstruction;
+package barna.capacitor;
 
 import barna.commons.Execute;
+import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitor;
+import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings;
 import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.io.FileHelper;
 import barna.io.Sorter;
