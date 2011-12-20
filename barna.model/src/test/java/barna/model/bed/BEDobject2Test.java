@@ -1,7 +1,10 @@
 package barna.model.bed;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.genome.model.bed.BEDobject2;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 
 public class BEDobject2Test {
