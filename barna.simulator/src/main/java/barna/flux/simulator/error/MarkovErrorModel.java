@@ -280,7 +280,7 @@ public class MarkovErrorModel implements FluxTool {
         OutputStream out = new GZIPOutputStream(new FileOutputStream(getOutput()));
         // prepare model
         QualityErrorModel qualityErrorModel = new QualityErrorModel(technology, readLength, trans, crossTalkQuality);
-        XStream ss = new XStream();
+        XStream ss = createXStream();
         ss.toXML(qualityErrorModel, out);
         out.close();
 
@@ -323,9 +323,16 @@ public class MarkovErrorModel implements FluxTool {
     public static QualityErrorModel loadErrorModel(String name, InputStream inputStream) throws IOException {
         Log.info("Reading error model " + (name == null ? "" : name));
         GZIPInputStream gz = new GZIPInputStream(inputStream);
-        XStream xx = new XStream();
+        XStream xx = createXStream();
         QualityErrorModel trans = (QualityErrorModel) xx.fromXML(gz);
         gz.close();
         return trans;
+    }
+
+    static XStream createXStream() {
+        XStream stream = new XStream();
+        stream.alias("fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel", QualityErrorModel.class);
+        stream.alias("QualityErrorModel", QualityErrorModel.class);
+        return stream;
     }
 }
