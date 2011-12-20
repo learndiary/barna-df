@@ -1,4 +1,4 @@
-package barna.capacitor;
+package barna.flux.capacitor;
 
 import barna.commons.Execute;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
