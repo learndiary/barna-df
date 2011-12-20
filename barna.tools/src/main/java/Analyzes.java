@@ -1,6 +1,6 @@
 
 
-import barna.genome.astalavista.statistics.David;
+import barna.astalavista.statistics.David;
 import barna.model.commons.DoubleVector;
 
 import java.io.BufferedReader;

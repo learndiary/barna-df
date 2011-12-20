@@ -1,4 +1,4 @@
-package barna.genome.astalavista;
+package barna.astalavista;
 
 import barna.io.SpliceGraphIO;
 import barna.model.IntronModel;
