@@ -2,6 +2,8 @@ package fbi.commons;
 
 import org.junit.Test;
 
+import java.text.DecimalFormat;
+
 import static junit.framework.Assert.assertEquals;
 
 /**
