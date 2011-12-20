@@ -9,9 +9,10 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.io.bed;
+package barna.io.bed;
 
 import barna.commons.Execute;
+import barna.genome.io.bed.BEDwrapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

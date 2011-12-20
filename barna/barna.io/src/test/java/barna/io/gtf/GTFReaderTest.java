@@ -9,10 +9,11 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.io.gtf;
+package barna.io.gtf;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
+import barna.genome.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.Transcript;
 import org.junit.AfterClass;
