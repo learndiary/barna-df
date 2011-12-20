@@ -1,4 +1,4 @@
-package barna.genome.sequencing.rnaseq.simulation;
+package barna.flux.simulator;
 
 import barna.model.Graph;
 import org.junit.Test;

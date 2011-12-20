@@ -1,7 +1,9 @@
-package barna.genome.sequencing.rnaseq.simulation;
+package barna.flux.simulator;
 
 import barna.commons.Execute;
 import barna.commons.log.Log;
+import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
+import barna.genome.sequencing.rnaseq.simulation.SimulationPipeline;
 import barna.io.FileHelper;
 import org.junit.After;
 import org.junit.Before;

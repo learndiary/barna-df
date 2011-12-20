@@ -1,4 +1,4 @@
-package barna.genome.sequencing.rnaseq.simulation;
+package barna.flux.simulator;
 
 import barna.commons.launcher.Flux;
 import barna.commons.launcher.FluxTool;

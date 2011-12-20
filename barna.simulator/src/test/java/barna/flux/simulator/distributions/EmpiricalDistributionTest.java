@@ -9,8 +9,9 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.sequencing.rnaseq.simulation.distributions;
+package barna.flux.simulator.distributions;
 
+import barna.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -18,15 +19,21 @@ import static junit.framework.Assert.assertEquals;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class NormalDistributionTest {
+public class EmpiricalDistributionTest {
 
     @Test
-    public void testName() throws Exception {
-        NormalDistribution d = new NormalDistribution(0, 1, false);
-        EmpiricalDistribution e = new EmpiricalDistribution(d, 1000, 4.0);
-        assertEquals(0.0, e.getP(0), 0.000001);
-        assertEquals(0.0, e.getP(1), 0.000001);
-        assertEquals(0.0031, e.getP(0.5), 0.0001);
-        assertEquals(0.999, e.getSum(), 0.001);
+    public void testPropabilityAndFrequency() throws Exception {
+        double[] dist = new double[]{1.0,2.0,2.0,3.0};
+
+        double[] edist = new double[3];
+        for (int i = 0; i < dist.length; i++) {
+            double v = dist[i];
+            EmpiricalDistribution.addToBin(v, edist, 1.0, 3.0);
+        }
+        EmpiricalDistribution distribution = new EmpiricalDistribution(edist, 1.0, 3.0, 2.0);
+
+
+        assertEquals(0.5, distribution.getP(2.0), 0.00001);
+        assertEquals(1.0, distribution.getRelFreq(2.0), 0.00001);
     }
 }

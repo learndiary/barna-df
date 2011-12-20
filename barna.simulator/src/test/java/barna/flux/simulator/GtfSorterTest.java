@@ -9,7 +9,7 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.sequencing.rnaseq.simulation;
+package barna.flux.simulator;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;

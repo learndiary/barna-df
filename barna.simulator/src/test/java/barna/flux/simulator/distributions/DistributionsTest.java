@@ -9,8 +9,11 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.sequencing.rnaseq.simulation.distributions;
+package barna.flux.simulator.distributions;
 
+import barna.genome.sequencing.rnaseq.simulation.distributions.AbstractDistribution;
+import barna.genome.sequencing.rnaseq.simulation.distributions.Distributions;
+import barna.genome.sequencing.rnaseq.simulation.distributions.NormalDistribution;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
