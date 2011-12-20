@@ -2,8 +2,8 @@
 package test
 
 import barna.commons.Execute
-import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings
-import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
 import barna.io.Sorter
 import barna.io.rna.UniversalReadDescriptor

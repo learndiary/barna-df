@@ -6,7 +6,7 @@ import barna.commons.launcher.FluxTool;
 import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.log.Log.Level;
-import barna.genome.sequencing.rnaseq.reconstruction.Kernel;
+import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.BufferedIteratorDisk;
 import barna.io.FileHelper;
 import barna.io.bed.BEDwrapper;
