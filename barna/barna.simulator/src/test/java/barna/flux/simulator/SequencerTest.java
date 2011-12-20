@@ -1,6 +1,5 @@
 package barna.flux.simulator;
 
-import barna.genome.sequencing.rnaseq.simulation.Sequencer;
 import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.Transcript;

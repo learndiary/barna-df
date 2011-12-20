@@ -9,24 +9,11 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.flux.simulator.distributions;
+package barna.flux.simulator;
 
-import org.junit.Test;
+public interface WeightMatrix {
 
-import static junit.framework.Assert.assertEquals;
+    public float[] apply(CharSequence s);
 
-/**
- * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
- */
-public class NormalDistributionTest {
 
-    @Test
-    public void testName() throws Exception {
-        NormalDistribution d = new NormalDistribution(0, 1, false);
-        EmpiricalDistribution e = new EmpiricalDistribution(d, 1000, 4.0);
-        assertEquals(0.0, e.getP(0), 0.000001);
-        assertEquals(0.0, e.getP(1), 0.000001);
-        assertEquals(0.0031, e.getP(0.5), 0.0001);
-        assertEquals(0.999, e.getSum(), 0.001);
-    }
 }

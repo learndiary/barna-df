@@ -11,8 +11,6 @@
 
 package barna.flux.simulator.error;
 
-import barna.genome.sequencing.rnaseq.simulation.error.MapFileReader;
-import barna.genome.sequencing.rnaseq.simulation.error.Read;
 import barna.model.Qualities;
 import org.junit.BeforeClass;
 import org.junit.Test;
