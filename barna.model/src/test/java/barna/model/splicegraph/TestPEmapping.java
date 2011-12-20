@@ -9,7 +9,7 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.genome.model.splicegraph;
+package barna.model.splicegraph;
 
 public class TestPEmapping {
 		static boolean output= false;
