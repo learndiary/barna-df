@@ -321,8 +321,8 @@ public class Sequencer implements Callable<Void> {
             if(tmpFasta != null && babes != null){
                 Log.message("");
                 Log.message("\tQuality stats: ");
-                String avg = StringUtils.fprint(babes.getAverageMutations(), 2);
-                if(avg.equals("0.00") && babes.getAverageMutations() > 0){
+                String avg = StringUtils.fprint(babes.getAverageMutations(), 8);
+                if(avg.equals("0.00000000") && babes.getAverageMutations() > 0.0){
                     avg = Double.toString(babes.getAverageMutations());
                 }
                 Log.message("\t" + avg +" % average mutations per sequence");
