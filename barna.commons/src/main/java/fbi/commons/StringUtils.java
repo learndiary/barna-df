@@ -136,6 +136,7 @@ public class StringUtils {
         return s;
     }
 
+
     /**
      * Append the character c to the given string until given length is reached
      *
