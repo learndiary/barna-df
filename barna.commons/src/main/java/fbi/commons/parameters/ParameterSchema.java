@@ -19,8 +19,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -148,7 +147,6 @@ public abstract class ParameterSchema {
     /**
      * Write the parameter set to a string
      *
-     * @param out the target stream
      */
     @Override
     public String toString() {
@@ -229,10 +227,18 @@ public abstract class ParameterSchema {
 	    try {
 	        writer = new BufferedWriter(new OutputStreamWriter(out));
 	
-	
-	        for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
-	            Parameter p = entry.getValue();
-	            String name = entry.getKey();
+
+            //SIMULATOR-23 sort the parameter list
+            ArrayList<Parameter> params = new ArrayList<Parameter>(parameters.values());
+            Collections.sort(params, new Comparator<Parameter>() {
+                @Override
+                public int compare(Parameter o1, Parameter o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+
+            for (Parameter p : params) {
+	            String name = p.getName();
 	            if (p.getDescription() != null) {
 	                writer.write("# " + cleanDescription(p.getDescription()) + "\n");
 	            }
