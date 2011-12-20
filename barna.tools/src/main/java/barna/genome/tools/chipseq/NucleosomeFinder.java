@@ -4,7 +4,7 @@ package barna.genome.tools.chipseq;
 import barna.commons.Execute;
 import barna.commons.launcher.FluxTool;
 import barna.commons.launcher.HelpPrinter;
-import barna.genome.sequencing.rnaseq.reconstruction.Kernel;
+import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.bed.BEDwrapper;
 import barna.io.rna.UniversalReadDescriptor;
