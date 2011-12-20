@@ -1,12 +1,8 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.PrintStream;
+import barna.commons.ByteArrayCharSequence;
+import barna.commons.Execute;
+import barna.genome.io.BufferedIteratorDisk;
 
-import fbi.commons.ByteArrayCharSequence;
-import fbi.commons.Execute;
-import fbi.genome.io.BufferedIteratorDisk;
+import java.io.*;
 
 /**
  * Takes an .aln file and computes distances between 

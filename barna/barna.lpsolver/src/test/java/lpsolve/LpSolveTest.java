@@ -9,7 +9,7 @@ package lpsolve;/*
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-import fbi.genome.lpsolver.LPSolverLoader;
+import barna.genome.lpsolver.LPSolverLoader;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

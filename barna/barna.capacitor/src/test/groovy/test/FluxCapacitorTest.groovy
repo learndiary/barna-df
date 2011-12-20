@@ -1,64 +1,20 @@
 	
 package test
 
-import static junit.framework.Assert.assertEquals
-import static junit.framework.Assert.assertTrue
-
-import java.io.BufferedReader
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileOutputStream
-import java.io.FileReader
-import java.io.FileWriter
-import java.io.OutputStream
-import java.io.OutputStreamWriter
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
+import barna.commons.Execute
+import barna.genome.io.FileHelper
+import barna.genome.io.Sorter
+import barna.genome.io.rna.UniversalReadDescriptor
+import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings
+import barna.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import java.util.concurrent.Future
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
-
-import fbi.commons.Execute
-import fbi.genome.io.FileHelper
-import fbi.genome.io.Sorter
-import fbi.genome.io.rna.UniversalReadDescriptor
-import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings
-import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping
-
-
-import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
-
-import java.io.BufferedReader
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileOutputStream
-import java.io.FileReader
-import java.io.FileWriter
-import java.io.OutputStream
-import java.io.OutputStreamWriter
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-import java.util.concurrent.Future
-import java.util.zip.GZIPOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
-
-import fbi.commons.Execute
-import fbi.genome.io.FileHelper
-import fbi.genome.io.Sorter
-import fbi.genome.io.rna.UniversalReadDescriptor
-import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings
-import fbi.genome.sequencing.rnaseq.reconstruction.FluxCapacitorSettings.AnnotationMapping
 
 /**
  * 
@@ -187,7 +143,7 @@ class FluxCapacitorTest{
 		String cmd= "java -cp "+System.getProperty("java.class.path")
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
-		cmd+= " -Xmx1G fbi.commons.flux.Flux -t capacitor -p "+parFile.getAbsolutePath()
+		cmd+= " -Xmx1G barna.commons.flux.Flux -t capacitor -p "+parFile.getAbsolutePath()
 
         System.out.println("Try executing : " + cmd);
 		Process process= cmd.execute()

@@ -1,10 +1,6 @@
-import fbi.genome.model.commons.MyFile;
+import barna.genome.model.commons.MyFile;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.*;
 
 
 public class FloatPointMultiplier {

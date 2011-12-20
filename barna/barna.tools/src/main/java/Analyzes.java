@@ -1,8 +1,7 @@
 
 
-import fbi.genome.astalavista.statistics.David;
-import fbi.genome.astalavista.statistics.EventDavid;
-import fbi.genome.model.commons.DoubleVector;
+import barna.genome.astalavista.statistics.David;
+import barna.genome.model.commons.DoubleVector;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

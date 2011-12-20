@@ -1,14 +1,10 @@
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import barna.commons.ByteArrayCharSequence;
+import barna.genome.io.BufferedByteArrayReader;
+import barna.genome.io.FileHelper;
+import barna.genome.model.bed.BEDobject2;
+import barna.genome.model.commons.IntVector;
 
-import fbi.commons.ByteArrayCharSequence;
-import fbi.genome.io.BufferedByteArrayReader;
-import fbi.genome.io.FileHelper;
-import fbi.genome.model.bed.BEDobject2;
-import fbi.genome.model.commons.IntVector;
+import java.io.*;
 
 
 public class Bed2Wig {
