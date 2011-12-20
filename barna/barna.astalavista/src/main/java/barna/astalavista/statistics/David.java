@@ -1,4 +1,4 @@
-package barna.genome.astalavista.statistics;
+package barna.astalavista.statistics;
 
 import barna.io.gtf.GTFwrapper;
 import barna.model.commons.MyFile;

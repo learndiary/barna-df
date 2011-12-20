@@ -1,4 +1,4 @@
-package barna.genome.astalavista;
+package barna.astalavista;
 
 public class Constants {
 

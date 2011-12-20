@@ -1,4 +1,4 @@
-package barna.genome.astalavista.statistics;
+package barna.astalavista.statistics;
 
 import java.util.Arrays;
 
