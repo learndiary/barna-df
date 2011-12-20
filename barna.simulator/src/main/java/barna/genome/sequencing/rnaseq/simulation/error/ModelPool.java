@@ -12,7 +12,7 @@
 package barna.genome.sequencing.rnaseq.simulation.error;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.genome.model.Qualities;
+import barna.model.Qualities;
 
 import java.util.Random;
 

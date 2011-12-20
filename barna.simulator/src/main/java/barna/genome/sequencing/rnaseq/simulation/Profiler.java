@@ -18,9 +18,9 @@ import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.ThreadedBufferedByteArrayStream;
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.Gene;
-import barna.genome.model.commons.Distribution;
-import barna.genome.model.commons.IntVector;
+import barna.model.Gene;
+import barna.model.commons.Distribution;
+import barna.model.commons.IntVector;
 
 import java.io.BufferedInputStream;
 import java.io.File;

@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.commons.IntVector;
+import barna.model.commons.IntVector;
 
 import java.util.Vector;
 

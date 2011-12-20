@@ -15,7 +15,7 @@ import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.rna.UniversalReadDescriptor;
-import barna.genome.model.constants.Constants;
+import barna.model.constants.Constants;
 
 import java.io.File;
 import java.io.FileInputStream;

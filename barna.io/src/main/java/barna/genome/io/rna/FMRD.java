@@ -11,8 +11,8 @@
 
 package barna.genome.io.rna;
 
-import barna.genome.model.Transcript;
-import barna.genome.model.bed.BEDobject2;
+import barna.model.Transcript;
+import barna.model.bed.BEDobject2;
 
 import java.util.regex.Pattern;
 

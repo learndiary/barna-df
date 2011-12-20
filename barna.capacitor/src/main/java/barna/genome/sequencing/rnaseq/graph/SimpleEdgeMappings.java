@@ -1,11 +1,11 @@
 package barna.genome.sequencing.rnaseq.graph;
 
-import barna.genome.model.Transcript;
-import barna.genome.model.constants.Constants;
-import barna.genome.model.splicegraph.Node;
-import barna.genome.model.splicegraph.SimpleEdge;
-import barna.genome.model.splicegraph.SplicingGraph;
-import barna.genome.model.splicegraph.SuperEdge;
+import barna.model.Transcript;
+import barna.model.constants.Constants;
+import barna.model.splicegraph.Node;
+import barna.model.splicegraph.SimpleEdge;
+import barna.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.SuperEdge;
 
 import java.io.PrintStream;
 import java.util.Arrays;

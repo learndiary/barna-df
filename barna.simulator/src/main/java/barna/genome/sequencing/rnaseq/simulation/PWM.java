@@ -15,11 +15,11 @@ import barna.genome.io.FileHelper;
 import barna.genome.io.bed.BEDwrapper;
 import barna.genome.io.gtf.GTFwrapper;
 import barna.genome.io.state.MappingWrapperState;
-import barna.genome.model.Gene;
-import barna.genome.model.Graph;
-import barna.genome.model.Transcript;
-import barna.genome.model.bed.BEDobject2;
-import barna.genome.model.commons.IntVector;
+import barna.model.Gene;
+import barna.model.Graph;
+import barna.model.Transcript;
+import barna.model.bed.BEDobject2;
+import barna.model.commons.IntVector;
 
 import java.io.*;
 import java.util.Arrays;

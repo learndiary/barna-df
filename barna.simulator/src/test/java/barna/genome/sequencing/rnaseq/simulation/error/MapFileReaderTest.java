@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.simulation.error;
 
-import barna.genome.model.Qualities;
+import barna.model.Qualities;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

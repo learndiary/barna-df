@@ -16,8 +16,8 @@ package barna.genome.io.bed;
 import barna.commons.utils.ArrayUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.bed.BEDobject;
-import barna.genome.model.gff.GFFObject;
+import barna.model.bed.BEDobject;
+import barna.model.gff.GFFObject;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -27,8 +27,8 @@ import java.util.Vector;
 
 public class BedToGtfConverter {
 
-	static barna.genome.model.commons.MyFile inFile, outFile;
-	barna.genome.model.commons.MyFile inputFile, outputFile;
+	static barna.model.commons.MyFile inFile, outFile;
+	barna.model.commons.MyFile inputFile, outputFile;
 	
 	static final String errorMsg = "usage: BedToGtfConverter <inputFile> [outputFileName]\n\n" + "where\n" + "<inputFile>\ta BED file\n" + "[outpuFileName] an optional name for the output GTF (default is <inputFileName>.gtf" + "\n\nmicha, may 07";
 	
@@ -40,10 +40,10 @@ public class BedToGtfConverter {
 		
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-out")) {
-				outFile= new barna.genome.model.commons.MyFile(args[++i]);
+				outFile= new barna.model.commons.MyFile(args[++i]);
 				continue;
 			}
-			inFile= new barna.genome.model.commons.MyFile(args[i]);
+			inFile= new barna.model.commons.MyFile(args[i]);
 		}
 		
 		if (!inFile.exists()) {
@@ -51,7 +51,7 @@ public class BedToGtfConverter {
 			System.exit(-1);
 		}
 		if (outFile== null) {
-			outFile= new barna.genome.model.commons.MyFile(
+			outFile= new barna.model.commons.MyFile(
 					FileHelper.getPathOnly(inFile)+ File.separator+
 					inFile.getFileNameOnly()+ ".gtf");
 		}
@@ -65,7 +65,7 @@ public class BedToGtfConverter {
 		System.out.println("took "+(System.currentTimeMillis()- t0)/1000+" sec.");
 	}
 	
-	public BedToGtfConverter(barna.genome.model.commons.MyFile inFile, barna.genome.model.commons.MyFile outFile) {
+	public BedToGtfConverter(barna.model.commons.MyFile inFile, barna.model.commons.MyFile outFile) {
 		this.inputFile= inFile;
 		this.outputFile= outFile;
 	}

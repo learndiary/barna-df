@@ -11,10 +11,10 @@
 
 package barna.genome.reconstruction.tools;
 
-import barna.genome.model.commons.IntVector;
-import barna.genome.model.commons.MyHashMap;
 import barna.genome.reconstruction.closure.AliGraphClosure;
 import barna.genome.reconstruction.closure.Closure;
+import barna.model.commons.IntVector;
+import barna.model.commons.MyHashMap;
 
 import java.io.*;
 import java.util.Arrays;

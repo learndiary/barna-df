@@ -16,7 +16,7 @@ import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
-import barna.genome.model.Qualities;
+import barna.model.Qualities;
 import com.thoughtworks.xstream.XStream;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;

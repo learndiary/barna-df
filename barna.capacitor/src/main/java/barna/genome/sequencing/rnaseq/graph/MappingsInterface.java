@@ -1,6 +1,6 @@
 package barna.genome.sequencing.rnaseq.graph;
 
-import barna.genome.model.Transcript;
+import barna.model.Transcript;
 
 public interface MappingsInterface {
 

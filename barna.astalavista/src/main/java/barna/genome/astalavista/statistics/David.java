@@ -1,8 +1,8 @@
 package barna.genome.astalavista.statistics;
 
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.commons.MyFile;
-import barna.genome.model.gff.GFFObject;
+import barna.model.commons.MyFile;
+import barna.model.gff.GFFObject;
 
 import java.io.*;
 import java.util.*;

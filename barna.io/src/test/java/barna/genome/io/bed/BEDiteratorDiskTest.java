@@ -4,7 +4,7 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.genome.io.BufferedIteratorDisk;
 import barna.genome.io.rna.UniversalReadDescriptor;
-import barna.genome.model.bed.BEDobject2;
+import barna.model.bed.BEDobject2;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

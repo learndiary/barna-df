@@ -1,9 +1,9 @@
 package barna.genome.sequencing.rnaseq.simulation;
 
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.Gene;
-import barna.genome.model.Transcript;
-import barna.genome.model.bed.BEDobject2;
+import barna.model.Gene;
+import barna.model.Transcript;
+import barna.model.bed.BEDobject2;
 import org.junit.Test;
 
 import java.io.File;

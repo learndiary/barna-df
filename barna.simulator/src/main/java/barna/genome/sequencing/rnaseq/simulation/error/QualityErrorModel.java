@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.simulation.error;
 
-import barna.genome.model.Qualities;
+import barna.model.Qualities;
 
 /**
  * Wraps around the markov error model and the crosstalk table

@@ -12,8 +12,8 @@
 package barna.genome.io;
 
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.Gene;
-import barna.genome.model.gff.GFFObject;
+import barna.model.Gene;
+import barna.model.gff.GFFObject;
 
 import java.io.BufferedWriter;
 import java.io.File;

@@ -1,8 +1,8 @@
 import barna.commons.ByteArrayCharSequence;
 import barna.genome.io.BufferedByteArrayReader;
 import barna.genome.io.FileHelper;
-import barna.genome.model.bed.BEDobject2;
-import barna.genome.model.commons.IntVector;
+import barna.model.bed.BEDobject2;
+import barna.model.commons.IntVector;
 
 import java.io.*;
 

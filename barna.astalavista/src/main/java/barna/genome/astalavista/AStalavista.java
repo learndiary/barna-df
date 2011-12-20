@@ -1,6 +1,6 @@
 package barna.genome.astalavista;
 
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;

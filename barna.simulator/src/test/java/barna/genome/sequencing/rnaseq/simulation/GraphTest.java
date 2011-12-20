@@ -1,6 +1,6 @@
 package barna.genome.sequencing.rnaseq.simulation;
 
-import barna.genome.model.Graph;
+import barna.model.Graph;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;

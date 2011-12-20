@@ -11,11 +11,11 @@
 
 package barna.genome.io.bed;
 
-import barna.genome.model.DirectedRegion;
-import barna.genome.model.SpliceSite;
-import barna.genome.model.Transcript;
-import barna.genome.model.bed.BEDobject;
-import barna.genome.model.constants.Pedro;
+import barna.model.DirectedRegion;
+import barna.model.SpliceSite;
+import barna.model.Transcript;
+import barna.model.bed.BEDobject;
+import barna.model.constants.Pedro;
 
 import java.awt.*;
 import java.util.HashMap;

@@ -12,8 +12,8 @@
 package barna.genome.io;
 
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.Gene;
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.Gene;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.util.Date;
 

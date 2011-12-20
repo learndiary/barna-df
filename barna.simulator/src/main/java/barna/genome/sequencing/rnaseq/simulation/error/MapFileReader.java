@@ -14,7 +14,7 @@ package barna.genome.sequencing.rnaseq.simulation.error;
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.io.IOHandler;
 import barna.commons.io.IOHandlerFactory;
-import barna.genome.model.Qualities;
+import barna.model.Qualities;
 
 import java.io.BufferedInputStream;
 import java.io.File;
