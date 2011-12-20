@@ -13,7 +13,7 @@ package barna.genome.io.bed;
 
 //import gphase.LaVista;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
 import barna.genome.model.bed.BEDobject;

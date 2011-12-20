@@ -11,7 +11,7 @@
 
 package barna.genome.model;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 
 import java.util.Comparator;
 import java.util.HashMap;

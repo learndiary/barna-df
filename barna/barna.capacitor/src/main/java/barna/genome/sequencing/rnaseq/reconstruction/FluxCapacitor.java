@@ -12,13 +12,13 @@
 package barna.genome.sequencing.rnaseq.reconstruction;
 
 import barna.commons.Execute;
-import barna.commons.Log;
-import barna.commons.StringUtils;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.CommandLine;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
 import barna.commons.system.SystemInspector;
 import barna.commons.thread.SyncIOHandler2;
-import barna.commons.tools.CommandLine;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.*;
 import barna.genome.io.bed.BEDDescriptorComparator;
 import barna.genome.io.bed.BEDwrapper;
@@ -1955,9 +1955,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		if (settings.get(FluxCapacitorSettings.STDOUT_FILE)!= null) {
 			File f= settings.get(FluxCapacitorSettings.STDOUT_FILE);
 			if (f.exists()&& !CommandLine.confirm(
-				     "[CAUTION] I overwrite the output file " + 
-					 settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() + 
-			 		", please confirm:\n\t(Yes,No,Don't know)")) {
+                    "[CAUTION] I overwrite the output file " +
+                            settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
+                            ", please confirm:\n\t(Yes,No,Don't know)")) {
 				exit(-1);
 			}
 			
@@ -3975,8 +3975,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		
 		Log.info("\t"+ nrBEDreads+ " reads, "+ nrBEDmappings
 					+ " mappings: R-factor "+(wrapper.getCountMappings()/ (float) wrapper.getCountReads()));
-		Log.info("\t"+ wrapper.getCountContinuousMappings()+ " entire, "+ wrapper.getCountSplitMappings()
-					+ " split mappings ("+ (wrapper.getCountSplitMappings()* 10f/ wrapper.getCountMappings())+ "%)");
+		Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
+                + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
 	}
 
 	private AbstractFileIOWrapper getWrapper(File inputFile) {

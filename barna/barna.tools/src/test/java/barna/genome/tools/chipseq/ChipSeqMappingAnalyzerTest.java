@@ -1,7 +1,7 @@
 package barna.genome.tools.chipseq;
 
 import barna.commons.Execute;
-import barna.commons.flux.Flux;
+import barna.commons.launcher.Flux;
 import barna.genome.io.FileHelper;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import org.junit.Test;
@@ -12,6 +12,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import static org.junit.Assert.fail;
 
 public class ChipSeqMappingAnalyzerTest {
 
@@ -72,6 +74,7 @@ public class ChipSeqMappingAnalyzerTest {
             parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
             writer = new BufferedWriter(new FileWriter(parF));
             writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + "\n");
+            writer.write(ChipSeqSettings.FILE_OUTPUT.getName() + " " + tmpF.getAbsolutePath()+".out" + "\n");
             writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + "\n");
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,6 +92,53 @@ public class ChipSeqMappingAnalyzerTest {
         String[] args = {"-t", "mapdist", "-p", parF.getAbsolutePath()};
         long start = System.currentTimeMillis();
         Flux.main(args);
+
+        System.out.println((System.currentTimeMillis()-start) / 1000+"s");
+
+    }
+    @Test
+    public void testThatTheFileOutputParameterMustBeSpecified() {
+
+        // copy input file
+        File f = new File(ChipSeqMappingAnalyzerTest.class.getResource("/Paired_sorted_chrY.bed").getFile());
+        File tmpF = null;
+        try {
+            tmpF = FileHelper.createTempFile(FileHelper.stripExtension(f.getName()), FileHelper.getExtension(f));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        FileHelper.copy(f, tmpF);
+
+
+        // write par
+        File parF = null;
+        BufferedWriter writer = null;
+        try {
+            parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
+            writer = new BufferedWriter(new FileWriter(parF));
+            writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + "\n");
+            writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + "\n");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (writer != null)
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
+
+
+        // instantiate and run
+        String[] args = {"-t", "mapdist", "-p", parF.getAbsolutePath()};
+        long start = System.currentTimeMillis();
+        try{
+            Flux.main(args);
+            fail();
+        }catch (Exception e){
+
+        }
 
         System.out.println((System.currentTimeMillis()-start) / 1000+"s");
 

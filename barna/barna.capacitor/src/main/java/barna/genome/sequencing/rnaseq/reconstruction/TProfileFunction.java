@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.model.Transcript;
 import barna.genome.model.splicegraph.SplicingGraph;
 

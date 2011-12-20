@@ -11,12 +11,12 @@
 
 package barna.genome.sequencing.rnaseq.simulation.error;
 
-import barna.commons.Log;
-import barna.commons.StringUtils;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
-import barna.commons.tools.Qualities;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
+import barna.genome.model.Qualities;
 import com.thoughtworks.xstream.XStream;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;

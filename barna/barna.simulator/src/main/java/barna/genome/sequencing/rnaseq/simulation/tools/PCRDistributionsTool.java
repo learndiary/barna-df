@@ -11,10 +11,10 @@
 
 package barna.genome.sequencing.rnaseq.simulation.tools;
 
-import barna.commons.Log;
-import barna.commons.StringUtils;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 import barna.genome.sequencing.rnaseq.simulation.distributions.GCPCRDistribution;
 import com.thoughtworks.xstream.XStream;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
@@ -190,7 +190,7 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
         s.toXML(dist, out);
         out.close();
 
-        Log.info("PCR", "Distributions written to "+ getOutputFile().getAbsolutePath());
+        Log.info("PCR", "Distributions written to " + getOutputFile().getAbsolutePath());
         return dist;
     }
 

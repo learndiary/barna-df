@@ -1,8 +1,8 @@
 package barna.genome.io.tools;
 
-import barna.commons.Log;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
 import barna.genome.io.FileHelper;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
@@ -176,7 +176,7 @@ public class Subsetter implements FluxTool<Void> {
 		}
 		
 		if (output!= null&& output.canWrite()) {
-			Log.error("Cannot write to "+ output.getAbsolutePath());
+			Log.error("Cannot write to " + output.getAbsolutePath());
 			return false;
 		}
 		

@@ -12,7 +12,7 @@
 package barna.genome.sequencing.rnaseq.simulation.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.Log;
+import barna.commons.log.Log;
 import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import barna.genome.sequencing.rnaseq.simulation.PWM;
 import barna.genome.sequencing.rnaseq.simulation.Profiler;

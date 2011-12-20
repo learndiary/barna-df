@@ -62,6 +62,7 @@
         <module>barna.simulator</module>
         <module>barna.tools</module>
         <module>barna.capacitor</module>
+        <module>barna.gui</module>
     </modules>
 
     <dependencyManagement>

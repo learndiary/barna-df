@@ -1,5 +1,6 @@
 package barna.commons;
 
+import barna.commons.log.Log;
 import org.junit.Test;
 
 import java.io.IOException;

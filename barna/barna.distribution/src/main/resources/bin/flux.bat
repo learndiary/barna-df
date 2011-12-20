@@ -12,4 +12,4 @@ if not defined FOUND (
 
 set parent=%~dp0%..\lib
 FOR /R "%parent%" %%G IN (*.jar) DO set CLASSPATH=!CLASSPATH!;"%%G"
-java -Xmx%FLUX_MEM% -cp %CLASSPATH% barna.commons.flux.Flux %*
+java -Xmx%FLUX_MEM% -cp %CLASSPATH% barna.commons.launcher.Flux %*

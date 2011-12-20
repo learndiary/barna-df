@@ -11,9 +11,9 @@
 
 package barna.genome.sequencing.rnaseq.simulation.tools;
 
-import barna.commons.Log;
-import barna.commons.options.HelpPrinter;
-import barna.commons.options.Options;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.launcher.Options;
+import barna.commons.log.Log;
 import barna.genome.io.SpliceGraphIO;
 import barna.genome.model.IntronModel;
 import org.cyclopsgroup.jcli.ArgumentProcessor;

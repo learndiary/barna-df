@@ -11,7 +11,7 @@
 
 package barna.genome.model.splicegraph;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.model.*;
 import barna.genome.model.commons.IntVector;
 import barna.genome.model.commons.MyFile;

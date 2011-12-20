@@ -12,8 +12,8 @@
 package barna.genome.io;
 
 import barna.commons.io.DevNullOutputStream;
-import barna.commons.tools.Interceptable;
-import barna.commons.tools.LineComparator;
+import barna.commons.utils.Interceptable;
+import barna.commons.utils.LineComparator;
 
 import java.io.IOException;
 import java.io.InputStream;

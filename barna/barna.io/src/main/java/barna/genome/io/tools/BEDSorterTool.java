@@ -11,10 +11,10 @@
 
 package barna.genome.io.tools;
 
-import barna.commons.Log;
-import barna.commons.StringUtils;
-import barna.commons.flux.FluxTool;
-import barna.commons.options.HelpPrinter;
+import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.HelpPrinter;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.bed.BEDwrapper;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;

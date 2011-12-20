@@ -1,7 +1,7 @@
 package barna.genome.io.bed;
 
-import barna.commons.CharSequences;
 import barna.commons.CharsequenceComparator;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
 
@@ -64,8 +64,8 @@ public class BEDDescriptorComparator implements Comparator<CharSequence> {
 	 */
 	public int compare(CharSequence s1, CharSequence s2) {
 		
-		CharSequence ss1= CharSequences.getField(s1, '\t', 3),
-			ss2= CharSequences.getField(s2, '\t', 3);
+		CharSequence ss1= StringUtils.getField(s1, '\t', 3),
+			ss2= StringUtils.getField(s2, '\t', 3);
 		if (ss1== null|| ss2== null)
 			throw new RuntimeException("failed to extract BED name: "+
 					(ss1== null? s1: "")+

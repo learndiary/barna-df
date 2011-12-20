@@ -2,7 +2,7 @@ package barna.genome.io;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.commons.Log;
+import barna.commons.log.Log;
 
 import java.io.*;
 import java.util.Comparator;
@@ -393,7 +393,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 			} catch (FileNotFoundException e) {
 				Log.error(e+ " reading from file "+ tmpFile.getName());
 			} catch (IOException e) {
-				Log.error(e+ "Error reading from file "+ tmpFile.getName());
+				Log.error(e + "Error reading from file " + tmpFile.getName());
 			}
 		}
 			

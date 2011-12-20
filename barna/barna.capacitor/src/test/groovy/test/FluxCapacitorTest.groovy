@@ -143,7 +143,7 @@ class FluxCapacitorTest{
 		String cmd= "java -cp "+System.getProperty("java.class.path")
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
-		cmd+= " -Xmx1G barna.commons.flux.Flux -t capacitor -p "+parFile.getAbsolutePath()
+		cmd+= " -Xmx1G barna.commons.launcher.Flux -t capacitor -p "+parFile.getAbsolutePath()
 
         System.out.println("Try executing : " + cmd);
 		Process process= cmd.execute()

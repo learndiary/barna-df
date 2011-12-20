@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.simulation.distributions;
 
-import barna.commons.Log;
+import barna.commons.log.Log;
 
 import java.io.*;
 

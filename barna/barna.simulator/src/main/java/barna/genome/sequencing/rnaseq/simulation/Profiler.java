@@ -12,9 +12,9 @@
 package barna.genome.sequencing.rnaseq.simulation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.Log;
-import barna.commons.StringUtils;
-import barna.commons.file.ReverseFileReader;
+import barna.commons.io.ReverseFileReader;
+import barna.commons.log.Log;
+import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.ThreadedBufferedByteArrayStream;
 import barna.genome.io.gtf.GTFwrapper;

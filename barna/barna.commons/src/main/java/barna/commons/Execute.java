@@ -11,6 +11,8 @@
 
 package barna.commons;
 
+import barna.commons.log.Log;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;

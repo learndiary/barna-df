@@ -20,8 +20,8 @@ package barna.genome.model;
 //import gphase.NMDSimulator;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.StringUtils;
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
+import barna.commons.utils.StringUtils;
 import barna.genome.model.constants.Constants2;
 
 import java.io.*;

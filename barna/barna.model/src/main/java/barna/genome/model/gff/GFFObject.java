@@ -17,7 +17,7 @@
  */
 package barna.genome.model.gff;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.model.*;
 import barna.genome.model.bed.BEDobject;
 import barna.genome.model.constants.Constants;

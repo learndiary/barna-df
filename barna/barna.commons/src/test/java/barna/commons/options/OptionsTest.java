@@ -1,5 +1,6 @@
 package barna.commons.options;
 
+import barna.commons.launcher.Options;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

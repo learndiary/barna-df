@@ -20,8 +20,8 @@ package barna.genome.model;
 //import genome.NMDSimulator;
 //import genome.SpliceSiteConservationComparator;
 
-import barna.commons.Log;
-import barna.commons.tools.ArrayUtils;
+import barna.commons.log.Log;
+import barna.commons.utils.ArrayUtils;
 import barna.genome.model.tools.NMDSimulator;
 
 import java.util.Arrays;
@@ -1264,8 +1264,8 @@ public class Transcript extends DirectedRegion {
 						//return false;
 					}
 					if ((p< exons.length)&& (exons[p].get5PrimeEdge()<= newExon.get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1))  {
-						Log.warn("merging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p].start+","+exons[p].end+")"+
-								" in transcript "+ getTranscriptID()+ " because intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt."); 
+						Log.warn("merging exon (" + newExon.start + "," + newExon.end + ") with exon (" + exons[p].start + "," + exons[p].end + ")" +
+                                " in transcript " + getTranscriptID() + " because intervening intron has " + MAX_LENGTH_INTRON_IS_GAP + " or less nt.");
 						newExon.set3PrimeEdge(exons[p].get3PrimeEdge());
 						removeExon(exons[p], true, false);
 						; // nothing, insertion point is the same

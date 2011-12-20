@@ -14,8 +14,8 @@ package barna.genome.io;
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.io.IOHandler;
 import barna.commons.io.IOHandlerFactory;
-import barna.commons.tools.ArrayUtils;
-import barna.commons.tools.LineComparator;
+import barna.commons.utils.ArrayUtils;
+import barna.commons.utils.LineComparator;
 
 import java.io.IOException;
 import java.io.InputStream;

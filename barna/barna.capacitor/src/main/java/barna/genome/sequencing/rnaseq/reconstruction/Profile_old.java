@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.commons.tools.ArrayUtils;
+import barna.commons.utils.ArrayUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
