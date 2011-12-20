@@ -11,12 +11,12 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.Transcript;
-import barna.genome.model.constants.Constants;
-import barna.genome.model.splicegraph.AbstractEdge;
-import barna.genome.model.splicegraph.SplicingGraph;
-import barna.genome.model.splicegraph.SuperEdge;
 import barna.genome.sequencing.rnaseq.graph.AnnotationMapper;
+import barna.model.Transcript;
+import barna.model.constants.Constants;
+import barna.model.splicegraph.AbstractEdge;
+import barna.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.SuperEdge;
 
 import java.util.Vector;
 

@@ -1,4 +1,4 @@
-import barna.genome.model.commons.MyFile;
+import barna.model.commons.MyFile;
 
 import java.io.*;
 

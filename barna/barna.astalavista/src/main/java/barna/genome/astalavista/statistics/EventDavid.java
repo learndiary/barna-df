@@ -2,10 +2,10 @@ package barna.genome.astalavista.statistics;
 
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.ASEvent;
-import barna.genome.model.commons.MyFile;
-import barna.genome.model.constants.Constants;
-import barna.genome.model.gff.GFFObject;
+import barna.model.ASEvent;
+import barna.model.commons.MyFile;
+import barna.model.constants.Constants;
+import barna.model.gff.GFFObject;
 import net.maizegenetics.pal.statistics.FisherExact;
 
 import java.io.*;

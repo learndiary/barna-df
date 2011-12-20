@@ -8,7 +8,7 @@ import barna.genome.io.FileHelper;
 import barna.genome.io.bed.BEDwrapper;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
-import barna.genome.model.bed.BEDobject2;
+import barna.model.bed.BEDobject2;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;

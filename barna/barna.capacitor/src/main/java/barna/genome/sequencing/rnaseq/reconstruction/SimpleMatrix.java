@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.constants.Constants;
+import barna.model.constants.Constants;
 
 public class SimpleMatrix implements Matrix {
 

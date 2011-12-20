@@ -11,8 +11,8 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.commons.IntVector;
-import barna.genome.model.constants.Constants;
+import barna.model.commons.IntVector;
+import barna.model.constants.Constants;
 
 import java.util.Vector;
 

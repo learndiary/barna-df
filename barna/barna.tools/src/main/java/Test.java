@@ -1,4 +1,4 @@
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.SplicingGraph;
 
 
 public class Test {

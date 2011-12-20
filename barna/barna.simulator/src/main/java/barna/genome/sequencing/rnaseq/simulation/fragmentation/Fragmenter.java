@@ -21,15 +21,15 @@ import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.Gene;
-import barna.genome.model.Graph;
-import barna.genome.model.Transcript;
 import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import barna.genome.sequencing.rnaseq.simulation.PWM;
 import barna.genome.sequencing.rnaseq.simulation.Profiler;
 import barna.genome.sequencing.rnaseq.simulation.ProfilerFile;
 import barna.genome.sequencing.rnaseq.simulation.distributions.*;
 import barna.genome.sequencing.rnaseq.simulation.tools.PCRDistributionsTool;
+import barna.model.Gene;
+import barna.model.Graph;
+import barna.model.Transcript;
 import org.apache.commons.math.random.RandomDataImpl;
 
 import java.io.*;

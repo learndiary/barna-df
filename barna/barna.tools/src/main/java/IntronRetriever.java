@@ -1,10 +1,10 @@
 import barna.genome.io.FileHelper;
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.Gene;
-import barna.genome.model.Transcript;
-import barna.genome.model.splicegraph.Node;
-import barna.genome.model.splicegraph.SimpleEdge;
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.Gene;
+import barna.model.Transcript;
+import barna.model.splicegraph.Node;
+import barna.model.splicegraph.SimpleEdge;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
 import java.io.FileOutputStream;

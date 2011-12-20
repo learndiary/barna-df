@@ -15,9 +15,9 @@ import barna.commons.log.Log;
 import barna.genome.io.BufferedIterator;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.io.rna.UniversalReadDescriptor.Attributes;
-import barna.genome.model.*;
-import barna.genome.model.bed.BEDobject2;
-import barna.genome.model.splicegraph.*;
+import barna.model.*;
+import barna.model.bed.BEDobject2;
+import barna.model.splicegraph.*;
 
 import java.util.Arrays;
 import java.util.Iterator;

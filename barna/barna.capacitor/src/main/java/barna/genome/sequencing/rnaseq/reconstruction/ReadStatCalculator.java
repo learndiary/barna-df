@@ -11,8 +11,8 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.splicegraph.AbstractEdge;
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.AbstractEdge;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.util.Vector;
 

@@ -13,8 +13,8 @@ package barna.genome.io.gtf;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.genome.model.Gene;
-import barna.genome.model.Transcript;
+import barna.model.Gene;
+import barna.model.Transcript;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

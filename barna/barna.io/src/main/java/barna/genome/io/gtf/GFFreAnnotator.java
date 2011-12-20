@@ -12,8 +12,8 @@
 package barna.genome.io.gtf;
 
 import barna.genome.io.FileHelper;
-import barna.genome.model.*;
-import barna.genome.model.gff.GFFObject;
+import barna.model.*;
+import barna.model.gff.GFFObject;
 
 import java.io.*;
 import java.util.HashMap;

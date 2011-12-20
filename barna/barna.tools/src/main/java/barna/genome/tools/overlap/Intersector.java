@@ -6,7 +6,7 @@ import barna.commons.launcher.FluxTool;
 import barna.commons.launcher.HelpPrinter;
 import barna.genome.io.BufferedBACSReader;
 import barna.genome.io.FileHelper;
-import barna.genome.model.bed.BEDobject2;
+import barna.model.bed.BEDobject2;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;

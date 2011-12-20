@@ -15,7 +15,7 @@ import barna.commons.launcher.HelpPrinter;
 import barna.commons.launcher.Options;
 import barna.commons.log.Log;
 import barna.genome.io.SpliceGraphIO;
-import barna.genome.model.IntronModel;
+import barna.model.IntronModel;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Option;
 
@@ -58,7 +58,7 @@ public class SpliceJunctionExtractor { //implements FluxTool<Void> {
             throw new RuntimeException("No valid GFF input file specified!");
         } else {
             // todo : refactor this to not use a static variable
-            barna.genome.model.Graph.overrideSequenceDirPath = gffFile.getAbsolutePath();
+            barna.model.Graph.overrideSequenceDirPath = gffFile.getAbsolutePath();
         }
 
         int[] flanks = getEFlanks();

@@ -11,7 +11,7 @@
 
 package barna.genome.io.rna;
 
-import barna.genome.model.constants.Constants;
+import barna.model.constants.Constants;
 
 import java.util.HashMap;
 

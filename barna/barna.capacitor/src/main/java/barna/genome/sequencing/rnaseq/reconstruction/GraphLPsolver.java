@@ -11,17 +11,17 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.SpliceSite;
-import barna.genome.model.Transcript;
-import barna.genome.model.commons.DoubleVector;
-import barna.genome.model.commons.IntVector;
-import barna.genome.model.constants.Constants;
-import barna.genome.model.splicegraph.AbstractEdge;
-import barna.genome.model.splicegraph.SimpleEdge;
-import barna.genome.model.splicegraph.SplicingGraph;
-import barna.genome.model.splicegraph.SuperEdge;
 import barna.genome.sequencing.rnaseq.graph.AnnotationMapper;
 import barna.genome.sequencing.rnaseq.graph.MappingsInterface;
+import barna.model.SpliceSite;
+import barna.model.Transcript;
+import barna.model.commons.DoubleVector;
+import barna.model.commons.IntVector;
+import barna.model.constants.Constants;
+import barna.model.splicegraph.AbstractEdge;
+import barna.model.splicegraph.SimpleEdge;
+import barna.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.SuperEdge;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 

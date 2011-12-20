@@ -14,7 +14,7 @@ package barna.genome.sequencing.rnaseq.reconstruction;
 import barna.commons.log.Log;
 import barna.genome.io.FileHelper;
 import barna.genome.io.rna.UniversalReadDescriptor;
-import barna.genome.model.constants.Constants;
+import barna.model.constants.Constants;
 
 import java.io.BufferedReader;
 import java.io.File;

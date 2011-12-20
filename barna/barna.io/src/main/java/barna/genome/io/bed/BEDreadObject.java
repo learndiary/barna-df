@@ -11,7 +11,7 @@
 
 package barna.genome.io.bed;
 
-import barna.genome.model.bed.BEDobject;
+import barna.model.bed.BEDobject;
 
 public class BEDreadObject extends BEDobject {
 	public static char SEP_PE= '_', SEP= ':';

@@ -12,8 +12,8 @@
 package barna.genome.sequencing.rnaseq.reconstruction;
 
 import barna.commons.utils.ArrayUtils;
-import barna.genome.model.Transcript;
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.Transcript;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
 import java.io.FileOutputStream;

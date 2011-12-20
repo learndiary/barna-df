@@ -11,8 +11,8 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.Transcript;
-import barna.genome.model.splicegraph.SimpleEdge;
+import barna.model.Transcript;
+import barna.model.splicegraph.SimpleEdge;
 
 public class Partition {
 

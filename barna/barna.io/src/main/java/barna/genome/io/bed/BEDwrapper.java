@@ -25,9 +25,9 @@ import barna.genome.io.rna.ReadDescriptor;
 import barna.genome.io.rna.SolexaPairedEndDescriptor;
 import barna.genome.io.rna.UniversalReadDescriptor;
 import barna.genome.io.state.MappingWrapperState;
-import barna.genome.model.bed.BEDobject;
-import barna.genome.model.bed.BEDobject2;
-import barna.genome.model.constants.Constants;
+import barna.model.bed.BEDobject;
+import barna.model.bed.BEDobject2;
+import barna.model.constants.Constants;
 
 import java.io.*;
 import java.util.HashMap;

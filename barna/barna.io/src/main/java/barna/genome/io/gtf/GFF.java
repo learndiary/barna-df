@@ -11,9 +11,9 @@
 
 package barna.genome.io.gtf;
 
-import barna.genome.model.*;
-import barna.genome.model.constants.Pedro;
-import barna.genome.model.gff.GFFObject;
+import barna.model.*;
+import barna.model.constants.Pedro;
+import barna.model.gff.GFFObject;
 
 import java.util.Iterator;
 import java.util.Vector;

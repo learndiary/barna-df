@@ -21,11 +21,11 @@ import barna.genome.io.AbstractFileIOWrapper;
 import barna.genome.io.AnnotationWrapper;
 import barna.genome.io.FileHelper;
 import barna.genome.io.Sorter;
-import barna.genome.model.*;
-import barna.genome.model.commons.IntVector;
-import barna.genome.model.commons.MyArrayHashMap;
-import barna.genome.model.constants.Constants;
-import barna.genome.model.gff.GFFObject;
+import barna.model.*;
+import barna.model.commons.IntVector;
+import barna.model.commons.MyArrayHashMap;
+import barna.model.constants.Constants;
+import barna.model.gff.GFFObject;
 
 import java.io.*;
 import java.text.Collator;

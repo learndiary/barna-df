@@ -12,7 +12,7 @@
 package barna.genome.io;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.genome.model.constants.Constants;
+import barna.model.constants.Constants;
 
 import java.io.IOException;
 import java.io.InputStream;

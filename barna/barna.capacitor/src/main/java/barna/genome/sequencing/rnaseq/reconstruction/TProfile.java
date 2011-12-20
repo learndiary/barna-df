@@ -11,7 +11,7 @@
 
 package barna.genome.sequencing.rnaseq.reconstruction;
 
-import barna.genome.model.constants.Constants;
+import barna.model.constants.Constants;
 
 import java.util.Comparator;
 
@@ -52,7 +52,7 @@ public class TProfile {
 		
 		//System.err.println("profile: "+(++profileCtr));
 		
-		byte dir= strandSpecific? barna.genome.model.constants.Constants.DIR_BOTH: barna.genome.model.constants.Constants.DIR_FORWARD;
+		byte dir= strandSpecific? barna.model.constants.Constants.DIR_BOTH: barna.model.constants.Constants.DIR_FORWARD;
 		m= (Matrix)	// TODO 
 			(pairedEnd?new UniversalMatrix(length):new SimpleMatrix(length, dir));
 		

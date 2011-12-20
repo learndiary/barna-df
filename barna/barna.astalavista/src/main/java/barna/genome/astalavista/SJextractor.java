@@ -1,7 +1,7 @@
 package barna.genome.astalavista;
 
 import barna.genome.io.SpliceGraphIO;
-import barna.genome.model.IntronModel;
+import barna.model.IntronModel;
 
 import java.io.File;
 
@@ -23,7 +23,7 @@ public class SJextractor {
 				} else if (args[i].equalsIgnoreCase("--ann")) {
 					inFile= new File(args[++i]);
 				} else if (args[i].equalsIgnoreCase("--genome")) {
-					barna.genome.model.Graph.overrideSequenceDirPath= args[++i];
+					barna.model.Graph.overrideSequenceDirPath= args[++i];
 				} else if (args[i].equalsIgnoreCase("--out")) {
 					outFile= new File(args[++i]);
 				}

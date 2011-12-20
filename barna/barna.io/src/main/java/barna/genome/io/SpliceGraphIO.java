@@ -12,10 +12,10 @@
 package barna.genome.io;
 
 import barna.genome.io.gtf.GTFwrapper;
-import barna.genome.model.*;
-import barna.genome.model.commons.MyFile;
-import barna.genome.model.constants.Constants;
-import barna.genome.model.splicegraph.SplicingGraph;
+import barna.model.*;
+import barna.model.commons.MyFile;
+import barna.model.constants.Constants;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -67,11 +67,11 @@ public class SpliceGraphIO {
                 buffy.write("\t"+outputFname+"\n");
             else
                 buffy.write("\tstdout\n");
-            if (barna.genome.model.Graph.overrideSequenceDirPath== null) {
+            if (barna.model.Graph.overrideSequenceDirPath== null) {
                 if (DEBUG)
                     buffy.write("# genome\t"+ SplicingGraph.EventExtractorThread.species+"\n");
             } else
-                buffy.write("# genome\t"+ barna.genome.model.Graph.overrideSequenceDirPath+"\n");
+                buffy.write("# genome\t"+ barna.model.Graph.overrideSequenceDirPath+"\n");
             buffy.write("# dimension\t"+ SplicingGraph.EventExtractorThread.n+"\n");
             buffy.write("# internalOnly\t"+ SplicingGraph.onlyInternal +"\n");
             //buffy.write("# canonicalSS "+canonicalSS+"\n");
@@ -220,7 +220,7 @@ public class SpliceGraphIO {
                     }
                     MyFile checkFile= new MyFile(args[i+1]);
                     if (checkFile.exists()&& checkFile.isDirectory())
-                        barna.genome.model.Graph.overrideSequenceDirPath= checkFile.getAbsolutePath();
+                        barna.model.Graph.overrideSequenceDirPath= checkFile.getAbsolutePath();
                     else {
                         String[] s= args[++i].split("_");
                         if (s.length!= 2) {
@@ -335,7 +335,7 @@ public class SpliceGraphIO {
 
             }
 
-            if (ASEvent.isOutputFlankMode()&& barna.genome.model.Graph.overrideSequenceDirPath== null) {
+            if (ASEvent.isOutputFlankMode()&& barna.model.Graph.overrideSequenceDirPath== null) {
                 System.err.println("[OOOPS] Parameters require genomic sequence. Use the option -g.");
                 System.exit(-1);
             }
@@ -350,7 +350,7 @@ public class SpliceGraphIO {
                 System.exit(-1);
             }
 
-            if ((SplicingGraph.canonicalSS|| SplicingGraph.acceptableIntrons)&& barna.genome.model.Graph.overrideSequenceDirPath== null) {
+            if ((SplicingGraph.canonicalSS|| SplicingGraph.acceptableIntrons)&& barna.model.Graph.overrideSequenceDirPath== null) {
                 System.err.println("You want me to check introns for valid/canonical splice sites, but you did not provide a valid sequence directory");
                 System.exit(-1);
             }
