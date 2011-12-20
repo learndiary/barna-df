@@ -1,7 +1,5 @@
 package barna.flux.simulator;
 
-import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
-import barna.genome.sequencing.rnaseq.simulation.Profiler;
 import org.junit.Test;
 
 import java.io.File;

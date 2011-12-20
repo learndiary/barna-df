@@ -1,7 +1,6 @@
 package barna.flux.simulator;
 
 import barna.commons.parameters.ParameterException;
-import barna.genome.sequencing.rnaseq.simulation.FluxSimulatorSettings;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

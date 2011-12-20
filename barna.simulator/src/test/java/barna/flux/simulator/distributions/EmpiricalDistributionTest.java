@@ -11,7 +11,6 @@
 
 package barna.flux.simulator.distributions;
 
-import barna.genome.sequencing.rnaseq.simulation.distributions.EmpiricalDistribution;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;

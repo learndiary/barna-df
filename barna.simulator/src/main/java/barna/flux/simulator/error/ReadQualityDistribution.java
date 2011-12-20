@@ -9,26 +9,27 @@
  * see the Flux Library homepage <http://flux.sammeth.net> for more information.
  */
 
-package barna.flux.simulator.tools;
-
-import barna.flux.simulator.distributions.GCPCRDistribution;
-import org.junit.Test;
-
-import java.io.InputStream;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
+package barna.flux.simulator.error;
 
 /**
+ * Distribution of the average read quality
+ *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class PCRDistributionsToolTest {
+class ReadQualityDistribution extends Distribution {
 
-    @Test
-    public void testLoadDefault() throws Exception {
-        InputStream inputStream = getClass().getResource("/pcr_15_20.dat").openStream();
-        GCPCRDistribution def = PCRDistributionsTool.load(inputStream);
-        assertNotNull(def);
-        assertEquals(15, def.getGenerations());
+    public ReadQualityDistribution(int size) {
+        super(size);
+    }
+
+    public void addRead(Read read) {
+        reads++;
+        int[] q = read.getQualities();
+        int s = 0;
+        for (int i = 0; i < q.length; i++) {
+            s += q[i];
+        }
+        int avg = s / read.getLength();
+        values[avg]++;
     }
 }
