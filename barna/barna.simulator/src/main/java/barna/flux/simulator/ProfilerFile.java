@@ -77,8 +77,9 @@ public class ProfilerFile {
         if (colNr <= 3) {
             throw new IllegalArgumentException("You can not append to column <= 3!");
         }
-        if (map.size()== 0)
-            throw new IllegalArgumentException("Empty map");
+        // allow empty string for no-pcr
+//      if (map.size()== 0)
+//          throw new IllegalArgumentException("Empty map");
 
         BufferedReader buffy = null;
         BufferedWriter wright = null;
