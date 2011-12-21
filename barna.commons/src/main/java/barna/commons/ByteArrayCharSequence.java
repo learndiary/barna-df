@@ -237,6 +237,20 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
         this.end = chars.length;
         resetFind();
     }
+    
+    /**
+     * Set the value to the value of the given sequence
+     *
+     * @param value the sequence
+     */
+    public void set(ByteArrayCharSequence value) {
+        if(value == null) throw new NullPointerException("Null value not permitted!");
+        ensureLength(0, value.chars.length);
+        this.start = value.start;
+        this.end = value.end;
+        System.arraycopy(value.chars, 0, chars, 0, value.chars.length);
+        resetFind();
+    }
 
     /**
      * Get char value at given index

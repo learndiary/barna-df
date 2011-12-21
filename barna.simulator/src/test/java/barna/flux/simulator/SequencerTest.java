@@ -13,7 +13,7 @@ import static junit.framework.Assert.assertEquals;
 
 public class SequencerTest {
 
-	@Test
+    @Test
 	public void testReadGeneration() throws Exception {
 		
 		int nrTests= 100; // nr. of tests per transcript
