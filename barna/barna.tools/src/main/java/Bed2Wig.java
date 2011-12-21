@@ -1,10 +1,15 @@
-import barna.commons.ByteArrayCharSequence;
-import barna.io.BufferedByteArrayReader;
-import barna.io.FileHelper;
-import barna.model.bed.BEDobject2;
-import barna.model.commons.IntVector;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 
-import java.io.*;
+import fbi.commons.ByteArrayCharSequence;
+import fbi.genome.io.BufferedByteArrayReader;
+import fbi.genome.io.FileHelper;
+import fbi.genome.io.bed.BEDwrapper;
+import fbi.genome.model.bed.BEDobject2;
+import fbi.genome.model.commons.IntVector;
 
 
 public class Bed2Wig {
@@ -25,8 +30,8 @@ public class Bed2Wig {
 	
 	public static void main(String[] args) {
 		
-		if (1== 1)
-			myMain();
+//		if (1== 1)
+//			myMain();
 		
 		if (args== null|| args.length!= 2) {
 			System.err.println("Usage: Bed2Wig [input.bed] [output.wig]");
@@ -51,6 +56,15 @@ public class Bed2Wig {
 	 */
 	static void bed2wig(File in, File out) {
 		try {
+			
+			BEDwrapper bedreader= new BEDwrapper(in);
+			if (!bedreader.isApplicable()) {
+				File tmp= FileHelper.createTempFile(Bed2Wig.class.getName(), in.getName());
+				tmp.deleteOnExit();
+				bedreader.sort(tmp);
+				in= tmp;
+			}
+			
 			//BufferedReader buffy= new BufferedReader(new FileReader(in));
 			if (out.exists())
 				out.delete();
@@ -87,6 +101,8 @@ public class Bed2Wig {
 						int bstart= obj.getNextBlockStart();
 						for (int j = 0; j < bsize; j++) {
 							int gpos= bedstart+ bstart+ j;
+							if (gpos- start< 0)
+								System.currentTimeMillis();
 							v.set(gpos- start, v.get(gpos- start)+ 1);
 						}
 					}
