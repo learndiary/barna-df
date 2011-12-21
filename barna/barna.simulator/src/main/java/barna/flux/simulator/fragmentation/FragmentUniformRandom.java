@@ -12,11 +12,17 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.log.Log;
+import barna.flux.simulator.PWM;
+
 import org.apache.commons.math.special.Gamma;
 
+import java.io.File;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -34,6 +40,47 @@ public class FragmentUniformRandom implements FragmentProcessor {
     private double medMoleculeLength;
     private boolean filtering;
 
+    Map<CharSequence, CharSequence> mapTx;
+	private PWM pwmASense;
+	private PWM pwmSense;
+	private Map<CharSequence, double[]> mapWeightAsense;
+	private Map<CharSequence, double[]> mapWeightSense;
+    
+    public FragmentUniformRandom(double d0, double delta, double eta, double medMoleculeLength, boolean filtering,  
+    		Map<CharSequence, CharSequence> mapTx, File pwmFile) {
+    	this(d0, delta, eta, medMoleculeLength, filtering);
+    	this.mapTx= mapTx;
+    	if (pwmFile != null) {
+            // read the sequence annotations
+            try {
+                pwmSense = null;
+
+                if(!pwmFile.exists() && pwmFile.getName().equalsIgnoreCase("default")){
+                    // load default motif_1mer_0-5
+                    pwmSense = PWM.create(new InputStreamReader(getClass().getResource("/motif_1mer_0-5.pwm").openStream()));
+                    pwmASense = PWM.create(new InputStreamReader(getClass().getResource("/motif_1mer_0-5.pwm").openStream()));
+                }else{
+                    pwmSense = PWM.create(pwmFile);
+                    pwmASense = PWM.create(pwmFile);
+                }
+/*                for (int i = 0; i < 100; i++) {
+                    pwmSense.multiply();
+                    pwmASense.multiply();
+                }
+                pwmSense.makePDF();
+                pwmASense.makePDF();
+*/             
+                pwmASense.invert();
+                //pwmSense.makePDF();
+                //mapWeightSense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmSense);
+                //pwmSense.invert();
+                //PWM pwmAsense = pwmSense;
+                //mapWeightAsense = Fragmenter.getMapWeight(mapTxSeq, mapTxSeq, pwmAsense);
+            } catch (Exception e) {
+                Log.error("Error while initializing PWM : " + e.getMessage(), e);
+            }
+        }
+    }
     public FragmentUniformRandom(double d0, double delta, double eta, double medMoleculeLength, boolean filtering) {
         this.filtering = filtering;
         if (d0 < 1.0) {
@@ -45,12 +92,19 @@ public class FragmentUniformRandom implements FragmentProcessor {
         this.medMoleculeLength = medMoleculeLength;
     }
 
+    Random rndDELME= new Random();
     @Override
     public List<Fragment> process(final ByteArrayCharSequence id, final ByteArrayCharSequence cs, final int start, final int end, final int len) {
         assert (d0 >= 1); // problem with integer breakpoints, when fragment size << 1 !
         double delta = getFragURdelta(len);
         double eta = getFragUReta();
-
+        double[] wSense = null;
+        double[] wAsense = null;
+        if (false) {	// customMotif
+            wAsense = mapWeightAsense.get(id);
+            wSense = mapWeightSense.get(id);
+        }
+        
         double E = d0 + eta * Math.exp(Gamma.logGamma(1d + 1d / delta));
         // determine n, the number of fragments (i.e. (n-1) breakpoints)
         double nn = ((double) len) / E;
@@ -110,7 +164,17 @@ public class FragmentUniformRandom implements FragmentProcessor {
             cs.replace(1, nuEnd);
             //rw.writeLine(cs, fos);    // id is invalid now
             //fragments.add(cs.toString());
+            
+            
+/*            double p= nuStart>= 0&& nuStart<= wSense.length? wSense[nuStart]: 1;
+            double q= nuEnd>= 0&& nuEnd<= wAsense.length? wAsense[nuEnd]: 1;
+            double rnd= rndDELME.nextDouble();
+            double rnd2= rndDELME.nextDouble();
+            
+            if (true|| (rnd<= p&& rnd2<= q))
+*/
             fragments.add(new Fragment(id, nuStart, nuEnd));
+
         }
         assert (Math.round(dsum) == len);
         return fragments;
@@ -170,5 +234,15 @@ public class FragmentUniformRandom implements FragmentProcessor {
     public String done() {
         return null;
     }
+	public void initPWMMap(){
+	    if(pwmASense != null){
+	        Log.info("Initializing PWM cache");
+	        mapWeightAsense = Fragmenter.getMapWeight(mapTx,null, pwmASense);
+	        mapWeightSense = Fragmenter.getMapWeight(mapTx,null, pwmSense);
+	        Log.info("Done");
+	    }
+	}
+	
+	
 
 }
