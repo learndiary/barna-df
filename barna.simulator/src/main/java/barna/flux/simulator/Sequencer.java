@@ -12,13 +12,12 @@
 package barna.flux.simulator;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.io.IOHandler;
-import barna.commons.io.IOHandlerFactory;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.flux.simulator.error.MarkovErrorModel;
 import barna.flux.simulator.error.ModelPool;
 import barna.flux.simulator.error.QualityErrorModel;
+import barna.flux.simulator.fragmentation.FragmentDB;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.FMRD;
@@ -32,9 +31,6 @@ import barna.model.commons.Coverage;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Sequence the library
@@ -93,21 +89,18 @@ public class Sequencer implements Callable<Void> {
         Log.info("SEQUENCING", "getting the reads");
         File inFile = settings.get(FluxSimulatorSettings.LIB_FILE);
 
-        File zipFile = FileHelper.createTempFile("sim", "master.gz");
-        zipFile.deleteOnExit();
-
         /*
         Write initial zip file and collect the line number. This represents
         the number of fragments written and is used to compute the probability
         for a read to be sequenced
          */
-        long noOfFragments = writeInitialFile(inFile, zipFile);
-        p = settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) noOfFragments;
+        FragmentDB fragmentIndex = createFragmentIndex(inFile);
+        p = settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) fragmentIndex.getNumberOfFragments();
 
 
         File referenceFile = settings.get(FluxSimulatorSettings.REF_FILE);
 
-        sequence(zipFile, referenceFile, noOfFragments);
+        sequence(fragmentIndex, referenceFile);
         return null;
     }
 
@@ -115,69 +108,17 @@ public class Sequencer implements Callable<Void> {
      * Write and return the initial zip file
      *
      * @param libraryFile the library file
-     * @param zipFile     the target file
-     * @return lines lines zipped
+     * @return db fragment index
      * @throws IOException in case of errors
      */
-    long writeInitialFile(File libraryFile, File zipFile) throws IOException {
+    FragmentDB createFragmentIndex(File libraryFile) throws IOException {
         if (libraryFile == null) {
             throw new NullPointerException("NULL library file not permitted");
         }
-        if (zipFile == null) {
-            throw new NullPointerException("NULL target file not permitted");
-        }
-        ByteArrayCharSequence cs = new ByteArrayCharSequence(100);
-        IOHandler io = IOHandlerFactory.createDefaultHandler();
-        ZipOutputStream zipOut = null;
-
-        long nrOfFrags = 0;
-        long lines = 0;
-        try {
-            Log.message("\tinitialize");
-            Log.progressStart("zipping");
-
-            // read the sorted file and put it in a zip form
-            InputStream sortedIn = new FileInputStream(libraryFile);
-            io.addStream(sortedIn);
-
-
-            // the target stream
-            zipOut = new ZipOutputStream(new FileOutputStream(zipFile));
-
-
-            long totBytes = libraryFile.length(), currBytes = 0;
-            ByteArrayCharSequence lastID = null;
-
-            while (io.readLine(sortedIn, cs) != -1) {
-                currBytes += cs.length() + 1;
-                //nrOfFrags++;
-                lines++;
-                Log.progress(currBytes, totBytes);
-
-                cs.resetFind();
-                ByteArrayCharSequence id = cs.getToken(2);
-                int dups = cs.getTokenInt(3);
-                nrOfFrags+=Math.max(1, dups);
-                if (!id.equals(lastID)) {
-                    zipOut.putNextEntry(new ZipEntry(id.toString()));
-                    lastID = id.cloneCurrentSeq();
-                }
-                zipOut.write(cs.chars, cs.start, cs.length());
-                zipOut.write(BYTE_NL);
-            }
-            Log.progressFinish(StringUtils.OK, true);
-            Log.message("\t"+lines + " lines zipped ("+nrOfFrags +" fragments)");
-        } finally {
-            io.close();
-            if (zipOut != null) {
-                try {
-                    zipOut.close();
-                } catch (IOException ignore) {
-                	throw new RuntimeException("Unable to close zip file "+ zipFile.getAbsolutePath(), ignore);
-                }
-            }
-        }
-        return nrOfFrags;
+        FragmentDB index = new FragmentDB(libraryFile);
+        index.setPrintStatus(true);
+        index.createIndex();
+        return index;
     }
 
     /**
@@ -238,9 +179,13 @@ public class Sequencer implements Callable<Void> {
     }
 
 
-    boolean sequence(File zipFile, File referenceFile, long numberOfFragments) {
-        if (zipFile == null) {
-            throw new NullPointerException("NULL initial file not permitted!");
+    boolean sequence(FragmentDB index, File referenceFile) {
+        if (index == null) {
+            throw new NullPointerException("NULL index not permitted!");
+        }
+
+        if (referenceFile == null) {
+            throw new NullPointerException("NULL reference not permitted!");
         }
 
         try {
@@ -273,22 +218,8 @@ public class Sequencer implements Callable<Void> {
             int readLength = settings.get(FluxSimulatorSettings.READ_LENGTH);
             boolean pairs = settings.get(FluxSimulatorSettings.PAIRED_END);
 
-            // init the hash
-            // create ZIP
-            // hash entries
-            Hashtable<CharSequence, ZipEntry> zipHash = new Hashtable<CharSequence, ZipEntry>(profiler.size());
-            ZipFile zFile = new ZipFile(zipFile);
-            Enumeration e = zFile.entries();
-            ZipEntry ze;
-            while (e.hasMoreElements()) {
-                ze = (ZipEntry) e.nextElement();
-                zipHash.put(ze.getName(), ze);
-            }
-            zFile.close();
-
-
             SequenceWriter writer = new SequenceWriter(tmpFile, tmpFasta, readLength);
-            Processor processor = new Processor(writer, pairs, zipFile, zipHash);
+            Processor processor = new Processor(writer, pairs, index);
             long fileLen= referenceFile.length();
             for (reader.read(); (g = reader.getGenes()) != null; reader.read()) {
                 for (Gene aG : g) {
@@ -300,9 +231,9 @@ public class Sequencer implements Callable<Void> {
             processor.close();
             writer.close();
 
-            Log.progressFinish();
+            Log.progressFinish(StringUtils.OK, true);
             Log.message("");
-            Log.message("\t" +  numberOfFragments+ " fragments found");
+            Log.message("\t" +  index.getNumberOfFragments()+ " fragments found (" + index.getNumberOfLines() + " without PCR duplicates)");
             Log.message("\t" + writer.totalReads + " reads sequenced");
             Log.message("\t" + writer.countPolyAReads + " reads fall in poly-A tail");
             Log.message("\t" + writer.countTruncatedReads + " truncated reads");
@@ -358,11 +289,7 @@ public class Sequencer implements Callable<Void> {
             Log.error("Error while sequencing : " + e.getMessage(), e);
             return false;
         } finally {
-            if (zipFile != null) {
-                if (!zipFile.delete()) {
-                    Log.error("Unable to delete zip file " + zipFile.getAbsolutePath());
-                }
-            }
+            index.close();
         }
     }
 
@@ -643,10 +570,6 @@ public class Sequencer implements Callable<Void> {
      */
     class Processor {
         /**
-         * Reader cache
-         */
-        private ByteArrayCharSequence cs;
-        /**
          * The sequence writer
          */
         private SequenceWriter writer;
@@ -655,9 +578,9 @@ public class Sequencer implements Callable<Void> {
          */
         private boolean pairedEnd;
         /**
-         * The zip hash
+         * the fragment index
          */
-        private Hashtable<CharSequence, ZipEntry> zipHash;
+        private FragmentDB index;
 
         /**
          * Random sampler pick reads
@@ -675,25 +598,16 @@ public class Sequencer implements Callable<Void> {
          * Count antisens reads written
          */
         private int cntMinus = 0;
-        /**
-         * The zip file
-         */
-        private ZipFile zip;
-        
+
         /**
          * Coverage profile of a sequenced transcript.
          */
         private Coverage coverage= null;
         
-        public Processor(SequenceWriter writer, boolean pairedEnd, final File zipFile, final Hashtable<CharSequence, ZipEntry> zipHash) throws IOException {
+        public Processor(SequenceWriter writer, boolean pairedEnd, FragmentDB index) throws IOException {
             this.writer = writer;
             this.pairedEnd = pairedEnd;
-            this.zipHash = zipHash;
-
-            // init caches
-            cs = new ByteArrayCharSequence(128);
-            zip = new ZipFile(zipFile);
-
+            this.index = index;
         }
 
         public void process(Gene gene) {
@@ -714,27 +628,17 @@ public class Sequencer implements Callable<Void> {
                 String compID = baseID + t.getTranscriptID();
 
 
-                ZipEntry ze = zipHash.remove(compID);
-                if (ze == null) {
-                    continue;    // not in frg file
-                }
-
-
-                InputStream is = null;
-                BufferedReader buffy = null;
+                // get the iterator
                 int readsSequenced = 0;
                 try {
-                    is = zip.getInputStream(ze);
-                    buffy = new BufferedReader(new InputStreamReader(is));
+
+                    Iterable<ByteArrayCharSequence> entries = index.getEntries(compID);
 
                     int k = 0;
-                    String s = null;
-                    while ((s = buffy.readLine()) != null) {
-                        cs.set(s);
+                    for (ByteArrayCharSequence cs : entries) {
                         int fstart = cs.getTokenInt(0);
                         int fend = cs.getTokenInt(1);
                         int dups = cs.getTokenInt(3);
-                        // TODO ++dups ?
                         dups = Math.max(dups, 1);	// file provides nr. of duplicates, not molecules
 
 
@@ -791,22 +695,7 @@ public class Sequencer implements Callable<Void> {
                 
                 // catch I/O errors
                 } catch (IOException e) {
-                    Log.error("Error while reading zip entry in sequencer: " + e.getMessage(), e);
-                } finally {
-                    if (is != null) {
-                        try {
-                            is.close();                            
-                        } catch (IOException ignore) {
-                        	throw new RuntimeException("Could not close zip inputstream from "+ zip.getName(), ignore);
-                        }
-                    }
-                    if (buffy != null) {
-                        try {
-                            buffy.close();
-                        } catch (IOException ignore) {
-                        	throw new RuntimeException("Could not close reader of zip inputstream from "+ zip.getName(), ignore);
-                        }
-                    }
+                    throw new RuntimeException("Error while reading from fragment index sequencer: " + e.getMessage(), e);
                 }
 
                 Number[] n= null;
@@ -833,12 +722,6 @@ public class Sequencer implements Callable<Void> {
          */
         public void close() {
         	coverage= null;
-            if (zip != null) {
-                try {
-                    zip.close();
-                } catch (IOException ignore) {
-                }
-            }
         }
 
     }
