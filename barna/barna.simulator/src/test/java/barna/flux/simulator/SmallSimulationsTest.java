@@ -141,6 +141,7 @@ public class SmallSimulationsTest {
             Pattern readP = Pattern.compile("\\s+(\\d+).*reads sequenced.*");
             for(String l = reader.readLine(); l != null; l = reader.readLine()){
                 Matcher m = fragP.matcher(l);
+                System.out.println(l);
                 if(m.matches()){
                     fragments = Long.parseLong(m.group(1));
                 }
