@@ -26,10 +26,25 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
+
 public class PWM implements WeightMatrix {
     double[][] pwm = null;
-    // either sorted positions, or continuous range [min;max]
+    /**
+     * Positions relative to scored position (i.e., 0) that are considered
+     * in scoring by the PWM.
+     */
     int[] pos = null;    // 0-based, 0= ref.position (+1)
+    
+    /**
+     * Sum of minimal frequencies weighted by information content;
+     */
+    double suMin= 0d;
+    
+    /**
+     * Sum of maximal frequencies weighted by information content
+     */
+    double suMax= 0d;
+    
     int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
 
     static final int MIN_DEFAULT = Integer.MAX_VALUE, MAX_DEFAULT = Integer.MIN_VALUE;
@@ -86,12 +101,23 @@ public class PWM implements WeightMatrix {
         return new PWM(kmers, pos, a);
     }
 
+    /**
+     * @deprecated
+     * @param min
+     * @param max
+     * @param pwm
+     */
     public PWM(int min, int max, double[][] pwm) {
         this.min = min;
         this.max = max;
         setPWM(pwm);
     }
 
+    /**
+     * @deprecated
+     * @param pos
+     * @param pwm
+     */
     public PWM(int[] pos, double[][] pwm) {
         set(pos, pwm);
         this.from = 0;
@@ -100,13 +126,39 @@ public class PWM implements WeightMatrix {
 
     CharSequence[] kmers;
     int kmerLen = 0;
+    /**
+     * Information content of the matrix
+     */
+    double[] ic= null;
 
     public PWM(CharSequence[] kmers, int[] pos, double[][] pwm) {
         //set(pos, pwm);
         this.kmers = kmers;
         kmerLen = kmers[0].length();
         this.pos = pos;
+        
+        // TODO setPWM()
         this.pwm = pwm;
+        this.ic= new double[pwm[0].length];
+        suMin= 0d; suMax= 0d;
+        for (int i = 0; i < pwm[0].length; i++) {
+        	this.ic[i]= 0d; // 2d; // bioconductor
+        	double minI= Double.MAX_VALUE, maxI= Double.MIN_VALUE;
+        	for (int j = 0; j < pwm.length; j++) {
+        		double v= pwm[j][i];
+        		// I according to MATCH [Kel et al. 2003]
+				this.ic[i]+= v* Math.log(4d* v);
+				// Bioconductor PWM, pwm2ic
+				//v* Math.log(v)/ Math.log(2);
+				if (v< minI)
+					minI= v;
+				if (v> maxI)
+					maxI= v;
+			}
+        	suMin+= this.ic[i]* minI;
+        	suMax+= this.ic[i]* maxI;
+ 		}
+        
         sortKmers();
         sortPositions();
     }
@@ -599,24 +651,41 @@ public class PWM implements WeightMatrix {
                 break;
             }
 
-            ++c;
             CharSequence seq = s.subSequence(pp, pp + kmerLen);
             int kmerPos = Arrays.binarySearch(kmers, seq);
 
             if (kmerPos >= 0) {
-                w += Math.log(pwm[kmerPos][i]);
+                ++c;
+            	double q= pwm[kmerPos][i];
+                //w += Math.log(q);
+            	w+= this.ic[i]* q;
+            } else {	// 'N'
+            	double min= Double.MAX_VALUE;	// TODO precompute
+            	for (int j = 0; j < pwm.length; j++) {
+					if (pwm[j][i]< min)
+						min= pwm[j][i];
+				}
+            	w+= this.ic[i]* min;
+            	
+            	++c;
             }
             //w*= pwm[i][kmerPos];
         }
-        if (c == 0) {
+        if (c == 0|| c< pos.length) {
             return 0;    // avoid NaN
         }
 
         // weight by information
-        w = Math.exp(w / c);
+       	//w = Math.exp(w);
+        //w = Math.exp(w / c);
         //w= Math.pow(w, 1d/ c);
 
+        // score tranformation
+        w= (w- suMin)/ (suMax- suMin); // only max?
+        
         assert (!(Double.isNaN(w) || Double.isInfinite(w) || w < 0));
+        if ((w!= 0&& w< 0.1)|| w >= 0.6)
+        	System.currentTimeMillis();
         return w;
     }
 
