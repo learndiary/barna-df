@@ -456,7 +456,11 @@ public class Fragmenter implements Callable<Void> {
                         double delta = settings.get(FluxSimulatorSettings.FRAG_UR_DELTA);
                         double eta = settings.get(FluxSimulatorSettings.FRAG_UR_ETA);
                         boolean filtering = settings.get(FluxSimulatorSettings.FILTERING);
-                        processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering);
+                        //processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering);
+                        processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering,
+                                getMapTxSeq(), settings.get(FluxSimulatorSettings.RT_MOTIF));
+                        ((FragmentUniformRandom)processor).initPWMMap();
+
                         break;
                     case MODE_FRAG_EZ:
                         File motif = settings.get(FluxSimulatorSettings.FRAG_EZ_MOTIF);
