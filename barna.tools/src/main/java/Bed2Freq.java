@@ -1,10 +1,11 @@
 import java.io.File;
 import java.io.FileInputStream;
 
-import fbi.commons.ByteArrayCharSequence;
-import fbi.genome.io.BufferedBACSReader;
-import fbi.genome.model.Graph;
-import fbi.genome.model.bed.BEDobject2;
+import barna.commons.ByteArrayCharSequence;
+import barna.io.BufferedBACSReader;
+import barna.model.Graph;
+import barna.model.bed.BEDobject2;
+
 
 
 public class Bed2Freq {
