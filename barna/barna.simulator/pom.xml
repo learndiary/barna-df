@@ -147,6 +147,12 @@
             <groupId>barna</groupId>
             <artifactId>barna.io</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>jdbm</groupId>
+            <artifactId>jdbm</artifactId>
+            <version>2.3</version>
+        </dependency>
     </dependencies>
 
 </project>
