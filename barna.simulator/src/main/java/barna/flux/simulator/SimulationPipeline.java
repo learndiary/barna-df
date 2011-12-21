@@ -11,6 +11,7 @@
 
 package barna.flux.simulator;
 
+import barna.commons.Execute;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.FluxTool;
 import barna.commons.launcher.HelpPrinter;
@@ -23,6 +24,7 @@ import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Flux Tool that implements the simulation pipeline
@@ -32,6 +34,34 @@ import java.io.File;
 @Cli(name = "simulator", description = "Flux Simulation Pipeline")
 public class SimulationPipeline implements FluxTool<Void> {
 
+	public static void main(String[] args) {
+		Execute.initialize(2);
+		
+		try {
+
+			final SimulationPipeline mySimulator= new SimulationPipeline();
+			mySimulator.setFile(new File(args[0]));
+			mySimulator.setExpression(false);
+			mySimulator.setLibrary(true);
+			mySimulator.setSequence(true);
+			
+		    // run
+			mySimulator.call();
+			
+		} catch (Throwable t) {
+			if (t instanceof Exception)
+				((Exception) t).printStackTrace();
+			else if (t instanceof Error)
+				((Error) t).printStackTrace();
+			else
+				System.err.println(t.getMessage());
+			
+		} finally {
+			Execute.shutdown();
+		}
+
+	}
+	
     /**
      * Expression mode
      */
