@@ -684,8 +684,10 @@ public class PWM implements WeightMatrix {
         w= (w- suMin)/ (suMax- suMin); // only max?
         
         assert (!(Double.isNaN(w) || Double.isInfinite(w) || w < 0));
-        if ((w!= 0&& w< 0.1)|| w >= 0.6)
+        if ((w!= 0&& w< 0.1)|| w >= 0.6) {
+        	CharSequence t= s.subSequence(p+ pos[0], p+ pos[pos.length- 1]+ 1);
         	System.currentTimeMillis();
+        }
         return w;
     }
 
