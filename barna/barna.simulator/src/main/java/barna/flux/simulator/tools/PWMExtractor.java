@@ -11,6 +11,7 @@
 
 package barna.flux.simulator.tools;
 
+import barna.commons.Execute;
 import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
@@ -18,6 +19,7 @@ import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.state.MappingWrapperState;
 import barna.model.Gene;
+import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
@@ -26,6 +28,7 @@ import org.cyclopsgroup.jcli.annotation.Option;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.concurrent.Future;
 
 /**
  * Count and print breakpoint distribution
@@ -35,6 +38,24 @@ import java.io.FileWriter;
 //@Cli(name = "extractPWM", description = "Extract PWM from GTF annotation and BED file")
 public class PWMExtractor {  //implements FluxTool {
 
+	public static void main(String[] args) {
+		
+		PWMExtractor ex= new PWMExtractor();
+		Graph.overrideSequenceDirPath= "/Users/micha/genomes/hg19";
+		ex.setBedFile(new File("/Users/micha/tmp/simulator/FRT_STD/STD.bed"));
+		ex.setGtfFile(new File("/Users/micha/annotation/hg19/hg19_RefSeq_fromUCSC100615_sorted.clean.gtf"));
+		ex.setOutFile(new File("/Users/micha/tmp/simulator/FRT_STD/STD.pwm"));
+		
+		Execute.initialize(2);
+		//Future f= Execute.getExecutor().submit(ex);
+		try {
+			ex.call();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Execute.shutdown();
+	}
+	
     private File gtfFile;
     private File bedFile;
     private File outFile;
