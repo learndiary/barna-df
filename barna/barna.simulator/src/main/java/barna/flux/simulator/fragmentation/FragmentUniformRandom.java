@@ -100,7 +100,7 @@ public class FragmentUniformRandom implements FragmentProcessor {
         double eta = getFragUReta();
         double[] wSense = null;
         double[] wAsense = null;
-        if (false) {	// customMotif
+        if (true) {	// customMotif
             wAsense = mapWeightAsense.get(id);
             wSense = mapWeightSense.get(id);
         }
@@ -166,14 +166,13 @@ public class FragmentUniformRandom implements FragmentProcessor {
             //fragments.add(cs.toString());
             
             
-/*            double p= nuStart>= 0&& nuStart<= wSense.length? wSense[nuStart]: 1;
+            double p= nuStart>= 0&& nuStart<= wSense.length? wSense[nuStart]: 1;
             double q= nuEnd>= 0&& nuEnd<= wAsense.length? wAsense[nuEnd]: 1;
             double rnd= rndDELME.nextDouble();
             double rnd2= rndDELME.nextDouble();
             
-            if (true|| (rnd<= p&& rnd2<= q))
-*/
-            fragments.add(new Fragment(id, nuStart, nuEnd));
+            if ((rnd<= p&& rnd2<= q))
+            	fragments.add(new Fragment(id, nuStart, nuEnd));
 
         }
         assert (Math.round(dsum) == len);
