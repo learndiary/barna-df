@@ -25,6 +25,7 @@ import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 /**
  * Flux Tool that implements the simulation pipeline
@@ -46,7 +47,8 @@ public class SimulationPipeline implements FluxTool<Void> {
 			mySimulator.setSequence(true);
 			
 		    // run
-			mySimulator.call();
+			// mySimulator.call();
+			Future f= Execute.getExecutor().submit(mySimulator);
 			
 		} catch (Throwable t) {
 			if (t instanceof Exception)
