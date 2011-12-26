@@ -89,15 +89,6 @@
     </dependencies>
 
 
-    <repositories>
-        <repository>
-            <id>Fernis</id>
-            <name>Fernis</name>
-            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
-        </repository>
-    </repositories>
-
-
     <build>
         <plugins>
 
