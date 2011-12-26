@@ -143,27 +143,6 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
-            <!--
-             Create a build number
-            -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.0-beta-4</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <doCheck>false</doCheck>
-                    <doUpdate>false</doUpdate>
-                    <revisionOnScmFailure>Unknown</revisionOnScmFailure>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
