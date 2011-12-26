@@ -39,13 +39,6 @@
         </license>
     </licenses>
 
-
-    <scm>
-        <url>svn+ssh://login1/project/devel/svnroot/fbi/trunk/barna</url>
-        <connection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/barna</connection>
-        <developerConnection>scm:svn:svn+ssh://login1/project/devel/svnroot/fbi/trunk/barna</developerConnection>
-    </scm>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <Build-Version>${project.version}</Build-Version>
@@ -185,22 +178,22 @@
 
     <repositories>
         <repository>
-            <id>fenris</id>
-            <name>fenris</name>
-            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/repo</url>
+            <id>barnaserver</id>
+            <name>barnaserver</name>
+            <url>http://barnaserver.com/artifactory/repo</url>
         </repository>
     </repositories>
 
     <distributionManagement>
         <repository>
-            <id>fenris</id>
-            <name>fenris-releases</name>
-            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-release-local</url>
+            <id>barnaserver</id>
+            <name>barnaserver-releases</name>
+            <url>http://barnaserver.com/artifactory/libs-release-local</url>
         </repository>
         <snapshotRepository>
-            <id>fenris</id>
-            <name>fenris-snapshots</name>
-            <url>http://fenris.ti00a1.pcb.ub.es/artifactory/libs-snapshot-local</url>
+            <id>barnaserver</id>
+            <name>barnaserver-snapshots</name>
+            <url>http://barnaserver.com/artifactory/libs-snapshot-local</url>
         </snapshotRepository>
     </distributionManagement>
 </project>
