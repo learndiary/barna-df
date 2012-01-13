@@ -142,14 +142,19 @@ public class PWM implements WeightMatrix {
         this.ic= new double[pwm[0].length];
         suMin= 0d; suMax= 0d;
         for (int i = 0; i < pwm[0].length; i++) {
-        	this.ic[i]= 0d; // 2d; // bioconductor
+        	this.ic[i]=  
+					// MATCH [Kel et al. 2003]
+				// 0d;
+        			// Bioconductor PWM, pwm2ic
+        		2d; 
         	double minI= Double.MAX_VALUE, maxI= Double.MIN_VALUE;
         	for (int j = 0; j < pwm.length; j++) {
         		double v= pwm[j][i];
-        		// I according to MATCH [Kel et al. 2003]
-				this.ic[i]+= v* Math.log(4d* v);
-				// Bioconductor PWM, pwm2ic
-				//v* Math.log(v)/ Math.log(2);
+				this.ic[i]+= 
+	        			// MATCH [Kel et al. 2003]
+					// v* Math.log(4d* v);
+						// Bioconductor PWM, pwm2ic
+					v* Math.log(v)/ Math.log(2);
 				if (v< minI)
 					minI= v;
 				if (v> maxI)
@@ -599,6 +604,13 @@ public class PWM implements WeightMatrix {
             kmers[i] = Graph.invertSequence(kmers[i].toString());// TODO work on charsequence
         }
         sortKmers();
+        // invert information content
+        int med= ic.length/ 2;
+        for (int i = 0; i < med; i++) {
+			double h= ic[i];
+			ic[i]= ic[ic.length- 1- i];
+			ic[ic.length- 1- i]= h;
+		}
     }
 
     public void multiply() {
@@ -642,6 +654,9 @@ public class PWM implements WeightMatrix {
         double w = 0; // sum logs, numerical stability
         // 1; for multiplying probabilities
         int c = 0;
+        CharSequence scseq= null;
+        if (p+ pos[0]>= 0&& p+ pos[pos.length- 1]< s.length())
+        	scseq= s.subSequence(p+ pos[0], p+ pos[pos.length- 1]);
         for (int i = 0; i < pos.length; i++) {
             int pp = p + pos[i];
             if (pp < 0) {
@@ -681,13 +696,14 @@ public class PWM implements WeightMatrix {
         //w= Math.pow(w, 1d/ c);
 
         // score tranformation
+        double wSave= w;
         w= (w- suMin)/ (suMax- suMin); // only max?
         
         assert (!(Double.isNaN(w) || Double.isInfinite(w) || w < 0));
-        if ((w!= 0&& w< 0.1)|| w >= 0.6) {
-        	CharSequence t= s.subSequence(p+ pos[0], p+ pos[pos.length- 1]+ 1);
-        	System.currentTimeMillis();
-        }
+//        if ((w!= 0&& w< 0.1)|| w >= 0.6) {
+//        	CharSequence t= s.subSequence(p+ pos[0], p+ pos[pos.length- 1]+ 1);
+//        	System.currentTimeMillis();
+//        }
         return w;
     }
 
