@@ -304,11 +304,20 @@ public class Fragmenter implements Callable<Void> {
      */
     static double[] applyPWM(CharSequence seq, PWM pwm){
         double[] a = new double[seq.length()];
+        double tmin= Double.MAX_VALUE, tmax= Double.MIN_VALUE;
         for (int p = 0; p < a.length; ++p) {
             double pb = pwm.apply(seq, p);
+            if (pb< tmin)
+            	tmin= pb;
+            if (pb> tmax)
+            	tmax= pb;
             a[p] = pb;
             assert (!(Double.isNaN(pb) || Double.isInfinite(pb)));
         }
+        // normalize for transcript
+//        for (int i = 0; i < a.length; i++) 
+//			a[i]= (a[i]- tmin)/ (tmax- tmin);
+		
         return a;
     }
 
@@ -330,7 +339,7 @@ public class Fragmenter implements Callable<Void> {
                 if(ll > Integer.MAX_VALUE) throw new RuntimeException(ll + " value > Integer.MAX_VALUE");
                 int total = (int) ll;
                 reader.read();
-                Log.progressStart("preparing reads");
+                Log.progressStart("preparing transcript sequences");
 
                 int leftFlank = Double.isNaN(tssMean) ? 0 : this.startOffset;
                 int rightFlank = Double.isNaN(polyaScale) || Double.isNaN(polyaShape) ? 0 : this.endOffset;
@@ -348,7 +357,7 @@ public class Fragmenter implements Callable<Void> {
                     for (int i = 0; i < g.length; i++) {
                         for (int j = 0; j < g[i].getTranscripts().length; j++) {
                             Transcript t = g[i].getTranscripts()[j];
-                            String s = t.getSplicedSequence(leftFlank, 0, "N", "A");    // TODO check chr pre-loading
+                            String s = t.getSplicedSequence(leftFlank, 0, "N", "A").toUpperCase();    // TODO check chr pre-loading
                             int sourceLength = s.length();
                             if (rightFlank > 0) {
                                 if (s.length() < sourceLength + rightFlank) {
@@ -432,7 +441,9 @@ public class Fragmenter implements Callable<Void> {
                 FragmentProcessor processor = null;
                 switch (mode) {
                     case MODE_FILT_REJ:
-                        processor = new FragmentFilterRejection(new AbstractDistribution[]{filterDist}, true);
+                        processor = new FragmentFilterRejection(new AbstractDistribution[]{filterDist}, true,
+                        		getMapTxSeq(), settings.get(FluxSimulatorSettings.RT_MOTIF));
+                        ((FragmentFilterRejection)processor).initPWMMap();
                         break;
                     case MODE_FILT_ACC:
                         processor = new FragmentFilterRejection(new AbstractDistribution[]{filterDist}, false);
@@ -456,10 +467,10 @@ public class Fragmenter implements Callable<Void> {
                         double delta = settings.get(FluxSimulatorSettings.FRAG_UR_DELTA);
                         double eta = settings.get(FluxSimulatorSettings.FRAG_UR_ETA);
                         boolean filtering = settings.get(FluxSimulatorSettings.FILTERING);
-                        //processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering);
-                        processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering,
-                                getMapTxSeq(), settings.get(FluxSimulatorSettings.RT_MOTIF));
-                        ((FragmentUniformRandom)processor).initPWMMap();
+                        processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering);
+//                        processor = new FragmentUniformRandom(d0, delta, eta, profiler.getMedMoleculeLength(), filtering,
+//                                getMapTxSeq(), settings.get(FluxSimulatorSettings.RT_MOTIF));
+//                        ((FragmentUniformRandom)processor).initPWMMap();
 
                         break;
                     case MODE_FRAG_EZ:
@@ -504,12 +515,20 @@ public class Fragmenter implements Callable<Void> {
                         }
 
 
+//                        processor = new Amplification(
+//                                dist,
+//                                pcrProb,
+//                                mean,
+//                                settings.get(FluxSimulatorSettings.GC_SD),
+//                                getMapTxSeq());
                         processor = new Amplification(
                                 dist,
                                 pcrProb,
                                 mean,
                                 settings.get(FluxSimulatorSettings.GC_SD),
-                                getMapTxSeq());
+                                getMapTxSeq(),
+                                getMapTxSeq(), settings.get(FluxSimulatorSettings.RT_MOTIF));
+                        ((Amplification) processor).initPWMMap();
                         break;
                 }
 

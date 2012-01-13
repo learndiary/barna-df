@@ -100,7 +100,7 @@ public class FragmentUniformRandom implements FragmentProcessor {
         double eta = getFragUReta();
         double[] wSense = null;
         double[] wAsense = null;
-        if (true) {	// customMotif
+        if (false) {	// customMotif
             wAsense = mapWeightAsense.get(id);
             wSense = mapWeightSense.get(id);
         }
@@ -166,12 +166,12 @@ public class FragmentUniformRandom implements FragmentProcessor {
             //fragments.add(cs.toString());
             
             
-            double p= nuStart>= 0&& nuStart<= wSense.length? wSense[nuStart]: 1;
-            double q= nuEnd>= 0&& nuEnd<= wAsense.length? wAsense[nuEnd]: 1;
-            double rnd= rndDELME.nextDouble();
-            double rnd2= rndDELME.nextDouble();
-            
-            if ((rnd<= p&& rnd2<= q))
+//            double p= nuStart>= 0&& nuStart<= wSense.length? wSense[nuStart]: 1;
+//            double q= nuEnd>= 0&& nuEnd<= wAsense.length? wAsense[nuEnd]: 1;
+//            double rnd= rndDELME.nextDouble();
+//            double rnd2= rndDELME.nextDouble();
+//            
+//            if ((rnd<= p&& rnd2<= q))
             	fragments.add(new Fragment(id, nuStart, nuEnd));
 
         }
@@ -236,8 +236,8 @@ public class FragmentUniformRandom implements FragmentProcessor {
 	public void initPWMMap(){
 	    if(pwmASense != null){
 	        Log.info("Initializing PWM cache");
-	        mapWeightAsense = Fragmenter.getMapWeight(mapTx,null, pwmASense);
 	        mapWeightSense = Fragmenter.getMapWeight(mapTx,null, pwmSense);
+	        mapWeightAsense = Fragmenter.getMapWeight(mapTx,null, pwmASense);
 	        Log.info("Done");
 	    }
 	}

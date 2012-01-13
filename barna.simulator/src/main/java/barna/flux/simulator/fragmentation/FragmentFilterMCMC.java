@@ -59,7 +59,7 @@ public class FragmentFilterMCMC implements FragmentProcessor {
             return null;
         }
 
-        // Metropolis/Hastings/Ema
+        // Metropolis/Hastings
         double a1 = p / lastP;
         double a2 = dGenerate.getP(lastLen, len) / dGenerate.getP(len, lastLen);
         double a = a1 * a2;
