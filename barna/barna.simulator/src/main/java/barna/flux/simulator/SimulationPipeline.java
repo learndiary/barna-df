@@ -49,14 +49,14 @@ public class SimulationPipeline implements FluxTool<Void> {
 		    // run
 			// mySimulator.call();
 			Future f= Execute.getExecutor().submit(mySimulator);
+			f.get();
 			
 		} catch (Throwable t) {
+			System.err.println(t.getMessage());
 			if (t instanceof Exception)
 				((Exception) t).printStackTrace();
 			else if (t instanceof Error)
 				((Error) t).printStackTrace();
-			else
-				System.err.println(t.getMessage());
 			
 		} finally {
 			Execute.shutdown();

@@ -95,7 +95,7 @@ public class Sequencer implements Callable<Void> {
         for a read to be sequenced
          */
         FragmentDB fragmentIndex = createFragmentIndex(inFile);
-        p = settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) fragmentIndex.getNumberOfFragments();
+        p = Math.min(1, settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) fragmentIndex.getNumberOfFragments());
 
 
         File referenceFile = settings.get(FluxSimulatorSettings.REF_FILE);

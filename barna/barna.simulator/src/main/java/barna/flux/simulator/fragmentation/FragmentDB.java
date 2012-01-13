@@ -352,11 +352,13 @@ public class FragmentDB {
 
         FragmentIterable(long limit) throws IOException {
             this.limit = limit;
-            next = byteStream.getSequence();
-            current = new ByteArrayCharSequence(300);
-            // read the first entry
-            next.clear();
-            readNext();
+            if (limit> 0) {
+            	next = byteStream.getSequence();
+            	current = new ByteArrayCharSequence(300);
+            	// read the first entry
+            	next.clear();
+            	readNext();
+            }
         }
 
         @Override
