@@ -22,6 +22,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.tools.ant.property.GetProperty;
+
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
  * 
@@ -205,6 +207,30 @@ public class FluxCapacitorSettings extends ParameterSchema {
         }, relativePathParser);
 
 	    /**
+	     * The file for fragments of correctly paired reads (insert sizes).
+	     */
+	    public static final Parameter<File> INSERT_FILE = Parameters.fileParameter("INSERT_FILE", "The file for output of inserts", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                if (!file.getParentFile().exists()) {
+                    throw new ParameterException("Folder for output file " + file.getAbsolutePath() 
+                    		+ " could not be found!");
+                }
+                
+                // check pre-conditions for read pairing
+            	UniversalReadDescriptor d= schema.get(READ_DESCRIPTOR);
+            	AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
+            	if (!(d.isPaired()&& (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.COMBINED)))) {
+                    throw new ParameterException("Read pairing required for annotating inserts: "+
+                    		(d.isPaired()? ANNOTATION_MAPPING.getName()+ " "+ a.toString(): READ_DESCRIPTOR.getName()+ " "+ d.toString()));
+            	}
+
+            }
+            
+        }, relativePathParser);
+
+	    /**
 	     * The log file.
 	     */
 	    public static final Parameter<File> STDERR_FILE = Parameters.fileParameter("STDERR_FILE", "The file for log messages", null, new ParameterValidator() {
@@ -217,7 +243,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                     throw new ParameterException("Folder for log file " + file.getAbsolutePath() 
                     		+ " could not be found!");
                 }
-
+   
             }
         }, relativePathParser);
 

@@ -12,6 +12,7 @@
 package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.BufferedIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
@@ -19,6 +20,10 @@ import barna.model.*;
 import barna.model.bed.BEDobject2;
 import barna.model.splicegraph.*;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
@@ -200,11 +205,21 @@ public class AnnotationMapper extends SplicingGraph {
 	 * @param lineIterator iterator of input lines
 	 * @param descriptor
 	 */
-	public void map(BufferedIterator lineIterator, UniversalReadDescriptor descriptor) {
+	public void map(BufferedIterator lineIterator, FluxCapacitorSettings settings) {
 
 			if (lineIterator== null) 
 				return;
 		
+			UniversalReadDescriptor descriptor= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
+			File insertFile= settings.get(FluxCapacitorSettings.INSERT_FILE);
+			BufferedWriter buffy= null;
+			if (insertFile!= null) 
+				try {
+					buffy= new BufferedWriter(new FileWriter(insertFile, true));
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			
 			// init
 			BEDobject2 dobject, dobject2;
 			CharSequence lastName= null;
@@ -303,7 +318,9 @@ public class AnnotationMapper extends SplicingGraph {
 							continue;	
 						}
 						((SuperEdgeMappings) se).getMappings().incrReadNr();
-						nrMappingsMapped+= 2;	
+						nrMappingsMapped+= 2;
+						if (buffy!= null) 
+							writeInsert(buffy, se, dobject, dobject2);
 					}
 					lineIterator.reset();
 
@@ -315,9 +332,55 @@ public class AnnotationMapper extends SplicingGraph {
 						((MappingsInterface) target).getMappings().incrRevReadNr();
 					++nrMappingsMapped;
 				}
-			}
-
+			} // end: while(iter.hasNext())
+			
+			// close insert writer
+			if (buffy!= null)
+				try {
+					buffy.close();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			
 		}
+
+	/**
+	 * Writes the insert described by 2 paired mates to the provided writer.
+	 * @param buffy writer for output
+	 * @param se a super-edge
+	 * @param dobject 1st bed object
+	 * @param dobject2 2nd bed object
+	 */
+	protected void writeInsert(BufferedWriter buffy, SuperEdge se,
+			BEDobject2 dobject, BEDobject2 dobject2) {
+		
+		Transcript[] tt= decodeTset(se.getTranscripts());
+		int[] isizes= new int[tt.length];
+		int startMin, endMax;
+		if (dobject.getStart()< dobject2.getStart()) {
+			startMin= dobject.getStart();
+			endMax= dobject2.getEnd();
+		} else {
+			startMin= dobject2.getStart();
+			endMax= dobject.getEnd();
+		}
+		for (int i = 0; i < tt.length; i++) {
+			int epos1= tt[i].getExonicPosition(startMin),
+					epos2= tt[i].getExonicPosition(endMax);
+			isizes[i]= epos2- epos1+ 1;
+		}
+		
+		Arrays.sort(isizes);
+		int v= -1;
+		for (int i = 0; i < isizes.length; i++) {
+			if (isizes[i]!= v)
+				try {
+					buffy.write(Integer.toString(isizes[i])+ "\n");
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+		}
+	}
 
 	public long getNrMappingsMapped() {
 		return nrMappingsMapped;
