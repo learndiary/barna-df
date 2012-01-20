@@ -216,6 +216,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
+                if (file== null)
+                	return;
                 if (!file.getParentFile().exists()) {
                     throw new ParameterException("Folder for output file " + file.getAbsolutePath() 
                     		+ " could not be found!");
