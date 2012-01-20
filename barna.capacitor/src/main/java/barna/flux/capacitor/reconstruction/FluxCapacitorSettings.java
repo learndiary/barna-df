@@ -22,21 +22,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.tools.ant.property.GetProperty;
-
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
- *
+ * 
  */
 public class FluxCapacitorSettings extends ParameterSchema {
-
+ 
 	 protected static class UniversalReadDescriptorParameter extends Parameter<UniversalReadDescriptor> {
 		 	ParameterException parseException;
 			UniversalReadDescriptor descriptor;
 			
-			public UniversalReadDescriptorParameter() {
+			public UniversalReadDescriptorParameter() {				
 				super("READ_DESCRIPTOR",
 					  " Expression how to parse the read IDs, or one of the shorthand names ("
 						+ StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',')+ ")",
