@@ -11,15 +11,6 @@
 
 package barna.flux.capacitor.graph;
 
-import barna.commons.log.Log;
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
-import barna.io.BufferedIterator;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
-import barna.model.*;
-import barna.model.bed.BEDobject2;
-import barna.model.splicegraph.*;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -27,6 +18,23 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
+
+import barna.commons.log.Log;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
+import barna.io.BufferedIterator;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.io.rna.UniversalReadDescriptor.Attributes;
+import barna.model.ASEvent;
+import barna.model.Exon;
+import barna.model.Gene;
+import barna.model.SpliceSite;
+import barna.model.Transcript;
+import barna.model.bed.BEDobject2;
+import barna.model.splicegraph.AbstractEdge;
+import barna.model.splicegraph.Node;
+import barna.model.splicegraph.SimpleEdge;
+import barna.model.splicegraph.SplicingGraph;
+import barna.model.splicegraph.SuperEdge;
 
 public class AnnotationMapper extends SplicingGraph {
 
@@ -367,18 +375,25 @@ public class AnnotationMapper extends SplicingGraph {
 		for (int i = 0; i < tt.length; i++) {
 			int epos1= tt[i].getExonicPosition(startMin),
 					epos2= tt[i].getExonicPosition(endMax);
-			isizes[i]= epos2- epos1+ 1;
+			if (epos1== Integer.MIN_VALUE|| epos2== Integer.MIN_VALUE)
+				isizes[i]= -1;
+			else
+				isizes[i]= epos2- epos1+ 1;
+			
 		}
 		
 		Arrays.sort(isizes);
 		int v= -1;
 		for (int i = 0; i < isizes.length; i++) {
-			if (isizes[i]!= v)
+			if (isizes[i]< 0)
+				continue;
+			if (isizes[i]!= v) 
 				try {
 					buffy.write(Integer.toString(isizes[i])+ "\n");
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
+			v= isizes[i];
 		}
 	}
 
