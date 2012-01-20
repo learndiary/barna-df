@@ -156,7 +156,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 							//SpliceGraph myGraph= getGraph(this.gene);
 							AnnotationMapper mapper= new AnnotationMapper(this.gene);
 							//map(myGraph, this.gene, this.beds); 
-							mapper.map(this.beds, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+							mapper.map(this.beds, settings);
 							nrReadsLoci+= mapper.nrMappingsLocus;
 							nrReadsMapped+= mapper.getNrMappingsMapped();
 							nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
@@ -3183,32 +3183,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		return bedWrapper;
 	}
 	
-	/**
-	 * @deprecated
-	 * @return
-	 */
-	private boolean writeISizes() {
-		
-		try {
-			FileOutputStream fos = new FileOutputStream("");	// TODO
-		    ZipOutputStream zos = new ZipOutputStream(fos);
-			zos.putNextEntry(new ZipEntry(FileHelper.getFileNameWithoutExtension(
-					fileISize.getAbsolutePath())));
-			BufferedWriter buffy= new BufferedWriter(new OutputStreamWriter(zos));
-			buffy.write(isizeV.toString());
-			buffy.flush();
-			zos.closeEntry();
-			zos.flush();
-			fos.flush();
-			buffy.close();
-			return true;
-		} catch (Exception e) {
-			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-				e.printStackTrace();
-			return false;
-		}
-	}
-	
 	private File getFileProfiles(int binIdx) {
 		return new File(settings.get(FluxCapacitorSettings.STDOUT_FILE).getAbsolutePath()+"_bin_"+profileBoundaries[binIdx]);
 	}
@@ -3791,8 +3765,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				//checkBEDscanMappings= getBedReader().getNrLines();
 				if (mode== FluxCapacitorConstants.MODE_LEARN) {
 	
-					if (pairedEnd&& outputISize)
-						writeISizes();
 					if (pairedEnd&& func.getTProfiles()!= null) {
 						insertMinMax= getInsertMinMax();
 					}
