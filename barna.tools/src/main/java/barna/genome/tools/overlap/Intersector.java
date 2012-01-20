@@ -7,6 +7,8 @@ import barna.commons.launcher.HelpPrinter;
 import barna.io.BufferedBACSReader;
 import barna.io.FileHelper;
 import barna.model.bed.BEDobject2;
+import barna.model.commons.MyInteger;
+
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
@@ -20,9 +22,12 @@ import java.util.zip.GZIPInputStream;
 @Cli(name = "isect", description = "Intersector")
 public class Intersector implements FluxTool<Void> {
 
+	public static byte MODE_INTERSECT= 1;
+	public static byte MODE_OVERLAP= 2;
+	
 	public static void main(String[] args) {
 		
-		File parFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/overlap_may_b50_w10_c3_june_b50_w10_c2.5");
+		File parFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/inter_over/overlap_may_b50_w10_c3_june_b50_w10_c2_pas");
 
 /*		
 		try {
@@ -45,13 +50,15 @@ public class Intersector implements FluxTool<Void> {
 			System.exit(-1);
 		}
 */		
-		File outFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/overlap_may_b50_w10_c3_june_b50_w10_c2.5.bed");
+		File outFile= new File("/Users/micha/projects/demassy/download_new/cisgenome/inter_over/overlap_may_b50_w10_c3_june_b50_w10_c2_pas_isect.bed");
 		
 		Execute.initialize(2);
 
 		Intersector myIsector= new Intersector();
 		myIsector.parFile= parFile;
 		myIsector.outFile= outFile;
+		myIsector.mode= MODE_INTERSECT;
+		myIsector.ctr= 1;
 
 		Future<Void> captain= Execute.getExecutor().submit(myIsector);
 		try {
@@ -65,6 +72,8 @@ public class Intersector implements FluxTool<Void> {
 
 	}
 
+	byte mode= -1;
+	
     @Option(name = "p", longName = "parameter", description = "specify parameter file", displayName = "file", required = true)
     public void setParameters(File file) {
         this.parFile = file;
@@ -85,6 +94,7 @@ public class Intersector implements FluxTool<Void> {
 	 */
 	public void intersect(File one, int oneCode, File two, int twoCode, File out) {
 		
+		BEDobject2[] beds= new BEDobject2[2];
 		BufferedBACSReader buffy1= null, buffy2= null;
 		BufferedWriter writer= null;
 		try {
@@ -128,6 +138,7 @@ public class Intersector implements FluxTool<Void> {
 					write(bed1, oneCode, writer);
 					bed1= null;
 				} else {
+					
 					ByteArrayCharSequence chr1= bed1.getChr();
 					ByteArrayCharSequence chr2= bed2.getChr();
 					int cc= chr1.compareTo(chr2);
@@ -143,7 +154,7 @@ public class Intersector implements FluxTool<Void> {
 						int end1= bed1.getEnd();
 						int start2= bed2.getStart();
 						int end2= bed2.getEnd();
-
+				
 						// one before the other
 						if (end1<= start2) {
 							write(bed1, oneCode, writer);
@@ -151,37 +162,19 @@ public class Intersector implements FluxTool<Void> {
 						} else if (end2<= start1) {
 							write(bed2, twoCode, writer);
 							bed2= null;
-						} else {	// intersect
-							// overlap
-							int minStart= (start1< start2? start1: start2);
-							int maxEnd= (end1< end2? end2: end1);
-
-							// obs: there are max. 3 blocks produced, 
-							// less iff start1== start2, or end1== end2
+						} else {
+							beds[0]= bed1;
+							beds[1]= bed2;
+							if (mode== MODE_INTERSECT)
+								bedTmp= intersect(beds, start1, end1, oneCode, 
+										start2, end2, twoCode, writer);
+							else if (mode== MODE_OVERLAP)
+								bedTmp= overlap(beds, start1, end1, oneCode, 
+										start2, end2, twoCode, writer);
+							bed1= beds[0];
+							bed2= beds[1];
 							
-							// block1 (minStart,maxStart)
-							int start= minStart;
-							int end= (start1== minStart? start2: start1);
-							if (start!= end) 
-								bedTmp= write(start, end++, 
-										start== start1? bed1: bed2, 
-										start== start1? oneCode: twoCode, 
-										null, -1, writer);
-							// block2 (maxStart,minEnd)
-							start= end;
-							end= (end1== maxEnd? end2: end1);
-							if (start!= end)
-								bedTmp= write(start, end++, bed1, oneCode, bed2, twoCode, writer);
-							// block3 (minEnd,maxEnd)
-							start= end;
-							end= (end1== maxEnd? end1: end2);
-							if (start!= end)
-								bedTmp= write(start, end++, 
-										maxEnd== end1? bed1: bed2, 
-										maxEnd== end1? oneCode: twoCode, 
-										null, twoCode, writer);
-
-							// consume completely divided,
+							// consume completely joint,
 							// set other to rest
 							if (end1< end2) {
 								bed1= null;
@@ -189,15 +182,15 @@ public class Intersector implements FluxTool<Void> {
 							} if (end2< end1) {
 								bed2= null;
 								bed1= bedTmp;
-							} else {
+							} else {	// Lemma, in this case there exists no 3rd block
 								bed1= null;
 								bed2= null;
 							}
-							
+
 						}
 						
-					}
-				}
+					} // end: on same chromosome
+				} // end: overlapping objects
 
 				// read
 				if (bed1== null) {
@@ -237,7 +230,7 @@ public class Intersector implements FluxTool<Void> {
 				}	
 		}
 	}
-
+	
 	private String toBinaryString(int d) {
 		StringBuilder b= new StringBuilder(Integer.toBinaryString(d));
 		for (int i = b.length(); i < parFileNr; i++) 
@@ -246,6 +239,18 @@ public class Intersector implements FluxTool<Void> {
 		return b.toString();
 	}
 	
+	/**
+	 * Creates and writes bed object, generated from one or two parents. 
+	 * @param start 1st coordinate of the bed line to be created
+	 * @param end 2nd coordinate of the bed line to be created
+	 * @param bed1 1st parent object
+	 * @param oneCode 1st parent's code
+	 * @param bed2 2nd parent object
+	 * @param twoCode 2nd parent's code
+	 * @param writer the writer to which new bed object is written, or
+	 * <code>null</code> if no output is desired
+	 * @return the created bed object
+	 */
 	private BEDobject2 write(int start, int end, BEDobject2 bed1, int oneCode,
 			BEDobject2 bed2, int twoCode, BufferedWriter writer) {
 		
@@ -255,23 +260,35 @@ public class Intersector implements FluxTool<Void> {
 		bed.setEnd(end);
 //		int code1= oneCode> 0? oneCode: Integer.parseInt(bed1.getName().toString());
 		int code1= oneCode;
-		if (oneCode<= 0) {
+		try {
 			String s= bed1.getName().toString();
 			int p= s.indexOf(':');
-			code1= Integer.parseInt(s.substring(0, p));
+			if (p> 0&& s.indexOf(':', p+1)< 0)
+				code1= Integer.parseInt(s.substring(0, p));
+		} catch (Exception e) {
+			; // :)
 		}
 		int code2= 0;
 		if (bed2!= null) {
 //			code2= twoCode> 0? twoCode: Integer.parseInt(bed2.getName().toString());
 			code2= twoCode;
-			if (twoCode<= 0) {
+			try {
 				String s= bed2.getName().toString();
 				int p= s.indexOf(':');
-				code2= Integer.parseInt(s.substring(0, p));
+				if (p> 0&& s.indexOf(':', p+1)< 0)
+					code2= Integer.parseInt(s.substring(0, p));
+			} catch (Exception e) {
+				; //:)
 			}
+				
 
 		}
-		int code= code1+ code2;
+		
+		// bin.join
+		int code= (code1| code2);
+		
+		if (code< 0|| code> 256)
+			System.currentTimeMillis();
 		bed.setName(Integer.toString(code)+ ":"+ toBinaryString(code));
 		int len= end- start;
 		int score= (int) (bed1.getScore()* len/ (float) bed1.getLength());
@@ -283,19 +300,44 @@ public class Intersector implements FluxTool<Void> {
 		bed.setScore(score> 1000? 1000: score);
 		bed.setStrand((byte) 1);
 		
-		write(bed, -1, writer);
+		if (writer!= null)
+			write(bed, -1, writer);
 		
 		return bed;
 	}
 
 	private char[] charBuf= new char[160];
 	private ByteArrayCharSequence ctrBuf= new ByteArrayCharSequence(10);
+	/**
+	 * Write bed object to the given writer
+	 * @param bed the bed object
+	 * @param ocode code of the bed object, or <code>&leq;1</code> if not specified
+	 * @param writer the writer
+	 */
 	private void write(BEDobject2 bed, int ocode, BufferedWriter writer) {
-		
-		if (ocode> 0) {
-			bed.setName(Integer.toString(ocode)+ ":"+ toBinaryString(ocode));	// TODO make BACS to work with single chars
+
+		// try to preserve suitable code in input
+		int code= ocode;
+		try {
+			String s= bed.getName().toString();
+			int p= s.indexOf(':');
+			if (p> 0&& s.indexOf(':', p+1)< 0)
+				code= Integer.parseInt(s.substring(0, p));
+		} catch (Exception e) {
+			; // :)
 		}
+		if (code> 0)
+			bed.setName(Integer.toString(code)+ ":"+ toBinaryString(ocode));	// TODO make BACS to work with single chars
+		else
+			System.currentTimeMillis();
+		
 		String s= bed.getName().toString();
+		int p= s.indexOf(':');
+		int ccode= Integer.parseInt(s.substring(0, p));
+		if (ccode< 0|| ccode> 256)
+			System.currentTimeMillis();
+
+		// write
 		charBuf= bed.toCharArray(charBuf);		
 		try {
 			writer.write(charBuf, 0, bed.length());
@@ -321,6 +363,11 @@ public class Intersector implements FluxTool<Void> {
 	protected File outFile;
 	
 	/**
+	 * Counter to start with
+	 */
+	int ctr= 1;
+	
+	/**
 	 * Iterates files in the list provided, performing pairwise 
 	 * overlaps.
 	 */
@@ -338,7 +385,6 @@ public class Intersector implements FluxTool<Void> {
 			s= buffy.readLine();
 			File f= new File(s);
 			File tmpFile= FileHelper.createTempFile(this.getClass().getSimpleName(), ".bed");
-			int ctr= 1;
 			intersect(f0, ctr, f, (ctr*2), tmpFile);
 			
 			for (s= null; (s= buffy.readLine())!= null;) {
@@ -398,6 +444,63 @@ public class Intersector implements FluxTool<Void> {
 					e.printStackTrace();
 				}
 		}
+	}
+
+	protected BEDobject2 intersect(BEDobject2[] beds, int start1, int end1, int oneCode, 
+			int start2, int end2, int twoCode, BufferedWriter writer) {
+		
+		// overlap
+		int minStart= (start1< start2? start1: start2);
+		int maxEnd= (end1< end2? end2: end1);
+
+		// obs: there are max. 3 blocks produced, 
+		// less iff start1== start2, or end1== end2
+
+		// all block boundaries
+		int startI1= minStart, 
+			endI1= (start1== minStart? start2: start1),
+			startI2= endI1,
+			endI2= (end1== maxEnd? end2: end1),
+			startI3= endI2,
+			endI3= (end1== maxEnd? end1: end2);
+		
+		// block1 (minStart,maxStart)
+		BEDobject2 bedTmp= null;
+		if (startI1!= endI1) 
+			bedTmp= write(startI1, endI1, 
+					startI1== start1? beds[0]: beds[1], 
+					startI1== start1? oneCode: twoCode, 
+					null, -1, writer);	// block before intersection always written
+		// block2 (maxStart,minEnd)
+		if (startI2!= endI2)
+			bedTmp= write(startI2, endI2, beds[0], oneCode, beds[1], twoCode, writer);	// intersection block always written
+		// block3 (minEnd,maxEnd)
+		if (startI3!= endI3)
+			bedTmp= write(startI3, endI3, 
+					maxEnd== end1? beds[0]: beds[1], 
+					maxEnd== end1? oneCode: twoCode, 
+					null, twoCode, null);	// never write out last block
+
+		return bedTmp;
+	}
+
+	protected BEDobject2 overlap(BEDobject2[] beds, int start1, int end1, int oneCode, 
+			int start2, int end2, int twoCode, BufferedWriter writer) {
+		
+		// overlap
+		int minStart= (start1< start2? start1: start2);
+		int maxEnd= (end1< end2? end2: end1);
+
+		BEDobject2 bedTmp= write(minStart, maxEnd, 
+				beds[0], oneCode, beds[1], twoCode, null);
+	
+		// Lemma, if both end at same position, 
+		// their join is not needed for further overlaps
+		if (end1== end2) 
+			write(bedTmp, -1, writer);
+		
+		
+		return bedTmp;
 	}
 
 	
