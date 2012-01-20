@@ -11,6 +11,13 @@
 
 package barna.flux.simulator.fragmentation;
 
+import java.io.File;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.log.Log;
 import barna.flux.simulator.PWM;
@@ -18,13 +25,6 @@ import barna.flux.simulator.distributions.AbstractDistribution;
 import barna.flux.simulator.distributions.EmpiricalDistribution;
 import barna.flux.simulator.distributions.GCPCRDistribution;
 import barna.flux.simulator.distributions.NormalDistribution;
-
-import java.io.File;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 /**
  *
@@ -153,7 +153,7 @@ public class Amplification implements FragmentProcessor{
         double[] wSense = null;
         double[] wAsense = null;
         in++;
-    	if (true) {	// customMotif
+    	if (mapWeightAsense!= null) {	// customMotif
             wAsense = mapWeightAsense.get(id);
             wSense = mapWeightSense.get(id);
         }
@@ -171,9 +171,10 @@ public class Amplification implements FragmentProcessor{
         int nfragments = 1;
 
         // test DEBUG
-        double p1= wSense[start];
-        double p2= wAsense[end];
-        double pp= p1* p2;
+//        double p1= wSense[start];
+//        double p2= wAsense[end];
+//        double pp= p1* p2;
+        
 //        double q= randomDELME.nextDouble();
 //        if (q> p1)
 //        	return fragments;
@@ -193,7 +194,7 @@ public class Amplification implements FragmentProcessor{
         }
         
         // test DEBUG
-        nfragments= (int) Math.pow(nfragments, pp);
+//        nfragments= (int) Math.pow(nfragments, pp);
 
         if (nfragments> 0)
             fragments.add(fragment);
