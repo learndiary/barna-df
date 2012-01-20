@@ -11,16 +11,21 @@
 
 package barna.flux.capacitor.reconstruction;
 
-import barna.commons.parameters.*;
-import barna.commons.utils.StringUtils;
-import barna.io.FileHelper;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.model.constants.Constants;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import barna.commons.parameters.FileNameParser;
+import barna.commons.parameters.Parameter;
+import barna.commons.parameters.ParameterException;
+import barna.commons.parameters.ParameterSchema;
+import barna.commons.parameters.ParameterValidator;
+import barna.commons.parameters.Parameters;
+import barna.commons.utils.StringUtils;
+import barna.io.FileHelper;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.model.constants.Constants;
 
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
