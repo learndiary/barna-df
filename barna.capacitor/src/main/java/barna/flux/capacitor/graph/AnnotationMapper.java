@@ -383,12 +383,10 @@ public class AnnotationMapper extends SplicingGraph {
 		}
 		
 		Arrays.sort(isizes);
-		int v= -1;
-		for (int i = 0, c= 0; i < isizes.length; i++) {
+		int v= -1, c= 0;
+		for (int i = 0; i < isizes.length; i++) {
 			if (isizes[i]>= 0&& isizes[i]!= v)
 				++c;
-			if (c> 1)
-				return;
 			v= isizes[i];
 		}
 		
@@ -398,7 +396,7 @@ public class AnnotationMapper extends SplicingGraph {
 				continue;
 			if (isizes[i]!= v) 
 				try {
-					buffy.write(Integer.toString(isizes[i])+ "\n");
+					buffy.write(Integer.toString(isizes[i])+ "\t"+ Integer.toString(c)+ "\n");
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
