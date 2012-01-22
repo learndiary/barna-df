@@ -384,6 +384,15 @@ public class AnnotationMapper extends SplicingGraph {
 		
 		Arrays.sort(isizes);
 		int v= -1;
+		for (int i = 0, c= 0; i < isizes.length; i++) {
+			if (isizes[i]>= 0&& isizes[i]!= v)
+				++c;
+			if (c> 1)
+				return;
+			v= isizes[i];
+		}
+		
+		v= -1;
 		for (int i = 0; i < isizes.length; i++) {
 			if (isizes[i]< 0)
 				continue;
