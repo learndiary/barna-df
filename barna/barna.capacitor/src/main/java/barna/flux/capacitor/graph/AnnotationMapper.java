@@ -433,7 +433,10 @@ public class AnnotationMapper extends SplicingGraph {
 			return e;
 			
 		} else {	// split-maps
-			assert(bcount== 2);	// paolo only maps 1 split
+			
+			// paolo only maps 1 split
+			//assert(bcount== 2);	
+			// yes, Paolo, but the simulator can map more..
 			
 //			if (obj.getName().equals("HWUSI-EAS626_1:5:92:163:105/2"))
 //				System.currentTimeMillis();
