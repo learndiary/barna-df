@@ -3931,24 +3931,32 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			wrapper= getWrapper(inputFile);
 		}
 		
-		// (3) scan
-		wrapper.scanFile();
-		if(wrapper.getNrInvalidLines()> 0)
-			Log.warn("Skipped "+ wrapper.getNrInvalidLines()+ " lines.");
-
 		return wrapper;
 	}
 	
 	private void fileStats(MappingWrapper wrapper) {
 
-		checkBEDscanMappings= wrapper.getCountMappings();
-		nrBEDreads= wrapper.getCountReads();
-		nrBEDmappings= wrapper.getCountMappings();
+		if (settings.get(FluxCapacitorSettings.NR_READS_MAPPED)<= 0) {
+			// (3) scan
+			((AbstractFileIOWrapper) wrapper).scanFile();
+			if(((AbstractFileIOWrapper) wrapper).getNrInvalidLines()> 0)
+				Log.warn("Skipped "+ ((AbstractFileIOWrapper) wrapper).getNrInvalidLines()+ " lines.");
+
+			checkBEDscanMappings= wrapper.getCountMappings();
+			nrBEDreads= wrapper.getCountReads();
+			nrBEDmappings= wrapper.getCountMappings();
+		} else {
+			checkBEDscanMappings= -1;
+			nrBEDreads= settings.get(FluxCapacitorSettings.NR_READS_MAPPED);
+			nrBEDmappings= -1;
+		}
 		
-		Log.info("\t"+ nrBEDreads+ " reads, "+ nrBEDmappings
-					+ " mappings: R-factor "+(wrapper.getCountMappings()/ (float) wrapper.getCountReads()));
-		Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
-                + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
+		
+		Log.info("\t"+ nrBEDreads+ " reads"
+				+ (nrBEDmappings> 0? nrBEDmappings+ " mappings: R-factor "+ (wrapper.getCountMappings()/ (float) wrapper.getCountReads()): ""));
+		if (nrBEDmappings> 0)
+			Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
+	                + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
 	}
 
 	private AbstractFileIOWrapper getWrapper(File inputFile) {

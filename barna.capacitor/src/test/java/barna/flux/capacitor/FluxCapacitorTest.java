@@ -17,7 +17,7 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
@@ -246,6 +246,71 @@ public class FluxCapacitorTest {
 			FileHelper.rmDir(anoDir);
 		}
 
+	}
+
+	@Test
+	public void testRPKMwithNrReadsMapped() {
+	
+		try {					
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE, 
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED, 
+					false,
+					// keep sorted
+					false);
+			runCapacitor();
+			File out1= outFile;
+			
+			
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE, 
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED, 
+					false,
+					// keep sorted
+					false);
+			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
+			try {
+				buffy.write(FluxCapacitorSettings.NR_READS_MAPPED.getName()+" "+
+						Integer.toString(7897));
+				buffy.close();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			runCapacitor();
+
+			// check
+			try{
+				BufferedReader b1= new BufferedReader(new FileReader(out1)), 
+						b2= new BufferedReader(new FileReader(outFile));
+				String s1, s2;
+				while ((s1= b1.readLine())!= null&& (s2= b2.readLine())!= null) {
+					System.err.println(s1);
+					assertEquals(s1, s2);
+				}
+				assertFalse(b1.ready());
+				assertFalse(b2.ready());
+				
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+	
 	}
 
 }

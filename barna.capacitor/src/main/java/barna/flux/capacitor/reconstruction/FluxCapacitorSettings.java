@@ -236,6 +236,11 @@ public class FluxCapacitorSettings extends ParameterSchema {
         }, relativePathParser);
 
 	    /**
+	     * The number of reads mapping to the genomic reference.
+	     */
+	    public static final Parameter<Integer> NR_READS_MAPPED = Parameters.intParameter("NR_READS_MAPPED", "The number of reads mapped", -1, -1, Integer.MAX_VALUE, null);
+	    
+	    /**
 	     * The log file.
 	     */
 	    public static final Parameter<File> STDERR_FILE = Parameters.fileParameter("STDERR_FILE", "The file for log messages", null, new ParameterValidator() {
