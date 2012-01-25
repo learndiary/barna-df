@@ -235,7 +235,7 @@ public class FluxCapacitorTest {
 			assertTrue(bedFile.exists());
 			assertTrue(outFile.exists());
 			String[] files= anoDir.list();
-			assertTrue(files.length== 4);	// annotation+ parameter+ output
+			assertTrue(files.length== 3);	// annotation+ parameter+ output
 			files= mapDir.list();
 			assertTrue(files.length== 1);	// mapping file only
 			
