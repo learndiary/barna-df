@@ -3856,7 +3856,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			if (f.exists()) {
 				Log.println("Assuming file "+ f.getName()+" is a decompressed version of "+ inputFile.getName());
 			} else {
-				f= createTempFile(f.getAbsoluteFile(), FileHelper.getFileNameWithoutExtension(f), FileHelper.getExtension(f), true);
+				f= createTempFile(null, FileHelper.getFileNameWithoutExtension(f), FileHelper.getExtension(f), true);
 				try {
 					FileHelper.inflate(inputFile, f, cb);
 				} catch (Exception e) {
