@@ -39,6 +39,11 @@ public class GTFSorterTool implements FluxTool {
     private File outFile;
 
     /**
+     * Check if the file is sorted first
+     */
+    private boolean check;
+
+    /**
      * Get the input file
      *
      * @return input file
@@ -76,6 +81,25 @@ public class GTFSorterTool implements FluxTool {
         this.outFile = outFile;
     }
 
+    /**
+     * Returns true if file is checked before sorting
+     *
+     * @return check check befor esorting
+     */
+    public boolean isCheck() {
+        return check;
+    }
+
+    /**
+     * Check if the file is already sorted before sorting
+     *
+     * @param check check if its sorted before sorting
+     */
+    @Option(name = "c", longName = "check", description = "Check if the file is sorted before sorting", required = false)
+    public void setCheck(boolean check) {
+        this.check = check;
+    }
+
     @Override
     public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
         if (getInFile() == null) {
@@ -88,6 +112,14 @@ public class GTFSorterTool implements FluxTool {
     @Override
     public Object call() throws Exception {
         GTFwrapper w= new GTFwrapper(inFile);
+        if(isCheck()){
+            if(w.isApplicable()){                
+                if(getOutFile() != null){
+                    Log.info("File is already sorted, skip sorting");
+                }
+                return null;
+            }
+        }
         if(getOutFile() != null){
             Log.info("SORT", "Sorting " + getInFile().getAbsolutePath() +" to " + getOutFile().getAbsolutePath());
             Log.progressStart("Sorting " + getInFile().getName());
