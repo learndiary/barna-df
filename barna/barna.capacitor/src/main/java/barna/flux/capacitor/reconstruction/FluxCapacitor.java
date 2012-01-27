@@ -1573,7 +1573,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			//p.println("\tread length " + readLen);
 			p.println("\t"+ CLI_LONG_STRAND+" "+ strandSpecific);
 */
-			
+		if(settings.get(FluxCapacitorSettings.INSERT_FILE) != null){
+            Log.info("\twriting insert sizes to "+settings.get(FluxCapacitorSettings.INSERT_FILE).getAbsolutePath());
+        }
 //		if (pairedEnd)
 //			p.println("\t"+CLI_LONG_PAIR+"\t"+insertMinMax[0]+","+insertMinMax[1]);
 		//System.err.println("\t"+CLI_LONG_NOISE+"\t"+Float.toString(1- GraphLPsolver.min_read_rest_frac));
