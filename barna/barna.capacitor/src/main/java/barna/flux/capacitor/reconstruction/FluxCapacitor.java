@@ -3197,6 +3197,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	 */
 	Profile profile;
 	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode) {
+        return readBedFile(gene, from, to, mode, 0, 1);
+    }
+	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode, int retryCount, long timeInSeconds) {
 		
 		if (from> to|| from< 0|| to< 0) 
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
@@ -3231,8 +3234,19 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return null;
 			}			
 		} catch (IOException e) {
+            /**
+             * "Resource temporarily unavailable"
+             * Catch this exception and try again after sleeping for a while
+             */
+            if(e.getMessage().contains("Resource temporarily unavailable")){
+                if(retryCount < 6){
+                    Log.warn("Filesystem reports : 'Resource temporarily unavailable', I am retrying ("+(retryCount+1)+")");
+                    try {Thread.sleep(1000 * (timeInSeconds));} catch (InterruptedException e1) {}
+                    return readBedFile(gene, from, to, mode, retryCount + 1, timeInSeconds*6);
+                }
+            }
 			throw new RuntimeException(
-				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to, e);
+				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to +", retried " + retryCount + " times", e);
 		}
         
 		return iter;
