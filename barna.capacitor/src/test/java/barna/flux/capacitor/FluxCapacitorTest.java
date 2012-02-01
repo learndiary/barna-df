@@ -344,7 +344,7 @@ public class FluxCapacitorTest {
 			} catch (Exception e) {
 				msg= e.getMessage();
 			}
-			assertTrue(msg.contains("not compatible with read IDs"));
+			assertTrue(msg.contains("incompatible with read IDs"));
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
