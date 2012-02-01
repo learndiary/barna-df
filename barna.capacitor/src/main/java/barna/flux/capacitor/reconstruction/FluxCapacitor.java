@@ -1982,8 +1982,12 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			
 			wrapperMappings= 
 				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
-			fileStats((MappingWrapper) wrapperMappings);
-
+			try {
+				fileStats((MappingWrapper) wrapperMappings);
+			} catch (Exception e) {
+				Log.error(e.getMessage());
+				throw(e);
+			}
 		}
 		
 
@@ -3957,6 +3961,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		if (nrBEDmappings> 0)
 			Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
 	                + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
+		
+		// (4) check read descriptor
+		if (!wrapper.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
+			throw new RuntimeException("Read Descriptor "+ settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString()+ " not compatible with read IDs.");
+		
 	}
 
 	private AbstractFileIOWrapper getWrapper(File inputFile) {

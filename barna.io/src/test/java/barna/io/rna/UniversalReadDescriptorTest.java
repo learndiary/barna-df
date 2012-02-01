@@ -38,22 +38,25 @@ public class UniversalReadDescriptorTest {
 		+UniversalReadDescriptor.TAG_ID
 		+UniversalReadDescriptor.SYMBOL_OPT_RIGHT;
 	
-	String simRead1= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:S/1";
-	String simRead2= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:S/2";
-	String simRead3= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:A/1";
-	String simRead4= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:A/2";
+	static String simRead1= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:S/1";
+	static String simRead2= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:S/2";
+	static String simRead3= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:A/1";
+	static String simRead4= "chr1:4797974-4836816W:NM_008866:2:2433:548:757:A/2";
 	
-	String barnaID1= "BILLIEHOLIDAY:5:100:1000:1190/1s";
-	String barnaID2= "BILLIEHOLIDAY:5:100:1000:1190/1a";
-	String barnaID3= "BILLIEHOLIDAY:5:100:1000:1190/2";
-	String barnaID4= "BILLIEHOLIDAY:5:100:1000:1190/2a";
-	String barnaID5= "BILLIEHOLIDAY:5:100:1000:1190/1";
+	static String barnaID1= "BILLIEHOLIDAY:5:100:1000:1190/1s";
+	static String barnaID2= "BILLIEHOLIDAY:5:100:1000:1190/1a";
+	static String barnaID3= "BILLIEHOLIDAY:5:100:1000:1190/2";
+	static String barnaID4= "BILLIEHOLIDAY:5:100:1000:1190/2a";
+	static String barnaID5= "BILLIEHOLIDAY:5:100:1000:1190/1";
 	
-	String oldCshlID1= "BILLIEHOLIDAY:5:100:1000:1190/1_strand2";
-	String oldCshlID2= "BILLIEHOLIDAY:5:100:1000:1190/1_strand0";
+	static String oldCshlID1= "BILLIEHOLIDAY:5:100:1000:1190/1_strand2";
+	static String oldCshlID2= "BILLIEHOLIDAY:5:100:1000:1190/1_strand0";
 	
-	String newCshlCombined= "MARILYN_0005:7:1:2804:1011#0/1";
+	static String newCshlCombined= "MARILYN_0005:7:1:2804:1011#0/1";
 
+	static String genevaRead1= "@HWI-ST661:130:C037KACXX:6:1101:1483:2196 1:N:0:CAGATC";
+	static String genevaRead2= "@HWI-ST661:130:C037KACXX:6:1101:1483:2196 2:N:0:CAGATC";
+	
 
 	@Test
 	public void testInvalidDescriptor() {
@@ -376,5 +379,35 @@ public class UniversalReadDescriptorTest {
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
+	}
+	
+	@Test
+	public void testGenevaID() {
+		
+		// @HWI-ST661:130:C037KACXX:6:1101:1483:2196 2:N:0:CAGATC
+		String descriptorGeneva= 
+				UniversalReadDescriptor.SYMBOL_TAG_LEFT
+				+UniversalReadDescriptor.TAG_ID
+				+UniversalReadDescriptor.SYMBOL_TAG_RIGHT
+				+" "
+				+UniversalReadDescriptor.SYMBOL_TAG_LEFT
+				+UniversalReadDescriptor.TAG_PAIR
+				+UniversalReadDescriptor.SYMBOL_TAG_RIGHT;
+
+		
+		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+		descriptor.init(descriptorGeneva);
+		
+		Attributes a= null;
+		a= descriptor.getAttributes(genevaRead1, a);
+		String id= genevaRead1.split(" ")[0];
+		assertEquals(id, a.id);
+		assertEquals(1, a.flag);
+		
+		a= descriptor.getAttributes(genevaRead2, a);
+		id= genevaRead2.split(" ")[0];
+		assertEquals(id, a.id);
+		assertEquals(2, a.flag);
+		
 	}
 }

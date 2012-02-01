@@ -231,6 +231,33 @@ public class UniversalReadDescriptor {
 		return (posPair>= 0);
 	}
 	
+	/**
+	 * Checks whether <code>this</code> read descriptor is applicable 
+	 * to the given character sequence.
+	 * @param cs a character sequence
+	 * @return <code>true</code> if the character sequence could be 
+	 * parsed according to <code>this</code>' rules, <code>false</code>
+	 * otherwise
+	 */
+	public boolean isApplicable(CharSequence cs) {
+		try {
+			return getAttributes(cs, null)!= null;
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			return false;
+		}
+				
+	}
+	
+	/**
+	 * Returns the attributes expressed by a given character sequence
+	 * with respect to <code>this</code> UniversalReadDescriptor, or
+	 * <code>null</code> if the descriptor is not applicable
+	 * @param cs the character sequence
+	 * @param a an optional <code>Attributes</code> instance for object re-use
+	 * @return <code>a</code> initialized with the values of <code>cs</code>,
+	 * or <code>null</code> if an parsing error occured
+	 */
 	public Attributes getAttributes(CharSequence cs, Attributes a) {
 		
 		if (a== null)
@@ -318,8 +345,11 @@ public class UniversalReadDescriptor {
 					}
 				}
 				
-				if (left!= lastCPos)
-					return null;
+				// TODO: security check disabled to ignore 
+				// redundant end of Geneva reads
+//				if (left!= lastCPos)
+//					return null;
+				
 				if (i== posPair) {
 					if(!setPair(a, cs, left)) {
 						if (mandatory[i])
@@ -342,8 +372,7 @@ public class UniversalReadDescriptor {
 			return a;
 			
 		} catch (Throwable e) {
-			e.printStackTrace();
-			return null;
+			throw new RuntimeException(e);
 		}
 	}
 
