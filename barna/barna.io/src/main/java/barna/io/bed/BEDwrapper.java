@@ -184,10 +184,17 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 		}
 	}
 
+	/**
+	 * @deprecated based on BedObject
+	 */
 	public void read() {
 		read(0);
 	}
 	
+	/**
+	 * @deprecated based on BedObject
+	 * @param bedLines
+	 */
 	public void read(int bedLines) {
 
 		if (bedLines== 0)
@@ -752,7 +759,6 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		
 	}
 	
-	File baseFile;
 	public HashSet<String> getRefIDset() {
 		return refIDset;
 	}
@@ -1448,6 +1454,29 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	
 	public void setMaxBEDObjects(int i) {
 		maxBEDobjects= i;
+	}
+
+	@Override
+	public boolean isApplicable(UniversalReadDescriptor descriptor) {
+		
+		// TODO re-implement line-wise reading
+		BufferedBACSReader buffy= null;
+		try {
+			buffy= new BufferedBACSReader(new FileInputStream(inputFile));
+			ByteArrayCharSequence b= buffy.readLine(null); 
+			
+			return descriptor.isApplicable(b);
+			
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		} finally {
+			if (buffy!= null)
+				try {
+					buffy.close();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+		}
 	}
 
 }

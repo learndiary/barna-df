@@ -1,5 +1,8 @@
 package barna.io;
 
+import barna.io.rna.ReadDescriptor;
+import barna.io.rna.UniversalReadDescriptor;
+
 
 public interface MappingWrapper {
 
@@ -27,4 +30,13 @@ public interface MappingWrapper {
 	 */
 	public int getCountSplitMappings();
 
+	/**
+	 * Checks if a given read descriptor can be applied to
+	 * the data wrapped by the <code>this</code> instance.
+	 * @param descriptor a read descriptor
+	 * @return <code>true</code> if the mappings wrapped by <code>this</code>
+	 * are applicable too the rules of the read descriptor, <code>false</code>
+	 * otherwise 
+	 */
+	public boolean isApplicable(UniversalReadDescriptor descriptor);
 }

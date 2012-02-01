@@ -313,4 +313,46 @@ public class FluxCapacitorTest {
 	
 	}
 
+	@Test
+	public void testWrongReadDescriptor() {
+	
+		try {					
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE, 
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED, 
+					false,
+					// keep sorted
+					false);
+			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
+			try {
+				buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName()+" "+
+						UniversalReadDescriptor.getDescriptor(
+								UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL));
+				buffy.close();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			
+			String msg= "";
+			try {
+				runCapacitor();
+			} catch (Exception e) {
+				msg= e.getMessage();
+			}
+			assertTrue(msg.contains("not compatible with read IDs"));
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+	
+	}
+
 }
