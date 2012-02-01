@@ -58,7 +58,7 @@ public class FluxCapacitorConstants {
 	public static final String GTF_ATTRIBUTE_TOKEN_ALL= "all";
 	public static final String GTF_ATTRIBUTE_TOKEN_TID= "split";
 	public static final String GTF_ATTRIBUTE_TOKEN_EXC= "uniq";
-	public static final String GTF_ATTRIBUTE_TOKEN_READS= "freq";
+	public static final String GTF_ATTRIBUTE_TOKEN_READS= "reads";
 	public static final String GTF_ATTRIBUTE_TOKEN_RFREQ= "rfreq";
 	public static final String GTF_ATTRIBUTE_TOKEN_RPKM= "RPKM"; // rpkm
 	public static final String GTF_ATTRIBUTE_TOKEN_COV= "cov";

@@ -261,150 +261,53 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			
 	
 			private void outputGFF(AnnotationMapper g, ASEvent[] events, GraphLPsolver solver) {
+
+				// check locus
 				++nrLoci;
-				if (solver!= null) 
+				if (solver!= null|| nrMappingsReadsOrPairs> 0) 
 					++nrLociExp;
-				double perM= nrReadsAll/ 1000000d;
-				// deprecated
-				boolean unsolvedSystem= false;	
 				double valOF= solver== null?0: solver.getValObjFunc();
 				if (valOF> FluxCapacitorConstants.BIG) { 
 					++nrUnsolved;
-					unsolvedSystem= true;
+					Log.warn("Unsolved system: "+ gene.getGeneID());
 				}
-				//String pv= getAttributeOF(valOF, solver, getMappedReadcount());
+
+				// pre-build rpkm hash
+				HashMap<String, Double> rpkmMap= null;
+				double base= (nrBEDreads< 0? 1: nrBEDreads);
 				Transcript[] tt= gene.getTranscripts();
-	
-				// prebuild rpkm hash
-				HashMap<String, Float> rpkmMap= null;
 				if (outputBalanced) {
-					rpkmMap= new HashMap<String, Float>(tt.length, 1f);
+					rpkmMap= new HashMap<String, Double>(tt.length, 1f);
 					for (int i = 0; i < tt.length; i++) {
 						Transcript tx= tt[i];
-						float val= 0f, rpkm= 0f;
-						if (solver== null) {
-							// no reads
-							val= nrMappingsReadsOrPairs;
-						} else {
-	//						if (solver.getTrptExprHash().get(g.trpts[i].getTranscriptID())!= 0)
-	//							System.currentTimeMillis();
-							val= (float) (solver.getTrptExprHash().get(tx.getTranscriptID()).doubleValue());
+						String tid= tt[i].getTranscriptID();
+						
+						double val= 0d;
+						if (solver== null) 									
+							val= nrMappingsReadsOrPairs* 2;
+						else {
+							val= solver.getTrptExprHash().get(tid).doubleValue();
 							if (val< 1- costBounds[0]) // 1- 0.95
 								val= 0;
-							try {
-								assert(tt.length> 1|| val== nrMappingsReadsOrPairs);
-							} catch (AssertionError e) {
-								System.err.println(val+ " x "+ nrMappingsReadsOrPairs);
-								solver.getNFactor();
-							}
 						}
-//						if (pairedEnd)
-//							val*= 2;	// count both ends for paired-end reads
+
 						if (val> 0&& !(outputObs|| outputPred))
 							++nrTxExp;
-						rpkm= calcRPKM(val, tx.getExonicLength());
-						rpkmMap.put(tx.getTranscriptID(), rpkm);
-						// TODO chk
-						if (Float.isNaN(rpkmMap.get(tt[i].getTranscriptID()).floatValue()))
-							System.currentTimeMillis();
+
+						double rpkm= (float) ((val/ (double) tx.getExonicLength())* (1000000000l/ base));
+						if (Double.isNaN(rpkm))
+							Log.warn("NaN RPKM produced: "+ val+ " / "+ base+ " = "+ rpkm);
+
+						rpkmMap.put(tid, rpkm);
 					}
 				}
 				
 				
 				// reproduce original
-				boolean foundTranscripts= false, foundExons= false;
+				boolean foundExons= true, foundTranscripts= false;
 				if (getGTFreader().isKeepOriginalLines()&& origLines!= null) {
-					foundExons= true;
-					for (int i = 0; i < origLines.size(); i++) {
-						String s= origLines.elementAt(i);
-						String feat= GFFObject.getField(3, s);
-						String tid= GFFObject.getTranscriptID(s);
-						int tx= 0;
-						if ((feat.equals(feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT))
-								|| feat.equals(Exon.GFF_FEATURE_EXON))
-								&& (outputObs|| outputPred))
-							for (tx = 0; tx < tt.length; tx++) 
-								if (tt[tx].getTranscriptID().equals(tid))
-									break;
-						if (tx>= tt.length) {
-							System.err.println("\nTranscript "+ tid+ " not found in: ");
-							for (int j = 0; j < tt.length; j++) 
-								System.err.println("\t"+ tt[j].getTranscriptID());
-							System.err.println();
-						}
-						
-						if (feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT)&& outputTranscript) {
-							foundTranscripts= true;
-							StringBuilder sb= new StringBuilder(s);
-							int x= sb.length();	// trim
-							while(Character.isWhitespace(sb.charAt(--x)))
-								sb.delete(x, x+1);
-							if (sb.charAt(x)!= ';')
-								sb.append("; ");
-							else
-								sb.append(Constants.SPACE);
-							
-							if ((outputObs|| outputPred)&& tx< tt.length)
-								; //getGTF(sb, tt[tx], solver, g, perM, pv, true);
-							else if (outputBalanced) {
-								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
-								sb.append(Constants.SPACE);
-								if (rpkmMap.containsKey(tid))
-									sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
-								else
-									sb.append(Constants.NULL);
-								sb.append(";\n");
-							}
-							
-							Log.print(sb.toString());
-							
-						} else if (feat.equals(Exon.GFF_FEATURE_EXON)&& outputExon) {
-							
-							StringBuilder sb= new StringBuilder(s); 
-							int x= sb.length();
-							while(Character.isWhitespace(sb.charAt(--x)))
-								sb.delete(x, x+1);
-							if (sb.charAt(x)!= ';')
-								sb.append("; ");
-							else
-								sb.append(' ');
-							
-													
-							if ((outputObs|| outputPred)&& tx< tt.length) {
-								int start= Integer.parseInt(GFFObject.getField(4, s));
-								int end= Integer.parseInt(GFFObject.getField(5, s));
-								int j = 0;
-								for (; j < tt[x].getExons().length; j++) {
-									int begin= Math.abs(tt[x].getExons()[j].getStart()),
-										ende= Math.abs(tt[x].getExons()[j].getEnd());
-									if (begin> ende) {
-										int h= begin;
-										begin= ende;
-										ende= h;
-									}
-									if (begin== start&& ende== end)
-										break;
-								}
-								//getGTF(sb, tt[x].getExons()[j], tt[i], g, solver, unsolvedSystem, perM, pv, true);
-							} else if (outputBalanced) {
-								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
-								sb.append(Constants.SPACE);
-								if (rpkmMap.containsKey(tid))
-									sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
-								else
-									sb.append(Constants.NULL);
-								sb.append(";\n");
-							}
-							
-
-							Log.print(sb.toString());
-						} else if (outputUnknown) {
-							Log.print(s+ System.getProperty("line.separator"));
-						}
-					}
+					foundTranscripts= outputGFForiginalLines(g, events, solver, rpkmMap);
 				}
-				
-					
 				
 				StringBuilder sb= new StringBuilder();
 				// LOCUS TODO genes 
@@ -414,16 +317,14 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						try {assert(testInvariant(invariantTestObsSplitFreq, 
 								pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs, 0.05));}	// min: 0.01
 						catch (AssertionError e) {
-							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-								System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantTestObsSplitFreq= "
+							Log.warn(getClass().getName()+".outputGFF():\n\tinvariantTestObsSplitFreq= "
 										+ invariantTestObsSplitFreq+ ", nrMappingsReadsOrPairs= "+ (pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs)
 										+ "\n\tlocus: "+ g.trpts[0].getTranscriptID());
 						};
 						try {assert(testInvariant(invariantTestPredSplitFreq, 
 								pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs, 0.1));}
 						catch (AssertionError e) {
-							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-								System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantTestPredSplitFreq= "
+							Log.warn(getClass().getName()+".outputGFF():\n\tinvariantTestPredSplitFreq= "
 										+ invariantTestPredSplitFreq+ ", nrMappingsReadsOrPairs= "+ (pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs)
 										+ "\n\tlocus: "+ g.trpts[0].getTranscriptID());
 						};
@@ -441,6 +342,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						++nrTx;
 	//					float invariantObsTx= invariantTestObsSplitFreq,
 	//					invariantPredTx= invariantTestPredSplitFreq;
+						String tid= tt[i].getTranscriptID();
 						float invariantObsTx= 0, invariantPredTx= 0;
 						if (outputTranscript&& !foundTranscripts) {
 							if (outputObs|| outputPred) {
@@ -453,6 +355,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 									++nrTxExp;
 	
 							} else if (outputBalanced) {
+								
 								GFFObject obj= GFFObject.createGFFObject(tt[i]);
 								sb.append(obj.toString());
 								int x= sb.length();
@@ -461,13 +364,20 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 								if (sb.charAt(x)!= ';')
 									sb.append("; ");
 								else
-									sb.append(Constants.SPACE);
+									sb.append(" ");
+								
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS);
+								sb.append(" ");
+								sb.append(String.format("%1$f", 
+										(float) (rpkmMap.get(tid)* tt[i].getExonicLength()* (base/ 1000000000l))));
+								sb.append("; ");
 								
 								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
-								sb.append(Constants.SPACE);							
+								sb.append(" ");							
 								//sb.append(rpkmMap.get(g.trpts[i].getTranscriptID()));
-								sb.append(String.format("%1$f", rpkmMap.get(tt[i].getTranscriptID()).floatValue()));	// rgasp parser does not like scientific notation
-								sb.append(";\n");
+								// avoid scientific notation								
+								sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));
+								sb.append("\n");
 							}
 						}
 						// EXONS
@@ -499,15 +409,13 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						if (outputExon&& outputSJunction&& outputTranscript) {
 							try {assert(testInvariant(invariantObsEx, invariantObsTx, 0.05));}	// min: 0.02
 							catch (AssertionError e) {
-								if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-									System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantObsEx= "
+								Log.warn(getClass().getName()+".outputGFF():\n\tinvariantObsEx= "
 											+ invariantObsEx+ ", invariantObsTx= "+ invariantObsTx
 											+ "\n\tlocus: "+ tt[0].getTranscriptID());
 							};
 							try {assert(testInvariant(invariantPredEx, invariantPredTx, 0.1));}
 							catch (AssertionError e) {
-								if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-									System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantPredEx= "
+								Log.warn(getClass().getName()+".outputGFF():\n\tinvariantPredEx= "
 											+ invariantPredEx+ ", invariantPredTx= "+ invariantPredTx
 											+ "\n\tlocus: "+ tt[0].getTranscriptID());
 							};
@@ -517,16 +425,14 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						try {assert(testInvariant(invariantObsAllTx, 
 								pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs, 0.05));}	// min: 0.01
 						catch (AssertionError e) {
-							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-								System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantObsAllTx= "
+							Log.warn(getClass().getName()+".outputGFF():\n\tinvariantObsAllTx= "
 										+ invariantObsAllTx+ ", nrMappingsReadsOrPairs= "+ (pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs)
 										+ "\n\tlocus: "+ tt[0].getTranscriptID());
 						};
 						try {assert(testInvariant(invariantPredAllTx, 
 								pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs, 0.1));}
 						catch (AssertionError e) {
-							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-								System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantPredAllTx= "
+							Log.warn(getClass().getName()+".outputGFF():\n\tinvariantPredAllTx= "
 										+ invariantPredAllTx+ ", nrMappingsReadsOrPairs= "+ (pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs)
 										+ "\n\tlocus: "+ tt[0].getTranscriptID());
 						};
@@ -535,16 +441,14 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						try {assert(testInvariant(invariantObsAllEx, 
 								pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs, 0.05));}	// min: 0.02
 						catch (AssertionError e) {
-							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-								System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantObsAllEx= "
+							Log.warn(getClass().getName()+".outputGFF():\n\tinvariantObsAllEx= "
 										+ invariantObsAllEx+ ", nrMappingsReadsOrPairs= "+ (pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs)
 										+ "\n\tlocus: "+ tt[0].getTranscriptID());
 						};
 						try {assert(testInvariant(invariantPredAllEx, 
 								pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs, 0.1));}
 						catch (AssertionError e) {
-							if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
-								System.err.println("[ASSERTION] "+getClass().getName()+".outputGFF():\n\tinvariantPredAllEx= "
+							Log.warn(getClass().getName()+".outputGFF():\n\tinvariantPredAllEx= "
 										+ invariantPredAllEx+ ", nrMappingsReadsOrPairs= "+ (pairedEnd?nrMappingsReadsOrPairs*2:nrMappingsReadsOrPairs)
 										+ "\n\tlocus: "+ tt[0].getTranscriptID());
 						};
@@ -571,7 +475,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 							++nrEvents;
 						if (outputBalanced) {
 							sb.append(events[i].toStringGTF());
-							sb.append(Constants.SPACE);
+							sb.append(" ");
 							sb.append("\"");
 							boolean allPos= true;
 							for (int j = 0; j < events[i].getTranscripts().length; j++) {
@@ -617,6 +521,103 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				
 			}
 	
+			private boolean outputGFForiginalLines(AnnotationMapper g,
+					ASEvent[] events2, GraphLPsolver solver, HashMap<String, Double> rpkmMap) {
+				
+				Transcript[] tt= gene.getTranscripts();
+				boolean foundTranscripts= false;
+				for (int i = 0; i < origLines.size(); i++) {
+					String s= origLines.elementAt(i);
+					String feat= GFFObject.getField(3, s);
+					String tid= GFFObject.getTranscriptID(s);
+					int tx= 0;
+					if ((feat.equals(feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT))
+							|| feat.equals(Exon.GFF_FEATURE_EXON))
+							&& (outputObs|| outputPred))
+						for (tx = 0; tx < tt.length; tx++) 
+							if (tt[tx].getTranscriptID().equals(tid))
+								break;
+					if (tx>= tt.length) {
+						System.err.println("\nTranscript "+ tid+ " not found in: ");
+						for (int j = 0; j < tt.length; j++) 
+							System.err.println("\t"+ tt[j].getTranscriptID());
+						System.err.println();
+					}
+					
+					if (feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT)&& outputTranscript) {
+						foundTranscripts= true;
+						StringBuilder sb= new StringBuilder(s);
+						int x= sb.length();	// trim
+						while(Character.isWhitespace(sb.charAt(--x)))
+							sb.delete(x, x+1);
+						if (sb.charAt(x)!= ';')
+							sb.append("; ");
+						else
+							sb.append(Constants.SPACE);
+						
+						if ((outputObs|| outputPred)&& tx< tt.length)
+							; //getGTF(sb, tt[tx], solver, g, perM, pv, true);
+						else if (outputBalanced) {
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
+							sb.append(Constants.SPACE);
+							if (rpkmMap.containsKey(tid))
+								sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
+							else
+								sb.append(Constants.NULL);
+							sb.append(";\n");
+						}
+						
+						Log.print(sb.toString());
+						
+					} else if (feat.equals(Exon.GFF_FEATURE_EXON)&& outputExon) {
+						
+						StringBuilder sb= new StringBuilder(s); 
+						int x= sb.length();
+						while(Character.isWhitespace(sb.charAt(--x)))
+							sb.delete(x, x+1);
+						if (sb.charAt(x)!= ';')
+							sb.append("; ");
+						else
+							sb.append(' ');
+						
+												
+						if ((outputObs|| outputPred)&& tx< tt.length) {
+							int start= Integer.parseInt(GFFObject.getField(4, s));
+							int end= Integer.parseInt(GFFObject.getField(5, s));
+							int j = 0;
+							for (; j < tt[x].getExons().length; j++) {
+								int begin= Math.abs(tt[x].getExons()[j].getStart()),
+									ende= Math.abs(tt[x].getExons()[j].getEnd());
+								if (begin> ende) {
+									int h= begin;
+									begin= ende;
+									ende= h;
+								}
+								if (begin== start&& ende== end)
+									break;
+							}
+							//getGTF(sb, tt[x].getExons()[j], tt[i], g, solver, unsolvedSystem, perM, pv, true);
+						} else if (outputBalanced) {
+							sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
+							sb.append(Constants.SPACE);
+							if (rpkmMap.containsKey(tid))
+								sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));	// rgasp parser does not like scientific notation
+							else
+								sb.append(Constants.NULL);
+							sb.append(";\n");
+						}
+						
+
+						Log.print(sb.toString());
+					} else if (outputUnknown) {
+						Log.print(s+ System.getProperty("line.separator"));
+					}
+				}
+				
+				return foundTranscripts;
+			}
+
+
 			private boolean testInvariant(double invariant, double reference, double stringency) {
 				double delta= Math.abs(reference== 0?invariant: (invariant- reference)/ reference);
 				if (delta> stringency) {

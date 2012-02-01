@@ -49,6 +49,7 @@ public class Constants {
 	public static final String DOT= ".";
 	public static final String NULL= "0";
 	public static final String COLON= ":";
+	public static final String SEMICOLON= ";";
 	public static final String PAROPEN= "(";
 	public static final String PARCLOSE= ")";
 	public static final String OK= "OK";
