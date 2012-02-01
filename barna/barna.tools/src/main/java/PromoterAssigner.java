@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import barna.io.gtf.GTFReaderTest;
 import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.Transcript;
