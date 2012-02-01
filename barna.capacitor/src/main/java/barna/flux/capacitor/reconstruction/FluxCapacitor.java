@@ -1573,7 +1573,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			//p.println("\tread length " + readLen);
 			p.println("\t"+ CLI_LONG_STRAND+" "+ strandSpecific);
 */
-			
+		if(settings.get(FluxCapacitorSettings.INSERT_FILE) != null){
+            Log.info("\twriting insert sizes to "+settings.get(FluxCapacitorSettings.INSERT_FILE).getAbsolutePath());
+        }
 //		if (pairedEnd)
 //			p.println("\t"+CLI_LONG_PAIR+"\t"+insertMinMax[0]+","+insertMinMax[1]);
 		//System.err.println("\t"+CLI_LONG_NOISE+"\t"+Float.toString(1- GraphLPsolver.min_read_rest_frac));
@@ -1982,12 +1984,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			
 			wrapperMappings= 
 				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
-			try {
-				fileStats((MappingWrapper) wrapperMappings);
-			} catch (Exception e) {
-				Log.error(e.getMessage());
-				throw(e);
-			}
+			fileStats((MappingWrapper) wrapperMappings);
+
 		}
 		
 
@@ -3199,6 +3197,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	 */
 	Profile profile;
 	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode) {
+        return readBedFile(gene, from, to, mode, 0, 1);
+    }
+	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode, int retryCount, long timeInSeconds) {
 		
 		if (from> to|| from< 0|| to< 0) 
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
@@ -3233,8 +3234,19 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					return null;
 			}			
 		} catch (IOException e) {
+            /**
+             * "Resource temporarily unavailable"
+             * Catch this exception and try again after sleeping for a while
+             */
+            if(e.getMessage().contains("Resource temporarily unavailable")){
+                if(retryCount < 6){
+                    Log.warn("Filesystem reports : 'Resource temporarily unavailable', I am retrying ("+(retryCount+1)+")");
+                    try {Thread.sleep(1000 * (timeInSeconds));} catch (InterruptedException e1) {}
+                    return readBedFile(gene, from, to, mode, retryCount + 1, timeInSeconds*6);
+                }
+            }
 			throw new RuntimeException(
-				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to, e);
+				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to +", retried " + retryCount + " times", e);
 		}
         
 		return iter;
@@ -3961,11 +3973,6 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		if (nrBEDmappings> 0)
 			Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
 	                + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
-		
-		// (4) check read descriptor
-		if (!wrapper.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
-			throw new RuntimeException("Read Descriptor "+ settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString()+ " not compatible with read IDs.");
-		
 	}
 
 	private AbstractFileIOWrapper getWrapper(File inputFile) {
