@@ -85,4 +85,12 @@ public class BufferedIteratorRAM implements BufferedIterator{
 			return;
 		currentIndex= markedIndex;
 	}
+
+	/**
+	 * frees memory occupied by the elements
+	 */
+	@Override
+	public void clear() {
+		elements= null;
+	}
 }

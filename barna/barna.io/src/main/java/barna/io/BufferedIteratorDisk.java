@@ -421,5 +421,20 @@ public class BufferedIteratorDisk implements BufferedIterator {
 		
 		return n;
 	}
+
+	/**
+	 * removes the temporary file
+	 */
+	@Override
+	public void clear() {
+		boolean b= false;
+		try {
+			reader.close();
+			b= tmpFile.delete();
+		} catch (IOException e) {
+			if (!b)
+				throw new RuntimeException(e);
+		}
+	}
 	
 }

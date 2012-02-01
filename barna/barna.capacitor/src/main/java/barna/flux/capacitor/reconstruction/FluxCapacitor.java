@@ -3223,7 +3223,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				PipedInputStream  pin= new PipedInputStream();
 		        PipedOutputStream pout= new PipedOutputStream(pin);
 				Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-				File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to, "bed", true);
+				File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to+ ".", "bed", true);
 				BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, c);
 				biter.init();
 				iter= biter;
@@ -3738,8 +3738,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 							solve(gene[i], beds, true); 
 						}
 						
-						if (beds instanceof BufferedIteratorDisk)
-							((BufferedIteratorDisk) beds).getTmpFile().delete();
+						beds.clear();
 							
 						if (output) {
 							System.out.println(gene[i].getChromosome()+ " "+
