@@ -355,4 +355,49 @@ public class FluxCapacitorTest {
 	
 	}
 
+	@Test
+	public void testIOinsertSizes() {
+	
+		try {					
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE, 
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED, 
+					false,
+					// keep sorted
+					false);
+	
+			File insFile= FileHelper.replaceSfx(outFile, "_ins.txt");
+			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
+			try {
+				buffy.write(FluxCapacitorSettings.INSERT_FILE.getName()+ " "+ insFile.getAbsolutePath());
+				buffy.close();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			runCapacitor();
+			
+			
+			// check
+			BufferedReader buffy2= new BufferedReader(new FileReader(insFile));
+			String s= null;
+			while ((s= buffy2.readLine())!= null) {
+				String[] ss= s.split("\\s");
+				assertEquals(9, ss.length);
+			}
+			buffy2.close();
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+	
+	}
+
 }

@@ -328,7 +328,7 @@ public class AnnotationMapper extends SplicingGraph {
 						((SuperEdgeMappings) se).getMappings().incrReadNr();
 						nrMappingsMapped+= 2;
 						if (buffy!= null) 
-							writeInsert(buffy, se, dobject, dobject2);
+							writeInsert(buffy, se, dobject, dobject2, attributes2.id);
 					}
 					lineIterator.reset();
 
@@ -360,7 +360,7 @@ public class AnnotationMapper extends SplicingGraph {
 	 * @param dobject2 2nd bed object
 	 */
 	protected void writeInsert(BufferedWriter buffy, SuperEdge se,
-			BEDobject2 dobject, BEDobject2 dobject2) {
+			BEDobject2 dobject, BEDobject2 dobject2, CharSequence id) {
 		
 		Transcript[] tt= decodeTset(se.getTranscripts());
 		int[] isizes= new int[tt.length];
@@ -382,6 +382,7 @@ public class AnnotationMapper extends SplicingGraph {
 			
 		}
 		
+		// make non-redundant
 		Arrays.sort(isizes);
 		int v= -1, c= 0;
 		for (int i = 0; i < isizes.length; i++) {
@@ -390,16 +391,21 @@ public class AnnotationMapper extends SplicingGraph {
 			v= isizes[i];
 		}
 		
+		// output
+		String pfx= dobject.getChr()+ "\t"+ startMin+ "\t"+ endMax+ "\t"+ id+ "\t",
+				sfx= "\t"+ (tt[0].isForward()? "+": "-")+ "\t0\t0\t";
 		v= -1;
-		for (int i = 0; i < isizes.length; i++) {
+		for (int i = 0, cc= 0; i < isizes.length; i++) {
 			if (isizes[i]< 0)
 				continue;
-			if (isizes[i]!= v) 
+			if (isizes[i]!= v) {
+				++cc;
 				try {
-					buffy.write(Integer.toString(isizes[i])+ "\t"+ Integer.toString(c)+ "\n");
+					buffy.write(pfx+ Integer.toString(isizes[i])+ sfx+ cc+ ","+ Integer.toString(c)+ ","+ tt.length+ "\n");
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
+			}
 			v= isizes[i];
 		}
 	}
