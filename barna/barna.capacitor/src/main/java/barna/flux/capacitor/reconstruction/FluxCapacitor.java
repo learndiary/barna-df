@@ -11,6 +11,44 @@
 
 package barna.flux.capacitor.reconstruction;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
+import lpsolve.LpSolve;
+import lpsolve.VersionInfo;
+
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
+import org.cyclopsgroup.jcli.annotation.Option;
+
 import barna.commons.Execute;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.FluxTool;
@@ -23,14 +61,24 @@ import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.genome.lpsolver.LPSolverLoader;
-import barna.io.*;
+import barna.io.AbstractFileIOWrapper;
+import barna.io.AnnotationWrapper;
+import barna.io.BufferedIterator;
+import barna.io.BufferedIteratorDisk;
+import barna.io.BufferedIteratorRAM;
+import barna.io.FileHelper;
+import barna.io.MappingWrapper;
 import barna.io.bed.BEDDescriptorComparator;
 import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.io.state.MappingWrapperState;
-import barna.model.*;
+import barna.model.ASEvent;
+import barna.model.DirectedRegion;
+import barna.model.Exon;
+import barna.model.Gene;
+import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
@@ -40,19 +88,6 @@ import barna.model.splicegraph.AbstractEdge;
 import barna.model.splicegraph.SimpleEdge;
 import barna.model.splicegraph.SplicingGraph;
 import barna.model.splicegraph.SuperEdge;
-import lpsolve.LpSolve;
-import lpsolve.VersionInfo;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
-
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 
 
@@ -1852,6 +1887,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	
 	
 	private void fileStats(AnnotationWrapper wrapper) {
+
+		// (3) scan
+		((AbstractFileIOWrapper) wrapper).scanFile();
+		if(((AbstractFileIOWrapper) wrapper).getNrInvalidLines()> 0)
+			Log.warn("Skipped "+ ((AbstractFileIOWrapper) wrapper).getNrInvalidLines()+ " lines.");
 
 		Log.info(Constants.TAB+ wrapper.getNrGenes()+ " loci, "
 				+ wrapper.getNrTranscripts()+ " transcripts, "
@@ -3739,7 +3779,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 							solve(gene[i], beds, true); 
 						}
 						
-						beds.clear();
+						if (beds!= null)
+							beds.clear();
 							
 						if (output) {
 							System.out.println(gene[i].getChromosome()+ " "+
