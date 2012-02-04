@@ -3890,8 +3890,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				}
 				
 			} catch (Exception e1) {
-				e1.printStackTrace();
-				return false;
+				Log.error("Error while iterating loci:", e1);
+				throw new RuntimeException(e1);
 			}
 	
 			return true;
