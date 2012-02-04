@@ -32,7 +32,7 @@ public abstract class ParameterSchema {
     /**
      * Parser pattern
      */
-    private static final Pattern PROPERTY_PATTERN = Pattern.compile("(.*)\\s+(.*)");
+    private static final Pattern PROPERTY_PATTERN = Pattern.compile("([^\\s]+)\\s+(.*)");
     /**
      * The parameters
      */
