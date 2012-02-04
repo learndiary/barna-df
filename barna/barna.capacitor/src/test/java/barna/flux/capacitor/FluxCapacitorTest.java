@@ -1,5 +1,28 @@
 package barna.flux.capacitor;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.concurrent.Future;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import barna.commons.Execute;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
@@ -7,17 +30,6 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMappi
 import barna.io.FileHelper;
 import barna.io.Sorter;
 import barna.io.rna.UniversalReadDescriptor;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.*;
-import java.util.concurrent.Future;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
@@ -355,6 +367,55 @@ public class FluxCapacitorTest {
 	
 	}
 
+	/**
+	 * A test to guarantee correct handling of loci without reads.
+	 */
+	@Test
+	public void testLocusWithoutReads() {
+		try {
+			
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE, 
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED, 
+					false,
+					// keep sorted
+					false);
+
+			// filter chr1 off mapping file
+			BufferedReader buffy= new BufferedReader(new FileReader(bedFile));
+			File tmpFile= FileHelper.createTempFile(bedFile.getName(), FileHelper.getExtension(bedFile), bedFile.getParentFile());
+			BufferedWriter writer= new BufferedWriter(new FileWriter(tmpFile));
+			for(String s= null; (s= buffy.readLine())!= null;) {
+				if (!s.startsWith("chr1"))
+					writer.write(s+ "\n");
+			}
+			buffy.close();
+			bedFile.delete();
+			writer.close();
+			bedFile= tmpFile;
+			
+			// lazily append new mapping file to parameters
+			writer= new BufferedWriter(new FileWriter(parFile, true));
+			writer.write(FluxCapacitorSettings.MAPPING_FILE.getName()+" "+ bedFile.getAbsolutePath());
+			writer.close();
+
+			// check for exceptions when run
+			runCapacitor();
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+	}
+	
+	
 	@Test
 	public void testIOinsertSizes() {
 	
