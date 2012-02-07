@@ -196,51 +196,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	public static void main(String[] args) {
 
-		// if (args.length< 1) {
-		// System.out.println(usage);
-		// System.exit(0);
-		// }
-		//		
-		// File f= null;
-		// for (int i = 0; i < args.length; i++) {
-		// if (args[i].equalsIgnoreCase("-sort")) {
-		// sort= true;
-		// continue;
-		// }
-		// f= new File(args[i]);
-		// }
-		//		
-		// if (f== null|| !f.exists()) {
-		// System.out.println("input file invalid");
-		// System.exit(0);
-		// }
-		//		
-		GTFwrapper reader = new GTFwrapper(
-				//"/home/ug/sfoissac/tmphuman_hg18_RefSeqGenes_fromUCSC070716.gtf");
-				"/home/msammeth/graph_evaluation/graphx/est_sorted");
-		//System.out.println(reader.isApplicable());
-		try {
-			reader.read();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		Gene[] g= reader.getGenes();
-		int cnt= 0;
-		while (g!= null) {
-			cnt+= g.length;
-			
-			try {
-				reader.read();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			g= reader.getGenes();
-		}
-		
-		System.out.println("read genes: "+cnt);
-		// if (sort) {
-		// reader.reformatFile();
-		// }
+        System.out.println(SPLITTER_PATTERN);
 	}
 
 	void initSpecies() {
@@ -1745,9 +1701,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         Map<byte[], Integer> tssMap = null;
         try {
             tssMap = getTSS(fieldNrs);  
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
+		} catch (Exception error) {
+			throw new RuntimeException(error);
 		} finally {
 			System.gc();
 		}
@@ -1778,9 +1733,11 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         BufferedWriter writer = null;
         Future sorterThread = null;
 
-
+        ByteArrayCharSequence cs = null;
+        long lineCount = 0l;
+        ByteArrayCharSequence[] fields = null;
 		try {
-			ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
+			cs= new ByteArrayCharSequence(1000);
 
             
             out = new PipedOutputStream();
@@ -1802,13 +1759,13 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
             io.addStream(fileInput);
 
             while (io.readLine(fileInput,cs) != -1){
+                lineCount++;
                 // issue #56 make sure we skip empty lines and comment lines
                 if (cs.length() == 0 || cs.charAt(0)== '#'){
                     continue;
                 }
 
-                ByteArrayCharSequence[] fields= ByteArrayCharSequence.split(cs, SPLITTER_PATTERN,fieldNrs);	// 1,4,-1
-				
+                fields= ByteArrayCharSequence.split(cs, SPLITTER_PATTERN,fieldNrs);	// 1,4,-1
                 byte[] key= ByteArrayCharSequence.merge(fields[1], fields[0]);
                 int val= transcriptPositions.get(key);
                 if (val== Integer.MIN_VALUE) {
@@ -1836,6 +1793,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
                 }
                 Log.message("");
             }
+        }catch (Exception error){
+            logError(fieldNrs, cs, lineCount, fields, error);
+            throw error; // rethrow
 		} finally {
             io.close();
             if(out != null) try {out.close();} catch (IOException e) {}
@@ -1847,8 +1807,40 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		}
 	}
 
-	
-	/**
+    /**
+     * Helper method to print more usefull infomation to log error if the gtf can not be parsed.
+     *
+     * @param fieldNrs the field numbers inspected by the parser
+     * @param cs the current line
+     * @param lineCount the line count
+     * @param fields the parsed fields
+     * @param error the exception
+     */
+    private void logError(int[] fieldNrs, ByteArrayCharSequence cs, long lineCount, ByteArrayCharSequence[] fields, Exception error) {
+        Log.error("Error while sorting GTF File : " + error.getMessage());
+        if(cs != null){
+            Log.error("Line "+lineCount+" caused the problem : " + cs.toString());
+            Log.error("Please check your GTF file and watch out for too much tabs or spaces!");
+            Log.error("We currently use '"+SPLITTER_PATTERN+"'. This single tab or space characters.");
+            Log.error("Note that the GTF definition states that the first eight fields are separated by tab (\\t).");
+            Log.error("Our parser also allows a single space, but not multiple spaces !");
+            Log.error("We look for fields : "+ Arrays.toString(fieldNrs) + ".");
+            if(fields  != null){
+                Log.error("The field content for the problematic line : ");
+                for (int i = 0; i < fields.length; i++) {
+                    switch (i){
+                        case 0: Log.error("Field " + fieldNrs[i] + " : "+fields[i] + " - The chromosome, parsed as Text");break;
+                        case 1: Log.error("Field " + fieldNrs[i] + " : "+fields[i] + " - Start Position, parsed as Number");break;
+                        case 2: Log.error("Field " + fieldNrs[i] + " : "+fields[i] + " - Strand, parsed as Text");break;
+                        case 3: Log.error("Field " + fieldNrs[i] + " : "+fields[i] + " - Transcript ID, parsed as Text");break;
+                    }
+
+                }
+            }
+        }
+    }
+
+    /**
      * Find the field index of the transcript id or return -1
      *
      * @param input the line
@@ -1882,6 +1874,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
     protected Map<byte[], Integer> getTSS(int[] fieldNrs) throws Exception{
     	
         IOHandler io = IOHandlerFactory.createDefaultHandler();
+        ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
+        ByteArrayCharSequence[] fields = null;
+        int lineCounter = 0;
         try{
             /*
              estimate line count to estimate map size
@@ -1913,10 +1908,10 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
             InputStream reader = getInputStream();
             io.addStream(reader);
 
-            ByteArrayCharSequence cs= new ByteArrayCharSequence(1000);
+
             //int[] fieldNrs= new int[]{1,4,7,-1};	// ,-1 for gene
             int bytesRead = 0;
-            int lineCounter = 0;
+
             while(io.readLine(reader, cs) != -1){
             	
                 lineCounter++;
@@ -1937,7 +1932,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					}
 				}
 
-				ByteArrayCharSequence[] fields= ByteArrayCharSequence.split(cs, SPLITTER_PATTERN, fieldNrs);	// 1,4,tid,gid
+				fields= ByteArrayCharSequence.split(cs, SPLITTER_PATTERN, fieldNrs);	// 1,4,tid,gid
 				for (int i = 0; i < fields.length; i++) {
 					if (fields[i]== null) {
                         throw new RuntimeException("I could not find field number "+fieldNrs[i]+" in line " + lineCounter
@@ -1946,7 +1941,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
                         +"\t(first 8 fields and transcript_id in the same column!)");
 					}
 				}
-
 					// transcript start
 				int start = fields[1].parseInt();
 				byte[] key= ByteArrayCharSequence.merge(fields[3], fields[0]);
@@ -1971,8 +1965,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				
 			}
             return transcriptPositions;
-        } catch (Exception e) {
-        	throw new RuntimeException(e);
+        } catch (Exception error) {
+            logError(fieldNrs, cs, lineCounter, fields, error);
+        	throw error; // rethrow
         }finally {
             io.close();
         }
