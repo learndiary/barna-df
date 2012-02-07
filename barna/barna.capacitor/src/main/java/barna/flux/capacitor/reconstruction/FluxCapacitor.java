@@ -401,12 +401,20 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 								else
 									sb.append(" ");
 								
+								// deconvoluted reads
 								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS);
 								sb.append(" ");
 								sb.append(String.format("%1$f", 
 										(float) (rpkmMap.get(tid)* tt[i].getExonicLength()* (base/ 1000000000l))));
 								sb.append("; ");
 								
+								// spliced length
+								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_LENGTH);
+								sb.append(" ");
+								sb.append(Integer.toString(tt[i].getExonicLength()));
+								sb.append("; ");
+								
+								// rpkm
 								sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
 								sb.append(" ");							
 								//sb.append(rpkmMap.get(g.trpts[i].getTranscriptID()));
@@ -3874,11 +3882,12 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 								+ bedWrapper.getNrLines()+" mappings read from file\n\t"
 								// no info, reads in redundantly many reads
 								//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
-								+ nrReadsMapped+ " mapping"+ (pairedEnd?" pairs":"s") +" map to annotation\n"
+								+ nrReadsMapped+ " mappings"+ (pairedEnd?" in pairs":"s") +" map to annotation\n"
 								+ (pairedEnd?
-									"\t"+ nrPairsNoTxEvidence+ " pairs without tx evidence\n"
-									+ "\t"+ nrPairsWrongOrientation+ " pairs in wrong orientation\n"
-									+ "\t"+ nrMappingsForced+ " single mappings forced\n":"")
+									"\t"+ nrPairsNoTxEvidence+ " mappings without tx evidence\n"
+									+ "\t"+ nrPairsWrongOrientation+ " mappings with wrong orientation\n"
+									//+ "\t"+ nrMappingsForced+ " single mappings forced\n"
+									:"")
 								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
 								//+ nrMultiMaps+" mapped multiply.\n\n\t"
 								+ (outputGene?"\n\t"+ nrLoci+ " loci, "+ nrLociExp+ " detected":"")
