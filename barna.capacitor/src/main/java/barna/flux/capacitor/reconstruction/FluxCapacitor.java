@@ -11,44 +11,6 @@
 
 package barna.flux.capacitor.reconstruction;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.PrintStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
-
-import lpsolve.LpSolve;
-import lpsolve.VersionInfo;
-
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
-
 import barna.commons.Execute;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.FluxTool;
@@ -61,24 +23,14 @@ import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.genome.lpsolver.LPSolverLoader;
-import barna.io.AbstractFileIOWrapper;
-import barna.io.AnnotationWrapper;
-import barna.io.BufferedIterator;
-import barna.io.BufferedIteratorDisk;
-import barna.io.BufferedIteratorRAM;
-import barna.io.FileHelper;
-import barna.io.MappingWrapper;
+import barna.io.*;
 import barna.io.bed.BEDDescriptorComparator;
 import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.io.state.MappingWrapperState;
-import barna.model.ASEvent;
-import barna.model.DirectedRegion;
-import barna.model.Exon;
-import barna.model.Gene;
-import barna.model.Transcript;
+import barna.model.*;
 import barna.model.bed.BEDobject2;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
@@ -88,6 +40,19 @@ import barna.model.splicegraph.AbstractEdge;
 import barna.model.splicegraph.SimpleEdge;
 import barna.model.splicegraph.SplicingGraph;
 import barna.model.splicegraph.SuperEdge;
+import lpsolve.LpSolve;
+import lpsolve.VersionInfo;
+import org.cyclopsgroup.jcli.ArgumentProcessor;
+import org.cyclopsgroup.jcli.annotation.Cli;
+import org.cyclopsgroup.jcli.annotation.Option;
+
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 
 
@@ -3248,40 +3213,64 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode) {
         return readBedFile(gene, from, to, mode, 0, 1);
     }
-	private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode, int retryCount, long timeInSeconds) {
+
+
+    private BufferedIterator readBedFile(Gene gene, int from, int to, byte mode, int retryCount, long timeInSeconds) {
+        if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
+            try{
+                return readBedFileRAM(gene, from, to, mode, retryCount, timeInSeconds);
+            }catch (OutOfMemoryError memoryError){
+                System.gc();
+                Thread.yield();
+                Log.warn("Not enough memory to sort BED entries in RAM. Switching to disk sorting. You can increase the amount of memory used " +
+                        "by the capacitor using the FLUX_MEM environment variable. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
+                        "6 GB of memory.");
+                return readBedFileDisk(gene, from, to, mode, retryCount, timeInSeconds);
+            }
+        }else{
+            return readBedFileDisk(gene, from, to, mode, retryCount, timeInSeconds);
+        }
+    }
+    
+	private BufferedIterator readBedFileRAM(Gene gene, int from, int to, byte mode, int retryCount, long timeInSeconds) {
 		
 		if (from> to|| from< 0|| to< 0) 
+			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
+		// init iterator
+		BufferedIterator iter= null;
+        // memory
+        MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
+        if (state.result== null)
+            return null;
+        BEDobject2[] beds= (BEDobject2[]) state.result;
+        Arrays.sort(beds, getDescriptorComparator());
+        iter= new BufferedIteratorRAM(beds);
+
+		return iter;
+		
+	}
+	private BufferedIterator readBedFileDisk(Gene gene, int from, int to, byte mode, int retryCount, long timeInSeconds) {
+
+		if (from> to|| from< 0|| to< 0)
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 
 		// init iterator
 		BufferedIterator iter= null;
 
 		try {
-			if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
-				// memory
-				MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
-				if (state.result== null)
-					return null;
-				BEDobject2[] beds= (BEDobject2[]) state.result;
-				Arrays.sort(beds, getDescriptorComparator());
-				iter= new BufferedIteratorRAM(beds);
-				
-			} else {
-				
-				// read, maintain main thread			
-				PipedInputStream  pin= new PipedInputStream();
-		        PipedOutputStream pout= new PipedOutputStream(pin);
-				Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-				File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to+ ".", "bed", true);
-				BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, c);
-				biter.init();
-				iter= biter;
-				MappingWrapperState state= bedWrapper.read(pout, gene.getChromosome(), from, to);
-				pout.flush();
-				pout.close();
-				if (state.count== 0)
-					return null;
-			}			
+            // read, maintain main thread
+            PipedInputStream  pin= new PipedInputStream();
+            PipedOutputStream pout= new PipedOutputStream(pin);
+            Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to+ ".", "bed", true);
+            BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, c);
+            biter.init();
+            iter= biter;
+            MappingWrapperState state= bedWrapper.read(pout, gene.getChromosome(), from, to);
+            pout.flush();
+            pout.close();
+            if (state.count== 0)
+                return null;
 		} catch (IOException e) {
             /**
              * "Resource temporarily unavailable"
@@ -3291,17 +3280,17 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
                 if(retryCount < 6){
                     Log.warn("Filesystem reports : 'Resource temporarily unavailable', I am retrying ("+(retryCount+1)+")");
                     try {Thread.sleep(1000 * (timeInSeconds));} catch (InterruptedException e1) {}
-                    return readBedFile(gene, from, to, mode, retryCount + 1, timeInSeconds*6);
+                    return readBedFileDisk(gene, from, to, mode, retryCount + 1, timeInSeconds*6);
                 }
             }
 			throw new RuntimeException(
 				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to +", retried " + retryCount + " times", e);
 		}
-        
+
 		return iter;
-		
+
 	}
-	
+
 	
 	BEDDescriptorComparator comp= null;
 	private Comparator<? super BEDobject2> getDescriptorComparator() {
