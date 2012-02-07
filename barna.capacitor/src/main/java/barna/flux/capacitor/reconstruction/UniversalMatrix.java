@@ -155,13 +155,79 @@ public class UniversalMatrix {
 	}
 	
 	public StringBuilder toStringBuilder() {
-		StringBuilder sb= new StringBuilder(sense.length); // not * m.length, can exceed integer bounds
+		
+		StringBuilder sb= new StringBuilder(sense.length* 3); 
+		
+		// sense
 		for (int i = 0; i < sense.length; i++) {
 			sb.append(Integer.toString(sense[i]));
-			sb.append("\t");
-			sb.append(Integer.toString(asense[i]));
-			sb.append("\n");
+			sb.append(",");
 		}
+		sb.deleteCharAt(sb.length()- 1);
+		sb.append("\n");
+
+		// anti-sense
+		for (int i = 0; i < asense.length; i++) {
+			sb.append(Integer.toString(asense[i]));
+			sb.append(",");
+		}
+		sb.deleteCharAt(sb.length()- 1);
+		sb.append("\n");
+
+		// sum
+		for (int i = 0; i < sense.length; i++) {
+			sb.append(Integer.toString(sense[i]+ asense[i]));
+			sb.append(",");
+		}
+		sb.deleteCharAt(sb.length()- 1);
+		sb.append("\n");
+
+		return sb;
+	}
+	
+	public StringBuilder toStringBuilder(int nrBins) {
+		
+		if (nrBins> sense.length)
+			throw new RuntimeException("Not implemented.");
+		
+		StringBuilder sb= new StringBuilder(nrBins* 3); 
+		float div= sense.length/ (float) nrBins;	// assuming nrBins< 
+		
+		int[] sBins= new int[nrBins], aBins= new int[nrBins];
+		for (int i = 0; i < aBins.length; i++) {
+			sBins[i]= 0; 
+			aBins[i]= 0;
+		}
+		for (int i = 0; i < sense.length; i++) {
+			int p= (int) (i/ div);
+			sBins[p]+= sense[i];
+			aBins[p]+= asense[i];
+		}
+		
+		// sense
+		for (int i = 0; i < sBins.length; i++) {
+			sb.append(Integer.toString(sBins[i]));
+			sb.append(",");
+		}
+		sb.deleteCharAt(sb.length()- 1);
+		sb.append("\n");
+
+		// anti-sense
+		for (int i = 0; i < aBins.length; i++) {
+			sb.append(Integer.toString(aBins[i]));
+			sb.append(",");
+		}
+		sb.deleteCharAt(sb.length()- 1);
+		sb.append("\n");
+
+		// sum
+		for (int i = 0; i < sBins.length; i++) {
+			sb.append(Integer.toString(sBins[i]+ aBins[i]));
+			sb.append(",");
+		}
+		sb.deleteCharAt(sb.length()- 1);
+		sb.append("\n");
+
 		return sb;
 	}
 	

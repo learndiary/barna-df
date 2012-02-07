@@ -1829,6 +1829,10 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 
 		// TODO close files for non-/mapped reads, insert sizes, LPs, profiles  
 
+		// profiles
+		if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!= null)
+			writeProfiles();
+		
 		// close output
 		if (Log.outputStream!= System.out&& Log.outputStream!= System.err) 
 			Log.outputStream.close();
@@ -2453,8 +2457,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 
             Log.progressStart(MSG_WRITING_PROFILES);
 
-			FileOutputStream fos = new FileOutputStream(getFileProfile());
-		    ZipOutputStream zos = new ZipOutputStream(fos);
+            BufferedWriter buffy= new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.PROFILE_FILE)));
+//			FileOutputStream fos = new FileOutputStream(getFileProfile());
+//		    ZipOutputStream zos = new ZipOutputStream(fos);
 
 		    UniversalMatrix[] mm= profile.getMasters();
 		    for (int i = 0; i < mm.length; i++) {
@@ -2462,18 +2467,22 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 //		    	for (int j = 0; j < mm[i].length; j++) {
 					//int expUp= TProfileFunction.BIN_EXP[j];
 //					String expString= (j== 0?Integer.toString(Profile.EXP_LO):(j==1?Integer.toString(Profile.EXP_UP):"max"));
-					String name= "profile"+ UNDERSCORE+ lenString+ NT;
+					//String name= "profile"+ UNDERSCORE+ lenString+ NT;
 						//+ UNDERSCORE+ expString;
-					ZipEntry ze= new ZipEntry(name);
-					zos.putNextEntry(ze);
-					zos.write(mm[i].toString().getBytes());
+					buffy.write(lenString);
+					buffy.write("\n");
+					buffy.write(mm[i].toStringBuilder(20).toString());
+//					ZipEntry ze= new ZipEntry(name);					
+//					zos.putNextEntry(ze);
+//					zos.write(mm[i].toString().getBytes());
 //					zos.write(mm[i][j].toString().getBytes());
-					zos.closeEntry();
+//					zos.closeEntry();
 //				}
 		    }
-			zos.flush();
-			fos.flush();
-			zos.close();
+//			zos.flush();
+//			fos.flush();
+//			zos.close();
+		    buffy.close();
             Log.progressFinish(StringUtils.OK, true );
 
 		} catch (Exception e) {
