@@ -1208,7 +1208,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 					if (pairedEnd) {
 						if (attributes.flag< 1)
 							Log.warn("Read ignored, error in readID: "+ tag);
-						if (attributes.flag== 2)	// don't iterate twice, for counters
+						if (attributes.flag== 2)	// don't iterate second read
 							continue;
 					}
 
@@ -1225,7 +1225,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 						continue;
 					}
 
-					++nrReadsSingleLociMapped;	// TODO here?
+					++nrReadsSingleLociMapped;	// the (first) read maps
 					
 					if (pairedEnd) {
 
@@ -3842,10 +3842,11 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 								+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
 								+ bedWrapper.getNrLines()+ " mappings in file\n\t"
 								+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
-								+ nrReadsSingleLociMapped+" mappings map to annotation\n\t"
+								// counter un-reliable, /2 read is skipped in paired-end mode
+								// + nrReadsSingleLociMapped+" mappings map to annotation\n\t"
 								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
 								//+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
-								+ (pairedEnd?(nrReadsSingleLociPairsMapped* 2)+" mappings in annotation-mapped pairs\n\t":"")
+								+ (pairedEnd?(nrReadsSingleLociPairsMapped)+" mappings in annotation-mapped pairs\n\t":"")
 								//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
 								//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
 								+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
