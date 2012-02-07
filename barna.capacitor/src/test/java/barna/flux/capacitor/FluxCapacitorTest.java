@@ -19,6 +19,8 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import junit.framework.Assert;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -307,6 +309,18 @@ public class FluxCapacitorTest {
 				String s1, s2;
 				while ((s1= b1.readLine())!= null&& (s2= b2.readLine())!= null) {
 					System.err.println(s1);
+					String[] ss= s1.split("\\s");
+					if (ss[9].contains("NM_001159750"))
+						assertEquals(ss[ss.length- 1], "244929.484375");
+					else if (ss[9].contains("NM_001159751"))
+						assertEquals(ss[ss.length- 1], "32835.675781");
+					else if (ss[9].contains("NM_011541"))
+						assertEquals(ss[ss.length- 1], "77404.234375");
+					else if (ss[9].contains("NM_019397"))
+						assertEquals(ss[ss.length- 1], "27483.478516");
+					else
+						Assert.fail("Unknown Transcript ID: "+ ss[9]);
+					
 					assertEquals(s1, s2);
 				}
 				assertFalse(b1.ready());
