@@ -475,4 +475,52 @@ public class FluxCapacitorTest {
 	
 	}
 
+	@Test
+	public void testOutputProfiles() {
+	
+		try {					
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE, 
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED, 
+					false,
+					// keep sorted
+					false);
+			File proFile= new File(FileHelper.append(outFile.getAbsolutePath(), "_profiles", true, "txt"));
+			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
+			try {
+				buffy.write(FluxCapacitorSettings.PROFILE_FILE.getName()+" "+
+						proFile.getAbsolutePath());
+				buffy.close();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			runCapacitor();
+	
+			// check
+			try{
+				BufferedReader b1= new BufferedReader(new FileReader(proFile));
+				String s1;
+				while ((s1= b1.readLine())!= null) {
+					System.err.println(s1);
+				}
+				b1.close();
+				
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+	
+	}
+
 }

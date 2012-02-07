@@ -209,6 +209,25 @@ public class FluxCapacitorSettings extends ParameterSchema {
             }
         }, relativePathParser);
 
+
+	    /**
+	     * The file for outputting the learned profiles.
+	     */
+		public static final Parameter<File> PROFILE_FILE= Parameters.fileParameter("PROFILE_FILE", "The file for outputting profiles", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                if (file== null)
+                	return;
+                if (!file.getParentFile().exists()) {
+                    throw new ParameterException("Folder for output file " + file.getAbsolutePath() 
+                    		+ " could not be found!");
+                }
+
+            }
+            
+        }, relativePathParser);
+
 	    /**
 	     * The file for fragments of correctly paired reads (insert sizes).
 	     */
