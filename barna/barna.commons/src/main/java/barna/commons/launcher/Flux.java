@@ -174,6 +174,15 @@ public class Flux {
                 Execute.initialize(simulator.getThreads());
 
                 tool.call();
+            }catch (OutOfMemoryError outOfMemoryError){
+                int mb = 1024*1024;
+                long maxMemoryBytes = Runtime.getRuntime().maxMemory();
+                long maxMemoryMB = (maxMemoryBytes/mb);
+                Log.error("The Flux " + simulator.getToolName() + " tool run into memory problems ! " +
+                        "Please use the FLUX_MEM environment variable to increase the memory. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
+                        "6 GB of memory.");
+                Log.error("Current memory setting : " + maxMemoryMB + " MB");
+                System.exit(-1);
             } catch (IOException ioError) {
                 // check for some specific errors
                 if (ioError.getMessage().equals("No space left on device")) {
