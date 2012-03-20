@@ -1,37 +1,25 @@
 package barna.flux.capacitor;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import barna.commons.Execute;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
+import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
+import barna.io.FileHelper;
+import barna.io.Sorter;
+import barna.io.rna.UniversalReadDescriptor;
+import junit.framework.Assert;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.util.concurrent.Future;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import junit.framework.Assert;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import barna.commons.Execute;
-import barna.flux.capacitor.reconstruction.FluxCapacitor;
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
-import barna.io.FileHelper;
-import barna.io.Sorter;
-import barna.io.rna.UniversalReadDescriptor;
+import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
@@ -148,12 +136,13 @@ public class FluxCapacitorTest {
 		parFile.deleteOnExit();
 	}
 
-	protected void runCapacitor() throws Exception{
+	protected FluxCapacitorStats runCapacitor() throws Exception{
 		FluxCapacitor capacitor= new FluxCapacitor();
 		capacitor.setFile(parFile);
-		Future<Void> captain= Execute.getExecutor().submit(capacitor);
-		captain.get();
-		outFile.deleteOnExit();
+		Future<FluxCapacitorStats> captain= Execute.getExecutor().submit(capacitor);
+        FluxCapacitorStats stats = captain.get();
+        outFile.deleteOnExit();
+        return stats;
 	}
 
 	protected void initFiles(byte compressionGTF, int sortGTF, boolean writeProtectGTF,   
@@ -454,10 +443,22 @@ public class FluxCapacitorTest {
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
-			runCapacitor();
-			
-			
-			// check
+            FluxCapacitorStats stats = runCapacitor();
+            assertNotNull(stats);
+            assertEquals(1, stats.getLociSingle());
+            assertEquals(0, stats.getLociExp());
+            assertEquals(4, stats.getTxExp());
+            assertEquals(0, stats.getEventsExp());
+            assertEquals(566, stats.getMappingsSingle());
+            assertEquals(586, stats.getMappingsSinglePairs());
+            assertEquals(283, stats.getMappingsSinglePairsMapped());
+            assertEquals(8009, stats.getMappingsTotal());
+            assertEquals(8044, stats.getMappingsMapped());
+            assertEquals(0, stats.getMappingsPairsNa());
+            assertEquals(208, stats.getMappingsPairsWo());
+            assertEquals(0, stats.getMappingsNotSens());
+
+            // check
 			BufferedReader buffy2= new BufferedReader(new FileReader(insFile));
 			String s= null;
 			while ((s= buffy2.readLine())!= null) {

@@ -40,13 +40,13 @@ import barna.model.splicegraph.AbstractEdge;
 import barna.model.splicegraph.SimpleEdge;
 import barna.model.splicegraph.SplicingGraph;
 import barna.model.splicegraph.SuperEdge;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
-
-import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -65,22 +65,22 @@ import java.util.zip.ZipOutputStream;
  *
  */
 @Cli(name = "capacitor", description = "Flux Capacitor")
-public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
+public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
 
-	public final static String 
-							JSON_LOCI_SINGLE= "LOCI_NO-AS",	
-							JSON_MAPPINGS_SL= "MAPPINGS_NO-AS",
-							JSON_MAPPINGS_SL_PAIRS= "MAPPING-PAIRS_NO-AS",
-							JSON_MAPPINGS_SL_PAIRS_MAPPED= "MAPPING-PAIRS_NO-AS_MAPPED",
-
-							JSON_MAPPINGS_TOTAL= "MAPPINGS_TOTAL",
-							JSON_MAPPINGS_MAPPED= "MAPPINGS_MAPPED",
-							JSON_MAPPINGS_PAIRS_NA= "MAPPINGS_PAIRS-WO",
-							JSON_MAPPINGS_PAIRS_WO= "MAPPINGS_PAIRS-WO",
-							JSON_MAPPINGS_NOTSENSE= "MAPPINGS_NOTSENSE",
-							JSON_LOCI_EXP= "LOCI_EXP",
-							JSON_TX_EXP= "TX_EXP",
-							JSON_EVENTS_EXP= "EVENTS_EXP";
+//	public final static String
+//							JSON_LOCI_SINGLE= "LOCI_NO-AS",
+//							JSON_MAPPINGS_SL= "MAPPINGS_NO-AS",
+//							JSON_MAPPINGS_SL_PAIRS= "MAPPING-PAIRS_NO-AS",
+//							JSON_MAPPINGS_SL_PAIRS_MAPPED= "MAPPING-PAIRS_NO-AS_MAPPED",
+//
+//							JSON_MAPPINGS_TOTAL= "MAPPINGS_TOTAL",
+//							JSON_MAPPINGS_MAPPED= "MAPPINGS_MAPPED",
+//							JSON_MAPPINGS_PAIRS_NA= "MAPPINGS_PAIRS-WO",
+//							JSON_MAPPINGS_PAIRS_WO= "MAPPINGS_PAIRS-WO",
+//							JSON_MAPPINGS_NOTSENSE= "MAPPINGS_NOTSENSE",
+//							JSON_LOCI_EXP= "LOCI_EXP",
+//							JSON_TX_EXP= "TX_EXP",
+//							JSON_EVENTS_EXP= "EVENTS_EXP";
 
 	
 	
@@ -111,7 +111,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	public static boolean 
 		cheatDoNotExit= false,
 		cheatLearn= false, 
-		cheatDisableFCheck= true,
+		cheatDisableFCheck= false,
 		cheatEnableCleanup= false,
 		cheatCopyFile= false,
 		doUseLocusNormalization= false;
@@ -1972,7 +1972,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	BufferedWriter testWriter;
 	
 	@Override
-	public Void call() throws Exception {
+	public FluxCapacitorStats call() throws Exception {
 
 		// TODO not here
 		if (loadLibraries()< 0)
@@ -2037,14 +2037,26 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		// run
 		long t0= System.currentTimeMillis();
 
-		profile= getProfile();
+        FluxCapacitorStats stats = new FluxCapacitorStats();
+		profile= getProfile(stats);
 		if (profile== null) {
 			exit(-1);
 		}
-		
-		if(1== 2)
-			explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
+        explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
+        // write stats
+        File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
+        if(statsFile!= null){
+            try {
+                BufferedWriter statsWriter = new BufferedWriter(new FileWriter(statsFile));
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                String jsonString = gson.toJson(stats);
+                statsWriter.write(jsonString);
+                statsWriter.close();
+            } catch (Exception e) {
+                Log.error("Unable to write stats file to " + statsFile.getAbsolutePath() +" : " + e.getMessage());
+            }
+        }
 		
 		fileFinish();
 		
@@ -2053,7 +2065,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 		
 		//System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
 		
-		return null;
+		return stats;
 	}
 
 	private Profile readProfiles(File fileProfileOriginal) {
@@ -2908,7 +2920,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	double costModelPar= Double.NaN;
 	float[] costBounds= new float[] {0.95f, Float.NaN};	// how much of the original observation can be subs/add
 	int[] profileBoundaries;
-	Profile getProfile() {
+	Profile getProfile(FluxCapacitorStats stats) {
 		if (uniform) {
 			profile= new Profile(this);
 			int nr= profile.fill();
@@ -2931,7 +2943,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			if (profile== null) {
 				profile= new Profile(this);
 				try {
-					explore(FluxCapacitorConstants.MODE_LEARN);			
+					explore(FluxCapacitorConstants.MODE_LEARN, stats);
 				} catch (Throwable e) {
 					e.printStackTrace();
 					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
@@ -3674,7 +3686,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	protected boolean printParameters;
 	
 
-	void exploreFinish(byte mode, long secs) {
+	void exploreFinish(byte mode, long secs, FluxCapacitorStats stats) {
 
 		try {
 					
@@ -3712,28 +3724,17 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				}
 			
 				// output stats
-				if (settings.get(FluxCapacitorSettings.STATS_FILE)!= null) {
-					JsonWriter jsonWriter= 
-						new JsonWriter(new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.STATS_FILE))));
-					jsonWriter.beginObject();
-					jsonWriter.name(JSON_LOCI_SINGLE);
-					jsonWriter.value(nrSingleTranscriptLoci);
-					jsonWriter.name(JSON_MAPPINGS_TOTAL);
-					jsonWriter.value(bedWrapper.getNrLines());
-					jsonWriter.name(JSON_MAPPINGS_SL);
-					jsonWriter.value(nrReadsSingleLoci);
+				if (stats != null) {
+                    stats.setLociSingle(nrSingleTranscriptLoci);
+					stats.setMappingsTotal(bedWrapper.getNrLines());
+					stats.setMappingsSingle(nrReadsSingleLoci);
 					if (strand== FluxCapacitorConstants.STRAND_SPECIFIC) {
-						jsonWriter.name(JSON_MAPPINGS_NOTSENSE);
-						jsonWriter.value(nrMappingsWrongStrand);
+						stats.setMappingsNotSens(nrMappingsWrongStrand);
 					}
 					if (pairedEnd) {
-						jsonWriter.name(JSON_MAPPINGS_SL_PAIRS);
-						jsonWriter.value(nrReadsSingleLociPairsMapped);
-						jsonWriter.name(JSON_MAPPINGS_SL_PAIRS_MAPPED);
-						jsonWriter.value(nrReadsSingleLociMapped);
+						stats.setMappingsSinglePairs(nrReadsSingleLociPairsMapped);
+						stats.setMappingsSinglePairsMapped(nrReadsSingleLociMapped);
 					}
-					jsonWriter.endObject();
-					jsonWriter.close();
 				}
 				
 			} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
@@ -3771,38 +3772,26 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				}
 				
 				// output stats
-				if (settings.get(FluxCapacitorSettings.STATS_FILE)!= null) {
-					JsonWriter jsonWriter= 
-						new JsonWriter(new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.STATS_FILE))));
-					jsonWriter.beginObject();
-					jsonWriter.name(JSON_MAPPINGS_TOTAL);
-					jsonWriter.value(bedWrapper.getNrLines());
-					jsonWriter.name(JSON_MAPPINGS_MAPPED);
-					jsonWriter.value(nrReadsMapped);
+				if (stats != null) {
+					stats.setMappingsTotal(bedWrapper.getNrLines());
+					stats.setMappingsMapped(nrReadsMapped);
 					if (pairedEnd) {
-						jsonWriter.name(JSON_MAPPINGS_PAIRS_NA);
-						jsonWriter.value(nrPairsNoTxEvidence);
-						jsonWriter.name(JSON_MAPPINGS_PAIRS_WO);
-						jsonWriter.value(nrPairsWrongOrientation);
+						stats.setMappingsPairsNa(nrPairsNoTxEvidence);
+                        stats.setMappingsPairsWo(nrPairsWrongOrientation);
 					}
 					if (strand== FluxCapacitorConstants.STRAND_SPECIFIC) {
-						jsonWriter.name(JSON_MAPPINGS_NOTSENSE);
-						jsonWriter.value(nrMappingsWrongStrand);
+                        stats.setMappingsNotSens(nrMappingsWrongStrand);
 					}
 					if (outputGene) {
-						jsonWriter.name(JSON_LOCI_EXP);
-						jsonWriter.value(nrLociExp);
+						stats.setLociExp(nrLociExp);
 					}
 					if (outputTranscript) {
-						jsonWriter.name(JSON_TX_EXP);
-						jsonWriter.value(nrTxExp);
+						stats.setTxExp(nrTxExp);
 					}
 					if (outputEvent) {
-						jsonWriter.name(JSON_EVENTS_EXP);
-						jsonWriter.value(nrEvents);
+
+						stats.setEventsExp(nrEvents);
 					}
-					jsonWriter.endObject();
-					jsonWriter.close();
 				}
 			}
 			
@@ -3812,7 +3801,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 
 
 	}
-	public boolean explore(byte mode) {
+	public boolean explore(byte mode, FluxCapacitorStats stats) {
 	
 			nrSingleTranscriptLoci= 0;
 			nrReadsLoci= 0;
@@ -3986,7 +3975,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				//checkBEDscanMappings= getBedReader().getNrLines();
 				
 				// close readers, output
-				exploreFinish(mode, ((System.currentTimeMillis()- t0)/ 1000));
+				exploreFinish(mode, ((System.currentTimeMillis()- t0)/ 1000), stats);
 				
 			} catch (Exception e1) {
 				Log.error("Error while iterating loci:", e1);
