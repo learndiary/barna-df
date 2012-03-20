@@ -46,6 +46,8 @@ import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
+import com.google.gson.stream.JsonWriter;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -65,6 +67,23 @@ import java.util.zip.ZipOutputStream;
 @Cli(name = "capacitor", description = "Flux Capacitor")
 public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 
+	public final static String 
+							JSON_LOCI_SINGLE= "LOCI_NO-AS",	
+							JSON_MAPPINGS_SL= "MAPPINGS_NO-AS",
+							JSON_MAPPINGS_SL_PAIRS= "MAPPING-PAIRS_NO-AS",
+							JSON_MAPPINGS_SL_PAIRS_MAPPED= "MAPPING-PAIRS_NO-AS_MAPPED",
+
+							JSON_MAPPINGS_TOTAL= "MAPPINGS_TOTAL",
+							JSON_MAPPINGS_MAPPED= "MAPPINGS_MAPPED",
+							JSON_MAPPINGS_PAIRS_NA= "MAPPINGS_PAIRS-WO",
+							JSON_MAPPINGS_PAIRS_WO= "MAPPINGS_PAIRS-WO",
+							JSON_MAPPINGS_NOTSENSE= "MAPPINGS_NOTSENSE",
+							JSON_LOCI_EXP= "LOCI_EXP",
+							JSON_TX_EXP= "TX_EXP",
+							JSON_EVENTS_EXP= "EVENTS_EXP";
+
+	
+	
 	public static enum SupportedFormatExtensions {
 		GTF, GFF, BED,
 	}
@@ -92,7 +111,7 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	public static boolean 
 		cheatDoNotExit= false,
 		cheatLearn= false, 
-		cheatDisableFCheck= false,
+		cheatDisableFCheck= true,
 		cheatEnableCleanup= false,
 		cheatCopyFile= false,
 		doUseLocusNormalization= false;
@@ -2023,7 +2042,8 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 			exit(-1);
 		}
 		
-		explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
+		if(1== 2)
+			explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
 		
 		fileFinish();
@@ -3654,6 +3674,144 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 	protected boolean printParameters;
 	
 
+	void exploreFinish(byte mode, long secs) {
+
+		try {
+					
+			
+			if (mode== FluxCapacitorConstants.MODE_LEARN) {
+				
+				if (pairedEnd&& func.getTProfiles()!= null) {
+					insertMinMax= getInsertMinMax();
+				}
+				// close coverage writer
+				if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
+					writerTmpCovStats.close();
+					writerTmpCovStats= null;
+					
+	
+			if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+					
+					//System.err.println(" OK.");
+					System.err.println("\tfirst round finished .. took "+ secs+ " sec.\n\n\t"
+							+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
+							+ bedWrapper.getNrLines()+ " mappings in file\n\t"
+							+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
+							// counter un-reliable, /2 read is skipped in paired-end mode
+							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
+							//+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
+							+ (pairedEnd?(nrReadsSingleLociPairsMapped)+" mappings in annotation-mapped pairs\n\t"
+									: nrReadsSingleLociMapped+" mappings map to annotation\n\t")
+							//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
+							//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
+							+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
+							+ (pairedEnd&& insertMinMax!= null?insertMinMax[0]+","+insertMinMax[1]+" min/max insert size\n\t":""));
+					//nrUniqueReads= getBedReader().getNrUniqueLinesRead();
+					//System.err.println("\ttotal lines in file "+nrUniqueReads);
+					System.err.println();
+				}
+			
+				// output stats
+				if (settings.get(FluxCapacitorSettings.STATS_FILE)!= null) {
+					JsonWriter jsonWriter= 
+						new JsonWriter(new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.STATS_FILE))));
+					jsonWriter.beginObject();
+					jsonWriter.name(JSON_LOCI_SINGLE);
+					jsonWriter.value(nrSingleTranscriptLoci);
+					jsonWriter.name(JSON_MAPPINGS_TOTAL);
+					jsonWriter.value(bedWrapper.getNrLines());
+					jsonWriter.name(JSON_MAPPINGS_SL);
+					jsonWriter.value(nrReadsSingleLoci);
+					if (strand== FluxCapacitorConstants.STRAND_SPECIFIC) {
+						jsonWriter.name(JSON_MAPPINGS_NOTSENSE);
+						jsonWriter.value(nrMappingsWrongStrand);
+					}
+					if (pairedEnd) {
+						jsonWriter.name(JSON_MAPPINGS_SL_PAIRS);
+						jsonWriter.value(nrReadsSingleLociPairsMapped);
+						jsonWriter.name(JSON_MAPPINGS_SL_PAIRS_MAPPED);
+						jsonWriter.value(nrReadsSingleLociMapped);
+					}
+					jsonWriter.endObject();
+					jsonWriter.close();
+				}
+				
+			} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
+				while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
+					try {
+						threadPool.elementAt(0).join();
+					} catch (Exception e) {
+						; //:)
+					}
+	
+	//					if (fileMappings!= null)
+	//						getSammy().close();
+				
+				//assert(nrUniqueReads==getBedReader().getNrUniqueLinesRead());	// take out for cheat
+				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
+					System.err.println();
+					System.err.println("\treconstruction finished .. took "+ secs+ " sec.\n\n\t"
+							+ bedWrapper.getNrLines()+" mappings read from file\n\t"
+							// no info, reads in redundantly many reads
+							//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
+							+ nrReadsMapped+ " mappings"+ (pairedEnd?" in pairs":"s") +" map to annotation\n"
+							+ (pairedEnd?
+								"\t"+ nrPairsNoTxEvidence+ " mappings without tx evidence\n"
+								+ "\t"+ nrPairsWrongOrientation+ " mappings with wrong orientation\n"
+								//+ "\t"+ nrMappingsForced+ " single mappings forced\n"
+								:"")
+							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
+							//+ nrMultiMaps+" mapped multiply.\n\n\t"
+							+ (outputGene?"\n\t"+ nrLoci+ " loci, "+ nrLociExp+ " detected":"")
+							+ (outputTranscript?"\n\t"+nrTx+" transcripts, "+nrTxExp+" detected":"")
+							+ (outputEvent?"\n\t"+ nrEvents+" ASevents of dimension "+eventDim+", "+nrEventsExp+" detected":"")
+							+ "\n"
+							//+ nrUnsolved+" unsolved systems."
+							);
+				}
+				
+				// output stats
+				if (settings.get(FluxCapacitorSettings.STATS_FILE)!= null) {
+					JsonWriter jsonWriter= 
+						new JsonWriter(new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.STATS_FILE))));
+					jsonWriter.beginObject();
+					jsonWriter.name(JSON_MAPPINGS_TOTAL);
+					jsonWriter.value(bedWrapper.getNrLines());
+					jsonWriter.name(JSON_MAPPINGS_MAPPED);
+					jsonWriter.value(nrReadsMapped);
+					if (pairedEnd) {
+						jsonWriter.name(JSON_MAPPINGS_PAIRS_NA);
+						jsonWriter.value(nrPairsNoTxEvidence);
+						jsonWriter.name(JSON_MAPPINGS_PAIRS_WO);
+						jsonWriter.value(nrPairsWrongOrientation);
+					}
+					if (strand== FluxCapacitorConstants.STRAND_SPECIFIC) {
+						jsonWriter.name(JSON_MAPPINGS_NOTSENSE);
+						jsonWriter.value(nrMappingsWrongStrand);
+					}
+					if (outputGene) {
+						jsonWriter.name(JSON_LOCI_EXP);
+						jsonWriter.value(nrLociExp);
+					}
+					if (outputTranscript) {
+						jsonWriter.name(JSON_TX_EXP);
+						jsonWriter.value(nrTxExp);
+					}
+					if (outputEvent) {
+						jsonWriter.name(JSON_EVENTS_EXP);
+						jsonWriter.value(nrEvents);
+					}
+					jsonWriter.endObject();
+					jsonWriter.close();
+				}
+			}
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+
+
+	}
 	public boolean explore(byte mode) {
 	
 			nrSingleTranscriptLoci= 0;
@@ -3826,76 +3984,9 @@ public class FluxCapacitor implements FluxTool<Void>, ReadStatCalculator {
 				if (checkBEDscanMappings> 0&& checkBEDscanMappings!= bedWrapper.getNrLines())
 					System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ bedWrapper.getNrLines());
 				//checkBEDscanMappings= getBedReader().getNrLines();
-				if (mode== FluxCapacitorConstants.MODE_LEARN) {
-	
-					if (pairedEnd&& func.getTProfiles()!= null) {
-						insertMinMax= getInsertMinMax();
-					}
-					// close coverage writer
-					if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
-						try {
-							writerTmpCovStats.close();
-							writerTmpCovStats= null;
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-						
-	
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						
-						//System.err.println(" OK.");
-						System.err.println("\tfirst round finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
-								+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
-								+ bedWrapper.getNrLines()+ " mappings in file\n\t"
-								+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
-								// counter un-reliable, /2 read is skipped in paired-end mode
-								// + nrReadsSingleLociMapped+" mappings map to annotation\n\t"
-								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
-								//+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
-								+ (pairedEnd?(nrReadsSingleLociPairsMapped)+" mappings in annotation-mapped pairs\n\t":"")
-								//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
-								//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
-								+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
-								+ (pairedEnd&& insertMinMax!= null?insertMinMax[0]+","+insertMinMax[1]+" min/max insert size\n\t":""));
-						//nrUniqueReads= getBedReader().getNrUniqueLinesRead();
-						//System.err.println("\ttotal lines in file "+nrUniqueReads);
-						System.err.println();
-					}
-					
-				} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-					while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
-						try {
-							threadPool.elementAt(0).join();
-						} catch (Exception e) {
-							; //:)
-						}
-	
-	//					if (fileMappings!= null)
-	//						getSammy().close();
-					
-					//assert(nrUniqueReads==getBedReader().getNrUniqueLinesRead());	// take out for cheat
-					if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-						System.err.println();
-						System.err.println("\treconstruction finished .. took "+((System.currentTimeMillis()- t0)/ 1000)+ " sec.\n\n\t"
-								+ bedWrapper.getNrLines()+" mappings read from file\n\t"
-								// no info, reads in redundantly many reads
-								//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
-								+ nrReadsMapped+ " mappings"+ (pairedEnd?" in pairs":"s") +" map to annotation\n"
-								+ (pairedEnd?
-									"\t"+ nrPairsNoTxEvidence+ " mappings without tx evidence\n"
-									+ "\t"+ nrPairsWrongOrientation+ " mappings with wrong orientation\n"
-									//+ "\t"+ nrMappingsForced+ " single mappings forced\n"
-									:"")
-								+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction\n\t":"")
-								//+ nrMultiMaps+" mapped multiply.\n\n\t"
-								+ (outputGene?"\n\t"+ nrLoci+ " loci, "+ nrLociExp+ " detected":"")
-								+ (outputTranscript?"\n\t"+nrTx+" transcripts, "+nrTxExp+" detected":"")
-								+ (outputEvent?"\n\t"+ nrEvents+" ASevents of dimension "+eventDim+", "+nrEventsExp+" detected":"")
-								+ "\n"
-								//+ nrUnsolved+" unsolved systems."
-								);
-					}					
-				}
+				
+				// close readers, output
+				exploreFinish(mode, ((System.currentTimeMillis()- t0)/ 1000));
 				
 			} catch (Exception e1) {
 				Log.error("Error while iterating loci:", e1);
