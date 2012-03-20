@@ -307,6 +307,21 @@ public class FluxCapacitorSettings extends ParameterSchema {
         }, relativePathParser);
 
 	    /**
+	     * The file where profiles are stored in.
+	     */
+	    public static final Parameter<File> STATS_FILE = Parameters.fileParameter("STATS_FILE", "The file to which the run characteristics are written", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                // if set for writing, check whether the parent directory is valid
+                if ((file != null)&& (!file.exists())&& ((!file.getParentFile().exists())|| (!file.getParentFile().canWrite()))) {
+                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath() 
+                    		+ " to write stats file "+ file.getName()+ " cannot be found or is write-protected.");
+                }
+            }
+        }, relativePathParser);
+
+	    /**
 	     * The temporary directory.
 	     */
 	    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "The temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
