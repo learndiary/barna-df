@@ -43,7 +43,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <Build-Version>${project.version}</Build-Version>
-        <buildNumber></buildNumber>
+        <buildNumber>1</buildNumber>
         <Flux-JDK>1.6</Flux-JDK>
     </properties>
 
