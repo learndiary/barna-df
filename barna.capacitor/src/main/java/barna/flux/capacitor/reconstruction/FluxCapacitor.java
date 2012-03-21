@@ -49,6 +49,8 @@ import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -2052,6 +2054,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             BufferedWriter writer = null;
             BufferedReader reader = null;
             Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
+
+            File lockFile = new File(statsFile.getAbsolutePath()+".lock");
+            if(!lockFile.exists()) lockFile.createNewFile();
+            FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+            FileLock lock = channel.lock();
+
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 if (statsFile.exists() && append) {
@@ -2071,6 +2079,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             } finally {
                 if(reader != null)reader.close();
                 if(writer != null)writer.close();
+                // release the lock
+                lock.release();
             }
         }
 		
