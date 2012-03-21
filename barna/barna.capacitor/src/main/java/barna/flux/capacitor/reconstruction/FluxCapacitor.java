@@ -2044,17 +2044,32 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		}
         explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
-        // write stats
+        // BARNA-103 : write stats to file
         File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
-        if(statsFile!= null){
+        if(statsFile!= null) {
+            FluxCapacitorStats statsToWrite = stats;
+            BufferedWriter writer = null;
+            BufferedReader reader = null;
+            Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
             try {
-                BufferedWriter statsWriter = new BufferedWriter(new FileWriter(statsFile));
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                String jsonString = gson.toJson(stats);
-                statsWriter.write(jsonString);
-                statsWriter.close();
+                if (statsFile.exists() && append) {
+                    // read stats file and append
+                    reader = new BufferedReader(new FileReader(statsFile));
+                    FluxCapacitorStats existingStats = gson.fromJson(reader, FluxCapacitorStats.class);
+                    reader.close();
+                    existingStats.add(stats);
+                    statsToWrite = existingStats;
+                }
+                Log.info((append ? "Appending stats to " : "Writing stats to " )+statsFile.getAbsolutePath());
+                writer = new BufferedWriter(new FileWriter(statsFile));
+                gson.toJson(statsToWrite, writer);
+                writer.close();
             } catch (Exception e) {
-                Log.error("Unable to write stats file to " + statsFile.getAbsolutePath() +" : " + e.getMessage());
+                Log.error("unable to " +(append ? "append stats to " : "write stats to " )+statsFile.getAbsolutePath() + " : " +e.getMessage(),e);
+            } finally {
+                reader.close();
+                writer.close();
             }
         }
 		

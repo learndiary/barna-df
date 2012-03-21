@@ -220,6 +220,26 @@ public class FileHelper {
     }
 
     /**
+     * Reads the full content of the given file as string using '\n' as
+     * line separator
+     *
+     * @param file the source file
+     * @return content the content as string
+     * @throws IOException in case of an error while reading the file
+     */
+    public static String readContent(File file) throws IOException {
+        if(file == null) throw new NullPointerException();
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+        String l = null;
+        StringBuffer b = new StringBuffer();
+        while( (l = bufferedReader.readLine()) != null){
+            b.append(l).append("\n");
+        }
+        return b.toString();
+    }
+
+
+    /**
      * Unpacks a source file to a destination file. In case of multi-file archives (e.g., ZIP), 
      * the first file is unpacked to the destination.
      * @param src source file

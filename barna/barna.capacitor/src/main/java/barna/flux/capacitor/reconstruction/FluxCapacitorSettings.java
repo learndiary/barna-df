@@ -11,21 +11,16 @@
 
 package barna.flux.capacitor.reconstruction;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import barna.commons.parameters.FileNameParser;
-import barna.commons.parameters.Parameter;
-import barna.commons.parameters.ParameterException;
-import barna.commons.parameters.ParameterSchema;
-import barna.commons.parameters.ParameterValidator;
-import barna.commons.parameters.Parameters;
+import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
@@ -235,23 +230,23 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
-                if (file== null)
-                	return;
+                if (file == null)
+                    return;
                 if (!file.getParentFile().exists()) {
-                    throw new ParameterException("Folder for output file " + file.getAbsolutePath() 
-                    		+ " could not be found!");
+                    throw new ParameterException("Folder for output file " + file.getAbsolutePath()
+                            + " could not be found!");
                 }
-                
+
                 // check pre-conditions for read pairing
-            	UniversalReadDescriptor d= schema.get(READ_DESCRIPTOR);
-            	AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
-            	if (!(d.isPaired()&& (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.COMBINED)))) {
-                    throw new ParameterException("Read pairing required for annotating inserts: "+
-                    		(d.isPaired()? ANNOTATION_MAPPING.getName()+ " "+ a.toString(): READ_DESCRIPTOR.getName()+ " "+ d.toString()));
-            	}
+                UniversalReadDescriptor d = schema.get(READ_DESCRIPTOR);
+                AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
+                if (!(d.isPaired() && (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.COMBINED)))) {
+                    throw new ParameterException("Read pairing required for annotating inserts: " +
+                            (d.isPaired() ? ANNOTATION_MAPPING.getName() + " " + a.toString() : READ_DESCRIPTOR.getName() + " " + d.toString()));
+                }
 
             }
-            
+
         }, relativePathParser);
 
 	    /**
@@ -299,9 +294,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 // if set for writing, check whether the parent directory is valid
-                if ((file != null)&& (!file.exists())&& ((!file.getParentFile().exists())|| (!file.getParentFile().canWrite()))) {
-                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath() 
-                    		+ " to write coverage file "+ file.getName()+ " cannot be found or is write-protected.");
+                if ((file != null) && (!file.exists()) && ((!file.getParentFile().exists()) || (!file.getParentFile().canWrite()))) {
+                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath()
+                            + " to write coverage file " + file.getName() + " cannot be found or is write-protected.");
                 }
             }
         }, relativePathParser);
@@ -320,6 +315,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
             }
         }, relativePathParser);
+        /**
+         * If true, and a stats file is specified, the stats are added to the existing stats. This is useful, i.e, if you if you
+         * run the chromosomes in single runs and want to sum up the stats in one file. NOTE that the stats
+         * are actually added and the stats are summed up. You will 'loose' the old stats
+         */
+        public static final Parameter<Boolean> STATS_FILE_APPEND = Parameters.booleanParameter("STATS_FILE_APPEND", "Append to the stats file. \n" +
+                "This adds results from this run to an existing capacitor stats file.", false);
 
 	    /**
 	     * The temporary directory.

@@ -130,4 +130,25 @@ public class FluxCapacitorStats {
     public void setMappingsNotSens(long mappingsNotSens) {
         this.mappingsNotSens = mappingsNotSens;
     }
+
+    /**
+     * Add the numbers from the given stats to this instance.
+     *
+     * @param other the other stats
+     */
+    public void add(FluxCapacitorStats other){
+        if(other == null) return;
+        this.lociSingle                 += other.lociSingle               ;
+        this.lociExp                    += other.lociExp                  ;
+        this.txExp                      += other.txExp                    ;
+        this.eventsExp                  += other.eventsExp                ;
+        this.mappingsSingle             += other.mappingsSingle           ;
+        this.mappingsSinglePairs        += other.mappingsSinglePairs      ;
+        this.mappingsSinglePairsMapped  += other.mappingsSinglePairsMapped;
+        this.mappingsTotal              += other.mappingsTotal            ;
+        this.mappingsMapped             += other.mappingsMapped           ;
+        this.mappingsPairsNa            += other.mappingsPairsNa          ;
+        this.mappingsPairsWo            += other.mappingsPairsWo          ;
+        this.mappingsNotSens            += other.mappingsNotSens          ;
+    }
 }
