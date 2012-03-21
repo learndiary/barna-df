@@ -2068,8 +2068,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             } catch (Exception e) {
                 Log.error("unable to " +(append ? "append stats to " : "write stats to " )+statsFile.getAbsolutePath() + " : " +e.getMessage(),e);
             } finally {
-                reader.close();
-                writer.close();
+                if(reader != null)reader.close();
+                if(writer != null)writer.close();
             }
         }
 		
