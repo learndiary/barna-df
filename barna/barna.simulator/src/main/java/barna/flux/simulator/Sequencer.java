@@ -129,8 +129,11 @@ public class Sequencer implements Callable<Void> {
     public boolean loadErrors() {
         // load model
         String errorFile = settings.get(FluxSimulatorSettings.ERR_FILE);
+        if(!errorFile.startsWith("/") || !new File(errorFile).exists()) {
+            errorFile = new File(settings.getParameterFile().getParentFile(), errorFile).getAbsolutePath();
+        }
         boolean fastOutput = settings.get(FluxSimulatorSettings.FASTA);
-        if (fastOutput && errorFile != null && errorFile.length() > 0) {
+        if (!fastOutput && errorFile != null && errorFile.length() > 0) {
             QualityErrorModel errorModel;
             try {
                 InputStream input = null;
