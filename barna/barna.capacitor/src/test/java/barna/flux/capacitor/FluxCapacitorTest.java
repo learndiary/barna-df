@@ -8,6 +8,7 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
 import barna.io.FileHelper;
 import barna.io.Sorter;
 import barna.io.rna.UniversalReadDescriptor;
+import com.google.gson.GsonBuilder;
 import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -38,7 +39,8 @@ public class FluxCapacitorTest {
 	protected File parFile= null;
 	protected File gtfFile= null;
 	protected File bedFile= null;
-	
+	protected File statsFile= null;
+
 	
 	
 	private void initFileNames(byte compressionGTF, byte compressionBED) throws Exception {
@@ -51,7 +53,9 @@ public class FluxCapacitorTest {
 		outFile= File.createTempFile(getClass().getSimpleName(), suffixOutput, anoDir);
 		outFile.delete();
 		parFile= File.createTempFile(getClass().getSimpleName(), suffixParameter, anoDir);
-		gtfFile= new File(FileHelper.append(anoDir.getAbsolutePath()+ File.separator+ 
+		statsFile= File.createTempFile(getClass().getSimpleName(), suffixParameter, tmpDir);
+        statsFile.delete();
+		gtfFile= new File(FileHelper.append(anoDir.getAbsolutePath()+ File.separator+
 				GTF_SORTED.getName(), null, false, FileHelper.getCompressionExtension(compressionGTF)));
 		gtfFile.delete();		
 		bedFile= new File(FileHelper.append(mapDir.getAbsolutePath()+ 
@@ -124,7 +128,9 @@ public class FluxCapacitorTest {
 				AnnotationMapping.PAIRED);
 		settings.set(FluxCapacitorSettings.STDOUT_FILE, 
 				outFile);
-//		settings.set(FluxCapacitorSettings.COVERAGE_STATS, 
+		settings.set(FluxCapacitorSettings.STATS_FILE,
+				statsFile);
+//		settings.set(FluxCapacitorSettings.COVERAGE_STATS,
 //				true);
 //		settings.set(FluxCapacitorSettings.COVERAGE_FILE, 
 //				new File(anoDir.getAbsolutePath()+ File.separator+ getClass().getSimpleName()+ "_coverage.txt"));
@@ -206,6 +212,53 @@ public class FluxCapacitorTest {
 			files= mapDir.list();
 			assertTrue(files.length== 1);	// mapping file only
 			
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
+
+	}
+	@Test
+	public void testStasAreWrittenAndContainValidData() {
+
+		try {
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED,
+					false,
+					// keep sorted
+					false);
+
+            FluxCapacitorStats stats = runCapacitor();
+            assertNotNull(stats);
+            assertTrue(statsFile.exists());
+
+            FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
+            assertNotNull(loaded);
+
+            assertEquals(loaded.getLociSingle()               ,   stats.getLociSingle()                   );
+            assertEquals(loaded.getLociExp()                  ,   stats.getLociExp()                      );
+            assertEquals(loaded.getTxExp()                    ,   stats.getTxExp()                        );
+            assertEquals(loaded.getEventsExp()                ,   stats.getEventsExp()                    );
+            assertEquals(loaded.getMappingsSingle()           ,   stats.getMappingsSingle()               );
+            assertEquals(loaded.getMappingsSinglePairs()      ,   stats.getMappingsSinglePairs()          );
+            assertEquals(loaded.getMappingsSinglePairsMapped(),   stats.getMappingsSinglePairsMapped()    );
+            assertEquals(loaded.getMappingsTotal()            ,   stats.getMappingsTotal()                );
+            assertEquals(loaded.getMappingsMapped()           ,   stats.getMappingsMapped()               );
+            assertEquals(loaded.getMappingsPairsNa()          ,   stats.getMappingsPairsNa()              );
+            assertEquals(loaded.getMappingsPairsWo()          ,   stats.getMappingsPairsWo()              );
+            assertEquals(loaded.getMappingsNotSens()          ,   stats.getMappingsNotSens()              );
+
+
+
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
