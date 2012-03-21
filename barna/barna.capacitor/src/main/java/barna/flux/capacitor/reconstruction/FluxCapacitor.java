@@ -1241,9 +1241,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 							// check again strand in case one strand-info had been lost
 							if (stranded) {
 								if ((tx.getStrand()== bed2.getStrand()&& attributes2.strand== 2)
-										|| (tx.getStrand()!= bed2.getStrand()&& attributes2.strand== 1))
-								++nrMappingsWrongStrand;
-								continue;
+										|| (tx.getStrand()!= bed2.getStrand()&& attributes2.strand== 1)){
+								    ++nrMappingsWrongStrand;
+								    continue;
+                                }
 							}
 							
 							// check directionality (sequencing-by-synthesis)
