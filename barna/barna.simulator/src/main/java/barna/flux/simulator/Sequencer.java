@@ -133,7 +133,7 @@ public class Sequencer implements Callable<Void> {
             errorFile = new File(settings.getParameterFile().getParentFile(), errorFile).getAbsolutePath();
         }
         boolean fastOutput = settings.get(FluxSimulatorSettings.FASTA);
-        if (!fastOutput && errorFile != null && errorFile.length() > 0) {
+        if (errorFile != null && errorFile.length() > 0) {
             QualityErrorModel errorModel;
             try {
                 InputStream input = null;
