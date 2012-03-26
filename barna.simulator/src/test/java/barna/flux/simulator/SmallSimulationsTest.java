@@ -77,6 +77,32 @@ public class SmallSimulationsTest {
         // check read count
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
     }
+    @Test
+    public void testRunWithCustomErrorModelAndParameters(){
+
+        // disable any questions
+        Log.setInteractive(false);
+        // the setting file
+        File settings = new File(getClass().getResource("/human100.par").getFile());
+
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(true);
+        pipeline.setSequence(true);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // check read count
+        assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+        // we should have a fastq file
+        assertTrue(new File(settings.getParentFile(), "human100.fastq").exists());
+    }
 
     @Test
     public void testMinimalProfile(){
