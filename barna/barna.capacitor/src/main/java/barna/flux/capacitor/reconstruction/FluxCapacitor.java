@@ -2056,7 +2056,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
 
             File lockFile = new File(statsFile.getAbsolutePath()+".lock");
-            if(!lockFile.exists()) lockFile.createNewFile();
+//            if(!lockFile.exists()) lockFile.createNewFile();
             FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
             FileLock lock = channel.lock();
 
@@ -2075,12 +2075,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 gson.toJson(statsToWrite, writer);
                 writer.close();
             } catch (Exception e) {
-                Log.error("unable to " +(append ? "append stats to " : "write stats to " )+statsFile.getAbsolutePath() + " : " +e.getMessage(),e);
+                Log.error("Unable to " +(append ? "append stats to " : "write stats to " )+statsFile.getAbsolutePath() + " : " +e.getMessage(),e);
             } finally {
                 if(reader != null)reader.close();
                 if(writer != null)writer.close();
                 // release the lock
-                lock.release();
+                try {
+                    lock.release();
+                } catch (IOException e) {
+                    Log.error("Unable to release lock");
+                }
+                channel.close();
             }
         }
 		
