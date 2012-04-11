@@ -42,7 +42,7 @@ public class SimulationPipeline implements FluxTool<Void> {
 
 			final SimulationPipeline mySimulator= new SimulationPipeline();
 			mySimulator.setFile(new File(args[0]));
-			mySimulator.setExpression(true);
+			mySimulator.setExpression(false);
 			mySimulator.setLibrary(true);
 			mySimulator.setSequence(true);
 			

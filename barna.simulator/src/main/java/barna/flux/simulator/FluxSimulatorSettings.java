@@ -152,7 +152,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if(v != null && v.length() > 0){
                 if(!v.equals("35") && !v.equals("76")){
                     // check file
-                    if(!new File(v).canRead()){
+                    if((v.startsWith("/") && !new File(v).canRead())){
                         throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
                     }
                 }
