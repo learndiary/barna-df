@@ -1,0 +1,37 @@
+#REF_FILE_NAME	/Users/nandeng/Desktop/FluxSimulator-1.0-RC5/bin/Homo_Sapiens.GRCh37.65.Protein.Coding_sorted1.gtf
+#PRO_FILE_NAME	/Users/nandeng/Desktop/FluxSimulator-1.0-RC5/bin/human100.pro
+#LIB_FILE_NAME	/Users/nandeng/Desktop/FluxSimulator-1.0-RC5/bin/human100.lib
+#SEQ_FILE_NAME	/Users/nandeng/Desktop/FluxSimulator-1.0-RC5/bin/H50_2M_test.fastq
+#GEN_DIR	/Users/nandeng/Desktop/SimulationReplicates/chromFa1
+#TMP_DIR	/Users/nandeng/Desktop/FluxSimulator-1.0-RC5/bin
+
+REF_FILE_NAME   spike_sequences.gtf
+GEN_DIR         genome_Spikes
+#ERR_FILE BARNA-106-errormodel
+#ERR_FILE 
+NB_MOLECULES	100000
+EXPRESSION_K	-0.6
+#EXPRESSION_X0	5.0E7
+#EXPRESSION_X1	9500.0
+#TSS_MEAN	25.0
+#POLYA_SHAPE	2.0
+#POLYA_SCALE	300.0
+#RT_MIN	500
+#RT_MAX	5500
+#RT_PRIMER	RH
+FRAGMENTATION	YES
+#FRAG_B4_RT	NO
+#FRAG_METHOD	UR
+#FRAG_LAMBDA	700.0
+#FRAG_SIGMA	0.05
+FRAG_NB_THOLD	0.1
+FILTERING	NO
+#LOAD_CODING	YES
+#LOAD_NONCODING	YES
+#FILT_MIN	200
+#FILT_MAX	300
+READ_NUMBER	1000
+READ_LENGTH	50
+PAIRED_END	YES
+FASTA	YES
+#QTHOLD	33.0
