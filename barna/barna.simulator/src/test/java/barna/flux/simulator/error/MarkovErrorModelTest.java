@@ -70,4 +70,12 @@ public class MarkovErrorModelTest {
         assertNotNull(loaded_model);
 
     }
+    @Test
+    public void testThatBARNA106errorModelLoads() throws IOException {
+        QualityErrorModel model = MarkovErrorModel.loadErrorModel(
+                new File(getClass().getResource("/BARNA-106-errormodel").getFile())
+        );
+        assertNotNull(model);
+
+    }
 }

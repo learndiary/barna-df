@@ -1,26 +1,17 @@
 package barna.flux.simulator;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import barna.commons.Execute;
+import barna.commons.log.Log;
+import barna.io.FileHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import barna.commons.Execute;
-import barna.commons.log.Log;
-import barna.io.FileHelper;
+import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -61,6 +52,82 @@ public class SmallSimulationsTest {
 
         // check read count
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+    }
+    @Test
+    public void testRunForCustomErrorModelBarna106(){
+
+        // disable any questions
+        Log.setInteractive(false);
+        // the setting file
+        File settings = new File(getClass().getResource("/simulator-BARNA-106.par").getFile());
+
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(true);
+        pipeline.setSequence(true);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // check read count
+        assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+    }
+    @Test
+    public void testRunWithCustomErrorModelAndParameters(){
+
+        // disable any questions
+        Log.setInteractive(false);
+        // the setting file
+        File settings = new File(getClass().getResource("/human100.par").getFile());
+
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(true);
+        pipeline.setSequence(true);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // check read count
+        assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+        // we should have a fastq file
+        assertTrue(new File(settings.getParentFile(), "human100.fastq").exists());
+    }
+    @Test
+    public void testRunWithoutCustomErrorModelAndFastAOutput(){
+
+        // disable any questions
+        Log.setInteractive(false);
+        // the setting file
+        File settings = new File(getClass().getResource("/human100-2.par").getFile());
+
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(true);
+        pipeline.setSequence(true);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // check read count
+        assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+        // we should have a fastq file
+        assertTrue(new File(settings.getParentFile(), "human100-2.fasta").exists());
     }
 
     @Test

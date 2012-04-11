@@ -49,6 +49,8 @@ import org.cyclopsgroup.jcli.annotation.Cli;
 import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1241,9 +1243,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 							// check again strand in case one strand-info had been lost
 							if (stranded) {
 								if ((tx.getStrand()== bed2.getStrand()&& attributes2.strand== 2)
-										|| (tx.getStrand()!= bed2.getStrand()&& attributes2.strand== 1))
-								++nrMappingsWrongStrand;
-								continue;
+										|| (tx.getStrand()!= bed2.getStrand()&& attributes2.strand== 1)){
+								    ++nrMappingsWrongStrand;
+								    continue;
+                                }
 							}
 							
 							// check directionality (sequencing-by-synthesis)
@@ -2051,6 +2054,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             BufferedWriter writer = null;
             BufferedReader reader = null;
             Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
+
+            File lockFile = new File(statsFile.getAbsolutePath()+".lock");
+//            if(!lockFile.exists()) lockFile.createNewFile();
+            FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+            FileLock lock = channel.lock();
+
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 if (statsFile.exists() && append) {
@@ -2066,10 +2075,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 gson.toJson(statsToWrite, writer);
                 writer.close();
             } catch (Exception e) {
-                Log.error("unable to " +(append ? "append stats to " : "write stats to " )+statsFile.getAbsolutePath() + " : " +e.getMessage(),e);
+                Log.error("Unable to " +(append ? "append stats to " : "write stats to " )+statsFile.getAbsolutePath() + " : " +e.getMessage(),e);
             } finally {
                 if(reader != null)reader.close();
                 if(writer != null)writer.close();
+                // release the lock
+                try {
+                    lock.release();
+                } catch (IOException e) {
+                    Log.error("Unable to release lock");
+                }
+                channel.close();
             }
         }
 		
