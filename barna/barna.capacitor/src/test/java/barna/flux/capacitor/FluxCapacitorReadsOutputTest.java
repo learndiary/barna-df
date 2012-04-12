@@ -192,39 +192,39 @@ public class FluxCapacitorReadsOutputTest {
 	@Test
 	public void testStasAreWrittenAndContainValidData() {
 
-//		try {
-//			initFiles(
-//					// GTF: compressed, sorted, readOnly
-//					FileHelper.COMPRESSION_NONE,
-//					SORTED,
-//					false,
-//					// BED: compressed, sorted, readOnly
-//					FileHelper.COMPRESSION_NONE,
-//					SORTED,
-//					false,
-//					// keep sorted
-//					false);
-//
-//            FluxCapacitorStats stats = runCapacitor();
-//            assertNotNull(stats);
-//            assertTrue(statsFile.exists());
-//
-//            FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
-//            assertTrue(outFile.exists());
-//            BufferedReader reader = new BufferedReader(new FileReader(outFile));
-//            String l = null;
-//            while((l = reader.readLine()) != null ){
-//                System.out.println(l);
-//                assertTrue(l.contains("reads"));
-//            }
-//
-//
-//		} catch (Exception e) {
-//			throw new RuntimeException(e);
-//		} finally {
-//			FileHelper.rmDir(mapDir);
-//			FileHelper.rmDir(anoDir);
-//		}
+		try {
+			initFiles(
+					// GTF: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED,
+					false,
+					// BED: compressed, sorted, readOnly
+					FileHelper.COMPRESSION_NONE,
+					SORTED,
+					false,
+					// keep sorted
+					false);
+
+            FluxCapacitorStats stats = runCapacitor();
+            assertNotNull(stats);
+            assertTrue(statsFile.exists());
+
+            FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
+            assertTrue(outFile.exists());
+            BufferedReader reader = new BufferedReader(new FileReader(outFile));
+            String l = null;
+            while((l = reader.readLine()) != null ){
+                System.out.println(l);
+                assertTrue(l.contains("reads"));
+            }
+
+
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} finally {
+			FileHelper.rmDir(mapDir);
+			FileHelper.rmDir(anoDir);
+		}
 
 	}
 }
