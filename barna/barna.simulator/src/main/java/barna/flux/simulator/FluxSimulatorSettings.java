@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
 
 /**
  * Flux Simulator settings
@@ -26,6 +27,37 @@ import java.io.InputStream;
  * @author Micha Sammeth (gmicha@gmail.com)
  */
 public class FluxSimulatorSettings extends ParameterSchema {
+
+    /**
+     * Instance to check the validity of the maximum memory size.
+     */
+    static ParameterValidator motifHeapValidator= new ParameterValidator() {
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+
+            // check whether memory is realistic
+            File f = schema.get((Parameter<File>) parameter);
+            if (f== null)
+                return;   // valid
+            long heapMaxSize = Runtime.getRuntime().maxMemory();
+            if (heapMaxSize< HEAP_SIZE_MOTIFS) {
+                DecimalFormat df = new DecimalFormat("#.##");
+                throw new ParameterException("Due to the parameter value " +
+                        parameter.getName() +
+                        " heap size of " +
+                        df.format(HEAP_SIZE_MOTIFS/ (double) 1000000000)  +
+                        " is required, but currently only "+ df.format(heapMaxSize/ (double) 1000000000) +
+                        " have been provided. "
+                );
+            }
+
+        }
+    };
+
+    /**
+     * Maximum heap size required when motifs are used
+     */
+    protected static long HEAP_SIZE_MOTIFS= 4000000000l;
 
     /**
      * Loci separator
@@ -237,7 +269,10 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "You can specify a custom PWM file or\n" +
             "use one of the available defaults:\n" +
             "\n" +
-            "NlaIII or DpnII", relativePathParser);
+            "NlaIII or DpnII",
+            null,
+            motifHeapValidator,
+            relativePathParser);
 
 
     /*
@@ -331,9 +366,14 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
 
     // todo: disabled for the moment !! reenable in Fragmenter RT
-    public static final Parameter<File> RT_MOTIF = Parameters.fileParameter("RT_MOTIF", "Reverse transcription motif PWM.\n" +
+    public static final Parameter<File> RT_MOTIF = Parameters.fileParameter(
+            "RT_MOTIF",
+            "Reverse transcription motif PWM.\n" +
             "This is disabled by default, but you can use a default matrix\n" +
-            "by specifying 'default' as value.", relativePathParser);
+            "by specifying 'default' as value.",
+            null,
+            motifHeapValidator,
+            relativePathParser);
 
     /*
     Size Selection
