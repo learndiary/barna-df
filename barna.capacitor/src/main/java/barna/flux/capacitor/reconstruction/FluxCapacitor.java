@@ -2562,8 +2562,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	 * @param transcriptID transcript identifier
 	 * @param cds flag to indicate whether transcript has an annotated ORF
 	 * @param length (processed) length of the transcript 
-	 * @param i
-	 * @param fractionCovered
+	 * @param nrReads
+	 * @param fracCov
 	 * @param chiSquare
 	 * @param cv
 	 */
@@ -3869,11 +3869,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	                Log.progressStart(decomposing);
 	
 	
-				
-				if (mode== FluxCapacitorConstants.MODE_LEARN) 
-					gtfReader.setKeepOriginalLines(false);
-				else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-					gtfReader.setKeepOriginalLines(true);
+				// BARNA-112 disable keeping original lines
+//				if (mode== FluxCapacitorConstants.MODE_LEARN)
+//					gtfReader.setKeepOriginalLines(false);
+//				else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
+//					gtfReader.setKeepOriginalLines(true);
 				
 				gtfReader.read();
 				Gene[] gene= null, geneNext= gtfReader.getGenes();
@@ -3898,7 +3898,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					
 					if ((gene= geneNext)== null)
 						break;
-					if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
+					if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT&& gtfReader.getVLines()!= null)
 						origLines= (Vector<String>) gtfReader.getVLines().clone();	// TODO make array, trim..
 					
 					// http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
@@ -4020,7 +4020,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	 * Checks whether file is to be uncompressed and/or sorted.
 	 * 
 	 * @param inputFile
-	 * @param wrapper
 	 * @return
 	 */
 	public AbstractFileIOWrapper fileInit(File inputFile) {
