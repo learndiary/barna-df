@@ -1,0 +1,24 @@
+/**
+ * Artifactory Deployment
+ */
+artifactory {
+     contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
+     publish {
+         //A closure defining publishing information
+         repository {
+             repoKey = 'gradle-jip'   //The Artifactory repository key to publish to
+             username = "${jip_artifactory_user}"          //The publisher user name
+             password = "${jip_artifactory_password}"      //The publisher password
+         }
+     }
+     resolve {
+         contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL for the resolver
+         repository {
+             repoKey = 'repo'  //The Artifactory (preferably virtual) repository key to resolve from
+             maven = true                //Resolve Maven-style artifacts and descriptors (true by default)
+         }
+     }
+}
+if(tasks.findByPath('build')){
+    tasks.artifactoryPublish.dependsOn(tasks.build)
+}
