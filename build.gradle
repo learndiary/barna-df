@@ -1,23 +1,22 @@
 apply plugin: 'base'
 apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'artifactory'
 
-
-/**
-* Global version
-*/
-version "1.1"
 /**
  * Extension for artifacts. Set to empty string for releases
  */
-ext.extension = "-SNAPSHOT"
+ext.mode = "-SNAPSHOT"
 
 /**
  * Versions for the sub projects
  */
 ext.versions = [
     "barna.model":"1.1",
+    "barna.commons":"1.1",
+    "barna.io":"1.1",
+    "barna.lpsolver":"1.2",
+    "barna.astalavista":"1.0",
+    "barna.simulator":"1.0",
+    "barna.capacitor":"1.0"
 ]
 // make sure version defined here are applied to subprojects
 apply from : "${rootDir}/gradle/versions.gradle"
@@ -53,6 +52,10 @@ subprojects{
     apply from : "${rootDir}/gradle/artifactory.gradle"
     // add tasks for source/javadoc and test jars and add them as artifacts
     apply from : "${rootDir}/gradle/javaproject.gradle"
+    
+    test{
+        jvmArgs '-Xms128m', '-Xmx1G'
+    }
 }
 
 
