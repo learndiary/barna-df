@@ -7,3 +7,47 @@ dependencies{
     compile project(":barna.commons")
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
+
+def outputName = "flux-simulator-${version}"
+ext.distSpec = copySpec {
+    from('.'){
+        include 'COPYING'
+    }
+    from('src/main/distribution/'){
+        include 'APACHE_LICENSE.txt'
+        include 'LICENSE.txt'
+        include 'README.txt'
+    }
+    into('bin') {
+        from("src/main/distribution/bin")
+        fileMode = 0755
+    }    
+    into('lib') {
+        from(jar.outputs.files)
+        from(configurations.runtime)        
+    }
+}
+
+task distDir(type: Copy){
+    description = "Prepare a directory for distribution"
+    into "${distsDir}/${outputName}"
+    with distSpec
+}
+
+
+task distTar(type: Tar) {
+    description = "Tars the binary distribution."
+    baseName "flux-simulator"
+    into "${outputName}"
+    with distSpec
+    compression = Compression.GZIP
+}
+
+task distZip(type: Zip) {
+    description = "Zip the binary distribution."
+    baseName "flux-simulator"
+    into "${outputName}"
+    with distSpec
+}
+
+task dist(dependsOn: ['distTar', 'distZip'])

@@ -1,6 +1,7 @@
 /**
  * Artifactory Deployment
  */
+if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password')){
 artifactory {
      contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
      publish {
@@ -21,4 +22,5 @@ artifactory {
 }
 if(tasks.findByPath('build')){
     tasks.artifactoryPublish.dependsOn(tasks.build)
+}
 }
