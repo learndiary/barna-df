@@ -1,0 +1,7 @@
+// assign all version before we do anything else
+subprojects.each{project->
+    if(versions[project.name])
+        project.version = "${versions[project.name]}${mode}"
+    else
+        project.version = "${version}${mode}"
+}

@@ -1,3 +1,0 @@
-This is a simple and stupid file sep test
-
-and this should be a unix seperator
