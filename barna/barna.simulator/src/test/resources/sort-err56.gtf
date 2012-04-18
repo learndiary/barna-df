@@ -1,0 +1,11 @@
+chr10	GenomeSimulator	exon	92916	94077	.	-	.	gene_id "ENSG00000173876";	transcript_id "ENST00000328974";	gene_name "92916-95552";
+chr10	GenomeSimulator	exon	94578	94688	.	-	.	gene_id "ENSG00000173876";	transcript_id "ENST00000328974";	gene_name "92916-95552";
+chr10	GenomeSimulator	exon	94767	94875	.	-	.	gene_id "ENSG00000173876";	transcript_id "ENST00000328974";	gene_name "92916-95552";
+chr10	GenomeSimulator	exon	95145	95552	.	-	.	gene_id "ENSG00000173876";	transcript_id "ENST00000328974";	gene_name "92916-95552";
+chr10	GenomeSimulator	exon	180635	180824	.	+	.	gene_id "ENSG00000015171";	transcript_id "ENST00000381602";	gene_name "180635-300527";
+chr10	GenomeSimulator	exon	181010	181243	.	+	.	gene_id "ENSG00000015171";	transcript_id "ENST00000381591";	gene_name "180635-300527";
+chr10	GenomeSimulator	exon	225966	226100	.	+	.	gene_id "ENSG00000015171";	transcript_id "ENST00000381591";	gene_name "180635-300527";
+chr10	GenomeSimulator	exon	225966	226100	.	+	.	gene_id "ENSG00000015171";	transcript_id "ENST00000381602";	gene_name "180635-300527";
+chr10	GenomeSimulator	exon	225966	226100	.	+	.	gene_id "ENSG00000015171";	transcript_id "ENST00000381584";	gene_name "180635-300527";
+chr10	GenomeSimulator	exon	243849	243943	.	+	.	gene_id "ENSG00000015171";	transcript_id "ENST00000381584";	gene_name "180635-300527";
+
