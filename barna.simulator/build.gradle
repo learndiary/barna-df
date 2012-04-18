@@ -8,7 +8,8 @@ dependencies{
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
 
-def outputName = "flux-simulator-${version}"
+def appVersion = project(":").applications[project.name]
+def outputName = "flux-simulator-${appVersion}"
 ext.distSpec = copySpec {
     from('.'){
         include 'COPYING'

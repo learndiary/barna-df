@@ -14,7 +14,10 @@ task testJar(type: Jar) {
     from sourceSets.test.output
 }
 
-task writeBuidProperties(type:Copy){
+/**
+ * Write a properties file that contains version and build information
+ */
+task writeBuildProperties(type:Copy){
     File bp = file("${sourceSets.main.output.resourcesDir.absolutePath}/${project.name}-build.properties")
     if(!bp.exists()){
         bp.getParentFile().mkdirs();
@@ -24,17 +27,32 @@ task writeBuidProperties(type:Copy){
         bp.delete()
         bp.createNewFile();
     }
-    project(":").subprojects.each{p->
-        bp.append("${p.name}.version=${p.version}\n")
+    bp.append("flux.version=${version}\n")
+    if(project(":").applications[project.name]){
+        bp.append("flux.appversion=${project(":").applications[project.name]}\n")
     }
     bp.append("build.date=${buildDate}\n")
     bp.append("build.version=${gitVersion}\n")
     bp.append("build.branch=${gitBranch}\n")
 }
-tasks.classes.dependsOn tasks.writeBuidProperties
+tasks.classes.dependsOn tasks.writeBuildProperties
+
+task versionInfo(){
+    description "Print version info"
+    println "${project.name} Version info"
+    println "Flux Lib:\t${version}"
+    if(project(":").applications[project.name]){
+        println "Flux App:\t${project(':').applications[project.name]}"
+    }
+    println "Build Date:\t${buildDate}"
+    println "Build Version:\t${gitVersion}"
+    println "Build Branch:\t${gitBranch}"
+    println ""
+}
+
 
 configurations {
-    tests
+//    tests
     sjar
     jdoc
 }
@@ -43,5 +61,5 @@ configurations {
 artifacts {
     archives sourcesJar
     archives javadocJar
-    archives testJar
+//    archives testJar
 }

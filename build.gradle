@@ -3,20 +3,26 @@ apply plugin: 'idea'
 
 /**
  * Library version
+ *
+ * This is the  global flux suite version used to identify
+ * library/jar versions
  */
 version = "1.9-SNAPSHOT"
 
 /**
  * Versions for applications
  */
-ext.versions = [
+ext.applications = [
     "barna.astalavista":"1.0-SNAPSHOT",
     "barna.simulator":"1.0-SNAPSHOT",
     "barna.capacitor":"1.0-SNAPSHOT",
     "barna.tools":"1.0-SNAPSHOT"
 ]
 // make sure version defined here are applied to subprojects
-apply from : "${rootDir}/gradle/versions.gradle"
+subprojects.each{project->
+    project.version = "${version}"
+}
+
 // collect build info and set it in subprojects
 apply from : "${rootDir}/gradle/buildinfo.gradle"
 
@@ -59,7 +65,9 @@ subprojects{
     }
 }
 
-
+/**
+ * Test all subprojects
+ */
 task test(){
     dependsOn{
         subprojects.collectAll{sp-> sp.tasks.test}
