@@ -2,22 +2,18 @@ apply plugin: 'base'
 apply plugin: 'idea'
 
 /**
- * Extension for artifacts. Set to empty string for releases
+ * Library version
  */
-ext.mode = "-SNAPSHOT"
+version = "1.9-SNAPSHOT"
 
 /**
- * Versions for the sub projects
+ * Versions for applications
  */
 ext.versions = [
-    "barna.model":"1.1",
-    "barna.commons":"1.1",
-    "barna.io":"1.1",
-    "barna.lpsolver":"1.2",
-    "barna.astalavista":"1.0",
-    "barna.simulator":"1.0",
-    "barna.capacitor":"1.0",
-    "barna.tools":"1.0"
+    "barna.astalavista":"1.0-SNAPSHOT",
+    "barna.simulator":"1.0-SNAPSHOT",
+    "barna.capacitor":"1.0-SNAPSHOT",
+    "barna.tools":"1.0-SNAPSHOT"
 ]
 // make sure version defined here are applied to subprojects
 apply from : "${rootDir}/gradle/versions.gradle"
