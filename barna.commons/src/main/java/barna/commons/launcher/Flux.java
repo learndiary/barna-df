@@ -90,11 +90,11 @@ public class Flux {
         // register tools
         List<FluxTool> tools = findTools();
 
-        // prepare the simulator
-        Flux simulator = new Flux();
+        // prepare the fluxInstance
+        Flux fluxInstance = new Flux();
         ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(Flux.class);
         try {
-            fluxArguments.process(args, simulator);
+            fluxArguments.process(args, fluxInstance);
         } catch (AccessFailureException ae) {
             Log.error("Error while processing arguments !");
             if (ae.getCause() instanceof InvocationTargetException) {
@@ -135,10 +135,10 @@ public class Flux {
 
         // find the tool to start
         FluxTool tool = null;
-        if (simulator.getToolName() != null) {
+        if (fluxInstance.getToolName() != null) {
             int i = 0;
             for (org.cyclopsgroup.jcli.spi.Cli cli : toolClis) {
-                if (cli.getName().equals(simulator.getToolName())) {
+                if (cli.getName().equals(fluxInstance.getToolName())) {
                     tool = tools.get(i);
                     break;
                 }
@@ -150,7 +150,7 @@ public class Flux {
         PrintWriter out = new PrintWriter(System.err);
         HelpPrinter printer = new HelpPrinter(out);
 
-        if (simulator.isHelp()) {
+        if (fluxInstance.isHelp()) {
             // show help message
             if (tool == null) {
                 printFluxHelp(tools, fluxArguments, out, printer);
@@ -178,14 +178,14 @@ public class Flux {
 
             try {
                 // configure the executor
-                Execute.initialize(simulator.getThreads());
+                Execute.initialize(fluxInstance.getThreads());
 
                 tool.call();
             }catch (OutOfMemoryError outOfMemoryError){
                 int mb = 1024*1024;
                 long maxMemoryBytes = Runtime.getRuntime().maxMemory();
                 long maxMemoryMB = (maxMemoryBytes/mb);
-                Log.error("The Flux " + simulator.getToolName() + " tool run into memory problems ! " +
+                Log.error("The Flux " + fluxInstance.getToolName() + " tool run into memory problems ! " +
                         "Please use the FLUX_MEM environment variable to increase the memory. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
                         "6 GB of memory.");
                 Log.error("Current memory setting : " + maxMemoryMB + " MB");
@@ -208,13 +208,13 @@ public class Flux {
                 Execute.shutdown();
             }
         } else {
-            if (simulator.getToolName() == null || simulator.getToolName().isEmpty()) {
+            if (fluxInstance.getToolName() == null || fluxInstance.getToolName().isEmpty()) {
                 Log.error("");
                 Log.error("No tool specified!");
                 Log.error("\n");
             } else {
                 Log.error("");
-                Log.error("Unable to find tool : " + simulator.getToolName());
+                Log.error("Unable to find tool : " + fluxInstance.getToolName());
                 Log.error("\n");
             }
 
