@@ -1,4 +1,0 @@
-dependencies{
-    compile project(":barna.commons")
-    compile project(":barna.model")
-}

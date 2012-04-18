@@ -1,8 +1,0 @@
-include "barna.commons"
-include "barna.model"
-include "barna.io"
-include "barna.simulator"
-include "barna.astalavista"
-include "barna.lpsolver"
-include "barna.capacitor"
-include "barna.tools"

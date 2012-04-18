@@ -1,7 +1,0 @@
-dependencies{
-    compile project(':barna.commons')
-    compile project(':barna.io')
-    compile project(':barna.model')
-    compile 'sTASSEL:sTASSEL:1.0'
-    compile 'ledatastream:ledatastream:1.0'
-}
