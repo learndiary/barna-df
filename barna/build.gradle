@@ -16,7 +16,8 @@ ext.versions = [
     "barna.lpsolver":"1.2",
     "barna.astalavista":"1.0",
     "barna.simulator":"1.0",
-    "barna.capacitor":"1.0"
+    "barna.capacitor":"1.0",
+    "barna.tools":"1.0"
 ]
 // make sure version defined here are applied to subprojects
 apply from : "${rootDir}/gradle/versions.gradle"
