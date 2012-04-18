@@ -4,3 +4,9 @@
 */build/*
 .idea
 **.iml
+.gradle/
+atlassian-ide-plugin.xml
+**.ipr
+**.iws
+out/
+*/bin/
