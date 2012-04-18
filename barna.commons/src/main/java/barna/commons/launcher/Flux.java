@@ -12,7 +12,9 @@
 package barna.commons.launcher;
 
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;
+import com.martiansoftware.jsap.*;
 import org.cyclopsgroup.caff.ref.AccessFailureException;
 import org.cyclopsgroup.jcli.ArgumentProcessor;
 import org.cyclopsgroup.jcli.annotation.Cli;
@@ -82,86 +84,70 @@ public class Flux {
          */
         checkJavaVersion();
 
+
+        /*
+        Create command line parser and
+        add default Flux parameter
+         */
+        JSAP jsap = new JSAP();
+        try {
+            jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').help("Select a tool").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("help").help("Show help").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("list-tools").help("List available tools").get());
+            jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").help("Maximum number of threads to use. Default 2").get());
+            jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("force").help("Disable interactivity. No questions will be asked").get());
+        } catch (JSAPException e) {
+            Log.error("Unable to create parameters : " + e.getMessage(), e);
+            System.exit(-1);
+        }
         // register tools
         List<FluxTool> tools = findTools();
-
         // prepare the fluxInstance
         Flux fluxInstance = new Flux();
-        ArgumentProcessor fluxArguments = ArgumentProcessor.newInstance(Flux.class);
-        try {
-            fluxArguments.process(args, fluxInstance);
-        } catch (AccessFailureException ae) {
-            Log.error("Error while processing arguments !");
-            if (ae.getCause() instanceof InvocationTargetException) {
-                Log.error(((InvocationTargetException) (ae.getCause())).getTargetException().getMessage());
-            } else {
-                Log.error(ae.getCause().getMessage());
-            }
-            System.exit(-1);
-        } catch (Exception e) {
-            Log.error("Error while processing arguments !");
-            Log.error(e.getMessage());
-            System.exit(-1);
+
+        // parse the arguments (first round)
+        JSAPResult initialFluxArguments = null;
+        try{
+            initialFluxArguments = jsap.parse(args);
+        }catch(Exception e){
+            Log.error("Error while parsing arguments : " + e.getMessage());
         }
 
+        fluxInstance.setLogLevel(initialFluxArguments.getString("log"));
+        fluxInstance.setThreads(initialFluxArguments.getInt("threads"));
+        fluxInstance.setToolName(initialFluxArguments.getString("tool"));
+        fluxInstance.setDetached(initialFluxArguments.userSpecified("force"));
 
-        // prepare tools
-        List<org.cyclopsgroup.jcli.spi.Cli> toolClis = new ArrayList<org.cyclopsgroup.jcli.spi.Cli>();
-        for (FluxTool fluxTool : tools) {
-            ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
-            ParsingContext context = toolArguments.createParsingContext();
-            toolClis.add(context.cli());
-        }
-
-        if(fluxInstance.getToolName() == null){
+        if(!initialFluxArguments.userSpecified("tool")){
             // check for a default tool
-            String tool = System.getProperty("flux.tool");
-            if(tool != null){
-                fluxInstance.setToolName(tool);
-            }
+            fluxInstance.setToolName(System.getProperty("flux.tool"));
+        }
+        // still no tool ? print usage and exit
+        if(fluxInstance.getToolName() == null){
+            printUsage(null, jsap);
         }
 
         // find the tool to start
         FluxTool tool = null;
-        if (fluxInstance.getToolName() != null) {
-            int i = 0;
-            for (org.cyclopsgroup.jcli.spi.Cli cli : toolClis) {
-                if (cli.getName().equals(fluxInstance.getToolName())) {
-                    tool = tools.get(i);
-                    break;
-                }
-                i++;
-            }
+//        for (FluxTool fluxTool : tools) {
+//            if(fluxTool.getName().eqauls(fluxInstance.getToolName())){
+//                tool = fluxTool;
+//                break;
+//            }
+//        }
+
+        if (initialFluxArguments.userSpecified("help") || tool == null) {
+            printUsage(tool, jsap);
         }
 
-        // delegate help prints to std err
-        PrintWriter out = new PrintWriter(System.err);
-        HelpPrinter printer = new HelpPrinter(out);
 
-
-        if (fluxInstance.isHelp()) {
-            // show help message
-            if (tool == null) {
-                printFluxHelp(tools, fluxArguments, out, printer);
-            } else {
-                out.println("General Options");
-                printer.print(fluxArguments);
-                out.println();
-                out.println("Tool Options");
-                out.println();
-                ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
-                printer.print(toolArguments);
-                out.flush();
-            }
-            // exit after printing help
-            System.exit(-1);
-        }
 
         /**
          * Print tools
          */
-        if(fluxInstance.isListTools()){
-            printTools(tools, out);
+        if(initialFluxArguments.userSpecified("list-tools")){
+            printTools(tools);
             System.exit(-1);
         }
 
@@ -171,7 +157,8 @@ public class Flux {
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
             toolArguments.process(args, tool);
             if (!tool.validateParameters(printer, toolArguments)) {
-                out.flush();
+                System.out.flush();
+                System.err.flush();
                 System.exit(-1);
             }
 
@@ -278,16 +265,15 @@ public class Flux {
      * Print available flux tools
      *
      * @param tools the tools available flux tools
-     * @param out the output stream
      */
-    private static void printTools(List<FluxTool> tools, PrintWriter out) {
-        out.println("\tTools available:");
+    private static void printTools(List<FluxTool> tools) {
+        System.out.println("\tTools available:");
         for (FluxTool fluxTool : tools) {
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
             ParsingContext context = toolArguments.createParsingContext();
-            out.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
+            System.out.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
         }
-        out.println();
+        System.out.println();
     }
 
     /**
