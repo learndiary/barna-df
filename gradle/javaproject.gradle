@@ -17,11 +17,19 @@ task testJar(type: Jar) {
 task writeBuidProperties(type:Copy){
     File bp = file("${sourceSets.main.output.resourcesDir.absolutePath}/${project.name}-build.properties")
     if(!bp.exists()){
-        bp.getParentFile().mkdirs(); bp.createNewFile();
+        bp.getParentFile().mkdirs();
+        bp.createNewFile();
+    }else{
+        // delete old
+        bp.delete()
+        bp.createNewFile();
     }
     project(":").subprojects.each{p->
         bp.append("${p.name}.version=${p.version}\n")
     }
+    bp.append("build.date=${buildDate}\n")
+    bp.append("build.version=${gitVersion}\n")
+    bp.append("build.branch=${gitBranch}\n")
 }
 tasks.classes.dependsOn tasks.writeBuidProperties
 

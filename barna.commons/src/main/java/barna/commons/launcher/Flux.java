@@ -120,8 +120,15 @@ public class Flux {
 
 
         // start
-        if (FLUX_VERSION.length() > 0 && FLUX_REVISION.length() > 0) {
-            Log.info("I am the Flux Toolbox (v" + FLUX_VERSION + " build " + FLUX_REVISION + "), nice to meet you!\n");
+        StringBuilder versionString = new StringBuilder();
+        if(FLUX_VERSION.length() > 0){
+            versionString.append("v").append(FLUX_VERSION).append(" ");
+        }
+        if(FLUX_REVISION.length() > 0){
+            versionString.append(FLUX_REVISION);
+        }
+        if (versionString.length() > 0) {
+            Log.info("I am the Flux Toolbox ("+versionString.toString()+"), nice to meet you!\n");
         } else {
             Log.info("I am the Flux Toolbox ( Devel Mode ), nice to meet you!\n");
         }
@@ -415,7 +422,7 @@ public class Flux {
         /*
         Find the manifest file and extract version revision adn jdk information
          */
-        URL location = Flux.class.getResource("/flux.properties");
+        URL location = Flux.class.getResource("/barna.commons-build.properties");
         String buildVersion = "";
         String buildRevision = "";
         String buildJDK = "";
@@ -423,17 +430,14 @@ public class Flux {
             try {
                 Properties pp = new Properties();
                 pp.load(location.openStream());
-                String v = pp.getProperty("Build-Version");
-                String r = pp.getProperty("buildNumber");
-                String j = pp.getProperty("Flux-JDK");
-                if (v != null) {
-                    buildVersion = v.toString();
-                }
-                if (r != null) {
-                    buildRevision = r.toString();
-                }
-                if (j != null) {
-                    buildJDK = j.toString();
+                buildVersion = pp.getProperty("barna.commons.version", "Devel");
+
+                String commit = pp.getProperty("build.version", "");
+                String branch = pp.getProperty("build.branch", "");
+                String date = pp.getProperty("build.date", "");
+                buildRevision = "";
+                if(buildVersion.equals("Devel") || buildVersion.contains("SNAPSHOT")){
+                    buildRevision = "Branch: " + branch + " Date: " + date + " Commit: " + commit;
                 }
             } catch (IOException e) {
             }
@@ -466,5 +470,44 @@ public class Flux {
         }
         return true;
 
+    }
+
+    /**
+     * This is an internal mehtod that assumes "source" is path to a prioperties file
+     * that contains the "name" property to find the version. If build info is contained and
+     * the version does not contain SNAPSHOT, build info is added to the version string
+     *
+     * @param source the path to the source file
+     * @param name the name of the version proeprty
+     * @return versionString the version string
+     */
+    public static String loadVersionInfo(String source, String name){
+        URL location = Flux.class.getResource(source);
+        String buildVersion = "";
+        String buildRevision = "";
+        if (location != null) {
+            try {
+                Properties pp = new Properties();
+                pp.load(location.openStream());
+                buildVersion = pp.getProperty(name, "");
+
+                String commit = pp.getProperty("build.version", "");
+                String branch = pp.getProperty("build.branch", "");
+                String date = pp.getProperty("build.date", "");
+                buildRevision = "";
+                if(buildVersion.equals("Devel") || buildVersion.contains("SNAPSHOT")){
+                    buildRevision = "Branch: " + branch + " Date: " + date + " Commit: " + commit;
+                }
+            } catch (IOException e) {
+            }
+        }
+        StringBuilder versionString = new StringBuilder();
+        if(buildVersion.length() > 0){
+            versionString.append("v").append(buildVersion).append(" ");
+        }
+        if(buildRevision.length() > 0){
+            versionString.append(buildRevision);
+        }
+        return versionString.toString();
     }
 }

@@ -17,6 +17,8 @@ ext.versions = [
 ]
 // make sure version defined here are applied to subprojects
 apply from : "${rootDir}/gradle/versions.gradle"
+// collect build info and set it in subprojects
+apply from : "${rootDir}/gradle/buildinfo.gradle"
 
 // all projects access the default maven repos
 allprojects {
