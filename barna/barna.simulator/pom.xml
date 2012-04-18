@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This file is part of the Flux Library.
+  ~
+  ~ The code of the Flux Library may be freely distributed and modified under the terms of the
+  ~ European Union Public Licence (EUPL) published on the web site <http://www.osor.eu/eupl/european-union-public-licence-eupl-v.1.1>.
+  ~ Copyright for the code is held jointly by the individual authors, who should be listed
+  ~ in @author doc comments. According to Article 5 and Article 11 of the EUPL, publications that
+  ~ include results produced by the Flux Library are liable to reference the Work,
+  ~ see the Flux Library homepage <http://flux.sammeth.net> for more information.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>barna</groupId>
+        <artifactId>barna</artifactId>
+        <relativePath>../</relativePath>
+        <version>1.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>barna.simulator</artifactId>
+    <name>Barna - Flux Simulator</name>
+    <version>1.0-SNAPSHOT</version>
+
+    <description>
+        The Flux Simulator
+    </description>
+
+    <properties>
+        <package.name>FluxSimulator</package.name>
+    </properties>
+
+    <build>
+        <plugins>
+            <!--
+             Create custom manifest properties for version, build number and jdk version
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>barna.commons.launcher.Flux</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Revision>GIT</Build-Revision>
+                            <Build-Version>${project.version}</Build-Version>
+                            <Flux-JDK>1.6</Flux-JDK>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0-alpha-2</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>
+                                ${project.build.outputDirectory}/flux.properties
+                            </outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <!--
+             Assembly plugin to create the actual bundle
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>make-unix</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>${package.name}-${project.version}</finalName>
+                            <descriptors>
+                                <descriptor>src/main/assembly/simulator.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+        	<plugins>
+        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        		<plugin>
+        			<groupId>org.eclipse.m2e</groupId>
+        			<artifactId>lifecycle-mapping</artifactId>
+        			<version>1.0.0</version>
+        			<configuration>
+        				<lifecycleMappingMetadata>
+        					<pluginExecutions>
+        						<pluginExecution>
+        							<pluginExecutionFilter>
+        								<groupId>
+        									org.codehaus.mojo
+        								</groupId>
+        								<artifactId>
+        									properties-maven-plugin
+        								</artifactId>
+        								<versionRange>
+        									[1.0-alpha-2,)
+        								</versionRange>
+        								<goals>
+        									<goal>
+        										write-project-properties
+        									</goal>
+        								</goals>
+        							</pluginExecutionFilter>
+        							<action>
+        								<ignore></ignore>
+        							</action>
+        						</pluginExecution>
+        					</pluginExecutions>
+        				</lifecycleMappingMetadata>
+        			</configuration>
+        		</plugin>
+        	</plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>barna</groupId>
+            <artifactId>barna.distribution</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>barna</groupId>
+            <artifactId>barna.commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>barna</groupId>
+            <artifactId>barna.model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>barna</groupId>
+            <artifactId>barna.io</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jdbm</groupId>
+            <artifactId>jdbm</artifactId>
+            <version>2.3</version>
+        </dependency>
+    </dependencies>
+
+</project>

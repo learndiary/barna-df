@@ -1,0 +1,8 @@
+chrI	sacCer2_sgdGene	start_codon	538	540	0.000000	+	.	gene_id "YAL068W-A"; transcript_id "YAL068W-A"; 
+chrI	sacCer2_sgdGene	CDS	538	789	0.000000	+	0	gene_id "YAL068W-A"; transcript_id "YAL068W-A"; 
+chrI	sacCer2_sgdGene	exon	538	792	0.000000	+	.	gene_id "YAL068W-A"; transcript_id "YAL068W-A"; 
+chrI	sacCer2_sgdGene	stop_codon	790	792	0.000000	+	.	gene_id "YAL068W-A"; transcript_id "YAL068W-A"; 
+chrI	sacCer2_sgdGene	stop_codon	1807	1809	0.000000	-	.	gene_id "YAL068C"; transcript_id "YAL068C"; 
+chrI	sacCer2_sgdGene	exon	1807	2169	0.000000	-	.	gene_id "YAL068C"; transcript_id "YAL068C"; 
+chrI	sacCer2_sgdGene	CDS	1810	2169	0.000000	-	0	gene_id "YAL068C"; transcript_id "YAL068C"; 
+chrI	sacCer2_sgdGene	start_codon	2167	2169	0.000000	-	.	gene_id "YAL068C"; transcript_id "YAL068C"; 

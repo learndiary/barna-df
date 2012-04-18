@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>barna</groupId>
+        <artifactId>barna</artifactId>
+        <relativePath>../</relativePath>
+        <version>1.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>barna.lpsolver</artifactId>
+    <name>Barna - LPSolver</name>
+    <version>1.2-SNAPSHOT</version>
+    <description>
+        LP-Solver library
+    </description>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <excludes>
+                        <exclude>linux/**</exclude>
+                        <exclude>osx/**</exclude>
+                        <exclude>win/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!--
+             Assembly plugin to create the actual bundle
+            -->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <appendAssemblyId>true</appendAssemblyId>
+                    <finalName>${artifactId}-${project.version}</finalName>
+                    <descriptors>
+                        <descriptor>src/main/assembly/lpsolver-lx.xml</descriptor>
+                        <descriptor>src/main/assembly/lpsolver-osx.xml</descriptor>
+                        <descriptor>src/main/assembly/lpsolver-win.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-unix</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>
