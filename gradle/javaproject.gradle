@@ -37,7 +37,7 @@ task writeBuildProperties(type:Copy){
 }
 tasks.classes.dependsOn tasks.writeBuildProperties
 
-task versionInfo(){
+task(versionInfo) << {
     description "Print version info"
     println "${project.name} Version info"
     println "Flux Lib:\t${version}"

@@ -23,10 +23,7 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import java.io.File;
-import java.io.FilePermission;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -41,15 +38,9 @@ import java.util.*;
 @Cli(name = "flux", restrict = false)
 public class Flux {
     /**
-     * Current Flux Simulator version
+     * Required java version
      */
-    public static String FLUX_VERSION = "";
-
-    /**
-     * Current Flux Simulator revision
-     */
-    public static String FLUX_REVISION = "";
-
+    private static final float FLUX_JAVA_VERSION = 1.6f;
     /**
      * The tool to be executed
      */
@@ -61,9 +52,15 @@ public class Flux {
     private boolean help;
 
     /**
+     * List available tools
+     */
+    private boolean listTools;
+
+    /**
      * Number of executor threads
      */
     private int threads = 2;
+
 
 
     /**
@@ -81,11 +78,9 @@ public class Flux {
         // load java.util.logger configuration
         Log.initialize();
         /*
-        Read properties
+        Check java version
          */
-        if (!readProperties()) {
-            System.exit(-1);
-        }
+        checkJavaVersion();
 
         // register tools
         List<FluxTool> tools = findTools();
@@ -118,19 +113,12 @@ public class Flux {
             toolClis.add(context.cli());
         }
 
-
-        // start
-        StringBuilder versionString = new StringBuilder();
-        if(FLUX_VERSION.length() > 0){
-            versionString.append("v").append(FLUX_VERSION).append(" ");
-        }
-        if(FLUX_REVISION.length() > 0){
-            versionString.append(FLUX_REVISION);
-        }
-        if (versionString.length() > 0) {
-            Log.info("I am the Flux Toolbox ("+versionString.toString()+"), nice to meet you!\n");
-        } else {
-            Log.info("I am the Flux Toolbox ( Devel Mode ), nice to meet you!\n");
+        if(fluxInstance.getToolName() == null){
+            // check for a default tool
+            String tool = System.getProperty("flux.tool");
+            if(tool != null){
+                fluxInstance.setToolName(tool);
+            }
         }
 
         // find the tool to start
@@ -150,19 +138,30 @@ public class Flux {
         PrintWriter out = new PrintWriter(System.err);
         HelpPrinter printer = new HelpPrinter(out);
 
+
         if (fluxInstance.isHelp()) {
             // show help message
             if (tool == null) {
                 printFluxHelp(tools, fluxArguments, out, printer);
             } else {
-                // show tool help
-                // create the argument parser
+                out.println("General Options");
+                printer.print(fluxArguments);
+                out.println();
+                out.println("Tool Options");
+                out.println();
                 ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
-                //toolArguments.printHelp(out);
                 printer.print(toolArguments);
                 out.flush();
             }
             // exit after printing help
+            System.exit(-1);
+        }
+
+        /**
+         * Print tools
+         */
+        if(fluxInstance.isListTools()){
+            printTools(tools, out);
             System.exit(-1);
         }
 
@@ -268,6 +267,20 @@ public class Flux {
         // show general help
         //fluxArguments.printHelp(out);
         printer.print(fluxArguments);
+        printTools(tools, out);
+        out.println();
+        out.println("To get help for a specific tool try -t <tool> --help");
+        out.println();
+        out.flush();
+    }
+
+    /**
+     * Print available flux tools
+     *
+     * @param tools the tools available flux tools
+     * @param out the output stream
+     */
+    private static void printTools(List<FluxTool> tools, PrintWriter out) {
         out.println("\tTools available:");
         for (FluxTool fluxTool : tools) {
             ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
@@ -275,9 +288,6 @@ public class Flux {
             out.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
         }
         out.println();
-        out.println("To get help for a specific tool try -t <tool> --help");
-        out.println();
-        out.flush();
     }
 
     /**
@@ -414,100 +424,141 @@ public class Flux {
     }
 
     /**
+     * Returs true if tools should be listed
+     *
+     * @return listTools list available tools
+     */
+    public boolean isListTools() {
+        return listTools;
+    }
+
+    /**
+     * Set listing tools
+     *
+     * @param listTools list tools
+     */
+    @Option(name = "", longName = "list-tools", description = "List available tools", required = false)
+    public void setListTools(boolean listTools) {
+        this.listTools = listTools;
+    }
+
+    /**
      * Read properties like version and build revision from jar file
      *
      * @return valid returns true if properties are valid and everything is fine
      */
-    private static boolean readProperties() {
-        /*
-        Find the manifest file and extract version revision adn jdk information
-         */
-        URL location = Flux.class.getResource("/barna.commons-build.properties");
-        String buildVersion = "";
-        String buildRevision = "";
-        String buildJDK = "";
-        if (location != null) {
-            try {
-                Properties pp = new Properties();
-                pp.load(location.openStream());
-                buildVersion = pp.getProperty("barna.commons.version", "Devel");
+    private static void checkJavaVersion() {
+        try {
+            float v = FLUX_JAVA_VERSION;
+            String ver = System.getProperty("java.version");
+            int p = ver.indexOf('.', 0);
+            p = ver.indexOf('.', p + 1);
+            float v2 = Float.parseFloat(ver.substring(0, p));
+            if (v2 < v) {
+                Log.error("Wrong java version, I need " + v + " but I found " + v2 + ".");
 
-                String commit = pp.getProperty("build.version", "");
-                String branch = pp.getProperty("build.branch", "");
-                String date = pp.getProperty("build.date", "");
-                buildRevision = "";
-                if(buildVersion.equals("Devel") || buildVersion.contains("SNAPSHOT")){
-                    buildRevision = "Branch: " + branch + " Date: " + date + " Commit: " + commit;
-                }
-            } catch (IOException e) {
             }
+        } catch (Exception e) {
+            ; // :)
         }
-
-
-        if (!buildVersion.isEmpty()) {
-            FLUX_VERSION = buildVersion;
-        }
-
-        if (!buildRevision.isEmpty()) {
-            FLUX_REVISION = buildRevision;
-        }
-
-        if (!buildJDK.isEmpty()) {
-            try {
-                float v = Float.parseFloat(buildJDK);
-                String ver = System.getProperty("java.version");
-                int p = ver.indexOf('.', 0);
-                p = ver.indexOf('.', p + 1);
-                float v2 = Float.parseFloat(ver.substring(0, p));
-                if (v2 < v) {
-                    Log.error("Wrong java version, I need " + v + " but I found " + v2 + ".");
-                    return false;
-                }
-            } catch (Exception e) {
-                ; // :)
-            }
-
-        }
-        return true;
-
     }
 
     /**
-     * This is an internal mehtod that assumes "source" is path to a prioperties file
-     * that contains the "name" property to find the version. If build info is contained and
-     * the version does not contain SNAPSHOT, build info is added to the version string
-     *
-     * @param source the path to the source file
-     * @param name the name of the version proeprty
-     * @return versionString the version string
+     * Cover build and version information
      */
-    public static String loadVersionInfo(String source, String name){
-        URL location = Flux.class.getResource(source);
-        String buildVersion = "";
-        String buildRevision = "";
-        if (location != null) {
-            try {
-                Properties pp = new Properties();
-                pp.load(location.openStream());
-                buildVersion = pp.getProperty(name, "");
+    public static class FluxVersionInfo{
+        private String libVersion;
+        private String appVersion;
+        private String buildDate;
+        private String buildVersion;
+        private String buildBranch;
 
-                String commit = pp.getProperty("build.version", "");
-                String branch = pp.getProperty("build.branch", "");
-                String date = pp.getProperty("build.date", "");
-                buildRevision = "";
-                if(buildVersion.equals("Devel") || buildVersion.contains("SNAPSHOT")){
-                    buildRevision = "Branch: " + branch + " Date: " + date + " Commit: " + commit;
+        /**
+         * Createa a new version info from a properties file. File path is relative to the classpath, Flux
+         * is used to find the resource.
+         *
+         * @param fileName the file name (class path reference)
+         */
+        public FluxVersionInfo(String fileName){
+            InputStream buildProperties = getClass().getResourceAsStream(fileName);
+            if(buildProperties != null){
+                Properties properties = new Properties();
+                try {
+                    properties.load(buildProperties);
+                    libVersion = properties.getProperty("flux.version", "Unknown");
+                    appVersion = properties.getProperty("flux.appversion", "Unknown");
+                    buildDate = properties.getProperty("build.date", "Unknown");
+                    buildBranch = properties.getProperty("build.branch", "Unknown");
+                    buildVersion = properties.getProperty("build.version", "Unknown");
+                    buildVersion = properties.getProperty("build.version", "Unknown");
+                } catch (IOException ignore) {
+                    // ignore
                 }
-            } catch (IOException e) {
             }
         }
-        StringBuilder versionString = new StringBuilder();
-        if(buildVersion.length() > 0){
-            versionString.append("v").append(buildVersion).append(" ");
+
+        /**
+         * Get the flux library version
+         * @return libVersion the library version
+         */
+        public String getLibVersion() {
+            return libVersion;
         }
-        if(buildRevision.length() > 0){
-            versionString.append(buildRevision);
+
+        /**
+         * Get the application version
+         * @return appVersion the application version
+         */
+        public String getAppVersion() {
+            return appVersion;
         }
-        return versionString.toString();
+
+        /**
+         * Get the build date
+         * @return buildDate the build date
+         */
+        public String getBuildDate() {
+            return buildDate;
+        }
+
+        /**
+         * Get the build version
+         * @return buildVersion the build version
+         */
+        public String getBuildVersion() {
+            return buildVersion;
+        }
+
+        /**
+         * Get the branch name
+         * @return buildBranch the branch name
+         */
+        public String getBuildBranch() {
+            return buildBranch;
+        }
+
+        /**
+         * Long multi-line string representation of all the version information
+         * @return info the build info
+         */
+        public String toString(){
+            StringBuilder builder = new StringBuilder();
+            builder.append("Version ").append(appVersion).append('\n');
+            builder.append("Flux Library ").append(appVersion).append('\n');
+            builder.append("-----------------------------------------------\n");
+            builder.append("Build Date ").append(buildDate).append('\n');
+            builder.append("Build Version ").append(buildVersion).append('\n');
+            builder.append("Build Branch ").append(buildBranch).append('\n');
+            return builder.toString();
+        }
+        /**
+         * Shor version info
+         * @return info short version info
+         */
+        public String toShortString(){
+            StringBuilder builder = new StringBuilder();
+            builder.append("v").append(appVersion).append(" (Flux Library: ").append(libVersion).append(")\n");
+            return builder.toString();
+        }
     }
 }
