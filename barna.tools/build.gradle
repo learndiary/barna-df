@@ -1,0 +1,8 @@
+dependencies{
+    compile project(":barna.commons")
+    compile project(":barna.model")
+    compile project(":barna.io")
+    compile project(":barna.simulator")
+    compile project(":barna.capacitor")
+    compile project(":barna.astalavista")
+}
