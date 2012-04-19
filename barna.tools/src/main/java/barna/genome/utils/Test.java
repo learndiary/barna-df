@@ -1,4 +1,4 @@
-/*
+package barna.genome.utils;/*
  * Copyright (c) 2010, Micha Sammeth
  * All rights reserved.
  *
@@ -25,39 +25,40 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import barna.model.commons.MyFile;
-
-import java.io.*;
+import barna.model.splicegraph.SplicingGraph;
 
 
-public class FloatPointMultiplier {
+public class Test {
 
+	/**
+	 * @param args
+	 */
 	public static void main(String[] args) {
-		replace(new File("P:\\rgasp1.3\\GM12878\\quant01_fixed-25lines_others_dmg\\GM12878_flux_paired.gtf"), -1, 1.48f);
+//		float f= 0.00001f;
+//		String s= String.format("%1$f", f);
+//
+//		System.out.println(s+"*");
+//		
+//		System.err.println("3 mod 0"+(3%0));
+		
+		long[] a= new long[2];
+		for (int i = 0; i < a.length; i++) {
+			for (int j = 0; j < 64; j++) {
+				a[i]|= (int) Math.pow(2, j);
+			}
+		}
+		
+		for(int idx= -1; (idx= SplicingGraph.getNextTxIdx(a, idx))!= -1; ){
+			System.out.println(idx);
+		}
+		
+		long x= 1;
+		for (int i = 0; i < 64; i++, x*= 2) {
+			System.err.println(i+"\t"+x);
+		}
 	}
 
-	private static void replace(File file, int nr, float f) {
-		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(file));
-			String oFname= MyFile.stripExtension(file.getAbsolutePath())+ "_x_"+ Float.toString(f);
-			BufferedWriter writer= new BufferedWriter(new FileWriter(oFname));
-			String line;
-			int cnt= 0;
-			while ((line= buffy.readLine())!= null) {
-				++cnt;
-				String[] ss= line.split("\\s");
-				String token= ss[ss.length- 1];
-				float b= Float.parseFloat(token.substring(0, token.length()- 1));
-				b*= f;
-				line= line.substring(0, line.length()- ss[ss.length- 1].length());
-				writer.write(line+ String.format("%1$f", b)+";\n");
-			}
-			buffy.close();
-			writer.flush();
-			writer.close();
-			System.err.println("wrote "+ cnt+ " lines.");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	void kstest() {
+		//StatisticalComparison.compare(null, null);
 	}
 }

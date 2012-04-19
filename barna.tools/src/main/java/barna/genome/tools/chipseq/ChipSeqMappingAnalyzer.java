@@ -458,12 +458,12 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 
     @Override
     public String getName() {
-        return "mfilter";
+        return "mapdist";
     }
 
     @Override
     public String getDescription() {
-        return "Mapping filter";
+        return "Mapping Distribution";
     }
 
     @Override

@@ -11,7 +11,7 @@ dependencies{
 def appVersion = project(":").appVersions[project.name]
 def outputName = "flux-simulator-${appVersion}"
 ext.distSpec = copySpec {
-    from('.'){
+    from(project.rootDir){
         include 'LICENSE'
         include 'LGPL_LICENSE.txt'
         include 'APACHE_LICENSE.txt'

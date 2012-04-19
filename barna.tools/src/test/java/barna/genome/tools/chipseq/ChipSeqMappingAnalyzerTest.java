@@ -31,6 +31,10 @@ import barna.commons.Execute;
 import barna.commons.launcher.Flux;
 import barna.io.FileHelper;
 import barna.io.rna.UniversalReadDescriptor;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -136,14 +140,24 @@ public class ChipSeqMappingAnalyzerTest {
         }
         FileHelper.copy(f, tmpF);
 
+        ChipSeqMappingAnalyzer analyser = new ChipSeqMappingAnalyzer(f, null, null);
+        JSAP jsap = new JSAP();
+        for (Parameter parameter : analyser.getParameter()) {
+            try {
+                jsap.registerParameter(parameter);
+            } catch (JSAPException e) {
+                e.printStackTrace();
+                fail();
+            }
+        }
 
-        // write par
         File parF = null;
         BufferedWriter writer = null;
         try {
             parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
             writer = new BufferedWriter(new FileWriter(parF));
             writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + "\n");
+
             writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + "\n");
         } catch (Exception e) {
             e.printStackTrace();
@@ -156,19 +170,13 @@ public class ChipSeqMappingAnalyzerTest {
                 }
         }
 
-
-        // instantiate and run
-        String[] args = {"-t", "mapdist", "-p", parF.getAbsolutePath()};
-        long start = System.currentTimeMillis();
-        try{
-            Flux.main(args);
+        JSAPResult result = jsap.parse("-t mapdist -p "+parF.getAbsolutePath());
+        try {
+            analyser.validateParameter(result);
             fail();
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
-
-        System.out.println((System.currentTimeMillis()-start) / 1000+"s");
-
     }
 
 }

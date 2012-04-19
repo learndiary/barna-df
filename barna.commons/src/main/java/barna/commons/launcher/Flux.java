@@ -165,7 +165,11 @@ public class Flux {
 
         if (initialFluxArguments.userSpecified("help") || tool == null) {
             // todo: add error message "No tool sepcified"
-            printUsage(tool, jsap, tools, !initialFluxArguments.userSpecified("help") ? "No tool specified, use -t <tool> to specify a tool":null);
+            printUsage(tool, jsap, tools, !initialFluxArguments.userSpecified("help") ?
+                    (initialFluxArguments.userSpecified("tool") ?
+                            initialFluxArguments.getString("tool") + " tool not found!" :
+                            "No tool specified, use -t <tool> to specify a tool")
+                    :null);
         }
 
         // execute the tool

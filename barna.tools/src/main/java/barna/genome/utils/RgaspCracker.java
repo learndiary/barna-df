@@ -1,4 +1,4 @@
-/*
+package barna.genome.utils;/*
  * Copyright (c) 2010, Micha Sammeth
  * All rights reserved.
  *
