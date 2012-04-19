@@ -162,7 +162,3 @@ GETTING STARTED
 	http://fluxcapacitor.wikidot.com/forum:start
 	
 or leave me an email.
-
-The FluxDev-Team
-
-Micha and Thasso
