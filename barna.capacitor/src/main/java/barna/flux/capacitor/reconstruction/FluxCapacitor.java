@@ -12,9 +12,9 @@
 package barna.flux.capacitor.reconstruction;
 
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.system.SystemInspector;
 import barna.commons.thread.SyncIOHandler2;
@@ -42,11 +42,10 @@ import barna.model.splicegraph.SplicingGraph;
 import barna.model.splicegraph.SuperEdge;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -66,7 +65,6 @@ import java.util.zip.ZipOutputStream;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-@Cli(name = "capacitor", description = "Flux Capacitor")
 public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
 
 //	public final static String
@@ -2698,12 +2696,32 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      *
      * @param file parameter file
      */
-    @Option(name = "p", longName = "parameter", description = "specify parameter file (PAR file)", displayName = "file", required = true)
     public void setFile(File file) {
         this.file = file;
     }
-    
-    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+
+    @Override
+    public String getName() {
+        return "capacitor";
+    }
+
+    @Override
+    public String getDescription() {
+        return "The Flux Capacitor";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").required().get());
+        parameters.add(JSAPParameters.switchParameter("printParameters").help("Print default parameters").get());
+        return parameters;
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setPrintParameters(args.userSpecified("printParameters"));
+        setFile(args.getFile("parameter"));
 
         if(isPrintParameters()){
             FluxCapacitorSettings settings = new FluxCapacitorSettings();
@@ -2715,20 +2733,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             Log.error("");
             Log.error("No parameter file specified !");
             Log.error("\n");
-            printer.print(toolArguments);
             return false;
         }
         if (!getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
             Log.error("\n");
-            printer.print(toolArguments);
             return false;
         }
 
         return true;
     }
-
 	
 	private boolean isPrintParameters() {
 		return printParameters;
@@ -4176,7 +4191,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      *
      * @param printParameters enable disable
      */
-    @Option(name = "o", longName = "printParameters", description = "Print default parameters", required = false)
     public void setPrintParameters(final boolean printParameters) {
         this.printParameters = printParameters;
     }

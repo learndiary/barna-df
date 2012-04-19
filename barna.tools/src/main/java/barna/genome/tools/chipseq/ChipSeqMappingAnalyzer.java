@@ -2,8 +2,8 @@ package barna.genome.tools.chipseq;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.log.Log.Level;
 import barna.flux.capacitor.reconstruction.Kernel;
@@ -14,15 +14,16 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
 import barna.model.commons.IntVector;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -33,7 +34,6 @@ import java.util.concurrent.Future;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-@Cli(name = "mapdist", description = "Mapping distribution")
 public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 
 	public static void main(String[] args) {
@@ -421,7 +421,6 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		return new int[] {x2, argmax, x3};
 	}
 
-	@Option(name = "p", longName = "parameter", description = "specify parameter file", displayName = "file", required = true)
 	public void setParameters(File file) {
 		try {
 			this.parameters= ChipSeqSettings.createSettings(file);
@@ -430,8 +429,27 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		}
 	}
 
-	public boolean validateParameters(HelpPrinter printer,
-			ArgumentProcessor toolArguments) {
+    @Override
+    public String getName() {
+        return "mfilter";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Mapping filter";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file").valueName("file").required().get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setParameters(args.getFile("parameter"));
 		if (parameters== null) {
 			System.err.println("I have no parameter file and I want to scream!");
 			return false;

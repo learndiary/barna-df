@@ -1,7 +1,7 @@
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.io.BufferedIteratorDisk;
 import barna.io.FileHelper;
@@ -9,15 +9,16 @@ import barna.io.bed.BEDwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -26,7 +27,7 @@ import java.util.concurrent.Future;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-@Cli(name = "mfilter", description = "Mapping filter")
+
 public class MappingFilter implements FluxTool<Void> {
 
 	public static void main(String[] args) {
@@ -192,8 +193,36 @@ public class MappingFilter implements FluxTool<Void> {
 
 
 
-	public boolean validateParameters(HelpPrinter printer,
-			ArgumentProcessor toolArguments) {
+    @Override
+    public String getName() {
+        return "mfilter";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Mapping filter";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("set input mappings file (BED)").valueName("bed").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("descriptor", 'd').help("set read descriptor").valueName("descriptor").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("insertmin").help("set insert size minimum").type(Integer.class).defaultValue("170").get());
+        parameters.add(JSAPParameters.flaggedParameter("insertmax").help("set insert size maximum").type(Integer.class).defaultValue("230").get());
+
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setInputFile(args.getFile("input"));
+        setDescriptor(args.getString("descriptor"));
+        setInsertMax(args.getInt("insertmax"));
+        setInsertMin(args.getInt("insertmin"));
+
 		if (fileIn== null|| (!fileIn.exists())|| (!fileIn.canRead())
 				|| descriptor== null)
 			return false;
@@ -201,22 +230,20 @@ public class MappingFilter implements FluxTool<Void> {
 	}
 
 	
-    @Option(name = "i", longName = "input", description = "set input mappings file (BED)", displayName = "input", required = true)
     public void setInputFile(File file) {
         this.fileIn= file;
     }
 
-    @Option(name = "imin", longName = "insertmin", description = "set insert size minimum", displayName = "input size minimum", required = false)
+
     public void setInsertMin(int imin) {
         this.insertMin= imin;
     }
 
-    @Option(name = "imax", longName = "insertmax", description = "set insert size maximum", displayName = "input size maximum", required = false)
+
     public void setInsertMax(int imax) {
         this.insertMax= imax;
     }
 
-    @Option(name = "d", longName = "descriptor", description = "set read descriptor", displayName = "descriptor", required = true)
     public void setDescriptor(String descriptor) {
     	this.descriptor= new UniversalReadDescriptor();
     	try {

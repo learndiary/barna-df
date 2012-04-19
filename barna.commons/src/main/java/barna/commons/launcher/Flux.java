@@ -14,19 +14,19 @@ package barna.commons.launcher;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;
-import com.martiansoftware.jsap.*;
-import org.cyclopsgroup.caff.ref.AccessFailureException;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
-import org.cyclopsgroup.jcli.spi.ParsingContext;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
+import java.io.File;
+import java.io.FilePermission;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.Permission;
@@ -37,7 +37,6 @@ import java.util.*;
  * Flux Simulator starter class. Contains the main method and parses command line arguments. During startup,
  * this checks for any {@link FluxTool} implementations and adds them to the list of available utils.
  */
-@Cli(name = "flux", restrict = false)
 public class Flux {
     /**
      * Required java version
@@ -47,16 +46,6 @@ public class Flux {
      * The tool to be executed
      */
     private String toolName;
-
-    /**
-     * Show help message
-     */
-    private boolean help;
-
-    /**
-     * List available tools
-     */
-    private boolean listTools;
 
     /**
      * Number of executor threads
@@ -91,10 +80,10 @@ public class Flux {
          */
         JSAP jsap = new JSAP();
         try {
-            jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').help("Select a tool").get());
+            jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').defaultValue(System.getProperty("flux.tool")).help("Select a tool").get());
             jsap.registerParameter(JSAPParameters.switchParameter("help").help("Show help").get());
             jsap.registerParameter(JSAPParameters.switchParameter("list-tools").help("List available tools").get());
-            jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").help("Maximum number of threads to use. Default 2").get());
+            jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").type(Integer.class).help("Maximum number of threads to use. Default 2").get());
             jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
             jsap.registerParameter(JSAPParameters.switchParameter("force").help("Disable interactivity. No questions will be asked").get());
         } catch (JSAPException e) {
@@ -103,6 +92,7 @@ public class Flux {
         }
         // register tools
         List<FluxTool> tools = findTools();
+
         // prepare the fluxInstance
         Flux fluxInstance = new Flux();
 
@@ -119,29 +109,10 @@ public class Flux {
         fluxInstance.setToolName(initialFluxArguments.getString("tool"));
         fluxInstance.setDetached(initialFluxArguments.userSpecified("force"));
 
-        if(!initialFluxArguments.userSpecified("tool")){
-            // check for a default tool
-            fluxInstance.setToolName(System.getProperty("flux.tool"));
-        }
         // still no tool ? print usage and exit
         if(fluxInstance.getToolName() == null){
-            printUsage(null, jsap);
+            printUsage(null, jsap, tools, null);
         }
-
-        // find the tool to start
-        FluxTool tool = null;
-//        for (FluxTool fluxTool : tools) {
-//            if(fluxTool.getName().eqauls(fluxInstance.getToolName())){
-//                tool = fluxTool;
-//                break;
-//            }
-//        }
-
-        if (initialFluxArguments.userSpecified("help") || tool == null) {
-            printUsage(tool, jsap);
-        }
-
-
 
         /**
          * Print tools
@@ -152,61 +123,71 @@ public class Flux {
         }
 
 
-        if (tool != null) {
-            // execute the tool
-            ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(tool.getClass());
-            toolArguments.process(args, tool);
-            if (!tool.validateParameters(printer, toolArguments)) {
-                System.out.flush();
-                System.err.flush();
-                System.exit(-1);
+        // find the tool to start
+        FluxTool tool = null;
+        for (FluxTool fluxTool : tools) {
+            if(fluxTool.getName().equals(fluxInstance.getToolName())){
+                tool = fluxTool;
+                break;
             }
+        }
 
-            try {
-                // configure the executor
-                Execute.initialize(fluxInstance.getThreads());
+        if (initialFluxArguments.userSpecified("help") || tool == null) {
+            // todo: add error message "No tool sepcified"
+            printUsage(tool, jsap, tools, "No tool specified, use -t <tool> to specify a tool");
+        }
 
-                tool.call();
-            }catch (OutOfMemoryError outOfMemoryError){
-                int mb = 1024*1024;
-                long maxMemoryBytes = Runtime.getRuntime().maxMemory();
-                long maxMemoryMB = (maxMemoryBytes/mb);
-                Log.error("The Flux " + fluxInstance.getToolName() + " tool run into memory problems ! " +
-                        "Please use the FLUX_MEM environment variable to increase the memory. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
-                        "6 GB of memory.");
-                Log.error("Current memory setting : " + maxMemoryMB + " MB");
-                System.exit(-1);
-            } catch (IOException ioError) {
-                // check for some specific errors
-                if (ioError.getMessage().equals("No space left on device")) {
-                    Log.error("[DISK] There is no space left on the device!");
-                } else {
-                    Log.error("Error while executing " + tool.getClass(), ioError);
+        // execute the tool
+        // 1. get the parameters
+        // 2. parse them
+        // 3. let the tool validate the parameter
+        List<Parameter> parameter = tool.getParameter();
+        if(parameter != null){
+            try{
+                for (Parameter p : parameter) {
+                    jsap.registerParameter(p);
                 }
-                System.exit(-1);
+                JSAPResult toolParameter = jsap.parse(args);
+                if (!tool.validateParameter(toolParameter)){
+                    printUsage(tool, jsap, tools, null);
+                }
             } catch (Exception e) {
-                Log.error(e.getMessage());
-                Log.debug("\n\n");
-                Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
+                Log.error("Parameter error : " + e.getMessage(), e);
                 System.exit(-1);
-            } finally {
-                // shutdown the executor
-                Execute.shutdown();
-            }
-        } else {
-            if (fluxInstance.getToolName() == null || fluxInstance.getToolName().isEmpty()) {
-                Log.error("");
-                Log.error("No tool specified!");
-                Log.error("\n");
-            } else {
-                Log.error("");
-                Log.error("Unable to find tool : " + fluxInstance.getToolName());
-                Log.error("\n");
             }
 
-            // warn and show help
-            printFluxHelp(tools, fluxArguments, out, printer);
+        }
+
+        try {
+            // configure the executor
+            Execute.initialize(fluxInstance.getThreads());
+
+            tool.call();
+        }catch (OutOfMemoryError outOfMemoryError){
+            int mb = 1024*1024;
+            long maxMemoryBytes = Runtime.getRuntime().maxMemory();
+            long maxMemoryMB = (maxMemoryBytes/mb);
+            Log.error("The Flux " + fluxInstance.getToolName() + " tool run into memory problems ! " +
+                    "Please use the FLUX_MEM environment variable to increase the memory. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
+                    "6 GB of memory.");
+            Log.error("Current memory setting : " + maxMemoryMB + " MB");
             System.exit(-1);
+        } catch (IOException ioError) {
+            // check for some specific errors
+            if (ioError.getMessage().equals("No space left on device")) {
+                Log.error("[DISK] There is no space left on the device!");
+            } else {
+                Log.error("Error while executing " + tool.getClass(), ioError);
+            }
+            System.exit(-1);
+        } catch (Exception e) {
+            Log.error(e.getMessage());
+            Log.debug("\n\n");
+            Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
+            System.exit(-1);
+        } finally {
+            // shutdown the executor
+            Execute.shutdown();
         }
     }
 
@@ -250,15 +231,22 @@ public class Flux {
 		return sm;
 	}
 
-	private static void printFluxHelp(List<FluxTool> tools, ArgumentProcessor fluxArguments, PrintWriter out, HelpPrinter printer) {
-        // show general help
-        //fluxArguments.printHelp(out);
-        printer.print(fluxArguments);
-        printTools(tools, out);
-        out.println();
-        out.println("To get help for a specific tool try -t <tool> --help");
-        out.println();
-        out.flush();
+	private static void printUsage(FluxTool tool, JSAP jsap, List<FluxTool> allTools, String errorMessage) {
+        if(errorMessage != null){
+            System.err.println(errorMessage);
+            System.err.println("");
+        }
+        if(tool != null){
+            System.err.println(tool.getDescription());
+        }
+        System.err.println("Options: " + jsap.getUsage());
+        System.err.println("");
+        System.err.println(jsap.getHelp());
+        System.err.println("");
+        printTools(allTools);
+        System.err.println("To get help for a specific tool try -t <tool> --help");
+        System.err.flush();
+        System.exit(-1);
     }
 
     /**
@@ -267,11 +255,9 @@ public class Flux {
      * @param tools the tools available flux tools
      */
     private static void printTools(List<FluxTool> tools) {
-        System.out.println("\tTools available:");
+        System.out.println("Tools available:");
         for (FluxTool fluxTool : tools) {
-            ArgumentProcessor toolArguments = ArgumentProcessor.newInstance(fluxTool.getClass());
-            ParsingContext context = toolArguments.createParsingContext();
-            System.out.println("\t\t" + context.cli().getName() + " - " + context.cli().getDescription());
+            System.out.println("\t" + fluxTool.getName() + " - " + fluxTool.getDescription());
         }
         System.out.println();
     }
@@ -328,36 +314,16 @@ public class Flux {
      *
      * @param toolName toolname
      */
-    @Option(name = "t", longName = "tool", description = "select the tool", displayName = "tool", required = true)
     public void setToolName(String toolName) {
         this.toolName = toolName;
     }
 
-    /**
-     * Should the help be displayed
-     *
-     * @return help true if help message should be displayed
-     */
-    public boolean isHelp() {
-        return help;
-    }
-
-    /**
-     * Show the help message
-     *
-     * @param help the help message
-     */
-    @Option(name = "h", longName = "help", description = "show help message")
-    public void setHelp(boolean help) {
-        this.help = help;
-    }
 
     /**
      * Set the log level. The Sting must be one of {@code NONE, INFO, ERROR, DEBUG}
      *
      * @param level the level
      */
-    @Option(name = "", longName = "log", description = "Log level (NONE|INFO|ERROR|DEBUG)", defaultValue = "INFO", required = false)
     public void setLogLevel(String level) {
         Log.setLogLevel(level);
     }
@@ -376,7 +342,6 @@ public class Flux {
      *
      * @param detached detache
      */
-    @Option(name = "f", longName = "force", description = "Disable interactivity. No questions will be asked", required = false)
     public void setDetached(boolean detached) {
         Log.setInteractive(!detached);
     }
@@ -404,28 +369,8 @@ public class Flux {
      *
      * @param threads number of background threads
      */
-    @Option(name = "x", longName = "threads", description = "Number of threads, default is 2", required = false, defaultValue = "2")
     public void setThreads(final int threads) {
         this.threads = threads;
-    }
-
-    /**
-     * Returs true if tools should be listed
-     *
-     * @return listTools list available tools
-     */
-    public boolean isListTools() {
-        return listTools;
-    }
-
-    /**
-     * Set listing tools
-     *
-     * @param listTools list tools
-     */
-    @Option(name = "", longName = "list-tools", description = "List available tools", required = false)
-    public void setListTools(boolean listTools) {
-        this.listTools = listTools;
     }
 
     /**

@@ -11,18 +11,19 @@
 
 package barna.flux.simulator.error;
 
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import barna.model.Qualities;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 import com.thoughtworks.xstream.XStream;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -35,7 +36,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "errormodel", description = "create an error model")
+
 public class MarkovErrorModel implements FluxTool {
     /**
      * The mapping file
@@ -72,7 +73,6 @@ public class MarkovErrorModel implements FluxTool {
      *
      * @param file the mapping file
      */
-    @Option(name = "f", longName = "file", description = ".map input file", required = true)
     public void setFile(File file) {
         this.file = file;
     }
@@ -92,7 +92,6 @@ public class MarkovErrorModel implements FluxTool {
      *
      * @param readLength the read length
      */
-    @Option(name = "l", longName = "length", description = "read length", required = false)
     public void setReadLength(int readLength) {
         if (readLength <= 0) {
             throw new IllegalArgumentException("Read length <= 0 not permitted!");
@@ -114,7 +113,6 @@ public class MarkovErrorModel implements FluxTool {
      *
      * @param output the output filename
      */
-    @Option(name = "o", longName = "output", description = "output file name", required = true)
     public void setOutput(File output) {
         this.output = output;
     }
@@ -133,7 +131,6 @@ public class MarkovErrorModel implements FluxTool {
      *
      * @param limit the limit
      */
-    @Option(name = "s", longName = "limit", description = "read limit number of sequences to create the model", required = false)
     public void setLimit(int limit) {
         if (limit <= 0) {
             throw new IllegalArgumentException("Limit <= 0 not permitted!");
@@ -146,7 +143,6 @@ public class MarkovErrorModel implements FluxTool {
      *
      * @param technology the technology
      */
-    @Option(name = "", longName = "tech", description = "Technology [phred|solexa|illumina13|illumina18]", required = true)
     public void setTechnology(String technology) {
         if (technology != null && technology.length() > 0) {
             technology = technology.trim();
@@ -162,25 +158,51 @@ public class MarkovErrorModel implements FluxTool {
         }
     }
 
-    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+    @Override
+    public String getName() {
+        return "errormodel";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Create an error model";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("file", 'f').type(File.class).help("gem mapping input file").valueName("map").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("output file name").valueName("output").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("tech", 't').help("Technology [phred|solexa|illumina13|illumina18]").valueName("tech").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("limit", 's').help("read limit number of sequences to create the model").get());
+        parameters.add(JSAPParameters.flaggedParameter("length", 'l').help("read length").get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setFile(args.getFile("file"));
+        setOutput(args.getFile("output"));
+        setTechnology(args.getString("tech"));
+        if(args.userSpecified("limit"))setLimit(args.getInt("limit"));
+        if(args.userSpecified("length"))setReadLength(args.getInt("length"));
+
         if (getFile() == null) {
-            printer.out.println("No input file specified!\n");
-            printer.print(toolArguments);
+            Log.error("No input file specified!\n");
             return false;
         } else if (!getFile().exists()) {
-            printer.out.println(getFile().getAbsolutePath() + " does not exist!\n");
-            printer.print(toolArguments);
+            Log.error(getFile().getAbsolutePath() + " does not exist!\n");
             return false;
         }
         if (getOutput() == null) {
-            printer.out.println("Please specify an output file!\n");
-            printer.print(toolArguments);
+            Log.error("Please specify an output file!\n");
             return false;
         }
 
         if (technology == null) {
-            printer.out.println("No technology specified, please specify the technology used to create the quality scores!\n");
-            printer.print(toolArguments);
+            Log.error("No technology specified, please specify the technology used to create the quality scores!\n");
+            return false;
         }
 
         return true;

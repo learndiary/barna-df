@@ -11,13 +11,10 @@
 
 package barna.flux.simulator.tools;
 
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.launcher.Options;
 import barna.commons.log.Log;
 import barna.io.SpliceGraphIO;
 import barna.model.IntronModel;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.File;
 
@@ -98,7 +95,7 @@ public class SpliceJunctionExtractor { //implements FluxTool<Void> {
      * @param length flank length  @code{> 0}
      */
 
-    @Option(name = "5", longName = "5flank", description = "exonic flank 5' of intron")
+//    @Option(name = "5", longName = "5flank", description = "exonic flank 5' of intron")
     public void set5flank(int length) {
         getEFlanks()[0] = -1;
         if (length <= 0) {
@@ -112,7 +109,7 @@ public class SpliceJunctionExtractor { //implements FluxTool<Void> {
      *
      * @param length flank length @code{> 0}
      */
-    @Option(name = "3", longName = "3flank", description = "exonic flank 3' of intron")
+//    @Option(name = "3", longName = "3flank", description = "exonic flank 3' of intron")
     public void set3flank(int length) {
         getEFlanks()[1] = -1;
         if (length <= 0) {
@@ -135,7 +132,7 @@ public class SpliceJunctionExtractor { //implements FluxTool<Void> {
      *
      * @param gffFile the input file
      */
-    @Option(name = "i", longName = "input", description = "GFF input file")
+//    @Option(name = "i", longName = "input", description = "GFF input file")
     public void setGffFile(File gffFile) {
         this.gffFile = gffFile;
     }
@@ -154,12 +151,12 @@ public class SpliceJunctionExtractor { //implements FluxTool<Void> {
      *
      * @param modelFile model file
      */
-    @Option(name = "m", longName = "model", description = "specify the intron model")
+//    @Option(name = "m", longName = "model", description = "specify the intron model")
     public void setModelFile(File modelFile) {
         this.modelFile = modelFile;
     }
 
-    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
-        return true;
-    }
+//    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+//        return true;
+//    }
 }

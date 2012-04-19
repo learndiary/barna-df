@@ -12,7 +12,6 @@
 package barna.flux.simulator.tools;
 
 import barna.commons.Execute;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
 import barna.io.bed.BEDwrapper;
@@ -22,13 +21,10 @@ import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.concurrent.Future;
 
 /**
  * Count and print breakpoint distribution
@@ -65,7 +61,7 @@ public class PWMExtractor {  //implements FluxTool {
         return gtfFile;
     }
 
-    @Option(name = "g", longName = "gtf", description = "The GTF file", required = true)
+//    @Option(name = "g", longName = "gtf", description = "The GTF file", required = true)
     public void setGtfFile(final File gtfFile) {
         this.gtfFile = gtfFile;
     }
@@ -74,7 +70,7 @@ public class PWMExtractor {  //implements FluxTool {
         return bedFile;
     }
 
-    @Option(name = "b", longName = "bed", description = "The .bed file", required = true)
+//    @Option(name = "b", longName = "bed", description = "The .bed file", required = true)
     public void setBedFile(final File bedFile) {
         this.bedFile = bedFile;
     }
@@ -83,15 +79,15 @@ public class PWMExtractor {  //implements FluxTool {
         return outFile;
     }
 
-    @Option(name = "o", longName = "out", description = "The output file", required = true)
+//    @Option(name = "o", longName = "out", description = "The output file", required = true)
     public void setOutFile(final File outFile) {
         this.outFile = outFile;
     }
 
-    //@Override
-    public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
-        return true;
-    }
+//    //@Override
+//    public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
+//        return true;
+//    }
 
     //@Override
     public Object call() throws Exception {

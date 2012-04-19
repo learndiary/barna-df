@@ -2,24 +2,23 @@ package barna.genome.tools.overlap;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.io.BufferedBACSReader;
 import barna.io.FileHelper;
 import barna.model.bed.BEDobject2;
-import barna.model.commons.MyInteger;
-
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 import org.jfree.util.Log;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 
-@Cli(name = "isect", description = "Intersector")
+
 public class Intersector implements FluxTool<Void> {
 
 	public static byte MODE_INTERSECT= 1;
@@ -74,12 +73,10 @@ public class Intersector implements FluxTool<Void> {
 
 	byte mode= -1;
 	
-    @Option(name = "p", longName = "parameter", description = "specify parameter file", displayName = "file", required = true)
     public void setParameters(File file) {
         this.parFile = file;
     }
 	
-    @Option(name = "o", longName = "output", description = "specify output file", displayName = "file", required = true)
     public void setOutput(File file) {
         this.outFile = file;
     }
@@ -411,13 +408,31 @@ public class Intersector implements FluxTool<Void> {
 		return null;
 	}
 
-	/**
-	 * Checks that file list, and each file in the list exists.
-	 */
-	public boolean validateParameters(HelpPrinter printer,
-			ArgumentProcessor toolArguments) {
-		
-		if (parFile== null|| (!parFile.exists())|| (!parFile.canRead()))
+
+    @Override
+    public String getName() {
+        return "isect";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Intersector";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file").valueName("file").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("specify output file").valueName("output").required().get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setParameters(args.getFile("parameter"));
+        setOutput(args.getFile("output"));
+        if (parFile== null|| (!parFile.exists())|| (!parFile.canRead()))
 			return false;
 		BufferedReader buffy= null;
 		try {

@@ -2,8 +2,8 @@ package barna.genome.tools.chipseq;
 
 
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.bed.BEDwrapper;
@@ -11,15 +11,16 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.io.state.MappingWrapperState;
 import barna.model.bed.BEDobject2;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -32,7 +33,6 @@ import java.util.concurrent.Future;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-@Cli(name = "nfind", description = "Nucleosome finder")
 public class NucleosomeFinder implements FluxTool<Void> {
 	
 	public static final byte MODE_MONONUCLEOSOME= 1;
@@ -745,19 +745,41 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		return false;
 	}
 
-	public boolean validateParameters(HelpPrinter printer,
-			ArgumentProcessor toolArguments) {
-		if (fileMappings== null|| descriptor== null)
+    //@Cli(name = "nfind", description = "Nucleosome finder")
+    @Override
+    public String getName() {
+        return "nfind";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Nucleosome finder";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("set input mappings file (BED)").valueName("bed").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("descriptor", 'd').help("read descriptor").valueName("bed").required().get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setDescriptor(args.getString("descriptor"));
+        setParameters(args.getFile("input"));
+        if (fileMappings== null|| descriptor== null)
 			return false;
 		return true;
 	}
 	
-    @Option(name = "i", longName = "input", description = "set input mappings file (BED)", displayName = "input", required = true)
+
     public void setParameters(File file) {
         this.fileMappings= file;
     }
 
-    @Option(name = "d", longName = "descriptor", description = "set read descriptor", displayName = "descriptor", required = true)
+
     public void setDescriptor(String descriptor) {
     	this.descriptor= new UniversalReadDescriptor();
     	try {

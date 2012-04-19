@@ -1,14 +1,15 @@
 package barna.io.tools;
 
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -17,7 +18,7 @@ import java.util.Random;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-@Cli(name = "subsetter", description = "Extract a random subset of lines from a file")
+
 public class Subsetter implements FluxTool<Void> {
 
 	/**
@@ -44,7 +45,6 @@ public class Subsetter implements FluxTool<Void> {
 	 * Set the input file from which is read.
 	 * @param input input file from which is read
 	 */
-	@Option(name = "i", longName = "input", description = "Input File", required = true)
 	public void setInput(File input) {
 		this.input= input;
 	}
@@ -53,7 +53,6 @@ public class Subsetter implements FluxTool<Void> {
 	 * Set the (approximate) number of lines to be extracted from the input file 
 	 * @param number of lines in the subset to be retrieved 
 	 */
-	@Option(name = "n", longName = "number", description = "Number of lines to be subset", required = true)
 	public void setNumber(int number) {
 		this.numberLines= number;
 	}
@@ -62,7 +61,6 @@ public class Subsetter implements FluxTool<Void> {
 	 * Set the output file to which is written.
 	 * @param output output file to which is written
 	 */
-	@Option(name = "o", longName = "output", description = "Output File", required = false)
 	public void setOutput(File output) {
 		this.output= output;
 	}
@@ -71,7 +69,6 @@ public class Subsetter implements FluxTool<Void> {
 	 * Set the number of lines in the input file
 	 * @param inputLines number of lines in the input file
 	 */
-	@Option(name = "l", longName = "lines", description = "Number of lines in the input file", required = false)
 	public void setLines(int inputLines) {
 		this.inputLines= inputLines;
 	}
@@ -149,12 +146,34 @@ public class Subsetter implements FluxTool<Void> {
 		}
 	}
 
-	/**
-	 * Check parameters.
-	 */
-	@Override
-	public boolean validateParameters(HelpPrinter printer,
-			ArgumentProcessor toolArguments) {
+
+    @Override
+    public String getName() {
+        return "subsetter";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extract a random subset of lines from a file";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Input File").valueName("input").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("Output File").valueName("output").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("number", 'n').help("Number of lines to be subset").valueName("subset").get());
+        parameters.add(JSAPParameters.flaggedParameter("lines", 'l').help("Number of lines in the input file").valueName("lines").get());
+        return parameters;
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setInput(args.getFile("input"));
+        setOutput(args.getFile("output"));
+        if(args.userSpecified("number")) setNumber(args.getInt("number"));
+        if(args.userSpecified("lines")) setLines(args.getInt("lines"));
+
 		if (!input.exists()) {
 			Log.error("Cannot find input file "+ input.getAbsolutePath());
 			return false;

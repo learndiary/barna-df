@@ -11,23 +11,24 @@
 
 package barna.flux.simulator.tools;
 
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Count and print breakpoint distribution
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "breakpoint", description = "Plot the breakpoint distribution of a .bed file")
+
 public class BreakpointCounter implements FluxTool {
 
     private File bedFile;
@@ -37,7 +38,7 @@ public class BreakpointCounter implements FluxTool {
     private int maxLength = Integer.MAX_VALUE;
 
 
-    @Option(name = "i", longName = "input", description = ".bed input file")
+
     public File getBedFile() {
         return bedFile;
     }
@@ -50,7 +51,7 @@ public class BreakpointCounter implements FluxTool {
         return bounds;
     }
 
-    @Option(name = "b", longName = "bounds", description = "Respect transcript bounds and ignore reads outside (negative breakpoints or breakpoints after transcript end)")
+
     public void setBounds(final boolean bounds) {
         this.bounds = bounds;
     }
@@ -59,7 +60,7 @@ public class BreakpointCounter implements FluxTool {
         return minLength;
     }
 
-    @Option(name = "m", longName = "min", description = "Minimum transcript length", defaultValue = "0")
+
     public void setMinLength(final int minLength) {
         this.minLength = minLength;
     }
@@ -68,15 +69,41 @@ public class BreakpointCounter implements FluxTool {
         return maxLength;
     }
 
-    @Option(name = "x", longName = "max", description = "Maximum transcript length", defaultValue = "100000000")
+
     public void setMaxLength(final int maxLength) {
         this.maxLength = maxLength;
     }
 
     @Override
-    public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
+    public String getName() {
+        return "breakpoint";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Plot the breakpoint distribution of a .bed file";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help(".bed input file").valueName("bed").required().get());
+        parameters.add(JSAPParameters.switchParameter("bounds", 'b').type(File.class).help("Respect transcript bounds and ignore reads outside (negative breakpoints or breakpoints after transcript end)").get());
+        parameters.add(JSAPParameters.flaggedParameter("min").help("Minimum transcript length").type(Integer.class).defaultValue("0").get());
+        parameters.add(JSAPParameters.flaggedParameter("max").help("Maximum transcript length").type(Integer.class).defaultValue("100000000").get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setBedFile(args.getFile("input"));
+        setMaxLength(args.getInt("max"));
+        setMinLength(args.getInt("min"));
+        setBounds(args.userSpecified("bounds"));
         if (bedFile == null || !bedFile.exists()) {
-            printer.out.println("Please specify a .bed file");
+            Log.error("Please specify a .bed file");
             return false;
         }
         return true;

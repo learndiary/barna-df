@@ -11,23 +11,23 @@
 
 package barna.io.tools;
 
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.io.gtf.GTFwrapper;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sort GTF Files from command line
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "sortGTF", description = "Sort a GTF file. If no output file is specified, result is printed to standard out")
 public class GTFSorterTool implements FluxTool {
     /**
      * The source file
@@ -57,7 +57,6 @@ public class GTFSorterTool implements FluxTool {
      *
      * @param inFile the input file
      */
-    @Option(name = "i", longName = "input", description = "GTF input file", required = true)
     public void setInFile(final File inFile) {
         this.inFile = inFile;
     }
@@ -76,7 +75,6 @@ public class GTFSorterTool implements FluxTool {
      *
      * @param outFile the output file
      */
-    @Option(name = "o", longName = "output", description = "GTF output file. Sorts to stdout if no file is given", required = false)
     public void setOutFile(final File outFile) {
         this.outFile = outFile;
     }
@@ -95,15 +93,39 @@ public class GTFSorterTool implements FluxTool {
      *
      * @param check check if its sorted before sorting
      */
-    @Option(name = "c", longName = "check", description = "Check if the file is sorted before sorting", required = false)
     public void setCheck(boolean check) {
         this.check = check;
     }
 
     @Override
-    public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
-        if (getInFile() == null) {
-            printer.out.println("Please specify an input file");
+    public String getName() {
+        return "sortGTF";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Sort a GTF file. If no output file is specified, result is printed to standard out";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("GTF input file").valueName("gtf").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("GTF output file. Sorts to stdout if no file is given").valueName("output").get());
+        parameters.add(JSAPParameters.switchParameter("check", 'c').help("Check if the file is sorted before sorting").get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setInFile(args.getFile("input"));
+        if(args.userSpecified("output"))
+            setOutFile(args.getFile("output"));
+        if(args.userSpecified("check")) setCheck(true);
+
+        if (getInFile() == null || !getInFile().canRead()) {
+            Log.error("Unable to read input file " + getInFile().getAbsolutePath());
             return false;
         }
         return true;

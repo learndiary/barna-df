@@ -3,9 +3,17 @@ package barna.commons.cli.jsap;
 
 import com.martiansoftware.jsap.*;
 
+import java.io.File;
 import java.math.BigDecimal;
 
 public class JSAPParameters {
+    private static StringParser FILE_PARSER = new StringParser() {
+        @Override
+        public Object parse(String s) throws ParseException {
+            return new File(s);
+        }
+    };
+
     /**
      * Create a builder for a flagged parameter
      *
@@ -193,6 +201,9 @@ public class JSAPParameters {
             if(type == Character.class) return JSAP.CHARACTER_PARSER;
             if(type == Byte.class) return JSAP.BYTE_PARSER;
             if(type == Short.class) return JSAP.SHORT_PARSER;
+            if(type == File.class) {
+                return FILE_PARSER;
+            }
             return JSAP.STRING_PARSER;
         }
 

@@ -12,19 +12,19 @@
 package barna.flux.simulator;
 
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.flux.simulator.fragmentation.Fragmenter;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Future;
 
 /**
@@ -32,7 +32,6 @@ import java.util.concurrent.Future;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "simulator", description = "Flux Simulation Pipeline")
 public class SimulationPipeline implements FluxTool<Void> {
 
 	public static void main(String[] args) {
@@ -117,7 +116,6 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param printParameters enable disable
      */
-    @Option(name = "o", longName = "printParameters", description = "Print default parameters", required = false)
     public void setPrintParameters(final boolean printParameters) {
         this.printParameters = printParameters;
     }
@@ -136,7 +134,6 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param expression activate/deactivate expression mode
      */
-    @Option(name = "x", longName = "express", description = "simulate expression")
     public void setExpression(boolean expression) {
         this.expression = expression;
     }
@@ -155,7 +152,6 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param library activate/deactivate library mode
      */
-    @Option(name = "l", longName = "library", description = "simulate library construction")
     public void setLibrary(boolean library) {
         this.library = library;
     }
@@ -174,7 +170,6 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param sequence activate/deactivate sequence mode
      */
-    @Option(name = "s", longName = "sequence", description = "simulate sequencing")
     public void setSequence(boolean sequence) {
         this.sequence = sequence;
     }
@@ -193,7 +188,6 @@ public class SimulationPipeline implements FluxTool<Void> {
      *
      * @param file parameter file
      */
-    @Option(name = "p", longName = "parameter", description = "specify parameter file (PAR file)", displayName = "file", required = true)
     public void setFile(File file) {
         this.file = file;
     }
@@ -252,7 +246,36 @@ public class SimulationPipeline implements FluxTool<Void> {
     }
 
 
-    public boolean validateParameters(HelpPrinter printer, ArgumentProcessor toolArguments) {
+    @Override
+    public String getName() {
+        return "simulator";
+    }
+
+    @Override
+    public String getDescription() {
+        return "The Flux Simulator";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").required().get());
+        parameters.add(JSAPParameters.switchParameter("express", 'x').help("Simulate Expression").get());
+        parameters.add(JSAPParameters.switchParameter("library", 'l').help("Simulate Library Construction").get());
+        parameters.add(JSAPParameters.switchParameter("sequence", 's').help("Simulate Sequencing").get());
+        parameters.add(JSAPParameters.switchParameter("printParameters", 'o').help("Print default parameters").get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setFile(args.getFile("parameter"));
+        setPrintParameters(args.userSpecified("printParameters"));
+        setLibrary(args.userSpecified("library"));
+        setExpression(args.userSpecified("express"));
+        setSequence(args.userSpecified("sequence"));
+
         if(isPrintParameters()){
             FluxSimulatorSettings settings = new FluxSimulatorSettings();
             settings.write(System.out);
@@ -263,14 +286,12 @@ public class SimulationPipeline implements FluxTool<Void> {
             Log.error("");
             Log.error("No parameter file specified !");
             Log.error("\n");
-            printer.print(toolArguments);
             return false;
         }
         if (!getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
             Log.error("\n");
-            printer.print(toolArguments);
             return false;
         }
 

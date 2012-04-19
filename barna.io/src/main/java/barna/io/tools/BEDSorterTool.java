@@ -11,23 +11,23 @@
 
 package barna.io.tools;
 
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.io.bed.BEDwrapper;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sort BED Files from command line
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name = "sortBED", description = "Sort a BED file. If no output file is specified, result is printed to standard out")
 public class BEDSorterTool implements FluxTool {
     /**
      * The source file
@@ -52,7 +52,6 @@ public class BEDSorterTool implements FluxTool {
      *
      * @param inFile the input file
      */
-    @Option(name = "i", longName = "input", description = "BED input file", required = true)
     public void setInFile(final File inFile) {
         this.inFile = inFile;
     }
@@ -71,18 +70,43 @@ public class BEDSorterTool implements FluxTool {
      *
      * @param outFile the output file
      */
-    @Option(name = "o", longName = "output", description = "BED output file. Sorts to stdout if no file is given", required = false)
+
     public void setOutFile(final File outFile) {
         this.outFile = outFile;
     }
 
     @Override
-    public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
-        if (getInFile() == null) {
-            printer.out.println("Please specify an input file");
+    public String getName() {
+        return "sortBED";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Sort a BED file. If no output file is specified, result is printed to standard out";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("BED input file").valueName("bed").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("BED output file. Sorts to stdout if no file is given").valueName("bed").get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setInFile(args.getFile("input"));
+        if(args.userSpecified("output"))
+            setOutFile(args.getFile("output"));
+
+        if (getInFile() == null || !getInFile().canRead()) {
+            Log.error("Unable to read input file " + getInFile().getAbsolutePath());
             return false;
         }
         return true;
+
+
     }
 
     @Override

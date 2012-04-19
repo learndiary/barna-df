@@ -11,18 +11,19 @@
 
 package barna.flux.simulator.tools;
 
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
-import barna.commons.launcher.HelpPrinter;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.flux.simulator.distributions.GCPCRDistribution;
 import barna.flux.simulator.distributions.PCRDistribution;
+import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 import com.thoughtworks.xstream.XStream;
-import org.cyclopsgroup.jcli.ArgumentProcessor;
-import org.cyclopsgroup.jcli.annotation.Cli;
-import org.cyclopsgroup.jcli.annotation.Option;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -31,7 +32,7 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-@Cli(name="pcrdistributions", description = "Create a set of pcr distributions with n generations")
+
 public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
     /**
      * The number of bins
@@ -69,7 +70,6 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
      *
      * @param bins the number of bins
      */
-    @Option(name = "b", longName = "bins", description = "number of bins", required = false)
     public void setBins(final int bins) {
         if(bins <= 0 ) throw new IllegalArgumentException("Number of bins must be > 0");
         this.bins = bins;
@@ -87,7 +87,6 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
      * Set the number of generations
      * @param generations the number of generations
      */
-    @Option(name = "g", longName = "generations", description = "number of generations (PCR rounds)", required = true)
     public void setGenerations(final int generations) {
         if(generations <= 0 ) throw new IllegalArgumentException("Number of generations must be > 0");
         this.generations = generations;
@@ -107,7 +106,6 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
      *
      * param outputFile target the target file
      */
-    @Option(name = "o", longName = "out", description = "output file", required = true)
     public void setOutputFile(final File outputFile) {
         if(outputFile == null) throw  new NullPointerException("You have to specify an output file!");
         this.outputFile = outputFile;
@@ -127,7 +125,6 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
      *
      * @param validate filename
      */
-    @Option(name = "v", longName = "validate", description = "validate file or 'default'", required = false)
     public void setValidate(final String validate) {
         this.validate = validate;
     }
@@ -146,16 +143,44 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
      *
      * @param validateProbability the probability
      */
-    @Option(name = "p", longName = "probability", description = "print distributions for this probability", required = false)
     public void setValidateProbability(final double validateProbability) {
         this.validateProbability = validateProbability;
     }
 
+
     @Override
-    public boolean validateParameters(final HelpPrinter printer, final ArgumentProcessor toolArguments) {
+    public String getName() {
+        return "pcrdistributions";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Create a set of pcr distributions with n generations";
+    }
+
+    @Override
+    public List<Parameter> getParameter() {
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.flaggedParameter("out", 'o').type(File.class).help("Output File").required().valueName("file").get());
+        parameters.add(JSAPParameters.flaggedParameter("generations", 'g').help("number of generations (PCR rounds)").required().valueName("rounds").get());
+        parameters.add(JSAPParameters.flaggedParameter("bins", 'b').type(Integer.class).defaultValue("20").help("number of bins").get());
+        parameters.add(JSAPParameters.flaggedParameter("validate").help("file to validate or 'default'").get());
+        parameters.add(JSAPParameters.flaggedParameter("probability").type(Float.class).help("print distributions for this probability").get());
+        return parameters;
+
+    }
+
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        setOutputFile(args.getFile("out"));
+        setGenerations(args.getInt("generations"));
+        setBins(args.getInt("bins"));
+        if(args.userSpecified("validate")) setValidate(args.getString("validate"));
+        if(args.userSpecified("probability")) setValidateProbability(args.getFloat("probability"));
+
         if(getValidate() == null){
             if (getOutputFile() == null) {
-                printer.out.println("Please specify an output file");
+                Log.error("Please specify an output file");
                 return false;
             }
         }
