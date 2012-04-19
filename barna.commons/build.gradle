@@ -1,16 +1,15 @@
-repositories {
-    maven {
-	    url "http://reflections.googlecode.com/svn/repo"	
-	}
-}
-
 dependencies{
     compile 'org.apache.commons:commons-math:2.2'
     compile 'commons-cli:commons-cli:1.2'
     compile 'xstream:xstream:1.2.2'
     compile 'jfreechart:jfreechart:1.0.0'
     compile 'com.lowagie:itext:2.0.7'
-    compile 'org.reflections:reflections:0.9.5-RC2'
+    compile 'org.reflections:reflections:0.9.5'
     compile 'com.martiansoftware:jsap:2.1'
+}
+
+configurations{
+    compile.exclude group:"junit"
+    compile.exclude group:"bouncycastle"
 }
 

@@ -1,0 +1,101 @@
+projectReport << {
+    def resolved = configurations.runtime.getResolvedConfiguration()
+    def all = []
+
+    def allLibs = []
+    def license2lib = [:]
+    def license2url = [:]
+
+    // hardcoded license mappings
+
+    def hardcoded = [
+            "barna:barna":["BSD-3", "http://opensource.org/licenses/BSD-3-Clause"],
+            "com.thoughtworks.xstream:xstream" : ["BSD-3", "http://xstream.codehaus.org/license.html"],
+            "commons-cli:commons-cli" : ["The Apache Software License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0.txt"],
+            "dom4j:dom4j":["BSD", "http://dom4j.sourceforge.net/dom4j-1.6.1/license.html"],
+            "jdbm:jdbm":["The Apache Software License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0.txt"],
+            "org.apache.commons:commons-math":["The Apache Software License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0.txt"],
+            "org.codehaus.groovy:groovy-all":["The Apache Software License, Version 2.0", "http://www.apache.org/licenses/LICENSE-2.0.txt"],
+            "org.reflections:reflections":["WTFL", "http://sam.zoy.org/wtfpl/COPYING"],
+            "org.slf4j:slf4j-api":["MIT", "http://www.opensource.org/licenses/MIT"],
+            "xpp3:xpp3_min":["Indiana University Extreme! Lab Software License", "http://www.extreme.indiana.edu/dist/java-repository/xpp3/distributions/"]
+    ]
+
+    /*
+   Collect all dependencies
+    */
+    resolved.resolvedArtifacts.each{ ra->
+        def m = ra.moduleVersion.id
+        def name = "${m.group}:${m.name}:${m.version}"
+        allLibs << name
+        all << name
+    }
+
+
+    if(all.size() > 0){
+        // find and resolve poms for what we can
+        def pomConf = configurations.create("poms")
+        all.each{ d->
+            dependencies.add("poms", "${d}@pom")
+        }
+        def pomResolved = pomConf.resolvedConfiguration.lenientConfiguration
+        def licenses = [:]
+        pomResolved.resolvedArtifacts.each{ a->
+            def xml = new XmlParser().parse(a.file)
+            if(xml.licenses){
+                xml.licenses.each{s->
+                    s.license.each{l->
+                        def name = l.name.text().trim()
+                        if(name == "LGPL" || name == "GNU Lesser General Public Licence"){
+                            name = "GNU Lesser General Public License"
+                        }
+                        if(name == "GPL"){
+                            name = "GNU General Public Licence"
+                        }
+                        def url = l.url.text()
+                        def libName = "${a.moduleVersion.id.group}:${a.moduleVersion.id.name}:${a.moduleVersion.id.version}"
+                        if(!license2lib[name]) license2lib[name] = []
+                        license2lib[name]<< libName
+                        license2url[name] = url
+                        allLibs.remove(libName)
+                    }
+                }
+            }
+        }
+
+        def rem = []
+        allLibs.each{ lib->
+            def entry = hardcoded.find{lib.startsWith(it.key)}?.value
+            if(entry){
+                def name = entry[0]
+                def url = entry[1]
+                def libName = lib
+                if(!license2lib[name]) license2lib[name] = []
+                license2lib[name]<< libName
+                license2url[name] = url
+                rem << libName
+            }
+        }
+        allLibs.removeAll(rem)
+        license2lib["Unknown"] = []
+        allLibs.each {license2lib["Unknown"] << it}
+
+
+
+        // write file
+        def file = new File("${buildDir}/reports/project/licenses.txt")
+        file.delete()
+        file.parentFile.mkdirs()
+        file.createNewFile()
+        license2lib.each{license, libs->
+            if(libs.size() > 0){
+                file.append("  License: '${license}'\n")
+                if(license2url[license])file.append("  URL: ${license2url[license]}\n")
+                libs.sort().each{l->
+                    file.append("    -${l}\n")
+                }
+                file.append("\n")
+            }
+        }
+    }
+}

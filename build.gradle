@@ -35,7 +35,7 @@ apply from : "${rootDir}/gradle/buildinfo.gradle"
 // all projects access the default maven repos
 allprojects {
 	apply plugin: 'idea'
-
+    
     group "barna"
 	repositories {
 	    mavenCentral()
@@ -52,7 +52,8 @@ subprojects{
     apply plugin: 'maven'
     apply plugin: 'artifactory'
     apply plugin: 'eclipse'
-    
+    apply plugin: 'project-report'
+
     sourceCompatibility = 1.6
     dependencies{
 		testCompile 'junit:junit-dep:4.10',
@@ -65,10 +66,14 @@ subprojects{
     apply from : "${rootDir}/gradle/artifactory.gradle"
     // add tasks for source/javadoc and test jars and add them as artifacts
     apply from : "${rootDir}/gradle/javaproject.gradle"
-    
+    // extend projectReport to print library license info
+    apply from : "${rootDir}/gradle/licenses.gradle"
+
     test{
         jvmArgs '-Xms128m', '-Xmx1G'
     }
+
+
 }
 
 /**

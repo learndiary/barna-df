@@ -288,7 +288,7 @@ public class Flux {
         List<FluxTool> tools = new ArrayList<FluxTool>();
         List<URL> fbiUrls = null;
         try {
-        	fbiUrls= new ArrayList<URL>(ClasspathHelper.getUrlsForPackagePrefix("barna"));
+        	fbiUrls= new ArrayList<URL>(ClasspathHelper.forPackage("barna"));
         } catch (Throwable t) {
         	System.err.println(t);
         	System.currentTimeMillis();
