@@ -12,11 +12,17 @@ version = "1.9-SNAPSHOT"
 /**
  * Versions for applications
  */
-ext.applications = [
+ext.appVersions = [
     "barna.astalavista":"1.0-SNAPSHOT",
     "barna.simulator":"1.0-SNAPSHOT",
     "barna.capacitor":"1.0-SNAPSHOT",
     "barna.tools":"1.0-SNAPSHOT"
+]
+ext.appNames = [
+    "barna.astalavista":"Astalavista",
+    "barna.simulator":"Flux-Simulator",
+    "barna.capacitor":"Flux-Capacitor",
+    "barna.tools":"Flux-Tools"
 ]
 // make sure version defined here are applied to subprojects
 subprojects.each{project->

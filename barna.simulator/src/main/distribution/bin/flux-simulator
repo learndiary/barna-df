@@ -47,4 +47,4 @@ if [ -n "$TMPDIR" ]; then
   MISC="-Djava.io.tmpdir="$TMPDIR
 fi
 
-java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC -cp $cp barna.commons.launcher.Flux -t simulator "$@"
+java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC -Dflux.tool=simulator -Dflux.app="barna.simulator" -cp $cp barna.commons.launcher.Flux "$@"

@@ -28,8 +28,11 @@ task writeBuildProperties(type:Copy){
         bp.createNewFile();
     }
     bp.append("flux.version=${version}\n")
-    if(project(":").applications[project.name]){
-        bp.append("flux.appversion=${project(":").applications[project.name]}\n")
+    if(project(":").appVersions[project.name]){
+        bp.append("flux.appversion=${project(":").appVersions[project.name]}\n")
+    }
+    if(project(":").appNames[project.name]){
+        bp.append("flux.appname=${project(":").appNames[project.name]}\n")
     }
     bp.append("build.date=${buildDate}\n")
     bp.append("build.version=${gitVersion}\n")

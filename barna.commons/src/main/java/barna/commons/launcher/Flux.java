@@ -68,9 +68,18 @@ public class Flux {
     	
         // load java.util.logger configuration
         Log.initialize();
+
+        // print tool and version info
+        FluxVersionInfo versionInfo = null;
+        if(System.getProperty("flux.app") != null){
+            versionInfo = new FluxVersionInfo("/" + System.getProperty("flux.app")+"-build.properties");
+            Log.println(versionInfo.toShortString());
+        }
+
+
         /*
-        Check java version
-         */
+       Check java version
+        */
         checkJavaVersion();
 
 
@@ -86,6 +95,7 @@ public class Flux {
             jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").type(Integer.class).help("Maximum number of threads to use. Default 2").get());
             jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
             jsap.registerParameter(JSAPParameters.switchParameter("force").help("Disable interactivity. No questions will be asked").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("version", 'v').help("Show version information").get());
         } catch (JSAPException e) {
             Log.error("Unable to create parameters : " + e.getMessage(), e);
             System.exit(-1);
@@ -108,6 +118,11 @@ public class Flux {
         fluxInstance.setThreads(initialFluxArguments.getInt("threads"));
         fluxInstance.setToolName(initialFluxArguments.getString("tool"));
         fluxInstance.setDetached(initialFluxArguments.userSpecified("force"));
+
+        if(initialFluxArguments.userSpecified("version") && versionInfo != null){
+            System.err.println(versionInfo.toString());
+            System.exit(1);
+        }
 
         // still no tool ? print usage and exit
         if(fluxInstance.getToolName() == null){
@@ -134,7 +149,7 @@ public class Flux {
 
         if (initialFluxArguments.userSpecified("help") || tool == null) {
             // todo: add error message "No tool sepcified"
-            printUsage(tool, jsap, tools, "No tool specified, use -t <tool> to specify a tool");
+            printUsage(tool, jsap, tools, !initialFluxArguments.userSpecified("help") ? "No tool specified, use -t <tool> to specify a tool":null);
         }
 
         // execute the tool
@@ -398,6 +413,7 @@ public class Flux {
      * Cover build and version information
      */
     public static class FluxVersionInfo{
+        private String appName;
         private String libVersion;
         private String appVersion;
         private String buildDate;
@@ -418,6 +434,7 @@ public class Flux {
                     properties.load(buildProperties);
                     libVersion = properties.getProperty("flux.version", "Unknown");
                     appVersion = properties.getProperty("flux.appversion", "Unknown");
+                    appName = properties.getProperty("flux.appname", "Flux");
                     buildDate = properties.getProperty("build.date", "Unknown");
                     buildBranch = properties.getProperty("build.branch", "Unknown");
                     buildVersion = properties.getProperty("build.version", "Unknown");
@@ -469,11 +486,20 @@ public class Flux {
         }
 
         /**
+         * Get the application name
+         * @return name the name
+         */
+        public String getAppName() {
+            return appName;
+        }
+
+        /**
          * Long multi-line string representation of all the version information
          * @return info the build info
          */
         public String toString(){
             StringBuilder builder = new StringBuilder();
+            builder.append(appName).append('\n');
             builder.append("Version ").append(appVersion).append('\n');
             builder.append("Flux Library ").append(appVersion).append('\n');
             builder.append("-----------------------------------------------\n");
@@ -488,7 +514,7 @@ public class Flux {
          */
         public String toShortString(){
             StringBuilder builder = new StringBuilder();
-            builder.append("v").append(appVersion).append(" (Flux Library: ").append(libVersion).append(")\n");
+            builder.append(appName).append(" ").append("v").append(appVersion).append(" (Flux Library: ").append(libVersion).append(")\n");
             return builder.toString();
         }
     }
