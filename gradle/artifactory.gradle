@@ -2,25 +2,55 @@
  * Artifactory Deployment
  */
 if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password')){
-artifactory {
-     contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
-     publish {
-         //A closure defining publishing information
-         repository {
-             repoKey = 'gradle-jip'   //The Artifactory repository key to publish to
-             username = "${jip_artifactory_user}"          //The publisher user name
-             password = "${jip_artifactory_password}"      //The publisher password
+    artifactory {
+         contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL if not overridden by the publisher/resolver
+         publish {
+             //A closure defining publishing information
+             repository {
+                 repoKey = 'gradle-jip'   //The Artifactory repository key to publish to
+                 username = "${jip_artifactory_user}"          //The publisher user name
+                 password = "${jip_artifactory_password}"      //The publisher password
+             }
+             defaults{
+                 mavenDescriptor 'build/publish-pom.xml'
+             }
+
          }
-     }
-     resolve {
-         contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL for the resolver
-         repository {
-             repoKey = 'repo'  //The Artifactory (preferably virtual) repository key to resolve from
-             maven = true                //Resolve Maven-style artifacts and descriptors (true by default)
+         resolve {
+             contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL for the resolver
+             repository {
+                 repoKey = 'repo'  //The Artifactory (preferably virtual) repository key to resolve from
+                 maven = true                //Resolve Maven-style artifacts and descriptors (true by default)
+             }
          }
-     }
-}
-if(tasks.findByPath('build')){
-    tasks.artifactoryPublish.dependsOn(tasks.build)
-}
+    }
+    // write pom
+    task writeNewPom << {
+        pom {
+            project {
+                licenses {
+                    license {
+                        name 'BSD-3'
+                        url 'http://opensource.org/licenses/BSD-3-Clause'
+                    }
+                }
+                contributors{
+                    contributor{
+                        name "Michael Sammeth"
+                        email "gmicha@googlemail.com"
+                    }
+                    contributor{
+                        name "Thasso Griebel"
+                        email "Thasso.Griebel@googlemail.com"
+                    }
+                }
+            }
+        }.writeTo("$buildDir/publish-pom.xml")
+    }
+
+    if(tasks.findByPath('build')){
+        tasks.artifactoryPublish.dependsOn([tasks.build, tasks.writeNewPom])
+    }
+
+
 }
