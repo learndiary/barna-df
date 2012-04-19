@@ -12,15 +12,24 @@ def appVersion = project(":").appVersions[project.name]
 def outputName = "flux-simulator-${appVersion}"
 ext.distSpec = copySpec {
     from('.'){
-        include 'COPYING'
+        include 'LICENSE'
+        include 'LGPL_LICENSE.txt'
+        include 'APACHE_LICENSE.txt'
     }
     from('src/main/distribution/'){
-        include 'APACHE_LICENSE.txt'
-        include 'LICENSE.txt'
         include 'README.txt'
     }
     into('bin') {
-        from("src/main/distribution/bin")
+        from("${project.rootDir}/barna.distribution/src/main/dist/bin")
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens:
+            [
+                "flux.tool":'simulator',
+                "flux.app":project.name
+            ]
+        )
+
+        rename 'flux-template.sh',  'flux-simulator'
+        rename 'flux-template.bat', 'flux-simulator.bat'
         fileMode = 0755
     }    
     into('lib') {

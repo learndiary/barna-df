@@ -5,6 +5,7 @@ dependencies{
     compile 'jfreechart:jfreechart:1.0.0'
     compile 'com.lowagie:itext:2.0.7'
     compile 'org.reflections:reflections:0.9.5'
+    compile 'org.slf4j:slf4j-nop:1.6.1'
     compile 'com.martiansoftware:jsap:2.1'
 }
 
