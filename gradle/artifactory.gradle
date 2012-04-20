@@ -50,7 +50,7 @@ if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password'
     }
 
     if(tasks.findByPath('build')){
-        tasks.artifactoryPublish.dependsOn([tasks.build, tasks.writeNewPom])
+        tasks.artifactoryPublish.dependsOn([tasks.assemble, tasks.writeNewPom])
     }
 
 

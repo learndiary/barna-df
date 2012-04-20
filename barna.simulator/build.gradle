@@ -8,8 +8,7 @@ dependencies{
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
 
-def appVersion = project(":").appVersions[project.name]
-def outputName = "flux-simulator-${appVersion}"
+def outputName = "flux-simulator-${version}"
 ext.distSpec = copySpec {
     from(project.rootDir){
         include 'LICENSE'
@@ -48,7 +47,6 @@ task distDir(type: Copy){
 task distTar(type: Tar) {
     description = "Tars the binary distribution."
     baseName "flux-simulator"
-    version "${appVersion}"
     into "${outputName}"    
     with distSpec
     compression = Compression.GZIP
@@ -57,7 +55,6 @@ task distTar(type: Tar) {
 task distZip(type: Zip) {
     description = "Zip the binary distribution."
     baseName "flux-simulator"
-    version "${appVersion}"
     into "${outputName}"
     with distSpec
 }

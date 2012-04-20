@@ -25,8 +25,9 @@ ext.appNames = [
     "barna.tools":"Flux-Tools"
 ]
 // make sure version defined here are applied to subprojects
-subprojects.each{project->
-    project.version = "${version}"
+subprojects.each{p->
+    def av = project(":").appVersions[p.name]
+    p.version = av ? "${av}": "${version}"
 }
 
 // collect build info and set it in subprojects
