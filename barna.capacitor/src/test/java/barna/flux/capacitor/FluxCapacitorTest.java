@@ -220,6 +220,49 @@ public class FluxCapacitorTest {
 		}
 
 	}
+
+    @Test
+    public void testReadsStranded() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false);
+
+            BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
+            try {
+                buffy.write(FluxCapacitorSettings.ANNOTATION_MAPPING.getName()+" "+
+                        AnnotationMapping.STRANDED+ "\n");
+                buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName()+" "+
+                        UniversalReadDescriptor.getDescriptor(
+                                UniversalReadDescriptor.DESCRIPTORID_SENSE)+ "\n");
+                buffy.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+
+            runCapacitor();
+
+            // check
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
+        }
+
+    }
+
 	@Test
 	public void testStasAreWrittenAndContainValidData() {
 
