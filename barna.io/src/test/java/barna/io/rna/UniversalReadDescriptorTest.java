@@ -194,8 +194,72 @@ public class UniversalReadDescriptorTest {
 		}
 		
 	}
-	
-	@Test
+
+    @Test
+    public void testSenseDescriptor() {
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+        try {
+            descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SENSE));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSenseID() {
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SENSE));
+        Attributes a=
+                descriptor.getAttributes(simRead1, null);
+        assertEquals(a.id, simRead1);
+        assertEquals(1, a.strand);
+
+        a= descriptor.getAttributes(simRead2, a);
+        assertEquals(a.id, simRead2);
+        assertEquals(1, a.strand);
+
+        a= descriptor.getAttributes(simRead3, a);
+        assertEquals(a.id, simRead3);
+        assertEquals(1, a.strand);
+
+        a= descriptor.getAttributes(simRead4, a);
+        assertEquals(a.id, simRead4);
+        assertEquals(1, a.strand);
+    }
+
+    @Test
+    public void testAntisenseID() {
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_ANTISENSE));
+        Attributes a=
+                descriptor.getAttributes(simRead1, null);
+        assertEquals(a.id, simRead1);
+        assertEquals(2, a.strand);
+
+        a= descriptor.getAttributes(simRead2, a);
+        assertEquals(a.id, simRead2);
+        assertEquals(2, a.strand);
+
+        a= descriptor.getAttributes(simRead3, a);
+        assertEquals(a.id, simRead3);
+        assertEquals(2, a.strand);
+
+        a= descriptor.getAttributes(simRead4, a);
+        assertEquals(a.id, simRead4);
+        assertEquals(2, a.strand);
+    }
+
+    @Test
+    public void testAntisenseDescriptor() {
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+        try {
+            descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_ANTISENSE));
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    @Test
 	public void testSimulatorID() {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
