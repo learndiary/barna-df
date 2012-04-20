@@ -8,7 +8,7 @@ if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password'
              contextUrl = 'http://barnaserver.com/artifactory'
              //A closure defining publishing information
              repository {
-                 repoKey = 'gradle-jip'   //The Artifactory repository key to publish to
+                 repoKey = 'gradle-barna-devel'   //The Artifactory repository key to publish to
                  username = "${jip_artifactory_user}"          //The publisher user name
                  password = "${jip_artifactory_password}"      //The publisher password
              }
