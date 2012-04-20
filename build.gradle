@@ -1,6 +1,13 @@
 apply plugin: 'base'
 apply plugin: 'idea'
 
+ext.nightly=false
+ext.timestamp=new Date().format("yyyyMMddHHmmss")
+
+if(System.properties['nightly']){
+    ext.nightly=true
+}
+
 /**
  * Library version
  *
@@ -24,6 +31,15 @@ ext.appNames = [
     "barna.capacitor":"Flux-Capacitor",
     "barna.tools":"Flux-Tools"
 ]
+
+if(nightly){
+    version=version.replaceAll("SNAPSHOT", timestamp)
+    appVersions.keySet.each{k->
+        appVersions[k] = appVersions[k].replaceAll("SNAPSHOT", timestamp)
+    }
+}
+
+
 // make sure version defined here are applied to subprojects
 subprojects.each{p->
     def av = project(":").appVersions[p.name]
