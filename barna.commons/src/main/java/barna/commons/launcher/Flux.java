@@ -452,7 +452,7 @@ public class Flux {
                 Properties properties = new Properties();
                 try {
                     properties.load(buildProperties);
-                    libVersion = properties.getProperty("flux.version", "Unknown");
+                    libVersion = properties.getProperty("barna.version", "Unknown");
                     appVersion = properties.getProperty("flux.appversion", "Unknown");
                     appName = properties.getProperty("flux.appname", "Flux");
                     buildDate = properties.getProperty("build.date", "Unknown");
@@ -521,7 +521,7 @@ public class Flux {
             StringBuilder builder = new StringBuilder();
             builder.append(appName).append('\n');
             builder.append("Version ").append(appVersion).append('\n');
-            builder.append("Flux Library ").append(libVersion).append('\n');
+            builder.append("Barna Library ").append(libVersion).append('\n');
             builder.append("-----------------------------------------------\n");
             builder.append("Build Date ").append(buildDate).append('\n');
             builder.append("Build Version ").append(buildVersion).append('\n');

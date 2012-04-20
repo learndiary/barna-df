@@ -60,3 +60,7 @@ task distZip(type: Zip) {
 }
 
 task dist(dependsOn: ['distTar', 'distZip'])
+
+artifacts{
+    archives distTar 
+}
