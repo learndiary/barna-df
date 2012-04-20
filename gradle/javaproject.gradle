@@ -29,7 +29,7 @@ task writeBuildProperties(type:Copy){
     }
     bp.append("barna.version=${project(":").version}\n")
     if(project(":").appVersions[project.name]){
-        bp.append("flux.appversion=${project(":").appVersions[project.name]}\n")
+        bp.append("flux.appversion=${project.version}\n")
     }
     if(project(":").appNames[project.name]){
         bp.append("flux.appname=${project(":").appNames[project.name]}\n")
