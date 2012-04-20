@@ -54,10 +54,12 @@ public class UniversalReadDescriptor {
 	public static String TAG_ID= "ID";
 	public static String TAG_PAIR= "MATE"; 
 	public static String TAG_STRAND= "STRAND";
-	public static String TAG_MATE1SENSE= "MATE1SENSE";
+    public static String TAG_SENSE= "SENSE";
+    public static String TAG_ANTISENSE= "ANTISENSE";
+    public static String TAG_MATE1SENSE= "MATE1SENSE";
 	public static String TAG_MATE2SENSE= "MATE2SENSE";
 
-	public static char SYMBOL_TAG_LEFT= '{';
+    public static char SYMBOL_TAG_LEFT= '{';
 	public static char SYMBOL_TAG_RIGHT= '}';
 	public static char SYMBOL_OPT_LEFT= '(';
 	public static char SYMBOL_OPT_RIGHT= ')';
@@ -68,8 +70,10 @@ public class UniversalReadDescriptor {
 	public static char SYMBOL_QUESTION= '?';
 
 	public static String 
-		DESCRIPTORID_SIMPLE= "SIMPLE", 
-		DESCRIPTORID_PAIRED= "PAIRED", 
+		DESCRIPTORID_SIMPLE= "SIMPLE",
+        DESCRIPTORID_SENSE= "SENSE",
+        DESCRIPTORID_ANTISENSE= "ANTISENSE",
+        DESCRIPTORID_PAIRED= "PAIRED",
 		DESCRIPTORID_STRAND_MATE= "STRAND_MATE", 
 		DESCRIPTORID_MATE_STRAND_CSHL= "MATE_STRAND_CSHL",
 		DESCRIPTORID_MATE1_SENSE= "MATE1_SENSE",
@@ -83,7 +87,15 @@ public class UniversalReadDescriptor {
 				SYMBOL_TAG_LEFT+ 
 				TAG_ID+
 				SYMBOL_TAG_RIGHT);
-		mapSimpleDescriptors.put(DESCRIPTORID_PAIRED, 
+        mapSimpleDescriptors.put(DESCRIPTORID_SENSE,
+                SYMBOL_TAG_LEFT+
+                        TAG_SENSE+
+                        SYMBOL_TAG_RIGHT);
+        mapSimpleDescriptors.put(DESCRIPTORID_ANTISENSE,
+                SYMBOL_TAG_LEFT+
+                        TAG_ANTISENSE+
+                        SYMBOL_TAG_RIGHT);
+        mapSimpleDescriptors.put(DESCRIPTORID_PAIRED,
 				SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
 				"/"+
 				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
@@ -150,11 +162,63 @@ public class UniversalReadDescriptor {
 	}
 
 
+    /**
+     * Strings that have been provided as separators between the information fields.
+     */
 	String[] separators= null;
+
+    /**
+     * Array of flags that indicates which fields are marked to be required.
+     */
 	boolean[] mandatory= null;
-	int posPair= -1, posStrand= -1, posID= -1;
-	
-	char symbolMate1= '1', symbolMate2= '2', symbolSense= '1', symbolAsense= '2', symbolNoSense= '0';
+
+    /**
+     * Position in the field array that specifies the paired-end information.
+     */
+	int posPair= -1;
+
+    /**
+     * Position in the field array that specifies the strand information.
+     */
+    int posStrand= -1;
+
+    /**
+     * Position in the field array that specifies the read identifier.
+     */
+    int posID= -1;
+
+    /**
+     * Flag indicating all mappings of <code>this</code> descriptor are sense
+     * with respect to the transcription directionality.
+     */
+    boolean sense= false;
+
+    /**
+     * Flag indicating all mappings of <code>this</code> descriptor are anti-sense
+     * with respect to the transcription directionality.
+     */
+    boolean antisense= false;
+
+    /**
+     * Symbol for first mate
+     */
+    char symbolMate1= '1';
+    /**
+     * Symbol for second mate
+     */
+    char symbolMate2= '2';
+    /**
+     * Symbol for sense directionality
+     */
+    char symbolSense= '1';
+    /**
+     * Symbol for anti-sense directionality
+     */
+    char symbolAsense= '2';
+    /**
+     * Symbol for cases where the directionality failed to be determined
+     */
+    char symbolNoSense= '0';
 	
 	public UniversalReadDescriptor() {
 	}
@@ -186,7 +250,11 @@ public class UniversalReadDescriptor {
 		symbolMate2= descriptor.charAt(i+ 4);
 		return (i+5);
 	}
-	
+
+    /**
+     * Generates an expression for the rules underlying <code>this</code> descriptor.
+     * @return
+     */
 	@Override
 	public String toString() {
 
@@ -198,9 +266,14 @@ public class UniversalReadDescriptor {
 				sb.append(SYMBOL_TAG_LEFT);
 			else
 				sb.append(SYMBOL_OPT_LEFT);
-			if (i== posID)
-				sb.append(TAG_ID);
-			else if (i== posPair&& i== posStrand) {
+			if (i== posID) {
+                if (sense)
+                    sb.append(TAG_SENSE);
+                else if (antisense)
+                    sb.append(TAG_ANTISENSE);
+                else
+				    sb.append(TAG_ID);
+            } else if (i== posPair&& i== posStrand) {
 				if (symbolMate1== symbolSense)
 					sb.append(TAG_MATE1SENSE);
 				else
@@ -238,12 +311,22 @@ public class UniversalReadDescriptor {
 		
 		return sb.toString();
 	}
-	
+
+    /**
+     * Indicates whether expressions of <code>this</code> descriptor carry strand information.
+     * @return <code>true</code> it the descriptor comprises strand information, <code>false</code>
+     * otherwise
+     */
 	public boolean isStranded() {
-		return (posStrand>= 0);
+		return (sense|| antisense|| posStrand>= 0);
 	}
-	
-	public boolean isPaired() {
+
+    /**
+     * Indicates whether expressions of <code>this</code> descriptor carry mate information.
+     * @return <code>true</code> it the descriptor comprises mate information, <code>false</code>
+     * otherwise
+     */
+    public boolean isPaired() {
 		return (posPair>= 0);
 	}
 	
@@ -385,6 +468,13 @@ public class UniversalReadDescriptor {
 			}
 			
 			a.id= cs.subSequence(0, cpos+ 1);	// 20110808: cpos+ 1 to catch last char
+
+            // set strand for whole readID if necessary
+            if (sense)
+                a.strand= 1;
+            else if (antisense)
+                a.strand= 2;
+
 			return a;
 			
 		} catch (Throwable e) {
@@ -421,6 +511,7 @@ public class UniversalReadDescriptor {
 	public void init(String descriptor) {
 		
 		String uc= descriptor.toUpperCase();
+
 		if (mapSimpleDescriptors.containsKey(uc))
 			descriptor= mapSimpleDescriptors.get(uc);
 		
@@ -444,10 +535,16 @@ public class UniversalReadDescriptor {
 						throw new RuntimeException("No closing symbol found for '"+ cc+ "' at position "+ i+ ".");
 					
 					String tag= descriptor.substring(i+1, j);
-					if (tag.equalsIgnoreCase(TAG_ID)) {
+					if (tag.equalsIgnoreCase(TAG_ID)||
+                            tag.equalsIgnoreCase(TAG_SENSE)||
+                            tag.equalsIgnoreCase(TAG_ANTISENSE)) {
 						if (opt)
 							throw new RuntimeException("Read ID cannot be optional.");
 						posID= pos;
+                        if (tag.equalsIgnoreCase(TAG_SENSE))
+                            sense= true;
+                        else if (tag.equalsIgnoreCase(TAG_ANTISENSE))
+                            antisense= true;
 					} else if (tag.equalsIgnoreCase(TAG_STRAND)) {
 						posStrand= pos;
 						j= initSymbolsSense(descriptor, j);
