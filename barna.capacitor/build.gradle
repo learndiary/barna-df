@@ -11,3 +11,63 @@ dependencies{
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
+
+def appVersion = project(":").appVersions[project.name]
+def outputName = "flux-capacitor-${appVersion}"
+ext.distSpec = copySpec {
+    from(project.rootDir){
+        include 'LICENSE'
+        include 'LGPL_LICENSE.txt'
+        include 'APACHE_LICENSE.txt'
+    }
+    from('src/main/distribution/'){
+        include 'README.txt'
+    }
+    into('bin') {
+        from("${project.rootDir}/barna.distribution/src/main/dist/bin")
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens:
+            [
+                "flux.tool":'simulator',
+                "flux.app":project.name
+            ]
+        )
+
+        rename 'flux-template.sh',  'flux-capacitor'
+        rename 'flux-template.bat', 'flux-capacitor.bat'
+        fileMode = 0755
+    }    
+    into('lib') {
+        from(jar.outputs.files)
+        from(configurations.runtime)        
+    }
+}
+
+task distDir(type: Copy){
+    description = "Prepare a directory for distribution"
+    into "${distsDir}/${outputName}"
+    with distSpec
+}
+
+
+task distTar(type: Tar) {
+    description = "Tars the binary distribution."
+    baseName "flux-capacitor"
+    into "${outputName}"
+    version "${appVersion}"
+    with distSpec
+    compression = Compression.GZIP
+}
+
+task distZip(type: Zip) {
+    description = "Zip the binary distribution."
+    baseName "flux-capacitor"
+    version "${appVersion}"
+    into "${outputName}"
+    with distSpec
+}
+
+task dist(dependsOn: ['distTar', 'distZip'])
+
+artifacts{
+    archives distTar 
+}

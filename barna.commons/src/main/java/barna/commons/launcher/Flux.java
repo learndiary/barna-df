@@ -521,7 +521,7 @@ public class Flux {
             StringBuilder builder = new StringBuilder();
             builder.append(appName).append('\n');
             builder.append("Version ").append(appVersion).append('\n');
-            builder.append("Flux Library ").append(appVersion).append('\n');
+            builder.append("Flux Library ").append(libVersion).append('\n');
             builder.append("-----------------------------------------------\n");
             builder.append("Build Date ").append(buildDate).append('\n');
             builder.append("Build Version ").append(buildVersion).append('\n');
