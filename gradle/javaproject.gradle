@@ -27,7 +27,7 @@ task writeBuildProperties(type:Copy){
         bp.delete()
         bp.createNewFile();
     }
-    bp.append("flux.version=${version}\n")
+    bp.append("barna.version=${project(":").version}\n")
     if(project(":").appVersions[project.name]){
         bp.append("flux.appversion=${project(":").appVersions[project.name]}\n")
     }
