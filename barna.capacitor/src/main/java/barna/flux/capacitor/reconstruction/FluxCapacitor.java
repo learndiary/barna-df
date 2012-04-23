@@ -1222,9 +1222,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 					if (stranded) {
 						if ((tx.getStrand()== bed1.getStrand()&& attributes.strand== 2)
-								|| (tx.getStrand()!= bed1.getStrand()&& attributes.strand== 1))
-						++nrMappingsWrongStrand;
-						continue;
+								|| (tx.getStrand()!= bed1.getStrand()&& attributes.strand== 1)) {
+						    ++nrMappingsWrongStrand;
+						    continue;
+                        }
 					}
 					
 					int bpoint1= getBpoint(tx, bed1);					
