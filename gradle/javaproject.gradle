@@ -17,7 +17,7 @@ task testJar(type: Jar) {
 /**
  * Write a properties file that contains version and build information
  */
-task writeBuildProperties(type:Copy){
+task writeBuildProperties(){
     File bp = file("${sourceSets.main.output.resourcesDir.absolutePath}/${project.name}-build.properties")
     if(!bp.exists()){
         bp.getParentFile().mkdirs();
