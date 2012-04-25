@@ -243,11 +243,15 @@ public class Log {
      */
     public static void error(String prefix, String message) {
         if (logLevel.level >= Log.Level.ERROR.level) {
+            // make sure everything is flushed before and after printing
+            outputStream.flush();
+            logStream.flush();
             if (prefix != null && prefix.length() > 0) {
                 logStream.println("[" + prefix + "]" + " " + message);
             } else {
                 logStream.println(message);
             }
+            logStream.flush();
         }
     }
 

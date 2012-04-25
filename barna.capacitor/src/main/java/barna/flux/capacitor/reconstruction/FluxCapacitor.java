@@ -3326,8 +3326,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             }catch (OutOfMemoryError memoryError){
                 System.gc();
                 Thread.yield();
-                Log.warn("Not enough memory to sort BED entries in RAM. Switching to disk sorting. You can increase the amount of memory used " +
-                        "by the capacitor using the FLUX_MEM environment variable. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
+                Log.warn("Not enough memory to sort BED entries in RAM. Switching to disk sorting. This run is NOT failed!\n " +
+                        "You can increase the amount of memory used " +
+                        "by the capacitor using the FLUX_MEM environment variable. For example: export FLUX_MEM=\"6G\"; flux-capacitor ... to use" +
                         "6 GB of memory.");
                 return readBedFileDisk(gene, from, to, mode, retryCount, timeInSeconds);
             }

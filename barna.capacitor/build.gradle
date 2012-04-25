@@ -48,7 +48,7 @@ task distDir(type: Copy){
 }
 
 
-task distTar(type: Tar) {
+task distTar(type: Tar, dependsOn: ['writeBuildProperties']) {
     description = "Tars the binary distribution."
     baseName "flux-capacitor"
     into "${outputName}"
