@@ -203,9 +203,12 @@ public class Flux {
             long maxMemoryBytes = Runtime.getRuntime().maxMemory();
             long maxMemoryMB = (maxMemoryBytes/mb);
             Log.error("The Flux " + fluxInstance.getToolName() + " tool run into memory problems ! " +
-                    "Please use the FLUX_MEM environment variable to increase the memory. For example: export FLUX_MEM=\"6G\"; flux -t capacitor ... to use" +
+                    "Please use the FLUX_MEM environment variable to increase the memory. For example: export FLUX_MEM=\"6G\"; " +
+                    "flux-"+fluxInstance.getToolName()+" ... to use " +
                     "6 GB of memory.");
             Log.error("Current memory setting : " + maxMemoryMB + " MB");
+            if(outOfMemoryError.getStackTrace() != null && outOfMemoryError.getStackTrace().length > 0)
+                Log.debug("Out of memory stacktrace: "+outOfMemoryError.getStackTrace()[0].toString(), outOfMemoryError);
             System.exit(-1);
         } catch (IOException ioError) {
             // check for some specific errors

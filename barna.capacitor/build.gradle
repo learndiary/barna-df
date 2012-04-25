@@ -26,7 +26,7 @@ ext.distSpec = copySpec {
         from("${project.rootDir}/barna.distribution/src/main/dist/bin")
         filter(org.apache.tools.ant.filters.ReplaceTokens, tokens:
             [
-                "flux.tool":'simulator',
+                "flux.tool":'capacitor',
                 "flux.app":project.name
             ]
         )
