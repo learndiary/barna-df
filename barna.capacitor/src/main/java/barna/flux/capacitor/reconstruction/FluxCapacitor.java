@@ -688,7 +688,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				solver.setCostSplit(costSplit);
 				solver.setProfile(profile);
 				solver.setReadLen(readLenMin);
-				solver.setFlow(true);
 				solver.costBounds= costBounds;
 			
 				return solver;
