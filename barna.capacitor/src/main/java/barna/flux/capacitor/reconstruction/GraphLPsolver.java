@@ -79,7 +79,6 @@ public class GraphLPsolver implements ReadStatCalculator {
 	double[] result= null;	// the primal solution
 	HashMap<Object,Double> trptExprHash= null;
 	Profile profile= null;
-	boolean flow= true;
 	int nrMappingsObs= 0;
 	
 	public GraphLPsolver(AnnotationMapper aMapper, int readLen, int realReads) {
@@ -825,13 +824,6 @@ public class GraphLPsolver implements ReadStatCalculator {
 		return lpWriter;
 	}
 
-	public boolean isFlow() {
-		return flow;
-	}
-
-	public void setFlow(boolean flow) {
-		this.flow = flow;
-	}
 
 	PrintStream p= null;
 	public strictfp void run() {
