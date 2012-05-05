@@ -471,8 +471,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 	
 	/**
 	 * 
-	 * @param dd	return value, array size is elementar block (either plus or minus)
-	 * @param obs
+	 * @param a	return value, array size is elementar block (either plus or minus)
+	 * @param baseLen
+     * @param e
 	 * @return
 	 * @deprecated debug
 	 */
@@ -832,18 +833,6 @@ public class GraphLPsolver implements ReadStatCalculator {
 		this.flow = flow;
 	}
 
-	private double getMaxPlus(SimpleEdge e, Transcript t) {
-		
-		double x= aMapper.getMaxFlux(readLen);
-		int[] a= e.getFrac(t, readLen);
-		int len= a[1]- a[0]+ 1;
-		x*= len;
-		x-= ((MappingsInterface) e).getMappings().getReadNr()
-			+ ((MappingsInterface) e).getMappings().getRevReadNr();
-		assert(x> 0);
-		return x;
-	}
-		
 	PrintStream p= null;
 	public strictfp void run() {
 		
