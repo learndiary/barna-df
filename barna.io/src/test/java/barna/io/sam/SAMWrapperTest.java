@@ -1,4 +1,4 @@
-package barna.io.sbam;
+package barna.io.sam;
 
 import static org.junit.Assert.*;
 
@@ -12,8 +12,9 @@ import org.junit.Test;
 
 import barna.commons.Execute;
 import barna.io.bed.BEDwrapperTest;
+import barna.io.sam.SAMWrapper;
 
-public class SBAMWrapperTest {
+public class SAMWrapperTest {
 	
 	private static File testfile;
 
@@ -30,7 +31,7 @@ public class SBAMWrapperTest {
 
 	@Test
 	public void testRead() {
-		SBAMWrapper wrapper = new SBAMWrapper(testfile);
+		SAMWrapper wrapper = new SAMWrapper(testfile);
 		wrapper.read();
 		assertNotNull(wrapper.beds);
 		assertTrue(wrapper.beds.length > 0);		

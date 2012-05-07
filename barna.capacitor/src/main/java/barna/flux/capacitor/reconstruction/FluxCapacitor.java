@@ -47,7 +47,8 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.io.state.MappingWrapperState;
 import barna.model.*;
-import barna.model.bed.BEDobject2;
+import barna.model.bed.BEDMapping;
+import barna.model.Mapping;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -155,7 +156,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			Thread threadBefore= null;
 			int nrMappingsReadsOrPairs;
 			HashSet<CharSequence> mapReadOrPairIDs;
-			HashMap<CharSequence, Vector<BEDobject2>[]> mapEndsOfPairs;
+			HashMap<CharSequence, Vector<Mapping>[]> mapEndsOfPairs;
 			long[] sigall= null;
 			UniversalReadDescriptor.Attributes attributes= null;
 	
@@ -171,7 +172,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				nrMappingsReadsOrPairs= 0;
 				mapReadOrPairIDs= new HashSet<CharSequence>();
 				if (pairedEnd)
-					mapEndsOfPairs = new HashMap<CharSequence, Vector<BEDobject2>[]>();
+					mapEndsOfPairs = new HashMap<CharSequence, Vector<Mapping>[]>();
 				attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes();
 			}
 			
@@ -1070,7 +1071,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			 * @param extension
 			 * @return
 			 */
-			private int[] extend(Transcript tx, BEDobject2[] beds, int[] extension) {
+			private int[] extend(Transcript tx, Mapping[] beds, int[] extension) {
 				
 				Attributes a= null;
 				
@@ -1080,8 +1081,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					int h= Math.abs(tstart); tstart= Math.abs(tend); tend= h;
 				}
 
-				HashMap<CharSequence, BEDobject2> mapMates5= new HashMap<CharSequence, BEDobject2>(),
-					mapMates3= new HashMap<CharSequence, BEDobject2>();
+				HashMap<CharSequence, Mapping> mapMates5= new HashMap<CharSequence, Mapping>(),
+					mapMates3= new HashMap<CharSequence, Mapping>();
 				if (tx.getStrand()< 0)
 					System.currentTimeMillis();
 
@@ -1114,7 +1115,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						continue;
 					a= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(beds[i].getName(), a);
 					CharSequence id= a.id; 
-					BEDobject2 bed= null;
+					Mapping bed= null;
 					if (beds[i].getStrand()< 0) {
 						bed= mapMates5.get(id);
 						if (bed== null)
@@ -1148,7 +1149,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			 * @param bed
 			 * @return
 			 */
-			private boolean contains(Transcript tx, BEDobject2 bed) {
+			private boolean contains(Transcript tx, Mapping bed) {
 				
 //				if (bed.toString().contains("HWUSI-EAS1692:3:30:7649:19668"))
 //					System.currentTimeMillis();
@@ -1191,7 +1192,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				if (beds== null)
 					return;
 				
-				BEDobject2 bed1, bed2;
+				BEDMapping bed1, bed2;//TODO Fix BARNA-119
 				UniversalReadDescriptor.Attributes 
 					attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes(), 
 					attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes();
@@ -1210,7 +1211,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				while (beds.hasNext()) {
 					
 					++nrReadsSingleLoci;
-					bed1= new BEDobject2(beds.next());
+					bed1= new BEDMapping(beds.next());//TODO Fix BARNA-119
 					CharSequence tag= bed1.getName();
 					attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);	
 					if (pairedEnd) {
@@ -1240,7 +1241,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 						beds.mark();
 						while(beds.hasNext()) {
-							bed2= new BEDobject2(beds.next());
+							bed2= new BEDMapping(beds.next());//TODO Fix BARNA-119
 							attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
 							if (attributes2== null)
 								continue;
@@ -3173,7 +3174,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	}
 
 	int[] insertMinMax= null;
-	private int[] getExonicPos(Transcript tx, BEDobject2 bed, int tlen) {
+	private int[] getExonicPos(Transcript tx, Mapping bed, int tlen) {
 		int gstart= bed.getStart();	// getAbsoluteStart();	// fuck 0-base in bed
 		int gend= bed.getEnd(); // getAbsoluteEnd();		// last pos not incl in bed, +1-1
 		++gstart;	// to normal coordinates
@@ -3206,7 +3207,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	 * @param bed
 	 * @return
 	 */
-	private int getBpoint(Transcript tx, BEDobject2 bed) {
+	private int getBpoint(Transcript tx, Mapping bed) {
 		
 		// just depends on genomic position, not on sense/antisense!
 		int gpos= bed.getStrand()>= 0? bed.getStart()+ 1: bed.getEnd();	
@@ -3347,7 +3348,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
         if (state.result== null)
             return null;
-        BEDobject2[] beds= (BEDobject2[]) state.result;
+        BEDMapping[] beds= (BEDMapping[]) state.result;//TODO move to Mapping
         Arrays.sort(beds, getDescriptorComparator());
         iter= new BufferedIteratorRAM(beds);
 
@@ -3397,10 +3398,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	}
 
 	
-	BEDDescriptorComparator comp= null;
-	private Comparator<? super BEDobject2> getDescriptorComparator() {
+	MappingComparator comp= null;
+	private Comparator<? super Mapping> getDescriptorComparator() {
 		if (comp == null) {
-			comp = new BEDDescriptorComparator(
+			comp = new MappingComparator(
 					settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
 		}
 

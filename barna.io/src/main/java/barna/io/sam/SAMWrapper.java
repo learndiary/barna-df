@@ -1,7 +1,7 @@
 /**
  * 
  */
-package barna.io.sbam;
+package barna.io.sam;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -18,14 +18,14 @@ import net.sf.samtools.*;
  * @author emilio
  *
  */
-public class SBAMWrapper extends AbstractFileIOWrapper implements
+public class SAMWrapper extends AbstractFileIOWrapper implements
 		MappingWrapper {
 
-	BEDobject[] beds= null;
+	public BEDobject[] beds= null;
 	/**
 	 * @param inputFile
 	 */
-	public SBAMWrapper(File inputFile) {
+	public SAMWrapper(File inputFile) {
 		super(inputFile);
 		// TODO Auto-generated constructor stub
 	}
@@ -35,7 +35,7 @@ public class SBAMWrapper extends AbstractFileIOWrapper implements
 	 * and the default line comparator.
 	 * @param absolutePath path to the file the wrapper is based on
 	 */
-	public SBAMWrapper(String absolutePath) {
+	public SAMWrapper(String absolutePath) {
 		this(new File(absolutePath));
 	}
 
