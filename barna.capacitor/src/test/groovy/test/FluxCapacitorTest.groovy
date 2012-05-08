@@ -144,12 +144,12 @@ class FluxCapacitorTest{
          */
         def classpath = System.getProperty("java.class.path")
         def cp  = []
+        // remove libs containing spaces in the name, eg "blabla IDEA bla.jar"
         classpath.split(":").each {e->
-            if(!e.contains("idea") && !e.contains("jre/lib")) cp << e
+            if(!e.contains(" ")) cp << e
         }
-        String cmd= "java -cp "+ cp.join(":")
-
-
+        def cpp= cp.join(":")
+        String cmd= "java -cp "+ cpp
 
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
