@@ -2103,19 +2103,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      */
     private AbstractFileIOWrapper getWrapperGTF(File inputFile) {
 
-        if (gtfReader== null) {
-            gtfReader= new GTFwrapper(inputFile.getAbsolutePath());
-            gtfReader.setNoIDs(null);
-            gtfReader.setReadGene(true);
-            gtfReader.setReadFeatures(new String[] {"exon","CDS"});
-            gtfReader.setReadAheadTranscripts(1);	// only one locus a time
-    //		gtfReader.setReadAheadTranscripts(-1);
-    //		gtfReader.setReadAll(true);
-            gtfReader.setGeneWise(true);
-            gtfReader.setPrintStatistics(false);
-            gtfReader.setReuse(true);
-            Transcript.removeGaps= false;
-        }
+        gtfReader= new GTFwrapper(inputFile.getAbsolutePath());
+        gtfReader.setNoIDs(null);
+        gtfReader.setReadGene(true);
+        gtfReader.setReadFeatures(new String[] {"exon","CDS"});
+        gtfReader.setReadAheadTranscripts(1);	// only one locus a time
+//		gtfReader.setReadAheadTranscripts(-1);
+//		gtfReader.setReadAll(true);
+        gtfReader.setGeneWise(true);
+        gtfReader.setPrintStatistics(false);
+        gtfReader.setReuse(true);
+        Transcript.removeGaps= false;
 
 		return gtfReader;
 	}
