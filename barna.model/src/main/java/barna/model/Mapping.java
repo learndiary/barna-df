@@ -15,13 +15,13 @@ public interface Mapping {
 	 * 
 	 * @return the name of the mapping
 	 */
-	public ByteArrayCharSequence getName();
+	public CharSequence getName();
 
 	/**
 	 * 
 	 * @return the name of the reference chromosome	
 	 */
-	public ByteArrayCharSequence getChromosome();
+	public CharSequence getChromosome();
 	
 	/**
 	 * 
