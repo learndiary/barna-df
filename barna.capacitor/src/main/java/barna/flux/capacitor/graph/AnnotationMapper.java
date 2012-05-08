@@ -44,17 +44,49 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Vector;
 
+/**
+ * Class to handle the <i>annotation</i> mapping of <i>genomic</i> mappings
+ * in a locus (gene).
+ *
+ * @author Michael Sammeth
+ */
 public class AnnotationMapper extends SplicingGraph {
 
+    /**
+     * The number of mappings in the current locus.
+     */
 	public long nrMappingsLocus= 0;
+
+    /**
+     * The number of mappings in the current locus that map to the annotation.
+     */
 	public long nrMappingsMapped= 0;
+
+    /**
+     * The number of mappings in the current locus that do not map to the annotation
+     */
 	public long nrMappingsNotMapped= 0;
+
+    /**
+     * The number of mappings that mapped to the annotation but no mate was found/mapped.
+     */
 	public long nrMappingsNotMappedAsPair= 0;
+
+    /**
+     * The number of mappings that did not match the expected strand.
+     */
 	public long nrMappingsWrongStrand= 0;
+
+    /**
+     * The number of paired and annotation-mapped reads that did not exhibit the expected orientation.
+     */
 	public long nrMappingsWrongPairOrientation= 0;
+
+    /**
+     * The number of mappings that are mapped multiple times in the locus.
+     */
 	public long nrMappingsLocusMultiMaps= 0;
 	
-	double maxFlux= -1;
 	public AnnotationMapper(Gene gene) {
 		super(gene);
 		constructGraph();
@@ -219,7 +251,7 @@ public class AnnotationMapper extends SplicingGraph {
 	 * Maps genome-mapped reads into the graph.
 	 * 
 	 * @param lineIterator iterator of input lines
-	 * @param descriptor
+	 * @param settings
 	 */
 	public void map(BufferedIterator lineIterator, FluxCapacitorSettings settings) {
 
@@ -622,24 +654,6 @@ public class AnnotationMapper extends SplicingGraph {
 
 	}
 
-	public double getMaxFlux(int readLen) {
-		if (maxFlux< 0) {
-			Iterator<SimpleEdge> iter= edgeHash.values().iterator();
-			while (iter.hasNext()) {
-				SimpleEdge e= iter.next();
-				double x= ((MappingsInterface) e).getMappings().getReadNr()
-						+ ((MappingsInterface) e).getMappings().getRevReadNr();
-				Transcript[] t= decodeTset(e.getTranscripts());
-				int[] a= e.getFrac(t[0], readLen);
-				x/= a[1]- a[0]+ 1;
-				maxFlux= Math.max(maxFlux, x);
-			}
-		}
-	
-		return maxFlux;
-	}
-
-	
 	@Override
 	protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
 		SimpleEdgeMappings e= new SimpleEdgeMappings(v, w);
