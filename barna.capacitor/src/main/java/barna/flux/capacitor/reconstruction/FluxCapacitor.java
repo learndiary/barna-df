@@ -2087,7 +2087,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @return a wrapper instance for GTF files, or <code>null</code>
      */
     private AbstractFileIOWrapper getWrapperGTF() {
-        return getWrapper(null);
+        return getWrapperGTF(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
     }
 
     /**
