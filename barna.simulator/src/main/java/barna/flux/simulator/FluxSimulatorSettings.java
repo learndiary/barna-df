@@ -56,13 +56,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if (f== null)
                 return;   // valid
             long heapMaxSize = Runtime.getRuntime().maxMemory();
-            if (heapMaxSize< HEAP_SIZE_MOTIFS) {
+            if (heapMaxSize<= HEAP_SIZE_MOTIFS) {
                 DecimalFormat df = new DecimalFormat("#.##");
                 throw new ParameterException("Due to the parameter value " +
                         parameter.getName() +
-                        " heap size of " +
+                        " heap size of > " +
                         df.format(HEAP_SIZE_MOTIFS/ (double) 1000000000)  +
-                        " is required, but currently only "+ df.format(heapMaxSize/ (double) 1000000000) +
+                        " GB is required, but currently only "+ df.format(heapMaxSize/ (double) 1000000000) +
                         " have been provided. "
                 );
             }
@@ -73,7 +73,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Maximum heap size required when motifs are used
      */
-    protected static long HEAP_SIZE_MOTIFS= 4000000000l;
+    protected static long HEAP_SIZE_MOTIFS= 2500000000l;
 
     /**
      * Loci separator
