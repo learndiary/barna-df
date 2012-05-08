@@ -761,14 +761,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         // update coverage
                         if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                             if (bpoint1< bpoint2) {
-                                for (int i = bpoint1; i < bpoint1+ bed1.length(); i++)
+                                for (int i = bpoint1; i < bpoint1+ bed1.getLength(); i++)
                                     coverage.increment(i);
-                                for (int i = bpoint2- bed2.length()+ 1; i <= bpoint2; i++)
+                                for (int i = bpoint2- bed2.getLength()+ 1; i <= bpoint2; i++)
                                     coverage.increment(i);
                             } else {
-                                for (int i = bpoint2; i < bpoint2+ bed2.length(); i++)
+                                for (int i = bpoint2; i < bpoint2+ bed2.getLength(); i++)
                                     coverage.increment(i);
-                                for (int i = bpoint1- bed1.length()+ 1; i <= bpoint1; i++)
+                                for (int i = bpoint1- bed1.getLength()+ 1; i <= bpoint1; i++)
                                     coverage.increment(i);
                             }
                         }
@@ -785,10 +785,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     // update coverage
                     if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                         if (bed1.getStrand()== tx.getStrand()) {
-                            for (int i = bpoint1; i < bpoint1+ bed1.length(); i++)
+                            for (int i = bpoint1; i < bpoint1+ bed1.getLength(); i++)
                                 coverage.increment(i);
                         } else {
-                            for (int i = bpoint1- bed1.length()+ 1; i <= bpoint1; i++)
+                            for (int i = bpoint1- bed1.getLength()+ 1; i <= bpoint1; i++)
                                 coverage.increment(i);
                         }
                     }
@@ -2087,7 +2087,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @return a wrapper instance for GTF files, or <code>null</code>
      */
     private AbstractFileIOWrapper getWrapperGTF() {
-        return getWrapper(null);
+    	return getWrapperGTF(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
     }
 
     /**
