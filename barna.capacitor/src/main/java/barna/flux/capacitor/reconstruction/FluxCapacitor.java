@@ -134,7 +134,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         /**
          * Iterator over mappings.
          */
-		MSIterator beds= null;
+		MSIterator mappings = null;
 
         /**
          * Flag indicating whether the deconvolution (<code>true</code>) is
@@ -173,14 +173,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
          * Constructor providing reads and mappings for deconvolution.
          * The mode of the run can be switched between profiling and deconvolution.
          * @param newGene the locus model
-         * @param newBeds the mappings that fall in the locus
+         * @param newMappings the mappings that fall in the locus
          * @param decompose flag indicating whether profiling (<code>false</code>) or
          *                  deconvolution (otherwise) is carried out.
          */
-		public LocusSolver(Gene newGene, MSIterator newBeds, boolean decompose) {
+		public LocusSolver(Gene newGene, MSIterator newMappings, boolean decompose) {
 
 			this.gene= newGene;
-			this.beds= newBeds;
+			this.mappings = newMappings;
 			this.decompose= decompose;
 
 			nrMappingsReadsOrPairs= 0;
@@ -197,11 +197,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						
     			// BUG 110301: do not use mapTrivial, problems with split-maps
 //				if (this.gene.getTranscriptCount()== 1) {
-//					mapTrivial(gene.getTranscripts()[0], beds);
+//					mapTrivial(gene.getTranscripts()[0], mappings);
 //					outputGFF(null, null, null);
 //				} else {
 					AnnotationMapper mapper= new AnnotationMapper(this.gene);
-					mapper.map(this.beds, settings);
+					mapper.map(this.mappings, settings);
 					nrReadsLoci+= mapper.nrMappingsLocus;
 					nrReadsMapped+= mapper.getNrMappingsMapped();
 					nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
@@ -220,11 +220,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				// map all reads
 				if (this.gene.getTranscriptCount()== 1) {
 					++nrSingleTranscriptLearn;
-					learn(this.gene.getTranscripts()[0], beds);
+					learn(this.gene.getTranscripts()[0], mappings);
 				}
 			}
 
-			beds= null;
+			mappings = null;
 			gene= null;
 			// makes it terribly slow
 			//System.gc();
@@ -2136,7 +2136,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates all mappings in the specified region
      */
-	private MSIterator<BEDMapping> readBedFile(Gene gene, int from, int to) {
+	private MSIterator readBedFile(Gene gene, int from, int to) {
         return readBedFile(gene, from, to, 0, 1);
     }
 
@@ -2153,7 +2153,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param timeInSeconds time between retries
      * @return an iterator instance that enumerates all mappings in the specified region
      */
-    private MSIterator<BEDMapping> readBedFile(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
+    private MSIterator readBedFile(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
         if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
             try{
                 return readBedFileRAM(gene, from, to);
@@ -2179,12 +2179,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates elements of an array stored in RAM
      */
-	private MSIterator<BEDMapping> readBedFileRAM(Gene gene, int from, int to) {
+	private BEDMappingIterator readBedFileRAM(Gene gene, int from, int to) {
 		
 		if (from> to|| from< 0|| to< 0) 
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 		// init iterator
-		MSIterator<BEDMapping> iter= null;
+		BEDMappingIterator iter= null;
         // memory
         MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
         if (state.result== null)
@@ -2204,13 +2204,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates elements of an array stored in RAM
      */
-    private MSIterator<BEDMapping> readBedFileDisk(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
+    private BEDMappingIteratorDisk readBedFileDisk(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
 
 		if (from> to|| from< 0|| to< 0)
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 
 		// init iterator
-		MSIterator<BEDMapping> iter= null;
+		BEDMappingIteratorDisk iter= null;
 
 		try {
             // read, maintain main thread

@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- * A class implementing the <code>BufferedBEDiterator</code> interface
+ * A class implementing the <code>MSIteratorDisk</code> interface
  * by reading data from a file on disk.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
@@ -133,7 +133,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 * @see #reader
 	 */
 	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
-		this.inputStream= istream;
+        this.inputStream= istream;
 		this.tmpFile= tmpFile;
 		this.comparator= comparator;
 		this.capacity= capacity;

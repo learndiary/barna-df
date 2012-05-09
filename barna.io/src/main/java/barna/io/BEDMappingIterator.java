@@ -33,7 +33,7 @@ import barna.model.bed.BEDMapping;
 import java.util.Iterator;
 
 /**
- * A class implementing the <code>BufferedBEDiterator</code> interface
+ * A class implementing the <code>MSIterator</code> interface
  * by iterating on an array in memory.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
