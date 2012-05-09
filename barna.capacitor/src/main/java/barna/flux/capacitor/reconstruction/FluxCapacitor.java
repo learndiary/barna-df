@@ -44,7 +44,8 @@ import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.state.MappingWrapperState;
 import barna.model.*;
-import barna.model.bed.BEDobject2;
+import barna.model.bed.BEDMapping;
+import barna.model.Mapping;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -99,15 +100,15 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Comparator for comparing read identifiers according to the provided descriptor.
      */
-    BEDDescriptorComparator comp= null;
+    MappingComparator comp= null;
 
     /**
      * Returns an instance for comparing read identifiers according to the provided descriptor.
      * @return instance for comparing read identifiers according to the provided descriptor
      */
-    private Comparator<? super BEDobject2> getDescriptorComparator() {
+    private Comparator<? super Mapping> getDescriptorComparator() {
         if (comp == null) {
-            comp = new BEDDescriptorComparator(
+            comp = new MappingComparator(
                     settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
         }
 
@@ -676,7 +677,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             if (beds== null)
                 return;
 
-            BEDobject2 bed1, bed2;
+            Mapping bed1, bed2;
             UniversalReadDescriptor.Attributes
                 attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes(),
                 attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes();
@@ -695,7 +696,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             while (beds.hasNext()) {
 
                 ++nrReadsSingleLoci;
-                bed1= new BEDobject2(beds.next());
+                bed1= new BEDMapping(beds.next());
                 CharSequence tag= bed1.getName();
                 attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);
                 if (pairedEnd) {
@@ -725,7 +726,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                     beds.mark();
                     while(beds.hasNext()) {
-                        bed2= new BEDobject2(beds.next());
+                        bed2= new BEDMapping(beds.next());
                         attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
                         if (attributes2== null)
                             continue;
@@ -2059,7 +2060,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	 * @param bed genomic mappping
 	 * @return transcript coordinate of the breakpoint indicated by the mapping
 	 */
-	private int getBpoint(Transcript tx, BEDobject2 bed) {
+	private int getBpoint(Transcript tx, Mapping bed) {	
 
         // TODO add check whether complete read is contained in transcript
 
@@ -2190,7 +2191,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
         if (state.result== null)
             return null;
-        BEDobject2[] beds= (BEDobject2[]) state.result;
+        BEDMapping[] beds= (BEDMapping[]) state.result;//TODO move to Mapping
         Arrays.sort(beds, getDescriptorComparator());
         iter= new BufferedIteratorRAM(beds);
 
@@ -2247,6 +2248,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 	}
 
+    
     /**
      * Finalizes an iteration over all mappings: closes readers, outputs stats, etc.
      * @param mode task carried out during the iteration, profiling or deconvolution
