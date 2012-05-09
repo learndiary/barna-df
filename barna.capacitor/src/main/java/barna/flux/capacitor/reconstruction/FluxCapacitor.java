@@ -2116,7 +2116,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         gtfReader.setReuse(true);
         Transcript.removeGaps= false;
 
-        return gtfReader;
+		return gtfReader;
 	}
 
     /**
