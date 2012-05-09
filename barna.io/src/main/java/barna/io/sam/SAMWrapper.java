@@ -13,7 +13,6 @@ import barna.io.MappingWrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.bed.BEDobject;
 import net.sf.samtools.*;
-
 /**
  * @author emilio
  *
