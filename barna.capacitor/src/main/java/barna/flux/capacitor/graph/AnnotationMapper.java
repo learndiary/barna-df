@@ -29,12 +29,13 @@ package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
-import barna.io.BufferedIterator;
+import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDobject2;
 import barna.model.splicegraph.*;
+import com.sun.xml.internal.ws.developer.UsesJAXBContext;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -94,7 +95,8 @@ public class AnnotationMapper extends SplicingGraph {
 		transformToFragmentGraph();
 
 	}
-	
+
+    @Deprecated //TODO Uses BEDObject2 - should be removed
 	public AbstractEdge getEdge(BEDobject2 obj) {
 			
 		Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
@@ -228,19 +230,19 @@ public class AnnotationMapper extends SplicingGraph {
 
 	}
 
-	Attributes getAttributes(BEDobject2 o, UniversalReadDescriptor d, Attributes attributes) {
+	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
 		
-		CharSequence tag= o.getName();
-		attributes= d.getAttributes(tag, attributes);
+		CharSequence tag= mapping.getName();
+		attributes= desc.getAttributes(tag, attributes);
 		if (attributes== null) {
 			Log.warn("Error in read ID: could not parse read identifier "+ tag);
 			return null;
 		}
-		if (d.isPaired()&& attributes.flag<= 0) {
+		if (desc.isPaired()&& attributes.flag<= 0) {
 			Log.warn("Error in read ID: could not find mate in "+ tag);
 			return null;
 		}
-		if (d.isStranded()&& attributes.strand< 0) {
+		if (desc.isStranded()&& attributes.strand< 0) {
 			Log.warn("Error in read ID: could not find strand in " + tag);
 			return null;
 		}
@@ -253,7 +255,7 @@ public class AnnotationMapper extends SplicingGraph {
 	 * @param lineIterator iterator of input lines
 	 * @param settings
 	 */
-	public void map(BufferedIterator lineIterator, FluxCapacitorSettings settings) {
+	public void map(MSIterator<Mapping> lineIterator, FluxCapacitorSettings settings) {
 
 			if (lineIterator== null) 
 				return;
@@ -269,7 +271,7 @@ public class AnnotationMapper extends SplicingGraph {
 				}
 			
 			// init
-			BEDobject2 dobject, dobject2;
+			Mapping mapping, otherMapping;
 			CharSequence lastName= null;
 			UniversalReadDescriptor.Attributes 
 				attributes= descriptor.createAttributes(), 
@@ -287,17 +289,17 @@ public class AnnotationMapper extends SplicingGraph {
 			// map read pairs
 			while (lineIterator.hasNext()) {
 				
-				dobject= new BEDobject2(lineIterator.next());
+				mapping= lineIterator.next();
 				++nrMappingsLocus;
-				CharSequence name= dobject.getName();
+				CharSequence name= mapping.getName();
 				if (name.equals(lastName))
 					++nrMappingsLocusMultiMaps;
 				lastName= name; 
 				
-				attributes= getAttributes(dobject, descriptor, attributes);
+				attributes= getAttributes(mapping, descriptor, attributes);
 				if (paired&& attributes.flag== 2)	// don't iterate twice, for counters
 					continue;
-				AbstractEdge target= getEdge2(dobject);
+				AbstractEdge target= getEdge2(mapping);
 				if (target== null) {
 					++nrMappingsNotMapped;
 					continue;	// couldn't map
@@ -305,7 +307,7 @@ public class AnnotationMapper extends SplicingGraph {
 
 				byte refStrand= trpts[0].getStrand();	// TODO get from edge
 				if (stranded) {
-					boolean sense= dobject.getStrand()== refStrand;
+					boolean sense= mapping.getStrand()== refStrand;
 					byte dir= attributes.strand;
 					if ((dir== 2&& sense)|| (dir== 1&& !sense)) {
 						++nrMappingsWrongStrand;
@@ -318,14 +320,14 @@ public class AnnotationMapper extends SplicingGraph {
 					// scan for mates
 					lineIterator.mark();
 					while (lineIterator.hasNext()) {
-						dobject2= new BEDobject2(lineIterator.next());
-						attributes2= getAttributes(dobject2, descriptor, attributes2);
+						otherMapping= lineIterator.next();
+						attributes2= getAttributes(otherMapping, descriptor, attributes2);
 						if (!attributes.id.equals(attributes2.id))
 							break;						
 						if (attributes2== null|| attributes2.flag== 1)
 							continue;
 
-						AbstractEdge target2= getEdge2(dobject2);
+						AbstractEdge target2= getEdge2(otherMapping);
 						if (target2== null) {
 							++nrMappingsNotMapped;
 							continue;
@@ -333,7 +335,7 @@ public class AnnotationMapper extends SplicingGraph {
 
 						// check again strand in case one strand-info had been lost
 						if (stranded) {
-							boolean sense= dobject2.getStrand()== refStrand;
+							boolean sense= otherMapping.getStrand()== refStrand;
 							byte dir= attributes2.strand;
 							if ((dir== 2&& sense)|| (dir== 1&& !sense)) {
 								++nrMappingsWrongStrand;
@@ -344,9 +346,9 @@ public class AnnotationMapper extends SplicingGraph {
 						// check directionality (sequencing-by-synthesis)
 						// 20101222: check also that the leftmost (in genomic direction) 
 						// is sense (in genomic direction)
-						if (dobject.getStrand()== dobject2.getStrand()
-								|| (dobject.getStart()< dobject2.getStart()&& dobject.getStrand()!= Transcript.STRAND_POS)
-								|| (dobject2.getStart()< dobject.getStart()&& dobject2.getStrand()!= Transcript.STRAND_POS)) {
+						if (mapping.getStrand()== otherMapping.getStrand()
+								|| (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
+								|| (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
 							nrMappingsWrongPairOrientation+= 2;
 							continue;
 						}
@@ -368,12 +370,12 @@ public class AnnotationMapper extends SplicingGraph {
 						((SuperEdgeMappings) se).getMappings().incrReadNr();
 						nrMappingsMapped+= 2;
 						if (buffy!= null) 
-							writeInsert(buffy, se, dobject, dobject2, attributes2.id);
+							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
 					}
 					lineIterator.reset();
 
 				} else {	// single reads, strand already checked
-					boolean sense= trpts[0].getStrand()== dobject.getStrand();	// TODO get from edge
+					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
 					if (sense)
 						((MappingsInterface) target).getMappings().incrReadNr();
 					else
@@ -396,21 +398,21 @@ public class AnnotationMapper extends SplicingGraph {
 	 * Writes the insert described by 2 paired mates to the provided writer.
 	 * @param buffy writer for output
 	 * @param se a super-edge
-	 * @param dobject 1st bed object
-	 * @param dobject2 2nd bed object
+	 * @param mapping 1st bed object
+	 * @param otherMapping 2nd bed object
 	 */
 	protected void writeInsert(BufferedWriter buffy, SuperEdge se,
-			BEDobject2 dobject, BEDobject2 dobject2, CharSequence id) {
+			Mapping mapping, Mapping otherMapping, CharSequence id) {
 		
 		Transcript[] tt= decodeTset(se.getTranscripts());
 		int[] isizes= new int[tt.length];
 		int startMin, endMax;
-		if (dobject.getStart()< dobject2.getStart()) {
-			startMin= dobject.getStart();
-			endMax= dobject2.getEnd();
+		if (mapping.getStart()< otherMapping.getStart()) {
+			startMin= mapping.getStart();
+			endMax= otherMapping.getEnd();
 		} else {
-			startMin= dobject2.getStart();
-			endMax= dobject.getEnd();
+			startMin= otherMapping.getStart();
+			endMax= mapping.getEnd();
 		}
 		for (int i = 0; i < tt.length; i++) {
 			int epos1= tt[i].getExonicPosition(startMin),
@@ -432,7 +434,7 @@ public class AnnotationMapper extends SplicingGraph {
 		}
 		
 		// output
-		String pfx= dobject.getChr()+ "\t"+ startMin+ "\t"+ endMax+ "\t"+ id+ "\t",
+		String pfx= mapping.getChromosome()+ "\t"+ startMin+ "\t"+ endMax+ "\t"+ id+ "\t",
 				sfx= "\t"+ (tt[0].isForward()? "+": "-")+ "\t0\t0\t";
 		v= -1;
 		for (int i = 0, cc= 0; i < isizes.length; i++) {
@@ -464,13 +466,13 @@ public class AnnotationMapper extends SplicingGraph {
 
 	/**
 	 * maps read to atomic edge or to SJ
-	 * @param obj
+	 * @param mapping
 	 * @return
 	 */
-	public AbstractEdge getEdge2(BEDobject2 obj) {
+	public AbstractEdge getEdge2(Mapping mapping) {
 		
-		int bcount= obj.getBlockCount();
-		int bstart= obj.getStart()+ 1, bend= obj.getEnd();	// to normal space
+		int bcount= mapping.getBlockCount();
+		int bstart= mapping.getStart()+ 1, bend= mapping.getEnd();	// to normal space
 
 
 		if (bcount< 2) {
@@ -484,11 +486,11 @@ public class AnnotationMapper extends SplicingGraph {
 			//assert(bcount== 2);	
 			// yes, Paolo, but the simulator can map more..
 			
-//			if (obj.getName().equals("HWUSI-EAS626_1:5:92:163:105/2"))
+//			if (mapping.getName().equals("HWUSI-EAS626_1:5:92:163:105/2"))
 //				System.currentTimeMillis();
 			
-			int size= obj.getNextBlockSize(), 			
-				size2= obj.getNextBlockSize();	// ask for all
+			int size= mapping.getNextBlockSize(),
+				size2= mapping.getNextBlockSize();	// ask for all
 			
 			AbstractEdge e= getEdge2(bstart, bstart+ size- 1);
 			if (e== null)

@@ -30,7 +30,8 @@ import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
-import barna.io.BufferedIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
 import barna.io.bed.BEDwrapper;
 import barna.io.rna.UniversalReadDescriptor;
@@ -126,7 +127,7 @@ public class MappingFilter implements FluxTool<Void> {
 	protected void filter(File sortedInput, File fileOut) {
 		
 		try {
-			BufferedIteratorDisk iter= new BufferedIteratorDisk(sortedInput);
+			BEDMappingIteratorDisk iter= new BEDMappingIteratorDisk(sortedInput);
 			BufferedWriter writer= new BufferedWriter(new FileWriter(fileOut));
 
 			BEDobject2 bed1, bed2, bedLeft, bedRight; 

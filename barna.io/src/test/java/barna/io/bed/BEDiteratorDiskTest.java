@@ -29,7 +29,8 @@ package barna.io.bed;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.io.BufferedIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.bed.BEDobject2;
 import org.junit.AfterClass;
@@ -83,7 +84,7 @@ public class BEDiteratorDiskTest {
 			//}
 			File tmpFile= File.createTempFile(getClass().getSimpleName(), "bed");
 			tmpFile.deleteOnExit();
-			BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, comp);
+			BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, comp);
 			biter.init();
 			
 			OutputStreamWriter writer= new OutputStreamWriter(pout);
@@ -127,7 +128,7 @@ public class BEDiteratorDiskTest {
 			
 			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
-			BufferedIteratorDisk biter= new BufferedIteratorDisk(x);
+			BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(x);
 			biter.init();
 			
 			int tstL= 0, tstC= 0;

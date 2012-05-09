@@ -28,31 +28,97 @@
 package barna.io;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.model.bed.BEDMapping;
 
 import java.util.Iterator;
 
 /**
- * The interface defines methods for marking a position in 
- * the data, to which the iterator subsequently can be 
- * repositioned.
+ * A class implementing the <code>BufferedBEDiterator</code> interface
+ * by iterating on an array in memory.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
- *
+ * @see BEDMappingIteratorDisk
  */
-public interface BufferedIterator extends Iterable<ByteArrayCharSequence>, Iterator<ByteArrayCharSequence>{
+public class BEDMappingIterator implements MSIterator<BEDMapping>{
+	
+	/**
+	 * Array of BED lines that are iterated
+	 */
+	ByteArrayCharSequence[] elements;
+	
+	/**
+	 * Current position of iterator in underlying 
+	 * array.
+	 * @see #elements
+	 */
+	int currentIndex;
+	
+	/**
+	 * Position marked for re-positioning later on.
+	 * @see #currentIndex
+	 * @see #mark()
+	 * @see #reset()
+	 */
+	int markedIndex;
+	
+	/**
+	 * Creates an instance iterating the elements 
+	 * provided starting with the first one.
+	 * @param elements array of BED lines
+	 */
+	public BEDMappingIterator(ByteArrayCharSequence[] elements) {
+		this.elements= elements;
+		currentIndex= 0;
+	}
 
 	/**
-	 * marks the actual element
+	 * Returns <code>this</code> instance implementing the
+	 * <code>Iterator</code> interface.
+	 * @return <code>this</code> iterator instance
 	 */
-	public void mark();
+	@Override
+	public Iterator<BEDMapping> iterator() {
+		return this;
+	}
+
+	@Override
+	public boolean hasNext() {		
+		return (elements!= null&& currentIndex< elements.length);
+	}
+
 	
-	/**
-	 * resets to last marked element (if any)
-	 */
-	public void reset();
+	@Override
+	public BEDMapping next() {
+		
+		if (elements== null|| currentIndex>= elements.length)
+			return null;
+		
+		return new BEDMapping(elements[currentIndex++]);
+	}
 	
+	@Override
+	public void remove() {
+		// TODO Auto-generated method stub
+	}
+	
+	@Override
+	public void mark() {
+		markedIndex= currentIndex;
+	}
+	
+	@Override
+	public void reset() {
+		
+		if(markedIndex< 0|| markedIndex>= elements.length)
+			return;
+		currentIndex= markedIndex;
+	}
+
 	/**
-	 * frees resources occupied by the iterator
+	 * frees memory occupied by the elements
 	 */
-	public void clear();
+	@Override
+	public void clear() {
+		elements= null;
+	}
 }

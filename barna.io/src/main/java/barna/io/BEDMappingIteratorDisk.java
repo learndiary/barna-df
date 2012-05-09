@@ -27,13 +27,12 @@
 
 package barna.io;
 
-import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.log.Log;
+import barna.model.bed.BEDMapping;
 
 import java.io.*;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -43,9 +42,9 @@ import java.util.concurrent.Future;
  * by reading data from a file on disk.
  * 
  * @author Micha Sammeth (gmicha@gmail.com)
- * @see BufferedIteratorRAM
+ * @see BEDMappingIterator
  */
-public class BufferedIteratorDisk implements BufferedIterator {
+public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 
 	/**
 	 * Inner comparator for string comparisons emplyoing the 
@@ -59,8 +58,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * In this case, a new file is create in the current 
 	 * temporary directory if no other is specified by 
 	 * <code>directory</code>, involving an optional prefix. 
-	 * @see #prefix
-	 * @see #directory
+	 * @see #tmpFile
 	 */
 	File tmpFile;
 	/**
@@ -92,7 +90,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * An instance to re-use the <code>byte[]</code>
 	 * representing the BED lines iterated.
 	 */
-	ByteArrayCharSequence cs= null;
+	BEDMapping cs= null;
 	
 	/**
 	 * Flag indicating whether the <code>init()</code>
@@ -107,7 +105,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @param istream input stream with <b>sorted</b> lines
 	 * @param tmpFile temporary file storing the content of the input stream
 	 */
-	public BufferedIteratorDisk(InputStream istream, File tmpFile) {
+	public BEDMappingIteratorDisk(InputStream istream, File tmpFile) {
 		this(istream, tmpFile, null, -1);
 	}
 	
@@ -119,7 +117,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @param tmpFile temporary file storing the content of the input stream
 	 * @param comparator rules of comparison
 	 */
-	public BufferedIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator) {
+	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator) {
 		this(istream, tmpFile, comparator, -1);
 	}
 	
@@ -134,7 +132,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @param capacity capacity of the reader
 	 * @see #reader
 	 */
-	public BufferedIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
+	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
 		this.inputStream= istream;
 		this.tmpFile= tmpFile;
 		this.comparator= comparator;
@@ -146,7 +144,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * <i>already sorted</i>.
 	 * @param inputFile <b>already sorted</b> input file
 	 */
-	public BufferedIteratorDisk(File inputFile) {
+	public BEDMappingIteratorDisk(File inputFile) {
 		this(inputFile, null, null, -1);
 	}
 	
@@ -157,7 +155,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @param inputFile <b>already sorted</b> input file
 	 * @param capacity number of bytes used for the reading buffer
 	 */
-	public BufferedIteratorDisk(File inputFile, int capacity) {
+	public BEDMappingIteratorDisk(File inputFile, int capacity) {
 		this(inputFile, null, null, capacity);
 	}
 	
@@ -169,7 +167,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @param tmpFile intermediate <b>sorted</b> file that is created
 	 * @param comparator comparison applied for sorting 
 	 */
-	public BufferedIteratorDisk(File inputFile, File tmpFile, Comparator<CharSequence> comparator) {
+	public BEDMappingIteratorDisk(File inputFile, File tmpFile, Comparator<CharSequence> comparator) {
 		this(inputFile, tmpFile, comparator, -1);
 	}
 	
@@ -183,7 +181,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @param comparator comparison applied for sorting 
 	 * @param capacity number of bytes used for the reading buffer
 	 */
-	public BufferedIteratorDisk(File inputFile, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
+	public BEDMappingIteratorDisk(File inputFile, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
 		this.inputFile= inputFile;
 		this.tmpFile= tmpFile;
 		this.capacity= capacity;
@@ -200,6 +198,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @throws IOException
 	 * @see #init()
 	 */
+    @Override
 	public File getTmpFile() throws ExecutionException, IOException {
 		
 		if (!inited) 
@@ -233,6 +232,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @see #getTmpFile()
 	 * @see #captain
 	 */
+    @Override
 	public void init() throws FileNotFoundException, IOException {
 		if (inputStream== null&& inputFile== null) 
 			Log.error("No input data");
@@ -326,7 +326,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @return <code>this</code> instance
 	 */
 	@Override
-	public Iterator<ByteArrayCharSequence> iterator() {		
+	public MSIterator<BEDMapping> iterator() {
 		return this;
 	}
 
@@ -355,12 +355,12 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @return the next BED line of this iterator
 	 */
 	@Override
-	public ByteArrayCharSequence next() {
+	public BEDMapping next() {
 		if (!hasNext())
 			return null;
 		try {
 			reader= getReader(-1);
-			cs= reader.readLine(cs);
+			cs= new BEDMapping(reader.readLine(cs));
 			// bedObject2 clones byte[]
 			return cs;
 		} catch (Exception e) {
@@ -436,6 +436,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * @return the number of elements from the current
 	 * reading position until the end
 	 */
+    @Override
 	public int countRemainingElements() {
 	
 		mark();

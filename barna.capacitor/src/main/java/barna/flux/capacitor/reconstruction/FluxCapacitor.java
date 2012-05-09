@@ -134,7 +134,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         /**
          * Iterator over mappings.
          */
-		BufferedIterator beds= null;
+		MSIterator beds= null;
 
         /**
          * Flag indicating whether the deconvolution (<code>true</code>) is
@@ -177,7 +177,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
          * @param decompose flag indicating whether profiling (<code>false</code>) or
          *                  deconvolution (otherwise) is carried out.
          */
-		public LocusSolver(Gene newGene, BufferedIterator newBeds, boolean decompose) {
+		public LocusSolver(Gene newGene, MSIterator newBeds, boolean decompose) {
 
 			this.gene= newGene;
 			this.beds= newBeds;
@@ -670,11 +670,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         /**
          * Learns systematic biases along a transcript
          * @param tx the Transcript
-         * @param beds the mappings
+         * @param mappings the mappings
          */
-        private void learn(Transcript tx, BufferedIterator beds) {
+        private void learn(Transcript tx, MSIterator<Mapping> mappings) {
 
-            if (beds== null)
+            if (mappings== null)
                 return;
 
             Mapping bed1, bed2;
@@ -693,10 +693,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     coverage.reset(elen);
             }
 
-            while (beds.hasNext()) {
+            while (mappings.hasNext()) {
 
                 ++nrReadsSingleLoci;
-                bed1= new BEDMapping(beds.next());
+                bed1= mappings.next();
                 CharSequence tag= bed1.getName();
                 attributes= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);
                 if (pairedEnd) {
@@ -724,9 +724,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                 if (pairedEnd) {
 
-                    beds.mark();
-                    while(beds.hasNext()) {
-                        bed2= new BEDMapping(beds.next());
+                    mappings.mark();
+                    while(mappings.hasNext()) {
+                        bed2= mappings.next();
                         attributes2= settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
                         if (attributes2== null)
                             continue;
@@ -778,7 +778,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         nrReadsSingleLociPairsMapped+= 2;
 
                     }
-                    beds.reset();
+                    mappings.reset();
 
                 } else {	// single reads
                     m.add(bpoint1, -1, elen,
@@ -1849,14 +1849,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Processes one locus encapsulated as a thread.
      * @param gene the locus
-     * @param beds the mappings in the locus
+     * @param mappings the mappings in the locus
      * @param decompose the mode of processing, either deconvolution (<code>true</code>)
      * or bias estimation (<code>false</code>)
      */
-	private void solve(Gene gene, BufferedIterator beds, boolean decompose) {
+	private void solve(Gene gene, MSIterator<Mapping> mappings, boolean decompose) {
 		
 		// create LP and solve
-		LocusSolver lsolver= new LocusSolver(gene, beds, decompose); 
+		LocusSolver lsolver= new LocusSolver(gene, mappings, decompose);
 		if (maxThreads> 1) {
 			//Thread outThread= new Thread(lsolver);
 			Thread lastThread= getLastThread(); 
@@ -2136,7 +2136,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates all mappings in the specified region
      */
-	private BufferedIterator readBedFile(Gene gene, int from, int to) {
+	private MSIterator<BEDMapping> readBedFile(Gene gene, int from, int to) {
         return readBedFile(gene, from, to, 0, 1);
     }
 
@@ -2153,7 +2153,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param timeInSeconds time between retries
      * @return an iterator instance that enumerates all mappings in the specified region
      */
-    private BufferedIterator readBedFile(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
+    private MSIterator<BEDMapping> readBedFile(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
         if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
             try{
                 return readBedFileRAM(gene, from, to);
@@ -2179,19 +2179,19 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates elements of an array stored in RAM
      */
-	private BufferedIterator readBedFileRAM(Gene gene, int from, int to) {
+	private MSIterator<BEDMapping> readBedFileRAM(Gene gene, int from, int to) {
 		
 		if (from> to|| from< 0|| to< 0) 
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 		// init iterator
-		BufferedIterator iter= null;
+		MSIterator<BEDMapping> iter= null;
         // memory
         MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
         if (state.result== null)
             return null;
         BEDMapping[] beds= (BEDMapping[]) state.result;//TODO move to Mapping
         Arrays.sort(beds, getDescriptorComparator());
-        iter= new BufferedIteratorRAM(beds);
+        iter= new BEDMappingIterator(beds);
 
 		return iter;
 		
@@ -2204,13 +2204,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates elements of an array stored in RAM
      */
-    private BufferedIterator readBedFileDisk(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
+    private MSIterator<BEDMapping> readBedFileDisk(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
 
 		if (from> to|| from< 0|| to< 0)
 			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 
 		// init iterator
-		BufferedIterator iter= null;
+		MSIterator<BEDMapping> iter= null;
 
 		try {
             // read, maintain main thread
@@ -2218,7 +2218,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             PipedOutputStream pout= new PipedOutputStream(pin);
             Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
             File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to+ ".", "bed", true);
-            BufferedIteratorDisk biter= new BufferedIteratorDisk(pin, tmpFile, c);
+            BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, c);
             biter.init();
             iter= biter;
             MappingWrapperState state= bedWrapper.read(pout, gene.getChromosome(), from, to);
@@ -2474,9 +2474,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						if (gene[i].getTranscriptCount()== 1)
 							++nrSingleTranscriptLoci;
 						else if (mode== FluxCapacitorConstants.MODE_LEARN)
-							continue;	// performance for not reading beds
+							continue;	// performance for not reading mappings
 						
-						BufferedIterator beds= null;
+						MSIterator mappings= null;
 	
 	/*					File f= File.createTempFile("fluxpfx", ".bed");
 						FileOutputStream fos= new FileOutputStream(f);
@@ -2496,24 +2496,24 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						tol= 0;
 						start= Math.max(1, start- tol);
 						end= end+ tol;
+
+						mappings= readBedFile(gene[i], start, end);
 						
-						beds= readBedFile(gene[i], start, end);
-						
-						if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null) {
-							solve(gene[i], beds, false);
+						if (mode== FluxCapacitorConstants.MODE_LEARN&& mappings!= null) {
+							solve(gene[i], mappings, false);
 						} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-							solve(gene[i], beds, true); 
+							solve(gene[i], mappings, true);
 						}
 						
-						if (beds!= null)
-							beds.clear();
+						if (mappings!= null)
+							mappings.clear();
 							
 						if (output) {
 							System.out.println(gene[i].getChromosome()+ " "+
 									gene[i].getStrand()+
 									" cluster "+ gene[i].getGeneID());
-									// TODO beds.size() no longer available
-									//", "+beds.size()+" reads.");
+									// TODO mappings.size() no longer available
+									//", "+mappings.size()+" reads.");
 							if ((lastStr!= gene[i].getStrand()
 									||!(lastChr.equals(gene[i].getChromosome())))) {
 								long t= System.currentTimeMillis();
