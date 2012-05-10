@@ -43,7 +43,6 @@ import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.*;
 import barna.model.Mapping;
-import barna.model.bed.BEDMapping;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -1388,8 +1387,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	private void fileStats(AnnotationWrapper wrapper) {
 
 		// (3) scan
-		((AbstractFileIOWrapper) wrapper).
-                scanFile();
+		((AbstractFileIOWrapper) wrapper).scanFile();
 		if(((AbstractFileIOWrapper) wrapper).getNrInvalidLines()> 0)
 			Log.warn("Skipped "+ ((AbstractFileIOWrapper) wrapper).getNrInvalidLines()+ " lines.");
 
@@ -1628,62 +1626,62 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					+ MyFile.stripExtension(g.getName());
 	}
 
-    /**
-     * Creates a temporary file in the location provided, iff write access is
-     * available there. Otherwise the file is created in the custom or system
-     * temporary directory.
-     *
-     * @param location a file in the target directory or the directory itself,
-     * may be <code>null</code>
-     * @param name prefix of the file to be created, class name is appended
-     * at the beginning
-     * @param extension (optional) suffix of the temporary file that is created
-     * @param deleteOnExit flag for calling the <code>deleteOnExit()</code>
-     * method for the file
-     * @return a temporary file according to the specifications
-     */
-    public File createTempFile(File location, String name, String extension, boolean deleteOnExit) {
+	/**
+	 * Creates a temporary file in the location provided, iff write access is 
+	 * available there. Otherwise the file is created in the custom or system
+	 * temporary directory. 
+	 * 
+	 * @param location a file in the target directory or the directory itself,
+	 * may be <code>null</code>
+	 * @param name prefix of the file to be created, class name is appended
+	 * at the beginning
+	 * @param extension (optional) suffix of the temporary file that is created
+	 * @param deleteOnExit flag for calling the <code>deleteOnExit()</code> 
+	 * method for the file
+	 * @return a temporary file according to the specifications
+	 */
+	protected File createTempFile(File location, String name, String extension, boolean deleteOnExit) {
+		
+		// get location
+		if (location== null)
+			location= settings.get(FluxCapacitorSettings.TMP_DIR);
+		else {
+			if (!location.isDirectory())
+				location= location.getParentFile();
+			if (!location.canWrite())
+				location= settings.get(FluxCapacitorSettings.TMP_DIR);
+		}
 
-        // get location
-        if (location== null)
-            location= settings.get(FluxCapacitorSettings.TMP_DIR);
-        else {
-            if (!location.isDirectory())
-                location= location.getParentFile();
-            if (!location.canWrite())
-                location= settings.get(FluxCapacitorSettings.TMP_DIR);
-        }
-
-        // get name
-        if (name== null)
-            name= getClass().getSimpleName();
-        else
-            name= getClass().getSimpleName()+ "_"+ name;
-
-        File f= null;
-        try {
-            f= FileHelper.createTempFile(name, extension, location);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return createFile(f, deleteOnExit);
-    }
-
-    /**
-     * Control gateway for file creation from the main class,
-     * adds a hook for delete on exit in case.
-     *
-     * @param f the file that has been created
-     * @param deleteOnExit flag to mark for deletion on exit
-     * @return
-     */
-    protected File createFile(File f, boolean deleteOnExit) {
-        if (deleteOnExit)
-            f.deleteOnExit();
-
-        return f;
-    }
+		// get name
+		if (name== null)
+			name= getClass().getSimpleName();
+		else
+			name= getClass().getSimpleName()+ "_"+ name;
+		
+		File f= null;
+		try {
+			f= FileHelper.createTempFile(name, extension, location);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		
+		return createFile(f, deleteOnExit);
+	}
+	
+	/**
+	 * Control gateway for file creation from the main class, 
+	 * adds a hook for delete on exit in case.
+	 * 
+	 * @param f the file that has been created
+	 * @param deleteOnExit flag to mark for deletion on exit
+	 * @return
+	 */
+	protected File createFile(File f, boolean deleteOnExit) {
+		if (deleteOnExit)
+			f.deleteOnExit();
+		
+		return f;
+	}
 
     /**
      * Returns the file with linear programs, respectively creates

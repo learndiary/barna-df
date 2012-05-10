@@ -17,7 +17,6 @@ import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.bed.BEDobject;
 import net.sf.samtools.*;
-
 /**
  * @author emilio
  *
