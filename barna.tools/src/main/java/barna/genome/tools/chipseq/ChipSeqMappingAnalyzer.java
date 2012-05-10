@@ -37,7 +37,8 @@ import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDFileReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
@@ -162,8 +163,8 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 			
 		
 		// sort
-		File sortedInput= BEDwrapper.getSortedFile(fileInput, null, 
-				((descriptor!= null&& descriptor.isPaired())?BEDwrapper.COMPARATOR_PAIRED_END:null));
+		File sortedInput= new BEDFileReader(fileInput).getSortedFile(null,    //TODO bad
+                ((descriptor != null && descriptor.isPaired()) ? BEDFileReader.COMPARATOR_PAIRED_END : null));
 		System.gc();
 		Thread.yield();
 		

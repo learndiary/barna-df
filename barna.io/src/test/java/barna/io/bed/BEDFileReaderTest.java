@@ -25,31 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io.state;
+package barna.io.bed;
 
-public class MappingWrapperState {
+import barna.commons.Execute;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-	public static final int STATE_OK= 0;
-	
-	public static final int STATE_END_OF_CHROMOSOME= 1;
-	
-	public static final int STATE_END_OF_FILE= 2;
-	
-	public static final int STATE_CHROMOSOME_NOT_FOUND= 3;
+import java.io.File;
 
-	public long count= 0l;
-	public Object result= null;
-	public byte state= STATE_OK;
-	public String nextChr= null;
-	
-	public MappingWrapperState() {
-		reset();
-	}
-	
-	public void reset() {
-		count= 0l;
-		result= null;
-		state= STATE_OK;
-		nextChr= null;
-	}
+import static junit.framework.Assert.assertEquals;
+
+/**
+ * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
+ */
+public class BEDFileReaderTest {
+
+    private static File testfile;
+
+    @BeforeClass
+    public static void setUp(){
+        testfile = new File(BEDFileReaderTest.class.getResource("/test.bed").getFile());
+        Execute.initialize(4);
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+        Execute.shutdown();
+    }
+
+
+    @Test
+    public void testScanFile(){
+        BEDFileReader reader = new BEDFileReader(testfile.getAbsolutePath());
+        reader.scanFile();
+
+        //scanFileReadLines= 0;
+        //countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
+        assertEquals(17, reader.nrUniqueLinesRead );
+        assertEquals(17, reader.countAll );
+        assertEquals(5, reader.countSplit );
+        assertEquals(12, reader.countEntire );
+        assertEquals(17, reader.countReads );
+    }
 }

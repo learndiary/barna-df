@@ -38,14 +38,12 @@ import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.genome.lpsolver.LPSolverLoader;
 import barna.io.*;
-import barna.io.bed.BEDDescriptorComparator;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDFileReader;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.io.state.MappingWrapperState;
 import barna.model.*;
-import barna.model.bed.BEDMapping;
 import barna.model.Mapping;
+import barna.model.bed.BEDMapping;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -95,25 +93,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			}		
 		}
 	}
-
-
-    /**
-     * Comparator for comparing read identifiers according to the provided descriptor.
-     */
-    MappingComparator comp= null;
-
-    /**
-     * Returns an instance for comparing read identifiers according to the provided descriptor.
-     * @return instance for comparing read identifiers according to the provided descriptor
-     */
-    private Comparator<? super Mapping> getDescriptorComparator() {
-        if (comp == null) {
-            comp = new MappingComparator(
-                    settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-        }
-
-        return comp;
-    }
 
     /**
      * A class that encapsulates all information necessary to carry out the deconvolution
@@ -864,7 +843,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		}
 	}
 
-
     /**
      * File name extensions of supported file formats.
      * @deprecated marked for removal
@@ -1164,10 +1142,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     int[] insertMinMax= null;   // TODO check if correctly used
 
     /**
-     * Wrapper to read mappings from a BED file format.
-     * @deprecated marked for removal
+     * Reader to read mappings from a file.
      */
-    private BEDwrapper bedWrapper;  // TODO pull up to MappingWrapper
+    private MappingReader mappingReader;
 
     /**
      * Wrapper to read the annotation from a GTF file format.
@@ -1376,7 +1353,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	void fileFinish() {
 
 		// TODO close input should occur by reader or interface method 
-		bedWrapper.close();
+		mappingReader.close();
 		gtfReader.close();
 
 
@@ -1411,7 +1388,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	private void fileStats(AnnotationWrapper wrapper) {
 
 		// (3) scan
-		((AbstractFileIOWrapper) wrapper).scanFile();
+		((AbstractFileIOWrapper) wrapper).
+                scanFile();
 		if(((AbstractFileIOWrapper) wrapper).getNrInvalidLines()> 0)
 			Log.warn("Skipped "+ ((AbstractFileIOWrapper) wrapper).getNrInvalidLines()+ " lines.");
 
@@ -1476,10 +1454,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			
 			wrapperMappings= 
 				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
-			fileStats((MappingWrapper) wrapperMappings);
+			fileStats((MappingReader) wrapperMappings);
 
 		}
 		
+        mappingReader = (MappingReader)wrapperMappings;
 
 		// TODO parameters
 		pairedEnd= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
@@ -1649,62 +1628,62 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					+ MyFile.stripExtension(g.getName());
 	}
 
-	/**
-	 * Creates a temporary file in the location provided, iff write access is 
-	 * available there. Otherwise the file is created in the custom or system
-	 * temporary directory. 
-	 * 
-	 * @param location a file in the target directory or the directory itself,
-	 * may be <code>null</code>
-	 * @param name prefix of the file to be created, class name is appended
-	 * at the beginning
-	 * @param extension (optional) suffix of the temporary file that is created
-	 * @param deleteOnExit flag for calling the <code>deleteOnExit()</code> 
-	 * method for the file
-	 * @return a temporary file according to the specifications
-	 */
-	protected File createTempFile(File location, String name, String extension, boolean deleteOnExit) {
-		
-		// get location
-		if (location== null)
-			location= settings.get(FluxCapacitorSettings.TMP_DIR);
-		else {
-			if (!location.isDirectory())
-				location= location.getParentFile();
-			if (!location.canWrite())
-				location= settings.get(FluxCapacitorSettings.TMP_DIR);
-		}
+    /**
+     * Creates a temporary file in the location provided, iff write access is
+     * available there. Otherwise the file is created in the custom or system
+     * temporary directory.
+     *
+     * @param location a file in the target directory or the directory itself,
+     * may be <code>null</code>
+     * @param name prefix of the file to be created, class name is appended
+     * at the beginning
+     * @param extension (optional) suffix of the temporary file that is created
+     * @param deleteOnExit flag for calling the <code>deleteOnExit()</code>
+     * method for the file
+     * @return a temporary file according to the specifications
+     */
+    public File createTempFile(File location, String name, String extension, boolean deleteOnExit) {
 
-		// get name
-		if (name== null)
-			name= getClass().getSimpleName();
-		else
-			name= getClass().getSimpleName()+ "_"+ name;
-		
-		File f= null;
-		try {
-			f= FileHelper.createTempFile(name, extension, location);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		
-		return createFile(f, deleteOnExit);
-	}
-	
-	/**
-	 * Control gateway for file creation from the main class, 
-	 * adds a hook for delete on exit in case.
-	 * 
-	 * @param f the file that has been created
-	 * @param deleteOnExit flag to mark for deletion on exit
-	 * @return
-	 */
-	protected File createFile(File f, boolean deleteOnExit) {
-		if (deleteOnExit)
-			f.deleteOnExit();
-		
-		return f;
-	}
+        // get location
+        if (location== null)
+            location= settings.get(FluxCapacitorSettings.TMP_DIR);
+        else {
+            if (!location.isDirectory())
+                location= location.getParentFile();
+            if (!location.canWrite())
+                location= settings.get(FluxCapacitorSettings.TMP_DIR);
+        }
+
+        // get name
+        if (name== null)
+            name= getClass().getSimpleName();
+        else
+            name= getClass().getSimpleName()+ "_"+ name;
+
+        File f= null;
+        try {
+            f= FileHelper.createTempFile(name, extension, location);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return createFile(f, deleteOnExit);
+    }
+
+    /**
+     * Control gateway for file creation from the main class,
+     * adds a hook for delete on exit in case.
+     *
+     * @param f the file that has been created
+     * @param deleteOnExit flag to mark for deletion on exit
+     * @return
+     */
+    protected File createFile(File f, boolean deleteOnExit) {
+        if (deleteOnExit)
+            f.deleteOnExit();
+
+        return f;
+    }
 
     /**
      * Returns the file with linear programs, respectively creates
@@ -2088,7 +2067,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @return a wrapper instance for GTF files, or <code>null</code>
      */
     private AbstractFileIOWrapper getWrapperGTF() {
-        return getWrapperGTF(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
+        if (gtfReader== null) {
+
+            return getWrapperGTF(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
+        }
+        return gtfReader;
     }
 
     /**
@@ -2100,19 +2083,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      */
     private AbstractFileIOWrapper getWrapperGTF(File inputFile) {
 
-        if (gtfReader== null) {
-            gtfReader= new GTFwrapper(inputFile.getAbsolutePath());
-            gtfReader.setNoIDs(null);
-            gtfReader.setReadGene(true);
-            gtfReader.setReadFeatures(new String[] {"exon","CDS"});
-            gtfReader.setReadAheadTranscripts(1);	// only one locus a time
-    //		gtfReader.setReadAheadTranscripts(-1);
-    //		gtfReader.setReadAll(true);
-            gtfReader.setGeneWise(true);
-            gtfReader.setPrintStatistics(false);
-            gtfReader.setReuse(true);
-            Transcript.removeGaps= false;
-        }
+        gtfReader= new GTFwrapper(inputFile.getAbsolutePath());
+        gtfReader.setNoIDs(null);
+        gtfReader.setReadGene(true);
+        gtfReader.setReadFeatures(new String[] {"exon","CDS"});
+        gtfReader.setReadAheadTranscripts(1);	// only one locus a time
+//		gtfReader.setReadAheadTranscripts(-1);
+//		gtfReader.setReadAll(true);
+        gtfReader.setGeneWise(true);
+        gtfReader.setPrintStatistics(false);
+        gtfReader.setReuse(true);
+        Transcript.removeGaps= false;
 
 		return gtfReader;
 	}
@@ -2123,129 +2104,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @return a wrapper instance providing read access to the specified file
      * @deprecated marked for removal
      */
+    @Deprecated
 	private AbstractFileIOWrapper getWrapperBED(File inputFile) {
-		bedWrapper= new BEDwrapper(inputFile.getAbsolutePath());
-		return bedWrapper;  // TODO pull up to MappingWrapper
+		/*mappingReader= new BEDFileReader(inputFile.getAbsolutePath());
+		return mappingReader;*/  // TODO pull up to MappingReader
+        mappingReader = new BEDFileReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
+        return null;// removed mappingReader;
 	}
-
-    /**
-     * Retrieves all mappings in a certain region from a BED input file.
-     *
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to end coordinate on chromosome
-     * @return an iterator instance that enumerates all mappings in the specified region
-     */
-	private MSIterator readBedFile(Gene gene, int from, int to) {
-        return readBedFile(gene, from, to, 0, 1);
-    }
-
-    /**
-     * Out-of-memory-proof method that retrieves all mappings in a certain region from a BED input file.
-     * The strategy is try-and-see, first it is attempted to try to load all requested reads into memory (RAM);
-     * if latter attempt fails, the iterator is initialized on disk. Method retries if disk/filesystem blocks.
-     * in the latter case.
-     *
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to end coordinate on chromosome
-     * @param retryCount number of retries that are attempted in the case of disk/filesystem temporarily unreachable
-     * @param timeInSeconds time between retries
-     * @return an iterator instance that enumerates all mappings in the specified region
-     */
-    private MSIterator readBedFile(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
-        if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
-            try{
-                return readBedFileRAM(gene, from, to);
-            }catch (OutOfMemoryError memoryError){
-                System.gc();
-                Thread.yield();
-                Log.warn("Not enough memory to sort BED entries in RAM. Switching to disk sorting. This run is NOT failed!\n " +
-                        "You can increase the amount of memory used " +
-                        "by the capacitor using the FLUX_MEM environment variable. For example: export FLUX_MEM=\"6G\"; flux-capacitor ... to use" +
-                        "6 GB of memory.");
-                return readBedFileDisk(gene, from, to, retryCount, timeInSeconds);
-            }
-        }else{
-            return readBedFileDisk(gene, from, to, retryCount, timeInSeconds);
-        }
-    }
-
-
-    /**
-     * Loads all mappings in the respective region into RAM.
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to end coordinate on chromosome
-     * @return an iterator instance that enumerates elements of an array stored in RAM
-     */
-	private BEDMappingIterator readBedFileRAM(Gene gene, int from, int to) {
-		
-		if (from> to|| from< 0|| to< 0) 
-			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
-		// init iterator
-		BEDMappingIterator iter= null;
-        // memory
-        MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
-        if (state.result== null)
-            return null;
-        BEDMapping[] beds= (BEDMapping[]) state.result;//TODO move to Mapping
-        Arrays.sort(beds, getDescriptorComparator());
-        iter= new BEDMappingIterator(beds);
-
-		return iter;
-		
-	}
-
-    /**
-     * Writes all mappings in the respective region to disk, retries if disk/filesystem blocks.
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to end coordinate on chromosome
-     * @return an iterator instance that enumerates elements of an array stored in RAM
-     */
-    private BEDMappingIteratorDisk readBedFileDisk(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
-
-		if (from> to|| from< 0|| to< 0)
-			throw new RuntimeException("BED reading range error: "+from+" -> "+to);
-
-		// init iterator
-		BEDMappingIteratorDisk iter= null;
-
-		try {
-            // read, maintain main thread
-            PipedInputStream  pin= new PipedInputStream();
-            PipedOutputStream pout= new PipedOutputStream(pin);
-            Comparator<CharSequence> c= new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-            File tmpFile= createTempFile(null, gene.getChromosome()+ ":"+ from+ "-"+ to+ ".", "bed", true);
-            BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, c);
-            biter.init();
-            iter= biter;
-            MappingWrapperState state= bedWrapper.read(pout, gene.getChromosome(), from, to);
-            pout.flush();
-            pout.close();
-            if (state.count== 0)
-                return null;
-		} catch (IOException e) {
-            /*
-             * "Resource temporarily unavailable"
-             * Catch this exception and try again after sleeping for a while
-             */
-            if(e.getMessage().contains("Resource temporarily unavailable")){
-                if(retryCount < 6){
-                    Log.warn("Filesystem reports : 'Resource temporarily unavailable', I am retrying ("+(retryCount+1)+")");
-                    try {Thread.sleep(1000 * (timeInSeconds));} catch (InterruptedException e1) {}
-                    return readBedFileDisk(gene, from, to, retryCount + 1, timeInSeconds*6);
-                }
-            }
-			throw new RuntimeException(
-				"Could not get reads for locus "+ gene.getChromosome()+ ":"+ from+ "-"+ to +", retried " + retryCount + " times", e);
-		}
-
-		return iter;
-
-	}
-
     
     /**
      * Finalizes an iteration over all mappings: closes readers, outputs stats, etc.
@@ -2273,7 +2138,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					//System.err.println(" OK.");
 					System.err.println("\tfirst round finished .. took "+ secs+ " sec.\n\n\t"
 							+ nrSingleTranscriptLoci+" single transcript loci\n\t"							
-							+ bedWrapper.getNrLines()+ " mappings in file\n\t"
+							+ mappingReader.getCountMappings()+ " mappings in file\n\t"  //    removed getNrLines()
 							+ nrReadsSingleLoci+" mappings fall in single transcript loci\n\t"	// these loci(+/-"+tolerance+"nt)\n\t"
 							// counter un-reliable, /2 read is skipped in paired-end mode
 							+ ((strand== FluxCapacitorConstants.STRAND_SPECIFIC)?nrMappingsWrongStrand+" mappings map to annotation in antisense direction,\n\t":"")
@@ -2282,7 +2147,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 									: nrReadsSingleLociMapped+" mappings map to annotation\n\t")
 							//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
 							//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
-							+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
+							+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"
 							+ (pairedEnd&& insertMinMax!= null?insertMinMax[0]+","+insertMinMax[1]+" min/max insert size\n\t":""));
 					//nrUniqueReads= getBedReader().getNrUniqueLinesRead();
 					//System.err.println("\ttotal lines in file "+nrUniqueReads);
@@ -2292,7 +2157,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				// output stats
 				if (stats != null) {
                     stats.setLociSingle(nrSingleTranscriptLoci);
-					stats.setMappingsTotal(bedWrapper.getNrLines());
+					stats.setMappingsTotal(mappingReader.getCountMappings());
 					stats.setMappingsSingle(nrReadsSingleLoci);
 					if (strand== FluxCapacitorConstants.STRAND_SPECIFIC) {
 						stats.setMappingsNotSens(nrMappingsWrongStrand);
@@ -2318,7 +2183,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 					System.err.println();
 					System.err.println("\treconstruction finished .. took "+ secs+ " sec.\n\n\t"
-							+ bedWrapper.getNrLines()+" mappings read from file\n\t"
+							+ mappingReader.getCountMappings()+" mappings read from file\n\t"
 							// no info, reads in redundantly many reads
 							//+ nrReadsLoci+" mappings in annotated loci regions\n\t"
 							+ nrReadsMapped+ " mappings"+ (pairedEnd?" in pairs":"s") +" map to annotation\n"
@@ -2339,7 +2204,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				
 				// output stats
 				if (stats != null) {
-					stats.setMappingsTotal(bedWrapper.getNrLines());
+					stats.setMappingsTotal(mappingReader.getCountMappings());
 					stats.setMappingsMapped(nrReadsMapped);
 					if (pairedEnd) {
 						stats.setMappingsPairsNa(nrPairsNoTxEvidence);
@@ -2395,7 +2260,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				//this.gtfReader= null;
 				//GFFReader gtfReader= getGTFreader();
 				gtfReader.reset();
-				bedWrapper.reset();
+				mappingReader.reset();
 				
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
 					if (mode== FluxCapacitorConstants.MODE_LEARN) 
@@ -2459,7 +2324,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 								//System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
 								readObjects= 0;	
 								// jump back
-								bedWrapper.reset(gene[i].getChromosome());
+								mappingReader.reset(gene[i].getChromosome());
 								lastStr= gene[i].getStrand();
 								lastEnd= -1;
 							}
@@ -2476,13 +2341,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						else if (mode== FluxCapacitorConstants.MODE_LEARN)
 							continue;	// performance for not reading mappings
 						
-						MSIterator mappings= null;
+						//MSIterator<Mapping> mappings= null;
 	
 	/*					File f= File.createTempFile("fluxpfx", ".bed");
 						FileOutputStream fos= new FileOutputStream(f);
 						handler.addStream(fos);
 						fileBED= f;
-						bedWrapper= null;
+						mappingReader= null;
 	*/					
 						// boundaries
 						int start= gene[i].getStart();
@@ -2497,7 +2362,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						start= Math.max(1, start- tol);
 						end= end+ tol;
 
-						mappings= readBedFile(gene[i], start, end);
+						MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 						
 						if (mode== FluxCapacitorConstants.MODE_LEARN&& mappings!= null) {
 							solve(gene[i], mappings, false);
@@ -2531,7 +2396,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					
 				}	// end iterate GTF
 				
-				bedWrapper.finish();
+				//mappingReader.finish(); //TODO check
 				
 				while (threadPool.size()> 0&& threadPool.elementAt(0).isAlive())
 					try {
@@ -2543,8 +2408,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				if (checkGTFscanExons> 0&& checkGTFscanExons!= gtfReader.getNrExons())
 					System.err.println("[ERROR] consistency check failed in GTF reader: "+ checkGTFscanExons+ "<>"+ gtfReader.getNrExons());
 				checkGTFscanExons= gtfReader.getNrExons(); 
-				if (checkBEDscanMappings> 0&& checkBEDscanMappings!= bedWrapper.getNrLines())
-					System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ bedWrapper.getNrLines());
+				if (checkBEDscanMappings> 0&& checkBEDscanMappings!= mappingReader.getCountMappings())
+					System.err.println("[ERROR] consistency check failed in BED reader "+ checkBEDscanMappings+ "<>"+ mappingReader.getCountMappings());
 				//checkBEDscanMappings= getBedReader().getNrLines();
 				
 				// close readers, output
@@ -2655,7 +2520,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * Obtains global statistics from the mapping file, e.g., number of total mappings etc.
      * @param wrapper mapping file reader
      */
-	private void fileStats(MappingWrapper wrapper) {
+	private void fileStats(MappingReader wrapper) {
 
 		if (settings.get(FluxCapacitorSettings.NR_READS_MAPPED)<= 0) {
 			// (3) scan
@@ -2711,8 +2576,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			return getWrapperGTF(inputFile);
 
 		case BED:
-			return getWrapperBED(inputFile);
-			
+			//return getWrapperBED(inputFile);
+            return new BEDFileReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
 		}
 		
 		return null;	// make compiler happy

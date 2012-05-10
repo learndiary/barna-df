@@ -29,18 +29,25 @@ package barna.flux.simulator.tools;
 
 import barna.commons.Execute;
 import barna.commons.log.Log;
+import barna.io.BEDMappingIterator;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.MSIterator;
+import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDFileReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.state.MappingWrapperState;
+import barna.io.state.MappingReaderState;
 import barna.model.Gene;
 import barna.model.Graph;
+import barna.model.Mapping;
 import barna.model.Transcript;
+import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject2;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Count and print breakpoint distribution
@@ -119,13 +126,13 @@ public class PWMExtractor {  //implements FluxTool {
         Log.message("");
 
         File ff = new File(bedFile.getAbsolutePath() + "_sorted");
-        BEDwrapper bedReader = null;
+        BEDFileReader bedReader = null;
         if (ff.exists()) {
             Log.message("\tusing sorted file " + ff.getName());
             bedFile = ff;
-            bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+            bedReader = new BEDFileReader(bedFile.getAbsolutePath());
         } else {
-            bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+            bedReader = new BEDFileReader(bedFile.getAbsolutePath());
             if (!bedReader.isApplicable()) {
                 Log.message("\tsorting BED file");
 
@@ -137,7 +144,7 @@ public class PWMExtractor {  //implements FluxTool {
                     bedFile = f;
                 }
                 Log.message("\tsorted file in " + bedFile.getAbsolutePath());
-                bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+                bedReader = new BEDFileReader(bedFile.getAbsolutePath());
             }
         }
 
@@ -163,23 +170,25 @@ public class PWMExtractor {  //implements FluxTool {
                 ++cntTrpt;
                 Transcript t = genes[i].getTranscripts()[0];
                 
-                MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                /*MappingReaderState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
                 BEDobject2[] beds = (BEDobject2[]) state.result;
                 if (beds == null) {
                     continue;
-                }
+                } */
                 String s = t.getSplicedSequence().toUpperCase();
-                for (int j = 0; j < beds.length; j++) {
+                for (MSIterator<Mapping> mappingIterator = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());mappingIterator.hasNext();) {
+                //for (int j = 0; j < beds.length; j++) {
                     // get t-coordinates
-                    int tstart = t.getExonicPosition(beds[j].getStart() + 1),
-                            tend = t.getExonicPosition(beds[j].getEnd());    // t-coordinates, 0-based
+                    Mapping mapping = mappingIterator.next();
+                    int tstart = t.getExonicPosition(mapping.getStart() + 1),
+                            tend = t.getExonicPosition(mapping.getEnd());    // t-coordinates, 0-based
                     if (tstart < 0 || tstart >= s.length()) {
                         continue;
                     }
 
                     // count on subsequence
                     ++cntReads;
-                    boolean sens = beds[j].getStrand() == t.getStrand();
+                    boolean sens = mapping.getStrand() == t.getStrand();
                     int[][] a = sens ? sense : asense;
                     if (sens) {
                         for (int k = 0; k < a.length; ++k) {

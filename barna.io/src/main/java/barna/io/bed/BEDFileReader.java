@@ -31,6 +31,7 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.Progressable;
 import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
+import barna.commons.parameters.Parameter;
 import barna.commons.thread.SyncIOHandler2;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
@@ -40,18 +41,19 @@ import barna.io.rna.FMRD;
 import barna.io.rna.ReadDescriptor;
 import barna.io.rna.SolexaPairedEndDescriptor;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.io.state.MappingWrapperState;
+import barna.model.Gene;
+import barna.model.Mapping;
+import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject;
 import barna.model.bed.BEDobject2;
 import barna.model.constants.Constants;
+import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.Future;
 
-public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper {
+public class BEDFileReader extends AbstractFileIOWrapper implements MappingReader {
 
 	static void test() {
 		System.out.println(((byte) -1)| (byte) 1);
@@ -67,6 +69,9 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	ThreadedBufferedByteArrayStream readerB= null;
 	
 	BEDobject[] beds= null;
+    Boolean sortInRam = null;
+    UniversalReadDescriptor descriptor = null;
+    File tmpDir = null;
 	
 	/**
 	 * Creates an instance using a given file and
@@ -75,9 +80,11 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 * @param comparator comparator describing required file
 	 * sorting 
 	 */
-	public BEDwrapper(File inputFile, LineComparator<CharSequence> comparator) {
+	public BEDFileReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		super(inputFile);
 		this.comparator= (comparator== null? COMPARATOR_DEFAULT: comparator);
+        this.sortInRam = sortInRam;
+        this.descriptor = descriptor;
 	}
 	
 	/**
@@ -85,8 +92,8 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 * and the default comparator.
 	 * @param inputFile
 	 */
-	public BEDwrapper(File inputFile) {
-		this(inputFile, COMPARATOR_DEFAULT);
+	public BEDFileReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+		this(inputFile, COMPARATOR_DEFAULT, sortInRam, descriptor, tmpDir);
 	}
 	
 	/**
@@ -94,9 +101,17 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 * and the default line comparator.
 	 * @param absolutePath path to the file the wrapper is based on
 	 */
-	public BEDwrapper(String absolutePath) {
-		this(new File(absolutePath));
+	public BEDFileReader(String absolutePath, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+		this(new File(absolutePath), sortInRam,  descriptor, tmpDir);
 	}
+
+    public BEDFileReader(String absolutePath) {
+        this(new File(absolutePath), false,  null, null);   // TODO Not the proper way!!!
+    }
+
+    public BEDFileReader(File inputFile) {
+        this(inputFile, false,  null, null);   // TODO Not the proper way!!!
+    }
 	
 	HashSet<String> refIDset;
 	
@@ -121,7 +136,6 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	/**
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
 	 * @param inputFile file from which is read
-	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
@@ -391,7 +405,7 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 					// DEBUG
 					File file = new File(this.fPath+MyFile.separator+this.fName);
 					InputStream inputStream = new FileInputStream(file);
-					inputStream.skip(bytes);	// must read next line 
+					inputStream.skip(bytes);	// must read next line
 					BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 					chk= r2.readLine();
 					r2.close();
@@ -486,7 +500,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			// check descriptor
 			if (descriptor.getAttributes(ss[3], null)== null) {
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[OHNO] Read descriptor "+descriptor+" not applicable for read ID\n\t"+ 
+					System.err.println("[OHNO] Read descriptor "+descriptor+" not applicable for read ID\n\t"+
 							ss[3]);
 				return false;
 			}
@@ -628,19 +642,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		}
 	}
 	
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		test();
-	}
-	
-	public static File getSortedFile(File inputFile, File tmpFile, LineComparator<CharSequence> comparator) {
+	public File getSortedFile(File tmpFile, LineComparator<CharSequence> comparator) {
 		
-		BEDwrapper wrapper= new BEDwrapper(inputFile, comparator);
-		
-		if (!wrapper.isApplicable()) {
+		//BEDFileReader wrapper= new BEDFileReader(inputFile, comparator);
+		if (!this.isApplicable()) {
 			if (tmpFile== null)
 				try {
 					tmpFile= FileHelper.createTempFile(
@@ -649,7 +654,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-			wrapper.sort(tmpFile);
+			this.sort(tmpFile);
 			
 			inputFile= tmpFile;
 		}
@@ -861,7 +866,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					// use this for debugging fpointer
 	//				File file = new File(this.fPath+MyFile.separator+this.fName);
 	//				InputStream inputStream = new FileInputStream(file);
-	//				inputStream.skip(bytesRead);	// must read next line 
+	//				inputStream.skip(bytesRead);	// must read next line
 	//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 	//				String chk= r2.readLine();
 	//				r2.close();
@@ -1040,25 +1045,219 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			return count;
 		}
 
+
+    /**
+     * Comparator for comparing read identifiers according to the provided descriptor.
+     */
+    MappingComparator comp= null;
+
+    /**
+     * Returns an instance for comparing read identifiers according to the provided descriptor.
+     * @return instance for comparing read identifiers according to the provided descriptor
+     */
+    private Comparator<? super Mapping> getDescriptorComparator() {
+        if (comp == null) {
+            comp = new MappingComparator(
+                    this.descriptor);
+        }
+
+        return comp;
+    }
+
+    /**
+     * Creates a temporary file in the location provided, iff write access is
+     * available there. Otherwise the file is created in the custom or system
+     * temporary directory.
+     *
+     * @param location a file in the target directory or the directory itself,
+     * may be <code>null</code>
+     * @param name prefix of the file to be created, class name is appended
+     * at the beginning
+     * @param extension (optional) suffix of the temporary file that is created
+     * @param deleteOnExit flag for calling the <code>deleteOnExit()</code>
+     * method for the file
+     * @return a temporary file according to the specifications
+     */
+    public File createTempFile(File location, String name, String extension, boolean deleteOnExit) {
+
+        // get location
+        if (location== null)
+            location= this.tmpDir;
+        else {
+            if (!location.isDirectory())
+                location= location.getParentFile();
+            if (!location.canWrite())
+                location= this.tmpDir;
+        }
+
+        // get name
+        if (name== null)
+            name= getClass().getSimpleName();
+        else
+            name= getClass().getSimpleName()+ "_"+ name;
+
+        File f= null;
+        try {
+            f= FileHelper.createTempFile(name, extension, location);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return createFile(f, deleteOnExit);
+    }
+
+    /**
+     * Control gateway for file creation from the main class,
+     * adds a hook for delete on exit in case.
+     *
+     * @param f the file that has been created
+     * @param deleteOnExit flag to mark for deletion on exit
+     * @return
+     */
+    protected File createFile(File f, boolean deleteOnExit) {
+        if (deleteOnExit)
+            f.deleteOnExit();
+
+        return f;
+    }
+
+    /**
+     * Retrieves all mappings in a certain region from a BED input file.
+     *
+     * @param chromosome the locus for which reads are to be read
+     * @param from start coordinate on chromosome
+     * @param to end coordinate on chromosome
+     * @return an iterator instance that enumerates all mappings in the specified region
+     */
+    public MSIterator read(String chromosome, int from, int to) {
+        return read(chromosome, from, to, 0, 1);
+    }
+
+    /**
+     * Out-of-memory-proof method that retrieves all mappings in a certain region from a BED input file.
+     * The strategy is try-and-see, first it is attempted to try to load all requested reads into memory (RAM);
+     * if latter attempt fails, the iterator is initialized on disk. Method retries if disk/filesystem blocks.
+     * in the latter case.
+     *
+     * @param chromosome the locus for which reads are to be read
+     * @param from start coordinate on chromosome
+     * @param to end coordinate on chromosome
+     * @param retryCount number of retries that are attempted in the case of disk/filesystem temporarily unreachable
+     * @param timeInSeconds time between retries
+     * @return an iterator instance that enumerates all mappings in the specified region
+     */
+    private MSIterator read(String chromosome, int from, int to, int retryCount, long timeInSeconds) {
+        if (this.sortInRam) {
+            try{
+                return readRAM(chromosome, from, to);
+            }catch (OutOfMemoryError memoryError){
+                System.gc();
+                Thread.yield();
+                Log.warn("Not enough memory to sort BED entries in RAM. Switching to disk sorting. This run is NOT failed!\n " +
+                        "You can increase the amount of memory used " +
+                        "by the capacitor using the FLUX_MEM environment variable. For example: export FLUX_MEM=\"6G\"; flux-capacitor ... to use" +
+                        "6 GB of memory.");
+                return readDisk(chromosome, from, to, retryCount, timeInSeconds);
+            }
+        }else{
+            return readDisk(chromosome, from, to, retryCount, timeInSeconds);
+        }
+    }
+
+
+    /**
+     * Loads all mappings in the respective region into RAM.
+     * @param chromosome the locus for which reads are to be read
+     * @param from start coordinate on chromosome
+     * @param to end coordinate on chromosome
+     * @return an iterator instance that enumerates elements of an array stored in RAM
+     */
+    private BEDMappingIterator readRAM(String chromosome, int from, int to) {
+
+        if (from> to|| from< 0|| to< 0)
+            throw new RuntimeException("BED reading range error: "+from+" -> "+to);
+        // init iterator
+        BEDMappingIterator iter= null;
+        // memory
+        MappingReaderState state= readState(chromosome, from, to);
+        if (state.result== null)
+            return null;
+        ArrayList<BEDMapping> beds= /*(BEDMapping[])*/ state.result;//TODO move to Mapping
+        Collections.sort(beds, getDescriptorComparator());
+        iter= new BEDMappingIterator(beds);
+
+        return iter;
+
+    }
+
+    /**
+     * Writes all mappings in the respective region to disk, retries if disk/filesystem blocks.
+     * @param chromosome the locus for which reads are to be read
+     * @param from start coordinate on chromosome
+     * @param to end coordinate on chromosome
+     * @return an iterator instance that enumerates elements of an array stored in RAM
+     */
+    private BEDMappingIteratorDisk readDisk(String chromosome, int from, int to, int retryCount, long timeInSeconds) {
+
+        if (from> to|| from< 0|| to< 0)
+            throw new RuntimeException("BED reading range error: "+from+" -> "+to);
+
+        // init iterator
+        BEDMappingIteratorDisk iter= null;
+
+        try {
+            // read, maintain main thread
+            PipedInputStream  pin= new PipedInputStream();
+            PipedOutputStream pout= new PipedOutputStream(pin);
+            Comparator<CharSequence> c= new BEDDescriptorComparator(this.descriptor);
+            File tmpFile= createTempFile(null, chromosome+ ":"+ from+ "-"+ to+ ".", "bed", true);
+            BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, c);
+            biter.init();
+            iter= biter;
+            MappingReaderState state= readState(pout, chromosome, from, to);
+            pout.flush();
+            pout.close();
+            if (state.count== 0)
+                return null;
+        } catch (IOException e) {
+            /*
+             * "Resource temporarily unavailable"
+             * Catch this exception and try again after sleeping for a while
+             */
+            if(e.getMessage().contains("Resource temporarily unavailable")){
+                if(retryCount < 6){
+                    Log.warn("Filesystem reports : 'Resource temporarily unavailable', I am retrying ("+(retryCount+1)+")");
+                    try {Thread.sleep(1000 * (timeInSeconds));} catch (InterruptedException e1) {}
+                    return readDisk(chromosome, from, to, retryCount + 1, timeInSeconds * 6);
+                }
+            }
+            throw new RuntimeException(
+                    "Could not get reads for locus "+ chromosome+ ":"+ from+ "-"+ to +", retried " + retryCount + " times", e);
+        }
+
+        return iter;
+
+    }
+
+
 	/**
 	 * Reads BED objects from the underlying <code>InputStream</code> 
 	 * overlapping the area specified by <code>chr</code>, 
 	 * <code>start</code> and <code>end</code> and returns them as 
 	 * an array.
-	 * @param os stream to which the output is written
 	 * @param chr chromosome name of the specified area
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
-	public MappingWrapperState read(String chr, int start, int end) {
-		MappingWrapperState state= new MappingWrapperState();
-		state.result= new Vector<BEDobject2>();
+	public MappingReaderState readState(String chr, int start, int end) {
+		MappingReaderState state= new MappingReaderState();
+		state.result= new ArrayList<BEDMapping>();
 		state.count= 0;
-		read(chr, start, end, null, state);
+		readState(chr, start, end, null, state);
 		if (state.count== 0)
 			state.result= null;
 		else
-			state.result= toObjects((Vector<BEDobject2>) state.result);
+			state.result= new ArrayList<BEDMapping>(state.result);
 		return state;
 	}
 	
@@ -1072,20 +1271,20 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
-	public MappingWrapperState read(OutputStream os, String chr, int start, int end) {
-		return read(chr, start, end, os, null);
+	public MappingReaderState readState(OutputStream os, String chr, int start, int end) {
+		return readState(chr, start, end, os, null);
 	}
 	
 	int skippedLines= 0;
 	boolean warnFirstSkip= true;
-	protected MappingWrapperState read(String chr, int start, int end, OutputStream os, MappingWrapperState state) {
+	protected MappingReaderState readState(String chr, int start, int end, OutputStream os, MappingReaderState state) {
 	
 				if (state== null)
-					state= new MappingWrapperState();
+					state= new MappingReaderState();
 				// else 
 				state.count= 0l;
-				state.state= MappingWrapperState.STATE_OK;
-				state.result= new Vector<BEDobject2>();
+				state.state= MappingReaderState.STATE_OK;
+				state.result= null;
 				state.nextChr= null;
 		
 				if (bytesRead== 0) {
@@ -1096,7 +1295,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				state.count= 0l;
 				if (mapChr.containsKey(chr)) {
 					if (mapChr.get(chr)== null) {
-						state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;
+						state.state= MappingReaderState.STATE_CHROMOSOME_NOT_FOUND;
 						return state;
 					}
 				}  
@@ -1123,7 +1322,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						} else {
 							lastLine= cs.cloneCurrentSeq();
 							if (buffy.readLine(cs)== null) {
-								state.state= MappingWrapperState.STATE_END_OF_FILE;
+								state.state= MappingReaderState.STATE_END_OF_FILE;
 								return state;	// EOF
 							}
 							cs.resetFind();
@@ -1134,7 +1333,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						// use this for debugging fpointer
 		//				File file = new File(this.fPath+MyFile.separator+this.fName);
 		//				InputStream inputStream = new FileInputStream(file);
-		//				inputStream.skip(bytesRead);	// must read next line 
+		//				inputStream.skip(bytesRead);	// must read next line
 		//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 		//				String chk= r2.readLine();
 		//				r2.close();
@@ -1198,7 +1397,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 							
 							addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
 							
-							state.state= MappingWrapperState.STATE_END_OF_CHROMOSOME;
+							state.state= MappingReaderState.STATE_END_OF_CHROMOSOME;
 							state.nextChr= chrToki;
 							return state;
 						}
@@ -1216,7 +1415,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											bytesRead= tmpBytes;
 											--nrUniqueLinesRead;
 										}
-										state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;
+										state.state= MappingReaderState.STATE_CHROMOSOME_NOT_FOUND;
 										return state;
 									} else {
 										if (mapChr.get(chr)[0]> tmpBytes) { 	// only jump forward, never back
@@ -1234,7 +1433,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											bedEnd= BEDobject.encodeInt(cs.getToken(2));
 										} else {
 											reset(tmpBytes, nrUniqueLinesRead-1);
-											state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;	// ?
+											state.state= MappingReaderState.STATE_CHROMOSOME_NOT_FOUND;	// ?
 											state.nextChr= chrToki;
 											return state;
 										}
@@ -1250,7 +1449,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 											--nrUniqueLinesRead;
 											readerB= null;
 										}
-										state.state= MappingWrapperState.STATE_CHROMOSOME_NOT_FOUND;
+										state.state= MappingReaderState.STATE_CHROMOSOME_NOT_FOUND;
 										state.nextChr= chrToki;
 										return state; 
 									} else {
@@ -1313,15 +1512,15 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 								bytesRead= tmpBytes;
 								--nrUniqueLinesRead;
 							}
-							state.state= MappingWrapperState.STATE_OK; // ? more info ? out of range ?
+							state.state= MappingReaderState.STATE_OK; // ? more info ? out of range ?
 							state.nextChr= chrToki;
 							return state;
 						}
 						
 						// create object
 						if (os== null) {
-							BEDobject2 bed= new BEDobject2(cs);
-							((Vector<BEDobject2>) state.result).add(bed);
+							BEDMapping bed= new BEDMapping(cs);
+							/*((Vector<Mapping>)*/ state.result.add(bed);      //using generic
 							++state.count;
 						} else {
 							os.write(cs.chars);
@@ -1369,7 +1568,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					descriptor= new FMRD();
 					if (!descriptor.isPairedEnd(ss[3])) {
 						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-							System.err.println("[OHNO] Could not detect the format of read descriptor:\n\t"+ 
+							System.err.println("[OHNO] Could not detect the format of read descriptor:\n\t"+
 									s);
 						return null;
 					}
@@ -1495,4 +1694,35 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		}
 	}
 
+    @Override
+    public Iterator<Mapping> iterator() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public class MappingReaderState {
+
+        public static final int STATE_OK= 0;
+
+        public static final int STATE_END_OF_CHROMOSOME= 1;
+
+        public static final int STATE_END_OF_FILE= 2;
+
+        public static final int STATE_CHROMOSOME_NOT_FOUND= 3;
+
+        public long count= 0l;
+        public ArrayList<BEDMapping> result= null;
+        public byte state= STATE_OK;
+        public String nextChr= null;
+
+        public MappingReaderState() {
+            reset();
+        }
+
+        public void reset() {
+            count= 0l;
+            result= null;
+            state= STATE_OK;
+            nextChr= null;
+        }
+    }
 }

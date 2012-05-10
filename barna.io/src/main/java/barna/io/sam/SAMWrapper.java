@@ -5,12 +5,16 @@ package barna.io.sam;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.Iterator;
 import java.util.Vector;
 
 import barna.commons.utils.ArrayUtils;
 import barna.io.AbstractFileIOWrapper;
-import barna.io.MappingWrapper;
+import barna.io.MSIterator;
+import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Gene;
+import barna.model.Mapping;
 import barna.model.bed.BEDobject;
 import net.sf.samtools.*;
 
@@ -19,7 +23,7 @@ import net.sf.samtools.*;
  *
  */
 public class SAMWrapper extends AbstractFileIOWrapper implements
-		MappingWrapper {
+        MappingReader {
 
 	public BEDobject[] beds= null;
 	/**
@@ -116,9 +120,14 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 
 	}
 
-	/* (non-Javadoc)
-	 * @see barna.io.MappingWrapper#getCountReads()
-	 */
+    @Override
+    public MSIterator<Mapping> read(String chromosome, int start, int end) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    /* (non-Javadoc)
+    * @see barna.io.MappingReader#getCountReads()
+    */
 	@Override
 	public int getCountReads() {
 		// TODO Auto-generated method stub
@@ -126,7 +135,7 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 	}
 
 	/* (non-Javadoc)
-	 * @see barna.io.MappingWrapper#getCountMappings()
+	 * @see barna.io.MappingReader#getCountMappings()
 	 */
 	@Override
 	public int getCountMappings() {
@@ -135,7 +144,7 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 	}
 
 	/* (non-Javadoc)
-	 * @see barna.io.MappingWrapper#getCountContinuousMappings()
+	 * @see barna.io.MappingReader#getCountContinuousMappings()
 	 */
 	@Override
 	public int getCountContinuousMappings() {
@@ -144,7 +153,7 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 	}
 
 	/* (non-Javadoc)
-	 * @see barna.io.MappingWrapper#getCountSplitMappings()
+	 * @see barna.io.MappingReader#getCountSplitMappings()
 	 */
 	@Override
 	public int getCountSplitMappings() {
@@ -153,7 +162,7 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 	}
 
 	/* (non-Javadoc)
-	 * @see barna.io.MappingWrapper#isApplicable(barna.io.rna.UniversalReadDescriptor)
+	 * @see barna.io.MappingReader#isApplicable(barna.io.rna.UniversalReadDescriptor)
 	 */
 	@Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
@@ -161,9 +170,24 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see barna.io.AbstractFileIOWrapper#scanFile()
-	 */
+    @Override
+    public boolean close() {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void reset() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public boolean reset(String chr) {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    /* (non-Javadoc)
+      * @see barna.io.AbstractFileIOWrapper#scanFile()
+      */
 	@Override
 	public void scanFile() {
 		// TODO Auto-generated method stub
@@ -179,4 +203,8 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 		return 0;
 	}
 
+    @Override
+    public Iterator<Mapping> iterator() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

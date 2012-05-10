@@ -28,9 +28,24 @@
 package barna.io;
 
 import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Gene;
+import barna.model.Mapping;
+
+import java.io.OutputStream;
 
 
-public interface MappingWrapper {
+public interface MappingReader extends Iterable<Mapping>{
+
+    /**
+     * Reads mappings from the underlying <code>InputStream</code>
+     * overlapping the area specified by <code>chr</code>,
+     * <code>start</code> and <code>end</code> and returns them as
+     * an <code>MSIterator</code>.
+     * @param chromosome chromosome name of the specified area
+     * @param start start position of the specified area
+     * @param end end position of the specified area
+     */
+    public MSIterator<Mapping> read(String chromosome, int start, int end);
 
 	/**
 	 * Retrieve the number of unique reads in the mapping set.
@@ -65,4 +80,10 @@ public interface MappingWrapper {
 	 * otherwise 
 	 */
 	public boolean isApplicable(UniversalReadDescriptor descriptor);
+
+    public boolean close();
+
+    public void reset();
+
+    public boolean reset(String chr);
 }

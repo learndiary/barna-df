@@ -33,7 +33,8 @@ import barna.commons.log.Log;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDFileReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
@@ -113,8 +114,8 @@ public class MappingFilter implements FluxTool<Void> {
 		
 		// sort
 		File sortedInput= fileIn;
-		sortedInput= BEDwrapper.getSortedFile(fileIn, null, 
-				((descriptor!= null&& descriptor.isPaired())?BEDwrapper.COMPARATOR_PAIRED_END:null));
+		sortedInput= new BEDFileReader(fileIn).getSortedFile(null,
+                ((descriptor != null && descriptor.isPaired()) ? BEDFileReader.COMPARATOR_PAIRED_END : null));
 
 		// doit
 		filter(sortedInput, fileOut);

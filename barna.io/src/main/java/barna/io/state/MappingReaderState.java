@@ -25,47 +25,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io.bed;
+package barna.io.state;
 
-import barna.commons.Execute;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import barna.model.Mapping;
+import barna.model.bed.BEDMapping;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
+public class MappingReaderState {
 
-/**
- * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
- */
-public class BEDwrapperTest {
+	public static final int STATE_OK= 0;
+	
+	public static final int STATE_END_OF_CHROMOSOME= 1;
+	
+	public static final int STATE_END_OF_FILE= 2;
+	
+	public static final int STATE_CHROMOSOME_NOT_FOUND= 3;
 
-    private static File testfile;
-
-    @BeforeClass
-    public static void setUp(){
-        testfile = new File(BEDwrapperTest.class.getResource("/test.bed").getFile());
-        Execute.initialize(4);
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        Execute.shutdown();
-    }
-
-
-    @Test
-    public void testScanFile(){
-        BEDwrapper wrapper = new BEDwrapper(testfile.getAbsolutePath());
-        wrapper.scanFile();
-
-        //scanFileReadLines= 0;
-        //countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
-        assertEquals(17, wrapper.nrUniqueLinesRead );
-        assertEquals(17, wrapper.countAll );
-        assertEquals(5, wrapper.countSplit );
-        assertEquals(12, wrapper.countEntire );
-        assertEquals(17, wrapper.countReads );
-    }
+	public long count= 0l;
+	public ArrayList<BEDMapping> result= null;
+	public byte state= STATE_OK;
+	public String nextChr= null;
+	
+	public MappingReaderState() {
+		reset();
+	}
+	
+	public void reset() {
+		count= 0l;
+		result= null;
+		state= STATE_OK;
+		nextChr= null;
+	}
 }

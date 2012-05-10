@@ -30,6 +30,7 @@ package barna.io;
 import barna.commons.ByteArrayCharSequence;
 import barna.model.bed.BEDMapping;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
@@ -44,7 +45,7 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 	/**
 	 * Array of BED lines that are iterated
 	 */
-	ByteArrayCharSequence[] elements;
+	ArrayList<BEDMapping> elements;
 	
 	/**
 	 * Current position of iterator in underlying 
@@ -66,7 +67,7 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 	 * provided starting with the first one.
 	 * @param elements array of BED lines
 	 */
-	public BEDMappingIterator(ByteArrayCharSequence[] elements) {
+	public BEDMappingIterator(ArrayList<BEDMapping> elements) {
 		this.elements= elements;
 		currentIndex= 0;
 	}
@@ -83,17 +84,17 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 
 	@Override
 	public boolean hasNext() {		
-		return (elements!= null&& currentIndex< elements.length);
+		return (elements!= null&& currentIndex< elements.size());
 	}
 
 	
 	@Override
 	public BEDMapping next() {
 		
-		if (elements== null|| currentIndex>= elements.length)
+		if (elements== null|| currentIndex>= elements.size())
 			return null;
 		
-		return new BEDMapping(elements[currentIndex++]);
+		return elements.get(currentIndex++);
 	}
 	
 	@Override
@@ -109,7 +110,7 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 	@Override
 	public void reset() {
 		
-		if(markedIndex< 0|| markedIndex>= elements.length)
+		if(markedIndex< 0|| markedIndex>= elements.size())
 			return;
 		currentIndex= markedIndex;
 	}

@@ -28,7 +28,8 @@ package barna.genome.utils;/*
 import barna.commons.ByteArrayCharSequence;
 import barna.io.BufferedByteArrayReader;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDFileReader;
 import barna.model.bed.BEDobject2;
 import barna.model.commons.IntVector;
 
@@ -80,7 +81,7 @@ public class Bed2Wig {
 	static void bed2wig(File in, File out) {
 		try {
 			
-			BEDwrapper bedreader= new BEDwrapper(in);
+			BEDFileReader bedreader= new BEDFileReader(in);
 			if (!bedreader.isApplicable()) {
 				File tmp= FileHelper.createTempFile(Bed2Wig.class.getName(), in.getName());
 				tmp.deleteOnExit();
