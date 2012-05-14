@@ -271,7 +271,7 @@ public class Flux {
 		return sm;
 	}
 
-	private static void printUsage(FluxTool tool, JSAP jsap, List<FluxTool> allTools, String errorMessage) {
+	public static void printUsage(FluxTool tool, JSAP jsap, List<FluxTool> allTools, String errorMessage) {
         if(errorMessage != null){
             System.err.println(errorMessage);
             System.err.println("");
