@@ -183,8 +183,8 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final boolean requiresGenomicSequence(ParameterSchema schema) {
         boolean req= (schema.get(FRAG_EZ_MOTIF)!= null)
                 || (schema.get(RT_MOTIF)!= null)
-                || (schema.get(GC_MEAN)!= null&& schema.get(GC_MEAN)!= Double.NaN)
-                || (schema.get(FASTA)!= null&& schema.get(FASTA)== Boolean.TRUE);
+                || (schema.get(GC_MEAN)!= null&& !Double.isNaN(schema.get(GC_MEAN)))
+                || (schema.get(FASTA)!= null&& schema.get(FASTA)== true);
         return req;
     }
 
