@@ -30,11 +30,13 @@ package barna.flux.simulator;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
+import barna.commons.launcher.Flux;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
 import barna.flux.simulator.fragmentation.Fragmenter;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
+import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -56,11 +58,25 @@ public class SimulationPipeline implements FluxTool<Void> {
 		try {
 
 			final SimulationPipeline mySimulator= new SimulationPipeline();
-			mySimulator.setFile(new File(args[0]));
-			mySimulator.setExpression(false);
-			mySimulator.setLibrary(true);
-			mySimulator.setSequence(true);
-			
+
+            JSAP jsap= new JSAP();
+            List<Parameter> parameter = mySimulator.getParameter();
+            if(parameter != null){
+                try{
+                    for (Parameter p : parameter) {
+                        jsap.registerParameter(p);
+                    }
+                    JSAPResult toolParameter = jsap.parse(args);
+                    if (!mySimulator.validateParameter(toolParameter)){
+                        Flux.printUsage(mySimulator, jsap, Flux.findTools(), null);
+                    }
+                } catch (Exception e) {
+                    Log.error("Parameter error : " + e.getMessage(), e);
+                    System.exit(-1);
+                }
+
+            }
+
 		    // run
 			// mySimulator.call();
 			Future f= Execute.getExecutor().submit(mySimulator);

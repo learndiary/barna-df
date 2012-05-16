@@ -139,8 +139,18 @@ class FluxCapacitorTest{
 	protected String runCapacitor() throws Exception{
 		
 		// start process
-		// start process
-		String cmd= "java -cp "+System.getProperty("java.class.path")
+        /**
+         * Get rid of any IDEA jars files in the classpath
+         */
+        def classpath = System.getProperty("java.class.path")
+        def cp  = []
+        // remove libs containing spaces in the name, eg "blabla IDEA bla.jar"
+        classpath.split(":").each {e->
+            if(!e.contains(" ")) cp << e
+        }
+        def cpp= cp.join(":")
+        String cmd= "java -cp "+ cpp
+
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
 		cmd+= " -Xmx1G barna.commons.launcher.Flux -t capacitor -p "+parFile.getAbsolutePath()

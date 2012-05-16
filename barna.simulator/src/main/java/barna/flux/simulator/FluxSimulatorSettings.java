@@ -56,13 +56,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             if (f== null)
                 return;   // valid
             long heapMaxSize = Runtime.getRuntime().maxMemory();
-            if (heapMaxSize< HEAP_SIZE_MOTIFS) {
+            if (heapMaxSize<= HEAP_SIZE_MOTIFS) {
                 DecimalFormat df = new DecimalFormat("#.##");
                 throw new ParameterException("Due to the parameter value " +
                         parameter.getName() +
-                        " heap size of " +
+                        " heap size of > " +
                         df.format(HEAP_SIZE_MOTIFS/ (double) 1000000000)  +
-                        " is required, but currently only "+ df.format(heapMaxSize/ (double) 1000000000) +
+                        " GB is required, but currently only "+ df.format(heapMaxSize/ (double) 1000000000) +
                         " have been provided. "
                 );
             }
@@ -73,7 +73,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Maximum heap size required when motifs are used
      */
-    protected static long HEAP_SIZE_MOTIFS= 4000000000l;
+    protected static long HEAP_SIZE_MOTIFS= 2500000000l;
 
     /**
      * Loci separator
@@ -164,15 +164,30 @@ public class FluxSimulatorSettings extends ParameterSchema {
                 @Override
                 public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                     File genomeFile = (File) schema.get(parameter);
-                    if (genomeFile == null) {
+                    boolean req= requiresGenomicSequence(schema);
+                    if (req&& genomeFile == null) {
                         throw new ParameterException("You have to specify a genome directory");
                     }
-                    if (!genomeFile.exists()) {
+                    if (req&& !genomeFile.exists()) {
                         throw new ParameterException("The genome directory " + genomeFile.getAbsolutePath() + " could not be found!");
                     }
 
                 }
             }, relativePathParser);
+
+    /**
+     * Checks by the current parameter settings whether a genomic sequence is required for the run.
+     * @param schema an instance with the current parameter settings
+     * @return <code>true</code> if the genomic sequence is required for the current run, <code>false</code> otherwise.
+     */
+    public static final boolean requiresGenomicSequence(ParameterSchema schema) {
+        boolean req= (schema.get(FRAG_EZ_MOTIF)!= null)
+                || (schema.get(RT_MOTIF)!= null)
+                || (schema.get(GC_MEAN)!= null&& !Double.isNaN(schema.get(GC_MEAN)))
+                || (schema.get(FASTA)!= null&& schema.get(FASTA)== true);
+        return req;
+    }
+
     public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
         @Override
         public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
