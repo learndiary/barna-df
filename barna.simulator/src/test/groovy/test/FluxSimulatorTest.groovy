@@ -113,7 +113,15 @@ class FluxSimulatorTest {
 	}
 	
 	protected String runSimulator(File parFile, File tmpDir) {
-		String cmd= "java -cp "+System.getProperty("java.class.path")
+		String cmd= "java -cp ";
+        String cp= System.getProperty("java.class.path");
+        String[] cpp= cp.split(":");
+        String cp2="";
+        for(int i= 0; i< cpp.length; ++i) {
+            if (cpp[i].indexOf(" ")< 0)
+                cp2+= ":"+ cpp[i];
+        }
+        cmd+= cp2.substring(1);
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
 		cmd+= " -Xmx1G barna.commons.launcher.Flux -t simulator -p "+parFile.getAbsolutePath()

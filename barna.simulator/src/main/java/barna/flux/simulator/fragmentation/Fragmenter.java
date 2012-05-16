@@ -540,8 +540,10 @@ public class Fragmenter implements Callable<Void> {
                                 pcrProb,
                                 mean,
                                 settings.get(FluxSimulatorSettings.GC_SD),
-                                settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
-                                settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
+                                getMapTxSeq(),
+                                getMapTxSeq(),
+                                //settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
+                                //settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
                                 settings.get(FluxSimulatorSettings.RT_MOTIF));
                         ((Amplification) processor).initPWMMap();
                         break;
