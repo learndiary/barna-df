@@ -28,7 +28,6 @@ public class Asta {
 
 
     private static MyFile inputFile;
-    private static SplicingGraph.WriterThread writerThread;
     public static int counter= 0;
     private static int readAheadLimit= -1;
     static boolean onlyInternal= true;
@@ -56,8 +55,8 @@ public class Asta {
 
     static void _240808_test_multithread(String[] args) {
 
-        writerThread= new SplicingGraph.WriterThread();
-        inputFile= new MyFile(parseArguments(writerThread, args).getAbsolutePath());
+        SplicingGraph.writerThread= new SplicingGraph.WriterThread();
+        inputFile= new MyFile(parseArguments(SplicingGraph.writerThread, args).getAbsolutePath());
         //
         // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716.gtf
         // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_mRNAs_fromUCSC070716.gtf
@@ -72,13 +71,13 @@ public class Asta {
 //		if (rusc)
 //			outputFname= "delme.asta";
 
-        writerThread.start();
+        SplicingGraph.writerThread.start();
 
         // init and start threads
         long t0= System.currentTimeMillis();
         if (output2) {
             // writerThread
-            outputStats(writerThread, new OutputStreamWriter(System.err));
+            outputStats(SplicingGraph.writerThread, new OutputStreamWriter(System.err));
             //Date ti= new Date(t0);
             //System.out.println("["+ti+"]  started, k= "+EventExtractorThread.n+" species "+EventExtractorThread.species+", input file "+inputFile.getAbsolutePath()+", output file= "+outputFname);
         }
@@ -102,9 +101,9 @@ public class Asta {
 
         System.err.println("took "+((System.currentTimeMillis()- t0)/1000)+" sec.");
         try {
-            writerThread.setKill(true);
-            writerThread.interrupt();
-            writerThread.join();
+            SplicingGraph.writerThread.setKill(true);
+            SplicingGraph.writerThread.interrupt();
+            SplicingGraph.writerThread.join();
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
         }

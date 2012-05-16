@@ -119,7 +119,7 @@ public class SplicingGraph {
 	/**
 	 * 
 	 */
-	static WriterThread writerThread= null;	// let it null here, see addEvent()
+	public static WriterThread writerThread= null;	// let it null here, see addEvent()
 	public static boolean writeStdOut= false;
 	public static boolean retrieveASEvents= true;
     public static boolean retrieveDSEvents= false;
