@@ -48,18 +48,39 @@ import java.io.PrintStream;
 import java.util.*;
 
 /**
- * ok, this version gives freedom to the expectation model.
- * @author micha
+ * A class that takes a splicing graph with annotation mapped read counts
+ * and transforms it into a system of linear equations that subsequently is
+ * solved to yield a deconvolution of reads in common transcript areas.
+ * @author Micha Sammeth (micha@sammeth.net)
  *
  */
 public class GraphLPsolver implements ReadStatCalculator {
-	
-	static final String[] COND_SYMBOLS= new String[] {"", " <= ", " >= ", " = "}; 
-	public final static String[] COSTS_NAMES= new String[] {"LIN", "LOG"};
-	public final static byte COSTS_LINEAR= 0, COSTS_LOG= 1;
-	public final static String SFX_LPOUT= ".lp";	 
-	public final static double DBL_MOST_LITTLE_VAL= 0.000000001, MY_INFINITY= 100;
-	static boolean debug= false;
+
+    /**
+     * Set of in-equation symbols.
+     */
+	static final String[] COND_SYMBOLS= new String[] {"", " <= ", " >= ", " = "};
+
+    /**
+     * Constant for linear cost function.
+     */
+	public final static byte COSTS_LINEAR= 0;
+
+    /**
+     * Constant for logarithmic cost function.
+     */
+    public final static byte COSTS_LOG= 1;
+
+    /**
+     * File extension for linear program files written to disk.
+     */
+	public final static String SFX_LPOUT= ".lp";
+
+    /**
+     * Flag for debug purposes.
+     * @deprecated marked for removal
+     */
+	static boolean debug= false;    // TODO replace by JUnit tests
 
 	/**
 	 * Splicing graph with mapped reads.
@@ -70,22 +91,147 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 * Linear Program solver.
 	 */
 	protected LpSolve lpSolve= null;
+
+    /**
+     * Hash storing edges and transcripts that are mapped to integer constraint numbers.
+     */
 	Hashtable<Object,int[]> constraintHash= null;	// for synchronizing different accesses to same constraints
+
+    /**
+     * Variable to count up constraint numbers as they successively get added.
+     */
 	public int constraintCtr= 0;
-	int restrNr= 0;	// for restrictions
+
+    /**
+     * Variable to count up restriciton numbers as they successively get added.
+     */
+	int restrNr= 0;
+
+    /**
+     * The (minimal) length of mapped reads.
+     */
 	int readLen= 0;
+
+    /**
+     * Array with the {minimum,maximum} insert length.
+     */
 	int[] insertLen= null;
-	double valObjFunc= 0d, valDeltaPos= 0d, valDeltaNeg= 0d;
-	double[] result= null;	// the primal solution
+
+    /**
+     * Value of the objective function after solving the linear system (i.e., deconvolution).
+     */
+	double valObjFunc= 0d;
+
+    /**
+     * Sum of all deviations from observations in positive direction,
+     * i.e., all reads added before deconvolution.
+     */
+    double valDeltaPos= 0d;
+
+    /**
+     * Sum of all deviations from observations in negative direction,
+     * i.e., all reads removed before deconvolution.
+     */
+    double valDeltaNeg= 0d;
+
+    /**
+     * Array with the primal solution.
+     */
+	double[] result= null;
+
+    /**
+     * Hash that maps transcripts to their predicted expression level after deconvolution.
+     */
 	HashMap<Object,Double> trptExprHash= null;
+
+    /**
+     * Profile of mapping distribution biases along transcript, from 5' to 3'.
+     */
 	Profile profile= null;
+
+    /**
+     * The number of mappings initially observed, for normalization purposes after deconvolution.
+     */
 	int nrMappingsObs= 0;
-	
-	public GraphLPsolver(AnnotationMapper aMapper, int readLen, int realReads) {
+
+    /**
+     * Normalization factor for deconvoluted expression levels.
+     */
+    double nFactor= Double.NaN;
+
+    /**
+     * Flag whether cost function is to be split into Watson and Crick mappings separately.
+     */
+    boolean costSplitWC= false;
+
+    /**
+     * Flag whether multimaps should be dis-/considered in the cost function.
+     */
+    boolean costUseMultimap= false;
+
+    /**
+     * Flag for paired-end mode.
+     */
+    boolean pairedEnd= false;
+
+    /**
+     * Model for cost function.
+     */
+    public byte costModel= COSTS_LOG;
+
+    /**
+     * Granularity of cost function.
+     */
+    public byte costSplit= 1;
+
+    /**
+     * Boundaries of cost function.
+     */
+    public float[] costBounds= null;
+
+    /**
+     * Flag whether LP programs should be documented in files, or not.
+     */
+    boolean writeFile= false;
+
+    /**
+     * Handle describing the directory where LP files are documented.
+     */
+    File fileLPdir= null;
+
+    /**
+     *
+     */
+    File fileLPinput= null;
+    IntVector costIdx;
+    DoubleVector costVal;
+    int[] insertMinMax;
+
+
+
+
+    /**
+     * Basic constructor, providing a graph with mappings, the minimum read length, and the total number of reads
+     * observed in the locus.
+     * @param aMapper splicing graph with annotation mapped reads
+     * @param readLen minimum length of a read
+     * @param realReads number of reads observed after annotation mapping
+     */
+	private GraphLPsolver(AnnotationMapper aMapper, int readLen, int realReads) {
 		this.aMapper= aMapper;
 		this.readLen= readLen;
 		this.nrMappingsObs= realReads;
 	}
+
+    /**
+     * Extended constructor, with read and insert size attributes.
+     * @param aMapper splicing graph with annotation mapped reads
+     * @param readLen minimum length of a read
+     * @param insertMinMax set of {minimum,maximum} of the observed insert size
+     * @param realReads number of reads observed after annotation mapping
+     * @param considerBothStrands flag for consideration of reads mapping in anti-/sense
+     * @param pairedEnd flag for paired-end reads
+     */
 	public GraphLPsolver(AnnotationMapper aMapper, int readLen, int[] insertMinMax, int realReads, 
 			boolean considerBothStrands, boolean pairedEnd) {
 		this(aMapper, readLen, realReads);
@@ -93,12 +239,19 @@ public class GraphLPsolver implements ReadStatCalculator {
 		this.pairedEnd= pairedEnd;
 		this.insertMinMax= insertMinMax;
 	}
-	
+
+    /**
+     * Setter method for profile with mapping distribution biases.
+     * @param profile profile of the biases
+     */
 	public void setProfile(Profile profile) {
 		this.profile= profile;
 	}
-	
-	
+
+    /**
+     * Retrieves or creates the linear program (LP) solver model.
+     * @return the linear program (LP) solver model
+     */
 	LpSolve getLPsolve() {
 		if (lpSolve == null) {
 			if (writeFile)
@@ -131,7 +284,11 @@ public class GraphLPsolver implements ReadStatCalculator {
 
 		return lpSolve;
 	}
-	
+
+    /**
+     * Outputs the constraint map for debugging purposes.
+     * @param p stream to which the output is requested
+     */
 	strictfp void printConstraintMap(PrintStream p) {
 		
 			// edges
@@ -169,11 +326,14 @@ public class GraphLPsolver implements ReadStatCalculator {
 			p.print("\n");
 		}
 	}
-	
-	double nFactor= Double.NaN;
 
+    /**
+     * Calculates and returns the normalization factor according to the read deviation
+     * before/after deconvolution.
+     * @return normalization factor to be applied to raw predicitions after deconvolutions
+     */
 	public double getNFactor() {
-		if (Double.isNaN(nFactor)|| true) {
+		//if (Double.isNaN(nFactor)|| true) {
 			double fictReads= 0;
 			Iterator iter= getTrptExprHash().keySet().iterator();
 			while (iter.hasNext()) {
@@ -193,88 +353,19 @@ public class GraphLPsolver implements ReadStatCalculator {
 				nFactor= nrMappingsObs/ fictReads;
 			} else 
 				nFactor= 1d;
-		}	
+		//}
 		return nFactor;
 	}
-	public double getNFactor(Transcript t) {
-		
-/*		long[] sig= g.encodeTset(new Transcript[] {t});
-		Vector<Edge> v= g.getEdges(sig, pairedEnd);
-		TProfile supa= getSuperProfileMap().get(t.getTranscriptID());
-		double sum= 0d;
-		for (int i = 0; i < v.size(); i++) {
-			Edge e= v.elementAt(i);
-			sum+= supa.getAreaFrac(e.getFrac(t, readLen), readLen, 
-					TProfile.DIR_FORWARD);	// TODO i==1?TProfile.DIR_BACKWARD:
-		}
-*/
-		
-		double real= getTrptExprHash().get(t.getTranscriptID());
-		
-		double tNorm= getNFactor()* real;	// getNFactor()/ sum
-		return tNorm;
-	}
-	
-	/**
-	 * @deprecated see getNFactor()
-	 * @param trptExprHash2
-	 */
-	private void normalizeBack2LocusExpr(HashMap<Object, Double> trptExprHash2) {
-		double fictReads= 0;
-		Iterator iter= trptExprHash2.keySet().iterator();
-		while (iter.hasNext()) {
-			Object o= iter.next();
-			if (!(o instanceof String))
-				continue;
-			fictReads+= trptExprHash2.get(o);
-		}
 
-		double nFactor= 1d;
-		if (fictReads> 0)	// avoid NaN
-			nFactor= nrMappingsObs/ fictReads;
-		
-		Object[] keys= trptExprHash2.keySet().toArray();
-		for (int i = 0; i < keys.length; i++) {
-			double fictVal= trptExprHash2.remove(keys[i]);
-			double realVal= fictVal* nFactor;
-			trptExprHash2.put(keys[i], realVal);
-		}
-		
-	}
-
-	private int[] getModelSize() {
-
-		int cols= 0, rows= 0;
-		Iterator iter= getConstraintHash().keySet().iterator();
-		while (iter.hasNext()) {
-			Object o= iter.next();
-			cols+= ((int[]) getConstraintHash().get(o)).length;
-		
-			if (o instanceof SimpleEdge)
-				++rows;
-			else if (o instanceof Region)
-				++rows;
-				
-		}
-		++rows; //upper stabi
-
-		int[] dim= new int[] {rows, cols};
-		return dim;
-	}
-
-	private double[] createArray(int constIdx) {
-		double[] a= new double[getConstraintHash().size()+1];
-		for (int i = 0; i < a.length; i++) 
-			a[i]=(i== constIdx)?1d:0d;
-		return a;
-	}
 
 	/**
-	 * create an array where certain indices are set to certain values
+	 * Creates a consecutive array where the specified indices
+     * are set to the specified values.
 	 * 
 	 * @param constIdx indices of constraints
 	 * @param constVal values of constraints
-	 * @return
+	 * @return consecutive array implementing the specified values
+     * at the specified indices
 	 */
 	private double[] createArray(int[] constIdx, double[] constVal) {
 		
@@ -285,31 +376,15 @@ public class GraphLPsolver implements ReadStatCalculator {
 			a[constIdx[i]]= constVal[i];		
 		return a;
 	}
-	
-	private double[] createArray(int[] constIdx) {
-		
-		double[] a= new double[constraintCtr+ 1];
-		for (int i = 0; i < a.length; i++) 
-			a[i]= 0d;
-		for (int i = 0; i < constIdx.length; i++) 
-			a[constIdx[i]]= 1d;		
-		return a;
-	}
-	
-	boolean costSplitWC= false, costUseMultimap= false, pairedEnd= false;	
-	int ret= 0;
-	public byte costModel= COSTS_LOG, costSplit= 1;
-	public float[] costBounds= null;
-	boolean writeFile= false;
-	File fileLPdir= null, fileLPinput= null;
-	IntVector costIdx;
-	DoubleVector costVal;
-	int[] insertMinMax; 
+
 
 	
 	/**
-	 * @param e
-	 * @return
+     * Assigns the integer constraint numbers associated with the
+     * restriction that is implied by the specified graph edge.
+	 * @param e an edge in the splicing graph
+	 * @return array of constraint indices assigned to the specified
+     * edge
 	 */
 	int[] getConstraintIDs(AbstractEdge e) {
 		
@@ -328,7 +403,8 @@ public class GraphLPsolver implements ReadStatCalculator {
 	
 	
 	private int[] allTrptIdx= null;
-	int[] getAllTrptIdx() {
+
+    int[] getAllTrptIdx() {
 		if (allTrptIdx == null) {
 			allTrptIdx = new int[aMapper.trpts.length];
 			for (int i = 0; i < aMapper.trpts.length; i++) 
@@ -755,37 +831,6 @@ public class GraphLPsolver implements ReadStatCalculator {
 		return reads;
 	}
 
-	public double getReadsAvg_old(Vector<SimpleEdge> v, byte dir, SplicingGraph g, long[] sigExcl) {
-		double sum= 0;
-		for (int i = 0; i < v.size(); i++) {
-			if (sigExcl!= null&& !SplicingGraph.isNull(SplicingGraph.intersect(v.elementAt(i).getTranscripts(), sigExcl)))
-				continue;
-
-			double partsum= 0;
-			double sf= g.decodeCount(v.elementAt(i).getTranscripts());
-			if (dir>= 0)
-				partsum+= ((MappingsInterface) v.elementAt(i)).getMappings().getReadNr();
-			if (dir<= 0)
-				partsum+= ((MappingsInterface) v.elementAt(i)).getMappings().getRevReadNr();
-			int[]  a= getConstraintHash().get(v.elementAt(i));
-			if (a== null)
-				return 0;
-			if (costSplitWC)
-				assert(a.length% 2== 0);
-			int lower= costSplitWC? (dir>= 0? 0: a.length/ 2): 0;
-			int upper= costSplitWC? (dir>= 0? a.length/ 2: a.length): a.length;
-			assert((upper- lower)% 2== 0);
-			int half= (upper- lower)/ 2;
-			for (int j = lower; j < upper; j++) 
-				partsum+= (j< half? -1: 1)* result[restrNr+ a[j]];
-			sum+= (partsum* getNFactor(null))/ sf;
-		}
-		
-		if (sum< 0.0000000001)
-			sum= 0;	// TODO only negatives?
-		return sum;
-	}
-
 	
 //	public static final int LE = 1;
 //	public static final int GE = 2;
@@ -864,7 +909,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 			
 			t0= System.currentTimeMillis();
 			// getLPsolve().setScaling(LpSolve.SCALE_CURTISREID);
-			ret= getLPsolve().solve();
+			int ret= getLPsolve().solve();
 /*			 NOMEMORY (-2)  	Out of memory
 			   OPTIMAL (0) 	An optimal solution was obtained
 			SUBOPTIMAL (1) 	The model is sub-optimal. Only happens if there are integer variables and there is already an integer solution found. The solution is not guaranteed the most optimal one.

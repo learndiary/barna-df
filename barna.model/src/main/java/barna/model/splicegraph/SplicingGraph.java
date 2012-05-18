@@ -119,7 +119,7 @@ public class SplicingGraph {
 	/**
 	 * 
 	 */
-	static WriterThread writerThread= null;	// let it null here, see addEvent()
+	public static WriterThread writerThread= null;	// let it null here, see addEvent()
 	public static boolean writeStdOut= false;
 	public static boolean retrieveASEvents= true;
     public static boolean retrieveDSEvents= false;
@@ -308,14 +308,14 @@ public class SplicingGraph {
 		boolean kill= false, outputASTA= false, outputGTF= true;
 		int maxQevents= 10000, minQevents= 1000;
 		static boolean writeHeader= true;
-            private String outputFname;
+        public String outputFname;
 
 
-            public WriterThread() {
+        public WriterThread() {
 			super();
 			setName("event_writing_thread");
 		}
-		
+
 		public void addEvent(ASEvent ev) {
 			queue.add(ev);
 			writingThread.interrupt();
@@ -437,9 +437,9 @@ public class SplicingGraph {
 				new File("C:\\testJunctions.fasta"));
 	    */
 	}
-	
 
-	public boolean isRoot(Node v) {
+
+    public boolean isRoot(Node v) {
 		if (v.equals(root))
 			return true;
 		return false;
@@ -1244,7 +1244,7 @@ public class SplicingGraph {
 	 * extends evidence >= ec (edge confidence) 
 	 * with the same 1st splice site
 	 * to the longest exonic evidence.
-	 * @see cleanESTborderEdges
+	 * @see #cleanESTborderEdges()
 	 * @deprecated now in constructGraph
 	 */
 	public void collapseFuzzyFlanks() {
@@ -1258,7 +1258,7 @@ public class SplicingGraph {
 	 * Kills all events that start have one variant 
 	 * with exclusively EST evidence (hardcoded!!!)
 	 * <> you need a first/last common site for EST events
-	 * @see collapseFuzzyFlanks
+	 * @see #collapseFuzzyFlanks(boolean)
 	 */
 	void cleanESTborderEdges() {
 		cleanESTborderEdges(root.getOutEdges());
