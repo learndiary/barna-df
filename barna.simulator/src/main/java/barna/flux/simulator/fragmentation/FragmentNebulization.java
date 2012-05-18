@@ -76,7 +76,7 @@ public class FragmentNebulization implements FragmentProcessor {
         this.nebuRecursionDepth = (int) Math.ceil(
                 //1d - (1d/Math.exp(maxLen/lambda))
                 //Math.log10((maxLen - nebuC) / (lambda * Math.pow(-Math.log(1d - thold), 1d / M))) / Math.log10(2)
-                maxLen / lambda
+                Math.sqrt(maxLen / lambda)
 
         );
         //this.nebuC = nebuC;
