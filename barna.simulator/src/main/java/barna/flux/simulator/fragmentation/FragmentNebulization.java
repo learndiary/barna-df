@@ -142,16 +142,15 @@ public class FragmentNebulization implements FragmentProcessor {
 
         // write result to disk
         List<Fragment> fragments = new ArrayList<Fragment>();
-        for (int j = 0; j < index1.length && index1[j] > 0; ++j) {
-            int s = start;
-            int e = s + index1[j];
-            Fragment fragment = new Fragment(id, s, e);
+        for (int j = 0, s = start; j < index1.length && index1[j] > 0; s+= index1[j++]) {
+            Fragment fragment = new Fragment(id, s, s+ index1[j]- 1);
             fragments.add(fragment);
             //cs.replace(0, start);
             //start += index1[j];
             //cs.replace(1, start - 1);
             //fragments.add(cs.toString());
         }
+        assert(fragments.get(fragments.size()- 1).getEnd()== end);
         return fragments;
     }
 
