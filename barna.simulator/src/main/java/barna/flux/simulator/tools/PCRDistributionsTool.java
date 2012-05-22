@@ -36,6 +36,7 @@ import barna.flux.simulator.distributions.PCRDistribution;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.Sun14ReflectionProvider;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -250,7 +251,7 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
     }
 
     private static XStream createXStream() {
-        XStream ss = new XStream();
+        XStream ss = new XStream(new Sun14ReflectionProvider());
         // make sure we use refactor save aliases
         ss.alias("GCPCRDistribution", GCPCRDistribution.class);
         ss.alias("PCRDistribution", PCRDistribution.class);

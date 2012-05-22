@@ -36,6 +36,7 @@ import barna.model.Qualities;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.Sun14ReflectionProvider;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -368,7 +369,7 @@ public class MarkovErrorModel implements FluxTool {
     }
 
     static XStream createXStream() {
-        XStream stream = new XStream();
+        XStream stream = new XStream(new Sun14ReflectionProvider());
         stream.alias("fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel", QualityErrorModel.class);
         stream.alias("QualityErrorModel", QualityErrorModel.class);
         return stream;
