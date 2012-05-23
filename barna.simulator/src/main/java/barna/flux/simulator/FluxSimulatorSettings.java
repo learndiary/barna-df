@@ -83,7 +83,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Helper to parse relative filenames
      */
-    private static RelativePathParser relativePathParser = new RelativePathParser();
+    protected static RelativePathParser relativePathParser = new RelativePathParser();
 
 
     /**
@@ -247,10 +247,16 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
+    /**
+     * Number of RNA molecules initially in the experiment.
+     */
     public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "number of RNA molecules initially in the experiment", 5000000);
     public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "exponent of power-law underlying the expression profile", -0.6);
     public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "parameter determining the maximum expression of the underlying power-law", 50000000);
     public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "parameter controlling the exponential decay along the power-law", 9500);
+    /**
+     * Average deviation from the annotated transcription start site (TSS).
+     */
     public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "average deviation from the annotated transcription start site (TSS)", 25d, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
@@ -260,18 +266,31 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "determining the shape of the poly-A tail size distribution", 2d, 0.0, Double.MAX_VALUE, null);
-    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "controlling the average length of the poly-A tail sizes", 300d, 0.0, Double.MAX_VALUE, null);
+    /**
+     * Shape of the Weibull distribution describing poly-A tail sizes.
+     */
+    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "shape of the Weibull distribution describing poly-A tail sizes", 2d, 0.0, Double.MAX_VALUE, null);
+    /**
+     * Scale of the Weibull distribution, shifts the average length of poly-A tail sizes.
+     */
+    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "scale of the Weibull distribution, shifts the average length of poly-A tail sizes", 300d, 0.0, Double.MAX_VALUE, null);
 
     /*
     Fragementation
      */
     public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION", "turn fragmentation on/off", true);
+
+    /**
+     * Fragmentation method employed:
+     * [NB] Fragmentation by nebulization
+     * [UR] Uniformal random fragmentation
+     * [EZ] Fragmentation by enzymatic digestion
+     */
     public static final Parameter<FragmentationMethod> FRAG_METHOD = Parameters.enumParameter("FRAG_METHOD", "" +
-            "Method applied for Fragmentation\n" +
-            "[NB] Nebulization fragmentation method.\n" +
-            "[UR] Uniformal random fragmentation method.\n" +
-            "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.UR, new ParameterValidator() {
+            "Fragmentation method employed:\n" +
+            "[NB] Fragmentation by nebulization\n" +
+            "[UR] Uniformal random fragmentation\n" +
+            "[EZ] Fragmentation by enzymatic digestion", FragmentationMethod.UR, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             if (schema.get(FRAG_METHOD) == FragmentationMethod.EZ) {
@@ -291,7 +310,10 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
         }
     });
-    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", " Parameter specifying the substrate of fragmentation.", Substrate.DNA, null);
+    /**
+     * Specifies the substrate of fragmentation, either DNA or RNA.
+     */
+    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", "Specifies the substrate of fragmentation, either DNA or RNA", Substrate.DNA, null);
 
     /*
     Enzymatic
@@ -310,35 +332,62 @@ public class FluxSimulatorSettings extends ParameterSchema {
     Nebulization
      */
     /**
-     * Parameter for the threshold on molecule length that cannot
-     * be broken by the shearfield during nebulization.
+     * Threshold on molecule length that cannot
+     * be broken by the shearfield of nebulization.
      */
     public static final Parameter<Double> FRAG_NB_LAMBDA = Parameters.doubleParameter("FRAG_NB_LAMBDA",
-            "Parameter for the threshold on molecule length that cannot " +
-                    "be broken by the shearfield during nebulization.",
+                    "Threshold on molecule length that cannot " +
+                    "be broken by the shearfield of nebulization.",
             900);
 
     public static final Parameter<Double> FRAG_NB_THOLD = Parameters.doubleParameter("FRAG_NB_THOLD",
-            "Parameter denoting the threshold on molecule population still " +
+                    "Parameter denoting the threshold on molecule population still\n" +
                     "breaking when determining convergence of iterative nebulizaiton.", 0.1);
 
 
-    public static final Parameter<Double> FRAG_NB_M = Parameters.doubleParameter("FRAG_NB_M", "Parameter " +
-            "specifying the strength of the " +
-            "nebulization shearfield.", 1.0); //
-
-    /*
-     RNA Hydrolysis (Uniform-Random)
+    /**
+     * Strength of the nebulization shearfield (i.e., rotor speed).
      */
-    public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA", "exhaustiveness of UR fragmentation, determining the number of breaks per unit length", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA", "geometry of the UR process (1=linear, 2=surface-diameter, 3=volume-diameter, etc.)", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0", "minimum length of fragments produced by UR fragmentation", 1.0, 1.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> FRAG_NB_M = Parameters.doubleParameter("FRAG_NB_M", "Parameter " +
+            "Strength of the nebulization shearfield (i.e., rotor speed)", 1.0);
+
+    /**
+     * Average expected framgent size after fragmentations,
+     * i.e., number of breaks per unit length (exhautiveness of fragmentation).
+     */
+    public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA",
+            "Average expected framgent size after fragmentations,\n" +
+            "i.e., number of breaks per unit length (exhautiveness of fragmentation)\n",
+            Double.NaN);
+    /**
+     * Geometry of molecules in the UR process:
+     * NaN= depends logarithmically on molecule length,
+     * 1= always linear, 2= surface-diameter, 3= volume-diameter,
+     * etc.
+     */
+    public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA",
+            "Geometry of molecules in the UR process:\n" +
+            "NaN= depends logarithmically on molecule length,\n" +
+            "1= always linear, 2= surface-diameter, 3= volume-diameter, etc.",
+            Double.NaN);
+    /**
+     * Minimum length of fragments produced by UR fragmentation.
+     */
+    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0",
+            "Minimum length of fragments produced by UR fragmentation",
+            1.0, 1.0, Double.MAX_VALUE, null);
 
     /*
      Reverse Transcription
      */
+    /**
+     * Switches on/off Reverse Transcription.
+     */
     public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION", "Switch on/off Reverse Transcription", true);// todo : default ?
-    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "", RtranscriptionMode.RH, null);
+    /**
+     * Primers used for first strand synthesis.
+     */
+    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "Primers used for first strand synthesis", RtranscriptionMode.RH, null);
     public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN", "Minimum length observed after " +
             "reverse transcription of full-length transcripts.", 500, new ParameterValidator() {
         @Override
@@ -362,24 +411,29 @@ public class FluxSimulatorSettings extends ParameterSchema {
         }
     });
     /**
-     * GC mean
+     * Mean value of a gaussian distribution that reflects GC bias amplification probability,
+     * set this to 'NaN' to disable GC biases.
      */
-    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution. Set this to 'NaN' to disable GC filtering.", 0.5, 0.0, 1.0, null);
+    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value of a gaussian distribution that reflects GC bias amplification chance,\n" +
+            "set to 'NaN' to disable GC biases.", 0.5, 0.0, 1.0, null);
     /**
-     * GC sd
+     * Standard deviation of a gaussian distribution that reflects GC bias amplification probability,
+     * inactive if GC_MEAN is set to NaN.
      */
-    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation value for GC distribution ", 0.1, 0.0, 100.0, null);
+    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation of a gaussian distribution that reflects GC bias amplification chance,\n" +
+            "inactive if GC_MEAN is set to NaN.", 0.1, 0.0, 1.0, null);
     /**
-     * PCR PROBABILITY
+     * PCR duplication probability when GC filtering is disabled by setting GC_MEAN to NaN.
      */
     public static final Parameter<Double> PCR_PROBABILITY = Parameters.doubleParameter("PCR_PROBABILITY", "PCR duplication probability\n" +
-            "This is used if GC filtering is disabled by setting GC_MEAN to NaN", 0.7, 0.0, 1.0, null);
+            "when GC filtering is disabled by setting GC_MEAN to NaN", 0.7, 0.0, 1.0, null);
     /**
-     * Amplification rounds
-     */
-    public static final Parameter<String> PCR_DISTRIBUTION = Parameters.stringParameter("PCR_DISTRIBUTION", "PCR distribution file or 'default' to .\n" +
-            "use a distribution with 15 rounds and 20 bins.\n" +
-            "Set this to 'none' to disable amplification.", "default", new ParameterValidator() {
+     * PCR distribution file, 'default' to use
+     * a distribution with 15 rounds and 20 bins,
+     * 'none' to disable amplification.     */
+    public static final Parameter<String> PCR_DISTRIBUTION = Parameters.stringParameter("PCR_DISTRIBUTION", "PCR distribution file, 'default' to use .\n" +
+            "a distribution with 15 rounds and 20 bins,\n" +
+            "'none' to disable amplification.", "default", new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             String dist = schema.get(FluxSimulatorSettings.PCR_DISTRIBUTION);
@@ -394,14 +448,23 @@ public class FluxSimulatorSettings extends ParameterSchema {
         }
     });
 
-    public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
+    /**
+     * Flag to force every molecule to be reversely transcribed.
+     */
+    public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Flag to force every molecule to be reversely transcribed", true);
 
-    // todo: disabled for the moment !! reenable in Fragmenter RT
+    /**
+     * Position weight matrix (PWM) used during reverse/transcription and adapter ligation.
+     * This is disabled by default (value 'null'), by the value 'default' a PWM derived from
+     * the current Illumina protocol is used. Optionally, a file containing a custom matrix
+     * may be provided.
+     */
     public static final Parameter<File> RT_MOTIF = Parameters.fileParameter(
             "RT_MOTIF",
-            "Reverse transcription motif PWM.\n" +
-            "This is disabled by default, but you can use a default matrix\n" +
-            "by specifying 'default' as value.",
+            "Position weight matrix (PWM) used during reverse/transcription and adapter ligation.\n" +
+                    "This is disabled by default (value 'null'), by the value 'default' a PWM derived from \n" +
+                    "the current Illumina protocol is used. Optionally, a file containing a custom matrix \n" +
+                    "may be provided.",
             null,
             motifHeapValidator,
             relativePathParser);
@@ -410,26 +473,47 @@ public class FluxSimulatorSettings extends ParameterSchema {
     Size Selection
      */
     public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "turn filtering on/off", false);
-    public static final Parameter<String> SIZE_DISTRIBUTION = Parameters.stringParameter("SIZE_DISTRIBUTION", "Describes " +
-            "the distribution of fragments after filtering.\n" +
-            "You can either specify an file with an empirical distribution, where each line" +
-            "represents the length of a read (no ordering required).\n" +
+
+    /**
+     * Size distribution of fragments after filtering,
+     * either specified by the fully qualified path of a file with an empirical distribution
+     * where each line represents the length of a read, no ordering required<br>
+     * </br>
+     * or attributes of a gaussian distribution (mean and standard deviation) in the form:<br>
+     * <br>
+     * N(mean, sd)<br>
+     * <br>
+     * for example: N(800, 200)<br>
+     * If no size distribution is provided, an empirical Illumina fragment size distribution is employed.
+     */
+    public static final Parameter<String> SIZE_DISTRIBUTION = Parameters.stringParameter("SIZE_DISTRIBUTION",
+            "Size distribution of fragments after filtering,\n" +
+            "either specified by the fully qualified path of a file with an empirical distribution" +
+            "where each line represents the length of a read, no ordering required,\n" +
             "\n" +
-            "You can also specify a Normal-Distribution with mean and standard deviation using:\n" +
+            "or attributes of a gaussian distribution (mean and standard deviation) in the form:\n" +
             "\n" +
             "N(mean, sd) \n" +
             "\n" +
-            "for example: N(800, 200)"
+            "for example: N(800, 200)\n" +
+            "If no size distribution is provided, an empirical Illumina fragment size distribution is employed."
     );
+
+    /**
+     * Method for sub-sampling fragments according to the characteristics of (see SIZE_DISTRIBUTION):<br>
+     *
+     * MH the Metropolis-Hastings algorithm is used for filtering<br>
+     * RJ rejection sampling, employing probability directly from the distribution<br>
+     * AC (acceptance) transforms the probability distribution, s.t. the 'most likely'
+     *    element in the distribution has a probability of 1.0.
+     */
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
-            "Describes the method for subsampling fragments in order to meet the characteristics " +
-                    "of the filter Distribution (see SIZE_DISTRIBUTION)\n" +
+            "Method for sub-sampling fragments according to the characteristics of (see SIZE_DISTRIBUTION) \n" +
                     "\n" +
-                    "MH is a metropolis Hastings Filter\n" +
-                    "RJ is a rejection filter, picking the probability directly from the distribution\n" +
-                    "AC is a acceptance filter, picking the probability from the distribution, \n" +
-                    "   but stretching it such that the probability of the 'most likely' element in the distribution is\n" +
-                    "   stretched to 1.0.", SizeSamplingModes.AC, null);
+                    "MH the Metropolis-Hastings algorithm is used for filtering\n" +
+                    "RJ rejection sampling, employing probability directly from the distribution\n" +
+                    "AC (acceptance) transforms the probability distribution, s.t. the 'most likely'\n" +
+                    "   element in the distribution has a probability of 1.0.\n", SizeSamplingModes.AC, null);
 
     /*
       Sequencing
