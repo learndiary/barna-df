@@ -358,7 +358,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
     Fragementation
      */
-    public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION", "turn fragmentation on/off", true);
+    /**
+     * Turn fragmentation on/off.
+     */
+    public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION",
+            "turn fragmentation on/off", true);
 
     /**
      * Fragmentation method employed:
@@ -368,9 +372,10 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<FragmentationMethod> FRAG_METHOD = Parameters.enumParameter("FRAG_METHOD", "" +
             "Fragmentation method employed:\n" +
+            "[EZ] Fragmentation by enzymatic digestion\n" +
             "[NB] Fragmentation by nebulization\n" +
-            "[UR] Uniformal random fragmentation\n" +
-            "[EZ] Fragmentation by enzymatic digestion", FragmentationMethod.UR, new ParameterValidator() {
+            "[UR] Uniformal random fragmentation",
+            FragmentationMethod.UR, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             if (schema.get(FRAG_METHOD) == FragmentationMethod.EZ) {
@@ -390,27 +395,40 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
         }
     });
-    /**
-     * Specifies the substrate of fragmentation, either DNA or RNA.
-     */
-    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", "Specifies the substrate of fragmentation, either DNA or RNA", Substrate.DNA, null);
 
-    /*
-    Enzymatic
+    /**
+     * Substrate of fragmentation, determines the order
+     * of fragmentation and reverse transcription (RT):
+     * for substrate DNA, fragmentation is carried out
+     * after RT, substrate RNA triggers fragmentation
+     * before RT.
      */
-    public static final Parameter<File> FRAG_EZ_MOTIF = Parameters.fileParameter("FRAG_EZ_MOTIF", "The motif description for enzymatic digestion\n" +
-            "You can specify a custom PWM file or\n" +
-            "use one of the available defaults:\n" +
-            "\n" +
-            "NlaIII or DpnII",
+    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE",
+            "substrate of fragmentation, determines the order\n" +
+            "of fragmentation and reverse transcription (RT):\n" +
+            "for substrate DNA, fragmentation is carried out\n" +
+            "after RT, substrate RNA triggers fragmentation\n" +
+            "before RT", Substrate.DNA, null);
+
+
+    /* Fragmentation by Enzymatic Digestikon */
+
+    /**
+     * Sequence motif caused by selective restriction
+     * with an enzyme, choose pre-defined NlaIII, DpnII,
+     * or a file with a custom position weight matrix.
+     */
+    public static final Parameter<File> FRAG_EZ_MOTIF = Parameters.fileParameter("FRAG_EZ_MOTIF",
+            "sequence motif caused by selective restriction\n" +
+            "with an enzyme, choose pre-defined NlaIII, DpnII,\n" +
+            "or a file with a custom position weight matrix",
             null,
             motifHeapValidator,
             relativePathParser);
 
 
-    /*
-    Nebulization
-     */
+    /* Nebulization */
+
     /**
      * Threshold on molecule length that cannot
      * be broken by the shearfield of nebulization.
@@ -418,12 +436,16 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<Double> FRAG_NB_LAMBDA = Parameters.doubleParameter("FRAG_NB_LAMBDA",
                     "Threshold on molecule length that cannot " +
                     "be broken by the shearfield of nebulization.",
-            900);
-
+                    900);
+    /**
+     * Threshold on the fraction of the molecule population;
+     * if less molecules break per time unit, convergence
+     * to steady state is assumed.
+     */
     public static final Parameter<Double> FRAG_NB_THOLD = Parameters.doubleParameter("FRAG_NB_THOLD",
-                    "Parameter denoting the threshold on molecule population still\n" +
-                    "breaking when determining convergence of iterative nebulizaiton.", 0.1);
-
+                    "threshold on the fraction of the molecule population;\n" +
+                    "if less molecules break per time unit, convergence \n" +
+                    "to steady state is assumed", 0.1, 0, 1, null);
 
     /**
      * Strength of the nebulization shearfield (i.e., rotor speed).
@@ -433,12 +455,15 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
     /**
      * Average expected framgent size after fragmentations,
-     * i.e., number of breaks per unit length (exhautiveness of fragmentation).
+     * i.e., number of breaks per unit length (exhautiveness of fragmentation);
+     * NaN optimizes the fragmentation process w.r.t. the size filtering.
      */
     public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA",
             "Average expected framgent size after fragmentations,\n" +
-            "i.e., number of breaks per unit length (exhautiveness of fragmentation)\n",
+            "i.e., number of breaks per unit length (exhautiveness of fragmentation);\n" +
+            "NaN optimizes the fragmentation process w.r.t. the size filtering",
             Double.NaN);
+
     /**
      * Geometry of molecules in the UR process:
      * NaN= depends logarithmically on molecule length,
@@ -450,6 +475,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "NaN= depends logarithmically on molecule length,\n" +
             "1= always linear, 2= surface-diameter, 3= volume-diameter, etc.",
             Double.NaN);
+
     /**
      * Minimum length of fragments produced by UR fragmentation.
      */
@@ -457,19 +483,36 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "Minimum length of fragments produced by UR fragmentation",
             1.0, 1.0, Double.MAX_VALUE, null);
 
+
     /*
      Reverse Transcription
      */
+
+
     /**
-     * Switches on/off Reverse Transcription.
+     * Switch on/off Reverse Transcription.
      */
-    public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION", "Switch on/off Reverse Transcription", true);// todo : default ?
+    public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION",
+            "Switch on/off Reverse Transcription", true);
+
     /**
-     * Primers used for first strand synthesis.
+     * Primers used for first strand synthesis:
+     * [RH] for random hexamers or
+     * [PDT] for poly-dT primers
      */
-    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "Primers used for first strand synthesis", RtranscriptionMode.RH, null);
-    public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN", "Minimum length observed after " +
-            "reverse transcription of full-length transcripts.", 500, new ParameterValidator() {
+    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER",
+            "Primers used for first strand synthesis:\n" +
+            "[RH] for random hexamers or\n" +
+            "[PDT] for poly-dT primers", RtranscriptionMode.RH, null);
+
+    /**
+     * Minimum length observed after reverse
+     * transcription of full-length transcripts.
+     */
+    public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN",
+            "Minimum length observed after reverse\n" +
+            "transcription of full-length transcripts.",
+            500, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int min = schema.get(RT_MIN);
