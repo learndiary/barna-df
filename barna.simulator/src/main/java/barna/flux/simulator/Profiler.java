@@ -778,7 +778,7 @@ public class Profiler implements Callable<Void> {
      * @return power value of the rank
      */
     public static double pareto(double rank, double par1) {
-        if (rank> 0|| rank< -1d)
+        if (par1> 0|| par1< -1d)
             throw new IllegalArgumentException("Pareto coefficient must be [-1;0]!");
         return Math.pow(rank, par1);
     }
