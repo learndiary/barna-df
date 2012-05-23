@@ -145,7 +145,15 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
     File locations
      */
-    public static final Parameter<File> REF_FILE = Parameters.fileParameter("REF_FILE_NAME", "GTF reference file", null, new ParameterValidator() {
+
+    /**
+     * Path to the GTF reference annotation, either absolute
+     * or relative to the location of the parameter file.
+     */
+    public static final Parameter<File> REF_FILE = Parameters.fileParameter("REF_FILE_NAME",
+            "path to the GTF reference annotation, either absolute\n" +
+            "or relative to the location of the parameter file",
+            null, new ParameterValidator() {
                 @Override
                 public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                     File refFile = (File) schema.get(parameter);
@@ -157,10 +165,53 @@ public class FluxSimulatorSettings extends ParameterSchema {
                     }
                 }
             }, relativePathParser);
-    public static final Parameter<File> PRO_FILE = Parameters.fileParameter("PRO_FILE_NAME", "Target Profiler file", null, new FileValidator("pro"), relativePathParser);
-    public static final Parameter<File> LIB_FILE = Parameters.fileParameter("LIB_FILE_NAME", "Target library file", null, new FileValidator("lib"), relativePathParser);
-    public static final Parameter<File> SEQ_FILE = Parameters.fileParameter("SEQ_FILE_NAME", "Target sequences file", null, new FileValidator("bed"), relativePathParser);
-    public static final Parameter<File> GEN_DIR = Parameters.fileParameter("GEN_DIR", "The Genome directory", null, new ParameterValidator() {
+    /**
+     * Path to the profile of the run, either absolute
+     * or relative to the location of the parameter file;
+     * the default profile uses the name of the parameter
+     * file with the extension .pro.
+     */
+    public static final Parameter<File> PRO_FILE = Parameters.fileParameter("PRO_FILE_NAME",
+            "path to the profile of the run, either absolute\n" +
+            "or relative to the location of the parameter file;\n" +
+            "the default profile uses the name of the parameter\n" +
+            "file with the extension .pro", null, new FileValidator("pro"), relativePathParser);
+
+    /**
+     * Path to the library file of the run, either absolute
+     * or relative to the location of the parameter file;
+     * the default profile uses the name of the parameter
+     * file with the extension .lib.
+     */
+    public static final Parameter<File> LIB_FILE = Parameters.fileParameter("LIB_FILE_NAME",
+            "path to the library file of the run, either absolute\n" +
+            "or relative to the location of the parameter file;\n" +
+            "the default profile uses the name of the parameter\n" +
+            "file with the extension .lib", null, new FileValidator("lib"), relativePathParser);
+
+    /**
+     * Path to the sequencing file of the run, either absolute
+     * or relative to the location of the parameter file;
+     * the default profile uses the name of the parameter
+     * file with the extension .bed.
+     */
+    public static final Parameter<File> SEQ_FILE = Parameters.fileParameter("SEQ_FILE_NAME",
+            "path to the sequencing file of the run, either absolute\n" +
+            "or relative to the location of the parameter file;\n" +
+            "the default profile uses the name of the parameter\n" +
+            "file with the extension .bed", null, new FileValidator("bed"), relativePathParser);
+
+    /**
+     * Path to the directory with the genomic sequences,
+     * i.e., one fasta file per chromosome/scaffold/contig
+     * with a file name corresponding to the identifiers of
+     * the first column in the GTF annotation.
+     */
+    public static final Parameter<File> GEN_DIR = Parameters.fileParameter("GEN_DIR",
+            "path to the directory with the genomic sequences,\n" +
+            "i.e., one fasta file per chromosome/scaffold/contig\n" +
+            "with a file name corresponding to the identifiers of\n" +
+            "the first column in the GTF annotation", null, new ParameterValidator() {
                 @Override
                 public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                     File genomeFile = (File) schema.get(parameter);
@@ -224,14 +275,23 @@ public class FluxSimulatorSettings extends ParameterSchema {
     });
 
 
-    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA", "Create .fasta/.fastq output. output.\n" +
+    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA",
+            "create .fasta/.fastq output. output.\n" +
             "If you specify an ERR_FILE as to be used as a quality model (or you use one of the default models)\n" +
             "the simulator will create a .fastq file with errors added to the actual sequence. If no error model is\n" +
             "specified, the simulator create a .fasta file where no error are added to the sequences.", false);
+
     /*
     Expression parameters
      */
-    public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING", "", true, new ParameterValidator() {
+
+    /**
+     * Coding messengers, i.e., transcripts that have an annotated CDS, are extracted from the cell.
+     */
+    public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING",
+            "coding messengers, i.e., transcripts\n" +
+            "that have an annotated CDS, are extracted\n" +
+            "from the cell", true, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             if (!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) {
@@ -239,7 +299,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING", "", true, new ParameterValidator() {
+    /**
+     * Non-coding RNAs, i.e., transcripts without an annotated ORF are extracted from the cell.
+     */
+    public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING",
+            "non-coding RNAs, i.e., transcripts\n" +
+            "without an annotated ORF are extracted\n" +
+            "from the cell", true, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             if (!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) {
@@ -250,10 +316,24 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Number of RNA molecules initially in the experiment.
      */
-    public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "number of RNA molecules initially in the experiment", 5000000);
-    public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "exponent of power-law underlying the expression profile", -0.6);
-    public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "parameter determining the maximum expression of the underlying power-law", 50000000);
-    public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "parameter controlling the exponential decay along the power-law", 9500);
+    public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES",
+            "number of RNA molecules initially in the experiment", 5000000);
+    /**
+     * Exponent of power-law underlying the expression profile.
+     */
+    public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K",
+            "exponent of power-law underlying the expression profile", -0.6, -1, 0, null);
+    /**
+     * Linear parameter of the exponential decay.
+     */
+    public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0",
+            "linear parameter of the exponential decay", 9500, 1, Double.MAX_VALUE, null);
+    /**
+     * linear parameter of the exponential decay
+     */
+    public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1",
+            "quadratic parameter of the exponential decay", Math.pow(9500, 2), 1, Double.MAX_VALUE, null);
+
     /**
      * Average deviation from the annotated transcription start site (TSS).
      */
