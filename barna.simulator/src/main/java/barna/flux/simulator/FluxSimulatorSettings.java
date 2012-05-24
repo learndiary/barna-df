@@ -512,7 +512,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      * Maximum fragment length observed after reverse
      * transcription of full-length transcripts.
      */
-    public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX", ç
+    public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX",
             "Maximum fragment length observed after reverse\n" +
             "transcription of full-length transcripts.", 5500, new ParameterValidator() {
         @Override
