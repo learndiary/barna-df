@@ -190,8 +190,8 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
     @Override
     public boolean validateParameter(JSAPResult args) {
         setOutputFile(args.getFile("out"));
-        setGenerations(args.getInt("generations"));
-        setBins(args.getInt("bins"));
+        setGenerations(Integer.parseInt(args.getString("generations")));
+        setBins(Integer.parseInt(args.getString("bins")));
         if(args.userSpecified("validate")) setValidate(args.getString("validate"));
         if(args.userSpecified("probability")) setValidateProbability(args.getFloat("probability"));
 
