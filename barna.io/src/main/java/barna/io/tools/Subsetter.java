@@ -198,8 +198,8 @@ public class Subsetter implements FluxTool<Void> {
     public boolean validateParameter(JSAPResult args) {
         setInput(args.getFile("input"));
         setOutput(args.getFile("output"));
-        if(args.userSpecified("number")) setNumber(args.getInt("number"));
-        if(args.userSpecified("lines")) setLines(args.getInt("lines"));
+        if(args.userSpecified("number")) setNumber(Integer.parseInt(args.getString("number")));
+        if(args.userSpecified("lines")) setLines(Integer.parseInt(args.getString("lines")));
 
 		if (!input.exists()) {
 			Log.error("Cannot find input file "+ input.getAbsolutePath());
