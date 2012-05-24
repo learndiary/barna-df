@@ -142,9 +142,16 @@ public class FluxSimulatorSettings extends ParameterSchema {
         MH
     }
 
+
     /*
     File locations
      */
+
+
+    /**
+     * The parameter file
+     */
+    private File parameterFile;
 
     /**
      * Path to the GTF reference annotation, either absolute
@@ -227,6 +234,25 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }, relativePathParser);
 
     /**
+     * Temporary directory
+     */
+    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR",
+            "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
+             // ISSUE IO-11 is related to this, we have to make sure the TMP dir exists and is writable
+            File tmp = parameterSchema.get(TMP_DIR);
+            if(tmp == null){
+                throw new ParameterException("No temp directory specified!");
+            }
+            if(!tmp.canWrite()){
+                throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
+            }
+
+        }
+    });
+
+    /**
      * Checks by the current parameter settings whether a genomic sequence is required for the run.
      * @param schema an instance with the current parameter settings
      * @return <code>true</code> if the genomic sequence is required for the current run, <code>false</code> otherwise.
@@ -239,47 +265,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
         return req;
     }
 
-    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-            /*
-             * ISSUE IO-11 is related to this, we have to make sure the TMP dir exists and is writabel
-             */
-            File tmp = parameterSchema.get(TMP_DIR);
-            if(tmp == null){
-                throw new ParameterException("No temp directory specified!");
-            }
-            if(!tmp.canWrite()){
-                throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
-            }
 
-        }
-    });
-    public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE", "Error model file\n" +
-            "\n" +
-            "You can use the default models '35' or '76' for the corresponding read lengths or\n" +
-            "specify a custom error model file\n", null, new ParameterValidator(){
-        @Override
-        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
-            String v = schema.get(FluxSimulatorSettings.ERR_FILE);
-
-            if(v != null && v.length() > 0){
-                if(!v.equals("35") && !v.equals("76")){
-                    // check file
-                    if((v.startsWith("/") && !new File(v).canRead())){
-                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
-                    }
-                }
-            }
-        }
-    });
-
-
-    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA",
-            "create .fasta/.fastq output. output.\n" +
-            "If you specify an ERR_FILE as to be used as a quality model (or you use one of the default models)\n" +
-            "the simulator will create a .fastq file with errors added to the actual sequence. If no error model is\n" +
-            "specified, the simulator create a .fasta file where no error are added to the sequences.", false);
 
     /*
     Expression parameters
@@ -506,11 +492,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "[PDT] for poly-dT primers", RtranscriptionMode.RH, null);
 
     /**
-     * Minimum length observed after reverse
+     * Minimum fragment length observed after reverse
      * transcription of full-length transcripts.
      */
     public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN",
-            "Minimum length observed after reverse\n" +
+            "Minimum fragment length observed after reverse\n" +
             "transcription of full-length transcripts.",
             500, new ParameterValidator() {
         @Override
@@ -522,8 +508,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX", "Maximum length observed after " +
-            "reverse transcription of full-length transcripts.", 5500, new ParameterValidator() {
+    /**
+     * Maximum fragment length observed after reverse
+     * transcription of full-length transcripts.
+     */
+    public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX", ç
+            "Maximum fragment length observed after reverse\n" +
+            "transcription of full-length transcripts.", 5500, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int min = schema.get(RT_MIN);
@@ -533,6 +524,9 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
+
+    /* PCR Amplification */
+
     /**
      * Mean value of a gaussian distribution that reflects GC bias amplification probability,
      * set this to 'NaN' to disable GC biases.
@@ -548,12 +542,14 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * PCR duplication probability when GC filtering is disabled by setting GC_MEAN to NaN.
      */
-    public static final Parameter<Double> PCR_PROBABILITY = Parameters.doubleParameter("PCR_PROBABILITY", "PCR duplication probability\n" +
+    public static final Parameter<Double> PCR_PROBABILITY = Parameters.doubleParameter("PCR_PROBABILITY",
+            "PCR duplication probability\n" +
             "when GC filtering is disabled by setting GC_MEAN to NaN", 0.7, 0.0, 1.0, null);
     /**
      * PCR distribution file, 'default' to use
      * a distribution with 15 rounds and 20 bins,
-     * 'none' to disable amplification.     */
+     * 'none' to disable amplification.
+     */
     public static final Parameter<String> PCR_DISTRIBUTION = Parameters.stringParameter("PCR_DISTRIBUTION", "PCR distribution file, 'default' to use .\n" +
             "a distribution with 15 rounds and 20 bins,\n" +
             "'none' to disable amplification.", "default", new ParameterValidator() {
@@ -595,7 +591,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
     Size Selection
      */
-    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "turn filtering on/off", false);
+    /**
+     * Switches size selection on/off.
+     */
+    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING",
+            "switches size selection on/off", false);
 
     /**
      * Size distribution of fragments after filtering,
@@ -641,15 +641,61 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
       Sequencing
      */
-    public static final Parameter<Long> READ_NUMBER = Parameters.longParameter("READ_NUMBER", "Number of reads", 5000000);
-    public static final Parameter<Integer> READ_LENGTH = Parameters.intParameter("READ_LENGTH", "The Read length", 36);
-    public static final Parameter<Boolean> PAIRED_END = Parameters.booleanParameter("PAIRED_END", "Pair end reads", false);
-
+    /**
+     * Number of reads
+     */
+    public static final Parameter<Long> READ_NUMBER = Parameters.longParameter("READ_NUMBER",
+            "Number of reads", 5000000);
+    /**
+     * Length of the reads.
+     */
+    public static final Parameter<Integer> READ_LENGTH = Parameters.intParameter("READ_LENGTH",
+            "Length of the reads", 36);
+    /**
+     * Switch on/off paired-end reads.
+     */
+    public static final Parameter<Boolean> PAIRED_END = Parameters.booleanParameter("PAIRED_END",
+            "Switch on/off paired-end reads", false);
+    /**
+     * Creates .fasta/.fastq output.
+     * Requires the genome sequences in a folder specified by GEN_DIR.
+     * If a quality model is provided by parameter ERR_FILE, a .fastq
+     * file is produced. Otherwise read sequences are given as .fasta.
+     */
+    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA",
+            "creates .fasta/.fastq output.\n" +
+            "Requires the genome sequences in a folder specified by GEN_DIR.\n" +
+            "If a quality model is provided by parameter ERR_FILE, a .fastq\n" +
+            "file is produced. Otherwise read sequences are given as .fasta.", false);
 
     /**
-     * The parameter file
+     * Path to the file with the error model.<br>
+     *
+     * With the values '35' or '76', default error models are provided
+     * for the corresponding read lengths, otherwise the path to a
+     * custom error model file is expected.
      */
-    private File parameterFile;
+    public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE",
+            "path to the file with the error model\n" +
+            "\n" +
+            "for the values '35' or '76', default error models are provided for the corresponding read lengths,\n" +
+            "otherwise the path to a custom error model file is expected\n", null, new ParameterValidator(){
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+            String v = schema.get(FluxSimulatorSettings.ERR_FILE);
+
+            if(v != null && v.length() > 0){
+                if(!v.equals("35") && !v.equals("76")){
+                    // check file
+                    if((v.startsWith("/") && !new File(v).canRead())){
+                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
+                    }
+                }
+            }
+        }
+    });
+
+
 
     /**
      * Load the setting from a file
