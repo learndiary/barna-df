@@ -92,9 +92,9 @@ public class FragmentEnzymatic implements FragmentProcessor {
             // localize potential breakpoint
             boolean sense = rnd1.nextFloat() < 0.5;
             double[] a = (sense ? wsense : wasense);
-            int bp = Arrays.binarySearch(a, start, end + 1, rnd2.nextDouble());
+            int bp = Arrays.binarySearch(a, Math.max(start,0), Math.min(end + 1, a.length- 1), rnd2.nextDouble());
             bp = (bp >= 0 ? bp : -(bp + 1));
-            if (bp >= end) {
+            if (bp >= len- 1) {
                 continue;
             }
 
@@ -119,7 +119,7 @@ public class FragmentEnzymatic implements FragmentProcessor {
             // breaking probability
             pb /= (sense ? pwmSense.getMaximumP() : pwmSense.getMaximumP()); // should be the same if only transposed
             if (rnd3.nextDouble() <= pb) {
-                System.arraycopy(pos, idx, pos, idx + 1, (k - idx) + 1);
+                System.arraycopy(pos, idx, pos, idx + 1, (k - idx));
                 pos[idx] = bp;
                 ++k;
             }

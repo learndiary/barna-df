@@ -4,7 +4,7 @@
 ## CONFIGURATION
 
 if [ -z "$FLUX_MEM" ]; then
-    FLUX_MEM="1G"
+    FLUX_MEM="3G"
 fi
 
 
@@ -45,6 +45,10 @@ MISC=""
 
 if [ -n "$TMPDIR" ]; then
   MISC="-Djava.io.tmpdir="$TMPDIR
+else
+	if [ -n "$TMP_DIR" ]; then
+  		MISC="-Djava.io.tmpdir="$TMP_DIR
+	fi
 fi
 
 java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC \

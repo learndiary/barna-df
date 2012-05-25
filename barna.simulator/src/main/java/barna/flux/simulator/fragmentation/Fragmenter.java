@@ -336,7 +336,7 @@ public class Fragmenter implements Callable<Void> {
         return a;
     }
 
-    private Map<CharSequence, CharSequence> getMapTxSeq() {
+    private Map<CharSequence, CharSequence> getMapTxSeq() throws Exception {
 
         if (mapTxSeq == null) {
             mapTxSeq = new HashMap<CharSequence, CharSequence>(10000);
@@ -390,6 +390,7 @@ public class Fragmenter implements Callable<Void> {
             } catch (Exception e) {
                 Log.progressFailed("ERROR");
                 Log.error("Error while preparing sequences: " + e.getMessage(), e);
+                throw(e);
             }
         }
 
@@ -496,10 +497,9 @@ public class Fragmenter implements Callable<Void> {
                         processor = new FragmentReverseTranscription(
                                 settings.get(FluxSimulatorSettings.RT_PRIMER),
                                 settings.get(FluxSimulatorSettings.RT_MOTIF),
-                                //settings.get(FluxSimulatorSettings.RT_MOTIF),
                                 settings.get(FluxSimulatorSettings.RT_MIN),
                                 settings.get(FluxSimulatorSettings.RT_MAX),
-                                getMapTxSeq(),
+                                settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
                                 profiler,
                                 leftFlank, rightFlank,
                                 settings.get(FluxSimulatorSettings.RT_LOSSLESS)
@@ -542,7 +542,10 @@ public class Fragmenter implements Callable<Void> {
                                 mean,
                                 settings.get(FluxSimulatorSettings.GC_SD),
                                 getMapTxSeq(),
-                                getMapTxSeq(), settings.get(FluxSimulatorSettings.RT_MOTIF));
+                                getMapTxSeq(),
+                                //settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
+                                //settings.get(FluxSimulatorSettings.RT_MOTIF)== null? null: getMapTxSeq(),
+                                settings.get(FluxSimulatorSettings.RT_MOTIF));
                         ((Amplification) processor).initPWMMap();
                         break;
                 }

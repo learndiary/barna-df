@@ -163,6 +163,21 @@ public class Flux {
             }
         }
 
+        /// register tool parameter
+        if(tool != null){
+            List<Parameter> parameter = tool.getParameter();
+            if(parameter != null){
+                try{
+                    for (Parameter p : parameter) {
+                        jsap.registerParameter(p);
+                    }
+                } catch (Exception e) {
+                    Log.error("Parameter error : " + e.getMessage(), e);
+                    System.exit(-1);
+                }
+            }
+        }
+
         if (initialFluxArguments.userSpecified("help") || tool == null) {
             // todo: add error message "No tool sepcified"
             printUsage(tool, jsap, tools, !initialFluxArguments.userSpecified("help") ?
@@ -179,9 +194,6 @@ public class Flux {
         List<Parameter> parameter = tool.getParameter();
         if(parameter != null){
             try{
-                for (Parameter p : parameter) {
-                    jsap.registerParameter(p);
-                }
                 JSAPResult toolParameter = jsap.parse(args);
                 if (!tool.validateParameter(toolParameter)){
                     printUsage(tool, jsap, tools, null);
@@ -271,13 +283,32 @@ public class Flux {
 		return sm;
 	}
 
-	private static void printUsage(FluxTool tool, JSAP jsap, List<FluxTool> allTools, String errorMessage) {
+	public static void printUsage(FluxTool tool, JSAP jsap, List<FluxTool> allTools, String errorMessage) {
         if(errorMessage != null){
             System.err.println(errorMessage);
             System.err.println("");
         }
         if(tool != null){
+
+
             System.err.println(tool.getDescription());
+            // custom jsap for the tool
+            JSAP toolJSAP = new JSAP();
+            List<Parameter> parameter = tool.getParameter();
+            if(parameter != null){
+                try{
+                    for (Parameter p : parameter) {
+                        toolJSAP.registerParameter(p);
+                    }
+                } catch (Exception e) {
+                    Log.error("Parameter error : " + e.getMessage(), e);
+                    System.exit(-1);
+                }
+            }
+            System.err.println("");
+            System.err.println("Tool specific options");
+            System.err.println(toolJSAP.getHelp());
+            System.err.println("");
         }
         System.err.println("Options: " + jsap.getUsage());
         System.err.println("");

@@ -341,8 +341,8 @@ public class Profiler implements Callable<Void> {
                 Expressions
                  */
                 for (int i = 0; i < relFreq.length; i++) {
-                    double par = pareto(molecules[i], expressionK, expression_x0);
-                    double exp = exponential(molecules[i], expression_x1);
+                    double par = pareto(molecules[i], expressionK);
+                    double exp = exponential(molecules[i], expression_x0, expression_x1);
                     sumRF += (relFreq[i] = par * exp);
                 }
                 /*
@@ -758,13 +758,29 @@ public class Profiler implements Callable<Void> {
         return gffReader;
     }
 
-
-    private static double exponential(double rank, double par1) {
-        return Math.exp(-(Math.pow(rank / par1, 2)) - (rank / par1));
+    /**
+     * Computes the exponential decay, which is a polynomial of degree 2 in the exponent,
+     * with separate parameters for fine tuning
+     * @param rank the x-value
+     * @param par1 parameter influencing 1st degree in polynomial
+     * @param par2 parameter influencing 2nd degree in polynomial
+     * @return exponential component of gene expression
+     */
+    public static double exponential(double rank, double par1, double par2) {
+        return Math.exp(-(Math.pow(rank, 2) / par2) - (rank / par1));
     }
 
-    private static double pareto(double rank, double par1, double par2) {
-        return Math.pow(rank / par2, par1);
+    /**
+     * Computes the power law value for the rank<i>th</i> x-position,
+     * starting at an x0 of 1.
+     * @param rank x-value
+     * @param par1 power law exponent, must be between (-1) and 0
+     * @return power value of the rank
+     */
+    public static double pareto(double rank, double par1) {
+        if (par1> 0|| par1< -1d)
+            throw new IllegalArgumentException("Pareto coefficient must be [-1;0]!");
+        return Math.pow(rank, par1);
     }
 
 }
