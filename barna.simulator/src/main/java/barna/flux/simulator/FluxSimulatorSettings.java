@@ -83,7 +83,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /**
      * Helper to parse relative filenames
      */
-    private static RelativePathParser relativePathParser = new RelativePathParser();
+    protected static RelativePathParser relativePathParser = new RelativePathParser();
 
 
     /**
@@ -142,10 +142,25 @@ public class FluxSimulatorSettings extends ParameterSchema {
         MH
     }
 
+
     /*
     File locations
      */
-    public static final Parameter<File> REF_FILE = Parameters.fileParameter("REF_FILE_NAME", "GTF reference file", null, new ParameterValidator() {
+
+
+    /**
+     * The parameter file
+     */
+    private File parameterFile;
+
+    /**
+     * Path to the GTF reference annotation, either absolute
+     * or relative to the location of the parameter file.
+     */
+    public static final Parameter<File> REF_FILE = Parameters.fileParameter("REF_FILE_NAME",
+            "path to the GTF reference annotation, either absolute\n" +
+            "or relative to the location of the parameter file",
+            null, new ParameterValidator() {
                 @Override
                 public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                     File refFile = (File) schema.get(parameter);
@@ -157,10 +172,53 @@ public class FluxSimulatorSettings extends ParameterSchema {
                     }
                 }
             }, relativePathParser);
-    public static final Parameter<File> PRO_FILE = Parameters.fileParameter("PRO_FILE_NAME", "Target Profiler file", null, new FileValidator("pro"), relativePathParser);
-    public static final Parameter<File> LIB_FILE = Parameters.fileParameter("LIB_FILE_NAME", "Target library file", null, new FileValidator("lib"), relativePathParser);
-    public static final Parameter<File> SEQ_FILE = Parameters.fileParameter("SEQ_FILE_NAME", "Target sequences file", null, new FileValidator("bed"), relativePathParser);
-    public static final Parameter<File> GEN_DIR = Parameters.fileParameter("GEN_DIR", "The Genome directory", null, new ParameterValidator() {
+    /**
+     * Path to the profile of the run, either absolute
+     * or relative to the location of the parameter file;
+     * the default profile uses the name of the parameter
+     * file with the extension .pro.
+     */
+    public static final Parameter<File> PRO_FILE = Parameters.fileParameter("PRO_FILE_NAME",
+            "path to the profile of the run, either absolute\n" +
+            "or relative to the location of the parameter file;\n" +
+            "the default profile uses the name of the parameter\n" +
+            "file with the extension .pro", null, new FileValidator("pro"), relativePathParser);
+
+    /**
+     * Path to the library file of the run, either absolute
+     * or relative to the location of the parameter file;
+     * the default profile uses the name of the parameter
+     * file with the extension .lib.
+     */
+    public static final Parameter<File> LIB_FILE = Parameters.fileParameter("LIB_FILE_NAME",
+            "path to the library file of the run, either absolute\n" +
+            "or relative to the location of the parameter file;\n" +
+            "the default profile uses the name of the parameter\n" +
+            "file with the extension .lib", null, new FileValidator("lib"), relativePathParser);
+
+    /**
+     * Path to the sequencing file of the run, either absolute
+     * or relative to the location of the parameter file;
+     * the default profile uses the name of the parameter
+     * file with the extension .bed.
+     */
+    public static final Parameter<File> SEQ_FILE = Parameters.fileParameter("SEQ_FILE_NAME",
+            "path to the sequencing file of the run, either absolute\n" +
+            "or relative to the location of the parameter file;\n" +
+            "the default profile uses the name of the parameter\n" +
+            "file with the extension .bed", null, new FileValidator("bed"), relativePathParser);
+
+    /**
+     * Path to the directory with the genomic sequences,
+     * i.e., one fasta file per chromosome/scaffold/contig
+     * with a file name corresponding to the identifiers of
+     * the first column in the GTF annotation.
+     */
+    public static final Parameter<File> GEN_DIR = Parameters.fileParameter("GEN_DIR",
+            "path to the directory with the genomic sequences,\n" +
+            "i.e., one fasta file per chromosome/scaffold/contig\n" +
+            "with a file name corresponding to the identifiers of\n" +
+            "the first column in the GTF annotation", null, new ParameterValidator() {
                 @Override
                 public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                     File genomeFile = (File) schema.get(parameter);
@@ -176,6 +234,25 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }, relativePathParser);
 
     /**
+     * Temporary directory
+     */
+    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR",
+            "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
+             // ISSUE IO-11 is related to this, we have to make sure the TMP dir exists and is writable
+            File tmp = parameterSchema.get(TMP_DIR);
+            if(tmp == null){
+                throw new ParameterException("No temp directory specified!");
+            }
+            if(!tmp.canWrite()){
+                throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
+            }
+
+        }
+    });
+
+    /**
      * Checks by the current parameter settings whether a genomic sequence is required for the run.
      * @param schema an instance with the current parameter settings
      * @return <code>true</code> if the genomic sequence is required for the current run, <code>false</code> otherwise.
@@ -188,50 +265,19 @@ public class FluxSimulatorSettings extends ParameterSchema {
         return req;
     }
 
-    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-            /*
-             * ISSUE IO-11 is related to this, we have to make sure the TMP dir exists and is writabel
-             */
-            File tmp = parameterSchema.get(TMP_DIR);
-            if(tmp == null){
-                throw new ParameterException("No temp directory specified!");
-            }
-            if(!tmp.canWrite()){
-                throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
-            }
-
-        }
-    });
-    public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE", "Error model file\n" +
-            "\n" +
-            "You can use the default models '35' or '76' for the corresponding read lengths or\n" +
-            "specify a custom error model file\n", null, new ParameterValidator(){
-        @Override
-        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
-            String v = schema.get(FluxSimulatorSettings.ERR_FILE);
-
-            if(v != null && v.length() > 0){
-                if(!v.equals("35") && !v.equals("76")){
-                    // check file
-                    if((v.startsWith("/") && !new File(v).canRead())){
-                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
-                    }
-                }
-            }
-        }
-    });
 
 
-    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA", "Create .fasta/.fastq output. output.\n" +
-            "If you specify an ERR_FILE as to be used as a quality model (or you use one of the default models)\n" +
-            "the simulator will create a .fastq file with errors added to the actual sequence. If no error model is\n" +
-            "specified, the simulator create a .fasta file where no error are added to the sequences.", false);
     /*
     Expression parameters
      */
-    public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING", "", true, new ParameterValidator() {
+
+    /**
+     * Coding messengers, i.e., transcripts that have an annotated CDS, are extracted from the cell.
+     */
+    public static final Parameter<Boolean> LOAD_CODING = Parameters.booleanParameter("LOAD_CODING",
+            "coding messengers, i.e., transcripts\n" +
+            "that have an annotated CDS, are extracted\n" +
+            "from the cell", true, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             if (!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) {
@@ -239,7 +285,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING", "", true, new ParameterValidator() {
+    /**
+     * Non-coding RNAs, i.e., transcripts without an annotated ORF are extracted from the cell.
+     */
+    public static final Parameter<Boolean> LOAD_NONCODING = Parameters.booleanParameter("LOAD_NONCODING",
+            "non-coding RNAs, i.e., transcripts\n" +
+            "without an annotated ORF are extracted\n" +
+            "from the cell", true, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             if (!schema.get(LOAD_CODING) && !schema.get(LOAD_NONCODING)) {
@@ -247,10 +299,30 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES", "number of RNA molecules initially in the experiment", 5000000);
-    public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K", "exponent of power-law underlying the expression profile", -0.6);
-    public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0", "parameter determining the maximum expression of the underlying power-law", 50000000);
-    public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1", "parameter controlling the exponential decay along the power-law", 9500);
+    /**
+     * Number of RNA molecules initially in the experiment.
+     */
+    public static final Parameter<Long> NB_MOLECULES = Parameters.longParameter("NB_MOLECULES",
+            "number of RNA molecules initially in the experiment", 5000000);
+    /**
+     * Exponent of power-law underlying the expression profile.
+     */
+    public static final Parameter<Double> EXPRESSION_K = Parameters.doubleParameter("EXPRESSION_K",
+            "exponent of power-law underlying the expression profile", -0.6, -1, 0, null);
+    /**
+     * Linear parameter of the exponential decay.
+     */
+    public static final Parameter<Double> EXPRESSION_X0 = Parameters.doubleParameter("EXPRESSION_X0",
+            "linear parameter of the exponential decay", 9500, 1, Double.MAX_VALUE, null);
+    /**
+     * linear parameter of the exponential decay
+     */
+    public static final Parameter<Double> EXPRESSION_X1 = Parameters.doubleParameter("EXPRESSION_X1",
+            "quadratic parameter of the exponential decay", Math.pow(9500, 2), 1, Double.MAX_VALUE, null);
+
+    /**
+     * Average deviation from the annotated transcription start site (TSS).
+     */
     public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "average deviation from the annotated transcription start site (TSS)", 25d, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
@@ -260,18 +332,36 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "determining the shape of the poly-A tail size distribution", 2d, 0.0, Double.MAX_VALUE, null);
-    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "controlling the average length of the poly-A tail sizes", 300d, 0.0, Double.MAX_VALUE, null);
+    /**
+     * Shape of the Weibull distribution describing poly-A tail sizes.
+     */
+    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "shape of the Weibull distribution describing poly-A tail sizes", 2d, 0.0, Double.MAX_VALUE, null);
+    /**
+     * Scale of the Weibull distribution, shifts the average length of poly-A tail sizes.
+     */
+    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "scale of the Weibull distribution, shifts the average length of poly-A tail sizes", 300d, 0.0, Double.MAX_VALUE, null);
 
     /*
     Fragementation
      */
-    public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION", "turn fragmentation on/off", true);
+    /**
+     * Turn fragmentation on/off.
+     */
+    public static final Parameter<Boolean> FRAGMENTATION = Parameters.booleanParameter("FRAGMENTATION",
+            "turn fragmentation on/off", true);
+
+    /**
+     * Fragmentation method employed:
+     * [NB] Fragmentation by nebulization
+     * [UR] Uniformal random fragmentation
+     * [EZ] Fragmentation by enzymatic digestion
+     */
     public static final Parameter<FragmentationMethod> FRAG_METHOD = Parameters.enumParameter("FRAG_METHOD", "" +
-            "Method applied for Fragmentation\n" +
-            "[NB] Nebulization fragmentation method.\n" +
-            "[UR] Uniformal random fragmentation method.\n" +
-            "[EZ] Enzymatic digestion as fragmentation method.", FragmentationMethod.UR, new ParameterValidator() {
+            "Fragmentation method employed:\n" +
+            "[EZ] Fragmentation by enzymatic digestion\n" +
+            "[NB] Fragmentation by nebulization\n" +
+            "[UR] Uniformal random fragmentation",
+            FragmentationMethod.UR, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             if (schema.get(FRAG_METHOD) == FragmentationMethod.EZ) {
@@ -291,56 +381,124 @@ public class FluxSimulatorSettings extends ParameterSchema {
 
         }
     });
-    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE", " Parameter specifying the substrate of fragmentation.", Substrate.DNA, null);
 
-    /*
-    Enzymatic
+    /**
+     * Substrate of fragmentation, determines the order
+     * of fragmentation and reverse transcription (RT):
+     * for substrate DNA, fragmentation is carried out
+     * after RT, substrate RNA triggers fragmentation
+     * before RT.
      */
-    public static final Parameter<File> FRAG_EZ_MOTIF = Parameters.fileParameter("FRAG_EZ_MOTIF", "The motif description for enzymatic digestion\n" +
-            "You can specify a custom PWM file or\n" +
-            "use one of the available defaults:\n" +
-            "\n" +
-            "NlaIII or DpnII",
+    public static final Parameter<Substrate> FRAG_SUBSTRATE = Parameters.enumParameter("FRAG_SUBSTRATE",
+            "substrate of fragmentation, determines the order\n" +
+            "of fragmentation and reverse transcription (RT):\n" +
+            "for substrate DNA, fragmentation is carried out\n" +
+            "after RT, substrate RNA triggers fragmentation\n" +
+            "before RT", Substrate.DNA, null);
+
+
+    /* Fragmentation by Enzymatic Digestikon */
+
+    /**
+     * Sequence motif caused by selective restriction
+     * with an enzyme, choose pre-defined NlaIII, DpnII,
+     * or a file with a custom position weight matrix.
+     */
+    public static final Parameter<File> FRAG_EZ_MOTIF = Parameters.fileParameter("FRAG_EZ_MOTIF",
+            "sequence motif caused by selective restriction\n" +
+            "with an enzyme, choose pre-defined NlaIII, DpnII,\n" +
+            "or a file with a custom position weight matrix",
             null,
             motifHeapValidator,
             relativePathParser);
 
 
-    /*
-    Nebulization
-     */
+    /* Nebulization */
+
     /**
-     * Parameter for the threshold on molecule length that cannot
-     * be broken by the shearfield during nebulization.
+     * Threshold on molecule length that cannot
+     * be broken by the shearfield of nebulization.
      */
     public static final Parameter<Double> FRAG_NB_LAMBDA = Parameters.doubleParameter("FRAG_NB_LAMBDA",
-            "Parameter for the threshold on molecule length that cannot " +
-                    "be broken by the shearfield during nebulization.",
-            900);
-
-    public static final Parameter<Double> FRAG_NB_THOLD = Parameters.doubleParameter("FRAG_NB_THOLD",
-            "Parameter denoting the threshold on molecule population still " +
-                    "breaking when determining convergence of iterative nebulizaiton.", 0.1);
-
-
-    public static final Parameter<Double> FRAG_NB_M = Parameters.doubleParameter("FRAG_NB_M", "Parameter " +
-            "specifying the strength of the " +
-            "nebulization shearfield.", 1.0); //
-
-    /*
-     RNA Hydrolysis (Uniform-Random)
+                    "Threshold on molecule length that cannot " +
+                    "be broken by the shearfield of nebulization.",
+                    900);
+    /**
+     * Threshold on the fraction of the molecule population;
+     * if less molecules break per time unit, convergence
+     * to steady state is assumed.
      */
-    public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA", "exhaustiveness of UR fragmentation, determining the number of breaks per unit length", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA", "geometry of the UR process (1=linear, 2=surface-diameter, 3=volume-diameter, etc.)", Double.NaN);
-    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0", "minimum length of fragments produced by UR fragmentation", 1.0, 1.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> FRAG_NB_THOLD = Parameters.doubleParameter("FRAG_NB_THOLD",
+                    "threshold on the fraction of the molecule population;\n" +
+                    "if less molecules break per time unit, convergence \n" +
+                    "to steady state is assumed", 0.1, 0, 1, null);
+
+    /**
+     * Strength of the nebulization shearfield (i.e., rotor speed).
+     */
+    public static final Parameter<Double> FRAG_NB_M = Parameters.doubleParameter("FRAG_NB_M", "Parameter " +
+            "Strength of the nebulization shearfield (i.e., rotor speed)", 1.0);
+
+    /**
+     * Average expected framgent size after fragmentations,
+     * i.e., number of breaks per unit length (exhautiveness of fragmentation);
+     * NaN optimizes the fragmentation process w.r.t. the size filtering.
+     */
+    public static final Parameter<Double> FRAG_UR_ETA = Parameters.doubleParameter("FRAG_UR_ETA",
+            "Average expected framgent size after fragmentations,\n" +
+            "i.e., number of breaks per unit length (exhautiveness of fragmentation);\n" +
+            "NaN optimizes the fragmentation process w.r.t. the size filtering",
+            Double.NaN);
+
+    /**
+     * Geometry of molecules in the UR process:
+     * NaN= depends logarithmically on molecule length,
+     * 1= always linear, 2= surface-diameter, 3= volume-diameter,
+     * etc.
+     */
+    public static final Parameter<Double> FRAG_UR_DELTA = Parameters.doubleParameter("FRAG_UR_DELTA",
+            "Geometry of molecules in the UR process:\n" +
+            "NaN= depends logarithmically on molecule length,\n" +
+            "1= always linear, 2= surface-diameter, 3= volume-diameter, etc.",
+            Double.NaN);
+
+    /**
+     * Minimum length of fragments produced by UR fragmentation.
+     */
+    public static final Parameter<Double> FRAG_UR_D0 = Parameters.doubleParameter("FRAG_UR_D0",
+            "Minimum length of fragments produced by UR fragmentation",
+            1.0, 1.0, Double.MAX_VALUE, null);
+
 
     /*
      Reverse Transcription
      */
-    public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION", "Switch on/off Reverse Transcription", true);// todo : default ?
-    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER", "", RtranscriptionMode.RH, null);
-    public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN", "Minimum length observed after " +
-            "reverse transcription of full-length transcripts.", 500, new ParameterValidator() {
+
+
+    /**
+     * Switch on/off Reverse Transcription.
+     */
+    public static final Parameter<Boolean> RTRANSCRIPTION = Parameters.booleanParameter("RTRANSCRIPTION",
+            "Switch on/off Reverse Transcription", true);
+
+    /**
+     * Primers used for first strand synthesis:
+     * [RH] for random hexamers or
+     * [PDT] for poly-dT primers
+     */
+    public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER",
+            "Primers used for first strand synthesis:\n" +
+            "[RH] for random hexamers or\n" +
+            "[PDT] for poly-dT primers", RtranscriptionMode.RH, null);
+
+    /**
+     * Minimum fragment length observed after reverse
+     * transcription of full-length transcripts.
+     */
+    public static final Parameter<Integer> RT_MIN = Parameters.intParameter("RT_MIN",
+            "Minimum fragment length observed after reverse\n" +
+            "transcription of full-length transcripts.",
+            500, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int min = schema.get(RT_MIN);
@@ -350,8 +508,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
-    public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX", "Maximum length observed after " +
-            "reverse transcription of full-length transcripts.", 5500, new ParameterValidator() {
+    /**
+     * Maximum fragment length observed after reverse
+     * transcription of full-length transcripts.
+     */
+    public static final Parameter<Integer> RT_MAX = Parameters.intParameter("RT_MAX",
+            "Maximum fragment length observed after reverse\n" +
+            "transcription of full-length transcripts.", 5500, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int min = schema.get(RT_MIN);
@@ -361,25 +524,35 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
+
+    /* PCR Amplification */
+
     /**
-     * GC mean
+     * Mean value of a gaussian distribution that reflects GC bias amplification probability,
+     * set this to 'NaN' to disable GC biases.
      */
-    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value for GC distribution. Set this to 'NaN' to disable GC filtering.", 0.5, 0.0, 1.0, null);
+    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value of a gaussian distribution that reflects GC bias amplification chance,\n" +
+            "set to 'NaN' to disable GC biases.", 0.5, 0.0, 1.0, null);
     /**
-     * GC sd
+     * Standard deviation of a gaussian distribution that reflects GC bias amplification probability,
+     * inactive if GC_MEAN is set to NaN.
      */
-    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation value for GC distribution ", 0.1, 0.0, 100.0, null);
+    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation of a gaussian distribution that reflects GC bias amplification chance,\n" +
+            "inactive if GC_MEAN is set to NaN.", 0.1, 0.0, 1.0, null);
     /**
-     * PCR PROBABILITY
+     * PCR duplication probability when GC filtering is disabled by setting GC_MEAN to NaN.
      */
-    public static final Parameter<Double> PCR_PROBABILITY = Parameters.doubleParameter("PCR_PROBABILITY", "PCR duplication probability\n" +
-            "This is used if GC filtering is disabled by setting GC_MEAN to NaN", 0.7, 0.0, 1.0, null);
+    public static final Parameter<Double> PCR_PROBABILITY = Parameters.doubleParameter("PCR_PROBABILITY",
+            "PCR duplication probability\n" +
+            "when GC filtering is disabled by setting GC_MEAN to NaN", 0.7, 0.0, 1.0, null);
     /**
-     * Amplification rounds
+     * PCR distribution file, 'default' to use
+     * a distribution with 15 rounds and 20 bins,
+     * 'none' to disable amplification.
      */
-    public static final Parameter<String> PCR_DISTRIBUTION = Parameters.stringParameter("PCR_DISTRIBUTION", "PCR distribution file or 'default' to .\n" +
-            "use a distribution with 15 rounds and 20 bins.\n" +
-            "Set this to 'none' to disable amplification.", "default", new ParameterValidator() {
+    public static final Parameter<String> PCR_DISTRIBUTION = Parameters.stringParameter("PCR_DISTRIBUTION", "PCR distribution file, 'default' to use .\n" +
+            "a distribution with 15 rounds and 20 bins,\n" +
+            "'none' to disable amplification.", "default", new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             String dist = schema.get(FluxSimulatorSettings.PCR_DISTRIBUTION);
@@ -394,14 +567,23 @@ public class FluxSimulatorSettings extends ParameterSchema {
         }
     });
 
-    public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Always force RT ", true);
+    /**
+     * Flag to force every molecule to be reversely transcribed.
+     */
+    public static final Parameter<Boolean> RT_LOSSLESS = Parameters.booleanParameter("RT_LOSSLESS", "Flag to force every molecule to be reversely transcribed", true);
 
-    // todo: disabled for the moment !! reenable in Fragmenter RT
+    /**
+     * Position weight matrix (PWM) used during reverse/transcription and adapter ligation.
+     * This is disabled by default (value 'null'), by the value 'default' a PWM derived from
+     * the current Illumina protocol is used. Optionally, a file containing a custom matrix
+     * may be provided.
+     */
     public static final Parameter<File> RT_MOTIF = Parameters.fileParameter(
             "RT_MOTIF",
-            "Reverse transcription motif PWM.\n" +
-            "This is disabled by default, but you can use a default matrix\n" +
-            "by specifying 'default' as value.",
+            "Position weight matrix (PWM) used during reverse/transcription and adapter ligation.\n" +
+                    "This is disabled by default (value 'null'), by the value 'default' a PWM derived from \n" +
+                    "the current Illumina protocol is used. Optionally, a file containing a custom matrix \n" +
+                    "may be provided.",
             null,
             motifHeapValidator,
             relativePathParser);
@@ -409,40 +591,111 @@ public class FluxSimulatorSettings extends ParameterSchema {
     /*
     Size Selection
      */
-    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING", "turn filtering on/off", false);
-    public static final Parameter<String> SIZE_DISTRIBUTION = Parameters.stringParameter("SIZE_DISTRIBUTION", "Describes " +
-            "the distribution of fragments after filtering.\n" +
-            "You can either specify an file with an empirical distribution, where each line" +
-            "represents the length of a read (no ordering required).\n" +
+    /**
+     * Switches size selection on/off.
+     */
+    public static final Parameter<Boolean> FILTERING = Parameters.booleanParameter("FILTERING",
+            "switches size selection on/off", false);
+
+    /**
+     * Size distribution of fragments after filtering,
+     * either specified by the fully qualified path of a file with an empirical distribution
+     * where each line represents the length of a read, no ordering required<br>
+     * </br>
+     * or attributes of a gaussian distribution (mean and standard deviation) in the form:<br>
+     * <br>
+     * N(mean, sd)<br>
+     * <br>
+     * for example: N(800, 200)<br>
+     * If no size distribution is provided, an empirical Illumina fragment size distribution is employed.
+     */
+    public static final Parameter<String> SIZE_DISTRIBUTION = Parameters.stringParameter("SIZE_DISTRIBUTION",
+            "Size distribution of fragments after filtering,\n" +
+            "either specified by the fully qualified path of a file with an empirical distribution" +
+            "where each line represents the length of a read, no ordering required,\n" +
             "\n" +
-            "You can also specify a Normal-Distribution with mean and standard deviation using:\n" +
+            "or attributes of a gaussian distribution (mean and standard deviation) in the form:\n" +
             "\n" +
             "N(mean, sd) \n" +
             "\n" +
-            "for example: N(800, 200)"
+            "for example: N(800, 200)\n" +
+            "If no size distribution is provided, an empirical Illumina fragment size distribution is employed."
     );
+
+    /**
+     * Method for sub-sampling fragments according to the characteristics of (see SIZE_DISTRIBUTION):<br>
+     *
+     * MH the Metropolis-Hastings algorithm is used for filtering<br>
+     * RJ rejection sampling, employing probability directly from the distribution<br>
+     * AC (acceptance) transforms the probability distribution, s.t. the 'most likely'
+     *    element in the distribution has a probability of 1.0.
+     */
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
-            "Describes the method for subsampling fragments in order to meet the characteristics " +
-                    "of the filter Distribution (see SIZE_DISTRIBUTION)\n" +
+            "Method for sub-sampling fragments according to the characteristics of (see SIZE_DISTRIBUTION) \n" +
                     "\n" +
-                    "MH is a metropolis Hastings Filter\n" +
-                    "RJ is a rejection filter, picking the probability directly from the distribution\n" +
-                    "AC is a acceptance filter, picking the probability from the distribution, \n" +
-                    "   but stretching it such that the probability of the 'most likely' element in the distribution is\n" +
-                    "   stretched to 1.0.", SizeSamplingModes.AC, null);
+                    "MH the Metropolis-Hastings algorithm is used for filtering\n" +
+                    "RJ rejection sampling, employing probability directly from the distribution\n" +
+                    "AC (acceptance) transforms the probability distribution, s.t. the 'most likely'\n" +
+                    "   element in the distribution has a probability of 1.0.\n", SizeSamplingModes.AC, null);
 
     /*
       Sequencing
      */
-    public static final Parameter<Long> READ_NUMBER = Parameters.longParameter("READ_NUMBER", "Number of reads", 5000000);
-    public static final Parameter<Integer> READ_LENGTH = Parameters.intParameter("READ_LENGTH", "The Read length", 36);
-    public static final Parameter<Boolean> PAIRED_END = Parameters.booleanParameter("PAIRED_END", "Pair end reads", false);
-
+    /**
+     * Number of reads
+     */
+    public static final Parameter<Long> READ_NUMBER = Parameters.longParameter("READ_NUMBER",
+            "Number of reads", 5000000);
+    /**
+     * Length of the reads.
+     */
+    public static final Parameter<Integer> READ_LENGTH = Parameters.intParameter("READ_LENGTH",
+            "Length of the reads", 36);
+    /**
+     * Switch on/off paired-end reads.
+     */
+    public static final Parameter<Boolean> PAIRED_END = Parameters.booleanParameter("PAIRED_END",
+            "Switch on/off paired-end reads", false);
+    /**
+     * Creates .fasta/.fastq output.
+     * Requires the genome sequences in a folder specified by GEN_DIR.
+     * If a quality model is provided by parameter ERR_FILE, a .fastq
+     * file is produced. Otherwise read sequences are given as .fasta.
+     */
+    public static final Parameter<Boolean> FASTA = Parameters.booleanParameter("FASTA",
+            "creates .fasta/.fastq output.\n" +
+            "Requires the genome sequences in a folder specified by GEN_DIR.\n" +
+            "If a quality model is provided by parameter ERR_FILE, a .fastq\n" +
+            "file is produced. Otherwise read sequences are given as .fasta.", false);
 
     /**
-     * The parameter file
+     * Path to the file with the error model.<br>
+     *
+     * With the values '35' or '76', default error models are provided
+     * for the corresponding read lengths, otherwise the path to a
+     * custom error model file is expected.
      */
-    private File parameterFile;
+    public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE",
+            "path to the file with the error model\n" +
+            "\n" +
+            "for the values '35' or '76', default error models are provided for the corresponding read lengths,\n" +
+            "otherwise the path to a custom error model file is expected\n", null, new ParameterValidator(){
+        @Override
+        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
+            String v = schema.get(FluxSimulatorSettings.ERR_FILE);
+
+            if(v != null && v.length() > 0){
+                if(!v.equals("35") && !v.equals("76")){
+                    // check file
+                    if((v.startsWith("/") && !new File(v).canRead())){
+                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
+                    }
+                }
+            }
+        }
+    });
+
+
 
     /**
      * Load the setting from a file

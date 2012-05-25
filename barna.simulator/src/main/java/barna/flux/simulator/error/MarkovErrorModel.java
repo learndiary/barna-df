@@ -36,6 +36,7 @@ import barna.model.Qualities;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.Sun14ReflectionProvider;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -189,7 +190,7 @@ public class MarkovErrorModel implements FluxTool {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("file", 'f').type(File.class).help("gem mapping input file").valueName("map").required().get());
         parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("output file name").valueName("output").required().get());
-        parameters.add(JSAPParameters.flaggedParameter("tech", 't').help("Technology [phred|solexa|illumina13|illumina18]").valueName("tech").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("tech").help("Technology [phred|solexa|illumina13|illumina18]").valueName("tech").required().get());
         parameters.add(JSAPParameters.flaggedParameter("limit", 's').help("read limit number of sequences to create the model").get());
         parameters.add(JSAPParameters.flaggedParameter("length", 'l').help("read length").get());
         return parameters;
@@ -201,8 +202,8 @@ public class MarkovErrorModel implements FluxTool {
         setFile(args.getFile("file"));
         setOutput(args.getFile("output"));
         setTechnology(args.getString("tech"));
-        if(args.userSpecified("limit"))setLimit(args.getInt("limit"));
-        if(args.userSpecified("length"))setReadLength(args.getInt("length"));
+        if(args.userSpecified("limit"))setLimit(Integer.parseInt(args.getString("limit")));
+        if(args.userSpecified("length"))setReadLength(Integer.parseInt(args.getString("length")));
 
         if (getFile() == null) {
             Log.error("No input file specified!\n");
@@ -278,7 +279,7 @@ public class MarkovErrorModel implements FluxTool {
         CrossTalkModel crossTalkQuality = new CrossTalkModel(numStates, true);
         CrossTalkModel crossTalkPosition = new CrossTalkModel(readLength, false);
 
-        // charachter quality distributions
+        // character quality distributions
         CharacterQualityDistribution dA = new CharacterQualityDistribution('A', numStates);
         CharacterQualityDistribution dC = new CharacterQualityDistribution('C', numStates);
         CharacterQualityDistribution dG = new CharacterQualityDistribution('G', numStates);
@@ -368,7 +369,7 @@ public class MarkovErrorModel implements FluxTool {
     }
 
     static XStream createXStream() {
-        XStream stream = new XStream();
+        XStream stream = new XStream(new Sun14ReflectionProvider());
         stream.alias("fbi.genome.sequencing.rnaseq.simulation.error.QualityErrorModel", QualityErrorModel.class);
         stream.alias("QualityErrorModel", QualityErrorModel.class);
         return stream;

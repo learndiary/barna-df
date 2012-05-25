@@ -86,6 +86,18 @@ public class QualityTransitions {
         }
     }
 
+    /**
+     * Supported read length
+     *
+     * @return read length the supported read length
+     */
+    public int getLength(){
+        return transitions.length;
+    }
+
+    public long[][][] getTransitions() {
+        return transitions;
+    }
 
     public int getQuality(int position, int lastQualityValue, double random) {
         // if start, sample from initial position 0 distribution

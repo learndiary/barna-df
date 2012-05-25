@@ -336,7 +336,7 @@ public class Fragmenter implements Callable<Void> {
         return a;
     }
 
-    private Map<CharSequence, CharSequence> getMapTxSeq() {
+    private Map<CharSequence, CharSequence> getMapTxSeq() throws Exception {
 
         if (mapTxSeq == null) {
             mapTxSeq = new HashMap<CharSequence, CharSequence>(10000);
@@ -390,6 +390,7 @@ public class Fragmenter implements Callable<Void> {
             } catch (Exception e) {
                 Log.progressFailed("ERROR");
                 Log.error("Error while preparing sequences: " + e.getMessage(), e);
+                throw(e);
             }
         }
 

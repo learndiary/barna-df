@@ -214,7 +214,7 @@ public class FragmentUniformRandom implements FragmentProcessor {
             //double d0 = settings.get(FluxSimulatorSettings.FRAG_UR_D0);
             double medFilt = DEFAULT_MED_SIZE;
             if (filtering) {
-                medFilt = 170; //getFiltMedian();
+                medFilt = 170; //getFiltMedian();   // TODO adapt dynamically to median of filter distribution
             }
             urEta = ((medFilt - d0) / Math.exp(Gamma.logGamma(1d + 1d / medDelta)));
         }

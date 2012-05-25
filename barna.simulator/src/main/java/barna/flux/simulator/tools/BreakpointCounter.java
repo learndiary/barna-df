@@ -115,8 +115,8 @@ public class BreakpointCounter implements FluxTool {
     @Override
     public boolean validateParameter(JSAPResult args) {
         setBedFile(args.getFile("input"));
-        setMaxLength(args.getInt("max"));
-        setMinLength(args.getInt("min"));
+        setMaxLength(Integer.parseInt(args.getString("max")));
+        setMinLength(Integer.parseInt(args.getString("min")));
         setBounds(args.userSpecified("bounds"));
         if (bedFile == null || !bedFile.exists()) {
             Log.error("Please specify a .bed file");
