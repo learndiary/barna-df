@@ -30,31 +30,14 @@ package barna.flux.simulator.error;
 import barna.model.Qualities;
 import com.thoughtworks.xstream.XStream;
 import org.junit.Test;
-import org.jzy3d.chart.Chart;
-import org.jzy3d.colors.Color;
-import org.jzy3d.colors.ColorMapper;
-import org.jzy3d.colors.colormaps.ColorMapRainbow;
-import org.jzy3d.maths.Coord3d;
-import org.jzy3d.maths.Coordinates;
-import org.jzy3d.plot3d.builder.Builder;
-import org.jzy3d.plot3d.builder.concrete.OrthonormalTesselator;
-import org.jzy3d.plot3d.builder.delaunay.DelaunayCoordinateValidator;
-import org.jzy3d.plot3d.builder.delaunay.DelaunayTessellator;
-import org.jzy3d.plot3d.builder.delaunay.jdt.Delaunay_Triangulation;
-import org.jzy3d.plot3d.primitives.*;
-import org.jzy3d.plot3d.rendering.legends.colorbars.ColorbarLegend;
-import org.jzy3d.ui.ChartLauncher;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class MarkovErrorModelTest {
 
