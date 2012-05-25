@@ -89,60 +89,60 @@ public class MarkovErrorModelTest {
             fail();
         }
     }
-    @Test
-    public void testModelDist() {
-        // models before refactoring to barna package
-        // (BARNA-86)
-        try {
-            QualityErrorModel model_76 = MarkovErrorModel.loadErrorModel(
-                    //new File(getClass().getResource("/35_error.model").getFile())
-                    new File("/tmp/75_errormodel2.xml")
-            );
-            assertNotNull(model_76);
-
-            System.out.println(model_76.getReadLength());
-            int count = 100000;
-            int[][] qs = new int[model_76.getReadLength()][count];
-            QualityTransitions qm = model_76.getQualityModel();
-            Random rndMutator = new Random();
-            for(int i=0;i<model_76.getReadLength();i++){
-                for(int j=0; j< count;j++){
-                    int last = i == 0 ? 0 : qs[i-1][j];
-                    qs[i][j] = qm.getQuality(i, last, rndMutator.nextDouble());
-                }
-            }
-
-            BufferedWriter w = new BufferedWriter(new FileWriter("/tmp/qm.txt"));
-            System.out.println(qs.length);
-            System.out.println(qs[0].length);
-            for (int i = 0; i < qs[0].length; i++) {
-                for (int j = 0; j < qs.length; j++) {
-                    w.write(""+qs[j][i]);
-                    if(j < qs.length-1) w.write("\t");
-                }
-                w.write("\n");
-            }
-            w.close();
-
-            long[][][] t = qm.getTransitions();
-            w = new BufferedWriter(new FileWriter("/tmp/trans.txt"));
-            for (int x = 0; x < t.length; x++) {
-                for (int y = 0; y < t[x].length; y++) {
-                    for (int z = 0; z < t[x][y].length; z++) {
-                        w.write(""+t[x][y][z]);
-                        if(z < t[x][y].length-1) w.write("\t");
-                    }
-                    w.write("\n");
-                }
-            }
-            w.close();
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            fail();
-        }
-    }
+//    @Test
+//    public void testModelDist() {
+//        // models before refactoring to barna package
+//        // (BARNA-86)
+//        try {
+//            QualityErrorModel model_76 = MarkovErrorModel.loadErrorModel(
+//                    //new File(getClass().getResource("/35_error.model").getFile())
+//                    new File("/tmp/75_errormodel2.xml")
+//            );
+//            assertNotNull(model_76);
+//
+//            System.out.println(model_76.getReadLength());
+//            int count = 100000;
+//            int[][] qs = new int[model_76.getReadLength()][count];
+//            QualityTransitions qm = model_76.getQualityModel();
+//            Random rndMutator = new Random();
+//            for(int i=0;i<model_76.getReadLength();i++){
+//                for(int j=0; j< count;j++){
+//                    int last = i == 0 ? 0 : qs[i-1][j];
+//                    qs[i][j] = qm.getQuality(i, last, rndMutator.nextDouble());
+//                }
+//            }
+//
+//            BufferedWriter w = new BufferedWriter(new FileWriter("/tmp/qm.txt"));
+//            System.out.println(qs.length);
+//            System.out.println(qs[0].length);
+//            for (int i = 0; i < qs[0].length; i++) {
+//                for (int j = 0; j < qs.length; j++) {
+//                    w.write(""+qs[j][i]);
+//                    if(j < qs.length-1) w.write("\t");
+//                }
+//                w.write("\n");
+//            }
+//            w.close();
+//
+//            long[][][] t = qm.getTransitions();
+//            w = new BufferedWriter(new FileWriter("/tmp/trans.txt"));
+//            for (int x = 0; x < t.length; x++) {
+//                for (int y = 0; y < t[x].length; y++) {
+//                    for (int z = 0; z < t[x][y].length; z++) {
+//                        w.write(""+t[x][y][z]);
+//                        if(z < t[x][y].length-1) w.write("\t");
+//                    }
+//                    w.write("\n");
+//                }
+//            }
+//            w.close();
+//
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            fail();
+//        }
+//    }
 
 
     @Test
