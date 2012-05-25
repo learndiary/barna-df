@@ -96,12 +96,13 @@ public class MarkovErrorModelTest {
 //        // (BARNA-86)
 //        try {
 //            QualityErrorModel model_76 = MarkovErrorModel.loadErrorModel(
-//                    new File(getClass().getResource("/35_error.model").getFile())
+//                    //new File(getClass().getResource("/35_error.model").getFile())
+//                    new File("/tmp/75_errormodel2.xml")
 //            );
 //            assertNotNull(model_76);
 //
 //            System.out.println(model_76.getReadLength());
-//            int count = 1000;
+//            int count = 100000;
 //            int[][] qs = new int[model_76.getReadLength()][count];
 //            QualityTransitions qm = model_76.getQualityModel();
 //            Random rndMutator = new Random();
@@ -124,12 +125,26 @@ public class MarkovErrorModelTest {
 //            }
 //            w.close();
 //
+//            long[][][] t = qm.getTransitions();
+//            w = new BufferedWriter(new FileWriter("/tmp/trans.txt"));
+//            for (int x = 0; x < t.length; x++) {
+//                for (int y = 0; y < t[x].length; y++) {
+//                    for (int z = 0; z < t[x][y].length; z++) {
+//                        w.write(""+t[x][y][z]);
+//                        if(z < t[x][y].length-1) w.write("\t");
+//                    }
+//                    w.write("\n");
+//                }
+//            }
+//            w.close();
+//
 //
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //            fail();
 //        }
 //    }
+
 
     @Test
     public void testThatTheErrorModelWriterUsesOnlyTheSimpleClassName(){
