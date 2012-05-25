@@ -31,10 +31,14 @@ import barna.model.Qualities;
 import com.thoughtworks.xstream.XStream;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Random;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class MarkovErrorModelTest {
 
@@ -47,6 +51,7 @@ public class MarkovErrorModelTest {
                     new File(getClass().getResource("/before_barna_35.error.model.gz").getFile())
             );
             assertNotNull(model_35);
+            assertEquals(35, model_35.getQualityModel().getLength());
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -56,6 +61,7 @@ public class MarkovErrorModelTest {
                     new File(getClass().getResource("/before_barna_76.error.model.gz").getFile())
             );
             assertNotNull(model_76);
+            assertEquals(76, model_76.getQualityModel().getLength());
         } catch (IOException e) {
             e.printStackTrace();
             fail();
@@ -79,6 +85,46 @@ public class MarkovErrorModelTest {
                     new File(getClass().getResource("/76_error.model").getFile())
             );
             assertNotNull(model_76);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @Test
+    public void testModelDist() {
+        // models before refactoring to barna package
+        // (BARNA-86)
+        try {
+            QualityErrorModel model_76 = MarkovErrorModel.loadErrorModel(
+                    new File(getClass().getResource("/35_error.model").getFile())
+            );
+            assertNotNull(model_76);
+
+            System.out.println(model_76.getReadLength());
+            int count = 1000;
+            int[][] qs = new int[model_76.getReadLength()][count];
+            QualityTransitions qm = model_76.getQualityModel();
+            Random rndMutator = new Random();
+            for(int i=0;i<model_76.getReadLength();i++){
+                for(int j=0; j< count;j++){
+                    int last = i == 0 ? 0 : qs[i-1][j];
+                    qs[i][j] = qm.getQuality(i, last, rndMutator.nextDouble());
+                }
+            }
+
+            BufferedWriter w = new BufferedWriter(new FileWriter("/tmp/qm.txt"));
+            System.out.println(qs.length);
+            System.out.println(qs[0].length);
+            for (int i = 0; i < qs[0].length; i++) {
+                for (int j = 0; j < qs.length; j++) {
+                    w.write(""+qs[j][i]);
+                    if(j < qs.length-1) w.write("\t");
+                }
+                w.write("\n");
+            }
+            w.close();
+
+
         } catch (IOException e) {
             e.printStackTrace();
             fail();

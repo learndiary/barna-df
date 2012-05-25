@@ -247,8 +247,8 @@ public class MappingFilter implements FluxTool<Void> {
     public boolean validateParameter(JSAPResult args) {
         setInputFile(args.getFile("input"));
         setDescriptor(args.getString("descriptor"));
-        setInsertMax(args.getInt("insertmax"));
-        setInsertMin(args.getInt("insertmin"));
+        setInsertMax(Integer.parseInt(args.getString("insertmax")));
+        setInsertMin(Integer.parseInt(args.getString("insertmin")));
 
 		if (fileIn== null|| (!fileIn.exists())|| (!fileIn.canRead())
 				|| descriptor== null)
