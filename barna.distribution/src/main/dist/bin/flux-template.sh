@@ -45,6 +45,10 @@ MISC=""
 
 if [ -n "$TMPDIR" ]; then
   MISC="-Djava.io.tmpdir="$TMPDIR
+else
+	if [ -n "$TMP_DIR" ]; then
+  		MISC="-Djava.io.tmpdir="$TMP_DIR
+	fi
 fi
 
 java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC \
