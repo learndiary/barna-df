@@ -156,10 +156,14 @@ public class Sequencer implements Callable<Void> {
             try {
                 InputStream input = null;
                 String name = null;
-                if(errorFile.equals("35")){
+                /*
+                Fix BARNA-166 and make sure we only use the name of the file
+                 */
+                String fileName = new File(errorFile).getName();
+                if(fileName.equals("35")){
                     input = getClass().getResource("/35_error.model").openStream();
                     name = "35 bases model";
-                }else if(errorFile.equals("76")){
+                }else if(fileName.equals("76")){
                     input = getClass().getResource("/76_error.model").openStream();
                     name = "76 bases model";
                 }else {
