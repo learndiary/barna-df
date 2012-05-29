@@ -28,13 +28,9 @@
 package test;
 
 
-import barna.flux.simulator.FluxSimulatorSettings
+import barna.flux.simulator.SimulationPipeline
 import barna.io.FileHelper
 import org.junit.Test
-
-import static org.junit.Assert.assertTrue
-import com.jogamp.opengl.util.FileUtil
-import barna.flux.simulator.SimulationPipeline
 
 import static org.junit.Assert.fail
 
