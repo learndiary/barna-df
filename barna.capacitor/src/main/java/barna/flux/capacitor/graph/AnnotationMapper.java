@@ -860,7 +860,7 @@ public class AnnotationMapper extends SplicingGraph {
 
     /**
      * Given a transcript the method returns the number of reads belonging to the SuperEdges which span
-     * across one splicing junction.
+     * across one splice junction.
      * @param t the transcript to follow
      * @return a <code>Map</code> with the <code>SuperEdge</code> string as key and the number of reads as value.
      */
