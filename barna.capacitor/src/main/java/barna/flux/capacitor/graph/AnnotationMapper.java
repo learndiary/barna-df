@@ -40,9 +40,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Class to handle the <i>annotation</i> mapping of <i>genomic</i> mappings
@@ -859,5 +857,44 @@ public class AnnotationMapper extends SplicingGraph {
 		
 		getRPK(n, sig, null, maxLen, pend, etype, v.elementAt(0));
 	}
+
+    /**
+     * Given a transcript the method returns the number of reads belonging to the SuperEdges which span
+     * across one splicing junction.
+     * @param t the transcript to follow
+     * @return a <code>Map</code> with the <code>SuperEdge</code> string as key and the number of reads as value.
+     */
+    public Map<String,Integer> getSJReads(Transcript t) {
+        Map<String, Integer> result = new HashMap<String, Integer>();
+        long[] tsupp = encodeTset(t);
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isLeftFlank() && !isNull(intersect(n.getTranscripts(), tsupp))) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (!isNull(intersect(e.getTranscripts(),tsupp))) {
+                        if (e.getSuperEdges()!=null) {
+                            for (SuperEdge se : e.getSuperEdges()) {
+                                    putEdge(result, (SuperEdgeMappings)se, tsupp);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    protected void putEdge(Map<String,Integer> map, SuperEdgeMappings se, long[] t) {
+        if (!isNull(intersect(se.getTranscripts(),t))) {
+            if (se.getSuperEdges() != null) {
+                for (SuperEdge se1 : se.getSuperEdges())
+                    putEdge(map, (SuperEdgeMappings)se1, t);
+            }
+            if (se.countEJ()==1)
+                map.put(se.toString().replace("PE",""), se.getMappings().getReadNr());
+        }
+    }
 
 }
