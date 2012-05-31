@@ -36,11 +36,10 @@ import barna.model.*;
 import barna.model.bed.BEDMapping;
 import barna.model.splicegraph.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Class to handle the <i>annotation</i> mapping of <i>genomic</i> mappings
@@ -90,7 +89,6 @@ public class AnnotationMapper extends SplicingGraph {
 		constructGraph();
 		getNodesInGenomicOrder();	// important ??!
 		transformToFragmentGraph();
-
 	}
 	
 	public AbstractEdge getEdge(BEDMapping obj) {
@@ -864,8 +862,8 @@ public class AnnotationMapper extends SplicingGraph {
      * @param t the transcript to follow
      * @return a <code>Map</code> with the <code>SuperEdge</code> string as key and the number of reads as value.
      */
-    public Map<String,Integer> getSJReads(Transcript t) {
-        Map<String, Integer> result = new HashMap<String, Integer>();
+    private Map<String,Integer> getSJReads(Transcript t) {
+        Map<String, Integer> result = new TreeMap<String, Integer>();
         long[] tsupp = encodeTset(t);
         Node n = null;
         for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
@@ -892,8 +890,32 @@ public class AnnotationMapper extends SplicingGraph {
                 for (SuperEdge se1 : se.getSuperEdges())
                     putEdge(map, (SuperEdgeMappings)se1, t);
             }
-            if (se.countEJ()==1)
-                map.put(se.toString().replace("PE",""), se.getMappings().getReadNr());
+            if (se.countEJ()==1) {
+                String edgeStr = se.toString().replace("PE","");
+                /*if (map.containsKey(edgeStr) && map.get(edgeStr) != se.getMappings().getReadNr()) //TODO is it possible to find a SuperEdge already in the map?
+                    map.put(edgeStr, map.get(edgeStr) + se.getMappings().getReadNr());
+                else*/
+                    map.put(edgeStr, se.getMappings().getReadNr());
+            }
+        }
+    }
+
+    public void writeSJReads(ZipOutputStream out) throws IOException {
+        try {
+            out.putNextEntry(new ZipEntry(gene.getGeneID()+"/"));
+            for (Transcript t : gene.getTranscripts()) {
+                String s = "";
+                Map<String,Integer> reads = getSJReads(t);
+                out.putNextEntry(new ZipEntry(gene.getGeneID()+"/" + t.getTranscriptID()));
+                for (String k : reads.keySet()) {
+                    s = new String(k + "\t" + reads.get(k) + "\n");
+                    out.write(s.getBytes());
+                }
+                out.closeEntry();
+            }
+            out.closeEntry();
+        } finally {
+            out.flush();
         }
     }
 

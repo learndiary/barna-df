@@ -1036,5 +1036,5 @@ public class BEDobject extends AnnotationObject {
 		}
 		this.name = new ByteArrayCharSequence(name);
 	}
-	
+
 }
