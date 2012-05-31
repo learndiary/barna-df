@@ -2078,6 +2078,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				tidMap = new HashMap<String, String>(), gidMap = new HashMap<String, String>();
 			int tidField = -1, gidField = -1, lastStart = -1;
 			String line;
+            if(size > 0){
+                Log.progressStart("Checking GTF");
+            }
 			while ((line = buffy.readLine())!= null) {	// TODO && !isStop()
 	
 				if (line.startsWith("#"))

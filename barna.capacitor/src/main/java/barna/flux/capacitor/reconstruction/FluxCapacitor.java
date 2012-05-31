@@ -45,6 +45,7 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.state.MappingWrapperState;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
+import barna.model.bed.BEDobject2;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -2235,7 +2236,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         MappingWrapperState state= bedWrapper.read(gene.getChromosome(), from, to);
         if (state.result== null)
             return null;
-        BEDMapping[] beds= (BEDMapping[]) state.result;//TODO move to Mapping
+        BEDobject2[] beds= (BEDobject2[]) state.result;//TODO move to Mapping
         Arrays.sort(beds, getDescriptorComparator());
         iter= new BufferedIteratorRAM(beds);
 
@@ -2679,6 +2680,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				}
 
 				// doit
+                if(wrapper.getInputFile() != null)
+                    Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
 				wrapper.sort(f);
 				
 				// if locked

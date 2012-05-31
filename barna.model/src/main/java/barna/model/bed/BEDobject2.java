@@ -29,10 +29,11 @@ package barna.model.bed;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.model.Graph;
+import barna.model.Mapping;
 
 import java.util.Comparator;
 
-public class BEDobject2 extends ByteArrayCharSequence {
+public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 
 	public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT= 46, BYTE_ZERO= 48;
 	
@@ -548,4 +549,10 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	public void setNext(BEDobject2 next) {
 		this.next = next;
 	}
+
+
+    @Override
+    public CharSequence getChromosome() {
+        return getChr();
+    }
 }
