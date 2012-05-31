@@ -1455,28 +1455,30 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
         // add command line parameter
-        if(commandLineArgs.userSpecified("annotation")){
-            settings.set(FluxCapacitorSettings.ANNOTATION_FILE, commandLineArgs.getFile("annotation"));
-        }
-        if(commandLineArgs.userSpecified("input")){
-            settings.set(FluxCapacitorSettings.MAPPING_FILE, commandLineArgs.getFile("input"));
-        }
-        if(commandLineArgs.userSpecified("output")){
-            settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output"));
-        }
-        if(commandLineArgs.userSpecified("annotation-mapping")){
-            try{
-                settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.valueOf(commandLineArgs.getString("annotation-mapping")));
-            }catch (Exception e){
-                throw new RuntimeException("Invalid Annotation Mapping : "+commandLineArgs.getString("annotation-mapping"));
+        if(commandLineArgs != null){
+            if(commandLineArgs.userSpecified("annotation")){
+                settings.set(FluxCapacitorSettings.ANNOTATION_FILE, commandLineArgs.getFile("annotation"));
             }
-        }
-        if(commandLineArgs.userSpecified("read-descriptor")){
-            settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor());
-            settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).init(commandLineArgs.getString("read-descriptor"));
-        }
-        if(commandLineArgs.userSpecified("sort-in-ram")){
-            settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
+            if(commandLineArgs.userSpecified("input")){
+                settings.set(FluxCapacitorSettings.MAPPING_FILE, commandLineArgs.getFile("input"));
+            }
+            if(commandLineArgs.userSpecified("output")){
+                settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output"));
+            }
+            if(commandLineArgs.userSpecified("annotation-mapping")){
+                try{
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.valueOf(commandLineArgs.getString("annotation-mapping")));
+                }catch (Exception e){
+                    throw new RuntimeException("Invalid Annotation Mapping : "+commandLineArgs.getString("annotation-mapping"));
+                }
+            }
+            if(commandLineArgs.userSpecified("read-descriptor")){
+                settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor());
+                settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).init(commandLineArgs.getString("read-descriptor"));
+            }
+            if(commandLineArgs.userSpecified("sort-in-ram")){
+                settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
+            }
         }
 
         // validate the settings
