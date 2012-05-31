@@ -46,6 +46,7 @@ import barna.model.bed.BEDobject;
 import barna.model.constants.Constants;
 
 import java.io.*;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
@@ -365,7 +366,24 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 */
 	public static final LineComparator<CharSequence> COMPARATOR_DEFAULT=
 		new LineComparator<CharSequence>(false, "\t", 0)
-				.addComparator(new LineComparator<CharSequence>(true, "\t", 1)); 
+                .addComparator(new LineComparator<CharSequence>(true, "\t", 1))
+				.addComparator(new LineComparator<CharSequence>(true, "\t", 2))
+				.addComparator(new LineComparator<CharSequence>(new Comparator<CharSequence>() {
+                    @Override
+                    public int compare(CharSequence o1, CharSequence o2) {
+                        int n1=o1.length(), n2=o2.length();
+                        for (int i1=0, i2=0; i1<n1 && i2<n2; i1++, i2++) {
+                            char c1 = o1.charAt(i1);
+                            char c2 = o2.charAt(i2);
+                            if (c1 != c2) {
+                                return c1 - c2;
+                            }
+                        }
+                        return n1 - n2;
+                    }
+                }));
+
+
 	/**
 	 * Default comparator for read pairing, sort (1) chromosome, (2) name,
 	 * (3) position.
