@@ -41,8 +41,8 @@ import barna.io.rna.ReadDescriptor;
 import barna.io.rna.SolexaPairedEndDescriptor;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.state.MappingWrapperState;
+import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject;
-import barna.model.bed.BEDobject2;
 import barna.model.constants.Constants;
 
 import java.io.*;
@@ -121,7 +121,6 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	/**
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
 	 * @param inputFile file from which is read
-	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
@@ -414,10 +413,10 @@ private BEDobject[] toObjectsOld(Vector<BEDobject> objV) {
 		return beds;
 	}
 
-private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
+private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	if (objV.size()== 0)
 		return null;
-	BEDobject2[] beds= new BEDobject2[objV.size()];
+	BEDMapping[] beds= new BEDMapping[objV.size()];
 	for (int i = 0; i < beds.length; i++) 
 		beds[i]= objV.elementAt(i);
 	return beds;
@@ -1025,7 +1024,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					// write line
 					handler.writeLine(cs, ostream);
 					++count;
-//					BEDobject2 bed= new BEDobject2(cs); 
+//					BEDMapping bed= new BEDMapping(cs);
 //					objV.add(bed);
 					
 	
@@ -1045,20 +1044,19 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * overlapping the area specified by <code>chr</code>, 
 	 * <code>start</code> and <code>end</code> and returns them as 
 	 * an array.
-	 * @param os stream to which the output is written
 	 * @param chr chromosome name of the specified area
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
 	public MappingWrapperState read(String chr, int start, int end) {
 		MappingWrapperState state= new MappingWrapperState();
-		state.result= new Vector<BEDobject2>();
+		state.result= new Vector<BEDMapping>();
 		state.count= 0;
 		read(chr, start, end, null, state);
 		if (state.count== 0)
 			state.result= null;
 		else
-			state.result= toObjects((Vector<BEDobject2>) state.result);
+			state.result= toObjects((Vector<BEDMapping>) state.result);
 		return state;
 	}
 	
@@ -1085,7 +1083,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				// else 
 				state.count= 0l;
 				state.state= MappingWrapperState.STATE_OK;
-				state.result= new Vector<BEDobject2>();
+				state.result= new Vector<BEDMapping>();
 				state.nextChr= null;
 		
 				if (bytesRead== 0) {
@@ -1320,8 +1318,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						
 						// create object
 						if (os== null) {
-							BEDobject2 bed= new BEDobject2(cs);
-							((Vector<BEDobject2>) state.result).add(bed);
+							BEDMapping bed= new BEDMapping(cs);
+							((Vector<BEDMapping>) state.result).add(bed);
 							++state.count;
 						} else {
 							os.write(cs.chars);

@@ -33,7 +33,7 @@ import barna.io.BufferedIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
-import barna.model.bed.BEDobject2;
+import barna.model.bed.BEDMapping;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -93,7 +93,7 @@ public class AnnotationMapper extends SplicingGraph {
 
 	}
 	
-	public AbstractEdge getEdge(BEDobject2 obj) {
+	public AbstractEdge getEdge(BEDMapping obj) {
 			
 		Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
 		v.removeAllElements();
@@ -226,7 +226,7 @@ public class AnnotationMapper extends SplicingGraph {
 
 	}
 
-	Attributes getAttributes(BEDobject2 o, UniversalReadDescriptor d, Attributes attributes) {
+	Attributes getAttributes(BEDMapping o, UniversalReadDescriptor d, Attributes attributes) {
 		
 		CharSequence tag= o.getName();
 		attributes= d.getAttributes(tag, attributes);
@@ -267,7 +267,7 @@ public class AnnotationMapper extends SplicingGraph {
 				}
 			
 			// init
-			BEDobject2 dobject, dobject2;
+			BEDMapping dobject, dobject2;
 			CharSequence lastName= null;
 			UniversalReadDescriptor.Attributes 
 				attributes= descriptor.createAttributes(), 
@@ -285,7 +285,7 @@ public class AnnotationMapper extends SplicingGraph {
 			// map read pairs
 			while (lineIterator.hasNext()) {
 				
-				dobject= new BEDobject2(lineIterator.next());
+				dobject= new BEDMapping(lineIterator.next());
 				++nrMappingsLocus;
 				CharSequence name= dobject.getName();
 				if (name.equals(lastName))
@@ -316,7 +316,7 @@ public class AnnotationMapper extends SplicingGraph {
 					// scan for mates
 					lineIterator.mark();
 					while (lineIterator.hasNext()) {
-						dobject2= new BEDobject2(lineIterator.next());
+						dobject2= new BEDMapping(lineIterator.next());
 						attributes2= getAttributes(dobject2, descriptor, attributes2);
 						if (!attributes.id.equals(attributes2.id))
 							break;						
@@ -398,7 +398,7 @@ public class AnnotationMapper extends SplicingGraph {
 	 * @param dobject2 2nd bed object
 	 */
 	protected void writeInsert(BufferedWriter buffy, SuperEdge se,
-			BEDobject2 dobject, BEDobject2 dobject2, CharSequence id) {
+			BEDMapping dobject, BEDMapping dobject2, CharSequence id) {
 		
 		Transcript[] tt= decodeTset(se.getTranscripts());
 		int[] isizes= new int[tt.length];
@@ -430,7 +430,7 @@ public class AnnotationMapper extends SplicingGraph {
 		}
 		
 		// output
-		String pfx= dobject.getChr()+ "\t"+ startMin+ "\t"+ endMax+ "\t"+ id+ "\t",
+		String pfx= dobject.getChromosome()+ "\t"+ startMin+ "\t"+ endMax+ "\t"+ id+ "\t",
 				sfx= "\t"+ (tt[0].isForward()? "+": "-")+ "\t0\t0\t";
 		v= -1;
 		for (int i = 0, cc= 0; i < isizes.length; i++) {
@@ -465,7 +465,7 @@ public class AnnotationMapper extends SplicingGraph {
 	 * @param obj
 	 * @return
 	 */
-	public AbstractEdge getEdge2(BEDobject2 obj) {
+	public AbstractEdge getEdge2(BEDMapping obj) {
 		
 		int bcount= obj.getBlockCount();
 		int bstart= obj.getStart()+ 1, bend= obj.getEnd();	// to normal space
