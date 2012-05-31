@@ -22,6 +22,9 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.0.1
+    - BARNA-166 fix the error model loading
+
 FluxSimulator 1.0
     - Fixed issue with Java 1.7
     - Fixed issue with the error model
