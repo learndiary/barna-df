@@ -41,11 +41,12 @@ import barna.io.rna.ReadDescriptor;
 import barna.io.rna.SolexaPairedEndDescriptor;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.state.MappingWrapperState;
+import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject;
-import barna.model.bed.BEDobject2;
 import barna.model.constants.Constants;
 
 import java.io.*;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
@@ -121,7 +122,6 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	/**
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
 	 * @param inputFile file from which is read
-	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */
@@ -366,7 +366,24 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	 */
 	public static final LineComparator<CharSequence> COMPARATOR_DEFAULT=
 		new LineComparator<CharSequence>(false, "\t", 0)
-				.addComparator(new LineComparator<CharSequence>(true, "\t", 1)); 
+                .addComparator(new LineComparator<CharSequence>(true, "\t", 1))
+				.addComparator(new LineComparator<CharSequence>(true, "\t", 2))
+				.addComparator(new LineComparator<CharSequence>(new Comparator<CharSequence>() {
+                    @Override
+                    public int compare(CharSequence o1, CharSequence o2) {
+                        int n1=o1.length(), n2=o2.length();
+                        for (int i1=0, i2=0; i1<n1 && i2<n2; i1++, i2++) {
+                            char c1 = o1.charAt(i1);
+                            char c2 = o2.charAt(i2);
+                            if (c1 != c2) {
+                                return c1 - c2;
+                            }
+                        }
+                        return n1 - n2;
+                    }
+                }));
+
+
 	/**
 	 * Default comparator for read pairing, sort (1) chromosome, (2) name,
 	 * (3) position.
@@ -414,10 +431,10 @@ private BEDobject[] toObjectsOld(Vector<BEDobject> objV) {
 		return beds;
 	}
 
-private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
+private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	if (objV.size()== 0)
 		return null;
-	BEDobject2[] beds= new BEDobject2[objV.size()];
+	BEDMapping[] beds= new BEDMapping[objV.size()];
 	for (int i = 0; i < beds.length; i++) 
 		beds[i]= objV.elementAt(i);
 	return beds;
@@ -674,14 +691,11 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	}
 	
 	@Override
-	public void sort(OutputStream outputStream) {
+	public void sort(OutputStream out) {
         InputStream in = null;
-        OutputStream out = null;
         try {
-            FileInputStream iStream = new FileInputStream(getInputFile());
-            getSorter(iStream, outputStream).sort();
-			return;
-			
+            in = new BufferedInputStream(new FileInputStream(getInputFile()));
+            getSorter(in, out).sort();
         } catch (Exception e) {
             Log.progressFailed("ERROR");
             Log.error("Error while sorting file!", e);
@@ -1025,7 +1039,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					// write line
 					handler.writeLine(cs, ostream);
 					++count;
-//					BEDobject2 bed= new BEDobject2(cs); 
+//					BEDMapping bed= new BEDMapping(cs);
 //					objV.add(bed);
 					
 	
@@ -1045,20 +1059,19 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	 * overlapping the area specified by <code>chr</code>, 
 	 * <code>start</code> and <code>end</code> and returns them as 
 	 * an array.
-	 * @param os stream to which the output is written
 	 * @param chr chromosome name of the specified area
 	 * @param start start position of the specified area
 	 * @param end end position of the specified area
 	 */
 	public MappingWrapperState read(String chr, int start, int end) {
 		MappingWrapperState state= new MappingWrapperState();
-		state.result= new Vector<BEDobject2>();
+		state.result= new Vector<BEDMapping>();
 		state.count= 0;
 		read(chr, start, end, null, state);
 		if (state.count== 0)
 			state.result= null;
 		else
-			state.result= toObjects((Vector<BEDobject2>) state.result);
+			state.result= toObjects((Vector<BEDMapping>) state.result);
 		return state;
 	}
 	
@@ -1085,7 +1098,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				// else 
 				state.count= 0l;
 				state.state= MappingWrapperState.STATE_OK;
-				state.result= new Vector<BEDobject2>();
+				state.result= new Vector<BEDMapping>();
 				state.nextChr= null;
 		
 				if (bytesRead== 0) {
@@ -1320,8 +1333,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						
 						// create object
 						if (os== null) {
-							BEDobject2 bed= new BEDobject2(cs);
-							((Vector<BEDobject2>) state.result).add(bed);
+							BEDMapping bed= new BEDMapping(cs);
+							((Vector<BEDMapping>) state.result).add(bed);
 							++state.count;
 						} else {
 							os.write(cs.chars);

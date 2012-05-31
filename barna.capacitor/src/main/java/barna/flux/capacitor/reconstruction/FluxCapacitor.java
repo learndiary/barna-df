@@ -2679,6 +2679,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				}
 
 				// doit
+                if(wrapper.getInputFile() != null)
+                    Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
 				wrapper.sort(f);
 				
 				// if locked
