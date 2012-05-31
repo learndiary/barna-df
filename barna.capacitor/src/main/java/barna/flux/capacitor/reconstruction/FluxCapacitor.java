@@ -45,7 +45,6 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.state.MappingWrapperState;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
-import barna.model.Mapping;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -76,6 +75,11 @@ import java.util.zip.ZipFile;
  *
  */
 public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
+    /**
+     * Store a reference to the parsed command line arguments
+     * to update settings
+     */
+    private JSAPResult commandLineArgs;
 
     /**
      * Thread to parallelize annotation reading.
@@ -1434,14 +1438,50 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			System.exit(-1);
 		
 		// load parameters
-        if (file == null || !file.exists()) {
+        if (file != null && !file.exists()) {
             throw new RuntimeException("I have no parameter file and I want to scream!");
         }
-        try {
-            settings = FluxCapacitorSettings.createSettings(file);
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
+
+        if(file != null){
+            try {
+                settings = FluxCapacitorSettings.createSettings(file);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
+            }
+        }else{
+            // create default settings
+            settings = new FluxCapacitorSettings();
+            FluxCapacitorSettings.relativePathParser.parentDir = new File("");
         }
+
+        // add command line parameter
+        if(commandLineArgs.userSpecified("annotation")){
+            settings.set(FluxCapacitorSettings.ANNOTATION_FILE, commandLineArgs.getFile("annotation"));
+        }
+        if(commandLineArgs.userSpecified("input")){
+            settings.set(FluxCapacitorSettings.MAPPING_FILE, commandLineArgs.getFile("input"));
+        }
+        if(commandLineArgs.userSpecified("output")){
+            settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output"));
+        }
+        if(commandLineArgs.userSpecified("annotation-mapping")){
+            try{
+                settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.valueOf(commandLineArgs.getString("annotation-mapping")));
+            }catch (Exception e){
+                throw new RuntimeException("Invalid Annotation Mapping : "+commandLineArgs.getString("annotation-mapping"));
+            }
+        }
+        if(commandLineArgs.userSpecified("read-descriptor")){
+            settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor());
+            settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).init(commandLineArgs.getString("read-descriptor"));
+        }
+        if(commandLineArgs.userSpecified("sort-in-ram")){
+            settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
+        }
+
+        // validate the settings
+        settings.validate();
+
 
         FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
 		
@@ -1806,13 +1846,21 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
+        parameters.add(JSAPParameters.flaggedParameter("annotation", 'a').type(File.class).help("Path to the annotation file").valueName("gtf").get());
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed").get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("Path to the output file").valueName("gtf").get());
+        parameters.add(JSAPParameters.flaggedParameter("annotation-mapping", 'm').type(String.class).help("Annotation Mapping (default PAIRED)").valueName("mapping").defaultValue("PAIRED").get());
+        parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
+        parameters.add(JSAPParameters.switchParameter("sort-in-ram", 'r').help("Sort in RAM").get());
+
         parameters.add(JSAPParameters.switchParameter("printParameters").help("Print default parameters").get());
         return parameters;
     }
 
     @Override
     public boolean validateParameter(JSAPResult args) {
+        commandLineArgs = args;
         setPrintParameters(args.userSpecified("printParameters"));
         setFile(args.getFile("parameter"));
 
@@ -1822,13 +1870,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             return false;
         }
 
-        if (getFile() == null) {
-            Log.error("");
-            Log.error("No parameter file specified !");
-            Log.error("\n");
-            return false;
-        }
-        if (!getFile().canRead()) {
+        if (getFile() != null && !getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
             Log.error("\n");
