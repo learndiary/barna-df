@@ -673,14 +673,11 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	}
 	
 	@Override
-	public void sort(OutputStream outputStream) {
+	public void sort(OutputStream out) {
         InputStream in = null;
-        OutputStream out = null;
         try {
-            FileInputStream iStream = new FileInputStream(getInputFile());
-            getSorter(iStream, outputStream).sort();
-			return;
-			
+            in = new BufferedInputStream(new FileInputStream(getInputFile()));
+            getSorter(in, out).sort();
         } catch (Exception e) {
             Log.progressFailed("ERROR");
             Log.error("Error while sorting file!", e);
