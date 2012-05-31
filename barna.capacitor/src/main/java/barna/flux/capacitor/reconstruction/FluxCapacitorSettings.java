@@ -130,7 +130,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
     /**
      * Helper to parse relative filenames
      */
-    private static RelativePathParser relativePathParser = new RelativePathParser();
+    static RelativePathParser relativePathParser = new RelativePathParser();
 
 	/**
 	  * Descriptor with parsing info for the read IDs.
@@ -361,7 +361,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
         });
 	    
 	    /**
-	     * Load the setting from a file
+	     * Load the setting from a file. NOTE that this does not validate the settings!
 	     *
 	     * @param f the file
 	     * @return settings the loaded and validated settings
@@ -382,7 +382,6 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	            settings.parameterFile = f;
 	            in = new FileInputStream(f);
 	            settings.parse(in);
-	            settings.validate();
 	            return settings;
 	        } finally {
 	            if (in != null) {
