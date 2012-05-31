@@ -1513,15 +1513,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			wrapperMappings= getWrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE));
 		} else {
 
-            Log.info("Scanning annotation file");
+            Log.progressStart("Scanning annotation file");
 			wrapperAnnotation=
 				fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
 			fileStats((AnnotationWrapper) wrapperAnnotation);
+            Log.progressFinish("OK", true);
 
-            Log.info("Scanning mapping file");
+            Log.progressStart("Scanning mapping file");
 			wrapperMappings=
 				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
 			fileStats((MappingWrapper) wrapperMappings);
+            Log.progressFinish("OK", true);
             Log.info("Annotation and mapping input checked");
 		}
 		
