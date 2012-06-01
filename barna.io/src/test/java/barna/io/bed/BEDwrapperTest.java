@@ -33,8 +33,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
-import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.*;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -67,5 +68,15 @@ public class BEDwrapperTest {
         assertEquals(5, wrapper.countSplit );
         assertEquals(12, wrapper.countEntire );
         assertEquals(17, wrapper.countReads );
+    }
+    @Test
+    public void testIsApplicable() throws IOException {
+        BEDwrapper wrapper = new BEDwrapper(testfile.getAbsolutePath());
+        assertFalse(wrapper.isApplicable());
+        File bedtest = File.createTempFile("bedtest", ".bed");
+        wrapper.sort(bedtest);
+        wrapper = new BEDwrapper(bedtest);
+        assertTrue(wrapper.isApplicable());
+        bedtest.delete();
     }
 }

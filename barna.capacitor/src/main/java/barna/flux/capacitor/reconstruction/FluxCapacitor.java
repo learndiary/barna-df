@@ -123,7 +123,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-	class LocusSolver extends Thread {
+    class LocusSolver extends Thread {
 
         /**
          * The locus that is to be solved.
@@ -1512,14 +1512,19 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			wrapperAnnotation= getWrapper(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
 			wrapperMappings= getWrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE));
 		} else {
+
+            Log.progressStart("Scanning annotation file");
 			wrapperAnnotation=
 				fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
 			fileStats((AnnotationWrapper) wrapperAnnotation);
-			
-			wrapperMappings= 
+            Log.progressFinish("OK", true);
+
+            Log.progressStart("Scanning mapping file");
+			wrapperMappings=
 				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
 			fileStats((MappingWrapper) wrapperMappings);
-
+            Log.progressFinish("OK", true);
+            Log.info("Annotation and mapping input checked");
 		}
 		
 
