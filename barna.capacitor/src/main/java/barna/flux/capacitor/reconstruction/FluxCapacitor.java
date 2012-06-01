@@ -1049,7 +1049,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * Flag indicating whether read biases should be ignored (<code>true</code>),
      * i.e. uniform read distribution is assumed.
      */
-    boolean uniform= true;
+    boolean uniform= false;
 
     /**
      * Lower and upper bound of how much of the original observation can be substracted respectively added.
