@@ -66,6 +66,7 @@ import java.nio.channels.FileLock;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 
 /**
@@ -80,7 +81,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * to update settings
      */
     private JSAPResult commandLineArgs;
-
     /**
      * Thread to parallelize annotation reading.
      */
@@ -123,7 +123,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-	class LocusSolver extends Thread {
+    class LocusSolver extends Thread {
 
         /**
          * The locus that is to be solved.
