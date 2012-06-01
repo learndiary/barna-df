@@ -891,7 +891,7 @@ public class AnnotationMapper extends SplicingGraph {
                     putEdge(map, (SuperEdgeMappings)se1, t);
             }
             if (se.countEJ()==1) {
-                String edgeStr = se.toString().replace("PE","");
+                String edgeStr = se.toString().replace("PE",""); //TODO Keep pair end reads information?
                 /*if (map.containsKey(edgeStr) && map.get(edgeStr) != se.getMappings().getReadNr()) //TODO is it possible to find a SuperEdge already in the map?
                     map.put(edgeStr, map.get(edgeStr) + se.getMappings().getReadNr());
                 else*/
