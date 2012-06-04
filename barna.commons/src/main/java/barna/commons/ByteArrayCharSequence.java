@@ -46,14 +46,16 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      * DNA/RNA characters
      */
     private static final byte[] CHARS_NORMAL = new byte[]{
-            45, 65, 67, 71, 75, 77, 78, 82, 84, 85, 88, 89,        // -ACGKMNRTUXY
-            97, 99, 103, 107, 109, 110, 114, 116, 117, 120, 121};// acgkmnrtuxy
+            45,
+            65, 66, 67, 68, 71, 72, 75, 77, 78, 82, 83, 84, 85, 86, 87, 88, 89,        // -ABCDGHKMNRSTUVWXY
+            97, 98, 99, 100, 103, 104, 107, 109, 110, 114, 115, 116, 117, 118, 119, 120, 121};// abcdghkmnrstuvwxy
     /**
      * DNA/RNA complements
      */
     private static final byte[] CHARS_REVERSED = new byte[]{
-            45, 84, 71, 67, 77, 75, 78, 89, 65, 65, 88, 82,        // -TGCMKNYAAXR
-            116, 103, 99, 109, 107, 110, 121, 97, 97, 120, 114};    // tgcmknyaaxr
+            45,
+            84, 86, 71, 72, 67, 68, 77, 75, 78, 89, 83, 65, 65, 66, 87, 88, 82,                 // -TVGHCDMKNYSAABWXR
+            116, 118, 103, 104, 99, 100, 109, 107, 110, 121, 115, 97, 97, 98, 119, 120, 114};    // tvghcdmknysaabwxr
 
 
     private final static byte[] DigitTens = {
