@@ -582,8 +582,10 @@ public class Graph implements Serializable {
 				}
 				
 			} catch (Exception e) {
-				throw new RuntimeException("Problems reading sequence "+ chromosome+": pos "+p+", len "+seq.length+ "\n\t"
-						+ e.getMessage());
+				throw new RuntimeException("Problems reading sequence " +
+                        chromosome+": pos "+p+", len "+seq.length+ ",\n" +
+                        "check whether chromosomal sequence exists / has the correct size",
+						e);
 				//e.printStackTrace();
 			}
 			
