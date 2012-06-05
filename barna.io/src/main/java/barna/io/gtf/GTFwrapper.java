@@ -1338,6 +1338,13 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 				// build gene
 				String tid = obj.getAttribute(GFFObject.TRANSCRIPT_ID_TAG);
+                if (tid== null) {
+                    throw new RuntimeException(
+                            "I have no transcript ID, and I want to scream!\n" +
+                            line+ "\n"+
+                            obj.getAttribute(GFFObject.TRANSCRIPT_ID_TAG)
+                    );
+                }
 				if (lastTrpt== null|| (!tid.equals(lastTrpt.getTranscriptID()))) {
 					boolean overlap = true;
 					if (!checkOverlapRegion(trpt)) // should be ok for the

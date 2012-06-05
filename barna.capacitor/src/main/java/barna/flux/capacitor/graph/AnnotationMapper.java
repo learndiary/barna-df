@@ -36,13 +36,10 @@ import barna.model.*;
 import barna.model.bed.BEDMapping;
 import barna.model.splicegraph.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Class to handle the <i>annotation</i> mapping of <i>genomic</i> mappings
@@ -92,7 +89,6 @@ public class AnnotationMapper extends SplicingGraph {
 		constructGraph();
 		getNodesInGenomicOrder();	// important ??!
 		transformToFragmentGraph();
-
 	}
 	
 	public AbstractEdge getEdge(BEDMapping obj) {
@@ -859,5 +855,68 @@ public class AnnotationMapper extends SplicingGraph {
 		
 		getRPK(n, sig, null, maxLen, pend, etype, v.elementAt(0));
 	}
+
+    /**
+     * Given a transcript the method returns the number of reads belonging to the SuperEdges which span
+     * across one splice junction.
+     * @param t the transcript to follow
+     * @return a <code>Map</code> with the <code>SuperEdge</code> string as key and the number of reads as value.
+     */
+    private Map<String,Integer> getSJReads(Transcript t) {
+        Map<String, Integer> result = new TreeMap<String, Integer>();
+        long[] tsupp = encodeTset(t);
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isLeftFlank() && !isNull(intersect(n.getTranscripts(), tsupp))) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (!isNull(intersect(e.getTranscripts(),tsupp))) {
+                        if (e.getSuperEdges()!=null) {
+                            for (SuperEdge se : e.getSuperEdges()) {
+                                    putEdge(result, (SuperEdgeMappings)se, tsupp);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    protected void putEdge(Map<String,Integer> map, SuperEdgeMappings se, long[] t) {
+        if (!isNull(intersect(se.getTranscripts(),t))) {
+            if (se.getSuperEdges() != null) {
+                for (SuperEdge se1 : se.getSuperEdges())
+                    putEdge(map, (SuperEdgeMappings)se1, t);
+            }
+            if (se.countEJ()==1) {
+                String edgeStr = se.toString().replace("PE",""); //TODO Keep pair end reads information?
+                /*if (map.containsKey(edgeStr) && map.get(edgeStr) != se.getMappings().getReadNr()) //TODO is it possible to find a SuperEdge already in the map?
+                    map.put(edgeStr, map.get(edgeStr) + se.getMappings().getReadNr());
+                else*/
+                    map.put(edgeStr, se.getMappings().getReadNr());
+            }
+        }
+    }
+
+    public void writeSJReads(ZipOutputStream out) throws IOException {
+        try {
+            out.putNextEntry(new ZipEntry(gene.getGeneID()+"/"));
+            for (Transcript t : gene.getTranscripts()) {
+                String s = "";
+                Map<String,Integer> reads = getSJReads(t);
+                out.putNextEntry(new ZipEntry(gene.getGeneID()+"/" + t.getTranscriptID()));
+                for (String k : reads.keySet()) {
+                    s = new String(k + "\t" + reads.get(k) + "\n");
+                    out.write(s.getBytes());
+                }
+                out.closeEntry();
+            }
+            out.closeEntry();
+        } finally {
+            out.flush();
+        }
+    }
 
 }

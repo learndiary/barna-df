@@ -85,7 +85,7 @@ public class SuperEdge extends AbstractEdge {
 
 	/**
 	 * @param edges
-	 * @param g
+	 * @param supp
 	 * @param pend
 	 */
 	public SuperEdge(AbstractEdge[] edges, long[] supp, boolean pend) {
@@ -139,17 +139,31 @@ public class SuperEdge extends AbstractEdge {
 		
 	
 	public static int getLastEJ(AbstractEdge[] edges) {
-		int pos= edges[edges.length-1].getTail().getSite().getPos();
-		if (edges[edges.length-1].getTail().getSite().isRightFlank())
-			++pos;
-		return pos;
+        int pos= edges[edges.length-1].getHead().getSite().getPos();
+        if (edges[edges.length-1].getTail().getSite().isRightFlank())
+            ++pos;
+        return pos;
 	}
 	
 	public int getLastEJ() {
 		return getLastEJ(edges);
 	}
-	
-	public boolean isIntronic() {
+
+    public int countEJ() {
+        return countEJ(edges);
+    }
+
+    private int countEJ(AbstractEdge[] edges) {
+        int count = 0;
+        for (int i = 0; i<edges.length-1;i++) {
+            if (edges[i].getHead().getSite().isDonor() && edges[i+1].getTail().getSite().isAcceptor()) {
+                    count++;
+            }
+        }
+        return count;
+    }
+
+    public boolean isIntronic() {
 		return false;
 	}
 	
