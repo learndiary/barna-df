@@ -188,6 +188,7 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 			ensureLength(end, 1);
 			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 			p2= end;
+            cnt= 1;
 		} else {
 			p1= start;
 			p2= chrP2;

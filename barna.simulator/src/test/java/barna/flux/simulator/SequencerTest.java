@@ -134,6 +134,12 @@ public class SequencerTest {
         }
 
         // generate object
+/*        ByteArrayCharSequence cs= new ByteArrayCharSequence(
+                FileHelper.stripExtension(f.getName())+ "\t"+
+                Integer.toString(1)+ "\t"+ Integer.toString(11)+ "\t"+
+                "TestRead+\t"+ Byte.toString(1)+ "\t"+
+        );
+*/
         BEDobject2 obj= new BEDobject2();
         Graph.overrideSequenceDirPath= f.getParent();
         obj.setChromosome(FileHelper.stripExtension(f.getName()));
