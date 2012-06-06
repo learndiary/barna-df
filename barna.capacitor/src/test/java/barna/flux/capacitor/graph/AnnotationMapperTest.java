@@ -27,7 +27,7 @@ import java.util.zip.ZipOutputStream;
 public class AnnotationMapperTest extends TestCase {
 
     private final File gtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    private final File bedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
+    private final File bedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());//("/home/emilio/tmp/chr1_chrX.bed");
     private FluxCapacitorSettings settings;
     private boolean paired =false;
 
@@ -192,7 +192,6 @@ public class AnnotationMapperTest extends TestCase {
         start= Math.max(1, start- tol);
         end= end+ tol;
         BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
-        iter.mark();
         AnnotationMapper a = new AnnotationMapper(g);
         a.map(iter, settings);
         Map<String,Integer> m = a.getSJReads(paired);
@@ -200,17 +199,42 @@ public class AnnotationMapperTest extends TestCase {
         for (String e : m.keySet()) {
             count[0]+=m.get(e);
         }
-        /*for (int i = 0; i<g.getTranscripts().length;i++) {
-            m = a.getSJReads(g.getTranscripts()[i], settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).name().equals("PAIRED")?true:false);
-            for (String e : m.keySet()) {
-                count[0]+=m.get(e);
-            }
-        }*/
         Map<String,Integer> m1 = getSJReads(g, paired);
         for (String e : m1.keySet()) {
             count[1]+=m1.get(e);
         }
-        long rest = 0;// a.nrMappingsNotMapped+a.nrMappingsNotMappedAsPair+a.nrMappingsWrongPairOrientation+a.nrMappingsWrongStrand;
-        assertEquals(count[1],count[0]+rest);
+        assertEquals(count[1],count[0]);
     }
+
+    @Test
+    public void testCompareIntronReads() throws Exception {
+        GTFwrapper gtf = new GTFwrapper(gtfFile);
+        BEDwrapper bed = new BEDwrapper(bedFile);
+        gtf = new GTFwrapper((gtf.sort()));
+        gtf.setReadAll(true);
+        gtf.setNoIDs(null);
+        gtf.setReadFeatures(new String[]{"exon","CDS"});
+        gtf.read();
+        Gene g = gtf.getGenes()[0];
+        int start = 0,end=0,tol=0;
+        start = g.getStart();
+        end=g.getEnd();
+        if (g.getStrand()< 0) {
+            start= -start;
+            end= -end;
+        }
+        tol= 0;
+        start= Math.max(1, start- tol);
+        end= end+ tol;
+        BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
+        AnnotationMapper a = new AnnotationMapper(g);
+        a.map(iter, settings);
+        Map<String,Integer> m = a.getIntronReads(paired);
+        int count[] = new int[]{0,0};
+        for (String e : m.keySet()) {
+            count[0]+=m.get(e);
+        }
+        assertTrue(count[0]>0);
+    }
+
 }

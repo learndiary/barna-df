@@ -626,13 +626,13 @@ public class AnnotationMapper extends SplicingGraph {
 		int p= Arrays.binarySearch(su, gstart);	// anchor<= 5'end of read
 		if (p< 0) {
 			p= -(p+ 1);	// falls before
-			if (nodes[p].getSite().isLeftFlank()
+			/*if (nodes[p].getSite().isLeftFlank()
 				&& nodes[p- 1].getSite().isRightFlank()) {	// p!= 0, for src
 				
 				boolean found= checkExonicEdge(nodes[p- 1], nodes[p]);
 				if (!found)
 					return null;	// in intron
-			}
+			} */
 			//else, in both cases
 			--p;	// p> 0, src
 		} else {	// hits exact
@@ -643,13 +643,13 @@ public class AnnotationMapper extends SplicingGraph {
 		int q= Arrays.binarySearch(su, gend);	// anchor>= 3'end of read
 		if (q< 0) {
 			q= -(q+ 1);	// falls before
-			if (nodes[q].getSite().isLeftFlank()&&
+			/*if (nodes[q].getSite().isLeftFlank()&&
 					nodes[q- 1].getSite().isRightFlank()) {
 
 				boolean found= checkExonicEdge(nodes[q- 1], nodes[q]);
 				if (!found)
 					return null;	// in intron
-			}// else nothing, falls before q marks end
+			}// else nothing, falls before q marks end*/
 		} else {	// hits exact			
 			if (nodes[q].getSite().isLeftFlank())
 				++q;
@@ -666,7 +666,7 @@ public class AnnotationMapper extends SplicingGraph {
 			boolean found= false;
 			while (iter.hasNext()) {
 				SimpleEdge e= iter.next();
-				if (!e.isExonic())
+				if (nodes[p].getSite().isLeftFlank()&&!e.isExonic())
 					continue;
 				v.add(e);
 				head= e.getHead();
@@ -674,7 +674,7 @@ public class AnnotationMapper extends SplicingGraph {
 				break;
 			}
 			if (!found)
-				return null;	// intron in between
+				return null;	// intron in between  */
 		}
 		if (v.size()== 0)
 			System.currentTimeMillis();
@@ -1021,6 +1021,24 @@ public class AnnotationMapper extends SplicingGraph {
         } finally {
             out.flush();
         }
+    }
+
+
+    public Map<String,Integer> getIntronReads(boolean paired) {
+        Map<String,Integer> nodesReads = new HashMap<String,Integer>();
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isRightFlank()) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (e.isIntronic()) {
+                        nodesReads.put(e.toString(), ((SimpleEdgeMappings)e).getMappings().getReadNr()+((SimpleEdgeMappings)e).getMappings().getRevReadNr());
+                    }
+                }
+            }
+        }
+        return nodesReads;
     }
 
 }
