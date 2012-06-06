@@ -281,7 +281,7 @@ public class FluxCapacitorTest {
                     false, true);
 
             BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
-            try {
+            /*try {
                 buffy.write(FluxCapacitorSettings.ANNOTATION_MAPPING.getName()+" "+
                         AnnotationMapping.STRANDED+ "\n");
                 buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName()+" "+
@@ -290,7 +290,7 @@ public class FluxCapacitorTest {
                 buffy.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
-            }
+            }*/
 
 
             runCapacitor();

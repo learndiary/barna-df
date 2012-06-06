@@ -206,7 +206,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 //				} else {
 					AnnotationMapper mapper= new AnnotationMapper(this.gene);
 					mapper.map(this.beds, settings);
-					nrReadsLoci+= mapper.nrMappingsLocus;
+                try {
+                    ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream("/home/emilio/fc.zip")));
+                    mapper.writeSJReads(out, settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).name().equals("PAIRED")?true:false);
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                nrReadsLoci+= mapper.nrMappingsLocus;
 					nrReadsMapped+= mapper.getNrMappingsMapped();
 					nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
 					nrPairsNoTxEvidence+= mapper.getNrMappingsNotMappedAsPair();
@@ -1049,7 +1056,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * Flag indicating whether read biases should be ignored (<code>true</code>),
      * i.e. uniform read distribution is assumed.
      */
-    boolean uniform= true;
+    boolean uniform= false;
 
     /**
      * Lower and upper bound of how much of the original observation can be substracted respectively added.

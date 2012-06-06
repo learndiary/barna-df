@@ -163,6 +163,12 @@ public class SuperEdge extends AbstractEdge {
         return count;
     }
 
+    public boolean isSpliceJunction() {
+        if (this.countEJ() > 0)
+            return true && !pairedEnd;
+        return false;
+    }
+
     public boolean isIntronic() {
 		return false;
 	}

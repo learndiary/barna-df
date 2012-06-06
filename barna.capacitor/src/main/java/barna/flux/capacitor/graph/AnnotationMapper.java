@@ -35,8 +35,13 @@ import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
 import barna.model.splicegraph.*;
+import barna.model.splicegraph.Node;
+import org.w3c.dom.*;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -242,8 +247,44 @@ public class AnnotationMapper extends SplicingGraph {
 		}
 		return attributes;
 	}
-	
-	/**
+
+    /*@Override
+    protected int createKeyElements(Document doc, Element graph) {
+        int i = super.createKeyElements(doc, graph);
+        graph.appendChild(createKeyElement(doc, ++i, "edge", "readNr", "int"));
+        graph.appendChild(createKeyElement(doc, ++i, "edge", "revReadNr", "int"));
+        return i;
+    }
+
+    @Override
+    protected Element createEdgeElement(SimpleEdge se, Document doc, int id, String target, String source) {
+        Element edge = super.createEdgeElement(se,doc,id,target,source);
+        Element data = doc.createElement("data");
+        data.setAttribute("key","d4");
+        data.appendChild(doc.createTextNode(Integer.toString(((SimpleEdgeMappings) se).getMappings().getReadNr())));
+        edge.appendChild(data);
+        data = doc.createElement("data");
+        data.setAttribute("key","d5");
+        data.appendChild(doc.createTextNode(Integer.toString(((SimpleEdgeMappings) se).getMappings().getRevReadNr())));
+        edge.appendChild(data);
+        return edge;
+    }
+
+    @Override
+    protected Boolean findEdgeElement(org.w3c.dom.Node edge) {
+        String head = edge.getChildNodes().item(0).getChildNodes().item(0).getNodeValue();
+        String tail = edge.getChildNodes().item(1).getChildNodes().item(0).getNodeValue();
+        String transcripts = edge.getChildNodes().item(2).getChildNodes().item(0).getNodeValue();
+        int readNr = Integer.parseInt(edge.getChildNodes().item(3).getChildNodes().item(0).getNodeValue());
+        int revReadNr = Integer.parseInt(edge.getChildNodes().item(4).getChildNodes().item(0).getNodeValue());
+        for (SimpleEdge se : edgeHash.values())  {
+            if (se.getHead().getSite().toString().equals(head)  && se.getTail().getSite().toString().equals(tail) && Arrays.toString(decodeTset(se.getTranscripts())).equals(transcripts) && ((SimpleEdgeMappings)se).getMappings().getReadNr() == readNr && ((SimpleEdgeMappings)se).getMappings().getRevReadNr() == revReadNr)
+                return true;
+        }
+        return false;
+    }   */
+
+    /**
 	 * Maps genome-mapped reads into the graph.
 	 * 
 	 * @param lineIterator iterator of input lines
@@ -862,50 +903,113 @@ public class AnnotationMapper extends SplicingGraph {
      * @param t the transcript to follow
      * @return a <code>Map</code> with the <code>SuperEdge</code> string as key and the number of reads as value.
      */
-    private Map<String,Integer> getSJReads(Transcript t) {
-        Map<String, Integer> result = new TreeMap<String, Integer>();
+    public Map<String,Integer> getSJReads(Transcript t, boolean paired) {
+        Map<SuperEdge,Integer> nodesReads = new HashMap<SuperEdge,Integer>();
         long[] tsupp = encodeTset(t);
         Node n = null;
         for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
             n = getNodesInGenomicOrder()[i];
-            if (n.getSite().isLeftFlank() && !isNull(intersect(n.getTranscripts(), tsupp))) {
+            if (n.getSite().isLeftFlank() && !isNull(intersect(n.getTranscripts(),tsupp))) {
                 Vector<SimpleEdge> ev = n.getOutEdges();
                 for (SimpleEdge e : ev) {
-                    if (!isNull(intersect(e.getTranscripts(),tsupp))) {
-                        if (e.getSuperEdges()!=null) {
-                            for (SuperEdge se : e.getSuperEdges()) {
-                                    putEdge(result, (SuperEdgeMappings)se, tsupp);
+                    if (!isNull(intersect(e.getTranscripts(),tsupp)) && e.getSuperEdges() != null) {
+                        for (SuperEdge se : e.getSuperEdges()) {
+                            if (!isNull(intersect(se.getTranscripts(),tsupp)) && se.isSpliceJunction()) {
+                                /*if (nodesReads.get(se)!=null)
+                                    continue;*/
+                                if (paired) {
+                                    if (se.getSuperEdges()!=null)
+                                        nodesReads.put(se,countReads(se.getSuperEdges(),tsupp));
+                                } else {
+                                    nodesReads.put(se, ((SuperEdgeMappings) se).getMappings().getReadNr()+((SuperEdgeMappings) se).getMappings().getRevReadNr());
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        return result;
+        TreeMap<String,Integer> sjReads = new TreeMap<String, Integer>();
+        for (SuperEdge edge : nodesReads.keySet()) {
+            int donor = edge.getEdges()[0].getHead().getSite().isDonor()?edge.getEdges()[0].getHead().getSite().getPos() : -1;
+            int acceptor = edge.getEdges()[1].getTail().getSite().isAcceptor()?edge.getEdges()[1].getTail().getSite().getPos() : -1;
+            if (donor ==-1 || acceptor ==-1)
+                continue;
+            if (sjReads.containsKey(donor+"-"+acceptor))
+                sjReads.put(donor+"-"+acceptor,sjReads.get(donor+"-"+acceptor)+ nodesReads.get(edge));
+            else
+                sjReads.put(donor+"-"+acceptor, nodesReads.get(edge));
+        }
+        return sjReads;
     }
 
-    protected void putEdge(Map<String,Integer> map, SuperEdgeMappings se, long[] t) {
-        if (!isNull(intersect(se.getTranscripts(),t))) {
-            if (se.getSuperEdges() != null) {
-                for (SuperEdge se1 : se.getSuperEdges())
-                    putEdge(map, (SuperEdgeMappings)se1, t);
-            }
-            if (se.countEJ()==1) {
-                String edgeStr = se.toString().replace("PE",""); //TODO Keep pair end reads information?
-                /*if (map.containsKey(edgeStr) && map.get(edgeStr) != se.getMappings().getReadNr()) //TODO is it possible to find a SuperEdge already in the map?
-                    map.put(edgeStr, map.get(edgeStr) + se.getMappings().getReadNr());
-                else*/
-                    map.put(edgeStr, se.getMappings().getReadNr());
+    public Map<String,Integer> getSJReads(boolean paired) {
+        Map<SuperEdge,Integer> nodesReads = new HashMap<SuperEdge,Integer>();
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isLeftFlank()) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (e.getSuperEdges() != null) {
+                        for (SuperEdge se : e.getSuperEdges()) {
+                            if (se.isSpliceJunction()) {
+                                if (nodesReads.get(se)!=null)
+                                    continue;
+                                if (paired) {
+                                    if (se.getSuperEdges()!=null)
+                                        nodesReads.put(se,countReads(se.getSuperEdges()));
+                                } else {
+                                    nodesReads.put(se, ((SuperEdgeMappings) se).getMappings().getReadNr()+((SuperEdgeMappings) se).getMappings().getRevReadNr());
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+        TreeMap<String,Integer> sjReads = new TreeMap<String, Integer>();
+        for (SuperEdge edge : nodesReads.keySet()) {
+            int donor = edge.getEdges()[0].getHead().getSite().isDonor()?edge.getEdges()[0].getHead().getSite().getPos() : -1;
+            int acceptor = edge.getEdges()[1].getTail().getSite().isAcceptor()?edge.getEdges()[1].getTail().getSite().getPos() : -1;
+            if (donor ==-1 || acceptor ==-1)
+                continue;
+            if (sjReads.containsKey(donor+"-"+acceptor))
+                sjReads.put(donor+"-"+acceptor,sjReads.get(donor+"-"+acceptor)+ nodesReads.get(edge));
+            else
+                sjReads.put(donor+"-"+acceptor, nodesReads.get(edge));
+        }
+        return sjReads;
     }
 
-    public void writeSJReads(ZipOutputStream out) throws IOException {
+    protected int countReads(Vector<SuperEdge> seVector) {
+        int reads = 0;
+        for (SuperEdge se : seVector) {
+            /*if (se.getSuperEdges()!=null)
+                reads+=countReads(se.getSuperEdges());  */
+            reads+=((SuperEdgeMappings)se).getMappings().getReadNr();
+        }
+        return reads;
+    }
+
+    protected int countReads(Vector<SuperEdge> seVector, long[] tsupp) {
+        int reads = 0;
+        for (SuperEdge se : seVector) {
+            if (!isNull(intersect(se.getTranscripts(),tsupp))) {
+                /*if (se.getSuperEdges()!=null)
+                    reads+=countReads(se.getSuperEdges(),tsupp); */
+                reads+=((SuperEdgeMappings)se).getMappings().getReadNr();
+            }
+        }
+        return reads;
+    }
+
+    public void writeSJReads(ZipOutputStream out, boolean paired) throws IOException {
         try {
             out.putNextEntry(new ZipEntry(gene.getGeneID()+"/"));
             for (Transcript t : gene.getTranscripts()) {
                 String s = "";
-                Map<String,Integer> reads = getSJReads(t);
+                Map<String,Integer> reads = getSJReads(t,paired);
                 out.putNextEntry(new ZipEntry(gene.getGeneID()+"/" + t.getTranscriptID()));
                 for (String k : reads.keySet()) {
                     s = new String(k + "\t" + reads.get(k) + "\n");
