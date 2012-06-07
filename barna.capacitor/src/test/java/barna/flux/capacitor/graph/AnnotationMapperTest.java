@@ -39,7 +39,7 @@ public class AnnotationMapperTest extends TestCase {
 
     private void setSettings() {
         UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
+        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
         settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(gtfFile.getAbsolutePath()));
@@ -52,7 +52,7 @@ public class AnnotationMapperTest extends TestCase {
         settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
                 false);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-                FluxCapacitorSettings.AnnotationMapping.SINGLE);
+                FluxCapacitorSettings.AnnotationMapping.PAIRED);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,
                 null);
         settings.set(FluxCapacitorSettings.STATS_FILE,
@@ -234,6 +234,7 @@ public class AnnotationMapperTest extends TestCase {
         for (String e : m.keySet()) {
             count[0]+=m.get(e);
         }
+        //((SimpleEdgeIntronMappings)a.getNodesInGenomicOrder()[2].getOutEdges().elementAt(0)).getReadDist(new int[]{2,2,2,2,2,2,2});
         assertTrue(count[0]>0);
     }
 

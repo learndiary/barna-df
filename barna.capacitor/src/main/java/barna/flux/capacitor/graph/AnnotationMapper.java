@@ -410,11 +410,16 @@ public class AnnotationMapper extends SplicingGraph {
 					lineIterator.reset();
 
 				} else {	// single reads, strand already checked
-					boolean sense= trpts[0].getStrand()== dobject.getStrand();	// TODO get from edge
-					if (sense)
-						((MappingsInterface) target).getMappings().incrReadNr();
-					else
-						((MappingsInterface) target).getMappings().incrRevReadNr();
+                    boolean sense= trpts[0].getStrand()== dobject.getStrand();	// TODO get from edge
+					if (target.isIntronic()) {
+                        if (sense)
+                            ((SimpleEdgeIntronMappings)target).incrReadNr(dobject.getStart(), dobject.getEnd());
+                    }   else {
+                        if (sense)
+                            ((MappingsInterface) target).getMappings().incrReadNr();
+                        else
+                            ((MappingsInterface) target).getMappings().incrRevReadNr();
+                    }
 					++nrMappingsMapped;
 				}
 			} // end: while(iter.hasNext())
@@ -658,7 +663,7 @@ public class AnnotationMapper extends SplicingGraph {
 		
 		// get chain of edges, if exists
 		Node head= nodes[p];
-		while (head!= nodes[q]) {
+		while (head!=nodes[q]) {
 			if (head.getOutEdges().size()<= 0)
 				System.currentTimeMillis();
 			assert(head.getOutEdges().size()> 0);
@@ -693,7 +698,11 @@ public class AnnotationMapper extends SplicingGraph {
 
 	@Override
 	protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
-		SimpleEdgeMappings e= new SimpleEdgeMappings(v, w);
+        SimpleEdgeMappings e;
+        if (v.getSite().isDonor() && w.getSite().isAcceptor())
+            e = new SimpleEdgeIntronMappings(v,w);
+        else
+            e= new SimpleEdgeMappings(v, w);
 		e.setTranscripts(newTset);
 		return e;
 	}
