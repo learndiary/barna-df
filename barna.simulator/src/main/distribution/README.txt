@@ -22,6 +22,11 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.0.2
+    - BARNA-170 - BEDobject2 limited to 128 chars up to the end of the name field
+    - BARNA-169 - Error Model should catch IUPAC ambiguities
+    - BARNA-168 - ByteArrayCharSequence.complement() cannot handle IUPAC ambiguities
+
 FluxSimulator 1.0.1
     - BARNA-166 fix the error model loading
 

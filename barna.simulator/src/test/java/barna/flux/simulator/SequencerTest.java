@@ -27,16 +27,24 @@
 
 package barna.flux.simulator;
 
+import barna.commons.ByteArrayCharSequence;
+import barna.flux.simulator.error.MarkovErrorModel;
+import barna.flux.simulator.error.ModelPool;
+import barna.flux.simulator.error.QualityErrorModel;
+import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
+import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
+import com.google.common.io.Resources;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.*;
 import java.util.Random;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 
 public class SequencerTest {
 
@@ -107,5 +115,62 @@ public class SequencerTest {
 			}
 		}
 	}
+
+    @Test
+    public void testSequenceAmbiguities() {
+
+        String allChars= "ACGUTWSRYMKBDHV";
+
+        // write sequence
+        File f= null;
+        try {
+            f= File.createTempFile(this.getClass().getSimpleName(), ".fa");
+            BufferedWriter writer= new BufferedWriter(new FileWriter(f));
+            writer.write(">"+ FileHelper.stripExtension(f.getName())+ "\n");
+            writer.write(allChars+ "\n");
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // generate object
+/*        ByteArrayCharSequence cs= new ByteArrayCharSequence(
+                FileHelper.stripExtension(f.getName())+ "\t"+
+                Integer.toString(1)+ "\t"+ Integer.toString(11)+ "\t"+
+                "TestRead+\t"+ Byte.toString(1)+ "\t"+
+        );
+*/
+        BEDobject2 obj= new BEDobject2();
+        Graph.overrideSequenceDirPath= f.getParent();
+        obj.setChromosome(FileHelper.stripExtension(f.getName()));
+        obj.setStart(1);
+        obj.setEnd(11);
+        obj.setName("TestRead");
+        obj.setStrand((byte) 1);
+
+        // load model
+        File eFile= new File(getClass().getResource("/76_error.model").getFile());
+        FileInputStream istream= null;
+        try {
+            istream= new FileInputStream(eFile);
+            QualityErrorModel errorModel = MarkovErrorModel.loadErrorModel(eFile.getName(), istream);
+            ModelPool babes = new ModelPool(true, errorModel);
+
+            // do it
+            ByteArrayCharSequence cs= new ByteArrayCharSequence(10);
+            Sequencer.createQSeq(cs,
+                    obj,
+                    (byte) 1,  // abs dir
+                    (byte) 1,  // tx dir
+                    10, // read length
+                    10, // fragment length
+                    babes);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
 	
 }

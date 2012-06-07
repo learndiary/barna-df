@@ -336,7 +336,12 @@ public class Sequencer implements Callable<Void> {
         b[0] = (babes == null) ? BYTE_GT : BYTE_AT;
         ++cs.end;
         assert (p1 > 0 && p2 > 0);
-        System.arraycopy(a, p1, b, 1, (p2 - p1));
+        try {
+            System.arraycopy(a, p1, b, 1, (p2 - p1));
+        } catch (ArrayIndexOutOfBoundsException e) {
+            Log.error("Problem when generating read ID: "+ p1+ ", "+ p2+ ", "+ a.length+ ", "+ b.length);
+            throw new RuntimeException(e);
+        }
         cs.end += (p2 - p1);
         cs.append(BYTE_NL);
     }

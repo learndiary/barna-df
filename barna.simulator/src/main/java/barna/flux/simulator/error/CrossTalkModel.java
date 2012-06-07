@@ -27,6 +27,7 @@
 
 package barna.flux.simulator.error;
 
+import barna.commons.log.Log;
 import barna.commons.utils.TableFormatter;
 
 import java.util.Arrays;
@@ -44,6 +45,12 @@ public class CrossTalkModel {
      * Supported characters
      */
     static final char[] SYMBOLS = new char[]{'A', 'C', 'G', 'N', 'T'};
+
+    /**
+     * Global flag whether (further) unknown symbols should be reported.
+     */
+    static boolean reportUnknownSymbol= true;
+
     /**
      * The transitions per quality in the form [quality][from][to]
      */
@@ -101,11 +108,27 @@ public class CrossTalkModel {
         }
     }
 
+    /**
+     * Retrieves a falsified base for the original character.
+     * @param state
+     * @param from original character
+     * @param random
+     * @return
+     */
     public char getTransition(int state, char from, double random) {
 
         // make sure its upper case
         from = Character.toUpperCase(from);
         int p0 = Arrays.binarySearch(SYMBOLS, from);
+        if (p0< 0|| p0>= SYMBOLS.length) {
+            if (reportUnknownSymbol) {
+                Log.warn("Unknown symbol "+ from+ " has been mapped to N!\n" +
+                    "Forthcoming unknown symbols will not anymore be reported.");
+            }
+            reportUnknownSymbol= false;
+            p0= 3;  // map unknown symbols to 'N'
+        }
+
         state = transitions.length == 1 ? 0 : state;
 
         if (p0 >= 0) {
