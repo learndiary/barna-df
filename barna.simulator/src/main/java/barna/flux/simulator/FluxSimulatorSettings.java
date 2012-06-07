@@ -321,9 +321,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "quadratic parameter of the exponential decay", Math.pow(9500, 2), 1, Double.MAX_VALUE, null);
 
     /**
-     * Average deviation from the annotated transcription start site (TSS).
+     * Average deviation from the annotated transcription start site (TSS),
+     * set to 'NaN' to deactivate simulated transcription start variability.
      */
-    public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN", "average deviation from the annotated transcription start site (TSS)", 25d, new ParameterValidator() {
+    public static final Parameter<Double> TSS_MEAN = Parameters.doubleParameter("TSS_MEAN",
+            "average deviation from the annotated transcription start site (TSS),\n" +
+            "set to 'NaN' to deactivate simulated transcription start variability",
+            25d, new ParameterValidator() {
         @Override
         public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
             // FIX #55 and make sure that NaN is supported to disable TSS_MEAN
@@ -333,13 +337,21 @@ public class FluxSimulatorSettings extends ParameterSchema {
         }
     });
     /**
-     * Shape of the Weibull distribution describing poly-A tail sizes.
+     * Shape of the Weibull distribution describing poly-A tail sizes,
+     * set to 'NaN' to disable simulated poly-A tails.
      */
-    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE", "shape of the Weibull distribution describing poly-A tail sizes", 2d, 0.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> POLYA_SHAPE = Parameters.doubleParameter("POLYA_SHAPE",
+            "shape of the Weibull distribution describing poly-A tail sizes,\n" +
+            "set to 'NaN' to disable simulated poly-A tails.",
+            2d, 0.0, Double.MAX_VALUE, null);
     /**
-     * Scale of the Weibull distribution, shifts the average length of poly-A tail sizes.
+     * Scale of the Weibull distribution, shifts the average length of poly-A tail sizes,
+     * set to 'NaN' to disable simulated poly-A tails.
      */
-    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE", "scale of the Weibull distribution, shifts the average length of poly-A tail sizes", 300d, 0.0, Double.MAX_VALUE, null);
+    public static final Parameter<Double> POLYA_SCALE = Parameters.doubleParameter("POLYA_SCALE",
+            "scale of the Weibull distribution, shifts the average length of poly-A tail sizes,\n" +
+            "set to 'NaN' to disable simulated poly-A tails.",
+            300d, 0.0, Double.MAX_VALUE, null);
 
     /*
     Fragementation
@@ -531,13 +543,15 @@ public class FluxSimulatorSettings extends ParameterSchema {
      * Mean value of a gaussian distribution that reflects GC bias amplification probability,
      * set this to 'NaN' to disable GC biases.
      */
-    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN", "Mean value of a gaussian distribution that reflects GC bias amplification chance,\n" +
+    public static final Parameter<Double> GC_MEAN = Parameters.doubleParameter("GC_MEAN",
+            "Mean value of a gaussian distribution that reflects GC bias amplification chance,\n" +
             "set to 'NaN' to disable GC biases.", 0.5, 0.0, 1.0, null);
     /**
      * Standard deviation of a gaussian distribution that reflects GC bias amplification probability,
      * inactive if GC_MEAN is set to NaN.
      */
-    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD", "Standard deviation of a gaussian distribution that reflects GC bias amplification chance,\n" +
+    public static final Parameter<Double> GC_SD = Parameters.doubleParameter("GC_SD",
+            "Standard deviation of a gaussian distribution that reflects GC bias amplification chance,\n" +
             "inactive if GC_MEAN is set to NaN.", 0.1, 0.0, 1.0, null);
     /**
      * PCR duplication probability when GC filtering is disabled by setting GC_MEAN to NaN.

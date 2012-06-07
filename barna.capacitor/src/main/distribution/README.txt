@@ -23,6 +23,10 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor SNAPSHOT
+    - BARNA-149 - Count reads to splice junctions
+    - BARNA-168 - ByteArrayCharSequence.complement() cannot handle IUPAC ambiguities
+
 FluxCapacitor 1.0.1
     - BARNA-126 - added minimal set of command line options
 
