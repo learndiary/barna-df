@@ -38,13 +38,13 @@ import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
 import com.google.common.io.Resources;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
 import java.util.Random;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
+import static junit.framework.Assert.*;
 
 public class SequencerTest {
 
@@ -143,8 +143,8 @@ public class SequencerTest {
         BEDobject2 obj= new BEDobject2();
         Graph.overrideSequenceDirPath= f.getParent();
         obj.setChromosome(FileHelper.stripExtension(f.getName()));
-        obj.setStart(1);
-        obj.setEnd(11);
+        obj.setStart(0);
+        obj.setEnd(allChars.length());
         obj.setName("TestRead");
         obj.setStrand((byte) 1);
 
@@ -165,6 +165,8 @@ public class SequencerTest {
                     10, // read length
                     10, // fragment length
                     babes);
+            String[] scs= cs.toString().split("\n");
+            Assert.assertTrue(allChars.equals(scs[0]));
 
         } catch (Exception e) {
             e.printStackTrace();

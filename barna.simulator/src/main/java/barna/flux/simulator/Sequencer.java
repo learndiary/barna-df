@@ -36,7 +36,6 @@ import barna.flux.simulator.error.QualityErrorModel;
 import barna.flux.simulator.fragmentation.FragmentDB;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.FMRD;
 import barna.model.Exon;
 import barna.model.Gene;
 import barna.model.Graph;
@@ -346,6 +345,33 @@ public class Sequencer implements Callable<Void> {
         cs.append(BYTE_NL);
     }
 
+    public static final byte BYTE_DELIM_FMOLI= ':';
+    public static final byte BYTE_DELIM_BARNA= '/';
+
+    public static void appendReadName(BEDobject2 obj, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean sense, int pairedEndSide) {
+
+
+        // FURI
+        obj.append(t.getGene().getGeneID());
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(t.getTranscriptID());
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append((int) (molNr+1));
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(t.getExonicLength());
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(fragStart);
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(fragEnd);
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(sense ? "S" : "A");
+
+
+        if (pairedEndSide == 1 || pairedEndSide == 2) {
+            obj.append(BYTE_DELIM_BARNA);
+            obj.append(pairedEndSide);
+        }
+    }
 
     /**
      * Create polya read
@@ -370,7 +396,7 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         obj.append(end - start+ 1);	// (+1) for end being excluded in BED, included in tx coordinates
         obj.append(BYTE_TAB);
-        FMRD.appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
+        appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -475,7 +501,7 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         obj.append(bedEnd);
         obj.append(BYTE_TAB);
-        FMRD.appendReadName(obj, t,
+        appendReadName(obj, t,
                 molNr, absDir, fragStart, fragEnd,
                 originalStart, originalEnd, left, pairedEndSide);
         obj.append(BYTE_TAB);
@@ -547,6 +573,8 @@ public class Sequencer implements Callable<Void> {
 
         //int flen= fend- fstart+ 1;
         cs.ensureLength(cs.end, len);
+        // check whether polyA read,
+        // compare against chr identifier
         int x;
         for (x = 0; x < CHR_POLYA.length(); ++x) {
             if (obj.charAt(x) != CHR_POLYA.charAt(x)) {
