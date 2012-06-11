@@ -36,7 +36,6 @@ import barna.flux.simulator.error.QualityErrorModel;
 import barna.flux.simulator.fragmentation.FragmentDB;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.FMRD;
 import barna.model.Exon;
 import barna.model.Gene;
 import barna.model.Graph;
@@ -346,6 +345,33 @@ public class Sequencer implements Callable<Void> {
         cs.append(BYTE_NL);
     }
 
+    public static final byte BYTE_DELIM_FMOLI= ':';
+    public static final byte BYTE_DELIM_BARNA= '/';
+
+    public static void appendReadName(BEDobject2 obj, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean sense, int pairedEndSide) {
+
+
+        // FURI
+        obj.append(t.getGene().getGeneID());
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(t.getTranscriptID());
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append((int) (molNr+1));
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(t.getExonicLength());
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(fragStart);
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(fragEnd);
+        obj.append(BYTE_DELIM_FMOLI);
+        obj.append(sense ? "S" : "A");
+
+
+        if (pairedEndSide == 1 || pairedEndSide == 2) {
+            obj.append(BYTE_DELIM_BARNA);
+            obj.append(pairedEndSide);
+        }
+    }
 
     /**
      * Create polya read
@@ -362,7 +388,7 @@ public class Sequencer implements Callable<Void> {
      * @param pairedEndSide paired end side, either 1 or 2 or 0 for no paired ends
      * @return bed the filled bed object
      */
-    public static BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public static BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
         obj.clear();
         obj.append(CHR_POLYA);
         obj.append(BYTE_TAB);
@@ -370,7 +396,7 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         obj.append(end - start+ 1);	// (+1) for end being excluded in BED, included in tx coordinates
         obj.append(BYTE_TAB);
-        FMRD.appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
+        appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -406,14 +432,14 @@ public class Sequencer implements Callable<Void> {
      * @param end       the end read end position in transcript coordinates (0-based)
      * @param t         the transcript with genomic positions (1-based)
      * @param molNr     molecule number of the transcript
-     * @param absDir    absolute direction of the transcript
+     * @param tDir    absolute direction of the transcript
      * @param fragStart fragment start start position of the fragment in transcript coordinates (0-based)
      * @param fragEnd   fragment end end position of the fragment in transcript coordinates (0-based)
      * @param left      flag indicating whether the read is the left end of the fragment
      * @param pairedEndSide either 1 or 2 or anything else if no pairedend reads are produced
      * @return polyA the number of nucleotides in the poly-A tail
      */
-    public static int createRead(BEDobject2 obj, int start, int end, Transcript t, long molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public static int createRead(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte tDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
 
 
         int originalStart = start;
@@ -421,7 +447,7 @@ public class Sequencer implements Callable<Void> {
         int tlen = t.getExonicLength();
 
         if (start > tlen- 1) {
-            createReadPolyA(obj, start, end, t, molNr, absDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
+            createReadPolyA(obj, start, end, t, molNr, tDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
             return (end- start+ 1);
         }
         int offsStart = 0, offsEnd = 0;
@@ -475,13 +501,13 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         obj.append(bedEnd);
         obj.append(BYTE_TAB);
-        FMRD.appendReadName(obj, t,
-                molNr, absDir, fragStart, fragEnd,
+        appendReadName(obj, t,
+                molNr, tDir, fragStart, fragEnd,
                 originalStart, originalEnd, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
-        obj.append(absDir >= 0 ? BYTE_PLUS : BYTE_MINUS);
+        obj.append(tDir >= 0 ? BYTE_PLUS : BYTE_MINUS);
         obj.append(BYTE_ARRAY_FROM_STRAND_TO_BLOCKS, 0,
                 BYTE_ARRAY_FROM_STRAND_TO_BLOCKS.length);    // spare if there are blocks?
         if (idxExA == idxExB) {    // no blocks, spare?
@@ -543,10 +569,12 @@ public class Sequencer implements Callable<Void> {
         return null;
     }
 
-    public static ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, byte absDir, byte tDir, int len, int flen, ModelPool babes) {
+    public static ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, int t3p, byte tDir, int len, int flen, ModelPool babes) {
 
         //int flen= fend- fstart+ 1;
         cs.ensureLength(cs.end, len);
+        // check whether polyA read,
+        // compare against chr identifier
         int x;
         for (x = 0; x < CHR_POLYA.length(); ++x) {
             if (obj.charAt(x) != CHR_POLYA.charAt(x)) {
@@ -557,20 +585,39 @@ public class Sequencer implements Callable<Void> {
         if (x != CHR_POLYA.length()) {        // not in pA, at least partially
             obj.readSequence(cs);    // not completely in poly-A
             cs.toUpperCase(seqStart, cs.end);
+            int diff= (tDir> 0? obj.getEnd(): -obj.getStart()) - t3p;
+            // remove trailing N's outside of chr sequence if in polyA-tail
+            if (diff> 0) {
+                diff= Math.min(diff, cs.end- seqStart);
+                if (obj.getStrand()< 0)
+                    try {
+                        System.arraycopy(cs.chars, seqStart+ diff, cs.chars, seqStart, cs.end- (seqStart+ diff));
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        System.err.println(obj);
+                        System.err.println(t3p+ "; "+ diff+ ", "+ seqStart+ ": "+ cs.chars.length);
+                        throw (e);
+                    }
+                cs.end-= diff;
+            }
         }
 
         // Issue 36 (20100516): sequencing poly-A in fragments < readLen
         // change from len (readLength) to Math.min(flen, len)
+        // to prevent polyA in the middle of a transcript
         int diff = Math.min(flen, len) - (cs.end - seqStart);    // fill trailing As
         if (diff > 0) {
 
-
-            // prevent polyA in the middle of a transcript
-            if (absDir == tDir) {
+            if (obj.getStrand()* tDir> 0) { // sense reads
                 Arrays.fill(cs.chars, cs.end, cs.end + diff, BYTE_a);
             } else {
-                System.arraycopy(cs.chars, fStart, cs.chars, fStart + diff, diff);
-                Arrays.fill(cs.chars, fStart, fStart + diff, BYTE_t);
+                //System.err.println("before:"+ cs.subSequence(seqStart, cs.end));
+                try {
+                    System.arraycopy(cs.chars, seqStart, cs.chars, seqStart + diff, cs.end- seqStart);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.err.println(diff+ ", "+ seqStart+ ": "+ cs.chars.length);
+                }
+                Arrays.fill(cs.chars, seqStart, seqStart + diff, BYTE_t);
+                //System.err.println("after:"+ cs.subSequence(seqStart, cs.end));
             }
             cs.end += diff;
 
@@ -872,7 +919,7 @@ public class Sequencer implements Callable<Void> {
             // fasta seq
             if (qFastaOut != null) {
                 createQname(obj, cs, babes);
-                createQSeq(cs, obj, absDir, t.getStrand(), rLen, flen, babes);
+                createQSeq(cs, obj, t.get3PrimeEdge(), t.getStrand(), rLen, flen, babes);
                 qFastaOut.write(cs.toString());
                 qFastaOut.write("\n");
             }

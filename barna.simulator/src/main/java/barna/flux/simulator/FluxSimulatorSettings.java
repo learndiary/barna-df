@@ -656,10 +656,10 @@ public class FluxSimulatorSettings extends ParameterSchema {
       Sequencing
      */
     /**
-     * Number of reads
+     * Number of reads sequenced
      */
     public static final Parameter<Long> READ_NUMBER = Parameters.longParameter("READ_NUMBER",
-            "Number of reads", 5000000);
+            "Number of reads sequenced", 5000000);
     /**
      * Length of the reads.
      */

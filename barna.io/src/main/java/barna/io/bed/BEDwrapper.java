@@ -36,9 +36,6 @@ import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
 import barna.io.*;
-import barna.io.rna.FMRD;
-import barna.io.rna.ReadDescriptor;
-import barna.io.rna.SolexaPairedEndDescriptor;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.state.MappingWrapperState;
 import barna.model.Gene;
@@ -1468,50 +1465,6 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
         return iter;
 
     }
-
-	public ReadDescriptor checkReadDescriptor(boolean pairedEnd) {
-		
-		ReadDescriptor descriptor= null;
-		try {
-			BufferedReader buffy= new BufferedReader(new FileReader(getInputFile()));
-			
-			String s;
-			while (((s= buffy.readLine())!= null)&&
-					(s.trim().length()== 0
-					|| s.startsWith(Constants.HASH)
-					|| s.startsWith(BROWSER)
-					|| s.startsWith(TRACK)));
-					
-			buffy.close();
-			
-			if (s== null)
-				return null;
-		
-			String[] ss= s.split("\\s");
-			if (ss.length< 4)
-				return null;
-			
-			// check descriptor
-			descriptor= new SolexaPairedEndDescriptor();
-			if (pairedEnd) {
-				if (!descriptor.isPairedEnd(ss[3])) {
-					// descriptor.getPairedEndInformation(bedWrapper.getBeds()[0].getName()))== 0)
-					descriptor= new FMRD();
-					if (!descriptor.isPairedEnd(ss[3])) {
-						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-							System.err.println("[OHNO] Could not detect the format of read descriptor:\n\t"+ 
-									s);
-						return null;
-					}
-				}
-			}
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-			
-		return descriptor;
-	}
 
 	@Override
 	public int getNrInvalidLines() {		
