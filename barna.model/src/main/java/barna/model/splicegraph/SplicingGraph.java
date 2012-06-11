@@ -2002,7 +2002,9 @@ public class SplicingGraph {
 		public void transformToFragmentGraph() {
 			
 			Node[] nodes= getNodesInGenomicOrder();
+            // set with tx that are exonic at the currently iterated position
 			long[] exonic= encodeTset(new Transcript[0]);
+
 			long[] active= encodeTset(new Transcript[0]);
 			
 			long[] intronic= encodeTset(new Transcript[0]);
@@ -2012,68 +2014,49 @@ public class SplicingGraph {
 					// init current exonic, intronic
 					// remove existing edges
 				Object[] inEdges= nodes[i].getInEdges().toArray();
-				long[] activeNext= active;
+				long[] activeNext= active; // keeps track of tx that started and did not end yet
 				for (int j = 0; j < inEdges.length; j++) {
 					SimpleEdge e= (SimpleEdge) inEdges[j];
+                    // find new TSSs, actually only one per node can be found
 					if (e.getTail()== root)
 						activeNext= unite(activeNext, e.getTranscripts());	// update active list
+                    // clean-up exonic edges before segmenting
 					else {
 						if (e.isExonic())
 							removeEdgeNew(e);
-						
+						// DO NOT remove non-segmented intron edges,
+                        // breaks probably the graph iterations
 					}
 				}
 				
-					// create new edges, one exonic, one intronic
-				//if (nodes[i-1].getSite().getPos()!= nodes[i].getSite().getPos()) {
-	//			Transcript[] t= decodeTset(intronic);
-	//			byte minConf= Byte.MAX_VALUE;
-	//			for (int j = 0; j < t.length; j++) 
-	//				minConf= (byte) Math.min(minConf, t[j].getSourceType());
-	//			if (t.length> 0)
-	//				createEdge(nodes[i-1], nodes[i], intronic, minConf);
-				
+                // create new exonic in-edges with last segment
 				Transcript[] t= decodeTset(exonic);
 				byte minConf= Byte.MAX_VALUE;
 				for (int j = 0; j < t.length; j++) 
 					minConf= (byte) Math.min(minConf, t[j].getSourceType());
 				if (t.length> 0) {
-	//				if (nodes[i].getSite().getPos()- nodes[i-1].getSite().getPos()== 1
-	//						&& nodes[i].getSite().isLeftFlank()!= nodes[i-1].getSite().isLeftFlank())
-	//					System.currentTimeMillis();
-	//				else 
 						SimpleEdge eee= createEdge(nodes[i-1], nodes[i], exonic, minConf,true);
-				} 				
+				}
+                // TODO else: create all-intronic segment edge
 	
-				//}
-				
-					// prepare next round
-	//			if (active!= activeNext) {
-	//				exonic= unite(exonic, without(activeNext, active));	// add new exonic where trpt started
-	//				active= activeNext;
-	//			}
 				active= activeNext;
 				Vector<SimpleEdge> outEdgeV= nodes[i].getOutEdges();
-				for (int j = 0; j < outEdgeV.size(); j++) {		// remove trpts that ended
+				for (int j = 0; j < outEdgeV.size(); j++) {
+                    // remove tx that ended from set of active tx
 					if (outEdgeV.elementAt(j).getHead()== leaf) {
 						active= without(active, outEdgeV.elementAt(j).getTranscripts());	// update active list
+
+                    // update set of tx that are in exonic state
 					} else {
-	//					if (outEdgeV.elementAt(j).valid) {	// only valid ones
-							if (outEdgeV.elementAt(j).getTail().getSite().isLeftFlank()) {	// intron
-								exonic= unite(exonic, outEdgeV.elementAt(j).getTranscripts()); 
-	//							Vector<Edge> v= outEdgeV.elementAt(j).getTail().getOutEdges();
-	//							for (int k = 0; k < v.size(); k++) 
-	//								v.elementAt(k).valid= false;	// mark future exons as invalid
-							} else {	// exon							
-								exonic= without(exonic, outEdgeV.elementAt(j).getTranscripts());
-							}
-	//					}
+                        if (outEdgeV.elementAt(j).getTail().getSite().isLeftFlank()) {	// intron
+                            exonic= unite(exonic, outEdgeV.elementAt(j).getTranscripts());
+                        } else {	// exon
+                            exonic= without(exonic, outEdgeV.elementAt(j).getTranscripts());
+                        }
 					}
 				}
-	//			if (active!= activeNext) {
-	//				exonic= without(exonic, without(active, activeNext));	// remove exonic where trpt ended
-	//				active= activeNext;
-	//			}
+
+                // remove in-active tx from exonic set
 				exonic= intersect(active, exonic);	// still active?
 				intronic= without(active, exonic);
 			}

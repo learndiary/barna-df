@@ -6,6 +6,7 @@ import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
+import groovy.ui.SystemOutputInterceptor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.junit.Test;
@@ -23,7 +24,7 @@ import java.util.zip.ZipOutputStream;
 public class AnnotationMapperTest extends TestCase {
 
     private final File gtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    private final File bedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());//("/home/emilio/tmp/chr1_chrX.bed");
+    private final File bedFile = new File(getClass().getResource("/chr1_chrX_uniq.bed").getFile());//("/home/emilio/tmp/chr1_chrX.bed");
     private FluxCapacitorSettings settings;
     private boolean paired =false;
 
@@ -35,7 +36,7 @@ public class AnnotationMapperTest extends TestCase {
 
     private void setUpSettings() {
         UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
+        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
         settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(gtfFile.getAbsolutePath()));
@@ -48,7 +49,7 @@ public class AnnotationMapperTest extends TestCase {
         settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
                 false);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-                FluxCapacitorSettings.AnnotationMapping.SINGLE);
+                FluxCapacitorSettings.AnnotationMapping.PAIRED);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,
                 null);
         settings.set(FluxCapacitorSettings.STATS_FILE,
@@ -238,10 +239,13 @@ public class AnnotationMapperTest extends TestCase {
         Map<String,Integer> m = a.getSJReads(paired);
         int count[] = new int[]{0,0};
         for (String e : m.keySet()) {
+            System.err.println(e+ "\t"+ m.get(e));
             count[0]+=m.get(e);
         }
+        System.err.println();
         Map<String,Integer> m1 = getSJReads(g, paired);
         for (String e : m1.keySet()) {
+            System.err.println(e+ "\t"+ m1.get(e));
             count[1]+=m1.get(e);
         }
         assertEquals(count[1],count[0]);

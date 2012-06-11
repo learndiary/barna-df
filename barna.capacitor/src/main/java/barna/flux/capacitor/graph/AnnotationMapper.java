@@ -323,7 +323,9 @@ public class AnnotationMapper extends SplicingGraph {
 		
 			// map read pairs
 			while (lineIterator.hasNext()) {
-				
+
+                boolean debugPairs= false;
+
 				dobject= new BEDMapping(lineIterator.next());
 				++nrMappingsLocus;
 				CharSequence name= dobject.getName();
@@ -335,7 +337,9 @@ public class AnnotationMapper extends SplicingGraph {
 				if (paired&& attributes.flag== 2)	// don't iterate twice, for counters
 					continue;
 				AbstractEdge target= getEdge2(dobject);
-				if (target== null) {
+                if(target!= null&& target.toString().contains("4848584^4857551-"))
+                    debugPairs= true;
+                if (target== null) {
 					++nrMappingsNotMapped;
 					continue;	// couldn't map
 				}
@@ -363,6 +367,8 @@ public class AnnotationMapper extends SplicingGraph {
 							continue;
 
 						AbstractEdge target2= getEdge2(dobject2);
+                        if(target2!= null&& target2.toString().contains("4848584^4857551-"))
+                            debugPairs= true;
 						if (target2== null) {
 							++nrMappingsNotMapped;
 							continue;
@@ -404,6 +410,10 @@ public class AnnotationMapper extends SplicingGraph {
 						}
 						((SuperEdgeMappings) se).getMappings().incrReadNr();
 						nrMappingsMapped+= 2;
+                        if (debugPairs) {
+                            System.err.println(dobject);
+                            System.err.println(dobject2);
+                        }
 						if (buffy!= null) 
 							writeInsert(buffy, se, dobject, dobject2, attributes2.id);
 					}
@@ -664,22 +674,25 @@ public class AnnotationMapper extends SplicingGraph {
 		// get chain of edges, if exists
 		Node head= nodes[p];
 		while (head!=nodes[q]) {
-			if (head.getOutEdges().size()<= 0)
-				System.currentTimeMillis();
+
 			assert(head.getOutEdges().size()> 0);
 			Iterator<SimpleEdge> iter= head.getOutEdges().iterator();
 			boolean found= false;
 			while (iter.hasNext()) {
+
 				SimpleEdge e= iter.next();
-				if (nodes[p].getSite().isLeftFlank()&&!e.isExonic())
+                // ... && ((!e.isExonic())|| (!e.isAllIntronic()))
+				if (nodes[p].getSite().isLeftFlank()&& !e.isExonic())
 					continue;
 				v.add(e);
 				head= e.getHead();
 				found= true;
+
+                // only one exonic outedge that leads to next node
 				break;
 			}
 			if (!found)
-				return null;	// intron in between  */
+				return null;	// intron in between
 		}
 		if (v.size()== 0)
 			System.currentTimeMillis();
