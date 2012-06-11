@@ -452,17 +452,22 @@ public class Graph implements Serializable {
 			sb.append(seq.charAt(i));
 		return sb.toString();
 	}
-	
+
+    public static char complementaryCharacter(char c) {
+        boolean wasLow= Character.isLowerCase(c);
+        c= Constants2.NA_COMPL_IUPAC[Character.toUpperCase(c)- 65];
+        if (wasLow)
+            c= Character.toLowerCase(c);
+        return c;
+    }
+
 	public static String complementarySequence(String seq) {
 		
 		StringBuffer sb= new StringBuffer(seq.length());
 		for (int i = 0; i < seq.length(); i++) {
 			
 			char c= seq.charAt(i);
-			boolean wasLow= Character.isLowerCase(c);
-			c= Constants2.NA_COMPL_IUPAC[Character.toUpperCase(c)- 65];
-			if (wasLow)
-				c= Character.toLowerCase(c);
+            c= complementaryCharacter(c);
 			sb.append(c);
 		}
 		return sb.toString();
