@@ -477,17 +477,6 @@ public class Sequencer implements Callable<Void> {
             		"], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
             		"], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
         }
-        if (bedStart > bedEnd) {
-            if (t.getStrand() >= 0) {
-                throw new RuntimeException("Invalid read (end before start): " +
-                        "tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+
-                        "], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
-                        "], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
-            }
-            int h = bedStart;
-            bedStart = bedEnd;
-            bedEnd = h;    // swap for neg strand
-        }
         bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
                 : bedStart + (offsEnd * strand);    // use original bedstart, before!
 /*        if (offsEnd> 0) {
@@ -506,6 +495,17 @@ public class Sequencer implements Callable<Void> {
             bedStart -= offsStart;
         else
             bedEnd += offsStart;*/
+        if (bedStart > bedEnd) {
+            if (t.getStrand() >= 0) {
+                throw new RuntimeException("Invalid read (end before start): " +
+                        "tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+
+                        "], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
+                        "], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
+            }
+            int h = bedStart;
+            bedStart = bedEnd;
+            bedEnd = h;    // swap for neg strand
+        }
         --bedStart; // lower the lower pos, BED:0-based
 
         //bedStart= Math.max(0, bedStart);    // prevent underflow
