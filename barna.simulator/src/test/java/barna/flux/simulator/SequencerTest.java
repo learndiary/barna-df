@@ -239,7 +239,7 @@ public class SequencerTest {
 
             // test
             for (int i= 0; i< nrReadTests; ++i) {
-                int polyA= rnd.nextInt((int) (tlen/ 2d));    // simulate poly-A
+                int polyA= sense? rnd.nextInt((int) (tlen/ 2d)): 0;    // TODO simulate poly-A only for sense reads
                 int truLen= tlen+ polyA;
                 int fragStart= rnd.nextInt(truLen)+ 1;
                 int fragEnd= fragStart+ (truLen== fragStart? 0: rnd.nextInt(truLen- fragStart));

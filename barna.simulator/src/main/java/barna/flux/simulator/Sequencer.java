@@ -488,9 +488,9 @@ public class Sequencer implements Callable<Void> {
             bedStart = bedEnd;
             bedEnd = h;    // swap for neg strand
         }
-//        bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
-//                : bedStart + (offsEnd * strand);    // use original bedstart, before!
-        if (offsEnd> 0) {
+        bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
+                : bedStart + (offsEnd * strand);    // use original bedstart, before!
+/*        if (offsEnd> 0) {
             if (tDir> 0)
                 bedEnd+= offsEnd;
             else
@@ -500,15 +500,15 @@ public class Sequencer implements Callable<Void> {
                 bedStart+= offsEnd;
             else
                 bedEnd-= offsEnd;
-        }
-        //bedStart += offsStart * strand;            // correct out of range
-        if (tDir> 0)
-            bedStart-= offsStart;
+        }*/
+        bedStart += offsStart * strand;            // correct out of range
+/*        if (tDir > 0)
+            bedStart -= offsStart;
         else
-            bedEnd+= offsStart;
+            bedEnd += offsStart;*/
         --bedStart; // lower the lower pos, BED:0-based
 
-        bedStart= Math.max(0, bedStart);    // prevent underflow
+        //bedStart= Math.max(0, bedStart);    // prevent underflow
 
         // build object
         obj.clear();
