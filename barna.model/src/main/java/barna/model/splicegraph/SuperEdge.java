@@ -179,6 +179,10 @@ public class SuperEdge extends AbstractEdge {
 				return false;
 		return true;
 	}
+
+    public boolean isAllIntronic() {
+        return false;
+    }
 	
 	public void setEdges(AbstractEdge[] edges) {
 //		long[] trpts= edges[0].getTranscripts();

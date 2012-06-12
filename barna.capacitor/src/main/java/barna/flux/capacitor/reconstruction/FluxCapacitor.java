@@ -206,14 +206,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 //				} else {
 					AnnotationMapper mapper= new AnnotationMapper(this.gene);
 					mapper.map(this.beds, settings);
-                try {
-                    ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream("/home/emilio/fc.zip")));
-                    mapper.writeSJReads(out, settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).name().equals("PAIRED")?true:false);
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                }
-                nrReadsLoci+= mapper.nrMappingsLocus;
+                    nrReadsLoci+= mapper.nrMappingsLocus;
 					nrReadsMapped+= mapper.getNrMappingsMapped();
 					nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
 					nrPairsNoTxEvidence+= mapper.getNrMappingsNotMappedAsPair();

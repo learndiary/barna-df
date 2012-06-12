@@ -6,7 +6,6 @@ import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
-import groovy.ui.SystemOutputInterceptor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.junit.Test;
@@ -23,9 +22,11 @@ import java.util.zip.ZipOutputStream;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private final File gtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    private final File bedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());//("/home/emilio/tmp/chr1_chrX.bed");
+    private String path = "/home/emilio/fromMicha";
+    private final File gtfFile = new File(path+"/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//
+    private final File bedFile = new File(path+"/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//(path+"/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//
     private FluxCapacitorSettings settings;
+    ArrayList<String[]> nodes = new ArrayList<String[]>();
 
     @Override
     public void setUp() throws Exception {
@@ -73,31 +74,59 @@ public class AnnotationMapperTest extends TestCase {
         return "";
     }
 
+    private void readGtf(Gene g) throws IOException {
+        BufferedReader gtfReader = new BufferedReader(new InputStreamReader(new FileInputStream(gtfFile)));
+        String tx = null;
+        nodes.clear();
+        int i = 0;
+        int start = 0,end=0,tol=0;
+        start = g.getStart();
+        end=g.getEnd();
+        if (g.getStrand()< 0) {
+            start= -start;
+            end= -end;
+        }
+        tol= 0;
+        start= Math.max(1, start- tol);
+        end= end+ tol;
+        //System.err.println("\n[TEST] Reading GTF for gene "+g.getGeneID()+" ...");
+        for ( String line; (line = gtfReader.readLine()) != null;) {
+            String[] gLine = line.split("\t");
+            if (gLine[0].equals(g.getChromosome()) && Integer.parseInt(gLine[3])>=start&&Integer.parseInt(gLine[4])<=end) {
+                if (tx==null)
+                    tx = gLine[8].split(";")[0].split("\\s")[1];
+                if (gLine[2].equals("exon")) {
+                    String[] strings = new String[]{gLine[3],gLine[4]};
+                    if (tx.equals(gLine[8].split(";")[0].split("\\s")[1])) {
+                        if (!nodes.contains(strings))
+                            nodes.add(strings);
+                    } else {
+                        tx = gLine[8].split(";")[0].split("\\s")[1];
+                        if (!nodes.contains(strings))
+                            nodes.add(strings);
+                    }
+                }
+            }
+        }
+        //System.err.println("[TEST] GTF read.");
+    }
 
     private Map<String,Integer> getSJReads(Gene g, boolean paired) throws Exception{
         BufferedReader bedReader = new BufferedReader(new InputStreamReader(new FileInputStream(bedFile)));
-        BufferedReader gtfReader = new BufferedReader(new InputStreamReader(new FileInputStream(gtfFile)));
-        ArrayList<String[]> nodes = new ArrayList<String[]>();
         Map<String,Integer> reads = new TreeMap<String, Integer>();
         HashMap<String,ArrayList<String[]>> p1hash = new HashMap<String, ArrayList<String[]>>();
         HashMap<String,ArrayList<String[]>> p2hash = new HashMap<String, ArrayList<String[]>>();
         int nr = 0;
-        String tx = null;
-        for ( String line; (line = gtfReader.readLine())!= null;) {
-            String[] gLine = line.split("\t");
-            if (tx==null)
-                    tx = gLine[8].split(";")[0].split("\\s")[1];
-            if (gLine[0].equals("chr1")&&gLine[2].equals("exon")) {
-                if (tx.equals(gLine[8].split(";")[0].split("\\s")[1])) {
-                    if (!nodes.contains(new String[]{gLine[3],gLine[4]}))
-                        nodes.add(new String[]{gLine[3],gLine[4]});
-                } else {
-                    tx = gLine[8].split(";")[0].split("\\s")[1];
-                    if (!nodes.contains(new String[]{gLine[3],gLine[4]}))
-                        nodes.add(new String[]{gLine[3],gLine[4]});
-                }
-            }
+        int start = 0,end=0,tol=0;
+        start = g.getStart();
+        end=g.getEnd();
+        if (g.getStrand()< 0) {
+            start= -start;
+            end= -end;
         }
+        tol= 0;
+        start= Math.max(1, start- tol);
+        end= end+ tol;
         for ( String line; (line = bedReader.readLine())!= null;) {
             String[] bLine = line.split("\t");
             boolean mapped =false;
@@ -118,7 +147,7 @@ public class AnnotationMapperTest extends TestCase {
                     }
                 }
             }
-            if (mapped && g.getGeneID().equals(bLine[3].split(":")[0]+":"+ bLine[3].split(":")[1]))
+            if (bLine[0].equals(g.getChromosome()) && Integer.parseInt(bLine[1])+1>=start && Integer.parseInt(bLine[2])<=end && mapped)// && g.getGeneID().equals(bLine[3].split(":")[0]+":"+ bLine[3].split(":")[1]))
             {
                 if (paired) {
                     if (nBlocks<3) {
@@ -236,35 +265,41 @@ public class AnnotationMapperTest extends TestCase {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
-        gtf = new GTFwrapper((gtf.sort()));
-        gtf.setReadAll(true);
+        //gtf = new GTFwrapper((gtf.sort()));
+        //gtf.setReadAll(true);
+        gtf.setChromosomeWise(true);
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon","CDS"});
+        gtf.sweepToChromosome("chr22");
         gtf.read();
-        Gene g = gtf.getGenes()[0];
-        int start = 0,end=0,tol=0;
-        start = g.getStart();
-        end=g.getEnd();
-        if (g.getStrand()< 0) {
-            start= -start;
-            end= -end;
+        //Gene g = gtf.getGenes()[0];        ;
+        for (Gene g : gtf.getGenes()) {
+            int start = 0,end=0,tol=0;
+            start = g.getStart();
+            end=g.getEnd();
+            if (g.getStrand()< 0) {
+                start= -start;
+                end= -end;
+            }
+            tol= 0;
+            start= Math.max(1, start- tol);
+            end= end+ tol;
+            BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
+            AnnotationMapper a = new AnnotationMapper(g);
+            a.map(iter, settings);
+            Map<String,Integer> m = a.getSJReads(false);
+            int count[] = new int[]{0,0};
+            for (String e : m.keySet()) {
+                count[0]+=m.get(e);
+            }
+            readGtf(g);
+            Map<String,Integer> m1 = getSJReads(g, false);
+            for (String e : m1.keySet()) {
+                count[1]+=m1.get(e);
+            }
+            System.err.println("Gene : " + g.getGeneID() + "\tAnnotation Mapper: " + count[0] + "\tTest: " + count[1]);
+            //assertEquals(count[1],count[0]);
         }
-        tol= 0;
-        start= Math.max(1, start- tol);
-        end= end+ tol;
-        BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
-        AnnotationMapper a = new AnnotationMapper(g);
-        a.map(iter, settings);
-        Map<String,Integer> m = a.getSJReads(false);
-        int count[] = new int[]{0,0};
-        for (String e : m.keySet()) {
-            count[0]+=m.get(e);
-        }
-        Map<String,Integer> m1 = getSJReads(g, false);
-        for (String e : m1.keySet()) {
-            count[1]+=m1.get(e);
-        }
-        assertEquals(count[1],count[0]);
     }
 
     @Test
@@ -326,10 +361,10 @@ public class AnnotationMapperTest extends TestCase {
         BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         AnnotationMapper a = new AnnotationMapper(g);
         a.map(iter, settings);
-        Map<String,Integer> m = a.getIntronReads(true);
+        Map<String,Integer[]> m = a.getAllIntronicReads();
         int count[] = new int[]{0,0};
         for (String e : m.keySet()) {
-            count[0]+=m.get(e);
+            count[0]+=m.get(e)[0];
         }
         //((SimpleEdgeIntronMappings)a.getNodesInGenomicOrder()[2].getOutEdges().elementAt(0)).getReadDist(new int[]{2,2,2,2,2,2,2});
         assertTrue(count[0]>0);

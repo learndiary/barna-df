@@ -41,7 +41,8 @@ import barna.model.constants.Constants;
  *
  */
 public class SimpleEdge extends AbstractEdge {
-	
+
+    public static final byte ALL_INTRONIC = 6;
 	/**
 	 * Confidence level of the edge's transcript support.
 	 */
@@ -155,7 +156,11 @@ public class SimpleEdge extends AbstractEdge {
 		return exonic;
 	}
 
-	public static PositionComparator getDefaultPositionComparator() {
+    public boolean isAllIntronic() {
+        return type == ALL_INTRONIC;
+    }
+
+    public static PositionComparator getDefaultPositionComparator() {
 		return defaultPositionComparator;
 	}
 

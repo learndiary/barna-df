@@ -45,27 +45,23 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         mappings.incrReadNr();
     }
 
-    public int getReadNr() {
-        int n = 0;
-        /*if (Math.round(getReadDist()*100)>90) {
-
-        } */
-        return n;
-    }
-
-    protected double getReadDist(int[] binReads, int n) {
-        int[] reads = Arrays.copyOf(binReads, binReads.length);
-        /*Arrays.sort(reads);
-        int max = reads[reads.length-1];
-        double value = 0;
-        for (int i = reads.length-1;i>=0 && reads[i]==max;i--) {
-            value++;
-        }*/
-        double value = 0;
-        int mean = n/binReads.length;//mappings.getReadNr()/binReads.length;
-        for (int i =0;i< reads.length;i++) {
-            value+=Math.abs(reads[i]-mean);
+    public int getBinCoverage() {
+        int count = 0;
+        for (int i = 0;i<binReads.length;i++) {
+            if (binReads[i]>0)
+                count++;
         }
-        return value;
+        return Math.round((float)count/binReads.length*100);
     }
+
+    /*protected double getReadDist(int[] binReads, int n) {
+        int count = 0, sum = 0;
+        for (int i = 0;i<binReads.length;i++) {
+            if (binReads[i]>0) {
+                count++;
+                sum+=binReads[i];
+            }
+        }
+        return (double)sum/count;
+    } */
 }

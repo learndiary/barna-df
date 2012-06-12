@@ -24,10 +24,10 @@ import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
-	static final int SORTED= -1, UNSORT_GTF= 8, UNSORT_BED= 10; 
+    static final int SORTED= -1, UNSORT_GTF= 8, UNSORT_BED= 10;
 	final File GTF_SORTED= new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
 	final File BED_SORTED= new File(getClass().getResource("/chr1_chrX.bed").getFile());
-	final String subdirMappings= "mappings";
+    final String subdirMappings= "mappings";
 	final String subdirAnnotation= "annotation";
 	final String suffixOutput= "gtf";
 	final String suffixParameter= "par";

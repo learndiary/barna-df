@@ -2007,7 +2007,7 @@ public class SplicingGraph {
 
 			long[] active= encodeTset(new Transcript[0]);
 			
-			long[] intronic= encodeTset(new Transcript[0]);
+			//long[] intronic= encodeTset(new Transcript[0]);
 			
 			for (int i = 1; i < nodes.length- 1; i++) {	// wo root/leaf
 	
@@ -2036,8 +2036,10 @@ public class SplicingGraph {
 					minConf= (byte) Math.min(minConf, t[j].getSourceType());
 				if (t.length> 0) {
 						SimpleEdge eee= createEdge(nodes[i-1], nodes[i], exonic, minConf,true);
-				}
-                // TODO else: create all-intronic segment edge
+				} else {
+                    SimpleEdge allintronic = createEdge(nodes[i-1], nodes[i], without(active,exonic), SimpleEdge.ALL_INTRONIC,false);
+                }
+
 	
 				active= activeNext;
 				Vector<SimpleEdge> outEdgeV= nodes[i].getOutEdges();
@@ -2058,7 +2060,7 @@ public class SplicingGraph {
 
                 // remove in-active tx from exonic set
 				exonic= intersect(active, exonic);	// still active?
-				intronic= without(active, exonic);
+				//intronic= without(active, exonic);
 			}
 		}
 
@@ -2072,7 +2074,7 @@ public class SplicingGraph {
 	public SimpleEdge createEdge(Node v, Node w, long[] newTset, byte type, boolean exonic) {
 		
 		SimpleEdge e= getEdge(v,w,exonic);
-		if (e== null) {
+		if (e== null || type == SimpleEdge.ALL_INTRONIC) {
 			e= createSimpleEdge(v, w, newTset);
 			e.type= type;
 			if (exonic)

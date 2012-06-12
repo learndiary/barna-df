@@ -411,7 +411,7 @@ public class AnnotationMapper extends SplicingGraph {
 
 				} else {	// single reads, strand already checked
                     boolean sense= trpts[0].getStrand()== dobject.getStrand();	// TODO get from edge
-					if (target.isIntronic()) {
+					if (target.isAllIntronic()) {
                         if (sense)
                             ((SimpleEdgeIntronMappings)target).incrReadNr(dobject.getStart(), dobject.getEnd());
                     }   else {
@@ -672,12 +672,11 @@ public class AnnotationMapper extends SplicingGraph {
 
 				SimpleEdge e= iter.next();
                 // ... && ((!e.isExonic())|| (!e.isAllIntronic()))
-				if (nodes[p].getSite().isLeftFlank()&& !e.isExonic())
+				if ((nodes[p].getSite().isLeftFlank()&&!e.isExonic())||(nodes[p].getSite().isRightFlank()&&!e.isAllIntronic()))
 					continue;
 				v.add(e);
 				head= e.getHead();
 				found= true;
-
                 // only one exonic outedge that leads to next node
 				break;
 			}
@@ -1039,21 +1038,60 @@ public class AnnotationMapper extends SplicingGraph {
     }
 
 
-    public Map<String,Integer> getIntronReads(boolean paired) {
-        Map<String,Integer> nodesReads = new HashMap<String,Integer>();
+    public Map<String,Integer[]> getAllIntronicReads() {
+        Map<String,Integer[]> nodesReads = new HashMap<String,Integer[]>();
         Node n = null;
         for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
             n = getNodesInGenomicOrder()[i];
             if (n.getSite().isRightFlank()) {
                 Vector<SimpleEdge> ev = n.getOutEdges();
                 for (SimpleEdge e : ev) {
-                    if (e.isIntronic()) {
-                        nodesReads.put(e.toString(), ((SimpleEdgeMappings)e).getMappings().getReadNr()+((SimpleEdgeMappings)e).getMappings().getRevReadNr());
+                    if (e.isAllIntronic()) {
+                        SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings)e;
+                        nodesReads.put(e.toString(), new Integer[]{e1.getMappings().getReadNr()+e1.getMappings().getRevReadNr(),e1.getBinCoverage()});
                     }
                 }
             }
         }
         return nodesReads;
+    }
+
+    public Map<String,Integer[]> getAllIntronicReads(Transcript t) {
+        Map<String,Integer[]> nodesReads = new HashMap<String,Integer[]>();
+        long[] tsupp = encodeTset(t);
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length-1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isRightFlank() && !isNull(intersect(n.getTranscripts(),tsupp))) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (e.isAllIntronic() && !isNull(intersect(e.getTranscripts(),tsupp))) {
+                        SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings)e;
+                        nodesReads.put(e.toString(), new Integer[]{e1.getMappings().getReadNr()+e1.getMappings().getRevReadNr(),e1.getBinCoverage()});
+                    }
+                }
+            }
+        }
+        return nodesReads;
+    }
+
+    public void writeAllIntronicReads(ZipOutputStream out) throws IOException {
+        try {
+            out.putNextEntry(new ZipEntry(gene.getGeneID()+"/"));
+            for (Transcript t : gene.getTranscripts()) {
+                String s = "";
+                Map<String,Integer[]> reads = getAllIntronicReads();
+                out.putNextEntry(new ZipEntry(gene.getGeneID()+"/" + t.getTranscriptID()));
+                for (String k : reads.keySet()) {
+                    s = new String(k + "\t" + reads.get(k) + "\n");
+                    out.write(s.getBytes());
+                }
+                out.closeEntry();
+            }
+            out.closeEntry();
+        } finally {
+            out.flush();
+        }
     }
 
 }
