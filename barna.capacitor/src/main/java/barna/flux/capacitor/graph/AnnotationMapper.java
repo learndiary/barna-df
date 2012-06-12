@@ -324,8 +324,6 @@ public class AnnotationMapper extends SplicingGraph {
 			// map read pairs
 			while (lineIterator.hasNext()) {
 
-                boolean debugPairs= false;
-
 				dobject= new BEDMapping(lineIterator.next());
 				++nrMappingsLocus;
 				CharSequence name= dobject.getName();
@@ -337,8 +335,6 @@ public class AnnotationMapper extends SplicingGraph {
 				if (paired&& attributes.flag== 2)	// don't iterate twice, for counters
 					continue;
 				AbstractEdge target= getEdge2(dobject);
-                if(target!= null&& target.toString().contains("4848584^4857551-"))
-                    debugPairs= true;
                 if (target== null) {
 					++nrMappingsNotMapped;
 					continue;	// couldn't map
@@ -367,8 +363,6 @@ public class AnnotationMapper extends SplicingGraph {
 							continue;
 
 						AbstractEdge target2= getEdge2(dobject2);
-                        if(target2!= null&& target2.toString().contains("4848584^4857551-"))
-                            debugPairs= true;
 						if (target2== null) {
 							++nrMappingsNotMapped;
 							continue;
@@ -410,10 +404,6 @@ public class AnnotationMapper extends SplicingGraph {
 						}
 						((SuperEdgeMappings) se).getMappings().incrReadNr();
 						nrMappingsMapped+= 2;
-                        if (debugPairs) {
-                            System.err.println(dobject);
-                            System.err.println(dobject2);
-                        }
 						if (buffy!= null) 
 							writeInsert(buffy, se, dobject, dobject2, attributes2.id);
 					}
@@ -1009,7 +999,10 @@ public class AnnotationMapper extends SplicingGraph {
         for (SuperEdge se : seVector) {
             /*if (se.getSuperEdges()!=null)
                 reads+=countReads(se.getSuperEdges());  */
-            reads+=((SuperEdgeMappings)se).getMappings().getReadNr();
+            int n = 1;
+            if (se.getEdges()[0].getClass().isAssignableFrom(SuperEdgeMappings.class) && se.getEdges()[0].equals(se.getEdges()[1]))
+                n = 2;
+            reads+=n*((SuperEdgeMappings)se).getMappings().getReadNr();
         }
         return reads;
     }
