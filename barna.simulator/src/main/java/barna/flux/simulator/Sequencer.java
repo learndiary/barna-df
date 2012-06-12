@@ -432,22 +432,22 @@ public class Sequencer implements Callable<Void> {
      * @param end       the end read end position in transcript coordinates (0-based)
      * @param t         the transcript with genomic positions (1-based)
      * @param molNr     molecule number of the transcript
-     * @param tDir    absolute direction of the transcript
+     * @param aDir    absolute direction of the transcript
      * @param fragStart fragment start start position of the fragment in transcript coordinates (0-based)
      * @param fragEnd   fragment end end position of the fragment in transcript coordinates (0-based)
      * @param left      flag indicating whether the read is the left end of the fragment
      * @param pairedEndSide either 1 or 2 or anything else if no pairedend reads are produced
      * @return polyA the number of nucleotides in the poly-A tail
      */
-    public static int createRead(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte tDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public static int createRead(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte aDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
 
-
+        byte tDir= t.getStrand();
         int originalStart = start;
         int originalEnd = end;
         int tlen = t.getExonicLength();
 
         if (start > tlen- 1) {
-            createReadPolyA(obj, start, end, t, molNr, tDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
+            createReadPolyA(obj, start, end, t, molNr, aDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
             return (end- start+ 1);
         }
         int offsStart = 0, offsEnd = 0;
@@ -477,21 +477,38 @@ public class Sequencer implements Callable<Void> {
             		"], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
             		"], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
         }
-        bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
-                : bedStart + (offsEnd * strand);    // use original bedstart, before!
-        bedStart += offsStart * strand;            // correct out of range
         if (bedStart > bedEnd) {
             if (t.getStrand() >= 0) {
                 throw new RuntimeException("Invalid read (end before start): " +
-                		"tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+ 
-                		"], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
-                		"], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
+                        "tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+
+                        "], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
+                        "], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
             }
             int h = bedStart;
             bedStart = bedEnd;
             bedEnd = h;    // swap for neg strand
         }
+//        bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
+//                : bedStart + (offsEnd * strand);    // use original bedstart, before!
+        if (offsEnd> 0) {
+            if (tDir> 0)
+                bedEnd+= offsEnd;
+            else
+                bedStart-= offsEnd;
+        } else {    // <0, before start
+            if (tDir> 0)
+                bedStart+= offsEnd;
+            else
+                bedEnd-= offsEnd;
+        }
+        //bedStart += offsStart * strand;            // correct out of range
+        if (tDir> 0)
+            bedStart-= offsStart;
+        else
+            bedEnd+= offsStart;
         --bedStart; // lower the lower pos, BED:0-based
+
+        bedStart= Math.max(0, bedStart);    // prevent underflow
 
         // build object
         obj.clear();
@@ -502,12 +519,12 @@ public class Sequencer implements Callable<Void> {
         obj.append(bedEnd);
         obj.append(BYTE_TAB);
         appendReadName(obj, t,
-                molNr, tDir, fragStart, fragEnd,
+                molNr, aDir, fragStart, fragEnd,
                 originalStart, originalEnd, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
-        obj.append(tDir >= 0 ? BYTE_PLUS : BYTE_MINUS);
+        obj.append(aDir >= 0 ? BYTE_PLUS : BYTE_MINUS);
         obj.append(BYTE_ARRAY_FROM_STRAND_TO_BLOCKS, 0,
                 BYTE_ARRAY_FROM_STRAND_TO_BLOCKS.length);    // spare if there are blocks?
         if (idxExA == idxExB) {    // no blocks, spare?
@@ -585,7 +602,7 @@ public class Sequencer implements Callable<Void> {
         if (x != CHR_POLYA.length()) {        // not in pA, at least partially
             obj.readSequence(cs);    // not completely in poly-A
             cs.toUpperCase(seqStart, cs.end);
-            int diff= (tDir> 0? obj.getEnd(): -obj.getStart()) - t3p;
+            int diff= (tDir> 0? obj.getEnd(): -(obj.getStart()+ 1)) - t3p;
             // remove trailing N's outside of chr sequence if in polyA-tail
             if (diff> 0) {
                 diff= Math.min(diff, cs.end- seqStart);
