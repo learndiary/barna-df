@@ -45,13 +45,33 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         mappings.incrReadNr();
     }
 
+    public void incrRevReadNr(int readStartPos, int readEndPos) {
+        int p = Arrays.binarySearch(binLimits,readStartPos);
+        if (p<0) {
+            p = -(p+1);
+        }
+        int q = Arrays.binarySearch(binLimits,readEndPos);
+        if (q<0) {
+            q = -(q+1);
+        }
+        for (int i = p;i<=q;i++) {
+            binReads[i]++;
+        }
+        mappings.incrRevReadNr();
+    }
+
     public int getBinCoverage() {
         int count = 0;
         for (int i = 0;i<binReads.length;i++) {
             if (binReads[i]>0)
                 count++;
         }
-        return Math.round((float)count/binReads.length*100);
+        return Math.round((float) count / binReads.length * 100);
+    }
+
+    @Override
+    public boolean isAllIntronic() {
+        return true;
     }
 
     /*protected double getReadDist(int[] binReads, int n) {

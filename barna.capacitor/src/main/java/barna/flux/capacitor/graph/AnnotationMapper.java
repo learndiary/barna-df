@@ -414,6 +414,8 @@ public class AnnotationMapper extends SplicingGraph {
 					if (target.isAllIntronic()) {
                         if (sense)
                             ((SimpleEdgeIntronMappings)target).incrReadNr(dobject.getStart(), dobject.getEnd());
+                        else
+                            ((SimpleEdgeIntronMappings)target).incrRevReadNr(dobject.getStart(), dobject.getEnd());
                     }   else {
                         if (sense)
                             ((MappingsInterface) target).getMappings().incrReadNr();
@@ -631,13 +633,13 @@ public class AnnotationMapper extends SplicingGraph {
 		int p= Arrays.binarySearch(su, gstart);	// anchor<= 5'end of read
 		if (p< 0) {
 			p= -(p+ 1);	// falls before
-			/*if (nodes[p].getSite().isLeftFlank()
+			if (nodes[p].getSite().isLeftFlank()
 				&& nodes[p- 1].getSite().isRightFlank()) {	// p!= 0, for src
 				
 				boolean found= checkExonicEdge(nodes[p- 1], nodes[p]);
 				if (!found)
 					return null;	// in intron
-			} */
+			}
 			//else, in both cases
 			--p;	// p> 0, src
 		} else {	// hits exact
@@ -648,13 +650,13 @@ public class AnnotationMapper extends SplicingGraph {
 		int q= Arrays.binarySearch(su, gend);	// anchor>= 3'end of read
 		if (q< 0) {
 			q= -(q+ 1);	// falls before
-			/*if (nodes[q].getSite().isLeftFlank()&&
+			if (nodes[q].getSite().isLeftFlank()&&
 					nodes[q- 1].getSite().isRightFlank()) {
 
 				boolean found= checkExonicEdge(nodes[q- 1], nodes[q]);
 				if (!found)
 					return null;	// in intron
-			}// else nothing, falls before q marks end*/
+			}// else nothing, falls before q marks end
 		} else {	// hits exact			
 			if (nodes[q].getSite().isLeftFlank())
 				++q;
@@ -672,8 +674,10 @@ public class AnnotationMapper extends SplicingGraph {
 
 				SimpleEdge e= iter.next();
                 // ... && ((!e.isExonic())|| (!e.isAllIntronic()))
-				if ((nodes[p].getSite().isLeftFlank()&&!e.isExonic())||(nodes[p].getSite().isRightFlank()&&!e.isAllIntronic()))
-					continue;
+				if (!e.isExonic()) {
+					//if (!e.isAllIntronic())
+                        continue;   //single tx intron
+                }
 				v.add(e);
 				head= e.getHead();
 				found= true;
@@ -701,8 +705,9 @@ public class AnnotationMapper extends SplicingGraph {
 	@Override
 	protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
         SimpleEdgeMappings e;
-        if (v.getSite().isDonor() && w.getSite().isAcceptor())
+        if (v.getSite().isDonor() && w.getSite().isAcceptor()&&decodeTset(newTset).length==gene.getTranscriptCount()) {
             e = new SimpleEdgeIntronMappings(v,w);
+        }
         else
             e= new SimpleEdgeMappings(v, w);
 		e.setTranscripts(newTset);
@@ -981,8 +986,15 @@ public class AnnotationMapper extends SplicingGraph {
         }
         TreeMap<String,Integer> sjReads = new TreeMap<String, Integer>();
         for (SuperEdge edge : nodesReads.keySet()) {
-            int donor = edge.getEdges()[0].getHead().getSite().isDonor()?edge.getEdges()[0].getHead().getSite().getPos() : -1;
-            int acceptor = edge.getEdges()[1].getTail().getSite().isAcceptor()?edge.getEdges()[1].getTail().getSite().getPos() : -1;
+            int donor = -1, acceptor = -1;
+            for (int i = 0; i < edge.getEdges().length-1;i++) {
+                SimpleEdge e = (SimpleEdge)edge.getEdges()[i];
+                SimpleEdge e1 = (SimpleEdge)edge.getEdges()[i+1];
+                if (e.getHead().getSite().isDonor() && e1.getTail().getSite().isAcceptor()) {
+                    donor = e.getHead().getSite().getPos();
+                    acceptor = e1.getTail().getSite().getPos();
+                }
+            }
             if (donor ==-1 || acceptor ==-1)
                 continue;
             if (sjReads.containsKey(donor+"-"+acceptor))
@@ -999,7 +1011,7 @@ public class AnnotationMapper extends SplicingGraph {
             /*if (se.getSuperEdges()!=null)
                 reads+=countReads(se.getSuperEdges());  */
             int n = 1;
-            if (se.getEdges()[0].getClass().isAssignableFrom(SuperEdgeMappings.class) && se.getEdges()[0].equals(se.getEdges()[1]))
+            if (se.getEdges()[0].getClass().isAssignableFrom(SuperEdgeMappings.class) && se.getEdges()[0].equals(se.getEdges()[se.getEdges().length-1]))
                 n = 2;
             reads+=n*((SuperEdgeMappings)se).getMappings().getReadNr();
         }
@@ -1047,8 +1059,11 @@ public class AnnotationMapper extends SplicingGraph {
                 Vector<SimpleEdge> ev = n.getOutEdges();
                 for (SimpleEdge e : ev) {
                     if (e.isAllIntronic()) {
+                        try {
                         SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings)e;
                         nodesReads.put(e.toString(), new Integer[]{e1.getMappings().getReadNr()+e1.getMappings().getRevReadNr(),e1.getBinCoverage()});
+                        } catch (Exception e1){
+                        }
                     }
                 }
             }
