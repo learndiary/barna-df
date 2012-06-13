@@ -145,7 +145,7 @@ public class UniversalReadDescriptor {
 				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
         mapSimpleDescriptors.put(DESCRIPTORID_CASAVA18,
                 SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
-                        "\\s"+
+                        " "+
                         SYMBOL_TAG_LEFT+ TAG_PAIR + SYMBOL_TAG_RIGHT);
 	}
 //	static {
