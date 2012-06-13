@@ -295,7 +295,8 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 			CharSequence chrom= getChr();
 			int headerLen= cs.end;
 			int bcount= getBlockCount();
-			
+
+            // contingent read
 			if (bcount<= 1) {
 				int first= f* (bedStart+ 1), 
 					last= f* bedEnd,
@@ -305,7 +306,8 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 						first, last, 
 						cs, cs.end, cs.end+ len);
 				cs.end+= len;
-				
+
+            // split read
 			} else for (int i = 0; i < bcount; i++) { 
 				int nextSt= getNextBlockStart(),
 					nextSi= getNextBlockSize();
