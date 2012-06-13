@@ -79,7 +79,8 @@ public class UniversalReadDescriptor {
 		DESCRIPTORID_MATE1_SENSE= "MATE1_SENSE",
 		DESCRIPTORID_MATE2_SENSE= "MATE2_SENSE",
 		DESCRIPTORID_SIMULATOR= "SIMULATOR",
-		DESCRIPTORID_BARNA= "BARNA";
+		DESCRIPTORID_BARNA= "BARNA",
+        DESCRIPTORID_CASAVA18 = "CASAVA18";
 	
 	static HashMap<String, String> mapSimpleDescriptors= new HashMap<String, String>();
 	static {
@@ -141,7 +142,11 @@ public class UniversalReadDescriptor {
 				SYMBOL_SET_LEFT+ "S,A"+ SYMBOL_SET_RIGHT+
 				"/"+
 				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
-				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);	
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
+        mapSimpleDescriptors.put(DESCRIPTORID_CASAVA18,
+                SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
+                        "\\s"+
+                        SYMBOL_TAG_LEFT+ TAG_PAIR + SYMBOL_TAG_RIGHT);
 	}
 //	static {
 //		mapSimpleDescriptors.put(DESCRIPTORID_SIMPLE, "#");
