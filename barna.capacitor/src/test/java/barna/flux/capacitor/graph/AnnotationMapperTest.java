@@ -452,7 +452,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareSJReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_PAIRED, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         //gtf.setReadAll(true);
         gtf.setChromosomeWise(true);
