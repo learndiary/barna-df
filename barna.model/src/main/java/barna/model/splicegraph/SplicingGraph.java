@@ -2076,7 +2076,7 @@ public class SplicingGraph {
 	public SimpleEdge createEdge(Node v, Node w, long[] newTset, byte type, boolean exonic) {
 		
 		SimpleEdge e= getEdge(v,w,exonic);
-		if (e== null || !e.isAllIntronic()&&type == SimpleEdge.ALL_INTRONIC) {
+		if (e== null){// || !e.isAllIntronic()&&type == SimpleEdge.ALL_INTRONIC) {
 			e= createSimpleEdge(v, w, newTset);
             e.type= type;
 			if (exonic)
