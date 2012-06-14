@@ -123,6 +123,19 @@ public class AnnotationMapperTest extends TestCase {
         //System.err.println("[TEST] GTF read.");
     }
 
+    private String[] getNextExon(int i, String[] exon) {
+        String [] nextExon = null;
+        for (int j=i+1;j<nodes.keySet().size();j++) {
+            nextExon = (String[])nodes.keySet().toArray()[j];
+            for(String tx : nodes.get(exon)) {
+                if (nodes.get(nextExon).contains(tx)) {
+                    return nextExon;
+                }
+            }
+        }
+        return nextExon;
+    }
+
     private Map<String, Integer> getSJReads(Gene g, boolean paired) throws Exception {
         BufferedReader bedReader = new BufferedReader(new InputStreamReader(new FileInputStream(bedFile)));
         Map<String, Integer> reads = new TreeMap<String, Integer>();
@@ -159,12 +172,7 @@ public class AnnotationMapperTest extends TestCase {
                             }
                         }
                         if (nBlocks == 2 && i<nodes.keySet().size()-1) {
-                            String[] nextExon = null;
-                            for (int j=i+1;j<nodes.keySet().size();j++) {
-                                nextExon = (String[])nodes.keySet().toArray()[j];
-                                if (nodes.get(nextExon).contains(nodes.get(exon))||nodes.get(nextExon).contains(nodes.get(exon)))
-                                    break;
-                            }
+                            String[] nextExon = getNextExon(i,exon);
                             int[] block1 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + Integer.parseInt(bLine[10].split(",")[0])};
                             int[] block2 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + Integer.parseInt(bLine[10].split(",")[1])};
                             if (Integer.parseInt(exon[0]) <= block1[0] && Integer.parseInt(exon[1]) == block1[1] && Integer.parseInt(nextExon[0]) == block2[0] && Integer.parseInt(nextExon[1]) >= block2[1]) {
