@@ -127,7 +127,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         if (memoryBound <= 0) {
             throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         }
-        this.memoryBound = Math.max(2*1024*1024, memoryBound);
+        this.memoryBound = Math.min((128*1024*1024), Math.max(2*1024*1024, memoryBound));
         this.silent = silent;
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
