@@ -193,6 +193,7 @@ public class UnixStreamSorterTest {
     public static void main(String[] args) throws Exception {
         Execute.initialize(16);
         UnixStreamSorter sorter = new UnixStreamSorter(-1, false, "\t");
+        sorter.setSilent(false);
 
 //        UnixStreamSorter sorter = new UnixStreamSorter(200*1024*1024, new Comparator<String>(){
 //            @Override
