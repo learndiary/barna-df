@@ -132,6 +132,10 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
 
+    public void setSilent(boolean silent) {
+        this.silent = silent;
+    }
+
     public void sort(InputStream input, OutputStream output) throws IOException {
         LineComparator comparator = getLineComparator();
 
