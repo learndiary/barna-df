@@ -32,9 +32,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -191,5 +189,23 @@ public class UnixStreamSorterTest {
             fail();
         }
     }
+
+    public static void main(String[] args) throws Exception {
+        Execute.initialize(16);
+        UnixStreamSorter sorter = new UnixStreamSorter(200*1024*1024, false, -1, false, "\t");
+//        UnixStreamSorter sorter = new UnixStreamSorter(200*1024*1024, new Comparator<String>(){
+//            @Override
+//            public int compare(String o1, String o2) {
+//                return o1.compareTo(o2);
+//            }
+//        });
+        String input = "/home/thasso/data/simulator/genomes/mm9/mm9.fasta";
+        String output = "/home/thasso/data/simulator/genomes/mm9/mm9.fasta.sorted";
+        long t = System.currentTimeMillis();
+        sorter.sort(new BufferedInputStream(new FileInputStream(input)), new BufferedOutputStream(new FileOutputStream(output)));
+        System.out.println((System.currentTimeMillis()-t)/1000+"s");
+        Execute.shutdown();
+    }
+
 
 }
