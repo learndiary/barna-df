@@ -2036,9 +2036,11 @@ public class SplicingGraph {
 					minConf= (byte) Math.min(minConf, t[j].getSourceType());
 				if (t.length> 0) {
 						SimpleEdge eee= createEdge(nodes[i-1], nodes[i], exonic, minConf,true);
-				} else {
-                    SimpleEdge allintronic = createEdge(nodes[i-1], nodes[i], without(active,exonic), SimpleEdge.ALL_INTRONIC,false);
-                }
+				} /*else {
+                    if (!isNull(active)) {
+                        SimpleEdge allintronic = createEdge(nodes[i-1], nodes[i], without(active,exonic), SimpleEdge.ALL_INTRONIC,false);
+                    }
+                }   */
 
 	
 				active= activeNext;
@@ -2074,9 +2076,9 @@ public class SplicingGraph {
 	public SimpleEdge createEdge(Node v, Node w, long[] newTset, byte type, boolean exonic) {
 		
 		SimpleEdge e= getEdge(v,w,exonic);
-		if (e== null || type == SimpleEdge.ALL_INTRONIC) {
+		if (e== null){// || !e.isAllIntronic()&&type == SimpleEdge.ALL_INTRONIC) {
 			e= createSimpleEdge(v, w, newTset);
-			e.type= type;
+            e.type= type;
 			if (exonic)
 				e.exonic= true;
 			edgeHash.put(v.getSite().toString()+w.getSite().toString()+(exonic?"1":"0"),e);

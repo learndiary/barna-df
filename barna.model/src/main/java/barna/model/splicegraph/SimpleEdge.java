@@ -157,7 +157,7 @@ public class SimpleEdge extends AbstractEdge {
 	}
 
     public boolean isAllIntronic() {
-        return type == ALL_INTRONIC;
+        return false;//type == ALL_INTRONIC;
     }
 
     public static PositionComparator getDefaultPositionComparator() {

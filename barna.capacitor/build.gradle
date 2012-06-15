@@ -63,6 +63,37 @@ task distZip(type: Zip) {
     with distSpec
 }
 
+
+
+/**
+ * Create aggregated javaDoc from all subprojects
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for all capacitor modules"
+    source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.capacitor"),project(":barna.lpsolver") ].collectAll{p-> p.sourceSets.main.java}
+    destinationDir = file("${buildDir}/docs/flux-capacitor-${version}")
+    configure(options) {
+        windowTitle = 'Flux-Capacitor API Documentation'
+        docTitle = "Flux-Capacitor JavaDoc (${project(':barna.capacitor').version})"
+        links = [ 'http://download.oracle.com/javase/6/docs/api/',
+                'http://download.oracle.com/javaee/6/api/' ]
+    }
+}
+
+task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
+    description = "Zip the aggregated javadoc"
+    classifier = "javadoc"
+    baseName = "flux-capacitor"
+    from("${buildDir}/docs/flux-capacitor-${version}"){
+        if(version =~ /.*SNAPSHOT.*/){
+            into "flux-capacitor-DEVEL"
+        }else{
+            into "flux-capacitor-${version}"
+        }
+    }
+}
+
+
 task dist(dependsOn: ['distTar', 'distZip'])
 
 artifacts{
