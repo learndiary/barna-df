@@ -85,7 +85,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
      * @param fieldSeparator the field separator
      */
     public UnixStreamSorter(int field, boolean numeric, String fieldSeparator) {
-        this((long) (Runtime.getRuntime().maxMemory() * 0.001), field, numeric, fieldSeparator);
+        this((long) (Runtime.getRuntime().maxMemory() /16), field, numeric, fieldSeparator);
     }
 
     /**
@@ -97,7 +97,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
      * @param fieldSeparator the field separator
      */
     public UnixStreamSorter(boolean silent, int field, boolean numeric, String fieldSeparator) {
-        this((long) (Runtime.getRuntime().maxMemory() * 0.001), silent, field, numeric, fieldSeparator);
+        this((long) (Runtime.getRuntime().maxMemory() /16), silent, field, numeric, fieldSeparator);
     }
 
     /**
@@ -127,7 +127,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         if (memoryBound <= 0) {
             throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         }
-        this.memoryBound = Math.max(16*1024*1024, memoryBound);
+        this.memoryBound = Math.max(2*1024*1024, memoryBound);
         this.silent = silent;
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
