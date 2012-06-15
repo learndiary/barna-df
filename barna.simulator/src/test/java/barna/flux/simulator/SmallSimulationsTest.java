@@ -156,6 +156,32 @@ public class SmallSimulationsTest {
         // we should have a fastq file
         assertTrue(new File(settings.getParentFile(), "human100-2.fasta").exists());
     }
+    @Test
+    public void testRunWithoutDefaultErrorModelAndFastQOutput(){
+
+        // disable any questions
+        Log.setInteractive(false);
+        // the setting file
+        File settings = new File(getClass().getResource("/default-error-model.par").getFile());
+
+        SimulationPipeline pipeline = new SimulationPipeline();
+        pipeline.setFile(settings);
+        pipeline.setExpression(true);
+        pipeline.setLibrary(true);
+        pipeline.setSequence(true);
+
+        try {
+            pipeline.call();
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        // check read count
+        assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
+        // we should have a fastq file
+        assertTrue(new File(settings.getParentFile(), "default-error-model.fastq").exists());
+    }
 
     @Test
     public void testMinimalProfile(){

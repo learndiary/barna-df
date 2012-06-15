@@ -38,14 +38,16 @@ import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
-import com.google.common.io.Resources;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.util.Random;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
 
 public class SequencerTest {
 
@@ -155,7 +157,7 @@ public class SequencerTest {
         try {
             istream= new FileInputStream(eFile);
             QualityErrorModel errorModel = MarkovErrorModel.loadErrorModel(eFile.getName(), istream);
-            ModelPool babes = new ModelPool(true, errorModel);
+            ModelPool babes = new ModelPool(true, errorModel, errorModel.getReadLength());
 
             // do it
             ByteArrayCharSequence cs= new ByteArrayCharSequence(10);

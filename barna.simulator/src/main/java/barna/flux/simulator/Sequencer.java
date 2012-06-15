@@ -175,7 +175,7 @@ public class Sequencer implements Callable<Void> {
                 }
 
                 errorModel = MarkovErrorModel.loadErrorModel(name, input);
-                babes = new ModelPool(settings.get(FluxSimulatorSettings.FASTA), errorModel);
+                babes = new ModelPool(settings.get(FluxSimulatorSettings.FASTA), errorModel, settings.get(FluxSimulatorSettings.READ_LENGTH));
             } catch (Exception e) {
                 Log.error("Unable to load error model : " + e.getMessage(), e);
                 throw new RuntimeException("Unable to load error model : " + e.getMessage(), e);
@@ -184,19 +184,16 @@ public class Sequencer implements Callable<Void> {
             // check length
             int readLength = settings.get(FluxSimulatorSettings.READ_LENGTH);
             int modelLength = errorModel.getReadLength();
-            if(readLength > modelLength){
-                throw new RuntimeException("The error model supports a read length of " + modelLength + " but\n" +
-                        "you are trying to create reads of length "+ readLength +"! This is not supported. Please \n" +
-                        "use a different error model or reduce your read length!");
-            }
-            if(readLength < modelLength){
+            if(readLength != modelLength){
                 Log.warn("The error model supports a read length of " + modelLength + " but\n" +
-                        "you are trying to create reads of length " + readLength + "!");
+                        "you are trying to create reads of length " + readLength +
+                        ". We are scaling.");
             }
+
             return true;
         }else if( fastOutput){
             // just plain fasta
-            babes = new ModelPool(true, null);
+            babes = new ModelPool(true, null, settings.get(FluxSimulatorSettings.READ_LENGTH));
         }
 
         return false;
