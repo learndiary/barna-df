@@ -1,13 +1,12 @@
 package barna.flux.capacitor.graph;
 
-import barna.commons.StringUtilsTest;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.BufferedIterator;
 import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
-import com.google.common.base.Strings;
+import com.sun.org.apache.bcel.internal.generic.RETURN;
 import com.sun.org.apache.xpath.internal.NodeSet;
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -29,7 +28,7 @@ public class AnnotationMapperTest extends TestCase {
     private final File gtfFile = new File(path+"/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
     private final File bedFile = new File(path+"/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
     private FluxCapacitorSettings settings;
-    Map<String[],ArrayList<String>> nodes = new HashMap<String[], ArrayList<String>>();
+    Map<String,ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
 
     @Override
     public void setUp() throws Exception {
@@ -101,21 +100,21 @@ public class AnnotationMapperTest extends TestCase {
                 if (gLine[2].equals("exon")) {
                     String[] strings = new String[]{gLine[3], gLine[4]};
                     if (tx.equals(gLine[8].split(";")[0].split("\\s")[1])) {
-                        ArrayList<String> list  = null;
-                        if (!nodes.containsKey(strings)) {
-                            list = new ArrayList<String>();
-                            list.add(tx);
+                        ArrayList<String[]> list  = null;
+                        if (!nodes.containsKey(tx)) {
+                            list = new ArrayList<String[]>();
+                            list.add(strings);
                         } else {
-                            list = nodes.get(strings);
-                            if (!list.contains(tx))
-                                list.add(tx);
+                            list = nodes.get(tx);
+                            if (!list.contains(strings))
+                                list.add(strings);
                         }
-                        nodes.put(strings,list);
+                        nodes.put(tx,list);
                     } else {
                         tx = gLine[8].split(";")[0].split("\\s")[1];
-                        ArrayList<String> list = new ArrayList<String>();
-                        list.add(tx);
-                        nodes.put(strings,list);
+                        ArrayList<String[]> list = new ArrayList<String[]>();
+                        list.add(strings);
+                        nodes.put(tx,list);
                     }
                 }
             }
@@ -123,17 +122,23 @@ public class AnnotationMapperTest extends TestCase {
         //System.err.println("[TEST] GTF read.");
     }
 
-    private String[] getNextExon(int i, String[] exon) {
-        String [] nextExon = null;
-        for (int j=i+1;j<nodes.keySet().size();j++) {
-            nextExon = (String[])nodes.keySet().toArray()[j];
-            for(String tx : nodes.get(exon)) {
-                if (nodes.get(nextExon).contains(tx)) {
-                    return nextExon;
+    private boolean containsExon(Map<String,String[]> transcripts,String[] exon) {
+        for (String t : transcripts.keySet()) {
+            if (exon.length!=transcripts.get(t).length)
+                return false;
+            if (exon.length==2) {
+                if (transcripts.get(t)[0].equals(exon[0])&&transcripts.get(t)[1].equals(exon[1])) {
+                    return true;
+                }
+            }
+            if (exon.length==4) {
+                if (transcripts.get(t)[0].equals(exon[0])&&transcripts.get(t)[1].equals(exon[1])&&
+                        transcripts.get(t)[2].equals(exon[2])&&transcripts.get(t)[3].equals(exon[3])) {
+                    return true;
                 }
             }
         }
-        return nextExon;
+        return false;
     }
 
     private Map<String, Integer> getSJReads(Gene g, boolean paired) throws Exception {
@@ -157,33 +162,40 @@ public class AnnotationMapperTest extends TestCase {
         for (String line; (line = bedReader.readLine()) != null; ) {
             String[] bLine = line.split("\t");
             boolean mapped = false;
-            String transcripts = new String();
+            Map<String,String[]> transcripts = new HashMap<String, String[]>();
             int nBlocks = Integer.parseInt(bLine[9]);
             if (bLine[0].equals(g.getChromosome()) && Integer.parseInt(bLine[1]) + 1 >= start && Integer.parseInt(bLine[2]) <= end) {
-                for (int i=0;i<nodes.keySet().size(); i++) {
-                    //for (int i = 0; i < nodes.get(tx).size(); i++) {
+                for (String tx : nodes.keySet()) {
+                    for (int i = 0; i < nodes.get(tx).size(); i++) {
                     //for (String[] pos : nodes.get(tx)) {
-                        String[] exon = (String[])nodes.keySet().toArray()[i];
+                        String[] exon = nodes.get(tx).get(i);
                         if (nBlocks == 1) {
                             if (Integer.parseInt(exon[0]) <= Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(exon[1]) >= Integer.parseInt(bLine[2])) {
                                 mapped = true;
-                                transcripts = barna.commons.utils.StringUtils.toString(nodes.get(exon),',');
+                                if (!containsExon(transcripts,exon))
+                                    transcripts.put(tx,exon);
+                                else
+                                    transcripts.put("("+tx+")",exon);
                                 break;
                             }
                         }
-                        if (nBlocks == 2 && i<nodes.keySet().size()-1) {
-                            String[] nextExon = getNextExon(i,exon);
+                        if (nBlocks == 2 && i<nodes.get(tx).size()-1) {
+                            String[] nextExon = nodes.get(tx).get(i+1);
                             int[] block1 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + Integer.parseInt(bLine[10].split(",")[0])};
                             int[] block2 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + Integer.parseInt(bLine[10].split(",")[1])};
                             if (Integer.parseInt(exon[0]) <= block1[0] && Integer.parseInt(exon[1]) == block1[1] && Integer.parseInt(nextExon[0]) == block2[0] && Integer.parseInt(nextExon[1]) >= block2[1]) {
                                 mapped = true;
-                                transcripts = barna.commons.utils.StringUtils.toString(nodes.get(exon),',');
+                                String[] junction = {exon[0],exon[1],nextExon[0],nextExon[1]};
+                                if (!containsExon(transcripts,junction))
+                                    transcripts.put(tx,junction);
+                                else
+                                    transcripts.put("("+tx+")",junction);
                                 break;
                             }
                         }
-                    //}
-                    if (mapped)
-                        break;
+                    }
+                    /*if (mapped)
+                        break;*/
                 }
                 if (mapped)// && g.getGeneID().equals(bLine[3].split(":")[0]+":"+ bLine[3].split(":")[1]))
                 {
@@ -200,84 +212,36 @@ public class AnnotationMapperTest extends TestCase {
                                 readId = bLine[3].substring(0, bLine[3].length() - 4);
                                 mate = bLine[3].charAt(bLine[3].length()-1);
                             }
+                            String transcript = null;
+                            for (String s : transcripts.keySet()) {
+                                transcript = transcript==null?s : transcript+","+s;
+                            }
 
                             if (mate == '1') {
                                 if (!p1hash.containsKey(readId)) {
                                     String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
                                     ArrayList<String[]> list = new ArrayList<String[]>();
-                                    list.add(new String[]{bLine[1], bLine[5], sj, transcripts});
+                                    list.add(new String[]{bLine[1],bLine[5], sj, transcript});
                                     p1hash.put(readId, list);
                                 } else {
                                     String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
                                     ArrayList<String[]> list = p1hash.get(readId);
-                                    list.add(new String[]{bLine[1], bLine[5], sj, transcripts});
+                                    list.add(new String[]{bLine[1], bLine[5], sj, transcript});
                                     p1hash.put(readId, list);
                                 }
-                                /*if (!p1hash.containsKey(readId)) {
-                                        String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                        ArrayList<String[]> list = new ArrayList<String[]>();
-                                        list.add(new String[]{bLine[1],bLine[5], sj});
-                                        HashMap<String,ArrayList<String[]>> map = new HashMap<String, ArrayList<String[]>>();
-                                        for (String tx : transcripts) {
-                                            map.put(tx,list);
-                                        }
-                                        p1hash.put(readId, map);
-                                    } else {
-                                        String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                        HashMap<String,ArrayList<String[]>> map = p1hash.get(readId);
-                                        for (String tx : transcripts) {
-                                            ArrayList<String[]> list = null;
-                                            if (map.containsKey(tx)) {
-                                                list = map.get(tx);
-
-                                            } else {
-                                                list = new ArrayList<String[]>();
-                                                list.add(new String[]{bLine[1], bLine[5], sj});
-                                            }
-                                            map.put(tx,list);
-                                        }
-                                        p1hash.put(readId, map);
-                                    }
-//                                }*/
                             }
                             if (mate == '2') {
                                 if (!p2hash.containsKey(readId)) {
                                     String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
                                     ArrayList<String[]> list = new ArrayList<String[]>();
-                                    list.add(new String[]{bLine[1], bLine[5], sj, transcripts});
+                                    list.add(new String[]{bLine[1], bLine[5], sj, transcript});
                                     p2hash.put(readId, list);
                                 } else {
                                     String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
                                     ArrayList<String[]> list = p2hash.get(readId);
-                                    list.add(new String[]{bLine[1], bLine[5], sj, transcripts});
+                                    list.add(new String[]{bLine[1], bLine[5], sj, transcript});
                                     p2hash.put(readId, list);
                                 }
-                                /*if (!p2hash.containsKey(readId)) {
-                                    String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                    ArrayList<String[]> list = new ArrayList<String[]>();
-                                    list.add(new String[]{bLine[1],bLine[5], sj});
-                                    HashMap<String,ArrayList<String[]>> map = new HashMap<String, ArrayList<String[]>>();
-                                    for (String tx : transcripts) {
-                                        map.put(tx,list);
-                                    }
-                                    p2hash.put(readId, map);
-                                } else {
-                                    String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                    HashMap<String,ArrayList<String[]>> map = p2hash.get(readId);
-                                    for (String tx : transcripts) {
-                                        ArrayList<String[]> list = null;
-                                        if (map.containsKey(tx)) {
-                                            list = map.get(tx);
-                                            list.add(new String[]{bLine[1], bLine[5], sj});
-                                        } else {
-                                            list = new ArrayList<String[]>();
-                                            list.add(new String[]{bLine[1], bLine[5], sj});
-                                        }
-                                        map.put(tx,list);
-                                    }
-                                    p2hash.put(readId, map);
-                                }*/
-//                                }
                             }
                         }
                     } else {
@@ -299,38 +263,68 @@ public class AnnotationMapperTest extends TestCase {
         if (paired) {
             for (String id : p1hash.keySet()) {
                 if (p2hash.containsKey(id)) {
-                    int p1Start,p2Start;
-                    byte p1Strand,p2Strand;
-                    String tx = null;
-
                     ArrayList<String[]> p1 = p1hash.get(id);
                     ArrayList<String[]> p2 = p2hash.get(id);
+                    int p1Start,p2Start;
+                    byte p1Strand,p2Strand;
+                    String[] tx1,tx2;
                     for (String[] s1 : p1) {
                         for (String[] s2 : p2) {
+                            tx1 = s1[3].split(",");
+                            tx2 = s2[3].split(",");
+                            Arrays.sort(tx1);
+                            Arrays.sort(tx2);
                             p1Start = Integer.parseInt(s1[0]);
                             p2Start = Integer.parseInt(s2[0]);
                             p1Strand = s1[1].equals("+")?(byte)1:(byte)-1;
                             p2Strand = s2[1].equals("+")?(byte)1:(byte)-1;
                             if (p1Strand!=p2Strand&&
-                                    p1Start<p2Start&&p1Strand==g.getStrand()||
-                                    p2Start<p1Start&&p2Strand==g.getStrand()) {
-                                if (s1[2] != null) {
-                                    String sj = s1[2];
-                                    nr = 1;
-                                    if (reads.containsKey(sj)) {
-                                        nr += reads.get(sj);
+                                ((p1Start<p2Start&&p1Strand==g.getStrand())||
+                                (p2Start<p1Start&&p2Strand==g.getStrand()))) {
+
+                                if (!Arrays.equals(tx1,tx2)) {
+                                    for (String s : tx1) {
+                                        for (String ss : tx2) {
+                                            if (!(s.startsWith("(")&&ss.startsWith("("))) {
+                                                if (s.replaceAll("[()]","").equals(ss.replaceAll("[()]",""))&&!s.startsWith("(")&&s1[2] != null) {
+                                                    String sj = s1[2];
+                                                    nr = 1;
+                                                    if (reads.containsKey(sj)) {
+                                                        nr += reads.get(sj);
+                                                    }
+                                                    reads.put(sj, nr);
+                                                }
+
+                                                if (s.replaceAll("[()]","").equals(ss.replaceAll("[()]",""))&&!ss.startsWith("(")&&s2[2] != null) {
+                                                    String sj = s2[2];
+                                                    nr = 1;
+                                                    if (reads.containsKey(sj)) {
+                                                        nr += reads.get(sj);
+                                                    }
+                                                    reads.put(sj, nr);
+                                                }
+                                            }
+                                        }
                                     }
-                                    reads.put(sj, nr);
-                                }
-                                if (s2[2] != null) {
-                                    String sj = s2[2];
-                                    nr = 1;
-                                    if (reads.containsKey(sj)) {
-                                        nr += reads.get(sj);
+                                } else {
+                                    if (s1[2] != null) {
+                                        String sj = s1[2];
+                                        nr = 1;
+                                        if (reads.containsKey(sj)) {
+                                            nr += reads.get(sj);
+                                        }
+                                        reads.put(sj, nr);
                                     }
-                                    reads.put(sj, nr);
+
+                                    if (s2[2] != null) {
+                                        String sj = s2[2];
+                                        nr = 1;
+                                        if (reads.containsKey(sj)) {
+                                            nr += reads.get(sj);
+                                        }
+                                        reads.put(sj, nr);
+                                    }
                                 }
-                                //break;
                             }
                         }
                     }
@@ -358,7 +352,7 @@ public class AnnotationMapperTest extends TestCase {
         start = Math.max(1, start - tol);
         end = end + tol;
 
-        /*for (String tx : nodes.keySet()) {
+        for (String tx : nodes.keySet()) {
             for (int i = 0; i < nodes.get(nodes.keySet().toArray()[0]).size()-1; i++) {
                 String[] exon = nodes.get(nodes.keySet().toArray()[0]).get(i);
                 String[] nextExon = nodes.get(nodes.keySet().toArray()[0]).get(i+1);
@@ -369,7 +363,7 @@ public class AnnotationMapperTest extends TestCase {
                     introns.put(intron, introns.get(intron)+1);
                 }
             }
-        }*/
+        }
         for (String line; (line = bedReader.readLine()) != null; ) {
             String[] bLine = line.split("\t");
             boolean mapped = false;
