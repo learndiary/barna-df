@@ -127,7 +127,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         if (memoryBound <= 0) {
             throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         }
-        this.memoryBound = memoryBound;
+        this.memoryBound = Math.max(16*1024*1024, memoryBound);
         this.silent = silent;
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
     }
@@ -257,7 +257,11 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
 
         int blocks = (int) ((fileSize / memoryBound) + 1);
         if (!silent) {
-            Log.progressStart("\tdividing input to ~"+blocks + " blocks ");
+            if(fileSize > 0){
+                Log.progressStart("\tDividing input to ~"+blocks + " blocks ");
+            }else{
+                Log.progressStart("\tDividing into blocks of " + ((memoryBound/1024)/1024) + "MB");
+            }
         }
 
         try {
