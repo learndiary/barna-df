@@ -24,11 +24,11 @@ import java.util.zip.ZipOutputStream;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private String path = "/home/emilio/fromMicha";
-    private final File gtfFile = new File(path+"/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
-    private final File bedFile = new File(path+"/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
+    private String path = "/Users/emilio/fromMicha";
+    private final File gtfFile = new File(path + "/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
+    private final File bedFile = new File(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
     private FluxCapacitorSettings settings;
-    Map<String,ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
+    Map<String, ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
 
     @Override
     public void setUp() throws Exception {
@@ -94,13 +94,13 @@ public class AnnotationMapperTest extends TestCase {
         //System.err.println("\n[TEST] Reading GTF for gene "+g.getGeneID()+" ...");
         for (String line; (line = gtfReader.readLine()) != null; ) {
             String[] gLine = line.split("\t");
-            if (gLine[0].equals(g.getChromosome()) && gLine[6].equals(g.getStrand()<0?"-":"+") && Integer.parseInt(gLine[3]) >= start && Integer.parseInt(gLine[4]) <= end) {
+            if (gLine[0].equals(g.getChromosome()) && gLine[6].equals(g.getStrand() < 0 ? "-" : "+") && Integer.parseInt(gLine[3]) >= start && Integer.parseInt(gLine[4]) <= end) {
                 if (tx == null)
-                    tx = gLine[8].split(";")[0].split("\\s")[1].replace("\"","");
+                    tx = gLine[8].split(";")[0].split("\\s")[1].replace("\"", "");
                 if (gLine[2].equals("exon")) {
                     String[] strings = new String[]{gLine[3], gLine[4]};
                     if (tx.equals(gLine[8].split(";")[0].split("\\s")[1])) {
-                        ArrayList<String[]> list  = null;
+                        ArrayList<String[]> list = null;
                         if (!nodes.containsKey(tx)) {
                             list = new ArrayList<String[]>();
                             list.add(strings);
@@ -109,12 +109,12 @@ public class AnnotationMapperTest extends TestCase {
                             if (!list.contains(strings))
                                 list.add(strings);
                         }
-                        nodes.put(tx,list);
+                        nodes.put(tx, list);
                     } else {
                         tx = gLine[8].split(";")[0].split("\\s")[1];
                         ArrayList<String[]> list = new ArrayList<String[]>();
                         list.add(strings);
-                        nodes.put(tx,list);
+                        nodes.put(tx, list);
                     }
                 }
             }
@@ -122,18 +122,18 @@ public class AnnotationMapperTest extends TestCase {
         //System.err.println("[TEST] GTF read.");
     }
 
-    private boolean containsExon(Map<String,String[]> transcripts,String[] exon) {
+    private boolean containsExon(Map<String, String[]> transcripts, String[] exon) {
         for (String t : transcripts.keySet()) {
-            if (exon.length!=transcripts.get(t).length)
+            if (exon.length != transcripts.get(t).length)
                 return false;
-            if (exon.length==2) {
-                if (transcripts.get(t)[0].equals(exon[0])&&transcripts.get(t)[1].equals(exon[1])) {
+            if (exon.length == 2) {
+                if (transcripts.get(t)[0].equals(exon[0]) && transcripts.get(t)[1].equals(exon[1])) {
                     return true;
                 }
             }
-            if (exon.length==4) {
-                if (transcripts.get(t)[0].equals(exon[0])&&transcripts.get(t)[1].equals(exon[1])&&
-                        transcripts.get(t)[2].equals(exon[2])&&transcripts.get(t)[3].equals(exon[3])) {
+            if (exon.length == 4) {
+                if (transcripts.get(t)[0].equals(exon[0]) && transcripts.get(t)[1].equals(exon[1]) &&
+                        transcripts.get(t)[2].equals(exon[2]) && transcripts.get(t)[3].equals(exon[3])) {
                     return true;
                 }
             }
@@ -162,34 +162,34 @@ public class AnnotationMapperTest extends TestCase {
         for (String line; (line = bedReader.readLine()) != null; ) {
             String[] bLine = line.split("\t");
             boolean mapped = false;
-            Map<String,String[]> transcripts = new HashMap<String, String[]>();
+            Map<String, String[]> transcripts = new HashMap<String, String[]>();
             int nBlocks = Integer.parseInt(bLine[9]);
             if (bLine[0].equals(g.getChromosome()) && Integer.parseInt(bLine[1]) + 1 >= start && Integer.parseInt(bLine[2]) <= end) {
                 for (String tx : nodes.keySet()) {
                     for (int i = 0; i < nodes.get(tx).size(); i++) {
-                    //for (String[] pos : nodes.get(tx)) {
+                        //for (String[] pos : nodes.get(tx)) {
                         String[] exon = nodes.get(tx).get(i);
                         if (nBlocks == 1) {
                             if (Integer.parseInt(exon[0]) <= Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(exon[1]) >= Integer.parseInt(bLine[2])) {
                                 mapped = true;
-                                if (!containsExon(transcripts,exon))
-                                    transcripts.put(tx,exon);
+                                if (!containsExon(transcripts, exon))
+                                    transcripts.put(tx, exon);
                                 else
-                                    transcripts.put("("+tx+")",exon);
+                                    transcripts.put("(" + tx + ")", exon);
                                 break;
                             }
                         }
-                        if (nBlocks == 2 && i<nodes.get(tx).size()-1) {
-                            String[] nextExon = nodes.get(tx).get(i+1);
+                        if (nBlocks == 2 && i < nodes.get(tx).size() - 1) {
+                            String[] nextExon = nodes.get(tx).get(i + 1);
                             int[] block1 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + Integer.parseInt(bLine[10].split(",")[0])};
                             int[] block2 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + Integer.parseInt(bLine[10].split(",")[1])};
                             if (Integer.parseInt(exon[0]) <= block1[0] && Integer.parseInt(exon[1]) == block1[1] && Integer.parseInt(nextExon[0]) == block2[0] && Integer.parseInt(nextExon[1]) >= block2[1]) {
                                 mapped = true;
-                                String[] junction = {exon[0],exon[1],nextExon[0],nextExon[1]};
-                                if (!containsExon(transcripts,junction))
-                                    transcripts.put(tx,junction);
+                                String[] junction = {exon[0], exon[1], nextExon[0], nextExon[1]};
+                                if (!containsExon(transcripts, junction))
+                                    transcripts.put(tx, junction);
                                 else
-                                    transcripts.put("("+tx+")",junction);
+                                    transcripts.put("(" + tx + ")", junction);
                                 break;
                             }
                         }
@@ -207,21 +207,20 @@ public class AnnotationMapperTest extends TestCase {
                                 String[] readDescTokens = bLine[3].split(" ");
                                 readId = readDescTokens[0];
                                 mate = readDescTokens[1].charAt(0);
-                            }
-                            else {
+                            } else {
                                 readId = bLine[3].substring(0, bLine[3].length() - 4);
-                                mate = bLine[3].charAt(bLine[3].length()-1);
+                                mate = bLine[3].charAt(bLine[3].length() - 1);
                             }
                             String transcript = null;
                             for (String s : transcripts.keySet()) {
-                                transcript = transcript==null?s : transcript+","+s;
+                                transcript = transcript == null ? s : transcript + "," + s;
                             }
 
                             if (mate == '1') {
                                 if (!p1hash.containsKey(readId)) {
                                     String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
                                     ArrayList<String[]> list = new ArrayList<String[]>();
-                                    list.add(new String[]{bLine[1],bLine[5], sj, transcript});
+                                    list.add(new String[]{bLine[1], bLine[5], sj, transcript});
                                     p1hash.put(readId, list);
                                 } else {
                                     String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
@@ -265,9 +264,9 @@ public class AnnotationMapperTest extends TestCase {
                 if (p2hash.containsKey(id)) {
                     ArrayList<String[]> p1 = p1hash.get(id);
                     ArrayList<String[]> p2 = p2hash.get(id);
-                    int p1Start,p2Start;
-                    byte p1Strand,p2Strand;
-                    String[] tx1,tx2;
+                    int p1Start, p2Start;
+                    byte p1Strand, p2Strand;
+                    String[] tx1, tx2;
                     for (String[] s1 : p1) {
                         for (String[] s2 : p2) {
                             tx1 = s1[3].split(",");
@@ -276,17 +275,17 @@ public class AnnotationMapperTest extends TestCase {
                             Arrays.sort(tx2);
                             p1Start = Integer.parseInt(s1[0]);
                             p2Start = Integer.parseInt(s2[0]);
-                            p1Strand = s1[1].equals("+")?(byte)1:(byte)-1;
-                            p2Strand = s2[1].equals("+")?(byte)1:(byte)-1;
-                            if (p1Strand!=p2Strand&&
-                                ((p1Start<p2Start&&p1Strand==g.getStrand())||
-                                (p2Start<p1Start&&p2Strand==g.getStrand()))) {
+                            p1Strand = s1[1].equals("+") ? (byte) 1 : (byte) -1;
+                            p2Strand = s2[1].equals("+") ? (byte) 1 : (byte) -1;
+                            if (p1Strand != p2Strand &&
+                                    ((p1Start < p2Start && p1Strand == g.getStrand()) ||
+                                            (p2Start < p1Start && p2Strand == g.getStrand()))) {
 
-                                if (!Arrays.equals(tx1,tx2)) {
+                                if (!Arrays.equals(tx1, tx2)) {
                                     for (String s : tx1) {
                                         for (String ss : tx2) {
-                                            if (!(s.startsWith("(")&&ss.startsWith("("))) {
-                                                if (s.replaceAll("[()]","").equals(ss.replaceAll("[()]",""))&&!s.startsWith("(")&&s1[2] != null) {
+                                            if (!(s.startsWith("(") && ss.startsWith("("))) {
+                                                if (s.replaceAll("[()]", "").equals(ss.replaceAll("[()]", "")) && !s.startsWith("(") && s1[2] != null) {
                                                     String sj = s1[2];
                                                     nr = 1;
                                                     if (reads.containsKey(sj)) {
@@ -295,7 +294,7 @@ public class AnnotationMapperTest extends TestCase {
                                                     reads.put(sj, nr);
                                                 }
 
-                                                if (s.replaceAll("[()]","").equals(ss.replaceAll("[()]",""))&&!ss.startsWith("(")&&s2[2] != null) {
+                                                if (s.replaceAll("[()]", "").equals(ss.replaceAll("[()]", "")) && !ss.startsWith("(") && s2[2] != null) {
                                                     String sj = s2[2];
                                                     nr = 1;
                                                     if (reads.containsKey(sj)) {
@@ -339,7 +338,7 @@ public class AnnotationMapperTest extends TestCase {
         Map<String, Integer> reads = new TreeMap<String, Integer>();
         HashMap<String, ArrayList<String[]>> p1hash = new HashMap<String, ArrayList<String[]>>();
         HashMap<String, ArrayList<String[]>> p2hash = new HashMap<String, ArrayList<String[]>>();
-        Map<String[],Integer> introns = new HashMap<String[], Integer>();
+        Map<String[], Integer> introns = new HashMap<String[], Integer>();
         int nr = 0;
         int start = 0, end = 0, tol = 0;
         start = g.getStart();
@@ -353,27 +352,30 @@ public class AnnotationMapperTest extends TestCase {
         end = end + tol;
 
         for (String tx : nodes.keySet()) {
-            for (int i = 0; i < nodes.get(nodes.keySet().toArray()[0]).size()-1; i++) {
-                String[] exon = nodes.get(nodes.keySet().toArray()[0]).get(i);
-                String[] nextExon = nodes.get(nodes.keySet().toArray()[0]).get(i+1);
-                String[] intron = {exon[1],nextExon[0]};
+            for (int i = 0; i < nodes.get(tx).size() - 1; i++) {
+                String[] exon = nodes.get(tx).get(i);
+                String[] nextExon = nodes.get(tx).get(i + 1);
+                String[] intron = {exon[1], nextExon[0]};
                 if (!introns.containsKey(intron)) {
-                    introns.put(intron,1);
+                    introns.put(intron, 1);
                 } else {
-                    introns.put(intron, introns.get(intron)+1);
+                    introns.put(intron, introns.get(intron) + 1);
                 }
             }
         }
         for (String line; (line = bedReader.readLine()) != null; ) {
             String[] bLine = line.split("\t");
+            String[] mIntron = new String[2];
             boolean mapped = false;
             int nBlocks = Integer.parseInt(bLine[9]);
             if (bLine[0].equals(g.getChromosome()) && Integer.parseInt(bLine[1]) + 1 >= start && Integer.parseInt(bLine[2]) <= end) {
                 for (String[] intron : introns.keySet()) {
-                    if (introns.get(intron)==g.getTranscriptCount()) {
+                    if (introns.get(intron) == g.getTranscriptCount()) {
                         if (nBlocks == 1) {
-                            if (Integer.parseInt(intron[0]) <= Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(intron[1])-1 >= Integer.parseInt(bLine[2])) {
+                            if (Integer.parseInt(intron[0]) <= Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(intron[1]) >= Integer.parseInt(bLine[2])) {
                                 mapped = true;
+                                mIntron[0] = intron[0];
+                                mIntron[1] = intron[1];
                                 break;
                             }
                         }
@@ -413,7 +415,7 @@ public class AnnotationMapperTest extends TestCase {
                         }
                     } else {
                         if (nBlocks == 1) {
-                            String[] ids = getId(bLine, nBlocks);
+                            String[] ids = {mIntron[0] + "-" + mIntron[1]};
                             for (String id : ids) {
                                 nr = 1;
                                 if (reads.containsKey(id)) {
@@ -507,32 +509,34 @@ public class AnnotationMapperTest extends TestCase {
         gtf.read();
         //Gene g = gtf.getGenes()[0];        ;
         for (Gene g : gtf.getGenes()) {
-            int start = 0, end = 0, tol = 0;
-            start = g.getStart();
-            end = g.getEnd();
-            if (g.getStrand() < 0) {
-                start = -start;
-                end = -end;
-            }
-            tol = 0;
-            start = Math.max(1, start - tol);
-            end = end + tol;
-            BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
-            Map<String, Integer> m = a.getSJReads(false);
-            int count[] = new int[]{0, 0};
-            for (String e : m.keySet()) {
-                count[0] += m.get(e);
-            }
-            readGtf(g);
-            Map<String, Integer> m1 = getSJReads(g, false);
-            for (String e : m1.keySet()) {
-                count[1] += m1.get(e);
-            }
-            //if (count[0]!=count[1])
+            if (g.getGeneID().contains("17565851-17596584")) {
+                int start = 0, end = 0, tol = 0;
+                start = g.getStart();
+                end = g.getEnd();
+                if (g.getStrand() < 0) {
+                    start = -start;
+                    end = -end;
+                }
+                tol = 0;
+                start = Math.max(1, start - tol);
+                end = end + tol;
+                BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+                AnnotationMapper a = new AnnotationMapper(g);
+                a.map(iter, settings);
+                Map<String, Integer> m = a.getSJReads(false);
+                int count[] = new int[]{0, 0};
+                for (String e : m.keySet()) {
+                    count[0] += m.get(e);
+                }
+                readGtf(g);
+                Map<String, Integer> m1 = getSJReads(g, false);
+                for (String e : m1.keySet()) {
+                    count[1] += m1.get(e);
+                }
+                //if (count[0]!=count[1])
                 System.err.println("Gene : " + g.getGeneID() + "\tAnnotation Mapper: " + count[0] + "\tTest: " + count[1]);
-            //assertEquals(count[1],count[0]);
+                //assertEquals(count[1],count[0]);
+            }
         }
     }
 
@@ -549,7 +553,7 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-            if (g.getGeneID().contains("50946645-50963209")) {
+            //if (g.getGeneID().contains("50946645-50963209")) {
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -573,15 +577,15 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            if (count[0]!=count[1])
+            if (count[0] != count[1])
                 System.err.println("Gene : " + g.getGeneID() + "\tAnnotation Mapper: " + count[0] + "\tTest: " + count[1]);
             //assertEquals(count[1], count[0]);
-            }
+            //}
         }
     }
 
     @Test
-    public void testCompareIntronReads() throws Exception {
+    public void testCompareIntronReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
@@ -611,7 +615,8 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m.keySet()) {
                 count[0] += m.get(e)[0];
             }
-            Map<String, Integer> m1 = getAllIntronicReads(g, true);
+            readGtf(g);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
