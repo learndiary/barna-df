@@ -2091,7 +2091,7 @@ public class SplicingGraph {
     public SimpleEdge createEdge(Node v, Node w, long[] newTset, byte type, boolean exonic) {
 
         SimpleEdge e = getEdge(v, w, exonic);
-        if (e == null) {// || !e.isAllIntronic()&&type == SimpleEdge.ALL_INTRONIC) {
+        if (e == null || !e.isAllIntronic()&&type == SimpleEdge.ALL_INTRONIC) {
             e = createSimpleEdge(v, w, newTset);
             e.type = type;
             if (exonic)
@@ -2265,11 +2265,36 @@ public class SplicingGraph {
         Vector<SimpleEdge> ev = node.getOutEdges();
         for (int i = 0; i < ev.size(); i++) {
             SimpleEdge g = ev.elementAt(i);
-            if (g.isExonic() || g.isAllIntronic()) {
+            if (g.isExonic()) {
                 if (g.getHead() == node2)
                     return true;
                 // TODO optimize: can maximally be 1 for Segment-Graphs
                 // break; 
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether an atomary all-intronic stretch connects
+     * <code>node</code> to <code>node2</code> by iterating
+     * all out-edges of <code>node</code>.
+     *
+     * @param node  upstream site of exonic edge
+     * @param node2 downnstream site of exonic edge
+     * @return <code>true</code> iff there is an exon / exonic
+     *         edge connecting <code>node</code> to <code>node2</code>,
+     *         <code>false</code> otherwise.
+     */
+    public boolean checkAllIntronicEdge(Node node, Node node2) {
+        Vector<SimpleEdge> ev = node.getOutEdges();
+        for (int i = 0; i < ev.size(); i++) {
+            SimpleEdge g = ev.elementAt(i);
+            if (g.isAllIntronic()) {
+                if (g.getHead() == node2)
+                    return true;
+                // TODO optimize: can maximally be 1 for Segment-Graphs
+                // break;
             }
         }
         return false;

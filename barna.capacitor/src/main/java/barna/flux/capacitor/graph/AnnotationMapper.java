@@ -635,13 +635,13 @@ public class AnnotationMapper extends SplicingGraph {
         int p = Arrays.binarySearch(su, gstart);    // anchor<= 5'end of read
         if (p < 0) {
             p = -(p + 1);    // falls before
-            if (nodes[p].getSite().isLeftFlank()
+            /*if (nodes[p].getSite().isLeftFlank()
                     && nodes[p - 1].getSite().isRightFlank()) {    // p!= 0, for src
 
                 boolean found = checkExonicEdge(nodes[p - 1], nodes[p]);
                 if (!found)
                     return null;    // in intron
-            }
+            }*/
             //else, in both cases
             --p;    // p> 0, src
         } else {    // hits exact
@@ -652,18 +652,26 @@ public class AnnotationMapper extends SplicingGraph {
         int q = Arrays.binarySearch(su, gend);    // anchor>= 3'end of read
         if (q < 0) {
             q = -(q + 1);    // falls before
-            if (nodes[q].getSite().isLeftFlank() &&
+            /*if (nodes[q].getSite().isLeftFlank() &&
                     nodes[q - 1].getSite().isRightFlank()) {
 
                 boolean found = checkExonicEdge(nodes[q - 1], nodes[q]);
                 if (!found)
                     return null;    // in intron
-            }// else nothing, falls before q marks end
+            }// else nothing, falls before q marks end */
         } else {    // hits exact
             if (nodes[q].getSite().isLeftFlank())
                 ++q;
         }
 
+        if (p >= q)
+            return null;
+        if (p == q - 1 && (!checkExonicEdge(nodes[p],nodes[q]) && !checkAllIntronicEdge(nodes[p],nodes[q])))
+            return null;
+        else {
+            if (p<q-1&&!(checkExonicEdge(nodes[p],nodes[p+1])&&checkExonicEdge(nodes[q-1],nodes[q])))
+                return null;
+        }
 
         // get chain of edges, if exists
         Node head = nodes[p];
