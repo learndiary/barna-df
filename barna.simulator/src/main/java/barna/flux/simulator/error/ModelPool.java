@@ -61,14 +61,20 @@ public class ModelPool {
      * Sum of mutations
      */
     private long sumMutations;
+    /**
+     * Length of the simulated reads
+     */
+    private int simulatedReadLength;
 
     /**
      * Create a new model pool
      *
      * @param fastOutput create fastq output
      * @param errorModel the error model
+     * @param simulatedReadLength length of the simulated reads (used for scaling)
      */
-    public ModelPool(final boolean fastOutput, final QualityErrorModel errorModel) {
+    public ModelPool(final boolean fastOutput, final QualityErrorModel errorModel, int simulatedReadLength) {
+        this.simulatedReadLength = simulatedReadLength;
         if(errorModel == null) throw new NullPointerException("Null error model not permitted");
         this.fastaOutput = fastOutput;
         this.errorModel = errorModel;
@@ -100,9 +106,12 @@ public class ModelPool {
         if(errorModel != null){
             for (int i = 0; i < len; i++) {
                 // iterate over the sequence and generate qualities
-                char character = (char) a[seqStart+i];
+                int characterPosition = seqStart + i;
+                char character = (char) a[characterPosition];
                 double r = rndMutator.nextDouble();
-                quality = errorModel.getQualityModel().getQuality(i, quality, r);
+                // implement BARNA-167 and scale the error model up/down
+                int scaledPosition = scalePosition(i, errorModel.getReadLength(), simulatedReadLength);
+                quality = errorModel.getQualityModel().getQuality(scaledPosition, quality, r);
                 sumQualities +=quality;
                 writtenNucleotides++;
                 // check if we have to mutate
@@ -110,9 +119,9 @@ public class ModelPool {
                 double random = rndMutator.nextDouble();
                 if ( random <= pe) {
                     // mutate using crosstalk
-                    a[seqStart + i] = (byte) errorModel.getCrossTalk().getTransition(quality, (char) a[seqStart + i], random);
+                    a[characterPosition] = (byte) errorModel.getCrossTalk().getTransition(quality, (char) a[characterPosition], random);
                     // SIMULATOR-29 make sure we count only for "real" mutations
-                    if (a[seqStart + i] != character){
+                    if (a[characterPosition] != character){
                         sumMutations++;
                     }
                 }
@@ -153,5 +162,23 @@ public class ModelPool {
      */
     public boolean hasErrorModel() {
         return errorModel != null;
+    }
+
+    /**
+     * Scale the position to fit within the error model range
+     * Also scales down
+     *
+     * @param position source position
+     * @param modelLength supported length of the model
+     * @param readLength length of the simulated reads
+     * @return scaled scaled position
+     */
+    protected static int scalePosition(int position, int modelLength, int readLength){
+        if(position == 0) return 0;
+        if(modelLength == readLength) return position;
+        position = (int) (position * (((modelLength-1)/(double)readLength)));
+        position = Math.min(modelLength-1, position);
+        position = Math.max(0, position);
+        return position;
     }
 }
