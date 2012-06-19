@@ -1023,7 +1023,7 @@ public class SplicingGraph {
      * @param newTset
      * @return
      */
-    protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
+    protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset, byte type) {
         SimpleEdge e = new SimpleEdge(v, w);
         e.setTranscripts(newTset);
         return e;
@@ -1044,7 +1044,7 @@ public class SplicingGraph {
 
 
     public SimpleEdge addEdge(Node v, Node w, long[] newTset) {
-        SimpleEdge e = createSimpleEdge(v, w, newTset);
+        SimpleEdge e = createSimpleEdge(v, w, newTset, (byte)0);
         //Edge chk= edgeHash.get(v.getSite().toString()+w.getSite().toString());
         edgeHash.put(v.getSite().toString() + w.getSite().toString(), e);
         return e;
@@ -1394,7 +1394,7 @@ public class SplicingGraph {
         // contract
         if (endEdge != null) {
 
-            f = createSimpleEdge(srcEdge.getTail(), endEdge.getHead(), newTset);
+            f = createSimpleEdge(srcEdge.getTail(), endEdge.getHead(), newTset, (byte)0);
             // srcEdge.getTranscripts() not, since edges are deleted; really TODO
             f.setContracted(true);
             f.setProcessed(true);
@@ -2092,7 +2092,7 @@ public class SplicingGraph {
 
         SimpleEdge e = getEdge(v, w, exonic);
         if (e == null || !e.isAllIntronic()&&type == SimpleEdge.ALL_INTRONIC) {
-            e = createSimpleEdge(v, w, newTset);
+            e = createSimpleEdge(v, w, newTset, type);
             e.type = type;
             if (exonic)
                 e.exonic = true;

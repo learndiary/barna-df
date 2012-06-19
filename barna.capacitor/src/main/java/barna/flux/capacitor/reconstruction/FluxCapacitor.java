@@ -211,7 +211,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 					nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
 					nrPairsNoTxEvidence+= mapper.getNrMappingsNotMappedAsPair();
 					nrPairsWrongOrientation+= mapper.getNrMappingsWrongPairOrientation();
-							
 					GraphLPsolver mySolver= null;
 					if (mapper.nrMappingsMapped> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE
 						mySolver= getSolver(mapper, (int) (mapper.nrMappingsMapped* 2)); // not: getMappedReadcount()
@@ -1533,7 +1532,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 		stranded= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
 				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
-		
+
 		printStats();
 		
 		// run

@@ -24,7 +24,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private String path = "/Users/emilio/fromMicha";
+    private String path = "/home/emilio/fromMicha";
     private final File gtfFile = new File(path + "/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
     private final File bedFile = new File(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
     private FluxCapacitorSettings settings;
@@ -68,14 +68,6 @@ public class AnnotationMapperTest extends TestCase {
         return sjs;
     }
 
-    private String getAltStrand(String s) {
-        if (s.equals("S"))
-            return "A";
-        if (s.equals("A"))
-            return "S";
-        return "";
-    }
-
     private void readGtf(Gene g) throws IOException {
         BufferedReader gtfReader = new BufferedReader(new InputStreamReader(new FileInputStream(gtfFile)));
         String tx = null;
@@ -91,7 +83,6 @@ public class AnnotationMapperTest extends TestCase {
         tol = 0;
         start = Math.max(1, start - tol);
         end = end + tol;
-        //System.err.println("\n[TEST] Reading GTF for gene "+g.getGeneID()+" ...");
         for (String line; (line = gtfReader.readLine()) != null; ) {
             String[] gLine = line.split("\t");
             if (gLine[0].equals(g.getChromosome()) && gLine[6].equals(g.getStrand() < 0 ? "-" : "+") && Integer.parseInt(gLine[3]) >= start && Integer.parseInt(gLine[4]) <= end) {
@@ -119,7 +110,6 @@ public class AnnotationMapperTest extends TestCase {
                 }
             }
         }
-        //System.err.println("[TEST] GTF read.");
     }
 
     private boolean containsExon(Map<String, String[]> transcripts, String[] exon) {
@@ -194,10 +184,8 @@ public class AnnotationMapperTest extends TestCase {
                             }
                         }
                     }
-                    /*if (mapped)
-                        break;*/
                 }
-                if (mapped)// && g.getGeneID().equals(bLine[3].split(":")[0]+":"+ bLine[3].split(":")[1]))
+                if (mapped)
                 {
                     if (paired) {
                         if (nBlocks < 3) {
@@ -352,39 +340,6 @@ public class AnnotationMapperTest extends TestCase {
         start = Math.max(1, start - tol);
         end = end + tol;
 
-        /*for (String tx : nodes.keySet()) {
-            for (int i = 0; i < nodes.get(tx).size() - 1; i++) {
-                String[] exon = nodes.get(tx).get(i);
-                String[] nextExon = nodes.get(tx).get(i + 1);
-                String intron = exon[1]+"-"+nextExon[0];
-                if (!introns.containsKey(intron)) {
-                    introns.put(intron, 1);
-                } else {
-                    introns.put(intron, introns.get(intron) + 1);
-                }
-            }
-        }
-        for (String intron : introns.keySet()) {
-            if (introns.get(intron)==g.getTranscriptCount())
-                continue;
-            else {
-                Iterator<String> iter = introns.keySet().iterator();
-                String nextIntron = null;
-                while (iter.hasNext()) {
-                    nextIntron = iter.next();
-                    if (Integer.parseInt(intron.split("-")[0])==Integer.parseInt(nextIntron.split("-")[0])) {
-                        if (Integer.parseInt(intron.split("-")[1])<Integer.parseInt(nextIntron.split("-")[1])) {
-                            introns.put(intron, introns.get(intron)+introns.get(nextIntron));
-                        }
-                    }
-                    if (Integer.parseInt(intron.split("-")[1])==Integer.parseInt(nextIntron.split("-")[1])) {
-                        if (Integer.parseInt(intron.split("-")[0])<Integer.parseInt(nextIntron.split("-")[0])) {
-                            introns.put(nextIntron, introns.get(nextIntron)+introns.get(intron));
-                        }
-                    }
-                }
-            }
-        }*/
         for (String tx : nodes.keySet()) {
             for (int i = 0; i < nodes.get(tx).size(); i++) {
                 if (i < nodes.get(tx).size() - 1) {
@@ -421,46 +376,16 @@ public class AnnotationMapperTest extends TestCase {
                         break;
                     }
                 }
-                if (mapped)// && g.getGeneID().equals(bLine[3].split(":")[0]+":"+ bLine[3].split(":")[1]))
+                if (mapped)
                 {
                     for (String intronString : introns.keySet()) {
                         String[] intron = intronString.split("-");
-                        if (Integer.parseInt(intron[0]) >= Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(intron[1]) >= Integer.parseInt(bLine[2])) {
+                        if (Integer.parseInt(intron[0]) < Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(intron[1]) > Integer.parseInt(bLine[2])) {
                             mIntron[0] = intron[0];
                             mIntron[1] = intron[1];
                         }
                     }
-                    if (paired) {
-                        if (nBlocks < 3) {
-                            String readId = bLine[3].substring(0, bLine[3].length() - 4);
-                            if (bLine[3].endsWith("1")) {
-                                if (!p1hash.containsKey(readId)) {
-                                    String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                    ArrayList<String[]> list = new ArrayList<String[]>();
-                                    list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
-                                    p1hash.put(readId, list);
-                                } else {
-                                    String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                    ArrayList<String[]> list = p1hash.get(readId);
-                                    list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
-                                    p1hash.put(readId, list);
-                                }
-                            }
-                            if (bLine[3].endsWith("2")) {
-                                if (!p2hash.containsKey(readId)) {
-                                    String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                    ArrayList<String[]> list = new ArrayList<String[]>();
-                                    list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
-                                    p2hash.put(readId, list);
-                                } else {
-                                    String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
-                                    ArrayList<String[]> list = p2hash.get(readId);
-                                    list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
-                                    p2hash.put(readId, list);
-                                }
-                            }
-                        }
-                    } else {
+                    if (mIntron[0]!=null&&mIntron[1]!=null) {
                         if (nBlocks == 1) {
                             String[] ids = {mIntron[0] + "-" + mIntron[1]};
                             for (String id : ids) {
@@ -471,75 +396,46 @@ public class AnnotationMapperTest extends TestCase {
                                 reads.put(id, nr);
                             }
                         }
+
                     }
                     mapped = false;
                 }
-            }
-        }
-        if (paired) {
-            for (String id : p1hash.keySet()) {
-                if (p2hash.containsKey(id)) {
-                    ArrayList<String[]> p1 = p1hash.get(id);
-                    ArrayList<String[]> p2 = p2hash.get(id);
-                    for (String[] s1 : p1) {
-                        for (String[] s2 : p2) {
-                            if (s2[0].equals(getAltStrand(s1[0]))) {
-                                if (s1[1] != null) {
-                                    String sj = s1[1];
-                                    nr = 1;
-                                    if (reads.containsKey(sj)) {
-                                        nr += reads.get(sj);
-                                    }
-                                    reads.put(sj, nr);
-                                }
-                                if (s2[1] != null) {
-                                    String sj = s2[1];
-                                    nr = 1;
-                                    if (reads.containsKey(sj)) {
-                                        nr += reads.get(sj);
-                                    }
-                                    reads.put(sj, nr);
-                                }
-                                //break;
+
+                if (paired) {
+                    if (nBlocks < 3) {
+                        String readId = bLine[3].substring(0, bLine[3].length() - 4);
+                        if (bLine[3].endsWith("1")) {
+                            if (!p1hash.containsKey(readId)) {
+                                String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
+                                ArrayList<String[]> list = new ArrayList<String[]>();
+                                list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
+                                p1hash.put(readId, list);
+                            } else {
+                                String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
+                                ArrayList<String[]> list = p1hash.get(readId);
+                                list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
+                                p1hash.put(readId, list);
+                            }
+                        }
+                        if (bLine[3].endsWith("2")) {
+                            if (!p2hash.containsKey(readId)) {
+                                String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
+                                ArrayList<String[]> list = new ArrayList<String[]>();
+                                list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
+                                p2hash.put(readId, list);
+                            } else {
+                                String sj = nBlocks == 2 ? getId(bLine, nBlocks)[0] : null;
+                                ArrayList<String[]> list = p2hash.get(readId);
+                                list.add(new String[]{bLine[3].substring(bLine[3].length() - 3, bLine[3].length() - 2), sj});
+                                p2hash.put(readId, list);
                             }
                         }
                     }
                 }
             }
         }
-        return reads;
-    }
 
-    private void writeSJReads() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(gtfFile);
-        BEDwrapper bed = new BEDwrapper(bedFile);
-        try {
-            gtf = new GTFwrapper((gtf.sort()));
-            gtf.setReadAll(true);
-            gtf.setNoIDs(null);
-            gtf.setReadFeatures(new String[]{"exon", "CDS"});
-            gtf.read();
-            Gene g = gtf.getGenes()[0];
-            int start = 0, end = 0, tol = 0;
-            start = g.getStart();
-            end = g.getEnd();
-            if (g.getStrand() < 0) {
-                start = -start;
-                end = -end;
-            }
-            tol = 0;
-            start = Math.max(1, start - tol);
-            end = end + tol;
-            BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
-            ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream("/home/emilio/ann_mapper.zip")));
-            a.writeSJReads(out, true);
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
+        return reads;
     }
 
     @Test
@@ -644,7 +540,7 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-            //if (g.getGeneID().contains("19744226-19771112")) {//32870707-32894818
+            //if (g.getGeneID().contains("18893736-18899601")) {//32870707-32894818
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -658,7 +554,7 @@ public class AnnotationMapperTest extends TestCase {
             BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
             AnnotationMapper a = new AnnotationMapper(g);
             a.map(iter, settings);
-            Map<String, Integer[]> m = a.getAllIntronicReads();
+            Map<String, Float[]> m = a.getAllIntronicReads(false);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
                 count[0] += m.get(e)[0];
@@ -669,6 +565,50 @@ public class AnnotationMapperTest extends TestCase {
                 count[1] += m1.get(e);
             }
             if (count[0] != count[1])
+                System.err.println("Gene : " + g.getGeneID() + "\tAnnotationMapper: " + count[0] + "\tTest: " + count[1]);
+            //assertTrue(count[0] > 0);
+            //}
+        }
+    }
+
+    @Test
+    public void testCompareIntronReadsPaired() throws Exception {
+        GTFwrapper gtf = new GTFwrapper(gtfFile);
+        BEDwrapper bed = new BEDwrapper(bedFile);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        //gtf = new GTFwrapper((gtf.sort()));
+        //gtf.setReadAll(true);
+        gtf.setChromosomeWise(true);
+        gtf.sweepToChromosome("chr22");
+        gtf.setNoIDs(null);
+        gtf.setReadFeatures(new String[]{"exon", "CDS"});
+        gtf.read();
+        for (Gene g : gtf.getGenes()) {
+            //if (g.getGeneID().contains("17517460-17539682")) {//32870707-32894818
+            int start = 0, end = 0, tol = 0;
+            start = g.getStart();
+            end = g.getEnd();
+            if (g.getStrand() < 0) {
+                start = -start;
+                end = -end;
+            }
+            tol = 0;
+            start = Math.max(1, start - tol);
+            end = end + tol;
+            BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            AnnotationMapper a = new AnnotationMapper(g);
+            a.map(iter, settings);
+            Map<String, Float[]> m = a.getAllIntronicReads(true);
+            int count[] = new int[]{0, 0};
+            for (String e : m.keySet()) {
+                count[0] += m.get(e)[0];
+            }
+            readGtf(g);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false);
+            for (String e : m1.keySet()) {
+                count[1] += m1.get(e);
+            }
+            //if (count[0] != count[1])
                 System.err.println("Gene : " + g.getGeneID() + "\tAnnotationMapper: " + count[0] + "\tTest: " + count[1]);
             //assertTrue(count[0] > 0);
             //}

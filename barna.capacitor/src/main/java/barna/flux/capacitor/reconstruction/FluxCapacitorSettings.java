@@ -423,32 +423,4 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public int getMaxThreads() {
 	        return 1;
 	    }
-
-    /**
-     * Flag to output coverage statistic
-     */
-    public static final Parameter<Boolean> COUNT_SJS = Parameters.booleanParameter("COUNT_SJ", "Flag to output splice junctions count", false, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            boolean set= (Boolean) schema.get(parameter);
-            File file= (File) schema.get(STDOUT_FILE);
-            if (set&& file== null)
-                throw new ParameterException("Parameter "+ STDOUT_FILE.getName()
-                        + " has to be set to output coverage statistics.");
-        }
-    });
-
-    /**
-     * Flag to output coverage statistic
-     */
-    public static final Parameter<Boolean> COUNT_INTRONS = Parameters.booleanParameter("COUNT_INTRONS", "Flag to output all-intronic regions count", false, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            boolean set= (Boolean) schema.get(parameter);
-            File file= (File) schema.get(STDOUT_FILE);
-            if (set&& file== null)
-                throw new ParameterException("Parameter "+ STDOUT_FILE.getName()
-                        + " has to be set to output coverage statistics.");
-        }
-    });
 }

@@ -30,7 +30,7 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         return limits;
     }
 
-    public void incrReadNr(int readStartPos, int readEndPos) {
+    public void incrReadNr(int readStartPos, int readEndPos, boolean count) {
         int p = Arrays.binarySearch(binLimits,readStartPos);
         if (p<0) {
             p = -(p+1);
@@ -42,10 +42,11 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         for (int i = p;i<=q;i++) {
             binReads[i]++;
         }
-        mappings.incrReadNr();
+        if (count)
+            mappings.incrReadNr();
     }
 
-    public void incrRevReadNr(int readStartPos, int readEndPos) {
+    public void incrRevReadNr(int readStartPos, int readEndPos, boolean count) {
         int p = Arrays.binarySearch(binLimits,readStartPos);
         if (p<0) {
             p = -(p+1);
@@ -57,16 +58,17 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         for (int i = p;i<=q;i++) {
             binReads[i]++;
         }
-        mappings.incrRevReadNr();
+        if (count)
+            mappings.incrRevReadNr();
     }
 
-    public int getBinCoverage() {
-        int count = 0;
+    public float getBinCoverage() {
+        float count = 0;
         for (int i = 0;i<binReads.length;i++) {
             if (binReads[i]>0)
                 count++;
         }
-        return Math.round((float) count / binReads.length * 100);
+        return count / binReads.length;
     }
 
     @Override
