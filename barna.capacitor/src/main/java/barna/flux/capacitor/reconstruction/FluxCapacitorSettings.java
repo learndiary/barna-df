@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.EnumSet;
 
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
@@ -423,4 +424,25 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public int getMaxThreads() {
 	        return 1;
 	    }
+
+    public static enum CountElements {SPLICE_JUNCTIONS,INTRONS};
+
+    /**
+     * Parameter for counting reads that falls into specific elements
+     */
+    public static final Parameter<EnumSet<CountElements>> COUNT_ELEMENTS = Parameters.enumSetParameter(
+            "COUNT_ELEMENTS",
+            " Count elements specified in the list",
+            EnumSet.noneOf(CountElements.class),
+            null);
+
+    /**
+     * Parameter for counting reads that falls into specific elements
+     */
+    public static final Parameter<Boolean> NO_DECOMPOSE = Parameters.booleanParameter(
+            "NO_DECOMPOSE",
+            " Avoid running deconvolution step on the dataset",
+            false,
+            null);
+
 }

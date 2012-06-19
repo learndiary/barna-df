@@ -76,6 +76,13 @@ import java.util.zip.ZipOutputStream;
  *
  */
 public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
+
+    /**
+     * Enum and EnumSet used to activate/deactivate FluxCapacitor currentTasks
+     */
+    private enum Task {DECOMPOSE,COUNT_SJ,COUNT_INTRONS};
+    private EnumSet<Task> currentTasks = EnumSet.noneOf(Task.class);
+
     /**
      * Store a reference to the parsed command line arguments
      * to update settings
@@ -206,11 +213,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 //				} else {
 					AnnotationMapper mapper= new AnnotationMapper(this.gene);
 					mapper.map(this.beds, settings);
-                    nrReadsLoci+= mapper.nrMappingsLocus;
+					nrReadsLoci+= mapper.nrMappingsLocus;
 					nrReadsMapped+= mapper.getNrMappingsMapped();
 					nrMappingsReadsOrPairs+= mapper.getNrMappingsMapped()/ 2;
 					nrPairsNoTxEvidence+= mapper.getNrMappingsNotMappedAsPair();
 					nrPairsWrongOrientation+= mapper.getNrMappingsWrongPairOrientation();
+							
 					GraphLPsolver mySolver= null;
 					if (mapper.nrMappingsMapped> 0&& this.gene.getTranscriptCount()> 1) {	// OPTIMIZE
 						mySolver= getSolver(mapper, (int) (mapper.nrMappingsMapped* 2)); // not: getMappedReadcount()
@@ -520,7 +528,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
          *
          * @param rpkmMap hash to map transcript ID to an deconvoluted expression value
          * @return <code>true</code> if <code>transcript</code> features were found in
-         * the inpñut, <code>false</code> otherwise
+         * the input, <code>false</code> otherwise
          */
         private boolean outputGFForiginalLines(HashMap<String, Double> rpkmMap) {
 
@@ -1532,6 +1540,23 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 		stranded= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
 				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
+
+
+        //Add currentTasks to be executed in the current run
+        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
+            currentTasks.add(Task.DECOMPOSE);
+        if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
+            for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
+                switch(e) {
+                    case SPLICE_JUNCTIONS:
+                        currentTasks.add(Task.COUNT_SJ);
+                        break;
+                    case INTRONS:
+                        currentTasks.add(Task.COUNT_INTRONS);
+                        break;
+                }
+            }
+        }
 
 		printStats();
 		
@@ -2549,11 +2574,21 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						
 						beds= readBedFile(gene[i], start, end);
 						
-						if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null) {
-							solve(gene[i], beds, false);
-						} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-							solve(gene[i], beds, true); 
-						}
+						for (Task t : currentTasks) {
+                            switch (t) {
+                                case DECOMPOSE:
+                                    if (mode== FluxCapacitorConstants.MODE_LEARN&& beds!= null) {
+                                    solve(gene[i], beds, false);
+                                    } else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                                    solve(gene[i], beds, true);
+                                    }
+                                    break;
+                                case COUNT_INTRONS:
+                                    break;
+                                case COUNT_SJ:
+                                    break;
+                            }
+                        }
 						
 						if (beds!= null)
 							beds.clear();
