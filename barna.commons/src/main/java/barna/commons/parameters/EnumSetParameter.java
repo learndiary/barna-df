@@ -41,11 +41,11 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     private EnumSet<E> value;
 
     public EnumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values) {
-        this(name, description, defaultValue,  values, null);
+        this(name, description, defaultValue, values, null);
     }
 
     public EnumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values, ParameterValidator validator) {
-        super(name, description, defaultValue, (Class<EnumSet<E>>)defaultValue.getClass(), validator);
+        super(name, description, defaultValue, (Class<EnumSet<E>>) defaultValue.getClass(), validator);
         this.values = values.getEnumConstants();
     }
 
@@ -62,8 +62,8 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     protected void parse(String value) throws ParameterException {
         if (this.value == null)
             this.value = getDefault();
-        String[] vals = value.replace("[]","").split(",");
-        for(String val : vals) {
+        String[] vals = value.replaceAll("[\\[\\]]", "").split(",");
+        for (String val : vals) {
             if (!val.isEmpty()) {
                 for (E e : values) {
                     if (e.name().equalsIgnoreCase(val)) {
