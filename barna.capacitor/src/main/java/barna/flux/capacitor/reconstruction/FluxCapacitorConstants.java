@@ -177,5 +177,4 @@ public class FluxCapacitorConstants {
 	public static byte FORMAT_SAM= 2;
 	static final String FLOAT_STRING_0= "0.0";
 	static String FNAME_PROPERTIES= "capacitor.prop";
-
 }
