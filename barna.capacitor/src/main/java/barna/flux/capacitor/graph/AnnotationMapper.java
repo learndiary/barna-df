@@ -666,10 +666,10 @@ public class AnnotationMapper extends SplicingGraph {
 
         if (p >= q)
             return null;
-        if (p == q - 1 && (!checkExonicEdge(nodes[p],nodes[q]) && !checkAllIntronicEdge(nodes[p],nodes[q])))
+        if (p == q - 1 && (!checkExonicEdge(nodes[p], nodes[q]) && !checkAllIntronicEdge(nodes[p], nodes[q])))
             return null;
         else {
-            if (p<q-1&&!(checkExonicEdge(nodes[p],nodes[p+1])&&checkExonicEdge(nodes[q-1],nodes[q])))
+            if (p < q - 1 && !(checkExonicEdge(nodes[p], nodes[p + 1]) && checkExonicEdge(nodes[q - 1], nodes[q])))
                 return null;
         }
 
@@ -714,7 +714,7 @@ public class AnnotationMapper extends SplicingGraph {
     @Override
     protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
         SimpleEdgeMappings e;
-        if (v.getSite().isDonor() && w.getSite().isAcceptor() && decodeTset(newTset).length == gene.getTranscriptCount()) {
+        if (v.getSite().isRightFlank() && w.getSite().isAcceptor() && decodeTset(newTset).length == gene.getTranscriptCount()) {
             e = new SimpleEdgeIntronMappings(v, w);
         } else
             e = new SimpleEdgeMappings(v, w);
