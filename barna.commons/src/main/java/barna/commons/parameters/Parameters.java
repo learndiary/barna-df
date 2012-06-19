@@ -179,12 +179,12 @@ public class Parameters {
         return new EnumParameter<E>(name, description, value, validator);
     }
 
-    public static <E extends Enum<E>> Parameter<EnumSet<E>> enumSetParameter(String name, String description, EnumSet<E> value) {
-        return new EnumSetParameter<E>(name, description, value);
+    public static <E extends Enum<E>> Parameter<EnumSet<E>> enumSetParameter(String name, String description, EnumSet<E> value, Class<E> values) {
+        return new EnumSetParameter<E>(name, description, value, values);
     }
 
-    public static <E extends Enum<E>> Parameter<EnumSet<E>> enumSetParameter(String name, String description, EnumSet<E> value, final ParameterValidator validator) {
-        return new EnumSetParameter<E>(name, description, value, validator);
+    public static <E extends Enum<E>> Parameter<EnumSet<E>> enumSetParameter(String name, String description, EnumSet<E> value, Class<E> values, final ParameterValidator validator) {
+        return new EnumSetParameter<E>(name, description, value, values, validator);
     }
 
 }

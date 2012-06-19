@@ -110,7 +110,7 @@ public class FluxCapacitorTest {
 		target.deleteOnExit();
 	}
 	
-	protected void writeParFile(boolean keepSorted, boolean sortInRam) throws Exception {
+	protected void writeParFile(boolean keepSorted, boolean sortInRam, boolean noDecompose) throws Exception {
 		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 		descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
 		FluxCapacitorSettings settings= new FluxCapacitorSettings();
@@ -132,6 +132,8 @@ public class FluxCapacitorTest {
 				statsFile);
 		settings.set(FluxCapacitorSettings.SORT_IN_RAM,
 				sortInRam);
+        settings.set(FluxCapacitorSettings.NO_DECOMPOSE,
+                noDecompose);
 //		settings.set(FluxCapacitorSettings.COVERAGE_STATS,
 //				true);
 //		settings.set(FluxCapacitorSettings.COVERAGE_FILE, 
@@ -154,7 +156,7 @@ public class FluxCapacitorTest {
 	}
 
 	protected void initFiles(byte compressionGTF, int sortGTF, boolean writeProtectGTF,
-                             byte compressionBED, int sortBED, boolean writeProtectBED, boolean keepSorted, boolean sortInRam) {
+                             byte compressionBED, int sortBED, boolean writeProtectBED, boolean keepSorted, boolean sortInRam, boolean noDecompose) {
 		
 		try {
 			
@@ -164,7 +166,7 @@ public class FluxCapacitorTest {
 			// put files in location
 			copy(GTF_SORTED, gtfFile, sortGTF, compressionGTF);
 			copy(BED_SORTED, bedFile, sortBED, compressionBED);
-			writeParFile(keepSorted, sortInRam);
+			writeParFile(keepSorted, sortInRam, noDecompose);
 			
 			// folder rights
 			if (writeProtectGTF)
@@ -201,7 +203,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 
 			runCapacitor();
 			
@@ -237,7 +239,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false);
+                    false, false, false);
 
             BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
             try {
@@ -278,7 +280,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, true);
+                    false, true,false);
 
             BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
             /*try {
@@ -305,7 +307,37 @@ public class FluxCapacitorTest {
         }
 
     }
+    @Test
+    public void testNoDecompose() {
 
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, true,true);
+
+
+
+
+            runCapacitor();
+
+            // check
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
+        }
+
+    }
 	@Test
 	public void testStasAreWrittenAndContainValidData() {
 
@@ -320,7 +352,7 @@ public class FluxCapacitorTest {
 					SORTED,
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 
             FluxCapacitorStats stats = runCapacitor();
             assertNotNull(stats);
@@ -368,7 +400,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 
 			runCapacitor();
 			
@@ -404,7 +436,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 			runCapacitor();
 			File out1= outFile;
 			
@@ -419,7 +451,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
 			try {
 				buffy.write(FluxCapacitorSettings.NR_READS_MAPPED.getName()+" "+
@@ -481,7 +513,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
 			try {
 				buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName()+" "+
@@ -526,7 +558,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 
 			// filter chr1 off mapping file
 			BufferedReader buffy= new BufferedReader(new FileReader(bedFile));
@@ -572,7 +604,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 	
 			File insFile= FileHelper.replaceSfx(outFile, "_ins.txt");
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
@@ -629,7 +661,7 @@ public class FluxCapacitorTest {
 					SORTED, 
 					false,
 					// keep sorted
-					false, false);
+					false, false, false);
 			File proFile= new File(FileHelper.append(outFile.getAbsolutePath(), "_profiles", true, "txt"));
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile, true));
 			try {

@@ -40,17 +40,12 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     private E[] values;
     private EnumSet<E> value;
 
-
-    public EnumSetParameter(String name, String description, EnumSet<E> defaultValue) {
-        this(name, description, defaultValue, null);
-    }
-
-    public EnumSetParameter(String name, String description, EnumSet<E> defaultValue, ParameterValidator validator) {
-        this(name, description, defaultValue, null,validator);
+    public EnumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values) {
+        this(name, description, defaultValue,  values, null);
     }
 
     public EnumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values, ParameterValidator validator) {
-        super(name, description, defaultValue, null, validator);
+        super(name, description, defaultValue, (Class<EnumSet<E>>)defaultValue.getClass(), validator);
         this.values = values.getEnumConstants();
     }
 
@@ -65,16 +60,19 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     }
 
     protected void parse(String value) throws ParameterException {
-        String[] vals = value.split(",");
+        if (this.value == null)
+            this.value = getDefault();
+        String[] vals = value.replace("[]","").split(",");
         for(String val : vals) {
-            for (E e : values) {
-                if (e.name().equalsIgnoreCase(val)) {
-                    this.value.add(e);
-                    return;
+            if (!val.isEmpty()) {
+                for (E e : values) {
+                    if (e.name().equalsIgnoreCase(val)) {
+                        this.value.add(e);
+                    }
                 }
             }
         }
-        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
+        //throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
     }
 
     @Override
