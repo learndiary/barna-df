@@ -25,13 +25,9 @@ import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
-    private String path = "/home/emilio/fromMicha";
-    private final File GTF_SORTED = new File(path + "/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
-    private final File BED_SORTED = new File(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
-
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    //final File GTF_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    //final File BED_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
+    final File GTF_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    final File BED_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -116,7 +112,7 @@ public class FluxCapacitorTest {
 
     protected void writeParFile(boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet<FluxCapacitorSettings.CountElements> countElements) throws Exception {
         UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("CASAVA18"));
+        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         FluxCapacitorSettings settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(gtfFile.getAbsolutePath()));
@@ -158,7 +154,7 @@ public class FluxCapacitorTest {
         capacitor.setFile(parFile);
         Future<FluxCapacitorStats> captain = Execute.getExecutor().submit(capacitor);
         FluxCapacitorStats stats = captain.get();
-        //outFile.deleteOnExit();
+        outFile.deleteOnExit();
         return stats;
     }
 
@@ -210,7 +206,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             runCapacitor();
 
@@ -246,7 +242,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             try {
@@ -288,7 +284,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, true, false, null);
+                    false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             /*try {
@@ -330,7 +326,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, true, null);
+                    false, false, true, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
 
             runCapacitor();
@@ -430,8 +426,8 @@ public class FluxCapacitorTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-           /* FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);*/
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
         }
 
     }
@@ -460,8 +456,8 @@ public class FluxCapacitorTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            /* FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);*/
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
         }
 
     }
@@ -480,7 +476,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             FluxCapacitorStats stats = runCapacitor();
             assertNotNull(stats);
@@ -526,7 +522,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             runCapacitor();
 
@@ -562,7 +558,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             runCapacitor();
             File out1 = outFile;
 
@@ -577,7 +573,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             try {
                 buffy.write(FluxCapacitorSettings.NR_READS_MAPPED.getName() + " " +
@@ -596,16 +592,18 @@ public class FluxCapacitorTest {
                 while ((s1 = b1.readLine()) != null && (s2 = b2.readLine()) != null) {
                     System.err.println(s1);
                     String[] ss = s1.split("\\s");
-                    if (ss[9].contains("NM_001159750"))
-                        assertEquals(ss[ss.length - 1], "244929.484375");
-                    else if (ss[9].contains("NM_001159751"))
-                        assertEquals(ss[ss.length - 1], "32835.675781");
-                    else if (ss[9].contains("NM_011541"))
-                        assertEquals(ss[ss.length - 1], "77404.234375");
-                    else if (ss[9].contains("NM_019397"))
-                        assertEquals(ss[ss.length - 1], "27483.478516");
-                    else
-                        Assert.fail("Unknown Transcript ID: " + ss[9]);
+                    if (ss[1].equals("transcript")) {
+                        if (ss[9].contains("NM_001159750"))
+                            assertEquals(ss[ss.length - 1], "244929.484375");
+                        else if (ss[9].contains("NM_001159751"))
+                            assertEquals(ss[ss.length - 1], "32835.675781");
+                        else if (ss[9].contains("NM_011541"))
+                            assertEquals(ss[ss.length - 1], "77404.234375");
+                        else if (ss[9].contains("NM_019397"))
+                            assertEquals(ss[ss.length - 1], "27483.478516");
+                        else
+                            Assert.fail("Unknown Transcript ID: " + ss[9]);
+                    }
 
                     assertEquals(s1, s2);
                 }
@@ -639,7 +637,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             try {
                 buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName() + " " +
@@ -684,7 +682,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             // filter chr1 off mapping file
             BufferedReader buffy = new BufferedReader(new FileReader(bedFile));
@@ -730,7 +728,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
             File insFile = FileHelper.replaceSfx(outFile, "_ins.txt");
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
@@ -787,7 +785,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, null);
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             File proFile = new File(FileHelper.append(outFile.getAbsolutePath(), "_profiles", true, "txt"));
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             try {

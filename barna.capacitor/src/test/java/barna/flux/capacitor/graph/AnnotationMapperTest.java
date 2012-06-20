@@ -24,9 +24,9 @@ import java.util.zip.ZipOutputStream;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private String path = "/home/emilio/fromMicha";
-    private final File gtfFile = new File(path + "/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
-    private final File bedFile = new File(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
+    //private String path = "/home/emilio/fromMicha";
+    private final File gtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());////(path+"/hg19_ref_ucsc120203_sorted.gtf");//
+    private final File bedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());//(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//
     private FluxCapacitorSettings settings;
     Map<String, ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
 
@@ -444,11 +444,11 @@ public class AnnotationMapperTest extends TestCase {
         BEDwrapper bed = new BEDwrapper(bedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
-        //gtf.setReadAll(true);
-        gtf.setChromosomeWise(true);
+        gtf.setReadAll(true);
+        //gtf.setChromosomeWise(true);
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
-        gtf.sweepToChromosome("chr22");
+        //gtf.sweepToChromosome("chr22");
         gtf.read();
         //Gene g = gtf.getGenes()[0];        ;
         for (Gene g : gtf.getGenes()) {
@@ -487,11 +487,11 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareSJReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
-        //gtf.setReadAll(true);
-        gtf.setChromosomeWise(true);
-        gtf.sweepToChromosome("chr22");
+        gtf.setReadAll(true);
+        //gtf.setChromosomeWise(true);
+        //gtf.sweepToChromosome("chr22");
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
@@ -533,9 +533,9 @@ public class AnnotationMapperTest extends TestCase {
         BEDwrapper bed = new BEDwrapper(bedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
-        //gtf.setReadAll(true);
-        gtf.setChromosomeWise(true);
-        gtf.sweepToChromosome("chr22");
+        gtf.setReadAll(true);
+        //gtf.setChromosomeWise(true);
+        //gtf.sweepToChromosome("chr22");
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
@@ -575,11 +575,11 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareIntronReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
-        //gtf.setReadAll(true);
-        gtf.setChromosomeWise(true);
-        gtf.sweepToChromosome("chr22");
+        gtf.setReadAll(true);
+        //gtf.setChromosomeWise(true);
+        //gtf.sweepToChromosome("chr22");
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
