@@ -2530,11 +2530,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                 if (mode == FluxCapacitorConstants.MODE_LEARN) {
-                    System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
-
                     if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
                         StringBuilder message = new StringBuilder();
-                        message.append("Counting reads to ");
+                        message.append("Reads to the following elements are counted: ");
                         if (currentTasks.contains(Task.COUNT_SJ)) {
                             message.append("splice junctions");
                             if (currentTasks.contains(Task.COUNT_INTRONS))
@@ -2543,11 +2541,16 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         if (currentTasks.contains(Task.COUNT_INTRONS))
                             message.append("all-intronic regions");
                         message.append(".");
+                        Log.info("","");
                         Log.info("COUNT", message.toString());
                     }
+                    Log.info("","");
+                    Log.info("LEARN", "Scanning the input and getting the attributes.");
                 }
-                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT)
-                    System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
+                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                    Log.info("","");
+                    Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                }
             }
             final String profiling = "profiling ", decomposing = "decomposing ";
 
