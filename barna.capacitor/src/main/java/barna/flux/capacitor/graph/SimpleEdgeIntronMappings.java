@@ -31,27 +31,35 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
     }
 
     public void incrReadNr(int readStartPos, int readEndPos, boolean count) {
-        int p = Arrays.binarySearch(binLimits,readStartPos);
-        if (p<0) {
-            p = -(p+1);
-        }
-        int q = Arrays.binarySearch(binLimits,readEndPos);
-        if (q<0) {
-            q = -(q+1);
-        }
-        for (int i = p;i<=q;i++) {
-            binReads[i]++;
-        }
-        if (count)
-            mappings.incrReadNr();
+
+        if (binLimits[0] > 0) {
+            int p = Arrays.binarySearch(binLimits,readStartPos);
+            if (p<0) {
+                p = -(p+1);
+            }
+            int q = Arrays.binarySearch(binLimits,readEndPos);
+            if (q<0) {
+                q = -(q+1);
+            }
+            for (int i = p;i<=q;i++) {
+                binReads[i]++;
+            }
+            if (count)
+                mappings.incrReadNr();
+        } else
+            incrRevReadNr(readStartPos,readEndPos,count);
     }
 
     public void incrRevReadNr(int readStartPos, int readEndPos, boolean count) {
-        int p = Arrays.binarySearch(binLimits,readStartPos);
+
+        int gstart = -readEndPos;
+        int gend = -readStartPos;
+
+        int p = Arrays.binarySearch(binLimits,gstart);
         if (p<0) {
             p = -(p+1);
         }
-        int q = Arrays.binarySearch(binLimits,readEndPos);
+        int q = Arrays.binarySearch(binLimits,gend);
         if (q<0) {
             q = -(q+1);
         }

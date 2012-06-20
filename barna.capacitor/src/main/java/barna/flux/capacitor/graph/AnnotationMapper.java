@@ -943,7 +943,7 @@ public class AnnotationMapper extends SplicingGraph {
                 for (SimpleEdge e : ev) {
                     if (e.getSuperEdges() != null) {
                         for (SuperEdge se : e.getSuperEdges()) {
-                            if (se.isSpliceJunction()) {
+                            if (se.isExonic() && se.isSpliceJunction()) {
                                 if (nodesReads.get(se) != null)
                                     continue;
                                 if (paired) {

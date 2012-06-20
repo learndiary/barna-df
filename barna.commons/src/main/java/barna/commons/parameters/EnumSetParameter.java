@@ -62,17 +62,20 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     protected void parse(String value) throws ParameterException {
         if (this.value == null)
             this.value = getDefault();
-        String[] vals = value.replaceAll("[\\[\\]]", "").split(",");
-        for (String val : vals) {
-            if (!val.isEmpty()) {
-                for (E e : values) {
-                    if (e.name().equalsIgnoreCase(val)) {
-                        this.value.add(e);
+        String[] vals = value.replaceAll("[\\[\\]\\s]", "").split(",");
+        try {
+            for (String val : vals) {
+                if (!val.isEmpty()) {
+                    for (E e : values) {
+                        if (e.name().equalsIgnoreCase(val)) {
+                            this.value.add(e);
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
         }
-        //throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
     }
 
     @Override
@@ -82,7 +85,7 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
 
     @Override
     public Parameter copy() {
-        EnumSetParameter enumParameter = new EnumSetParameter(getName(), getDescription(), getDefault(), getType(), getValidator());
+        EnumSetParameter enumParameter = new EnumSetParameter(getName(), getDescription(), getDefault(),values.getClass().getComponentType(), getValidator());
         enumParameter.set(get());
         return enumParameter;
     }

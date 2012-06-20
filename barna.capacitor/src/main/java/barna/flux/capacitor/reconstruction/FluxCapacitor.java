@@ -66,7 +66,6 @@ import java.nio.channels.FileLock;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 
 /**
@@ -1602,7 +1601,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         if (profile == null) {
             exit(-1);
         }
-        explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
+        if (currentTasks.contains(Task.DECOMPOSE))
+            explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
         // BARNA-103 : write stats to file
         File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
@@ -2634,19 +2634,22 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         switch (t) {
                             case DECOMPOSE:
                                 if (mode == FluxCapacitorConstants.MODE_LEARN && beds != null) {
+                                    beds.setAtStart();
                                     solve(gene[i], beds, false);
                                 } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                                    if (beds!=null)
+                                        beds.setAtStart();
                                     solve(gene[i], beds, true);
                                 }
                                 break;
                             case COUNT_INTRONS:
+                                if (beds!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
+                                    outputIntronsGFF(gene[i], beds);
+                                }
                                 break;
                             case COUNT_SJ:
-                                AnnotationMapper a = new AnnotationMapper(gene[i]);
-                                a.map(beds, settings);
-                                Map<String, Integer> m = a.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
-                                for (String s : m.keySet()) {
-                                    Log.println(s + "\t" + m.get(s));
+                                if (beds!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
+                                    outputSJGFF(gene[i], beds);
                                 }
                                 break;
                         }
@@ -2703,6 +2706,64 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
         return true;
+    }
+
+    private void outputSJGFF(Gene gene, BufferedIterator beds) {
+        beds.setAtStart();
+        AnnotationMapper a = new AnnotationMapper(gene);
+        a.map(beds, settings);
+        Map<String, Integer> m = a.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+        StringBuilder sb = new StringBuilder();
+        for (String s : m.keySet()) {
+            String[] junction = s.split("\\^");
+            sb.append(gene.getChromosome());
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
+            sb.append("\t");
+            sb.append("flux");
+            sb.append("\t");
+            sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
+            sb.append("\t");
+            sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
+            sb.append("\t");
+            sb.append(m.get(s));
+            sb.append("\t");
+            sb.append(junction[0].contains("-") ? "+" : "-");
+            sb.append("\t");
+            sb.append(".");
+            sb.append("\n");
+        }
+        Log.print(sb.toString());
+    }
+
+    private void outputIntronsGFF(Gene gene, BufferedIterator beds) {
+        beds.setAtStart();
+        AnnotationMapper a = new AnnotationMapper(gene);
+        a.map(beds, settings);
+        Map<String, Float[]> m = a.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+        StringBuilder sb = new StringBuilder();
+        for (String s : m.keySet()) {
+            String[] intron = s.split("\\^");
+            sb.append(gene.getChromosome());
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
+            sb.append("\t");
+            sb.append("flux");
+            sb.append("\t");
+            sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
+            sb.append("\t");
+            sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
+            sb.append("\t");
+            sb.append(m.get(s)[0].intValue());
+            sb.append("\t");
+            sb.append(intron[0].contains("-")?"+":"-");
+            sb.append("\t");
+            sb.append(".");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
+            sb.append("\n");
+        }
+        Log.print(sb.toString());
     }
 
     /**

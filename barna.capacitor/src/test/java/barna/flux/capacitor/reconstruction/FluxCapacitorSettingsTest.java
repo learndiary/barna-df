@@ -1,12 +1,14 @@
 package barna.flux.capacitor.reconstruction;
 
+import barna.commons.parameters.Parameter;
+import barna.commons.parameters.ParameterSchema;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.StringReader;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.util.EnumSet;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
+import static junit.framework.Assert.*;
 
 public class FluxCapacitorSettingsTest {
     @Test
@@ -24,5 +26,23 @@ public class FluxCapacitorSettingsTest {
             err.printStackTrace();
             fail();
         }
+    }
+
+    @Test
+    public void testReflectionForCountElements() throws Exception {
+        FluxCapacitorSettings settings = new FluxCapacitorSettings();
+        settings.set(FluxCapacitorSettings.COUNT_ELEMENTS,EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
+        BufferedWriter wbuffy = new BufferedWriter(new FileWriter("/home/emilio/test.par"));
+        wbuffy.write(settings.toString());
+        wbuffy.close();
+
+        FluxCapacitorSettings settings2 =  new FluxCapacitorSettings();
+        Field field = settings2.getClass().getField("COUNT_ELEMENTS");
+        Parameter p = (Parameter)field.get(null);
+        assertTrue(p.getValuesString().length() >0);
+        assertNotNull(p);
+        BufferedInputStream rbuffy = new BufferedInputStream(new FileInputStream("/home/emilio/test.par"));
+        settings2.parse(rbuffy);
+        //assertNotNull(settings2.get(FluxCapacitorSettings.COUNT_ELEMENTS));
     }
 }

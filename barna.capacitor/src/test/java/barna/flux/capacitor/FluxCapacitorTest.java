@@ -25,9 +25,13 @@ import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
+    private String path = "/home/emilio/fromMicha";
+    private final File GTF_SORTED = new File(path + "/hg19_ref_ucsc120203_sorted.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());//(path+"/hg19_ref_ucsc120203_sorted.gtf");//
+    private final File BED_SORTED = new File(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());//
+
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    final File GTF_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    final File BED_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
+    //final File GTF_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    //final File BED_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -112,7 +116,7 @@ public class FluxCapacitorTest {
 
     protected void writeParFile(boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet<FluxCapacitorSettings.CountElements> countElements) throws Exception {
         UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+        descriptor.init(UniversalReadDescriptor.getDescriptor("CASAVA18"));
         FluxCapacitorSettings settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(gtfFile.getAbsolutePath()));
@@ -154,7 +158,7 @@ public class FluxCapacitorTest {
         capacitor.setFile(parFile);
         Future<FluxCapacitorStats> captain = Execute.getExecutor().submit(capacitor);
         FluxCapacitorStats stats = captain.get();
-        outFile.deleteOnExit();
+        //outFile.deleteOnExit();
         return stats;
     }
 
@@ -326,7 +330,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, true, true, null);
+                    false, false, true, null);
 
 
             runCapacitor();
@@ -343,7 +347,7 @@ public class FluxCapacitorTest {
     }
 
     @Test
-    public void testOnlySJCount() {
+    public void testSJCount() {
 
         try {
             initFiles(
@@ -356,7 +360,7 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, true, true, EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
+                    false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 
 
             runCapacitor();
@@ -368,6 +372,96 @@ public class FluxCapacitorTest {
         } finally {
             FileHelper.rmDir(mapDir);
             FileHelper.rmDir(anoDir);
+        }
+
+    }
+
+    @Test
+    public void testIntronsCount() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
+
+
+            runCapacitor();
+
+            // check
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
+        }
+
+    }
+
+    @Test
+    public void testAllCounters() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, false, true, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+
+
+            runCapacitor();
+
+            // check
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+           /* FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);*/
+        }
+
+    }
+
+    @Test
+    public void testDeconvolveAndCount() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+
+
+            runCapacitor();
+
+            // check
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            /* FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);*/
         }
 
     }
