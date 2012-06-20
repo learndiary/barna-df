@@ -134,7 +134,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-    class LocusSolver extends Thread {
+    class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
 
         /**
          * The locus that is to be solved.
@@ -2529,8 +2529,23 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             bedWrapper.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
-                if (mode == FluxCapacitorConstants.MODE_LEARN)
+                if (mode == FluxCapacitorConstants.MODE_LEARN) {
                     System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
+
+                    if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Counting reads to ");
+                        if (currentTasks.contains(Task.COUNT_SJ)) {
+                            message.append("splice junctions");
+                            if (currentTasks.contains(Task.COUNT_INTRONS))
+                                message.append(", ");
+                        }
+                        if (currentTasks.contains(Task.COUNT_INTRONS))
+                            message.append("all-intronic regions");
+                        message.append(".");
+                        Log.info("COUNT", message.toString());
+                    }
+                }
                 else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT)
                     System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
             }
@@ -2731,6 +2746,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             sb.append(junction[0].contains("-") ? "+" : "-");
             sb.append("\t");
             sb.append(".");
+            sb.append("\t");
+            sb.append("gene_id \""+gene.getGeneID()+"\";");
             sb.append("\n");
         }
         Log.print(sb.toString());
@@ -2760,6 +2777,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             sb.append("\t");
             sb.append(".");
             sb.append("\t");
+            sb.append("gene_id \""+gene.getGeneID()+"\";");
+            sb.append(" ");
             sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
             sb.append("\n");
         }

@@ -408,7 +408,8 @@ public class AnnotationMapper extends SplicingGraph {
                         ((SimpleEdgeIntronMappings) target2).incrReadNr(dobject2.getStart(), dobject2.getEnd(),false);
                     }
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
-                    nrMappingsMapped += 2;
+                    if (se.isExonic())
+                        nrMappingsMapped += 2;
                     if (buffy != null)
                         writeInsert(buffy, se, dobject, dobject2, attributes2.id);
                 }
