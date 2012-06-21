@@ -46,7 +46,7 @@ public class BEDwrapperTest {
 
     @BeforeClass
     public static void setUp(){
-        testfile = new File(BEDwrapperTest.class.getResource("/test.bed").getFile());
+        testfile = new File(BEDwrapperTest.class.getResource("/test1.bed").getFile());
         Execute.initialize(4);
     }
 
@@ -58,7 +58,7 @@ public class BEDwrapperTest {
 
     @Test
     public void testScanFile(){
-        BEDwrapper wrapper = new BEDwrapper(testfile.getAbsolutePath());
+        BEDwrapper wrapper = new BEDwrapper(new File(getClass().getResource("/test.bed").getFile()));
         wrapper.scanFile();
 
         //scanFileReadLines= 0;
@@ -69,6 +69,21 @@ public class BEDwrapperTest {
         assertEquals(12, wrapper.countEntire );
         assertEquals(17, wrapper.countReads );
     }
+
+    @Test
+    public void testReadDescriptorWithSpace(){
+        BEDwrapper wrapper = new BEDwrapper(testfile.getAbsolutePath());
+        wrapper.scanFile();
+
+        //scanFileReadLines= 0;
+        //countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
+        assertEquals(1000, wrapper.nrUniqueLinesRead );
+        assertEquals(1000, wrapper.countAll );
+        assertEquals(75, wrapper.countSplit );
+        assertEquals(925, wrapper.countEntire );
+        assertEquals(972, wrapper.countReads );
+    }
+
     @Test
     public void testIsApplicable() throws IOException {
         BEDwrapper wrapper = new BEDwrapper(testfile.getAbsolutePath());
