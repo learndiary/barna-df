@@ -155,6 +155,7 @@ public class FluxCapacitorTest {
         Future<FluxCapacitorStats> captain = Execute.getExecutor().submit(capacitor);
         FluxCapacitorStats stats = captain.get();
         outFile.deleteOnExit();
+        parFile.deleteOnExit();
         return stats;
     }
 
@@ -313,6 +314,88 @@ public class FluxCapacitorTest {
     }
 
     @Test
+    public void testStasAreWrittenAndContainValidData() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+
+            FluxCapacitorStats stats = runCapacitor();
+            assertNotNull(stats);
+            assertTrue(statsFile.exists());
+
+            FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
+            assertNotNull(loaded);
+
+            assertEquals(loaded.getLociSingle(), stats.getLociSingle());
+            assertEquals(loaded.getLociExp(), stats.getLociExp());
+            assertEquals(loaded.getTxExp(), stats.getTxExp());
+            assertEquals(loaded.getEventsExp(), stats.getEventsExp());
+            assertEquals(loaded.getMappingsSingle(), stats.getMappingsSingle());
+            assertEquals(loaded.getMappingsSinglePairs(), stats.getMappingsSinglePairs());
+            assertEquals(loaded.getMappingsSinglePairsMapped(), stats.getMappingsSinglePairsMapped());
+            assertEquals(loaded.getMappingsTotal(), stats.getMappingsTotal());
+            assertEquals(loaded.getMappingsMapped(), stats.getMappingsMapped());
+            assertEquals(loaded.getMappingsPairsNa(), stats.getMappingsPairsNa());
+            assertEquals(loaded.getMappingsPairsWo(), stats.getMappingsPairsWo());
+            assertEquals(loaded.getMappingsNotSens(), stats.getMappingsNotSens());
+
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
+        }
+
+    }
+
+    @Test
+    public void testIOgzippedSortedWritableGTFflatSortedWritableBEDnoKeep() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_GZIP,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+
+            runCapacitor();
+
+            // check
+            assertTrue(gtfFile.exists());
+            assertTrue(bedFile.exists());
+            assertTrue(outFile.exists());
+            String[] files = anoDir.list();
+            assertTrue(files.length == 3);    // annotation+ parameter+ output
+            files = mapDir.list();
+            assertTrue(files.length == 1);    // mapping file only
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
+        }
+
+    }
+
+    @Test
     public void testNoDecompose() {
 
         try {
@@ -452,88 +535,6 @@ public class FluxCapacitorTest {
             runCapacitor();
 
             // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
-    }
-
-    @Test
-    public void testStasAreWrittenAndContainValidData() {
-
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-
-            FluxCapacitorStats stats = runCapacitor();
-            assertNotNull(stats);
-            assertTrue(statsFile.exists());
-
-            FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
-            assertNotNull(loaded);
-
-            assertEquals(loaded.getLociSingle(), stats.getLociSingle());
-            assertEquals(loaded.getLociExp(), stats.getLociExp());
-            assertEquals(loaded.getTxExp(), stats.getTxExp());
-            assertEquals(loaded.getEventsExp(), stats.getEventsExp());
-            assertEquals(loaded.getMappingsSingle(), stats.getMappingsSingle());
-            assertEquals(loaded.getMappingsSinglePairs(), stats.getMappingsSinglePairs());
-            assertEquals(loaded.getMappingsSinglePairsMapped(), stats.getMappingsSinglePairsMapped());
-            assertEquals(loaded.getMappingsTotal(), stats.getMappingsTotal());
-            assertEquals(loaded.getMappingsMapped(), stats.getMappingsMapped());
-            assertEquals(loaded.getMappingsPairsNa(), stats.getMappingsPairsNa());
-            assertEquals(loaded.getMappingsPairsWo(), stats.getMappingsPairsWo());
-            assertEquals(loaded.getMappingsNotSens(), stats.getMappingsNotSens());
-
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
-    }
-
-    @Test
-    public void testIOgzippedSortedWritableGTFflatSortedWritableBEDnoKeep() {
-
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    FileHelper.COMPRESSION_GZIP,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-
-            runCapacitor();
-
-            // check
-            assertTrue(gtfFile.exists());
-            assertTrue(bedFile.exists());
-            assertTrue(outFile.exists());
-            String[] files = anoDir.list();
-            assertTrue(files.length == 3);    // annotation+ parameter+ output
-            files = mapDir.list();
-            assertTrue(files.length == 1);    // mapping file only
 
         } catch (Exception e) {
             throw new RuntimeException(e);

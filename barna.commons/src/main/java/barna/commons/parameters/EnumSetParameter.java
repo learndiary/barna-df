@@ -56,12 +56,12 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     }
 
     protected EnumSet<E> get() {
-        return value == null ? getDefault() : value;
+        return value == null ? getDefault().clone() : value;
     }
 
     protected void parse(String value) throws ParameterException {
         if (this.value == null)
-            this.value = getDefault();
+            this.value = getDefault().clone();
         String[] vals = value.replaceAll("[\\[\\]\\s]", "").split(",");
         try {
             for (String val : vals) {
