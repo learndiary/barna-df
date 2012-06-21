@@ -2747,9 +2747,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             String[] junction = s.split("\\^");
             sb.append(gene.getChromosome());
             sb.append("\t");
-            sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
-            sb.append("\t");
             sb.append("flux");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
             sb.append("\t");
             sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
             sb.append("\t");
@@ -2783,9 +2783,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             String[] intron = s.split("\\^");
             sb.append(gene.getChromosome());
             sb.append("\t");
-            sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
-            sb.append("\t");
             sb.append("flux");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
             sb.append("\t");
             sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
             sb.append("\t");
