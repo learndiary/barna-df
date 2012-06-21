@@ -91,7 +91,7 @@ public class AnnotationMapper extends SplicingGraph {
     public AnnotationMapper(Gene gene) {
         super(gene);
         constructGraph();
-        getNodesInGenomicOrder();    // important ??!
+        getNodesInGenomicOrder();    //TODO important ??!
         transformToFragmentGraph();
     }
 
@@ -613,13 +613,13 @@ public class AnnotationMapper extends SplicingGraph {
     }
 
     /**
-     * maps a continous stretch of positions between
-     * gstart and gend to an atomic edge, or, a series
-     * of edges corresponding to an EEJ
+     * Maps a continous stretch of positions between
+     * <code>bstart</code> and <code>end</code to an atomic edge,
+     * or, a series of edges corresponding to an EEJ.
      *
      * @param bstart start on positive strand
      * @param bend   end on positive strand
-     * @return
+     * @return the edge mapped
      */
     public AbstractEdge getEdge2(int bstart, int bend) {
 
@@ -928,11 +928,10 @@ public class AnnotationMapper extends SplicingGraph {
     }
 
     /**
-     * Returns the number of reads belonging to the SuperEdges which span
-     * across a splice junction.
+     * Count reads which map to splice junction.
      *
-     * @param paired whether reads are paired end or not
-     * @return a <code>Map</code> with the <code>SuperEdge</code> string as key and the number of reads as value.
+     * @param paired whether the annotation mapping consider pairing information or not
+     * @return a <code>Map</code> with the junction id string as key and the number of reads as value.
      */
      public Map<String, Integer> getSJReads(boolean paired) {
         Map<SuperEdge, Integer> nodesReads = new HashMap<SuperEdge, Integer>();
@@ -991,6 +990,14 @@ public class AnnotationMapper extends SplicingGraph {
         return reads;
     }
 
+
+    /**
+     * Count reads which map to all-intronic regions.
+     *
+     * @param paired whether the annotation mapping consider pairing information or not
+     * @return a <code>Map</code> with the intron id string as key and an array with the count and the
+     * distribution of the reads over the intron as the value.
+     */
     public Map<String, Float[]> getAllIntronicReads(boolean paired) {
         Map<String, Float[]> nodesReads = new TreeMap<String, Float[]>();
         Node n = null;

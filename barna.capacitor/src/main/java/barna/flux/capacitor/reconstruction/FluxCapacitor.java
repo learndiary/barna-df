@@ -76,13 +76,15 @@ import java.util.zip.ZipFile;
 public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
 
     /**
-     * Enum and EnumSet used to activate/deactivate FluxCapacitor currentTasks
+     * Enumerates possible tasks for the FluxCapacitor
      */
     private enum Task {
         DECOMPOSE, COUNT_SJ, COUNT_INTRONS
-    }
+    };
 
-    ;
+    /**
+     * Task to be executed in the current run - initialized empty
+     */
     private EnumSet<Task> currentTasks = EnumSet.noneOf(Task.class);
 
     /**
@@ -1575,7 +1577,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 
 
-        //Add currentTasks to be executed in the current run
+        //Get from settings the tasks to be executed in the current run
         if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
             currentTasks.add(Task.DECOMPOSE);
         if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
@@ -1591,6 +1593,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             }
         }
 
+        //print current run stats
         printStats();
 
         // run
@@ -2648,6 +2651,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                     beds = readBedFile(gene[i], start, end);
 
+                    //TODO move this on call()
+                    //Execute tasks
                     for (Task t : currentTasks) {
                         switch (t) {
                             case DECOMPOSE:
@@ -2726,6 +2731,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         return true;
     }
 
+    /**
+     * Count reads to splice junction within the current locus and output them in GTF format.
+     *
+     * @param gene current locus
+     * @param beds mappings in the current locus
+     */
     private void outputSJGFF(Gene gene, BufferedIterator beds) {
         beds.setAtStart();
         AnnotationMapper a = new AnnotationMapper(gene);
@@ -2756,6 +2767,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         Log.print(sb.toString());
     }
 
+    /**
+     * Count reads to all-intronic regions within the current locus and output them in GTF format.
+     *
+     * @param gene current locus
+     * @param beds mappings in the current locus
+     */
     private void outputIntronsGFF(Gene gene, BufferedIterator beds) {
         beds.setAtStart();
         AnnotationMapper a = new AnnotationMapper(gene);

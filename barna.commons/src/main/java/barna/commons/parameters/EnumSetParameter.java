@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 
 /**
- * Enum parameter implementation
+ * EnumSet parameter implementation
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */

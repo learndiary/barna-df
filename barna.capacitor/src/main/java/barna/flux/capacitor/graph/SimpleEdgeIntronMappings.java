@@ -5,15 +5,25 @@ import barna.model.splicegraph.Node;
 import java.util.Arrays;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Emilio Palumbo
- * Date: 6/7/12
- * Time: 11:04 AM
+ * Extension of <code><SimpleEdgeMappings/code> for all-intronic regions.
+ *
+ * @author  Emilio Palumbo (emiliopalumbo@gmail.com)
  */
 public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
 
+    /**
+     * Number of bins.
+     */
     final int binCount = 10;
+
+    /**
+     * Array with the end position of each bin.
+     */
     int[] binLimits = new int[binCount];
+
+    /**
+     * Array with the distribution of reads over the edge.
+     */
     int[] binReads = new int[binCount];
 
     public SimpleEdgeIntronMappings(Node newTail, Node newHead) {
@@ -21,6 +31,12 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         binLimits = setLimits(binCount);
     }
 
+    /**
+     * Splits the edge in a certain number of beans.
+     *
+     * @param count number of bins
+     * @return the array whith the limits of the bins
+     */
     protected int[] setLimits(int count) {
         int[] limits = new int[count];
         for (int i=0;i<count;i++) {
@@ -30,6 +46,13 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         return limits;
     }
 
+    /**
+     * Increase the number of reads and update the bins array.
+     *
+     * @param readStartPos start postion of the read
+     * @param readEndPos end position of the read
+     * @param count whether increase the read number or only update the read distribution
+     */
     public void incrReadNr(int readStartPos, int readEndPos, boolean count) {
 
         if (binLimits[0] > 0) {
@@ -50,6 +73,13 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
             incrRevReadNr(readStartPos,readEndPos,count);
     }
 
+    /**
+     * Increase the number of reads on the reverse direction and update the bins array.
+     *
+     * @param readStartPos start postion of the read
+     * @param readEndPos end position of the read
+     * @param count whether increase the read number or only update the read distribution
+     */
     public void incrRevReadNr(int readStartPos, int readEndPos, boolean count) {
 
         int gstart = -readEndPos;
@@ -70,6 +100,11 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
             mappings.incrRevReadNr();
     }
 
+    /**
+     * Return the bins coverage.
+     *
+     * @return fractions of the bin covered out of the total number of bins
+     */
     public float getBinCoverage() {
         float count = 0;
         for (int i = 0;i<binReads.length;i++) {
@@ -84,14 +119,4 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
         return true;
     }
 
-    /*protected double getReadDist(int[] binReads, int n) {
-        int count = 0, sum = 0;
-        for (int i = 0;i<binReads.length;i++) {
-            if (binReads[i]>0) {
-                count++;
-                sum+=binReads[i];
-            }
-        }
-        return (double)sum/count;
-    } */
 }
