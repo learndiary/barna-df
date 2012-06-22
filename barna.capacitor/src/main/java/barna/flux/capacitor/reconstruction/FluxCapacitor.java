@@ -2922,7 +2922,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             nrBEDmappings = -1;
         }
 
-        Log.info("\t" + nrBEDreads + " reads"
+        Log.info("\t" + nrBEDreads + " reads, "
                 + (nrBEDmappings > 0 ? nrBEDmappings + " mappings: R-factor " + (wrapper.getCountMappings() / (float) wrapper.getCountReads()) : ""));
         if (nrBEDmappings > 0)
             Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()

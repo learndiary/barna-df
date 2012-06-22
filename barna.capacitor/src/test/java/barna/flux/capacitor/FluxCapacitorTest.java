@@ -26,8 +26,8 @@ import static junit.framework.Assert.*;
 public class FluxCapacitorTest {
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    final File GTF_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    final File BED_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
+    final File GTF_SORTED = new File("/home/emilio/fromMicha/gencode_v12-chr1-100174259-100232187C.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    final File BED_SORTED = new File("/home/emilio/fromMicha/test-chr1-100174259-100232187C.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -112,7 +112,7 @@ public class FluxCapacitorTest {
 
     protected void writeParFile(boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet<FluxCapacitorSettings.CountElements> countElements) throws Exception {
         UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+        descriptor.init(UniversalReadDescriptor.getDescriptor("CASAVA18"));
         FluxCapacitorSettings settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(gtfFile.getAbsolutePath()));
@@ -810,6 +810,36 @@ public class FluxCapacitorTest {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            FileHelper.rmDir(mapDir);
+            FileHelper.rmDir(anoDir);
+        }
+
+    }
+
+    @Test
+    public void testReadsPerTranscript() {
+
+        try {
+            initFiles(
+                    // GTF: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // BED: compressed, sorted, readOnly
+                    FileHelper.COMPRESSION_NONE,
+                    SORTED,
+                    false,
+                    // keep sorted
+                    false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+
+
+            runCapacitor();
+
+            // check
 
         } catch (Exception e) {
             throw new RuntimeException(e);
