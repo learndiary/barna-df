@@ -50,6 +50,11 @@ public interface BufferedIterator extends Iterable<ByteArrayCharSequence>, Itera
 	 * resets to last marked element (if any)
 	 */
 	public void reset();
+
+    /**
+     * reset to the start position
+     */
+    public void setAtStart();
 	
 	/**
 	 * frees resources occupied by the iterator

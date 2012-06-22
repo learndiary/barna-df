@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 
 /**
- * Enum parameter implementation
+ * EnumSet parameter implementation
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
@@ -56,23 +56,26 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     }
 
     protected EnumSet<E> get() {
-        return value == null ? getDefault() : value;
+        return value == null ? getDefault().clone() : value;
     }
 
     protected void parse(String value) throws ParameterException {
         if (this.value == null)
-            this.value = getDefault();
-        String[] vals = value.replaceAll("[\\[\\]]", "").split(",");
-        for (String val : vals) {
-            if (!val.isEmpty()) {
-                for (E e : values) {
-                    if (e.name().equalsIgnoreCase(val)) {
-                        this.value.add(e);
+            this.value = getDefault().clone();
+        String[] vals = value.replaceAll("[\\[\\]\\s]", "").split(",");
+        try {
+            for (String val : vals) {
+                if (!val.isEmpty()) {
+                    for (E e : values) {
+                        if (e.name().equalsIgnoreCase(val)) {
+                            this.value.add(e);
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
         }
-        //throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
     }
 
     @Override
@@ -82,7 +85,7 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
 
     @Override
     public Parameter copy() {
-        EnumSetParameter enumParameter = new EnumSetParameter(getName(), getDescription(), getDefault(), getType(), getValidator());
+        EnumSetParameter enumParameter = new EnumSetParameter(getName(), getDescription(), getDefault(),values.getClass().getComponentType(), getValidator());
         enumParameter.set(get());
         return enumParameter;
     }

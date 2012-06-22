@@ -276,7 +276,7 @@ public class BEDwrapper extends AbstractFileIOWrapper implements MappingWrapper 
 	HashMap<String,long[]> mapChr= new HashMap<String,long[]>(); // bytes and lines
 	private ByteArrayCharSequence cs= new ByteArrayCharSequence(200);
 	
-	int nrUniqueLinesRead= -1;
+	int nrUniqueLinesRead= 0;
 	
 	/**
 	 * reads the rest of the lines from the reader and closes it.
@@ -491,7 +491,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 			if (s== null)
 				return false;
 		
-			String[] ss= s.split("\\s");
+			String[] ss= s.split("\\t");
 			if (ss.length< 4)
 				return false;
 			
@@ -540,14 +540,16 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 			in = new PipedInputStream(out);
 			tmpWriter= new BufferedWriter(new OutputStreamWriter(out));
 
-            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true, "\\s")
+            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true, "\t")
                     .field(0, false)
                     .addInterceptor(new Interceptable.Interceptor<String>() {
-                        String lastLine= null;
+                        String lastLine = null;
+
                         public String intercept(String line) {
-                            if (lastLine== null|| !line.equals(lastLine))
+                            if (lastLine == null || !line.equals(lastLine)) {
                                 ++countReads;
-                            lastLine= line;
+                            }
+                            lastLine = line;
                             return line;
                         }
                     })
@@ -594,7 +596,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 				}
 				int from= (cnt== 3)? p: -1, to= -1;
 				while (p >= 0 && p< s.length()&& Character.isWhitespace(s.charAt(p++)));
-				while (p >= 0 && p< s.length()&& !Character.isWhitespace(s.charAt(p++)));
+				while (p >= 0 && p< s.length()&& s.charAt(p++)!='\t');
 				--p;
 				if (p< s.length())
 					to= p;

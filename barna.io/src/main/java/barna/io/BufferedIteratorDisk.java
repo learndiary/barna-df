@@ -58,9 +58,7 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * unsorted and/or in form of a stream, the file is created.
 	 * In this case, a new file is create in the current 
 	 * temporary directory if no other is specified by 
-	 * <code>directory</code>, involving an optional prefix. 
-	 * @see #prefix
-	 * @see #directory
+	 * <code>directory</code>, involving an optional prefix.
 	 */
 	File tmpFile;
 	/**
@@ -386,11 +384,13 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 */
 	@Override
 	public void mark() {
-		try {
-			reader= getReader(-1);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        if (reader!=null) {
+            try {
+                reader= getReader(-1);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
 		
 		reader.mark();
 	}
@@ -405,26 +405,42 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 */
 	@Override
 	public void reset() {
-		
-		try {
-			reader= getReader(-1);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		long pos= reader.reset();
-		if (pos>= 0) {
-			try {
-				reader.close();
-				reader= null;
-				getReader(pos);
-			} catch (FileNotFoundException e) {
-				Log.error(e+ " reading from file "+ tmpFile.getName());
-			} catch (IOException e) {
-				Log.error(e + "Error reading from file " + tmpFile.getName());
-			}
-		}
+		if (reader!=null) {
+            try {
+                reader= getReader(-1);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            long pos= reader.reset();
+            if (pos>= 0) {
+                try {
+                    reader.close();
+                    reader= null;
+                    getReader(pos);
+                } catch (FileNotFoundException e) {
+                    Log.error(e+ " reading from file "+ tmpFile.getName());
+                } catch (IOException e) {
+                    Log.error(e + "Error reading from file " + tmpFile.getName());
+                }
+            }
+        }
 			
 	}
+
+    @Override
+    public void setAtStart() {
+        if (reader!=null) {
+            try {
+                reader.close();
+                reader= null;
+                getReader(0);
+            } catch (FileNotFoundException e) {
+                Log.error(e+ " reading from file "+ tmpFile.getName());
+            } catch (IOException e) {
+                Log.error(e + "Error reading from file " + tmpFile.getName());
+            }
+        }
+    }
 
 	/**
 	 * Determines the number of elements left in the 
@@ -454,14 +470,16 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 */
 	@Override
 	public void clear() {
-		boolean b= false;
-		try {
-			reader.close();
-			b= tmpFile.delete();
-		} catch (IOException e) {
-			if (!b)
-				throw new RuntimeException(e);
-		}
+		if (reader!= null) {
+            boolean b= false;
+            try {
+                reader.close();
+                b= tmpFile.delete();
+            } catch (IOException e) {
+                if (!b)
+                    throw new RuntimeException(e);
+            }
+        }
 	}
 	
 }

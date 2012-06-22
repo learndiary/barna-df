@@ -66,7 +66,6 @@ import java.nio.channels.FileLock;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 
 /**
@@ -77,13 +76,15 @@ import java.util.zip.ZipOutputStream;
 public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
 
     /**
-     * Enum and EnumSet used to activate/deactivate FluxCapacitor currentTasks
+     * Enumerates possible tasks for the FluxCapacitor
      */
     private enum Task {
         DECOMPOSE, COUNT_SJ, COUNT_INTRONS
-    }
+    };
 
-    ;
+    /**
+     * Task to be executed in the current run - initialized empty
+     */
     private EnumSet<Task> currentTasks = EnumSet.noneOf(Task.class);
 
     /**
@@ -135,7 +136,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-    class LocusSolver extends Thread {
+    class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
 
         /**
          * The locus that is to be solved.
@@ -1576,7 +1577,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 
 
-        //Add currentTasks to be executed in the current run
+        //Get from settings the tasks to be executed in the current run
         if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
             currentTasks.add(Task.DECOMPOSE);
         if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
@@ -1592,6 +1593,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             }
         }
 
+        //print current run stats
         printStats();
 
         // run
@@ -1602,7 +1604,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         if (profile == null) {
             exit(-1);
         }
-        explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
+        if (currentTasks.contains(Task.DECOMPOSE))
+            explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
         // BARNA-103 : write stats to file
         File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
@@ -2529,10 +2532,28 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             bedWrapper.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
-                if (mode == FluxCapacitorConstants.MODE_LEARN)
-                    System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
-                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT)
-                    System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
+                if (mode == FluxCapacitorConstants.MODE_LEARN) {
+                    if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Reads to the following elements are counted: ");
+                        if (currentTasks.contains(Task.COUNT_SJ)) {
+                            message.append("splice junctions");
+                            if (currentTasks.contains(Task.COUNT_INTRONS))
+                                message.append(", ");
+                        }
+                        if (currentTasks.contains(Task.COUNT_INTRONS))
+                            message.append("all-intronic regions");
+                        message.append(".");
+                        Log.info("","");
+                        Log.info("COUNT", message.toString());
+                    }
+                    Log.info("","");
+                    Log.info("LEARN", "Scanning the input and getting the attributes.");
+                }
+                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                    Log.info("","");
+                    Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                }
             }
             final String profiling = "profiling ", decomposing = "decomposing ";
 
@@ -2630,23 +2651,28 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                     beds = readBedFile(gene[i], start, end);
 
+                    //TODO move this on call()
+                    //Execute tasks
                     for (Task t : currentTasks) {
                         switch (t) {
                             case DECOMPOSE:
                                 if (mode == FluxCapacitorConstants.MODE_LEARN && beds != null) {
+                                    beds.setAtStart();
                                     solve(gene[i], beds, false);
                                 } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                                    if (beds!=null)
+                                        beds.setAtStart();
                                     solve(gene[i], beds, true);
                                 }
                                 break;
                             case COUNT_INTRONS:
+                                if (beds!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
+                                    outputIntronsGFF(gene[i], beds);
+                                }
                                 break;
                             case COUNT_SJ:
-                                AnnotationMapper a = new AnnotationMapper(gene[i]);
-                                a.map(beds, settings);
-                                Map<String, Integer> m = a.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
-                                for (String s : m.keySet()) {
-                                    Log.println(s + "\t" + m.get(s));
+                                if (beds!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
+                                    outputSJGFF(gene[i], beds);
                                 }
                                 break;
                         }
@@ -2703,6 +2729,80 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
         return true;
+    }
+
+    /**
+     * Count reads to splice junction within the current locus and output them in GTF format.
+     *
+     * @param gene current locus
+     * @param beds mappings in the current locus
+     */
+    private void outputSJGFF(Gene gene, BufferedIterator beds) {
+        beds.setAtStart();
+        AnnotationMapper a = new AnnotationMapper(gene);
+        a.map(beds, settings);
+        Map<String, Integer> m = a.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+        StringBuilder sb = new StringBuilder();
+        for (String s : m.keySet()) {
+            String[] junction = s.split("\\^");
+            sb.append(gene.getChromosome());
+            sb.append("\t");
+            sb.append("flux");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
+            sb.append("\t");
+            sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
+            sb.append("\t");
+            sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
+            sb.append("\t");
+            sb.append(m.get(s));
+            sb.append("\t");
+            sb.append(junction[0].contains("-") ? "+" : "-");
+            sb.append("\t");
+            sb.append(".");
+            sb.append("\t");
+            sb.append("gene_id \""+gene.getGeneID()+"\";");
+            sb.append("\n");
+        }
+        Log.print(sb.toString());
+    }
+
+    /**
+     * Count reads to all-intronic regions within the current locus and output them in GTF format.
+     *
+     * @param gene current locus
+     * @param beds mappings in the current locus
+     */
+    private void outputIntronsGFF(Gene gene, BufferedIterator beds) {
+        beds.setAtStart();
+        AnnotationMapper a = new AnnotationMapper(gene);
+        a.map(beds, settings);
+        Map<String, Float[]> m = a.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+        StringBuilder sb = new StringBuilder();
+        for (String s : m.keySet()) {
+            String[] intron = s.split("\\^");
+            sb.append(gene.getChromosome());
+            sb.append("\t");
+            sb.append("flux");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
+            sb.append("\t");
+            sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
+            sb.append("\t");
+            sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
+            sb.append("\t");
+            sb.append(m.get(s)[0].intValue());
+            sb.append("\t");
+            sb.append(intron[0].contains("-")?"+":"-");
+            sb.append("\t");
+            sb.append(".");
+            sb.append("\t");
+            sb.append("gene_id \""+gene.getGeneID()+"\";");
+            sb.append(" ");
+            sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
+            sb.append("\n");
+        }
+        Log.print(sb.toString());
     }
 
     /**
@@ -2822,7 +2922,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             nrBEDmappings = -1;
         }
 
-        Log.info("\t" + nrBEDreads + " reads"
+        Log.info("\t" + nrBEDreads + " reads, "
                 + (nrBEDmappings > 0 ? nrBEDmappings + " mappings: R-factor " + (wrapper.getCountMappings() / (float) wrapper.getCountReads()) : ""));
         if (nrBEDmappings > 0)
             Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()

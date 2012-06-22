@@ -2050,7 +2050,7 @@ public class SplicingGraph {
                 minConf = (byte) Math.min(minConf, t[j].getSourceType());
             if (t.length > 0) {
                 SimpleEdge eee = createEdge(nodes[i - 1], nodes[i], exonic, minConf, true);
-            } else {
+            } else {// if at least a transcript is active create an all-intronic edge
                 if (!isNull(active)) {
                     SimpleEdge allintronic = createEdge(nodes[i - 1], nodes[i], without(active, exonic), SimpleEdge.ALL_INTRONIC, false);
                 }
@@ -2088,6 +2088,20 @@ public class SplicingGraph {
 
     IntronModel iModel = new IntronModel();
 
+
+    //TODO Modify graph structure and iterations to avoid duplicating existing edges
+    //TODO and create an all intronic segment instead
+    /**
+     * Create a new SimpleEdge between two nodes or return it if it already exists. If the region is all-intronic
+     * the edge is created even if a edge between the two nodes already exists (as long as it is not AllIntronic).
+     *
+     * @param v first node
+     * @param w second node
+     * @param newTset transcripts the nodes belong to
+     * @param type edge type
+     * @param exonic whether it is an exonic segment or not
+     * @return the new edge
+     */
     public SimpleEdge createEdge(Node v, Node w, long[] newTset, byte type, boolean exonic) {
 
         SimpleEdge e = getEdge(v, w, exonic);

@@ -123,6 +123,8 @@ public class ModelPool {
                     // SIMULATOR-29 make sure we count only for "real" mutations
                     if (a[characterPosition] != character){
                         sumMutations++;
+                        // BARNA-184 makre sure mutations are lowe case
+                        a[characterPosition] = (byte) Character.toLowerCase(a[characterPosition]);
                     }
                 }
 

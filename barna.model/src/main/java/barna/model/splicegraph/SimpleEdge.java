@@ -107,7 +107,9 @@ public class SimpleEdge extends AbstractEdge {
 	
 	@Override
 	public boolean equals(Object obj) {
-		SimpleEdge e= (SimpleEdge) obj;
+		if (!obj.getClass().isAssignableFrom(SimpleEdge.class))
+            return false;
+        SimpleEdge e= (SimpleEdge) obj;
 		if (getTail().equals(e.getTail())&& getHead().equals(e.getHead())
 				&& SplicingGraph.equalSet(getTranscripts(), e.getTranscripts())
 				&& isExonic()== isExonic()		// multiple edges exonic, intronic for eg intron retention
