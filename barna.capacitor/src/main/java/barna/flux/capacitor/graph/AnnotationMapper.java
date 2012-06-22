@@ -402,14 +402,15 @@ public class AnnotationMapper extends SplicingGraph {
                         continue;
                     }
                     if (target.isAllIntronic()) {
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(),false);
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(), false);
                     }
-                    if (target2.isAllIntronic()&&!target2.equals(target)) {
-                        ((SimpleEdgeIntronMappings) target2).incrReadNr(dobject2.getStart(), dobject2.getEnd(),false);
+                    if (target2.isAllIntronic() && !target2.equals(target)) {
+                        ((SimpleEdgeIntronMappings) target2).incrReadNr(dobject2.getStart(), dobject2.getEnd(), false);
                     }
-                    ((SuperEdgeMappings) se).getMappings().incrReadNr();
-                    if (se.isExonic())
+                    if (se.isExonic()) {
+                        ((SuperEdgeMappings) se).getMappings().incrReadNr();
                         nrMappingsMapped += 2;
+                    }
                     if (buffy != null)
                         writeInsert(buffy, se, dobject, dobject2, attributes2.id);
                 }
@@ -419,9 +420,9 @@ public class AnnotationMapper extends SplicingGraph {
                 boolean sense = trpts[0].getStrand() == dobject.getStrand();    // TODO get from edge
                 if (target.isAllIntronic()) {
                     if (sense)
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(),true);
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(), true);
                     else
-                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(dobject.getStart(), dobject.getEnd(),true);
+                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(dobject.getStart(), dobject.getEnd(), true);
                 } else {
                     if (sense)
                         ((MappingsInterface) target).getMappings().incrReadNr();
@@ -933,7 +934,7 @@ public class AnnotationMapper extends SplicingGraph {
      * @param paired whether the annotation mapping consider pairing information or not
      * @return a <code>Map</code> with the junction id string as key and the number of reads as value.
      */
-     public Map<String, Integer> getSJReads(boolean paired) {
+    public Map<String, Integer> getSJReads(boolean paired) {
         Map<SuperEdge, Integer> nodesReads = new HashMap<SuperEdge, Integer>();
         Node n = null;
         for (int i = 1; i < getNodesInGenomicOrder().length - 1; i++) {
@@ -996,7 +997,7 @@ public class AnnotationMapper extends SplicingGraph {
      *
      * @param paired whether the annotation mapping consider pairing information or not
      * @return a <code>Map</code> with the intron id string as key and an array with the count and the
-     * distribution of the reads over the intron as the value.
+     *         distribution of the reads over the intron as the value.
      */
     public Map<String, Float[]> getAllIntronicReads(boolean paired) {
         Map<String, Float[]> nodesReads = new TreeMap<String, Float[]>();
@@ -1010,10 +1011,9 @@ public class AnnotationMapper extends SplicingGraph {
                         SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings) e;
                         if (paired) {
                             if (e1.getSuperEdges() != null)
-                                nodesReads.put(e1.getTail().getSite().getPos()+"^"+e1.getHead().getSite().getPos(), new Float[]{(float)countAllIntronicReads(e1.getSuperEdges()),e1.getBinCoverage()});
-                        }
-                        else
-                            nodesReads.put(e.getTail().getSite().getPos()+"^"+e.getHead().getSite().getPos(), new Float[]{(float)e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
+                                nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) countAllIntronicReads(e1.getSuperEdges()), e1.getBinCoverage()});
+                        } else
+                            nodesReads.put(e.getTail().getSite().getPos() + "^" + e.getHead().getSite().getPos(), new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
                     }
                 }
             }
