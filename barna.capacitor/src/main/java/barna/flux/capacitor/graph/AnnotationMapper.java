@@ -401,14 +401,15 @@ public class AnnotationMapper extends SplicingGraph {
                         nrMappingsNotMappedAsPair += 2;
                         continue;
                     }
-                    if (target.isAllIntronic()) {
+
+                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
                         ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(), false);
                     }
-                    if (target2.isAllIntronic() && !target2.equals(target)) {
+                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
                         ((SimpleEdgeIntronMappings) target2).incrReadNr(dobject2.getStart(), dobject2.getEnd(), false);
                     }
+                    ((SuperEdgeMappings) se).getMappings().incrReadNr();
                     if (se.isExonic()) {
-                        ((SuperEdgeMappings) se).getMappings().incrReadNr();
                         nrMappingsMapped += 2;
                     }
                     if (buffy != null)
@@ -1013,7 +1014,7 @@ public class AnnotationMapper extends SplicingGraph {
                             if (e1.getSuperEdges() != null)
                                 nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) countAllIntronicReads(e1.getSuperEdges()), e1.getBinCoverage()});
                         } else
-                            nodesReads.put(e.getTail().getSite().getPos() + "^" + e.getHead().getSite().getPos(), new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
+                            nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
                     }
                 }
             }
@@ -1028,7 +1029,7 @@ public class AnnotationMapper extends SplicingGraph {
                 int n = 1;
                 if (se.getEdges()[0].getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && se.getEdges()[0].equals(se.getEdges()[se.getEdges().length - 1]))
                     n = 2;
-                reads += 1 * ((SuperEdgeMappings) se).getMappings().getReadNr();
+                reads += n * ((SuperEdgeMappings) se).getMappings().getReadNr();
             }
         }
         return reads;

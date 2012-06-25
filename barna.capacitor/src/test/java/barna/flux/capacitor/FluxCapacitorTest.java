@@ -26,8 +26,8 @@ import static junit.framework.Assert.*;
 public class FluxCapacitorTest {
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    final File GTF_SORTED = new File("/home/emilio/fromMicha/gencode_v12-chr1-100174259-100232187C.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    final File BED_SORTED = new File("/home/emilio/fromMicha/test-chr1-100174259-100232187C.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());
+    final File GTF_SORTED = new File("/home/emilio/fromMicha/gencode_v12-chr22-24030323-24041363.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    final File BED_SORTED = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -593,7 +593,7 @@ public class FluxCapacitorTest {
                 while ((s1 = b1.readLine()) != null && (s2 = b2.readLine()) != null) {
                     System.err.println(s1);
                     String[] ss = s1.split("\\s");
-                    if (ss[1].equals("transcript")) {
+                    if (ss[2].equals("transcript")) {
                         if (ss[9].contains("NM_001159750"))
                             assertEquals(ss[ss.length - 1], "244929.484375");
                         else if (ss[9].contains("NM_001159751"))
@@ -834,12 +834,47 @@ public class FluxCapacitorTest {
                     SORTED,
                     false,
                     // keep sorted
-                    false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+                    false, false, false, EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
 
 
             runCapacitor();
 
             // check
+            try {
+                BufferedReader b = new BufferedReader(new FileReader(outFile));
+                String s;
+                while ((s = b.readLine()) != null) {
+                    //System.err.println(s);
+                    String[] ss = s.split("\\s");
+                    if (ss[2].equals("transcript")) {
+                        if (ss[9].contains("ENST00000290691.5"))
+                            assertEquals("11.537205;", ss[13]);
+                        else if (ss[9].contains("ENST00000382833.2"))
+                            assertEquals("0.000000;", ss[13]);
+                        else if (ss[9].contains("ENST00000401461.1"))
+                            assertEquals("26.740435;", ss[13]);
+                        else if (ss[9].contains("ENST00000423392.1"))
+                            assertEquals("0.000000;", ss[13]);
+                        else if (ss[9].contains("ENST00000441897.1"))
+                            assertEquals("0.000000;", ss[13]);
+                        else if (ss[9].contains("ENST00000452208.1"))
+                            assertEquals("0.000000;", ss[13]);
+                        else if (ss[9].contains("ENST00000460003."))
+                            assertEquals("9.722361;", ss[13]);
+                        else if (ss[9].contains("ENST00000460167.1"))
+                            assertEquals("0.000000;", ss[13]);
+                        else if (ss[9].contains("ENST00000467354.1"))
+                            assertEquals("0.000000;", ss[13]);
+                        else
+                            Assert.fail("Unknown Transcript ID: " + ss[9]);
+                    }
+
+                }
+                assertFalse(b.ready());
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
 
         } catch (Exception e) {
             throw new RuntimeException(e);

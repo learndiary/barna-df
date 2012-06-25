@@ -1,6 +1,7 @@
 package barna.flux.capacitor.graph;
 
 import barna.model.splicegraph.Node;
+import barna.model.splicegraph.SplicingGraph;
 
 import java.util.Arrays;
 
@@ -118,5 +119,24 @@ public class SimpleEdgeIntronMappings extends SimpleEdgeMappings {
     public boolean isAllIntronic() {
         return true;
     }
+
+    @Override
+    public boolean isIntronic() {
+        return true;
+    }
+
+    /*@Override
+    public boolean equals(Object obj) {
+        if (!obj.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class))
+            return false;
+        SimpleEdgeIntronMappings e= (SimpleEdgeIntronMappings) obj;
+        if (getTail().equals(e.getTail())&& getHead().equals(e.getHead())
+                && SplicingGraph.equalSet(getTranscripts(), e.getTranscripts())
+                && isExonic()== isExonic()		// multiple edges exonic, intronic for eg intron retention
+                && isIntronic()== isIntronic())
+            return true;
+        return false;
+    } */
+
 
 }

@@ -170,6 +170,9 @@ public class SuperEdge extends AbstractEdge {
     }
 
     public boolean isIntronic() {
+        for(AbstractEdge e : edges)
+            if(e.isIntronic())
+                return true;
 		return false;
 	}
 	
@@ -181,7 +184,11 @@ public class SuperEdge extends AbstractEdge {
 	}
 
     public boolean isAllIntronic() {
-        return false;
+        boolean b= true;
+        for(AbstractEdge e : edges)
+            if(e.isAllIntronic())
+                b&= true;
+        return b;
     }
 	
 	public void setEdges(AbstractEdge[] edges) {
