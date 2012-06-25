@@ -24,16 +24,15 @@ import java.util.zip.ZipOutputStream;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    //private String path = "/home/emilio/fromMicha";
-    private final File gtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());////(path+"/hg19_ref_ucsc120203_sorted.gtf");//
-    private final File bedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());//(path + "/NA12546_NA12546.1.M_120209_gem_2_76-76-50-30_120313170321-1689404293_chr22.bed");//
+    private final File gtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+    private final File bedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     private FluxCapacitorSettings settings;
     Map<String, ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
     }
 
     private void initSettings(String descriptorStr, FluxCapacitorSettings.AnnotationMapping mapping) {
@@ -185,8 +184,7 @@ public class AnnotationMapperTest extends TestCase {
                         }
                     }
                 }
-                if (mapped)
-                {
+                if (mapped) {
                     if (paired) {
                         if (nBlocks < 3) {
                             String readId = null;
@@ -376,8 +374,7 @@ public class AnnotationMapperTest extends TestCase {
                         break;
                     }
                 }
-                if (mapped)
-                {
+                if (mapped) {
                     for (String intronString : introns.keySet()) {
                         String[] intron = intronString.split("-");
                         if (Integer.parseInt(intron[0]) < Integer.parseInt(bLine[1]) + 1 && Integer.parseInt(intron[1]) > Integer.parseInt(bLine[2])) {
@@ -385,7 +382,7 @@ public class AnnotationMapperTest extends TestCase {
                             mIntron[1] = intron[1];
                         }
                     }
-                    if (mIntron[0]!=null&&mIntron[1]!=null) {
+                    if (mIntron[0] != null && mIntron[1] != null) {
                         if (nBlocks == 1) {
                             String[] ids = {mIntron[0] + "-" + mIntron[1]};
                             for (String id : ids) {
@@ -445,14 +442,10 @@ public class AnnotationMapperTest extends TestCase {
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
-        //gtf.setChromosomeWise(true);
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
-        //gtf.sweepToChromosome("chr22");
         gtf.read();
-        //Gene g = gtf.getGenes()[0];        ;
         for (Gene g : gtf.getGenes()) {
-            //if (g.getGeneID().contains("18893736-18899601")) {
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -476,10 +469,7 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            if (count[0] != count[1])
-                System.err.println("Gene : " + g.getGeneID() + "\tAnnotation Mapper: " + count[0] + "\tTest: " + count[1]);
-            //assertEquals(count[1],count[0]);
-            //}
+            assertEquals(count[0], count[1]);
         }
     }
 
@@ -487,16 +477,13 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareSJReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
-        //gtf.setChromosomeWise(true);
-        //gtf.sweepToChromosome("chr22");
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-            //if (g.getGeneID().contains("50946645-50963209")) {
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -520,10 +507,7 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            if (count[0] != count[1])
-                System.err.println("Gene : " + g.getGeneID() + "\tAnnotation Mapper: " + count[0] + "\tTest: " + count[1]);
-            //assertEquals(count[1], count[0]);
-            //}
+            assertEquals(count[0], count[1]);
         }
     }
 
@@ -534,13 +518,10 @@ public class AnnotationMapperTest extends TestCase {
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
-        //gtf.setChromosomeWise(true);
-        //gtf.sweepToChromosome("chr22");
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-            //if (g.getGeneID().contains("18893736-18899601")) {//32870707-32894818
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -564,10 +545,7 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            if (count[0] != count[1])
-                System.err.println("Gene : " + g.getGeneID() + "\tAnnotationMapper: " + count[0] + "\tTest: " + count[1]);
-            //assertTrue(count[0] > 0);
-            //}
+            assertEquals(count[0], count[1]);
         }
     }
 
@@ -575,16 +553,13 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareIntronReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(gtfFile);
         BEDwrapper bed = new BEDwrapper(bedFile);
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
-        //gtf.setChromosomeWise(true);
-        //gtf.sweepToChromosome("chr22");
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-            //if (g.getGeneID().contains("17517460-17539682")) {//32870707-32894818
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -608,10 +583,7 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            //if (count[0] != count[1])
-                System.err.println("Gene : " + g.getGeneID() + "\tAnnotationMapper: " + count[0] + "\tTest: " + count[1]);
-            //assertTrue(count[0] > 0);
-            //}
+            assertEquals(76, count[0]);
         }
     }
 

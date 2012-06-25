@@ -26,8 +26,10 @@ import static junit.framework.Assert.*;
 public class FluxCapacitorTest {
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    final File GTF_SORTED = new File("/home/emilio/fromMicha/gencode_v12-chr1-100174259-100232187C.gtf");//(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    final File BED_SORTED = new File("/home/emilio/fromMicha/test-chr1-100174259-100232187C.bed");//(getClass().getResource("/chr1_chrX.bed").getFile());
+    final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    final File BED_MM9_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
+    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -43,7 +45,7 @@ public class FluxCapacitorTest {
     protected File statsFile = null;
 
 
-    private void initFileNames(byte compressionGTF, byte compressionBED) throws Exception {
+    private void initFileNames(File GTF_SORTED, byte compressionGTF, File BED_SORTED, byte compressionBED) throws Exception {
         // set up file structure
         tmpDir = new File(System.getProperty("java.io.tmpdir"));
         anoDir = FileHelper.createTempDir(getClass().getSimpleName(), subdirAnnotation, tmpDir);
@@ -110,9 +112,9 @@ public class FluxCapacitorTest {
         target.deleteOnExit();
     }
 
-    protected void writeParFile(boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet<FluxCapacitorSettings.CountElements> countElements) throws Exception {
+    protected void writeParFile(String descriptorString, boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet<FluxCapacitorSettings.CountElements> countElements) throws Exception {
         UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("CASAVA18"));
+        descriptor.init(UniversalReadDescriptor.getDescriptor(descriptorString));
         FluxCapacitorSettings settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(gtfFile.getAbsolutePath()));
@@ -159,18 +161,19 @@ public class FluxCapacitorTest {
         return stats;
     }
 
-    protected void initFiles(byte compressionGTF, int sortGTF, boolean writeProtectGTF,
-                             byte compressionBED, int sortBED, boolean writeProtectBED, boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet countElements) {
+    protected void initFiles(File GTF_SORTED, byte compressionGTF, int sortGTF, boolean writeProtectGTF,
+                             File BED_SORTED, byte compressionBED, int sortBED, boolean writeProtectBED,
+                             String descriptor, boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet countElements) {
 
         try {
 
             // file names
-            initFileNames(compressionGTF, compressionBED);
+            initFileNames(GTF_SORTED, compressionGTF, BED_SORTED, compressionBED);
 
             // put files in location
             copy(GTF_SORTED, gtfFile, sortGTF, compressionGTF);
             copy(BED_SORTED, bedFile, sortBED, compressionBED);
-            writeParFile(keepSorted, sortInRam, noDecompose, countElements);
+            writeParFile(descriptor, keepSorted, sortInRam, noDecompose, countElements);
 
             // folder rights
             if (writeProtectGTF)
@@ -199,13 +202,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -235,13 +241,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -277,13 +286,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -319,13 +331,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -365,13 +380,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_GZIP,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -401,13 +419,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, true, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -431,13 +452,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "CASAVA18",
                     // keep sorted
                     false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 
@@ -461,13 +485,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "CASAVA18",
                     // keep sorted
                     false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
 
@@ -491,13 +518,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "CASAVA18",
                     // keep sorted
                     false, false, true, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
@@ -521,13 +551,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "CASAVA18",
                     // keep sorted
                     false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
@@ -551,13 +584,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             runCapacitor();
@@ -566,13 +602,16 @@ public class FluxCapacitorTest {
 
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
@@ -630,13 +669,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
@@ -675,13 +717,16 @@ public class FluxCapacitorTest {
 
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -721,13 +766,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
@@ -778,13 +826,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_MM9_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "SIMULATOR",
                     // keep sorted
                     false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
             File proFile = new File(FileHelper.append(outFile.getAbsolutePath(), "_profiles", true, "txt"));
@@ -826,13 +877,16 @@ public class FluxCapacitorTest {
         try {
             initFiles(
                     // GTF: compressed, sorted, readOnly
+                    GTF_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
                     // BED: compressed, sorted, readOnly
+                    BED_HG_SORTED,
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
+                    "CASAVA18",
                     // keep sorted
                     false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
