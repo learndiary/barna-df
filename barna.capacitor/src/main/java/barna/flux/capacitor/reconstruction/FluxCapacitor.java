@@ -2535,7 +2535,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 if (mode == FluxCapacitorConstants.MODE_LEARN) {
                     if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
                         StringBuilder message = new StringBuilder();
-                        message.append("Reads to the following elements are counted: ");
+                        message.append("Counting reads to the following elements: ");
                         if (currentTasks.contains(Task.COUNT_SJ)) {
                             message.append("splice junctions");
                             if (currentTasks.contains(Task.COUNT_INTRONS))

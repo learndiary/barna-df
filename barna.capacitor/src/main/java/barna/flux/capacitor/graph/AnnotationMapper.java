@@ -402,10 +402,10 @@ public class AnnotationMapper extends SplicingGraph {
                         continue;
                     }
                     if (target.isAllIntronic()) {
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(), false);
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(dobject.getStart(), dobject.getEnd(), true);
                     }
                     if (target2.isAllIntronic() && !target2.equals(target)) {
-                        ((SimpleEdgeIntronMappings) target2).incrReadNr(dobject2.getStart(), dobject2.getEnd(), false);
+                        ((SimpleEdgeIntronMappings) target2).incrReadNr(dobject2.getStart(), dobject2.getEnd(), true);
                     }
                     if (se.isExonic()) {
                         ((SuperEdgeMappings) se).getMappings().incrReadNr();
@@ -1009,10 +1009,10 @@ public class AnnotationMapper extends SplicingGraph {
                 for (SimpleEdge e : ev) {
                     if (e.isAllIntronic()) {
                         SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings) e;
-                        if (paired) {
+                        /*if (paired) {
                             if (e1.getSuperEdges() != null)
                                 nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) countAllIntronicReads(e1.getSuperEdges()), e1.getBinCoverage()});
-                        } else
+                        } else*/
                             nodesReads.put(e.getTail().getSite().getPos() + "^" + e.getHead().getSite().getPos(), new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
                     }
                 }
