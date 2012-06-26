@@ -188,6 +188,8 @@ public class SuperEdge extends AbstractEdge {
         for(AbstractEdge e : edges)
             if(e.isAllIntronic())
                 b&= true;
+            else
+                b&=false;
         return b;
     }
 	
