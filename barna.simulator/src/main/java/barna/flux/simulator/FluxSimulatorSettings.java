@@ -501,7 +501,13 @@ public class FluxSimulatorSettings extends ParameterSchema {
     public static final Parameter<RtranscriptionMode> RT_PRIMER = Parameters.enumParameter("RT_PRIMER",
             "Primers used for first strand synthesis:\n" +
             "[RH] for random hexamers or\n" +
-            "[PDT] for poly-dT primers", RtranscriptionMode.RH, null);
+            "[PDT] for poly-dT primers", RtranscriptionMode.RH, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            if (schema.get(parameter).equals(RtranscriptionMode.PDT)&& schema.get(FRAGMENTATION)&& schema.get(FRAG_SUBSTRATE).equals(Substrate.RNA))
+                throw new ParameterException("Poly-dT primer (PDT) cannot be used after fragmenting RNA");
+        }
+    });
 
     /**
      * Minimum fragment length observed after reverse
