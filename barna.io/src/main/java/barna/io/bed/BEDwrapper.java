@@ -1334,7 +1334,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 							((Vector<BEDMapping>) state.result).add(bed);
 							++state.count;
 						} else {
-							os.write(cs.chars);
+							os.write(cs.chars, cs.start, (cs.end- cs.start));
 							os.write(Constants.NL);
 							//os.flush();
 							state.count+= cs.chars.length+ 1; 

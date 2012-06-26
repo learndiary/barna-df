@@ -797,7 +797,7 @@ public class FluxCapacitorTest {
             assertEquals(586, stats.getMappingsSinglePairs());
             assertEquals(283, stats.getMappingsSinglePairsMapped());
             assertEquals(8009, stats.getMappingsTotal());
-            assertEquals(8044, stats.getMappingsMapped());
+            assertEquals(8192, stats.getMappingsMapped());
             assertEquals(0, stats.getMappingsPairsNa());
             assertEquals(208, stats.getMappingsPairsWo());
             assertEquals(0, stats.getMappingsNotSens());

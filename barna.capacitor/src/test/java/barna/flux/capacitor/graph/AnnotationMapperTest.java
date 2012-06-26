@@ -6,15 +6,11 @@ import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
-import com.sun.org.apache.bcel.internal.generic.RETURN;
-import com.sun.org.apache.xpath.internal.NodeSet;
-import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.io.*;
 import java.util.*;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,8 +20,10 @@ import java.util.zip.ZipOutputStream;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private final File gtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
-    private final File bedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+    private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
     Map<String, ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
 
@@ -40,9 +38,9 @@ public class AnnotationMapperTest extends TestCase {
         descriptor.init(UniversalReadDescriptor.getDescriptor(descriptorStr));
         settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
-                new File(gtfFile.getAbsolutePath()));
+                new File(hgGtfFile.getAbsolutePath()));
         settings.set(FluxCapacitorSettings.MAPPING_FILE,
-                new File(bedFile.getAbsolutePath()));
+                new File(hgBedFile.getAbsolutePath()));
         settings.set(FluxCapacitorSettings.READ_DESCRIPTOR,
                 descriptor);
         settings.set(FluxCapacitorSettings.SORT_IN_RAM,
@@ -67,7 +65,7 @@ public class AnnotationMapperTest extends TestCase {
         return sjs;
     }
 
-    private void readGtf(Gene g) throws IOException {
+    private void readGtf(Gene g, File gtfFile) throws IOException {
         BufferedReader gtfReader = new BufferedReader(new InputStreamReader(new FileInputStream(gtfFile)));
         String tx = null;
         nodes.clear();
@@ -130,7 +128,7 @@ public class AnnotationMapperTest extends TestCase {
         return false;
     }
 
-    private Map<String, Integer> getSJReads(Gene g, boolean paired) throws Exception {
+    private Map<String, Integer> getSJReads(Gene g, boolean paired, File bedFile) throws Exception {
         BufferedReader bedReader = new BufferedReader(new InputStreamReader(new FileInputStream(bedFile)));
         Map<String, Integer> reads = new TreeMap<String, Integer>();
         HashMap<String, ArrayList<String[]>> p1hash = new HashMap<String, ArrayList<String[]>>();
@@ -168,7 +166,7 @@ public class AnnotationMapperTest extends TestCase {
                                 break;
                             }
                         }
-                        if (nBlocks == 2 && i < nodes.get(tx).size() - 1) {
+                        if (nBlocks > 1 && i < nodes.get(tx).size() - 1) {
                             String[] nextExon = nodes.get(tx).get(i + 1);
                             int[] block1 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[0]) + Integer.parseInt(bLine[10].split(",")[0])};
                             int[] block2 = {Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + 1, Integer.parseInt(bLine[1]) + Integer.parseInt(bLine[11].split(",")[1]) + Integer.parseInt(bLine[10].split(",")[1])};
@@ -230,7 +228,7 @@ public class AnnotationMapperTest extends TestCase {
                             }
                         }
                     } else {
-                        if (nBlocks == 2) {
+                        if (nBlocks > 1) {
                             String[] ids = getId(bLine, nBlocks);
                             for (String id : ids) {
                                 nr = 1;
@@ -319,7 +317,7 @@ public class AnnotationMapperTest extends TestCase {
         return reads;
     }
 
-    private Map<String, Integer> getAllIntronicReads(Gene g, boolean paired) throws Exception {
+    private Map<String, Integer> getAllIntronicReads(Gene g, boolean paired, File bedFile) throws Exception {
         BufferedReader bedReader = new BufferedReader(new InputStreamReader(new FileInputStream(bedFile)));
         Map<String, Integer> reads = new TreeMap<String, Integer>();
         HashMap<String, ArrayList<String[]>> p1hash = new HashMap<String, ArrayList<String[]>>();
@@ -437,8 +435,8 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareSJReadsSingle() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(gtfFile);
-        BEDwrapper bed = new BEDwrapper(bedFile);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        BEDwrapper bed = new BEDwrapper(hgBedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -464,8 +462,8 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m.keySet()) {
                 count[0] += m.get(e);
             }
-            readGtf(g);
-            Map<String, Integer> m1 = getSJReads(g, false);
+            readGtf(g, hgGtfFile);
+            Map<String, Integer> m1 = getSJReads(g, false, hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
@@ -475,8 +473,8 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareSJReadsPaired() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(gtfFile);
-        BEDwrapper bed = new BEDwrapper(bedFile);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        BEDwrapper bed = new BEDwrapper(hgBedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -502,8 +500,8 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m.keySet()) {
                 count[0] += m.get(e);
             }
-            readGtf(g);
-            Map<String, Integer> m1 = getSJReads(g, true);
+            readGtf(g, hgGtfFile);
+            Map<String, Integer> m1 = getSJReads(g, true, hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
@@ -512,9 +510,48 @@ public class AnnotationMapperTest extends TestCase {
     }
 
     @Test
+    public void testCompareMultiSJReadsSingle() throws Exception {
+        GTFwrapper gtf = new GTFwrapper(mm9GtfFile);
+        BEDwrapper bed = new BEDwrapper(mm9BedFile);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        //gtf = new GTFwrapper((gtf.sort()));
+        gtf.setReadAll(true);
+        gtf.setNoIDs(null);
+        gtf.setReadFeatures(new String[]{"exon", "CDS"});
+        gtf.read();
+        for (Gene g : gtf.getGenes()) {
+            int start = 0, end = 0, tol = 0;
+            start = g.getStart();
+            end = g.getEnd();
+            if (g.getStrand() < 0) {
+                start = -start;
+                end = -end;
+            }
+            tol = 0;
+            start = Math.max(1, start - tol);
+            end = end + tol;
+            BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            AnnotationMapper a = new AnnotationMapper(g);
+            a.map(iter, settings);
+            Map<String, Integer> m = a.getSJReads(false);
+            int count[] = new int[]{0, 0};
+            for (String e : m.keySet()) {
+                count[0] += m.get(e);
+            }
+            readGtf(g, mm9GtfFile);
+            Map<String, Integer> m1 = getSJReads(g, false, mm9BedFile);
+            for (String e : m1.keySet()) {
+                count[1] += m1.get(e);
+            }
+            //assertEquals(count[0], count[1]);
+            System.err.println(count[0] + "\t" + count[1]);
+        }
+    }
+
+    @Test
     public void testCompareIntronReadsSingle() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(gtfFile);
-        BEDwrapper bed = new BEDwrapper(bedFile);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        BEDwrapper bed = new BEDwrapper(hgBedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -540,8 +577,8 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m.keySet()) {
                 count[0] += m.get(e)[0];
             }
-            readGtf(g);
-            Map<String, Integer> m1 = getAllIntronicReads(g, false);
+            readGtf(g, hgGtfFile);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false,hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
@@ -551,8 +588,8 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareIntronReadsPaired() throws Exception { //TODO update getAllIntronic reads to work for paired end reads
-        GTFwrapper gtf = new GTFwrapper(gtfFile);
-        BEDwrapper bed = new BEDwrapper(bedFile);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        BEDwrapper bed = new BEDwrapper(hgBedFile);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -578,12 +615,12 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m.keySet()) {
                 count[0] += m.get(e)[0];
             }
-            readGtf(g);
-            Map<String, Integer> m1 = getAllIntronicReads(g, false);
+            readGtf(g,hgGtfFile);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false,hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            assertEquals(42, count[0]);
+            assertEquals(76, count[0]);
         }
     }
 

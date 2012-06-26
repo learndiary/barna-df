@@ -107,7 +107,7 @@ public class SimpleEdge extends AbstractEdge {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (!obj.getClass().isAssignableFrom(SimpleEdge.class))
+		if (!(obj instanceof SimpleEdge))
             return false;
         SimpleEdge e= (SimpleEdge) obj;
 		if (getTail().equals(e.getTail())&& getHead().equals(e.getHead())

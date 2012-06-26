@@ -330,6 +330,9 @@ public class AnnotationMapper extends SplicingGraph {
                 ++nrMappingsLocusMultiMaps;
             lastName = name;
 
+            if(dobject.toString().equals("chr1\t4876859\t4879559\tchr1:4847775-4887990W:NM_001159751:106:2564:381:533:S/1\t0\t+\t.\t.\t0,0,0\t2\t53,22\t0,2678"))
+                System.currentTimeMillis();
+
             attributes = getAttributes(dobject, descriptor, attributes);
             if (paired && attributes.flag == 2)    // don't iterate twice, for counters
                 continue;
@@ -524,7 +527,8 @@ public class AnnotationMapper extends SplicingGraph {
     public AbstractEdge getEdge2(BEDMapping obj) {
 
         int bcount = obj.getBlockCount();
-        int bstart = obj.getStart() + 1, bend = obj.getEnd();    // to normal space
+        int     bstart = obj.getStart() + 1,
+                bend = obj.getEnd();    // to normal space
 
 
         if (bcount < 2) {
@@ -541,74 +545,72 @@ public class AnnotationMapper extends SplicingGraph {
 //			if (obj.getName().equals("HWUSI-EAS626_1:5:92:163:105/2"))
 //				System.currentTimeMillis();
 
-            int size = obj.getNextBlockSize(),
-                    size2 = obj.getNextBlockSize();    // ask for all
+            Vector<AbstractEdge> v = new Vector<AbstractEdge>(bcount, 1);
+            long[] inter= null, part= null;
+            for (int i = 0; i < bcount; ++i) {
+                // next coordinates
+                int pos= bstart+ obj.getNextBlockStart();
+                int size = obj.getNextBlockSize();
 
-            AbstractEdge e = getEdge2(bstart, bstart + size - 1);
-            if (e == null)
-                return null;
-            else {
-                int epos = trpts[0].getStrand() >= 0 ? e.getHead().getSite().getPos() :
-                        Math.abs(e.getTail().getSite().getPos());
-                if (epos != bstart + size - 1)
+                // try to retrieve exonic segment
+                AbstractEdge e = getEdge2(pos, pos + size - 1);
+
+                // abort if no segment found
+                if (e==null)
                     return null;
-            }
 
-            AbstractEdge f = getEdge2(bend - size2 + 1, bend);
-            if (f == null)
-                return null;
-            else {
-                int epos = trpts[0].getStrand() >= 0 ? f.getTail().getSite().getPos() :
-                        Math.abs(f.getHead().getSite().getPos());
-                if (epos != bend - size2 + 1)
+                // update common tx support
+                inter = (inter== null? e.getTranscripts(): intersect(inter, e.getTranscripts()));
+
+                // abort
+                if (isNull(inter)       // no common tx support
+                   || v.contains(e))    // novel splice-junction within a single exonic segment
                     return null;
-            }
 
-            // either of them can be a superEdge, but no pe
-            if (e == f)
-                return null;    // intron maps to exonic stretch
-            // chr19	1612377	1615303	HWUSI-EAS627_1:6:84:296:216/1	1	-	0	0	0,0,0	2	55,20	0,2906
-            // new transcript evidence
-            if (isNull(intersect(e.getTranscripts(), f.getTranscripts())))
-                return null;
-            // get intermediate intron
-            Node g = null, h = null;
-            if (e.getHead().getSite().getPos() < f.getHead().getSite().getPos()) {
-                g = e.getHead();
-                h = f.getTail();
-            } else {
-                g = f.getHead();
-                h = e.getTail();
-            }
-            long[] part = null;
-            for (int i = 0; i < g.getOutEdges().size(); i++) {
-                if (g.getOutEdges().elementAt(i).isExonic())
-                    continue;
-                if (g.getOutEdges().elementAt(i).getHead() == h) {
-                    part = g.getOutEdges().elementAt(i).getTranscripts();
-                    break;
+                // check left flank for same coordinate as alignment
+                if ((i> 0)&& (Math.abs(trpts[0].getStrand() >= 0 ? e.getTail().getSite().getPos() : e.getHead().getSite().getPos())
+                        != pos))
+                    return null;
+                // check right flank for same coordinate as alignment
+                if ((i< bcount- 1)&& (Math.abs(trpts[0].getStrand() >= 0 ? e.getHead().getSite().getPos() : e.getTail().getSite().getPos())
+                        != pos+ size- 1))
+                    return null;
+
+                // get tx support of intermediate introns, not the same of exon segment intersection!
+                if (v.size()> 0) {
+                    AbstractEdge f= v.elementAt(v.size()- 1);
+                    Node g = null, h = null;
+                    if (f.getHead().getSite().getPos() < e.getHead().getSite().getPos()) {
+                        g = f.getHead();
+                        h = e.getTail();
+                    } else {
+                        g = e.getHead();
+                        h = f.getTail();
+                    }
+                    for (int j = 0; j < g.getOutEdges().size(); ++j) {
+                        AbstractEdge d= g.getOutEdges().elementAt(j);
+                        if (d.isExonic()|| d.isAllIntronic())
+                            continue;
+                        if (d.getHead() == h) {
+                            part = (part== null? d.getTranscripts(): intersect(part, d.getTranscripts()));
+                            break;
+                        }
+                    }
+                    if (part == null)
+                        return null;
                 }
-            }
-            if (part == null)
-                return null;
 
-            Vector<AbstractEdge> v = new Vector<AbstractEdge>();
-            if (e instanceof SuperEdge) {
-                SuperEdge se = (SuperEdge) e;
-                assert (!se.isPend());
-                AbstractEdge[] ee = se.getEdges();
-                for (int i = 0; i < ee.length; i++)
-                    v.add(ee[i]);
-            } else
-                v.add(e);
-            if (f instanceof SuperEdge) {
-                SuperEdge se = (SuperEdge) f;
-                assert (!se.isPend());
-                AbstractEdge[] ee = se.getEdges();
-                for (int i = 0; i < ee.length; i++)
-                    v.add(ee[i]);
-            } else
-                v.add(f);
+                // else, successfully add next segment(s)
+                if (e instanceof SuperEdge) {
+                    SuperEdge se = (SuperEdge) e;
+                    assert (!se.isPend());
+                    AbstractEdge[] ee = se.getEdges();
+                    for (int j = 0; j < ee.length; ++j)
+                        v.add(ee[j]);   // decompose multi-segment hits
+                } else
+                    v.add(e);
+
+            }
 
             return getSuperEdge(v, false, part);
         }
@@ -962,21 +964,23 @@ public class AnnotationMapper extends SplicingGraph {
         }
         TreeMap<String, Integer> sjReads = new TreeMap<String, Integer>();
         for (SuperEdge edge : nodesReads.keySet()) {
-            int donor = -1, acceptor = -1;
             for (int i = 0; i < edge.getEdges().length - 1; i++) {
+                int donor = -1, acceptor = -1;
                 SimpleEdge e = (SimpleEdge) edge.getEdges()[i];
                 SimpleEdge e1 = (SimpleEdge) edge.getEdges()[i + 1];
+                if (e.equals(e1))
+                    continue;
                 if (e.getHead().getSite().isDonor() && e1.getTail().getSite().isAcceptor()) {
                     donor = e.getHead().getSite().getPos();
                     acceptor = e1.getTail().getSite().getPos();
                 }
+                if (donor == -1 || acceptor == -1)
+                    continue;
+                if (sjReads.containsKey(donor + "^" + acceptor))
+                    sjReads.put(donor + "^" + acceptor, sjReads.get(donor + "^" + acceptor) + nodesReads.get(edge));
+                else
+                    sjReads.put(donor + "^" + acceptor, nodesReads.get(edge));
             }
-            if (donor == -1 || acceptor == -1)
-                continue;
-            if (sjReads.containsKey(donor + "^" + acceptor))
-                sjReads.put(donor + "^" + acceptor, sjReads.get(donor + "^" + acceptor) + nodesReads.get(edge));
-            else
-                sjReads.put(donor + "^" + acceptor, nodesReads.get(edge));
         }
         return sjReads;
     }
