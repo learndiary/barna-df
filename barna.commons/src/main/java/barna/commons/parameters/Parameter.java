@@ -38,6 +38,23 @@ public abstract class Parameter<T> {
     private T defaultValue;
     private Class<T> type;
     private ParameterValidator validator;
+    /**
+     * Short version of the CLI name
+     */
+     private char shortOption;
+
+    public String getLongOption() {
+        return longOption;
+    }
+
+    public char getShortOption() {
+        return shortOption;
+    }
+
+    /**
+      * Long version of the CLI name
+      */
+     private String longOption;
 
     protected Parameter(String name, String description, T defaultValue, Class<T> type, ParameterValidator validator) {
         this.name = name;
@@ -46,6 +63,8 @@ public abstract class Parameter<T> {
         this.type = type;
         this.validator = validator;
     }
+
+
     
     /**
      * Lazy clone constructor by micha.
@@ -57,6 +76,26 @@ public abstract class Parameter<T> {
         this.defaultValue = otherParameter.defaultValue;
         this.type = otherParameter.type;
         this.validator = otherParameter.validator;
+    }
+
+    /**
+     * Long version of the CLI name
+     * @param longOption
+     * @return <code>this</code>
+     */
+    public Parameter<T> longOption(String longOption){
+        this.longOption = longOption;
+        return this;
+    }
+
+    /**
+     * Short version of the CLI name
+     * @param shortOption
+     * @return <code>this</code>
+     */
+    public Parameter<T> shortOption(char shortOption){
+        this.shortOption = shortOption;
+        return this;
     }
 
     public String getName() {

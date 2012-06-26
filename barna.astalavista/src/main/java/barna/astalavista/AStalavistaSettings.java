@@ -30,7 +30,7 @@ public class AStalavistaSettings extends ParameterSchema {
      * Print parameters and descriptions.
      */
     public static final Parameter<Boolean> PRINT_PARAMETERS = Parameters.booleanParameter("PRINT_PARAMETERS",
-            "print parameters and descriptions", false, null).longOption("printParameters").shortOption("o");
+            "print parameters and descriptions", false, null).longOption("printParameters").shortOption('h');
 
     /**
      * Path to the GTF reference annotation.
@@ -57,7 +57,7 @@ public class AStalavistaSettings extends ParameterSchema {
                 throw new ParameterException("The reference annotation " + refFile.getAbsolutePath() + " could not be found!");
             }
         }
-    }, null).longOption("input").shortOption("i");
+    }, null).longOption("input").shortOption('i');
 
     /**
      * Output splice site sequences.
@@ -67,7 +67,7 @@ public class AStalavistaSettings extends ParameterSchema {
         continue;
     } */
     public static final Parameter<Boolean> OUTPUT_SITESEQ = Parameters.booleanParameter("OUTPUT_SITESEQ",
-            "output splice site sequences", false, null).longOption("seqsite").shortOption("s");
+            "output splice site sequences", false, null).longOption("seqsite").shortOption('s');
 
     /**
      * Path to the GTF output annotation.
@@ -82,7 +82,7 @@ public class AStalavistaSettings extends ParameterSchema {
     } */
     public static final Parameter<File> OUT_FILE = Parameters.fileParameter("OUT_FILE",
             "keyword 'stdout' for standard output, or a path to the GTF output file",
-            null, null, null).longOption("output").shortOption("o");
+            null, null, null).longOption("output").shortOption('o');
 
 
     /**
@@ -147,7 +147,7 @@ public class AStalavistaSettings extends ParameterSchema {
             // acceptableIntrons= true;
 
         }
-    }, null).longOption("genome").shortOption("g");
+    }, null).longOption("genome").shortOption('g');
 
     /**
      * Checks whether a folder with genomic sequences is necessary.
@@ -193,7 +193,7 @@ public class AStalavistaSettings extends ParameterSchema {
             else
                 SplicingGraph.EventExtractorThread.n= 2;
         }
-    }).longOption("dimension").shortOption("k");
+    }).longOption("dimension").shortOption('k');
 
 
     /**
@@ -204,7 +204,7 @@ public class AStalavistaSettings extends ParameterSchema {
         continue;
     } */
     public static final Parameter<Boolean> THREE_PRIME_COMPLETE = Parameters.booleanParameter("THREE_PRIME_COMPLETE",
-            "require 3'-complete transcripts", false, null).shortOption("3pc");
+            "require 3'-complete transcripts", false, null).longOption("3primeComplete");
 
     /**
      * Temporary directory
@@ -278,7 +278,7 @@ public class AStalavistaSettings extends ParameterSchema {
         continue;
     } */
     public static final Parameter<Boolean> EXT_EVENTS = Parameters.booleanParameter("EXT_EVENTS",
-            "do retrieve external events", false, null).longOption("ext");
+            "do retrieve external events", Boolean.FALSE, null).longOption("ext");
 
 
     /**
@@ -342,7 +342,7 @@ public class AStalavistaSettings extends ParameterSchema {
                 throw new IllegalArgumentException("Invalid confidence level "+ x);
             SplicingGraph.intronConfidenceLevel= (byte) x;
         }
-    }).longOption("intronConfidence").shortOption("ic");
+    }).longOption("intronConfidence");
 
     /**
      * Confidence level of the intron to be retrieved.
@@ -369,7 +369,7 @@ public class AStalavistaSettings extends ParameterSchema {
                 throw new IllegalArgumentException("Invalid confidence level "+ x);
             Transcript.setEdgeConfidenceLevel((byte) x);
         }
-    }).longOption("edgeConfidence").shortOption("ec");
+    }).longOption("edgeConfidence");
 
     /**
      * Switch on flank type output.

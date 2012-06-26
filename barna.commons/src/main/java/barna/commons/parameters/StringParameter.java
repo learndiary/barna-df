@@ -108,6 +108,7 @@ class StringParameter extends Parameter<String> {
     @Override
     public Parameter copy() {
         StringParameter stringParameter = new StringParameter(getName(), getDescription(), getDefault(), getValues(), getValidator());
+        stringParameter.longOption(getLongOption()).shortOption(getShortOption());
         stringParameter.set(get());
         return stringParameter;
     }

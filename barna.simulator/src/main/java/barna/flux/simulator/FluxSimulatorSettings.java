@@ -258,10 +258,10 @@ public class FluxSimulatorSettings extends ParameterSchema {
      * @return <code>true</code> if the genomic sequence is required for the current run, <code>false</code> otherwise.
      */
     public static final boolean requiresGenomicSequence(ParameterSchema schema) {
-        boolean req= (schema.get(FRAG_EZ_MOTIF)!= null)
-                || (schema.get(RT_MOTIF)!= null)
-                || (schema.get(GC_MEAN)!= null&& !Double.isNaN(schema.get(GC_MEAN)))
-                || (schema.get(FASTA)!= null&& schema.get(FASTA)== true);
+        boolean req= (schema.get(FRAGMENTATION)&& schema.get(FRAG_METHOD)== FragmentationMethod.EZ&& schema.get(FRAG_EZ_MOTIF)!= null);
+        req= req|| (schema.get(RTRANSCRIPTION)&& schema.get(RT_MOTIF)!= null);
+        req= req|| (schema.get(GC_MEAN)!= null&& !Double.isNaN(schema.get(GC_MEAN)));
+        req= req|| (schema.get(FASTA)!= null&& schema.get(FASTA)== true);
         return req;
     }
 
