@@ -1505,7 +1505,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 settings.set(FluxCapacitorSettings.MAPPING_FILE, commandLineArgs.getFile("input"));
             }
             if (commandLineArgs.userSpecified("output")) {
-                settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output"));
+                settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output").getAbsoluteFile());
             }
             if (commandLineArgs.userSpecified("annotation-mapping")) {
                 try {
