@@ -23,6 +23,13 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor SNAPSHOT
+    - BARNA-149 - Count reads to splice junctions
+    - BARNA-168 - ByteArrayCharSequence.complement() cannot handle IUPAC ambiguities
+
+FluxCapacitor 1.0.1
+    - BARNA-126 - added minimal set of command line options
+
 FluxCapacitor 1.0 RC1
 
     -fixed issue #11 - all chromosomes from the input annotation are considered now
@@ -47,25 +54,22 @@ GETTING STARTED
 
  You will find the executable in the bin/ folder
 
-    flux.bat     Windows
+    flux-capacitor.bat     Windows
 
-    flux         UNIX clones and Mac OSX
+    flux-capacitor         UNIX clones and Mac OSX
 
 
 * Run
 
     You can take a look at the command line parameters and available tools using
 
-     flux --help
+     flux-capacitor --help
 
     The Flux Capacitor is one of the tools in the Flux Package, further information 
     on each of the tools can be retrieved by the command pattern
 
-     flux --t <toolname> --help
+     flux-capacitor --t <toolname> --help
 
-    for instance in the case of the Flux Capacitor
-
-     flux -t capacitor --help
 
 * Parameters
 
@@ -74,12 +78,12 @@ GETTING STARTED
 
     To get a list and descriptions for all available parameters, use
 
-    flux -t capacitor --printParameters
+    flux-capacitor --printParameters
 
     to create a file with an exhaustive list of parameters and their default values,
     pipe the output to a file
 
-     flux -t capacitor --printParameters > myparameters.par
+     flux-capacitor --printParameters > myparameters.par
 
 
     NOTE that all file parameters, e.g. the location of the annotation or the mapping file,
@@ -99,7 +103,7 @@ GETTING STARTED
 	this will create a demo folder with GTF annotation, the mapped reads' file and
 	a parameter file. Now, to start the capacitor do:
 
-	flux -t capacitor -p mouse_demo.par
+	flux-capacitor -p mouse_demo.par
 
 * Memory
 

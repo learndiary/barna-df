@@ -243,4 +243,58 @@ public class ByteArrayCharSequenceTest {
         ByteArrayCharSequence.insertAsCharacters(100, 8, b);
         assertEquals("100", new String(b, 5, 3));
     }
+
+    private void checkComplement(String pos, String neg) {
+        ByteArrayCharSequence s = new ByteArrayCharSequence(pos);
+        ByteArrayCharSequence.complement(s.chars, 0, s.length());
+        assertEquals(neg, s.toString());
+    }
+
+    @Test
+    public void testComplement() {
+
+        // bases
+        checkComplement("A", "T");
+        checkComplement("C", "G");
+        checkComplement("G", "C");
+        checkComplement("T", "A");
+        checkComplement("U", "A");
+
+        checkComplement("a", "t");
+        checkComplement("c", "g");
+        checkComplement("g", "c");
+        checkComplement("t", "a");
+        checkComplement("u", "a");
+
+        // 2-letter ambiguities
+        checkComplement("M", "K");
+        checkComplement("R", "Y");
+        checkComplement("W", "W");
+        checkComplement("S", "S");
+        checkComplement("Y", "R");
+        checkComplement("K", "M");
+
+        checkComplement("m", "k");
+        checkComplement("r", "y");
+        checkComplement("w", "w");
+        checkComplement("s", "s");
+        checkComplement("y", "r");
+        checkComplement("k", "m");
+
+        // 3-letter ambiguities
+        checkComplement("B", "V");
+        checkComplement("D", "H");
+        checkComplement("H", "D");
+        checkComplement("V", "B");
+
+        checkComplement("b", "v");
+        checkComplement("d", "h");
+        checkComplement("h", "d");
+        checkComplement("v", "b");
+
+        // 4-letter ambiguity
+        checkComplement("N", "N");
+        checkComplement("n", "n");
+
+    }
 }

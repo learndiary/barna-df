@@ -27,9 +27,7 @@
 
 package barna.io;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 public abstract class AbstractIOWrapper implements IOWrapper {
 
@@ -40,9 +38,9 @@ public abstract class AbstractIOWrapper implements IOWrapper {
 	 */
 	public void sort(File outputFile) {
 		
-		FileOutputStream fos= null;
+		OutputStream fos= null;
 		try {
-			fos= new FileOutputStream(outputFile);
+			fos= new BufferedOutputStream(new FileOutputStream(outputFile));
 			sort(fos);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
