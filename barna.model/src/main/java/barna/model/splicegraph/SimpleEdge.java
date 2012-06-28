@@ -41,7 +41,8 @@ import barna.model.constants.Constants;
  *
  */
 public class SimpleEdge extends AbstractEdge {
-	
+
+    public static final byte ALL_INTRONIC = 6;
 	/**
 	 * Confidence level of the edge's transcript support.
 	 */
@@ -106,7 +107,9 @@ public class SimpleEdge extends AbstractEdge {
 	
 	@Override
 	public boolean equals(Object obj) {
-		SimpleEdge e= (SimpleEdge) obj;
+		if (!(obj instanceof SimpleEdge))
+            return false;
+        SimpleEdge e= (SimpleEdge) obj;
 		if (getTail().equals(e.getTail())&& getHead().equals(e.getHead())
 				&& SplicingGraph.equalSet(getTranscripts(), e.getTranscripts())
 				&& isExonic()== isExonic()		// multiple edges exonic, intronic for eg intron retention
@@ -155,7 +158,11 @@ public class SimpleEdge extends AbstractEdge {
 		return exonic;
 	}
 
-	public static PositionComparator getDefaultPositionComparator() {
+    public boolean isAllIntronic() {
+        return false;//type == ALL_INTRONIC;
+    }
+
+    public static PositionComparator getDefaultPositionComparator() {
 		return defaultPositionComparator;
 	}
 

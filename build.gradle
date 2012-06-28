@@ -14,15 +14,15 @@ if(System.properties['nightly']){
  * This is the  global flux suite version used to identify
  * library/jar versions
  */
-version = "1.10-SNAPSHOT"
+version = "1.14-SNAPSHOT"
 
 /**
  * Versions for applications
  */
 ext.appVersions = [
     "barna.astalavista":"1.0-SNAPSHOT",
-    "barna.simulator":"1.0-SNAPSHOT",
-    "barna.capacitor":"1.0.1-SNAPSHOT",
+    "barna.simulator":"1.0.3-SNAPSHOT",
+    "barna.capacitor":"1.0.2-SNAPSHOT",
     "barna.tools":"1.0-SNAPSHOT"
 ]
 ext.appNames = [
@@ -87,8 +87,33 @@ subprojects{
     test{
         jvmArgs '-Xms128m', '-Xmx1G'
     }
+}
 
+/**
+ * Create aggregated javaDoc from all subprojects
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for all modules"
+    source = subprojects.collectAll{p-> p.sourceSets.main.java}
+    destinationDir = file("${buildDir}/docs/barna-${project.version}")
+    configure(options) {
+        windowTitle = 'Barna API Documentation'
+        docTitle = "Barna JavaDoc (${project.version})"
+        links = [ 'http://download.oracle.com/javase/6/docs/api/',
+                  'http://download.oracle.com/javaee/6/api/' ]
+    }
+}
 
+task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
+    description = "Zip the aggregated javadoc"
+    classifier = "javadoc"
+    from("${buildDir}/docs/barna-${project.version}"){
+        if(project.version =~ /.*SNAPSHOT.*/){
+            into "barna-DEVEL"
+        }else{
+            into "barna-${project.version}"
+        }
+    }
 }
 
 /**

@@ -75,6 +75,24 @@ import java.util.zip.ZipFile;
 public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
 
     /**
+     * Enumerates possible tasks for the FluxCapacitor
+     */
+    private enum Task {
+        DECOMPOSE, COUNT_SJ, COUNT_INTRONS
+    };
+
+    /**
+     * Task to be executed in the current run - initialized empty
+     */
+    private EnumSet<Task> currentTasks = EnumSet.noneOf(Task.class);
+
+    /**
+     * Store a reference to the parsed command line arguments
+     * to update settings
+     */
+    private JSAPResult commandLineArgs;
+
+    /**
      * Thread to parallelize annotation reading.
      */
 	class GtfReaderThread extends Thread {
@@ -97,7 +115,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-	class LocusSolver extends Thread {
+    class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
 
         /**
          * The locus that is to be solved.
@@ -150,8 +168,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         /**
          * Constructor providing reads and mappings for deconvolution.
          * The mode of the run can be switched between profiling and deconvolution.
+         *
          * @param newGene the locus model
-         * @param newMappings the mappings that fall in the locus
+         * @param newBeds the mappings that fall in the locus
          * @param decompose flag indicating whether profiling (<code>false</code>) or
          *                  deconvolution (otherwise) is carried out.
          */
@@ -175,7 +194,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						
     			// BUG 110301: do not use mapTrivial, problems with split-maps
 //				if (this.gene.getTranscriptCount()== 1) {
-//					mapTrivial(gene.getTranscripts()[0], mappings);
+//					mapTrivial(gene.getTranscripts()[0], beds);
 //					outputGFF(null, null, null);
 //				} else {
 					AnnotationMapper mapper= new AnnotationMapper(this.gene);
@@ -215,6 +234,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         /**
          * Writes the GTF output file
+         *
          * @param g the splcing graph with annotation-mapped reads
          * @param events AStalavista events
          * @param solver the corresponding <code>GraphLPSolver</code> instance
@@ -387,7 +407,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                             Log.warn(getClass().getName()+".outputGFF():\n\tinvariantPredEx= "
                                         + invariantPredEx+ ", invariantPredTx= "+ invariantPredTx
                                         + "\n\tlocus: "+ tt[0].getTranscriptID());
-                        };
+                        }
+                        ;
                     }
                 }
                 if (outputTranscript) {
@@ -495,7 +516,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
          *
          * @param rpkmMap hash to map transcript ID to an deconvoluted expression value
          * @return <code>true</code> if <code>transcript</code> features were found in
-         * the inpñut, <code>false</code> otherwise
+         *         the input, <code>false</code> otherwise
          */
         private boolean outputGFForiginalLines(HashMap<String, Double> rpkmMap) {
 
@@ -596,6 +617,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         /**
          * Compares an invariant to the reference value and shouts if the difference
          * is larger than the specified tolerance.
+         *
          * @param invariant the tested value
          * @param reference the reference value
          * @param stringency the relative tolerance level
@@ -615,6 +637,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         /**
          * Sets the dependency on a thread that is to finish before execution can start.
+         *
          * @param threadBefore the thread that is waited for
          */
         void setThreadBefore(Thread threadBefore) {
@@ -623,6 +646,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         /**
          * Creates a <code>GraphLPsolver</code> instance.
+         *
          * @param mapper the annotation mapper
          * @param mappedReads the number of mapped reads
          * @return a <code>GraphLPsolver</code> instance
@@ -796,6 +820,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Workaround for wrapper script, provides first argument as parameter file.
+     *
      * @param args the program's arguments
      */
 	public static void main(String[] args) {
@@ -842,8 +867,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		}
 	}
 
+
     /**
      * File name extensions of supported file formats.
+     *
      * @deprecated marked for removal
      */
     public static enum SupportedFormatExtensions {
@@ -943,6 +970,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Vector of Strings representing the original lines of the annotation read annotation file.
+     *
      * @deprecated marked for removal
      */
     Vector<String> origLines= null;  // TODO check that this vector is no longer initiallized somewhere
@@ -1116,6 +1144,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Number of mappings that have an unexpected length.
+     *
      * @deprecated should no longer be used
      */
     volatile int nrReadsWrongLength= 0; // TODO (how) can this still occur?
@@ -1147,6 +1176,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Wrapper to read the annotation from a GTF file format.
+     *
      * @deprecated marked for removal
      */
     private GTFwrapper gtfReader;   // TODO pull up to AnnotationWrapper
@@ -1165,8 +1195,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * Flag indicating whether paramters and their description are to be output.
      */
     protected boolean printParameters;
-
-
 
 
     /**
@@ -1200,8 +1228,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
         return -1;
     }
+
     /**
      * Says goodbye and exits providing the given return code to the environment.
+     *
      * @param code the return code
      */
     static void exit(int code) {
@@ -1382,6 +1412,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Retrieves statistics about the provided annotation.
+     *
      * @param wrapper annotation reader
      */
 	private void fileStats(AnnotationWrapper wrapper) {
@@ -1399,6 +1430,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Executes a FC run.
+     *
      * @return statistics about the run
      * @throws Exception if something went wrong
      */
@@ -1410,14 +1442,52 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			System.exit(-1);
 		
 		// load parameters
-        if (file == null || !file.exists()) {
+        if (file != null && !file.exists()) {
             throw new RuntimeException("I have no parameter file and I want to scream!");
         }
+
+        if (file != null) {
         try {
             settings = FluxCapacitorSettings.createSettings(file);
         } catch (Exception e) {
             throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
         }
+        } else {
+            // create default settings
+            settings = new FluxCapacitorSettings();
+            FluxCapacitorSettings.relativePathParser.parentDir = new File("");
+        }
+
+        // add command line parameter
+        if (commandLineArgs != null) {
+            if (commandLineArgs.userSpecified("annotation")) {
+                settings.set(FluxCapacitorSettings.ANNOTATION_FILE, commandLineArgs.getFile("annotation"));
+            }
+            if (commandLineArgs.userSpecified("input")) {
+                settings.set(FluxCapacitorSettings.MAPPING_FILE, commandLineArgs.getFile("input"));
+            }
+            if (commandLineArgs.userSpecified("output")) {
+                settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output").getAbsoluteFile());
+            }
+            if (commandLineArgs.userSpecified("annotation-mapping")) {
+                try {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.valueOf(commandLineArgs.getString("annotation-mapping")));
+                } catch (Exception e) {
+                    throw new RuntimeException("Invalid Annotation Mapping : " + commandLineArgs.getString("annotation-mapping"));
+                }
+            }
+            if (commandLineArgs.userSpecified("read-descriptor")) {
+                settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor());
+                settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).init(commandLineArgs.getString("read-descriptor"));
+            }
+            if (commandLineArgs.userSpecified("sort-in-ram")) {
+                settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
+            }
+        }
+
+        // validate the settings
+        settings.validate();
+
 
         FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
 		
@@ -1446,13 +1516,19 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 			wrapperAnnotation= getWrapper(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
 			wrapperMappings= getWrapper(settings.get(FluxCapacitorSettings.MAPPING_FILE));
 		} else {
+
+            Log.progressStart("Scanning annotation file");
 			wrapperAnnotation=
 				fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
 			fileStats((AnnotationWrapper) wrapperAnnotation);
+            Log.progressFinish("OK", true);
 			
+            Log.progressStart("Scanning mapping file");
 			wrapperMappings= 
 				fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
-			fileStats((MappingReader) wrapperMappings);
+            fileStats((MappingReader) wrapperMappings);
+            Log.progressFinish("OK", true);
+            Log.info("Annotation and mapping input checked");
 
 		}
 		
@@ -1464,6 +1540,24 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		stranded= settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
 				|| settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 		
+
+        //Get from settings the tasks to be executed in the current run
+        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
+            currentTasks.add(Task.DECOMPOSE);
+        if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
+            for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
+                switch (e) {
+                    case SPLICE_JUNCTIONS:
+                        currentTasks.add(Task.COUNT_SJ);
+                        break;
+                    case INTRONS:
+                        currentTasks.add(Task.COUNT_INTRONS);
+                        break;
+                }
+            }
+        }
+
+        //print current run stats
 		printStats();
 		
 		// run
@@ -1474,6 +1568,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		if (profile== null) {
 			exit(-1);
 		}
+        if (currentTasks.contains(Task.DECOMPOSE))
         explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
         // BARNA-103 : write stats to file
@@ -1531,6 +1626,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Reads bias profiles from the provided source file.
+     *
      * @return an instance describing the bias distribution
      */
 	private Profile readProfiles() {
@@ -1606,6 +1702,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Performs the RPKM normalization, given a number of reads mapping to a transcript of a certain length.
+     *
      * @param reads the number of mappings to the transcript
      * @param len the length of the transcript
      * @return the RPKM value
@@ -1617,6 +1714,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Creates a composite name between both input files.
+     *
      * @return a string representation the composite name
      */
 	public String getCompositeFName() {
@@ -1686,6 +1784,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Returns the file with linear programs, respectively creates
      * a file from the name from the names of the input files.
+     *
      * @return the name of the file with systematic biases
      */
     public File getFileLP() {
@@ -1730,6 +1829,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 	
 	/**
 	 * Writes coverage statistics of a transcript to disk.
+     *
 	 * @param geneID locus identifier
 	 * @param transcriptID transcript identifier
 	 * @param cds flag to indicate whether transcript has an annotated ORF
@@ -1783,13 +1883,21 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
+        parameters.add(JSAPParameters.flaggedParameter("annotation", 'a').type(File.class).help("Path to the annotation file").valueName("gtf").get());
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed").get());
+        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("Path to the output file").valueName("gtf").get());
+        parameters.add(JSAPParameters.flaggedParameter("annotation-mapping", 'm').type(String.class).help("Annotation Mapping (default PAIRED)").valueName("mapping").defaultValue("PAIRED").get());
+        parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
+        parameters.add(JSAPParameters.switchParameter("sort-in-ram", 'r').help("Sort in RAM").get());
+
         parameters.add(JSAPParameters.switchParameter("printParameters").help("Print default parameters").get());
         return parameters;
     }
 
     @Override
     public boolean validateParameter(JSAPResult args) {
+        commandLineArgs = args;
         setPrintParameters(args.userSpecified("printParameters"));
         setFile(args.getFile("parameter"));
 
@@ -1799,7 +1907,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             return false;
         }
 
-        if (getFile() == null) {
+        if (getFile() != null && !getFile().canRead()) {
             Log.error("");
             Log.error("No parameter file specified !");
             Log.error("\n");
@@ -1817,6 +1925,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Returns the flag wheter parameter names and explanations are to be output.
+     *
      * @return flag wheter parameter names and explanations are to be output.
      */
 	private boolean isPrintParameters() {
@@ -1825,6 +1934,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Processes one locus encapsulated as a thread.
+     *
      * @param gene the locus
      * @param mappings the mappings in the locus
      * @param decompose the mode of processing, either deconvolution (<code>true</code>)
@@ -1868,6 +1978,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Returns the thread last added to the thread pool,
      * or <code>null</code> if the pool is empty.
+     *
      * @return
      */
 	private Thread getLastThread() {
@@ -1882,6 +1993,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Merges and smoothens bias profiles.
+     *
      * @param stats statistics object for storing attributes
      * @return a model for the bias profile
      */
@@ -1934,6 +2046,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Return the number of mappings (sense and/or anti-sense) falling in exonic edges of
      * a certain transcript signature, before or after deconvolution.
+     *
      * @param v edge set of a locus
      * @param dir directionality of the mappings to be retrieved, sense or anti-sense
      * @param sig signature of the transcript(s) with which exons the mappings have to
@@ -1979,6 +2092,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Return the number of mappings (sense and/or anti-sense) falling in exonic edges of
      * a certain transcript signature, before or after deconvolution.
+     *
      * @param v edge set of a locus
      * @param dir directionality of the mappings to be retrieved, sense or anti-sense
      * @param g splicing graph underlying the locus
@@ -2033,6 +2147,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 	/**
 	 * Returns the breakpoint indicated by a mapping within a transcript.
+     *
 	 * @param tx transcript to which a read maps
 	 * @param bed genomic mappping
 	 * @return transcript coordinate of the breakpoint indicated by the mapping
@@ -2062,6 +2177,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * If instantiated, the method returns the GTF file wrapper,
      * otherwise <code>null</code>.
+     *
      * @return a wrapper instance for GTF files, or <code>null</code>
      */
     private AbstractFileIOWrapper getWrapperGTF() {
@@ -2076,6 +2192,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * If instantiated, the method returns the GTF file wrapper,
      * otherwise a new instance is created using the provided file
      * argument.
+     *
      * @param inputFile the GTF file's handle
      * @return a wrapper instance for the GTF file
      */
@@ -2098,6 +2215,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Creates a wrapper to read mapping as BED objects from a file.
+     *
      * @param inputFile file with mappings in BED format
      * @return a wrapper instance providing read access to the specified file
      * @deprecated marked for removal
@@ -2109,7 +2227,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         mappingReader = new BEDFileReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
         return null;// removed mappingReader;
 	}
-    
+
     /**
      * Finalizes an iteration over all mappings: closes readers, outputs stats, etc.
      * @param mode task carried out during the iteration, profiling or deconvolution
@@ -2145,7 +2263,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 									: nrReadsSingleLociMapped+" mappings map to annotation\n\t")
 							//+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
 							//+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
-							+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"
+							+ readLenMin+ ","+ readLenMax+ " min/max read length\n\t"							
 							+ (pairedEnd&& insertMinMax!= null?insertMinMax[0]+","+insertMinMax[1]+" min/max insert size\n\t":""));
 					//nrUniqueReads= getBedReader().getNrUniqueLinesRead();
 					//System.err.println("\ttotal lines in file "+nrUniqueReads);
@@ -2234,6 +2352,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * A complete iteration cycle over all mappings, either for profiling or for deconvolution.
+     *
      * @param mode task carried out during the iteration, profiling or deconvolution
      * @param stats object capturing statistics of the run
      */
@@ -2261,11 +2380,29 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				mappingReader.reset();
 				
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-					if (mode== FluxCapacitorConstants.MODE_LEARN) 
-						System.err.println("\n[LEARN] Scanning the input and getting the attributes.");
-					else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT)
-						System.err.println("\n[SOLVE] Deconvolving reads of overlapping transcripts.");
-				}
+                if (mode == FluxCapacitorConstants.MODE_LEARN) {
+                    if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Counting reads to the following elements: ");
+                        if (currentTasks.contains(Task.COUNT_SJ)) {
+                            message.append("splice junctions");
+                            if (currentTasks.contains(Task.COUNT_INTRONS))
+                                message.append(", ");
+				        }
+                        if (currentTasks.contains(Task.COUNT_INTRONS))
+                            message.append("all-intronic regions");
+                        message.append(".");
+                        Log.info("","");
+                        Log.info("COUNT", message.toString());
+                    }
+                    Log.info("","");
+                    Log.info("LEARN", "Scanning the input and getting the attributes.");
+                }
+                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                    Log.info("","");
+                    Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                }
+            }
 				final String profiling= "profiling ", decomposing= "decomposing "; 
 	
 	            if (mode== FluxCapacitorConstants.MODE_LEARN)
@@ -2359,14 +2496,35 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 						tol= 0;
 						start= Math.max(1, start- tol);
 						end= end+ tol;
-
+						
 						MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 						
-						if (mode== FluxCapacitorConstants.MODE_LEARN&& mappings!= null) {
-							solve(gene[i], mappings, false);
+                    //TODO move this on call()
+                    //Execute tasks
+                    for (Task t : currentTasks) {
+                        switch (t) {
+                            case DECOMPOSE:
+                                if (mode == FluxCapacitorConstants.MODE_LEARN && mappings != null) {
+                                    mappings.setAtStart();
+                                    solve(gene[i], mappings, false);
 						} else if (mode== FluxCapacitorConstants.MODE_RECONSTRUCT) {
-							solve(gene[i], mappings, true);
+                                    if (mappings!=null)
+                                        mappings.setAtStart();
+                                    solve(gene[i], mappings, true);
 						}
+                                break;
+                            case COUNT_INTRONS:
+                                if (mappings!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
+                                    outputIntronsGFF(gene[i], mappings);
+                                }
+                                break;
+                            case COUNT_SJ:
+                                if (mappings!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
+                                    outputSJGFF(gene[i], mappings);
+                                }
+                                break;
+                        }
+                    }
 						
 						if (mappings!= null)
 							mappings.clear();
@@ -2422,6 +2580,80 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		}
 
 	/**
+     * Count reads to splice junction within the current locus and output them in GTF format.
+     *
+     * @param gene current locus
+     * @param beds mappings in the current locus
+     */
+    private void outputSJGFF(Gene gene, MSIterator<Mapping> beds) {
+        beds.setAtStart();
+        AnnotationMapper a = new AnnotationMapper(gene);
+        a.map(beds, settings);
+        Map<String, Integer> m = a.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+        StringBuilder sb = new StringBuilder();
+        for (String s : m.keySet()) {
+            String[] junction = s.split("\\^");
+            sb.append(gene.getChromosome());
+            sb.append("\t");
+            sb.append("flux");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
+            sb.append("\t");
+            sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
+            sb.append("\t");
+            sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
+            sb.append("\t");
+            sb.append(m.get(s));
+            sb.append("\t");
+            sb.append(junction[0].contains("-") ? "+" : "-");
+            sb.append("\t");
+            sb.append(".");
+            sb.append("\t");
+            sb.append("gene_id \""+gene.getGeneID()+"\";");
+            sb.append("\n");
+        }
+        Log.print(sb.toString());
+    }
+
+    /**
+     * Count reads to all-intronic regions within the current locus and output them in GTF format.
+     *
+     * @param gene current locus
+     * @param beds mappings in the current locus
+     */
+    private void outputIntronsGFF(Gene gene, MSIterator<Mapping> beds) {
+        beds.setAtStart();
+        AnnotationMapper a = new AnnotationMapper(gene);
+        a.map(beds, settings);
+        Map<String, Float[]> m = a.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+        StringBuilder sb = new StringBuilder();
+        for (String s : m.keySet()) {
+            String[] intron = s.split("\\^");
+            sb.append(gene.getChromosome());
+            sb.append("\t");
+            sb.append("flux");
+            sb.append("\t");
+            sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
+            sb.append("\t");
+            sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
+            sb.append("\t");
+            sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
+            sb.append("\t");
+            sb.append(m.get(s)[0].intValue());
+            sb.append("\t");
+            sb.append(intron[0].contains("-")?"+":"-");
+            sb.append("\t");
+            sb.append(".");
+            sb.append("\t");
+            sb.append("gene_id \""+gene.getGeneID()+"\";");
+            sb.append(" ");
+            sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
+            sb.append("\n");
+        }
+        Log.print(sb.toString());
+    }
+
+    /**
 	 * Checks whether an input file is to be uncompressed and/or sorted before reading.
 	 * 
 	 * @param inputFile file which is to be read
@@ -2496,6 +2728,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 				}
 
 				// doit
+                if (wrapper.getInputFile() != null)
+                    Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
 				wrapper.sort(f);
 				
 				// if locked
@@ -2516,6 +2750,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Obtains global statistics from the mapping file, e.g., number of total mappings etc.
+     *
      * @param wrapper mapping file reader
      */
 	private void fileStats(MappingReader wrapper) {
@@ -2554,6 +2789,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Initializes a wrapper for an input file, depending on the file extension.
+     *
      * @param inputFile the file from which is read
      * @return a wrapper instance for reading from the specified file
      */
@@ -2583,6 +2819,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
     /**
      * Returns the parameter file.
+     *
      * @return the parameter file
      */
 	public File getFile() {

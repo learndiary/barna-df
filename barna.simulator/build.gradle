@@ -61,6 +61,37 @@ task distZip(type: Zip) {
 
 task dist(dependsOn: ['distTar', 'distZip'])
 
+
+/**
+ * Create aggregated javaDoc from all subprojects
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for all simulator modules"
+    source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.simulator") ].collectAll{p-> p.sourceSets.main.java}
+    destinationDir = file("${buildDir}/docs/flux-simulator-${version}")
+    configure(options) {
+        windowTitle = 'Flux-Simulator API Documentation'
+        docTitle = "Flux-Simulator JavaDoc (${project(':barna.simulator').version})"
+        links = [ 'http://download.oracle.com/javase/6/docs/api/',
+                'http://download.oracle.com/javaee/6/api/' ]
+    }
+}
+
+task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
+    description = "Zip the aggregated javadoc"
+    classifier = "javadoc"
+    baseName = "flux-simulator"
+    from("${buildDir}/docs/flux-simulator-${version}"){
+        if(version =~ /.*SNAPSHOT.*/){
+            into "flux-simulator-DEVEL"
+        }else{
+            into "flux-simulator-${version}"
+        }
+    }
+}
+
+
+
 artifacts{
     archives distTar 
 }

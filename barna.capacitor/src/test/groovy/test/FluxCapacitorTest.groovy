@@ -196,7 +196,7 @@ class FluxCapacitorTest{
 		}
 	}
 			
-	static final String[] STDERR_MAPPED= ["8009","8044"]
+	static final String[] STDERR_MAPPED= ["8009","8192"]
 	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
 	
 	void assertFiles(int nrFilesInGTF, int nrFilesInBED, String stderr, String[] occurrences) {

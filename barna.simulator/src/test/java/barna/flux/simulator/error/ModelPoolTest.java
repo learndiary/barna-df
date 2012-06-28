@@ -25,33 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io;
+package barna.flux.simulator.error;
 
-import java.io.*;
+import org.junit.Test;
 
-public abstract class AbstractIOWrapper implements IOWrapper {
+import static junit.framework.Assert.assertEquals;
 
-	/**
-	 * Sorts and writes the output to the file provided
-	 * @param outputFile handle to which the output is
-	 * sent
-	 */
-	public void sort(File outputFile) {
-		
-		OutputStream fos= null;
-		try {
-			fos= new BufferedOutputStream(new FileOutputStream(outputFile));
-			sort(fos);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		} finally {
-			try {
-				if (fos!= null)
-					fos.close();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
+/**
+ * @author Thasso Griebel <thasso.griebel@gmail.com>
+ */
+public class ModelPoolTest {
 
+    @Test
+    public void testScalingPosition(){
+        assertEquals(0, ModelPool.scalePosition(0, 100, 100));
+        for (int i = 0; i < 100; i++) {
+            assertEquals(i, ModelPool.scalePosition(i, 100, 100));
+        }
+        assertEquals(49, ModelPool.scalePosition(100, 50, 100));
+        assertEquals(24, ModelPool.scalePosition(50, 50, 100));
+        assertEquals(0, ModelPool.scalePosition(2, 50, 100));
+        assertEquals(48, ModelPool.scalePosition(98, 50, 100));
+
+
+        assertEquals(99, ModelPool.scalePosition(50, 100, 50));
+        assertEquals(49, ModelPool.scalePosition(25, 100, 50));
+        assertEquals(3, ModelPool.scalePosition(2, 100, 50));
+        assertEquals(95, ModelPool.scalePosition(48, 100, 50));
+
+    }
 }

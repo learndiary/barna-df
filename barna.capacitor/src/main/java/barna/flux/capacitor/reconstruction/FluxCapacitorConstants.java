@@ -82,6 +82,7 @@ public class FluxCapacitorConstants {
 	public static final String GTF_ATTRIBUTE_TOKEN_FWD= "fwd";
 	public static final String GTF_ATTRIBUTE_TOKEN_REV= "rev";
 	public static final String GTF_ATTRIBUTE_TOKEN_BID= "bid";
+    public static final String GTF_ATTRIBUTE_TOKEN_FRAC_COVERED= "frac_cov";
 	public static final String GTF_ATTRIBUTE_TOKEN_SEP= "_";
 	public static final String GTF_ATTRIBUTE_LENGTH= "slots";
 	public static final String GTF_ATTRIBUTE_PROFILE= "profile";
@@ -91,6 +92,7 @@ public class FluxCapacitorConstants {
 	static final String[] GTF_ATTRIBUTES_MEASUREMENT= new String[] {GTF_ATTRIBUTE_TOKEN_READS, GTF_ATTRIBUTE_TOKEN_RFREQ, GTF_ATTRIBUTE_TOKEN_RPKM};
 	public static final String GTF_ATTRIBUTE_PVAL= "falsification";
 	public static final String GFF_FEATURE_JUNCTION = "junction";
+    public static final String GFF_FEATURE_INTRON = "intron";
 	public static final String GFF_FEATURE_PAIRED = "paired";
 	public static final String GFF_FEATURE_FRAGMENT = "fragment";
 	public static final byte STRAND_NONE= 0;

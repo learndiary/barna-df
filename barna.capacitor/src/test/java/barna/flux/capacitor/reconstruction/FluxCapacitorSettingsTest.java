@@ -1,12 +1,14 @@
 package barna.flux.capacitor.reconstruction;
 
+import barna.commons.parameters.Parameter;
+import barna.commons.parameters.ParameterSchema;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.StringReader;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.util.EnumSet;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
+import static junit.framework.Assert.*;
 
 public class FluxCapacitorSettingsTest {
     @Test

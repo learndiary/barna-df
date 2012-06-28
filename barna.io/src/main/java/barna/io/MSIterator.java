@@ -50,6 +50,11 @@ public interface MSIterator<T> extends Iterator<T>, Iterable<T>{
 	 * resets to last marked element (if any)
 	 */
 	public void reset();
+
+    /**
+     * reset to the start position
+     */
+    public void setAtStart();
 	
 	/**
 	 * frees resources occupied by the iterator

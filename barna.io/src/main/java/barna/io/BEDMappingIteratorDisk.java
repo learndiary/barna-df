@@ -386,11 +386,13 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 */
 	@Override
 	public void mark() {
-		try {
-			reader= getReader(-1);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+        if (reader!=null) {
+            try {
+                reader= getReader(-1);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
 		
 		reader.mark();
 	}
@@ -405,26 +407,42 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 */
 	@Override
 	public void reset() {
-		
-		try {
-			reader= getReader(-1);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		long pos= reader.reset();
-		if (pos>= 0) {
-			try {
-				reader.close();
-				reader= null;
-				getReader(pos);
-			} catch (FileNotFoundException e) {
-				Log.error(e+ " reading from file "+ tmpFile.getName());
-			} catch (IOException e) {
-				Log.error(e + "Error reading from file " + tmpFile.getName());
-			}
-		}
+		if (reader!=null) {
+            try {
+                reader= getReader(-1);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            long pos= reader.reset();
+            if (pos>= 0) {
+                try {
+                    reader.close();
+                    reader= null;
+                    getReader(pos);
+                } catch (FileNotFoundException e) {
+                    Log.error(e+ " reading from file "+ tmpFile.getName());
+                } catch (IOException e) {
+                    Log.error(e + "Error reading from file " + tmpFile.getName());
+                }
+            }
+        }
 			
 	}
+
+    @Override
+    public void setAtStart() {
+        if (reader!=null) {
+            try {
+                reader.close();
+                reader= null;
+                getReader(0);
+            } catch (FileNotFoundException e) {
+                Log.error(e+ " reading from file "+ tmpFile.getName());
+            } catch (IOException e) {
+                Log.error(e + "Error reading from file " + tmpFile.getName());
+            }
+        }
+    }
 
 	/**
 	 * Determines the number of elements left in the 
@@ -455,14 +473,16 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 */
 	@Override
 	public void clear() {
-		boolean b= false;
-		try {
-			reader.close();
-			b= tmpFile.delete();
-		} catch (IOException e) {
-			if (!b)
-				throw new RuntimeException(e);
-		}
+		if (reader!= null) {
+            boolean b= false;
+            try {
+                reader.close();
+                b= tmpFile.delete();
+            } catch (IOException e) {
+                if (!b)
+                    throw new RuntimeException(e);
+            }
+        }
 	}
 	
 }

@@ -33,8 +33,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 
-import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.*;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -45,7 +46,7 @@ public class BEDFileReaderTest {
 
     @BeforeClass
     public static void setUp(){
-        testfile = new File(BEDFileReaderTest.class.getResource("/test.bed").getFile());
+        testfile = new File(BEDFileReaderTest.class.getResource("/test1.bed").getFile());
         Execute.initialize(4);
     }
 
@@ -57,15 +58,40 @@ public class BEDFileReaderTest {
 
     @Test
     public void testScanFile(){
-        BEDFileReader reader = new BEDFileReader(testfile.getAbsolutePath());
-        reader.scanFile();
+        BEDFileReader wrapper = new BEDFileReader(new File(getClass().getResource("/test.bed").getFile()));
+        wrapper.scanFile();
 
         //scanFileReadLines= 0;
         //countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
-        assertEquals(17, reader.nrUniqueLinesRead );
-        assertEquals(17, reader.countAll );
-        assertEquals(5, reader.countSplit );
-        assertEquals(12, reader.countEntire );
-        assertEquals(17, reader.countReads );
+        assertEquals(17, wrapper.nrUniqueLinesRead );
+        assertEquals(17, wrapper.countAll );
+        assertEquals(5, wrapper.countSplit );
+        assertEquals(12, wrapper.countEntire );
+        assertEquals(17, wrapper.countReads );
+    }
+
+    @Test
+    public void testReadDescriptorWithSpace(){
+        BEDFileReader wrapper = new BEDFileReader(testfile.getAbsolutePath());
+        wrapper.scanFile();
+
+        //scanFileReadLines= 0;
+        //countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
+        assertEquals(1000, wrapper.nrUniqueLinesRead );
+        assertEquals(1000, wrapper.countAll );
+        assertEquals(75, wrapper.countSplit );
+        assertEquals(925, wrapper.countEntire );
+        assertEquals(972, wrapper.countReads );
+    }
+
+    @Test
+    public void testIsApplicable() throws IOException {
+        BEDFileReader wrapper = new BEDFileReader(testfile.getAbsolutePath());
+        assertFalse(wrapper.isApplicable());
+        File bedtest = File.createTempFile("bedtest", ".bed");
+        wrapper.sort(bedtest);
+        wrapper = new BEDFileReader(bedtest);
+        assertTrue(wrapper.isApplicable());
+        bedtest.delete();
     }
 }
