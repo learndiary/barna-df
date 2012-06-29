@@ -33,7 +33,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 
-public class BEDobject2Test {
+public class BEDMappingTest {
 	
 	@Test
 	public void testInit() {
@@ -54,11 +54,11 @@ public class BEDobject2Test {
 			"\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+ 
 			blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
 		ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
-		BEDobject2 bed2= new BEDobject2(bacs);
+		BEDMapping bed2= new BEDMapping(bacs);
 
 		assertEquals(start, bed2.getStart());
 		assertEquals(end, bed2.getEnd());
-		assertEquals(chr, bed2.getChr().toString());
+		assertEquals(chr, bed2.getChromosome().toString());
 		assertEquals(score, bed2.getScore());
 		assertEquals((byte) -1, bed2.getStrand());
 		assertEquals(blockNr, bed2.getBlockCount());

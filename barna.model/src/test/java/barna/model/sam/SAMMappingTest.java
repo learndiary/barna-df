@@ -21,6 +21,7 @@ public class SAMMappingTest {
         r.setAlignmentStart(16);
         r.setReadString("ATAGCTTCAGT");
         r.setCigarString("6M14N5M");
+        r.setMappingQuality(30);
 
         mapping = new SAMMapping(r);
     }
@@ -53,5 +54,19 @@ public class SAMMappingTest {
         assertEquals(36,mapping.getNextBlockStart());
         assertEquals(5,mapping.getNextBlockSize());
         assertEquals(-1,mapping.getNextBlockStart());
+    }
+
+    @Test
+    public void testQuality() throws Exception {
+        assertEquals(30, mapping.getScore());
+    }
+
+    @Test
+    public void testStrand() throws Exception {
+        assertEquals(1, mapping.getStrand());
+
+        r.setReadNegativeStrandFlag(true);
+        mapping = new SAMMapping(r);
+        assertEquals(-1, mapping.getStrand());
     }
 }

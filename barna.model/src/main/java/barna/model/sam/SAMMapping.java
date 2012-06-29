@@ -11,50 +11,64 @@ import java.util.ArrayList;
  */
 public class SAMMapping implements Mapping{
 
-    SAMRecord mapping = null;
+    private CharSequence readName;
+    private CharSequence referenceName;
+
     ArrayList<Integer[]> blocks;
     int currentBlock = 0;
+    private int alignmentStart;
+    private int alignmentEnd;
+    private int readLength;
+    private int mappingQuality;
+    private byte strandFlag;
 
     public SAMMapping(SAMRecord r) {
-        mapping = r;
-        initBlocks();
+
+        readName = r.getReadName();
+        referenceName = r.getReferenceName();
+        alignmentStart = r.getAlignmentStart();
+        alignmentEnd = r.getAlignmentEnd();
+        readLength = r.getReadLength();
+        mappingQuality = r.getMappingQuality();
+        strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
+
+
+        initBlocks(r.getCigar());
     }
 
     @Override
     public CharSequence getName() {
-        return mapping.getReadName();
+        return readName;
     }
 
     @Override
     public CharSequence getChromosome() {
-        return mapping.getReferenceName();
+        return referenceName;
     }
 
     @Override
     public int getStart() {
-        return mapping.getAlignmentStart();
+        return alignmentStart;
     }
 
     @Override
     public int getEnd() {
-        return mapping.getAlignmentEnd();
+        return alignmentEnd;
     }
 
     @Override
     public int getLength() {
-        return mapping.getReadLength();
+        return readLength;
     }
 
     @Override
     public int getScore() {
-        return mapping.getMappingQuality();
+        return mappingQuality;
     }
 
     @Override
     public byte getStrand() {
-        if (mapping.getReadNegativeStrandFlag())
-            return -1;
-        return 1;
+        return strandFlag;
     }
 
     @Override
@@ -64,11 +78,11 @@ public class SAMMapping implements Mapping{
         else return -1;
     }
 
-    private void initBlocks() {
+    private void initBlocks(Cigar c) {
         int bStart =getStart(), bLength = 0;
         blocks = new ArrayList<Integer[]>();
         if (blocks.size() == 0) {
-            for (CigarElement e : mapping.getCigar().getCigarElements()) {
+            for (CigarElement e : c.getCigarElements()) {
                 if (!e.getOperator().equals(CigarOperator.N)) {
                     bLength+=e.getLength();
                 } else {
