@@ -437,7 +437,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareSJReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile);
+        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -455,7 +455,7 @@ public class AnnotationMapperTest extends TestCase {
             tol = 0;
             start = Math.max(1, start - tol);
             end = end + tol;
-            MSIterator<Mapping> iter = bed.read(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            MSIterator<Mapping> iter = bed.read(g.getChromosome(),start,end);
             AnnotationMapper a = new AnnotationMapper(g);
             a.map(iter, settings);
             Map<String, Integer> m = a.getSJReads(false);
@@ -475,7 +475,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareSJReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile);
+        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -493,7 +493,8 @@ public class AnnotationMapperTest extends TestCase {
             tol = 0;
             start = Math.max(1, start - tol);
             end = end + tol;
-            MSIterator<Mapping> iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            MSIterator<Mapping> iter = bed.read(g.getChromosome(),start,end);
+//            MSIterator<Mapping> iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
             AnnotationMapper a = new AnnotationMapper(g);
             a.map(iter, settings);
             Map<String, Integer> m = a.getSJReads(true);
@@ -513,7 +514,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareMultiSJReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(mm9GtfFile);
-        BEDFileReader bed = new BEDFileReader(mm9BedFile);
+        BEDFileReader bed = new BEDFileReader(mm9BedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -531,7 +532,7 @@ public class AnnotationMapperTest extends TestCase {
             tol = 0;
             start = Math.max(1, start - tol);
             end = end + tol;
-            MSIterator<Mapping> iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
             AnnotationMapper a = new AnnotationMapper(g);
             a.map(iter, settings);
             Map<String, Integer> m = a.getSJReads(false);
@@ -552,7 +553,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareIntronReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile);
+        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -570,7 +571,7 @@ public class AnnotationMapperTest extends TestCase {
             tol = 0;
             start = Math.max(1, start - tol);
             end = end + tol;
-            MSIterator<Mapping> iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
             AnnotationMapper a = new AnnotationMapper(g);
             a.map(iter, settings);
             Map<String, Float[]> m = a.getAllIntronicReads(false);
@@ -590,7 +591,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareIntronReadsPaired() throws Exception { //TODO update getAllIntronic reads to work for paired end reads
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile);
+        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -608,7 +609,7 @@ public class AnnotationMapperTest extends TestCase {
             tol = 0;
             start = Math.max(1, start - tol);
             end = end + tol;
-            MSIterator<Mapping> iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+            MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
             AnnotationMapper a = new AnnotationMapper(g);
             a.map(iter, settings);
             Map<String, Float[]> m = a.getAllIntronicReads(true);

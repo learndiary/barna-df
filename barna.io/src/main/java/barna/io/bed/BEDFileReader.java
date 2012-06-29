@@ -293,7 +293,7 @@ HashSet<String> refIDset;
 	HashMap<String,long[]> mapChr= new HashMap<String,long[]>(); // bytes and lines
 	private ByteArrayCharSequence cs= new ByteArrayCharSequence(200);
 	
-	int nrUniqueLinesRead= -1;
+	int nrUniqueLinesRead= 0;
 	
 	/**
 	 * reads the rest of the lines from the reader and closes it.
@@ -1537,10 +1537,11 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 						// create object
 						if (os== null) {
 							BEDMapping bed= new BEDMapping(cs);
-							/*((Vector<Mapping>)*/ state.result.add(bed);      //using generic
-							++state.count;
+//							/*((Vector<Mapping>)*/ state.result.add(bed);      //using generic
+//							++state.count;
+                            state.addResult(bed);
 						} else {
-							os.write(cs.chars);
+							os.write(cs.chars, cs.start, cs.length());
 							os.write(Constants.NL);
 							//os.flush();
 							state.count+= cs.chars.length+ 1; 
@@ -1727,10 +1728,10 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 
         public static final int STATE_CHROMOSOME_NOT_FOUND= 3;
 
-        public long count= 0l;
-        public ArrayList<BEDMapping> result= null;
-        public byte state= STATE_OK;
-        public String nextChr= null;
+        private long count= 0l;
+        private ArrayList<BEDMapping> result= null;
+        private byte state= STATE_OK;
+        private String nextChr= null;
 
         public MappingReaderState() {
             reset();
@@ -1741,6 +1742,17 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
             result= null;
             state= STATE_OK;
             nextChr= null;
+        }
+
+        public void addResult(BEDMapping bed) {
+            if (result == null)
+                result = new ArrayList<BEDMapping>();
+            result.add(bed);
+            count++;
+        }
+
+        public ArrayList<BEDMapping> getResults() {
+            return result;
         }
     }
 }
