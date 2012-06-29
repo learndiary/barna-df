@@ -1,20 +1,14 @@
 package barna.io.sam;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import barna.commons.Execute;
-import barna.io.bed.BEDFileReaderTest;
-import barna.io.sam.SAMWrapper;
 
-public class SAMWrapperTest {
+public class SAMReaderTest {
 	
 	private static File testfile;
 
@@ -31,7 +25,7 @@ public class SAMWrapperTest {
 
 	@Test
 	public void testRead() {
-		//SAMWrapper wrapper = new SAMWrapper(testfile);
+		//SAMReader wrapper = new SAMReader(testfile);
 		//wrapper.read();
 		//assertNotNull(wrapper.beds);
 		//assertTrue(wrapper.beds.length > 0);

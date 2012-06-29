@@ -31,28 +31,22 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.Progressable;
 import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
-import barna.commons.parameters.Parameter;
 import barna.commons.thread.SyncIOHandler2;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
 import barna.io.*;
-import barna.io.rna.ReadDescriptor;
-import barna.io.rna.SolexaPairedEndDescriptor;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.io.state.MappingReaderState;
-import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject;
-import barna.model.bed.BEDobject2;
 import barna.model.constants.Constants;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Future;
 
-public class BEDFileReader extends AbstractFileIOWrapper implements MappingReader {
+public class BEDReader extends AbstractFileIOWrapper implements MappingReader {
 
 	static void test() {
 		System.out.println(((byte) -1)| (byte) 1);
@@ -78,7 +72,7 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 * @param comparator comparator describing required file
 	 * sorting 
 	 */
-	public BEDFileReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+	public BEDReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		super(inputFile);
 		this.comparator= (comparator== null? COMPARATOR_DEFAULT: comparator);
         this.sortInRam = sortInRam;
@@ -90,7 +84,7 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 * and the default comparator.
 	 * @param inputFile
 	 */
-	public BEDFileReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+	public BEDReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		this(inputFile, COMPARATOR_DEFAULT, sortInRam, descriptor, tmpDir);
 	}
 	
@@ -99,15 +93,15 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 * and the default line comparator.
 	 * @param absolutePath path to the file the wrapper is based on
 	 */
-	public BEDFileReader(String absolutePath, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+	public BEDReader(String absolutePath, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		this(new File(absolutePath), sortInRam,  descriptor, tmpDir);
 	}
 
-	    public BEDFileReader(String absolutePath) {
+	    public BEDReader(String absolutePath) {
         this(new File(absolutePath), false,  null, null);   // TODO Not the proper way!!!
     }
 
-    public BEDFileReader(File inputFile) {
+    public BEDReader(File inputFile) {
         this(inputFile, false,  null, null);   // TODO Not the proper way!!!
     }
 	
@@ -661,7 +655,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	
 	public File getSortedFile(File tmpFile, LineComparator<CharSequence> comparator) {
 	
-		//BEDFileReader wrapper= new BEDFileReader(inputFile, comparator);
+		//BEDReader wrapper= new BEDReader(inputFile, comparator);
 		if (!this.isApplicable()) {
 			if (tmpFile== null)
 				try {
@@ -1753,6 +1747,19 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 
         public ArrayList<BEDMapping> getResults() {
             return result;
+        }
+
+        public byte getState() {
+            return state;
+        }
+
+        public String getNextChromosome() {
+            return nextChr;
+        }
+
+        public void resetResults() {
+            result = null;
+            count = 0l;
         }
     }
 }

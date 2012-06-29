@@ -29,15 +29,12 @@ package barna.flux.simulator;
 
 import barna.io.FileHelper;
 import barna.io.MSIterator;
-import barna.io.bed.BEDFileReader;
-import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.state.MappingReaderState;
 import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.Mapping;
 import barna.model.Transcript;
-import barna.model.bed.BEDobject2;
 import barna.model.commons.IntVector;
 
 import java.io.*;
@@ -382,13 +379,13 @@ public class PWM implements WeightMatrix {
             System.err.println();
 
             File ff = new File(fileBed + "_sorted");
-            BEDFileReader bedReader = null;
+            BEDReader bedReader = null;
             if (ff.exists()) {
                 System.err.println("\tusing sorted file " + ff.getName());
                 fileBed = ff.getAbsolutePath();
-                bedReader = new BEDFileReader(fileBed);
+                bedReader = new BEDReader(fileBed);
             } else {
-                bedReader = new BEDFileReader(fileBed);
+                bedReader = new BEDReader(fileBed);
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
                     File f = new File(fileBed);
@@ -399,7 +396,7 @@ public class PWM implements WeightMatrix {
                         fileBed = f.getAbsolutePath();
                     }
                     System.err.println("\tsorted file in " + fileBed);
-                    bedReader = new BEDFileReader(fileBed);
+                    bedReader = new BEDReader(fileBed);
                 }
             }
 
@@ -751,13 +748,13 @@ public class PWM implements WeightMatrix {
             System.err.println();
 
             File ff = new File(fileBed + "_sorted");
-            BEDFileReader bedReader = null;
+            BEDReader bedReader = null;
             if (ff.exists()) {
                 System.err.println("\tusing sorted file " + ff.getName());
                 fileBed = ff.getAbsolutePath();
-                bedReader = new BEDFileReader(fileBed);
+                bedReader = new BEDReader(fileBed);
             } else {
-                bedReader = new BEDFileReader(fileBed);
+                bedReader = new BEDReader(fileBed);
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
                     File f = new File(fileBed);
@@ -768,7 +765,7 @@ public class PWM implements WeightMatrix {
                         fileBed = f.getAbsolutePath();
                     }
                     System.err.println("\tsorted file in " + fileBed);
-                    bedReader = new BEDFileReader(fileBed);
+                    bedReader = new BEDReader(fileBed);
                 }
             }
 

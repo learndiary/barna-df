@@ -89,7 +89,7 @@ public class BedToGtfConverter {
 	public void convert() {
 		try {
 			System.out.println("Reading..");
-			BEDFileReader reader= new BEDFileReader(inputFile.getAbsolutePath());
+			BEDReader reader= new BEDReader(inputFile.getAbsolutePath());
 			reader.read(0);
 			BEDobject[] beds= reader.getBeds();
 			Vector gtfV= new Vector(beds.length);

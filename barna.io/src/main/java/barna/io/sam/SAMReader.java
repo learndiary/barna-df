@@ -13,22 +13,21 @@ import barna.io.AbstractFileIOWrapper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.bed.BEDobject;
 import net.sf.samtools.*;
+
 /**
- * @author emilio
- *
+ * @author Emilio Palumbo (emiliopalumbo@gmail.com)
  */
-public class SAMWrapper extends AbstractFileIOWrapper implements
+public class SAMReader extends AbstractFileIOWrapper implements
         MappingReader {
 
 	public BEDobject[] beds= null;
 	/**
 	 * @param inputFile
 	 */
-	public SAMWrapper(File inputFile) {
+	public SAMReader(File inputFile) {
 		super(inputFile);
 		// TODO Auto-generated constructor stub
 	}
@@ -38,7 +37,7 @@ public class SAMWrapper extends AbstractFileIOWrapper implements
 	 * and the default line comparator.
 	 * @param absolutePath path to the file the wrapper is based on
 	 */
-	public SAMWrapper(String absolutePath) {
+	public SAMReader(String absolutePath) {
 		this(new File(absolutePath));
 	}
 

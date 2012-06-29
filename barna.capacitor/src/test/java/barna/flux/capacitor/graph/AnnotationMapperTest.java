@@ -2,7 +2,7 @@ package barna.flux.capacitor.graph;
 
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
-import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
@@ -437,7 +437,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareSJReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -475,7 +475,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareSJReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -514,7 +514,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareMultiSJReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(mm9GtfFile);
-        BEDFileReader bed = new BEDFileReader(mm9BedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        BEDReader bed = new BEDReader(mm9BedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -553,7 +553,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareIntronReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -591,7 +591,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareIntronReadsPaired() throws Exception { //TODO update getAllIntronic reads to work for paired end reads
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDFileReader bed = new BEDFileReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);

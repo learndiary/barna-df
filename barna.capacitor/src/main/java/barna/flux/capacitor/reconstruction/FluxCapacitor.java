@@ -38,7 +38,7 @@ import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.genome.lpsolver.LPSolverLoader;
 import barna.io.*;
-import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.*;
@@ -170,7 +170,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
          * The mode of the run can be switched between profiling and deconvolution.
          *
          * @param newGene the locus model
-         * @param newBeds the mappings that fall in the locus
+         * @param newMappings the mappings that fall in the locus
          * @param decompose flag indicating whether profiling (<code>false</code>) or
          *                  deconvolution (otherwise) is carried out.
          */
@@ -2222,9 +2222,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      */
     @Deprecated
 	private AbstractFileIOWrapper getWrapperBED(File inputFile) {
-		/*mappingReader= new BEDFileReader(inputFile.getAbsolutePath());
+		/*mappingReader= new BEDReader(inputFile.getAbsolutePath());
 		return mappingReader;*/  // TODO pull up to MappingReader
-        mappingReader = new BEDFileReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
+        mappingReader = new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
         return null;// removed mappingReader;
 	}
 
@@ -2811,7 +2811,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 		case BED:
 			//return getWrapperBED(inputFile);
-            return new BEDFileReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
+            return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
 		}
 		
 		return null;	// make compiler happy

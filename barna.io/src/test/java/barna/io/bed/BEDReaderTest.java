@@ -40,13 +40,13 @@ import static junit.framework.Assert.*;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class BEDFileReaderTest {
+public class BEDReaderTest {
 
     private static File testfile;
 
     @BeforeClass
     public static void setUp(){
-        testfile = new File(BEDFileReaderTest.class.getResource("/test1.bed").getFile());
+        testfile = new File(BEDReaderTest.class.getResource("/test1.bed").getFile());
         Execute.initialize(4);
     }
 
@@ -58,7 +58,7 @@ public class BEDFileReaderTest {
 
     @Test
     public void testScanFile(){
-        BEDFileReader wrapper = new BEDFileReader(new File(getClass().getResource("/test.bed").getFile()));
+        BEDReader wrapper = new BEDReader(new File(getClass().getResource("/test.bed").getFile()));
         wrapper.scanFile();
 
         //scanFileReadLines= 0;
@@ -72,7 +72,7 @@ public class BEDFileReaderTest {
 
     @Test
     public void testReadDescriptorWithSpace(){
-        BEDFileReader wrapper = new BEDFileReader(testfile.getAbsolutePath());
+        BEDReader wrapper = new BEDReader(testfile.getAbsolutePath());
         wrapper.scanFile();
 
         //scanFileReadLines= 0;
@@ -86,11 +86,11 @@ public class BEDFileReaderTest {
 
     @Test
     public void testIsApplicable() throws IOException {
-        BEDFileReader wrapper = new BEDFileReader(testfile.getAbsolutePath());
+        BEDReader wrapper = new BEDReader(testfile.getAbsolutePath());
         assertFalse(wrapper.isApplicable());
         File bedtest = File.createTempFile("bedtest", ".bed");
         wrapper.sort(bedtest);
-        wrapper = new BEDFileReader(bedtest);
+        wrapper = new BEDReader(bedtest);
         assertTrue(wrapper.isApplicable());
         bedtest.delete();
     }
