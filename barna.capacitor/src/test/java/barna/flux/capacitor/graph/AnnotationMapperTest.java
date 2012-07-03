@@ -5,8 +5,11 @@ import barna.io.MSIterator;
 import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
+import barna.io.sam.SAMReader;
 import barna.model.Gene;
 import barna.model.Mapping;
+import barna.model.bed.BEDMapping;
+import barna.model.sam.SAMMapping;
 import junit.framework.TestCase;
 import org.junit.Test;
 
@@ -23,6 +26,7 @@ public class AnnotationMapperTest extends TestCase {
 
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+    private final File hgBamFile = new File("/home/emilio/fromMicha/test.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
@@ -624,6 +628,57 @@ public class AnnotationMapperTest extends TestCase {
             }
             assertEquals(76, count[0]);
         }
+    }
+
+    @Test
+    public void testCompareBEDtoBAM() throws Exception {
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        SAMReader sam = new SAMReader(hgBamFile);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        gtf.setReadAll(true);
+        gtf.setNoIDs(null);
+        gtf.setReadFeatures(new String[]{"exon", "CDS"});
+        gtf.read();
+        for (Gene g : gtf.getGenes()) {
+            int start = 0, end = 0;
+            start = g.getStart();
+            end = g.getEnd();
+            if (g.getStrand() < 0) {
+                start = -start;
+                end = -end;
+            }
+            start = Math.max(1, start);
+
+            MSIterator<Mapping> iter1 = bed.read(g.getChromosome(),start,end);
+            MSIterator<Mapping> iter2 = sam.read(g.getChromosome(),start,end);
+
+            int[] count = {0,0};
+
+            while (iter1.hasNext()) {
+                iter1.next();
+                count[0]++;
+            }
+
+            while (iter2.hasNext()) {
+                iter2.next();
+                count[1]++;
+            }
+
+//            Mapping m1,m2;
+//            while (iter1.hasNext()) {
+//                m1=iter1.next();
+//                m2=iter2.next();
+//                assertEquals(m1.getChromosome(),m2.getChromosome());
+//                assertEquals(m1.getName(),m2.getName());
+//                assertEquals(m1.getStart(),m2.getStart());
+//                assertEquals(m1.getEnd(),m2.getEnd());
+//                assertEquals(m1.getStrand(),m2.getStrand());
+//            }
+
+            assertEquals(count[0],count[1]);
+        }
+
     }
 
 }

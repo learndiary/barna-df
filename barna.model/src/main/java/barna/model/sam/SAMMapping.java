@@ -25,7 +25,7 @@ public class SAMMapping implements Mapping{
     public SAMMapping(SAMRecord r) {
 
         readName = r.getReadName();
-        referenceName = r.getReferenceName();
+        referenceName = r.getHeader().getSequence(r.getReferenceIndex()).getSequenceName();
         alignmentStart = r.getAlignmentStart();
         alignmentEnd = r.getAlignmentEnd();
         readLength = r.getReadLength();
@@ -38,7 +38,7 @@ public class SAMMapping implements Mapping{
 
     @Override
     public CharSequence getName() {
-        return readName;
+        return readName + (strandFlag==1?" 1:N:0:TTAGGC":" 2:N:0:TTAGGC");
     }
 
     @Override

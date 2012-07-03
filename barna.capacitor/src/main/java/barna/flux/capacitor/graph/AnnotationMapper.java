@@ -320,7 +320,7 @@ public class AnnotationMapper extends SplicingGraph {
 						otherMapping= lineIterator.next();
 						attributes2= getAttributes(otherMapping, descriptor, attributes2);
 						if (!attributes.id.equals(attributes2.id))
-							break;						
+							break;
 						if (attributes2== null|| attributes2.flag== 1)
 							continue;
 

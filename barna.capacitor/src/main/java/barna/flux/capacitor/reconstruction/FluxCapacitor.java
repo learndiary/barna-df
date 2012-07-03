@@ -41,6 +41,7 @@ import barna.io.*;
 import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
+import barna.io.sam.SAMReader;
 import barna.model.*;
 import barna.model.Mapping;
 import barna.model.commons.Coverage;
@@ -874,7 +875,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @deprecated marked for removal
      */
     public static enum SupportedFormatExtensions {
-        GTF, GFF, BED,
+        GTF, GFF, BED, BAM
     }
 
     /**
@@ -2808,10 +2809,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		case GTF:
 		case GFF:
 			return getWrapperGTF(inputFile);
-
 		case BED:
 			//return getWrapperBED(inputFile);
             return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
+        case BAM:
+            return new SAMReader(inputFile);
 		}
 		
 		return null;	// make compiler happy

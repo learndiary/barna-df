@@ -6,15 +6,12 @@ package barna.io.sam;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.Vector;
 
-import barna.commons.utils.ArrayUtils;
 import barna.io.AbstractFileIOWrapper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
-import barna.model.bed.BEDobject;
 import net.sf.samtools.*;
 
 /**
@@ -23,13 +20,14 @@ import net.sf.samtools.*;
 public class SAMReader extends AbstractFileIOWrapper implements
         MappingReader {
 
-	public BEDobject[] beds= null;
+	private Mapping[] mappings= null;
+    private SAMFileReader reader = null;
+
 	/**
 	 * @param inputFile
 	 */
 	public SAMReader(File inputFile) {
 		super(inputFile);
-		// TODO Auto-generated constructor stub
 	}
 	
 	/**
@@ -41,59 +39,13 @@ public class SAMReader extends AbstractFileIOWrapper implements
 		this(new File(absolutePath));
 	}
 
-	/* (non-Javadoc)
-	 * @see barna.io.IOWrapper#read()
-	 */
-	@Override
-	public void read() {		
-		Vector objV= new Vector();
-		
-		try {	
-			final SAMFileReader inputSam = new SAMFileReader(inputFile);
-			final SAMFileHeader inputSamHeader =  inputSam.getFileHeader();
-			
-			for (final SAMRecord rec : inputSam) 
-			{
-				if (!rec.getReadUnmappedFlag()) {
-					BEDobject bed= BEDobject.getRecycleObj(); // new BEDobject();
-					
-					bed.setChrom(rec.getReferenceName());				
-					bed.setStart(rec.getAlignmentStart()-1);
-					bed.setEnd(rec.getAlignmentEnd()-1);
-					bed.setName(rec.getReadName());
-					bed.setScore(rec.getMappingQuality());			
-					
-					if (rec.getReadNegativeStrandFlag())				
-						bed.setStrand("-");
-					else
-						bed.setStrand("+");							
-					
-					/*
-						bed.setThickStart();					
-						bed.setThickEnd();											
-						bed.setCol();								
-						bed.setBlockCount());					
-						bed.setBlockSizes();					 
-						bed.setBlockStarts();
-					*/
-			
-					//objV.add(bed);	
-				}
-	        } 
-			
-			
-	} catch (Exception e) {
-		throw new RuntimeException(e);
-	}
+    @Override
+    public void read() {
+    }
 
-
-	beds= (BEDobject[]) ArrayUtils.toField(objV);
-        
-	}
-
-	/* (non-Javadoc)
-	 * @see barna.io.IOWrapper#write()
-	 */
+    /* (non-Javadoc)
+      * @see barna.io.IOWrapper#write()
+      */
 	@Override
 	public void write() {
 		// TODO Auto-generated method stub
@@ -119,8 +71,13 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	}
 
     @Override
-    public MSIterator<Mapping> read(String chromosome, int start, int end) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public MSIterator read(String chromosome, int start, int end) {
+        if (reader == null)
+            reader = new SAMFileReader(this.inputFile);
+        if (reader.hasIndex())
+            return new SAMMappingQueryIterator(reader.query(chromosome,start,end, true));
+        else
+            return new SAMMappingIterator(chromosome, start, end, reader.iterator());
     }
 
     /* (non-Javadoc)
