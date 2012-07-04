@@ -1577,9 +1577,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 
 
-        //Get from settings the tasks to be executed in the current run
-        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
-            currentTasks.add(Task.DECOMPOSE);
         if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
             for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
                 switch (e) {
@@ -1592,6 +1589,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 }
             }
         }
+        //Get from settings the tasks to be executed in the current run
+        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
+            currentTasks.add(Task.DECOMPOSE);
 
         //print current run stats
         printStats();
@@ -1600,11 +1600,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         long t0 = System.currentTimeMillis();
 
         FluxCapacitorStats stats = new FluxCapacitorStats();
-        profile = getProfile(stats);
-        if (profile == null) {
-            exit(-1);
+        if (currentTasks.contains(Task.DECOMPOSE)) {
+            profile = getProfile(stats);
+            if (profile == null) {
+                exit(-1);
+            }
         }
-        if (currentTasks.contains(Task.DECOMPOSE))
+        //if (currentTasks.contains(Task.DECOMPOSE))
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
         // BARNA-103 : write stats to file
@@ -2533,6 +2535,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                 if (mode == FluxCapacitorConstants.MODE_LEARN) {
+                    Log.info("","");
+                    Log.info("LEARN", "Scanning the input and getting the attributes.");
+                }
+                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
                     if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
                         StringBuilder message = new StringBuilder();
                         message.append("Counting reads to the following elements: ");
@@ -2547,12 +2553,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         Log.info("","");
                         Log.info("COUNT", message.toString());
                     }
-                    Log.info("","");
-                    Log.info("LEARN", "Scanning the input and getting the attributes.");
-                }
-                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
-                    Log.info("","");
-                    Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                    if (currentTasks.contains(Task.DECOMPOSE)) {
+                        Log.info("","");
+                        Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                    }
                 }
             }
             final String profiling = "profiling ", decomposing = "decomposing ";
@@ -2655,6 +2659,16 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     //Execute tasks
                     for (Task t : currentTasks) {
                         switch (t) {
+                            case COUNT_INTRONS:
+                                if (beds!= null && mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                                    outputIntronsGFF(gene[i], beds);
+                                }
+                                break;
+                            case COUNT_SJ:
+                                if (beds!= null && mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                                    outputSJGFF(gene[i], beds);
+                                }
+                                break;
                             case DECOMPOSE:
                                 if (mode == FluxCapacitorConstants.MODE_LEARN && beds != null) {
                                     beds.setAtStart();
@@ -2663,16 +2677,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                                     if (beds!=null)
                                         beds.setAtStart();
                                     solve(gene[i], beds, true);
-                                }
-                                break;
-                            case COUNT_INTRONS:
-                                if (beds!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
-                                    outputIntronsGFF(gene[i], beds);
-                                }
-                                break;
-                            case COUNT_SJ:
-                                if (beds!= null && mode == FluxCapacitorConstants.MODE_LEARN) {
-                                    outputSJGFF(gene[i], beds);
                                 }
                                 break;
                         }

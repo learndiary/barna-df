@@ -6,6 +6,7 @@ import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
+import barna.model.Transcript;
 import junit.framework.TestCase;
 import org.junit.Test;
 
@@ -22,6 +23,7 @@ public class AnnotationMapperTest extends TestCase {
 
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
@@ -437,6 +439,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareSJReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         BEDwrapper bed = new BEDwrapper(hgBedFile);
+        byte lastStr = 0;
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -444,6 +447,12 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
+            if (lastStr!=0&&lastStr!=g.getStrand()) {
+                bed.reset(g.getChromosome());
+                lastStr = g.getStrand();
+            }
+            if (lastStr == 0)
+                lastStr = g.getStrand();
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -475,6 +484,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareSJReadsPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         BEDwrapper bed = new BEDwrapper(hgBedFile);
+        byte lastStr = 0;
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -482,6 +492,12 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
+            if (lastStr!=0&&lastStr!=g.getStrand()) {
+                bed.reset(g.getChromosome());
+                lastStr = g.getStrand();
+            }
+            if (lastStr == 0)
+                lastStr = g.getStrand();
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -509,10 +525,53 @@ public class AnnotationMapperTest extends TestCase {
         }
     }
 
+//    @Test
+//    public void testSJReadsPaired() throws Exception {
+//        GTFwrapper gtf = new GTFwrapper(hgGtfChrFile);
+//        BEDwrapper bed = new BEDwrapper(hgBedChrFile);
+//        Map<String,String> sjs = new TreeMap<String, String>();
+//        int count=0;
+//        byte lastStr = 0;
+//        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+//        //gtf = new GTFwrapper((gtf.sort()));
+//        gtf.setReadAll(true);
+//        gtf.setNoIDs(null);
+//        gtf.setReadFeatures(new String[]{"exon", "CDS"});
+//        gtf.read();
+//        for (Gene g : gtf.getGenes()) {
+//            if (lastStr!=0&&lastStr!=g.getStrand()) {
+//                bed.reset(g.getChromosome());
+//                lastStr = g.getStrand();
+//            }
+//            if (lastStr == 0)
+//                lastStr = g.getStrand();
+//            int start = 0, end = 0, tol = 0;
+//            start = g.getStart();
+//            end = g.getEnd();
+//            if (g.getStrand() < 0) {
+//                start = -start;
+//                end = -end;
+//            }
+//            tol = 0;
+//            start = Math.max(1, start - tol);
+//            end = end + tol;
+//            BufferedIterator iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+//            AnnotationMapper a = new AnnotationMapper(g);
+//            a.map(iter, settings);
+//            Map<String, Integer> m = a.getSJReads(true);
+//            for (String e : m.keySet()) {
+//                sjs.put(e,"OK");
+//            }
+//        }
+//
+//        System.err.println("Splice junctions found: " + sjs.keySet().size());
+//    }
+
     @Test
     public void testCompareMultiSJReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(mm9GtfFile);
         BEDwrapper bed = new BEDwrapper(mm9BedFile);
+        byte lastStr = 0;
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -520,6 +579,12 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
+            if (lastStr!=0&&lastStr!=g.getStrand()) {
+                bed.reset(g.getChromosome());
+                lastStr = g.getStrand();
+            }
+            if (lastStr == 0)
+                lastStr = g.getStrand();
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -552,6 +617,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareIntronReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         BEDwrapper bed = new BEDwrapper(hgBedFile);
+        byte lastStr = 0;
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -559,6 +625,12 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
+            if (lastStr!=0&&lastStr!=g.getStrand()) {
+                bed.reset(g.getChromosome());
+                lastStr = g.getStrand();
+            }
+            if (lastStr == 0)
+                lastStr = g.getStrand();
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -590,6 +662,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareIntronReadsPaired() throws Exception { //TODO update getAllIntronic reads to work for paired end reads
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         BEDwrapper bed = new BEDwrapper(hgBedFile);
+        byte lastStr = 0;
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -597,6 +670,12 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
+            if (lastStr!=0&&lastStr!=g.getStrand()) {
+                bed.reset(g.getChromosome());
+                lastStr = g.getStrand();
+            }
+            if (lastStr == 0)
+                lastStr = g.getStrand();
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
