@@ -61,6 +61,7 @@ import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.*;
@@ -79,7 +80,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * Enumerates possible tasks for the FluxCapacitor
      */
     private enum Task {
-        DECOMPOSE, COUNT_SJ, COUNT_INTRONS
+        COUNT_INTRONS, COUNT_SJ, LEARN, DECOMPOSE
     };
 
     /**
@@ -154,10 +155,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         BufferedIterator beds = null;
 
         /**
-         * Flag indicating whether the deconvolution (<code>true</code>) is
-         * performed, or whether the learn step is performed (<code>false</code>).
+         * EnumSet indicating which task(s) has(have) to be performed in the current run.
          */
-        boolean decompose = false;
+        EnumSet<Task> tasks;
 
         /**
          * The coverage profile of systematic biases.
@@ -191,14 +191,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
          *
          * @param newGene   the locus model
          * @param newBeds   the mappings that fall in the locus
-         * @param decompose flag indicating whether profiling (<code>false</code>) or
-         *                  deconvolution (otherwise) is carried out.
+         * @param tasks     tasks to be preformed
          */
-        public LocusSolver(Gene newGene, BufferedIterator newBeds, boolean decompose) {
+        public LocusSolver(Gene newGene, BufferedIterator newBeds, EnumSet tasks) {
 
             this.gene = newGene;
             this.beds = newBeds;
-            this.decompose = decompose;
+            this.tasks = tasks;
 
             nrMappingsReadsOrPairs = 0;
         }
@@ -210,36 +209,70 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         @Override
         public void run() {
 
-            if (decompose) {
+            AnnotationMapper mapper = null;
 
-                // BUG 110301: do not use mapTrivial, problems with split-maps
-//				if (this.gene.getTranscriptCount()== 1) {
-//					mapTrivial(gene.getTranscripts()[0], beds);
-//					outputGFF(null, null, null);
-//				} else {
-                AnnotationMapper mapper = new AnnotationMapper(this.gene);
+            if (!tasks.contains(Task.LEARN)) {
+                mapper = new AnnotationMapper(this.gene);
                 mapper.map(this.beds, settings);
+
                 nrReadsLoci += mapper.nrMappingsLocus;
                 nrReadsMapped += mapper.getNrMappingsMapped();
                 nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
                 nrPairsNoTxEvidence += mapper.getNrMappingsNotMappedAsPair();
                 nrPairsWrongOrientation += mapper.getNrMappingsWrongPairOrientation();
+            }
 
-                GraphLPsolver mySolver = null;
-                if (mapper.nrMappingsMapped > 0 && this.gene.getTranscriptCount() > 1) {    // OPTIMIZE
-                    mySolver = getSolver(mapper, (int) (mapper.nrMappingsMapped * 2)); // not: getMappedReadcount()
-                    mySolver.run();
-                }
-                outputGFF(mapper, events, mySolver);
-//					}
 
-            } else {
-                // map all reads
-                if (this.gene.getTranscriptCount() == 1) {
-                    ++nrSingleTranscriptLearn;
-                    learn(this.gene.getTranscripts()[0], beds);
+            //TODO move this on call()
+            //Execute tasks
+            for (Task t : this.tasks) {
+                switch (t) {
+                    case COUNT_INTRONS:
+                        outputIntronsGFF(this.gene, mapper);
+                        break;
+                    case COUNT_SJ:
+                        outputSJGFF(this.gene, mapper);
+                        break;
+                    case LEARN:
+                        if (this.gene.getTranscriptCount() == 1) {
+                            ++nrSingleTranscriptLearn;
+                            learn(this.gene.getTranscripts()[0], beds);
+                        }
+                        break;
+                    case DECOMPOSE:
+                        GraphLPsolver mySolver = null;
+                        if (mapper.nrMappingsMapped > 0 && this.gene.getTranscriptCount() > 1) {    // OPTIMIZE
+                            mySolver = getSolver(mapper, (int) (mapper.nrMappingsMapped * 2)); // not: getMappedReadcount()
+                            mySolver.run();
+                        }
+                        outputGFF(mapper, events, mySolver);
+                        break;
                 }
             }
+
+//            if (decompose) {
+//
+//                // BUG 110301: do not use mapTrivial, problems with split-maps
+////				if (this.gene.getTranscriptCount()== 1) {
+////					mapTrivial(gene.getTranscripts()[0], beds);
+////					outputGFF(null, null, null);
+////				} else {
+//
+//                GraphLPsolver mySolver = null;
+//                if (mapper.nrMappingsMapped > 0 && this.gene.getTranscriptCount() > 1) {    // OPTIMIZE
+//                    mySolver = getSolver(mapper, (int) (mapper.nrMappingsMapped * 2)); // not: getMappedReadcount()
+//                    mySolver.run();
+//                }
+//                outputGFF(mapper, events, mySolver);
+////					}
+//
+//            } else {
+//                // map all reads
+//                if (this.gene.getTranscriptCount() == 1) {
+//                    ++nrSingleTranscriptLearn;
+//                    learn(this.gene.getTranscripts()[0], beds);
+//                }
+//            }
 
             beds = null;
             gene = null;
@@ -249,6 +282,74 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 //			synchronized(FluxCapacitor.this.threadPool) {
             FluxCapacitor.this.threadPool.remove(this);
 //			}
+        }
+
+        /**
+         * Count reads to splice junction within the current locus and output them in GTF format.
+         *
+         * @param gene current locus
+         * @param mapper mapping graph for the current locus
+         */
+        private void outputSJGFF(Gene gene, AnnotationMapper mapper) {
+            Map<String, Integer> m = mapper.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+            StringBuilder sb = new StringBuilder();
+            for (String s : m.keySet()) {
+                String[] junction = s.split("\\^");
+                sb.append(gene.getChromosome());
+                sb.append("\t");
+                sb.append("flux");
+                sb.append("\t");
+                sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
+                sb.append("\t");
+                sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
+                sb.append("\t");
+                sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
+                sb.append("\t");
+                sb.append(m.get(s));
+                sb.append("\t");
+                sb.append(junction[0].contains("-") ? "+" : "-");
+                sb.append("\t");
+                sb.append(".");
+                sb.append("\t");
+                sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append("\n");
+            }
+            Log.print(sb.toString());
+        }
+
+        /**
+         * Count reads to all-intronic regions within the current locus and output them in GTF format.
+         *
+         * @param gene current locus
+         * @param mapper mapping graph for the current locus
+         */
+        private void outputIntronsGFF(Gene gene, AnnotationMapper mapper) {
+            Map<String, Float[]> m = mapper.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+            StringBuilder sb = new StringBuilder();
+            for (String s : m.keySet()) {
+                String[] intron = s.split("\\^");
+                sb.append(gene.getChromosome());
+                sb.append("\t");
+                sb.append("flux");
+                sb.append("\t");
+                sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
+                sb.append("\t");
+                sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
+                sb.append("\t");
+                sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
+                sb.append("\t");
+                sb.append(m.get(s)[0].intValue());
+                sb.append("\t");
+                sb.append(intron[0].contains("-")?"+":"-");
+                sb.append("\t");
+                sb.append(".");
+                sb.append("\t");
+                sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append(" ");
+                sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
+                sb.append("\n");
+            }
+            Log.print(sb.toString());
         }
 
 
@@ -1590,8 +1691,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             }
         }
         //Get from settings the tasks to be executed in the current run
-        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE))
+        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
             currentTasks.add(Task.DECOMPOSE);
+        }
 
         //print current run stats
         printStats();
@@ -1606,8 +1708,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 exit(-1);
             }
         }
-        //if (currentTasks.contains(Task.DECOMPOSE))
-            explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
+
+        explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
         // BARNA-103 : write stats to file
         File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
@@ -1969,13 +2071,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      *
      * @param gene      the locus
      * @param beds      the mappings in the locus
-     * @param decompose the mode of processing, either deconvolution (<code>true</code>)
-     *                  or bias estimation (<code>false</code>)
+     * @param tasks     the tasks to be performed
      */
-    private void solve(Gene gene, BufferedIterator beds, boolean decompose) {
+    private void solve(Gene gene, BufferedIterator beds, EnumSet tasks) {
 
         // create LP and solve
-        LocusSolver lsolver = new LocusSolver(gene, beds, decompose);
+        LocusSolver lsolver = new LocusSolver(gene, beds, tasks);
         if (maxThreads > 1) {
             //Thread outThread= new Thread(lsolver);
             Thread lastThread = getLastThread();
@@ -2655,31 +2756,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                     beds = readBedFile(gene[i], start, end);
 
-                    //TODO move this on call()
-                    //Execute tasks
-                    for (Task t : currentTasks) {
-                        switch (t) {
-                            case COUNT_INTRONS:
-                                if (beds!= null && mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
-                                    outputIntronsGFF(gene[i], beds);
-                                }
-                                break;
-                            case COUNT_SJ:
-                                if (beds!= null && mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
-                                    outputSJGFF(gene[i], beds);
-                                }
-                                break;
-                            case DECOMPOSE:
-                                if (mode == FluxCapacitorConstants.MODE_LEARN && beds != null) {
-                                    beds.setAtStart();
-                                    solve(gene[i], beds, false);
-                                } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
-                                    if (beds!=null)
-                                        beds.setAtStart();
-                                    solve(gene[i], beds, true);
-                                }
-                                break;
-                        }
+                    if (mode == FluxCapacitorConstants.MODE_LEARN && beds != null) {
+                        solve(gene[i], beds, EnumSet.of(Task.LEARN));
+                    } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                        solve(gene[i], beds, currentTasks);
                     }
 
                     if (beds != null)
@@ -2733,80 +2813,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
         return true;
-    }
-
-    /**
-     * Count reads to splice junction within the current locus and output them in GTF format.
-     *
-     * @param gene current locus
-     * @param beds mappings in the current locus
-     */
-    private void outputSJGFF(Gene gene, BufferedIterator beds) {
-        beds.setAtStart();
-        AnnotationMapper a = new AnnotationMapper(gene);
-        a.map(beds, settings);
-        Map<String, Integer> m = a.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
-        StringBuilder sb = new StringBuilder();
-        for (String s : m.keySet()) {
-            String[] junction = s.split("\\^");
-            sb.append(gene.getChromosome());
-            sb.append("\t");
-            sb.append("flux");
-            sb.append("\t");
-            sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
-            sb.append("\t");
-            sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
-            sb.append("\t");
-            sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
-            sb.append("\t");
-            sb.append(m.get(s));
-            sb.append("\t");
-            sb.append(junction[0].contains("-") ? "+" : "-");
-            sb.append("\t");
-            sb.append(".");
-            sb.append("\t");
-            sb.append("gene_id \""+gene.getGeneID()+"\";");
-            sb.append("\n");
-        }
-        Log.print(sb.toString());
-    }
-
-    /**
-     * Count reads to all-intronic regions within the current locus and output them in GTF format.
-     *
-     * @param gene current locus
-     * @param beds mappings in the current locus
-     */
-    private void outputIntronsGFF(Gene gene, BufferedIterator beds) {
-        beds.setAtStart();
-        AnnotationMapper a = new AnnotationMapper(gene);
-        a.map(beds, settings);
-        Map<String, Float[]> m = a.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
-        StringBuilder sb = new StringBuilder();
-        for (String s : m.keySet()) {
-            String[] intron = s.split("\\^");
-            sb.append(gene.getChromosome());
-            sb.append("\t");
-            sb.append("flux");
-            sb.append("\t");
-            sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
-            sb.append("\t");
-            sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
-            sb.append("\t");
-            sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
-            sb.append("\t");
-            sb.append(m.get(s)[0].intValue());
-            sb.append("\t");
-            sb.append(intron[0].contains("-")?"+":"-");
-            sb.append("\t");
-            sb.append(".");
-            sb.append("\t");
-            sb.append("gene_id \""+gene.getGeneID()+"\";");
-            sb.append(" ");
-            sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
-            sb.append("\n");
-        }
-        Log.print(sb.toString());
     }
 
     /**
