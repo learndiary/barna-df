@@ -469,6 +469,7 @@ public class FluxCapacitorTest {
             runCapacitor();
 
             // check
+            System.currentTimeMillis();
 
         } catch (Exception e) {
             throw new RuntimeException(e);
