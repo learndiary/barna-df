@@ -29,25 +29,18 @@ package barna.flux.simulator.tools;
 
 import barna.commons.Execute;
 import barna.commons.log.Log;
-import barna.io.BEDMappingIterator;
 import barna.io.FileHelper;
 import barna.io.MSIterator;
-import barna.io.bed.BEDFileReader;
-import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.state.MappingReaderState;
 import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.Mapping;
 import barna.model.Transcript;
-import barna.model.bed.BEDMapping;
-import barna.model.bed.BEDobject2;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * Count and print breakpoint distribution
@@ -126,13 +119,13 @@ public class PWMExtractor {  //implements FluxTool {
         Log.message("");
 
         File ff = new File(bedFile.getAbsolutePath() + "_sorted");
-        BEDFileReader bedReader = null;
+        BEDReader bedReader = null;
         if (ff.exists()) {
             Log.message("\tusing sorted file " + ff.getName());
             bedFile = ff;
-            bedReader = new BEDFileReader(bedFile.getAbsolutePath());
+            bedReader = new BEDReader(bedFile.getAbsolutePath());
         } else {
-            bedReader = new BEDFileReader(bedFile.getAbsolutePath());
+            bedReader = new BEDReader(bedFile.getAbsolutePath());
             if (!bedReader.isApplicable()) {
                 Log.message("\tsorting BED file");
 
@@ -144,7 +137,7 @@ public class PWMExtractor {  //implements FluxTool {
                     bedFile = f;
                 }
                 Log.message("\tsorted file in " + bedFile.getAbsolutePath());
-                bedReader = new BEDFileReader(bedFile.getAbsolutePath());
+                bedReader = new BEDReader(bedFile.getAbsolutePath());
             }
         }
 

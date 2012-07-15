@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.EnumSet;
 
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
@@ -130,7 +131,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
     /**
      * Helper to parse relative filenames
      */
-    private static RelativePathParser relativePathParser = new RelativePathParser();
+    static RelativePathParser relativePathParser = new RelativePathParser();
 
 	/**
 	  * Descriptor with parsing info for the read IDs.
@@ -359,9 +360,30 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
             }
         });
+
+        public static enum CountElements {SPLICE_JUNCTIONS,INTRONS};
+
+        /**
+         * Parameter for counting reads that falls into specific elements
+         */
+        public static final Parameter<EnumSet<CountElements>> COUNT_ELEMENTS = Parameters.enumSetParameter(
+                "COUNT_ELEMENTS",
+                " Count elements specified in the list",
+                EnumSet.noneOf(CountElements.class),
+                CountElements.class,
+                null);
+
+        /**
+         * Parameter for skipping deconvolution
+         */
+        public static final Parameter<Boolean> NO_DECOMPOSE = Parameters.booleanParameter(
+                "NO_DECOMPOSE",
+                " Avoid running deconvolution step on the dataset",
+                false,
+                null);
 	    
 	    /**
-	     * Load the setting from a file
+	     * Load the setting from a file. NOTE that this does not validate the settings!
 	     *
 	     * @param f the file
 	     * @return settings the loaded and validated settings
@@ -376,13 +398,11 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	        }
 	        InputStream in = null;
 	        try {
-
 	            FluxCapacitorSettings settings = new FluxCapacitorSettings();
 	            relativePathParser.parentDir = f.getParentFile();
 	            settings.parameterFile = f;
 	            in = new FileInputStream(f);
 	            settings.parse(in);
-	            settings.validate();
 	            return settings;
 	        } finally {
 	            if (in != null) {
@@ -424,6 +444,4 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public int getMaxThreads() {
 	        return 1;
 	    }
-
-
 }

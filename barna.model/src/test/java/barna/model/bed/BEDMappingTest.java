@@ -25,47 +25,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io.bed;
+package barna.model.bed;
 
-import barna.commons.Execute;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import barna.commons.ByteArrayCharSequence;
 import org.junit.Test;
 
-import java.io.File;
-
-import static junit.framework.Assert.assertEquals;
-
-/**
- * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
- */
-public class BEDFileReaderTest {
-
-    private static File testfile;
-
-    @BeforeClass
-    public static void setUp(){
-        testfile = new File(BEDFileReaderTest.class.getResource("/test.bed").getFile());
-        Execute.initialize(4);
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-        Execute.shutdown();
-    }
+import static org.junit.Assert.assertEquals;
 
 
-    @Test
-    public void testScanFile(){
-        BEDFileReader reader = new BEDFileReader(testfile.getAbsolutePath());
-        reader.scanFile();
+public class BEDMappingTest {
+	
+	@Test
+	public void testInit() {
+		String chr= "chrX";
+		int start= 123;
+		int end= 456;
+		String name= "test1";
+		int score= 1;
+		String strand= "-";
+		int thickStart= 0;
+		int thickEnd= 0;
+		String col= "0,0,0";
+		int blockNr= 2;
+		int blockSizes1= 111, blockSizes2= 222;
+		int blockStart1= 0, blockStart2= 111;
+		
+		String bedLine= chr+ "\t"+ start+ "\t"+ end+ "\t"+name+ "\t"+ score+ "\t"+ strand+
+			"\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+ 
+			blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
+		ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
+		BEDMapping bed2= new BEDMapping(bacs);
 
-        //scanFileReadLines= 0;
-        //countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
-        assertEquals(17, reader.nrUniqueLinesRead );
-        assertEquals(17, reader.countAll );
-        assertEquals(5, reader.countSplit );
-        assertEquals(12, reader.countEntire );
-        assertEquals(17, reader.countReads );
-    }
+		assertEquals(start, bed2.getStart());
+		assertEquals(end, bed2.getEnd());
+		assertEquals(chr, bed2.getChromosome().toString());
+		assertEquals(score, bed2.getScore());
+		assertEquals((byte) -1, bed2.getStrand());
+		assertEquals(blockNr, bed2.getBlockCount());
+		assertEquals(blockSizes1, bed2.getNextBlockSize());
+		assertEquals(blockStart1, bed2.getNextBlockStart());
+		assertEquals(blockSizes2, bed2.getNextBlockSize());
+		assertEquals(blockStart2, bed2.getNextBlockStart());
+	}
 }

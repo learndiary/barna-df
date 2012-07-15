@@ -22,6 +22,20 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.0.2
+    - BARNA-170 - BEDobject2 limited to 128 chars up to the end of the name field
+    - BARNA-169 - Error Model should catch IUPAC ambiguities
+    - BARNA-168 - ByteArrayCharSequence.complement() cannot handle IUPAC ambiguities
+
+FluxSimulator 1.0.1
+    - BARNA-166 fix the error model loading
+
+FluxSimulator 1.0
+    - Fixed issue with Java 1.7
+    - Fixed issue with the error model
+    - Updated startup script to flux-simulator and set a default tool
+    - Switched to 3G of RAM by default
+
 FluxSimulator RC5
     -fixed Issue Issue 68: TMP_DIR parameter ignored - the user applied tmp folder should be used and
      debug tool added, just in case.
@@ -66,24 +80,21 @@ GETTING STARTED
 
  You will find the executable in the bin/ folder
 
-    flux.bat     Windows
+    flux-simulator.bat     Windows
 
-    flux         UNIX clones and Mac OS X
+    flux-simulator         UNIX clones and Mac OS X
 
 
 * Run
 
     You can take a look at the command line parameters and available tools using
 
-     flux --help
+     flux-simulator --help
 
-    To start a specific tool and see its parameters, use
+    To start a specific tool, i.e. the error model generator, and see its parameters, use
 
-     flux --t <toolname> --help
+     flux-simulator --t <toolname> --help
 
-    for example
-
-     flux -t simulator --help
 
 * Parameters
 
@@ -92,12 +103,12 @@ GETTING STARTED
 
     To get a list and descriptions for all available parameters, use
 
-    flux -t simulator --printParameters
+    flux-simulator --printParameters
 
     to create a file with an exhaustive list of parameters and their default values,
     pipe the output to a file
 
-     flux -t simulator --printParameters > myparameters.par
+     flux-simulator --printParameters > myparameters.par
 
 
     NOTE that all file parameters, e.g. the location of the genome or the .gtf annotation file,
@@ -117,18 +128,9 @@ GETTING STARTED
 
 * Example
 
-    To get a complete sample project including annotations and the genome, download
+    The Simulator documentation contains examples including demo data:
 
-      http://fluxcapacitor.googlecode.com/files/fluxsimulator_demo_yeast-1.0.tar.gz
-
-	and extract the file
-
-	  tar xzvf fluxsimulator_demo_yeast-1.0.tar.gz
-
-	this will create a demo folder with GTF annotations and the genomic sequences +
-	a set of parameters files. Now, to start the simulator do:
-
-	flux -t simulator -p yeast_demo.par
+    http://barnaserver.com/confluence/display/SIM/4+-+Example+Simulations
 
 * Memory
 
@@ -136,31 +138,25 @@ GETTING STARTED
     the simulator using the environment variable FLUX_MEM, for example:
 
     # this sets the upper limit to 2 gig
-    export FLUX_MEM="2G"; flux -t simulator -p ....
+    export FLUX_MEM="2G"; flux-simulator -p ....
 
 
     # this also sets the upper limit to 2 gig
-    export FLUX_MEM="2048M"; flux -t simulator -p ....
+    export FLUX_MEM="2048M"; flux-simulator -p ....
 
-* All pages related to the program are reachable from the program homepage
+* All pages related to the program are reachable from the program homepage.
+  Especially, have a look at the documentation of the FLUX SIMULATOR at
 
-	http://flux.sammeth.net
-	
-* Especially, have a look at the documentation of the FLUX SIMULATOR at
-
-	http://fluxcapacitor.wikidot.com/simulator
+	http://barnaserver.com/confluence/display/SIM
 
 * If you encounter any bugs, use the bugtracking system at
 
-	http://code.google.com/p/fluxcapacitor/issues/list
+	http://barnaserver.com/jira/browse/BARNA
 	
   First check for any known bugs, if you don't find your issue described, log
   in and create a new issue.
 
-* If you have any questions, discuss them via the forum 
-	
-	http://fluxcapacitor.wikidot.com/forum:start
-	
+
 or leave me an email.
 
 LICENSE

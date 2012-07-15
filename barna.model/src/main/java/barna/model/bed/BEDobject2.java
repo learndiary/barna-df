@@ -29,10 +29,11 @@ package barna.model.bed;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.model.Graph;
+import barna.model.Mapping;
 
 import java.util.Comparator;
 
-public class BEDobject2 extends ByteArrayCharSequence {
+public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 
 	public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT= 46, BYTE_ZERO= 48;
 	
@@ -49,8 +50,9 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	public static final BedIDComparator DEFAULT_ID_COMPARATOR = new BedIDComparator();
 	
 	int bedStart= -1, bedEnd= -1, score= -1;
-	byte strand= Byte.MIN_VALUE, blockCount= -1, 
-		chrP2= -1, 
+	byte strand= Byte.MIN_VALUE, blockCount= -1;
+
+    int chrP2= -1,
 		nameP1= -1, nameP2= -1; 
 	int blockSizeP1= -1, blockSizeP2= -1,
 		lastBsize= -1, lastBstart= -1;	// can exceed byte
@@ -93,7 +95,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			resetFind();
 			find(0);
 			if (cnt== 0)
-				chrP2= (byte) p2;
+				chrP2= p2;
 			else 
 				return;
 			bedStart= getTokenInt(1);
@@ -110,8 +112,8 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			// 9 opt fields
 			find(3);	// name
 			if (cnt== 3) {
-				nameP1= (byte) p1;
-				nameP2= (byte) p2;
+				nameP1= p1;
+				nameP2= p2;
 			} else
 				return;
 			
@@ -165,7 +167,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			cnt= 0;
 			p1= start;
 			p2= end;
-			chrP2= (byte) end;
+			chrP2= end;
 			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 		} else {
 			p1= start;
@@ -187,6 +189,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			ensureLength(end, 1);
 			chars[end++]= BYTE_TAB;	// mandatory, add fs after
 			p2= end;
+            cnt= 1;
 		} else {
 			p1= start;
 			p2= chrP2;
@@ -226,9 +229,9 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			assert(nameP1< 0|| nameP2< 0);
 			ensureLength(end, 1);
 			chars[end++]= BYTE_TAB;	// optional, fs before
-			nameP1= (byte) (p1= end);
+			nameP1= (p1= end);
 			append(name);
-			nameP2= (byte) (p2= end);
+			nameP2= (p2= end);
 			cnt= 3;
 		} else {
 			if (!isInited())
@@ -236,8 +239,8 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			p1= nameP1; p2= nameP2;
 			cnt= 3;
 			replaceCurrField(name);
-			nameP1= (byte) p1;
-			nameP2= (byte) p2;
+			nameP1= p1;
+			nameP2= p2;
 		}
 	}
 	
@@ -292,7 +295,8 @@ public class BEDobject2 extends ByteArrayCharSequence {
 			CharSequence chrom= getChr();
 			int headerLen= cs.end;
 			int bcount= getBlockCount();
-			
+
+            // contingent read
 			if (bcount<= 1) {
 				int first= f* (bedStart+ 1), 
 					last= f* bedEnd,
@@ -302,7 +306,8 @@ public class BEDobject2 extends ByteArrayCharSequence {
 						first, last, 
 						cs, cs.end, cs.end+ len);
 				cs.end+= len;
-				
+
+            // split read
 			} else for (int i = 0; i < bcount; i++) { 
 				int nextSt= getNextBlockStart(),
 					nextSi= getNextBlockSize();
@@ -498,7 +503,7 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	protected boolean find(int fieldNr) {
         boolean b = super.find(fieldNr);
         if (fieldNr== FN_NAME) {
-			nameP1= (byte) p1; nameP2= (byte) p2;
+			nameP1= p1; nameP2= p2;
 		}
         return b;
 	}
@@ -548,4 +553,10 @@ public class BEDobject2 extends ByteArrayCharSequence {
 	public void setNext(BEDobject2 next) {
 		this.next = next;
 	}
+
+
+    @Override
+    public CharSequence getChromosome() {
+        return getChr();
+    }
 }

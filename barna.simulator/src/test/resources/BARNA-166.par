@@ -1,0 +1,26 @@
+REF_FILE_NAME    ./id2.gtf
+GEN_DIR         ./
+
+# Fragmentation
+FRAG_SUBSTRATE    RNA
+FRAG_METHOD    UR
+FRAG_UR_ETA     350
+
+# Reverse Transcription
+RTRANSCRIPTION    NO
+#RT_MOTIF    default
+
+# Amplification
+PCR_DISTRIBUTION default
+GC_MEAN      NaN
+PCR_PROBABILITY  0.05
+
+# Size Filtering
+FILTERING     NO
+
+## Sequencing
+READ_NUMBER    150
+READ_LENGTH    76
+PAIRED_END    NO
+FASTA    YES
+ERR_FILE    76

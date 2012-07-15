@@ -1338,6 +1338,13 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 				// build gene
 				String tid = obj.getAttribute(GFFObject.TRANSCRIPT_ID_TAG);
+                if (tid== null) {
+                    throw new RuntimeException(
+                            "I have no transcript ID, and I want to scream!\n" +
+                            line+ "\n"+
+                            obj.getAttribute(GFFObject.TRANSCRIPT_ID_TAG)
+                    );
+                }
 				if (lastTrpt== null|| (!tid.equals(lastTrpt.getTranscriptID()))) {
 					boolean overlap = true;
 					if (!checkOverlapRegion(trpt)) // should be ok for the
@@ -2078,6 +2085,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				tidMap = new HashMap<String, String>(), gidMap = new HashMap<String, String>();
 			int tidField = -1, gidField = -1, lastStart = -1;
 			String line;
+            if(size > 0){
+                Log.progressStart("Checking GTF");
+            }
 			while ((line = buffy.readLine())!= null) {	// TODO && !isStop()
 	
 				if (line.startsWith("#"))

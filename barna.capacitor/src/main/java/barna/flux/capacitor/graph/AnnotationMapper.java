@@ -33,17 +33,14 @@ import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
-import barna.model.bed.BEDobject2;
+import barna.model.bed.BEDMapping;
 import barna.model.splicegraph.*;
-import com.sun.xml.internal.ws.developer.UsesJAXBContext;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Class to handle the <i>annotation</i> mapping of <i>genomic</i> mappings
@@ -91,13 +88,13 @@ public class AnnotationMapper extends SplicingGraph {
 	public AnnotationMapper(Gene gene) {
 		super(gene);
 		constructGraph();
-		getNodesInGenomicOrder();	// important ??!
+        getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
 
 	}
-
+	
     @Deprecated //TODO Uses BEDObject2 - should be removed
-	public AbstractEdge getEdge(BEDobject2 obj) {
+	public AbstractEdge getEdge(BEDMapping obj) {
 			
 		Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
 		v.removeAllElements();
@@ -323,7 +320,7 @@ public class AnnotationMapper extends SplicingGraph {
 						otherMapping= lineIterator.next();
 						attributes2= getAttributes(otherMapping, descriptor, attributes2);
 						if (!attributes.id.equals(attributes2.id))
-							break;						
+							break;
 						if (attributes2== null|| attributes2.flag== 1)
 							continue;
 
@@ -367,8 +364,17 @@ public class AnnotationMapper extends SplicingGraph {
 							nrMappingsNotMappedAsPair+= 2;
 							continue;	
 						}
+
+                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
+                    }
+                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
+                        ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
+                    }
 						((SuperEdgeMappings) se).getMappings().incrReadNr();
+                    if (se.isExonic()) {
 						nrMappingsMapped+= 2;
+                    }
 						if (buffy!= null) 
 							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
 					}
@@ -376,10 +382,17 @@ public class AnnotationMapper extends SplicingGraph {
 
 				} else {	// single reads, strand already checked
 					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
+                if (target.isAllIntronic()) {
 					if (sense)
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
+                    else
+                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
+                } else {
+                    if (sense)
 						((MappingsInterface) target).getMappings().incrReadNr();
 					else
 						((MappingsInterface) target).getMappings().incrRevReadNr();
+                }
 					++nrMappingsMapped;
 				}
 			} // end: while(iter.hasNext())
@@ -396,6 +409,7 @@ public class AnnotationMapper extends SplicingGraph {
 
 	/**
 	 * Writes the insert described by 2 paired mates to the provided writer.
+     *
 	 * @param buffy writer for output
 	 * @param se a super-edge
 	 * @param mapping 1st bed object
@@ -466,13 +480,14 @@ public class AnnotationMapper extends SplicingGraph {
 
 	/**
 	 * maps read to atomic edge or to SJ
-	 * @param mapping
+     *
+     * @param obj
 	 * @return
 	 */
-	public AbstractEdge getEdge2(Mapping mapping) {
+	public AbstractEdge getEdge2(Mapping obj) {
 		
-		int bcount= mapping.getBlockCount();
-		int bstart= mapping.getStart()+ 1, bend= mapping.getEnd();	// to normal space
+		int bcount= obj.getBlockCount();
+		int bstart= obj.getStart()+ 1, bend= obj.getEnd();	// to normal space
 
 
 		if (bcount< 2) {
@@ -489,87 +504,85 @@ public class AnnotationMapper extends SplicingGraph {
 //			if (mapping.getName().equals("HWUSI-EAS626_1:5:92:163:105/2"))
 //				System.currentTimeMillis();
 			
-			int size= mapping.getNextBlockSize(),
-				size2= mapping.getNextBlockSize();	// ask for all
+            Vector<AbstractEdge> v = new Vector<AbstractEdge>(bcount, 1);
+            long[] inter= null, part= null;
+            for (int i = 0; i < bcount; ++i) {
+                // next coordinates
+                int pos= bstart+ obj.getNextBlockStart();
+                int size = obj.getNextBlockSize();
 			
-			AbstractEdge e= getEdge2(bstart, bstart+ size- 1);
-			if (e== null)
-				return null;
-			else {
-				int epos= trpts[0].getStrand()>= 0? e.getHead().getSite().getPos():
-					Math.abs(e.getTail().getSite().getPos());
-				if (epos!= bstart+ size- 1)
+                // try to retrieve exonic segment
+                AbstractEdge e = getEdge2(pos, pos + size - 1);
+
+                // abort if no segment found
+                if (e==null)
+				    return null;
+
+                // update common tx support
+                inter = (inter== null? e.getTranscripts(): intersect(inter, e.getTranscripts()));
+
+                // abort
+                if (isNull(inter)       // no common tx support
+                   || v.contains(e))    // novel splice-junction within a single exonic segment
 					return null;
-			}
 			
-			AbstractEdge f= getEdge2(bend- size2+ 1, bend);
-			if (f== null)
+                // check left flank for same coordinate as alignment
+                if ((i> 0)&& (Math.abs(trpts[0].getStrand() >= 0 ? e.getTail().getSite().getPos() : e.getHead().getSite().getPos())
+                        != pos))
 				return null;
-			else {
-				int epos= trpts[0].getStrand()>= 0? f.getTail().getSite().getPos():
-					Math.abs(f.getHead().getSite().getPos());
-				if (epos!= bend- size2+ 1)
+                // check right flank for same coordinate as alignment
+                if ((i< bcount- 1)&& (Math.abs(trpts[0].getStrand() >= 0 ? e.getHead().getSite().getPos() : e.getTail().getSite().getPos())
+                        != pos+ size- 1))
 					return null;
-			}
 			
-			// either of them can be a superEdge, but no pe
-			if (e== f)
-				return null;	// intron maps to exonic stretch
-			// chr19	1612377	1615303	HWUSI-EAS627_1:6:84:296:216/1	1	-	0	0	0,0,0	2	55,20	0,2906
-			// new transcript evidence
-			if (isNull(intersect(e.getTranscripts(), f.getTranscripts())))
-				return null;
-			// get intermediate intron
-			Node g= null, h= null;
-			if (e.getHead().getSite().getPos()< f.getHead().getSite().getPos()) { 
-				g= e.getHead();
-				h= f.getTail();
-			} else {
-				g= f.getHead();
-				h= e.getTail();
+                // get tx support of intermediate introns, not the same of exon segment intersection!
+                if (v.size()> 0) {
+                    AbstractEdge f= v.elementAt(v.size()- 1);
+                    Node g = null, h = null;
+                    if (f.getHead().getSite().getPos() < e.getHead().getSite().getPos()) {
+                        g = f.getHead();
+                        h = e.getTail();
+                    } else {
+                        g = e.getHead();
+                        h = f.getTail();
 			}
-			long[] part= null;
-			for (int i = 0; i < g.getOutEdges().size(); i++) {
-				if (g.getOutEdges().elementAt(i).isExonic())
+                    for (int j = 0; j < g.getOutEdges().size(); ++j) {
+                        AbstractEdge d= g.getOutEdges().elementAt(j);
+                        if (d.isExonic()|| d.isAllIntronic())
 					continue;
-				if (g.getOutEdges().elementAt(i).getHead()== h) {
-					part= g.getOutEdges().elementAt(i).getTranscripts();
+                        if (d.getHead() == h) {
+                            part = (part== null? d.getTranscripts(): intersect(part, d.getTranscripts()));
 					break;
 				}
 			}
-			if (part== null)
+                    if (part == null)
 				return null;
+                }
 			
-			Vector<AbstractEdge> v= new Vector<AbstractEdge>();
+                // else, successfully add next segment(s)
 			if (e instanceof SuperEdge) {
-				SuperEdge se= (SuperEdge) e;
-				assert(!se.isPend());
-				AbstractEdge[] ee= se.getEdges();
-				for (int i = 0; i < ee.length; i++) 
-					v.add(ee[i]);
+                    SuperEdge se = (SuperEdge) e;
+                    assert (!se.isPend());
+                    AbstractEdge[] ee = se.getEdges();
+                    for (int j = 0; j < ee.length; ++j)
+                        v.add(ee[j]);   // decompose multi-segment hits
 			} else
 				v.add(e);
-			if (f instanceof SuperEdge) {
-				SuperEdge se= (SuperEdge) f;
-				assert(!se.isPend());
-				AbstractEdge[] ee= se.getEdges();
-				for (int i = 0; i < ee.length; i++) 
-					v.add(ee[i]);
-			} else
-				v.add(f);
 			
+            }
+
 			return getSuperEdge(v, false, part);
 		}
 	}
 
 	/**
-	 * maps a continous stretch of positions between
-	 * gstart and gend to an atomic edge, or, a series
-	 * of edges corresponding to an EEJ
+     * Maps a continous stretch of positions between
+     * <code>bstart</code> and <code>end</code to an atomic edge,
+     * or, a series of edges corresponding to an EEJ.
 	 *  
 	 * @param bstart start on positive strand
-	 * @param bend end on positive strand
-	 * @return
+     * @param bend   end on positive strand
+     * @return the edge mapped
 	 */
 	public AbstractEdge getEdge2(int bstart, int bend) {
 		
@@ -591,13 +604,13 @@ public class AnnotationMapper extends SplicingGraph {
 		int p= Arrays.binarySearch(su, gstart);	// anchor<= 5'end of read
 		if (p< 0) {
 			p= -(p+ 1);	// falls before
-			if (nodes[p].getSite().isLeftFlank()
-				&& nodes[p- 1].getSite().isRightFlank()) {	// p!= 0, for src
+            /*if (nodes[p].getSite().isLeftFlank()
+                    && nodes[p - 1].getSite().isRightFlank()) {    // p!= 0, for src
 				
-				boolean found= checkExonicEdge(nodes[p- 1], nodes[p]);
+                boolean found = checkExonicEdge(nodes[p - 1], nodes[p]);
 				if (!found)
 					return null;	// in intron
-			}
+            }*/
 			//else, in both cases
 			--p;	// p> 0, src
 		} else {	// hits exact
@@ -608,34 +621,45 @@ public class AnnotationMapper extends SplicingGraph {
 		int q= Arrays.binarySearch(su, gend);	// anchor>= 3'end of read
 		if (q< 0) {
 			q= -(q+ 1);	// falls before
-			if (nodes[q].getSite().isLeftFlank()&&
+            /*if (nodes[q].getSite().isLeftFlank() &&
 					nodes[q- 1].getSite().isRightFlank()) {
 
 				boolean found= checkExonicEdge(nodes[q- 1], nodes[q]);
 				if (!found)
 					return null;	// in intron
-			}// else nothing, falls before q marks end
+            }// else nothing, falls before q marks end */
 		} else {	// hits exact			
 			if (nodes[q].getSite().isLeftFlank())
 				++q;
 		}
 			
+        if (p >= q)
+            return null;
+        if (p == q - 1 && (!checkExonicEdge(nodes[p], nodes[q]) && !checkAllIntronicEdge(nodes[p], nodes[q])))
+            return null;
+        else {
+            if (p < q - 1 && !(checkExonicEdge(nodes[p], nodes[p + 1]) && checkExonicEdge(nodes[q - 1], nodes[q])))
+                return null;
+        }
 		
 		// get chain of edges, if exists
 		Node head= nodes[p];
 		while (head!= nodes[q]) {
-			if (head.getOutEdges().size()<= 0)
-				System.currentTimeMillis();
+
 			assert(head.getOutEdges().size()> 0);
 			Iterator<SimpleEdge> iter= head.getOutEdges().iterator();
 			boolean found= false;
 			while (iter.hasNext()) {
+
 				SimpleEdge e= iter.next();
-				if (!e.isExonic())
-					continue;
+                // ... && ((!e.isExonic())|| (!e.isAllIntronic()))
+                if (!e.isExonic() && !e.isAllIntronic()) {
+                    continue;   //single tx intron
+                }
 				v.add(e);
 				head= e.getHead();
 				found= true;
+                // only one exonic outedge that leads to next node
 				break;
 			}
 			if (!found)
@@ -657,8 +681,12 @@ public class AnnotationMapper extends SplicingGraph {
 	}
 
 	@Override
-	protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset) {
-		SimpleEdgeMappings e= new SimpleEdgeMappings(v, w);
+    protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset, byte type) {
+        SimpleEdgeMappings e;
+        if (type == SimpleEdge.ALL_INTRONIC) {
+            e = new SimpleEdgeIntronMappings(v, w);
+        } else
+            e = new SimpleEdgeMappings(v, w);
 		e.setTranscripts(newTset);
 		return e;
 	}
@@ -862,4 +890,111 @@ public class AnnotationMapper extends SplicingGraph {
 		getRPK(n, sig, null, maxLen, pend, etype, v.elementAt(0));
 	}
 
+    /**
+     * Count reads which map to splice junction.
+     *
+     * @param paired whether the annotation mapping consider pairing information or not
+     * @return a <code>Map</code> with the junction id string as key and the number of reads as value.
+     */
+    public Map<String, Integer> getSJReads(boolean paired) {
+        Map<SuperEdge, Integer> nodesReads = new HashMap<SuperEdge, Integer>();
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length - 1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isLeftFlank()) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (e.getSuperEdges() != null) {
+                        for (SuperEdge se : e.getSuperEdges()) {
+                            if (se.isExonic() && se.isSpliceJunction()) {
+                                if (nodesReads.get(se) != null)
+                                    continue;
+                                if (paired) {
+                                    if (se.getSuperEdges() != null)
+                                        nodesReads.put(se, countSJReads(se.getSuperEdges()));
+                                } else {
+                                    nodesReads.put(se, ((SuperEdgeMappings) se).getMappings().getReadNr() + ((SuperEdgeMappings) se).getMappings().getRevReadNr());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        TreeMap<String, Integer> sjReads = new TreeMap<String, Integer>();
+        for (SuperEdge edge : nodesReads.keySet()) {
+            for (int i = 0; i < edge.getEdges().length - 1; i++) {
+                int donor = -1, acceptor = -1;
+                SimpleEdge e = (SimpleEdge) edge.getEdges()[i];
+                SimpleEdge e1 = (SimpleEdge) edge.getEdges()[i + 1];
+                if (e.equals(e1))
+                    continue;
+                if (e.getHead().getSite().isDonor() && e1.getTail().getSite().isAcceptor()) {
+                    donor = e.getHead().getSite().getPos();
+                    acceptor = e1.getTail().getSite().getPos();
+                }
+                if (donor == -1 || acceptor == -1)
+                    continue;
+                if (sjReads.containsKey(donor + "^" + acceptor))
+                    sjReads.put(donor + "^" + acceptor, sjReads.get(donor + "^" + acceptor) + nodesReads.get(edge));
+                else
+                    sjReads.put(donor + "^" + acceptor, nodesReads.get(edge));
+            }
+        }
+        return sjReads;
+    }
+
+    protected int countSJReads(Vector<SuperEdge> seVector) {
+        int reads = 0;
+        for (SuperEdge se : seVector) {
+            int n = 1;
+            if (se.getEdges()[0].getClass().isAssignableFrom(SuperEdgeMappings.class) && se.getEdges()[0].equals(se.getEdges()[se.getEdges().length - 1]))
+                n = 2;
+            reads += n * ((SuperEdgeMappings) se).getMappings().getReadNr();
+        }
+        return reads;
+    }
+
+
+    /**
+     * Count reads which map to all-intronic regions.
+     *
+     * @param paired whether the annotation mapping consider pairing information or not
+     * @return a <code>Map</code> with the intron id string as key and an array with the count and the
+     *         distribution of the reads over the intron as the value.
+     */
+    public Map<String, Float[]> getAllIntronicReads(boolean paired) {
+        Map<String, Float[]> nodesReads = new TreeMap<String, Float[]>();
+        Node n = null;
+        for (int i = 1; i < getNodesInGenomicOrder().length - 1; i++) {
+            n = getNodesInGenomicOrder()[i];
+            if (n.getSite().isRightFlank()) {
+                Vector<SimpleEdge> ev = n.getOutEdges();
+                for (SimpleEdge e : ev) {
+                    if (e.isAllIntronic()) {
+                        SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings) e;
+                        if (paired) {
+                            if (e1.getSuperEdges() != null)
+                                nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) countAllIntronicReads(e1.getSuperEdges()), e1.getBinCoverage()});
+                        } else
+                            nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
+                    }
+                }
+            }
+        }
+        return nodesReads;
+    }
+
+    protected int countAllIntronicReads(Vector<SuperEdge> seVector) {
+        int reads = 0;
+        for (SuperEdge se : seVector) {
+            if (se.isPend()) {
+                int n = 1;
+                if (se.getEdges()[0].getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && se.getEdges()[0].equals(se.getEdges()[se.getEdges().length - 1]))
+                    n = 2;
+                reads += n * ((SuperEdgeMappings) se).getMappings().getReadNr();
+            }
+        }
+        return reads;
+    }
 }

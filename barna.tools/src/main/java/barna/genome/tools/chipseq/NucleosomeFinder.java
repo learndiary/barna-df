@@ -33,14 +33,11 @@ import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
 import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
-import barna.io.MSIterator;
-import barna.io.bed.BEDFileReader;
-import barna.io.bed.BEDFileReader;
+import barna.io.bed.BEDReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 //import barna.io.state.MappingReaderState;
 import barna.model.Mapping;
-import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject2;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
@@ -206,8 +203,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		
 		// sort
 		File sortedInput= fileMappings;
-		sortedInput= new BEDFileReader(fileMappings).getSortedFile(null,
-                ((descriptor != null && descriptor.isPaired()) ? BEDFileReader.COMPARATOR_PAIRED_END : null));
+		sortedInput= new BEDReader(fileMappings).getSortedFile(null,
+                ((descriptor != null && descriptor.isPaired()) ? BEDReader.COMPARATOR_PAIRED_END : null));
 
 		// distribution parameters
 		ChipSeqMappingAnalyzer distanceDistr= new ChipSeqMappingAnalyzer(
@@ -233,8 +230,8 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		// let's go
 		String chr= "";
 		double max= -1;
-		BEDFileReader.MappingReaderState state= null;
-		BEDFileReader bedReader= new BEDFileReader(sortedInput);
+		BEDReader.MappingReaderState state= null;
+		BEDReader bedReader= new BEDReader(sortedInput);
 		bedReader.setMaxBEDObjects(1000);
 		
 		List<Mapping> v= new ArrayList<Mapping>();
@@ -243,16 +240,16 @@ public class NucleosomeFinder implements FluxTool<Void> {
 		ctrReads= 0;
 		ctrDylds= 0;
 
-		for(;state== null|| state.state!= BEDFileReader.MappingReaderState.STATE_END_OF_FILE; chr= state.nextChr) {
+		for(;state== null|| state.getState()!= BEDReader.MappingReaderState.STATE_END_OF_FILE; chr= state.getNextChromosome()) {
 		//for (MSIterator<Mapping> mappingIterator = bedReader.read(chr,1,Integer.MAX_VALUE);mappingIterator.hasNext();)
 			// input
 			state = bedReader.readState(chr, 1, Integer.MAX_VALUE);
-			if (state.result== null)
+			if (state.getResults()== null)
 				continue;
 
 			// concatenate with left-over
-			List<? extends Mapping> beds= state.result;
-			state.result= null;
+			List<? extends Mapping> beds= state.getResults();
+			state.resetResults();
 			if (v.size()> 0) {
 				if (descriptor.getAttributes(beds.get(0).getName(), a).id.equals(
                         descriptor.getAttributes(v.get(0).getName(), a))) {
@@ -270,7 +267,7 @@ public class NucleosomeFinder implements FluxTool<Void> {
 			
 			
 			// save bucket with last read ID			
-			if (chr.equals(state.nextChr)) {
+			if (chr.equals(state.getNextChromosome())) {
 				CharSequence id= descriptor.getAttributes(beds.get(beds.size()- 1).getName(), a).id;
 				int x= beds.size()- 2;
 				while (x> 0&& descriptor.getAttributes(beds.get(x--).getName(), a).id.equals(id));

@@ -31,29 +31,22 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.Progressable;
 import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
-import barna.commons.parameters.Parameter;
 import barna.commons.thread.SyncIOHandler2;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
 import barna.io.*;
-import barna.io.rna.FMRD;
-import barna.io.rna.ReadDescriptor;
-import barna.io.rna.SolexaPairedEndDescriptor;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject;
-import barna.model.bed.BEDobject2;
 import barna.model.constants.Constants;
-import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Future;
 
-public class BEDFileReader extends AbstractFileIOWrapper implements MappingReader {
+public class BEDReader extends AbstractFileIOWrapper implements MappingReader {
 
 	static void test() {
 		System.out.println(((byte) -1)| (byte) 1);
@@ -68,11 +61,10 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 */
 	ThreadedBufferedByteArrayStream readerB= null;
 	
-	BEDobject[] beds= null;
-    Boolean sortInRam = null;
-    UniversalReadDescriptor descriptor = null;
+	BEDMapping[] beds= null;
     File tmpDir = null;
-	
+    boolean sortInRam = false;
+    UniversalReadDescriptor descriptor;
 	/**
 	 * Creates an instance using a given file and
 	 * line comparator.
@@ -80,7 +72,7 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 * @param comparator comparator describing required file
 	 * sorting 
 	 */
-	public BEDFileReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+	public BEDReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		super(inputFile);
 		this.comparator= (comparator== null? COMPARATOR_DEFAULT: comparator);
         this.sortInRam = sortInRam;
@@ -92,7 +84,7 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 * and the default comparator.
 	 * @param inputFile
 	 */
-	public BEDFileReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+	public BEDReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		this(inputFile, COMPARATOR_DEFAULT, sortInRam, descriptor, tmpDir);
 	}
 	
@@ -101,19 +93,19 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 * and the default line comparator.
 	 * @param absolutePath path to the file the wrapper is based on
 	 */
-	public BEDFileReader(String absolutePath, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+	public BEDReader(String absolutePath, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
 		this(new File(absolutePath), sortInRam,  descriptor, tmpDir);
 	}
 
-    public BEDFileReader(String absolutePath) {
+	    public BEDReader(String absolutePath) {
         this(new File(absolutePath), false,  null, null);   // TODO Not the proper way!!!
     }
 
-    public BEDFileReader(File inputFile) {
+    public BEDReader(File inputFile) {
         this(inputFile, false,  null, null);   // TODO Not the proper way!!!
     }
 	
-	HashSet<String> refIDset;
+HashSet<String> refIDset;
 	
 	private void addRefID(String ID) {
 		if (refIDset== null)
@@ -288,14 +280,14 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 		}
 		
 
-		beds= (BEDobject[]) ArrayUtils.toField(objV);
+		beds= (BEDMapping[]) ArrayUtils.toField(objV);
 
 	}
 
 	HashMap<String,long[]> mapChr= new HashMap<String,long[]>(); // bytes and lines
 	private ByteArrayCharSequence cs= new ByteArrayCharSequence(200);
 	
-	int nrUniqueLinesRead= -1;
+	int nrUniqueLinesRead= 0;
 	
 	/**
 	 * reads the rest of the lines from the reader and closes it.
@@ -380,7 +372,24 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 	 */
 	public static final LineComparator<CharSequence> COMPARATOR_DEFAULT=
 		new LineComparator<CharSequence>(false, "\t", 0)
-				.addComparator(new LineComparator<CharSequence>(true, "\t", 1)); 
+                .addComparator(new LineComparator<CharSequence>(true, "\t", 1))
+				.addComparator(new LineComparator<CharSequence>(true, "\t", 2))
+				.addComparator(new LineComparator<CharSequence>(new Comparator<CharSequence>() {
+                    @Override
+                    public int compare(CharSequence o1, CharSequence o2) {
+                        int n1 = o1.length(), n2 = o2.length();
+                        for (int i1 = 0, i2 = 0; i1 < n1 && i2 < n2; i1++, i2++) {
+                            char c1 = o1.charAt(i1);
+                            char c2 = o2.charAt(i2);
+                            if (c1 != c2) {
+                                return c1 - c2;
+                            }
+                        }
+                        return n1 - n2;
+                    }
+                }));
+
+
 	/**
 	 * Default comparator for read pairing, sort (1) chromosome, (2) name,
 	 * (3) position.
@@ -405,7 +414,7 @@ public class BEDFileReader extends AbstractFileIOWrapper implements MappingReade
 					// DEBUG
 					File file = new File(this.fPath+MyFile.separator+this.fName);
 					InputStream inputStream = new FileInputStream(file);
-					inputStream.skip(bytes);	// must read next line
+					inputStream.skip(bytes);	// must read next line 
 					BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 					chk= r2.readLine();
 					r2.close();
@@ -428,10 +437,10 @@ private BEDobject[] toObjectsOld(Vector<BEDobject> objV) {
 		return beds;
 	}
 
-private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
+private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	if (objV.size()== 0)
 		return null;
-	BEDobject2[] beds= new BEDobject2[objV.size()];
+	BEDMapping[] beds= new BEDMapping[objV.size()];
 	for (int i = 0; i < beds.length; i++) 
 		beds[i]= objV.elementAt(i);
 	return beds;
@@ -493,14 +502,14 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			if (s== null)
 				return false;
 		
-			String[] ss= s.split("\\s");
+			String[] ss= s.split("\\t");
 			if (ss.length< 4)
 				return false;
 			
 			// check descriptor
 			if (descriptor.getAttributes(ss[3], null)== null) {
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-					System.err.println("[OHNO] Read descriptor "+descriptor+" not applicable for read ID\n\t"+
+					System.err.println("[OHNO] Read descriptor "+descriptor+" not applicable for read ID\n\t"+ 
 							ss[3]);
 				return false;
 			}
@@ -542,14 +551,16 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			in = new PipedInputStream(out);
 			tmpWriter= new BufferedWriter(new OutputStreamWriter(out));
 
-            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true, "\\s")
+            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true, "\t")
                     .field(0, false)
                     .addInterceptor(new Interceptable.Interceptor<String>() {
-                        String lastLine= null;
+                        String lastLine = null;
+
                         public String intercept(String line) {
-                            if (lastLine== null|| !line.equals(lastLine))
+                            if (lastLine == null || !line.equals(lastLine)) {
                                 ++countReads;
-                            lastLine= line;
+                            }
+                            lastLine = line;
                             return line;
                         }
                     })
@@ -596,7 +607,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				}
 				int from= (cnt== 3)? p: -1, to= -1;
 				while (p >= 0 && p< s.length()&& Character.isWhitespace(s.charAt(p++)));
-				while (p >= 0 && p< s.length()&& !Character.isWhitespace(s.charAt(p++)));
+				while (p >= 0 && p< s.length()&& s.charAt(p++)!='\t');
 				--p;
 				if (p< s.length())
 					to= p;
@@ -643,8 +654,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 	}
 	
 	public File getSortedFile(File tmpFile, LineComparator<CharSequence> comparator) {
-		
-		//BEDFileReader wrapper= new BEDFileReader(inputFile, comparator);
+	
+		//BEDReader wrapper= new BEDReader(inputFile, comparator);
 		if (!this.isApplicable()) {
 			if (tmpFile== null)
 				try {
@@ -664,10 +675,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 
 
 	public BEDobject[] getBeds() {
-		return beds;
+		return new BEDobject[beds.length];     //TODO not working
 	}
 
-	public void setBeds(BEDobject[] beds) {
+	public void setBeds(BEDMapping[] beds) {
 		this.beds = beds;
 	}
 
@@ -866,7 +877,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					// use this for debugging fpointer
 	//				File file = new File(this.fPath+MyFile.separator+this.fName);
 	//				InputStream inputStream = new FileInputStream(file);
-	//				inputStream.skip(bytesRead);	// must read next line
+	//				inputStream.skip(bytesRead);	// must read next line 
 	//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 	//				String chk= r2.readLine();
 	//				r2.close();
@@ -1030,7 +1041,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 					// write line
 					handler.writeLine(cs, ostream);
 					++count;
-//					BEDobject2 bed= new BEDobject2(cs); 
+//					BEDMapping bed= new BEDMapping(cs);
 //					objV.add(bed);
 					
 	
@@ -1046,7 +1057,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		}
 
 
-    /**
+	/**
      * Comparator for comparing read identifiers according to the provided descriptor.
      */
     MappingComparator comp= null;
@@ -1333,7 +1344,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						// use this for debugging fpointer
 		//				File file = new File(this.fPath+MyFile.separator+this.fName);
 		//				InputStream inputStream = new FileInputStream(file);
-		//				inputStream.skip(bytesRead);	// must read next line
+		//				inputStream.skip(bytesRead);	// must read next line 
 		//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 		//				String chk= r2.readLine();
 		//				r2.close();
@@ -1520,10 +1531,11 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 						// create object
 						if (os== null) {
 							BEDMapping bed= new BEDMapping(cs);
-							/*((Vector<Mapping>)*/ state.result.add(bed);      //using generic
-							++state.count;
+//							/*((Vector<Mapping>)*/ state.result.add(bed);      //using generic
+//							++state.count;
+                            state.addResult(bed);
 						} else {
-							os.write(cs.chars);
+							os.write(cs.chars, cs.start, cs.length());
 							os.write(Constants.NL);
 							//os.flush();
 							state.count+= cs.chars.length+ 1; 
@@ -1538,7 +1550,8 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 				return state;
 			}
 
-	public ReadDescriptor checkReadDescriptor(boolean pairedEnd) {
+    //TODO check this method
+	/*public ReadDescriptor checkReadDescriptor(boolean pairedEnd) {
 		
 		ReadDescriptor descriptor= null;
 		try {
@@ -1565,10 +1578,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 			if (pairedEnd) {
 				if (!descriptor.isPairedEnd(ss[3])) {
 					// descriptor.getPairedEndInformation(bedWrapper.getBeds()[0].getName()))== 0)
-					descriptor= new FMRD();
+					descriptor= new UniversalReadDescriptor();
 					if (!descriptor.isPairedEnd(ss[3])) {
 						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
-							System.err.println("[OHNO] Could not detect the format of read descriptor:\n\t"+
+							System.err.println("[OHNO] Could not detect the format of read descriptor:\n\t"+ 
 									s);
 						return null;
 					}
@@ -1580,7 +1593,7 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 		}
 			
 		return descriptor;
-	}
+	}*/
 
 	@Override
 	public int getNrInvalidLines() {		
@@ -1709,10 +1722,10 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
 
         public static final int STATE_CHROMOSOME_NOT_FOUND= 3;
 
-        public long count= 0l;
-        public ArrayList<BEDMapping> result= null;
-        public byte state= STATE_OK;
-        public String nextChr= null;
+        private long count= 0l;
+        private ArrayList<BEDMapping> result= null;
+        private byte state= STATE_OK;
+        private String nextChr= null;
 
         public MappingReaderState() {
             reset();
@@ -1723,6 +1736,30 @@ private BEDobject2[] toObjects(Vector<BEDobject2> objV) {
             result= null;
             state= STATE_OK;
             nextChr= null;
+        }
+
+        public void addResult(BEDMapping bed) {
+            if (result == null)
+                result = new ArrayList<BEDMapping>();
+            result.add(bed);
+            count++;
+        }
+
+        public ArrayList<BEDMapping> getResults() {
+            return result;
+        }
+
+        public byte getState() {
+            return state;
+        }
+
+        public String getNextChromosome() {
+            return nextChr;
+        }
+
+        public void resetResults() {
+            result = null;
+            count = 0l;
         }
     }
 }
