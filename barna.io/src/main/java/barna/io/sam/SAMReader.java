@@ -23,6 +23,11 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	private Mapping[] mappings= null;
     private SAMFileReader reader = null;
 
+    int countAll;
+    int countEntire;
+    int countSplit;
+    int countReads;
+
 	/**
 	 * @param inputFile
 	 */
@@ -57,8 +62,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public boolean isApplicable() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	/* (non-Javadoc)
@@ -67,7 +71,6 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	@Override
 	public void sort(OutputStream outputStream) {
 		// TODO Auto-generated method stub
-
 	}
 
     @Override
@@ -75,7 +78,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         if (reader == null)
             reader = new SAMFileReader(this.inputFile);
         if (reader.hasIndex())
-            return new SAMMappingQueryIterator(reader.query(chromosome,start,end, true));
+            return new SAMMappingQueryIterator(reader.query(chromosome,start,end, true),start,end);
         else
             return new SAMMappingIterator(chromosome, start, end, reader.iterator());
     }
@@ -85,8 +88,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     */
 	@Override
 	public int getCountReads() {
-		// TODO Auto-generated method stub
-		return 0;
+		return countReads;
 	}
 
 	/* (non-Javadoc)
@@ -94,8 +96,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public int getCountMappings() {
-		// TODO Auto-generated method stub
-		return 0;
+		return countAll;
 	}
 
 	/* (non-Javadoc)
@@ -103,8 +104,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public int getCountContinuousMappings() {
-		// TODO Auto-generated method stub
-		return 0;
+		return countEntire;
 	}
 
 	/* (non-Javadoc)
@@ -112,8 +112,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public int getCountSplitMappings() {
-		// TODO Auto-generated method stub
-		return 0;
+		return countSplit;
 	}
 
 	/* (non-Javadoc)
@@ -121,8 +120,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
     @Override
@@ -145,8 +143,23 @@ public class SAMReader extends AbstractFileIOWrapper implements
       */
 	@Override
 	public void scanFile() {
-		// TODO Auto-generated method stub
+        if (reader == null)
+            reader = new SAMFileReader(this.inputFile);
 
+        countAll= 0; countEntire= 0; countSplit= 0; countReads= 0;
+
+        for(SAMRecord rec : reader) {
+            countReads++;
+            if (!rec.getReadUnmappedFlag()) {
+                countAll++;
+                if (rec.getAlignmentBlocks().size()>1)
+                    countSplit++;
+                else
+                    countEntire++;
+            }
+        }
+        reader.close();
+        reader=null;
 	}
 
 	/* (non-Javadoc)

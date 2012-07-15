@@ -2616,7 +2616,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     start = Math.max(1, start - tol);
                     end = end + tol;
 
-						MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
+                    MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 
                     if (mode == FluxCapacitorConstants.MODE_LEARN && mappings != null) {
                         solve(gene[i], mappings, EnumSet.of(Task.LEARN));
@@ -2686,21 +2686,24 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     public AbstractFileIOWrapper fileInit(File inputFile) {
 
         // (1) unpack, if compressed
-        byte cb = FileHelper.getCompression(inputFile);
-        if (cb != FileHelper.COMPRESSION_NONE) {
-            File f = new File(FileHelper.stripExtension(inputFile.getAbsolutePath()));
-            if (f.exists()) {
-                Log.println("Assuming file " + f.getName() + " is a decompressed version of " + inputFile.getName());
-            } else {
-                f = createTempFile(null, FileHelper.getFileNameWithoutExtension(f), FileHelper.getExtension(f), true);
-                try {
-                    FileHelper.inflate(inputFile, f, cb);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+        byte cb = FileHelper.COMPRESSION_NONE;
+        if (!FileHelper.getExtension(inputFile).toUpperCase().equals("BAM")) {
+            cb = FileHelper.getCompression(inputFile);
+            if (cb != FileHelper.COMPRESSION_NONE) {
+                File f = new File(FileHelper.stripExtension(inputFile.getAbsolutePath()));
+                if (f.exists()) {
+                    Log.println("Assuming file " + f.getName() + " is a decompressed version of " + inputFile.getName());
+                } else {
+                    f = createTempFile(null, FileHelper.getFileNameWithoutExtension(f), FileHelper.getExtension(f), true);
+                    try {
+                        FileHelper.inflate(inputFile, f, cb);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 }
+                inputFile = f;
+                inputFile.deleteOnExit();    // carefully
             }
-            inputFile = f;
-            inputFile.deleteOnExit();    // carefully
         }
 
         // (2) sort, if needed

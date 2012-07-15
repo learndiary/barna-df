@@ -29,7 +29,8 @@ public class FluxCapacitorTest {
     final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     final File BED_MM9_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
-    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+//    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test.bam");
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -887,14 +888,18 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "CASAVA18",
+                    "PAIRED",
                     // keep sorted
                     false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
 
+//            File index = new File(mapDir.getAbsolutePath()+File.separator+"test.bam.bai");
+//            FileHelper.copy(new File("/home/emilio/fromMicha/test.bam.bai"),index);
+
             runCapacitor();
 
             // check
+
 
         } catch (Exception e) {
             throw new RuntimeException(e);

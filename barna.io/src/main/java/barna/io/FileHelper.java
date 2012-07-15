@@ -659,9 +659,11 @@ public class FileHelper {
 
     public static boolean copy(File from, File to) {
         try {
-            BufferedReader buffy = new BufferedReader(new FileReader(from));
-            BufferedWriter wright = new BufferedWriter(new FileWriter(to));
-            char[] cbuf = new char[1024];
+//            BufferedReader buffy = new BufferedReader(new FileReader(from));
+//            BufferedWriter wright = new BufferedWriter(new FileWriter(to));
+            BufferedInputStream buffy = new BufferedInputStream(new FileInputStream(from));
+            BufferedOutputStream wright = new BufferedOutputStream(new FileOutputStream(to));
+            byte[] cbuf = new byte[1024];
             long bytesRead = 0, bytesTotal = from.length();
             int perc = 0;
             for (int c = 0, nb = 0; (nb = buffy.read(cbuf)) >= 0; ++c) {

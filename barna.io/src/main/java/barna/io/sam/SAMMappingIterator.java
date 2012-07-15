@@ -2,11 +2,12 @@ package barna.io.sam;
 
 import barna.io.MSIterator;
 import barna.model.sam.SAMMapping;
+import net.sf.samtools.SAMRecord;
+import net.sf.samtools.SAMRecordComparator;
 import net.sf.samtools.SAMRecordIterator;
+import net.sf.samtools.SAMRecordQueryNameComparator;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -30,18 +31,64 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     }
 
     private void init() {
+        SAMRecord record;
         SAMMapping mapping;
+        List<SAMMapping> tmp = null;
+//        ArrayList<SAMRecord> tmp=new ArrayList<SAMRecord>();
         while(wrappedIterator.hasNext()) {
-            mapping = new SAMMapping(wrappedIterator.next());
-            if (mapping.getChromosome().equals(chromosome)) {
-                if (mapping.getStart()>=start && mapping.getEnd()<=end) {
-                    if (mappings==null)
-                        mappings = new ArrayList<SAMMapping>();
-                    mappings.add(mapping);
-                }
+            //mapping = new SAMMapping(wrappedIterator.next());
+            record = wrappedIterator.next();
+
+            if (record.getReadUnmappedFlag())
+                continue;
+
+            String name = record.getReadName();
+            if (record.getMateNegativeStrandFlag())
+                record.setReadName(name+"/2");
+            else
+                record.setReadName(name+"/1");
+
+            mapping = new SAMMapping(record);
+
+            if (mapping.hasAlternates()) {
+                tmp = mapping.getAlternates();
             }
+            if (tmp==null)
+                tmp=new ArrayList<SAMMapping>();
+            tmp.add(mapping);
+            int i=0;
+            for (SAMMapping m : tmp) {
+                if (i>30)
+                    break;
+                if (m.getChromosome().equals(chromosome)) {
+                    if (m.getStart()>=start && m.getEnd()<=end) {
+                        if (mappings == null)
+                            mappings = new ArrayList<SAMMapping>();
+                        mappings.add(m);
+                    }
+                }
+                i++;
+            }
+            tmp.clear();
         }
-        //Arrays.sort(mappings.toArray());
+        //Collections.sort(tmp, new SAMRecordQueryNameComparator());
+        Collections.sort(mappings, new SAMMapping.SAMIdComparator());
+
+//        for (SAMRecord r : tmp) {
+//            if (mappings==null)
+//                mappings = new ArrayList<SAMMapping>();
+//            SAMMapping sam = new SAMMapping(r);
+//            mappings.add(sam);
+//            if (sam.hasAlternates()) {
+//                for (SAMMapping m : sam.getAlternates()) {
+//                    if (m.getChromosome().equals(chromosome)) {
+//                        if (m.getStart()>=start&&m.getEnd()<=end) {
+//                            mappings.add(m);
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 
     @Override
