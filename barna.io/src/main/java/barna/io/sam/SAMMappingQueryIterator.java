@@ -54,6 +54,8 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
             tmp.clear();
         }
         Collections.sort(tmp, new SAMMapping.SAMIdComparator());
+
+        wrappedIterator.close();
     }
 
     @Override
@@ -79,6 +81,7 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public void clear() {
+        wrappedIterator.close();
     }
 
     @Override
@@ -88,6 +91,8 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public boolean hasNext() {
+        if (mappings==null)
+            return false;
         return currPos<mappings.size()-1;
     }
 
@@ -98,5 +103,6 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public void remove() {
+        wrappedIterator.remove();
     }
 }

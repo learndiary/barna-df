@@ -4,6 +4,7 @@
 package barna.io.sam;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 
@@ -54,7 +55,6 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	@Override
 	public void write() {
 		// TODO Auto-generated method stub
-
 	}
 
 	/* (non-Javadoc)
@@ -70,7 +70,16 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public void sort(OutputStream outputStream) {
-		// TODO Auto-generated method stub
+//        reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.coordinate);
+//        final SAMFileWriter writer = new SAMFileWriterFactory().makeSAMOrBAMWriter(reader.getFileHeader(), false, null);
+//
+//        final Iterator<SAMRecord> iterator = reader.iterator();
+//        while (iterator.hasNext()) {
+//            writer.addAlignment(iterator.next());
+//        }
+//
+//        reader.close();
+//        writer.close();
 	}
 
     @Override
