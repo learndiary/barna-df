@@ -61,7 +61,6 @@ import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
 
 import java.io.*;
-import java.lang.annotation.Annotation;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.*;
@@ -305,13 +304,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
                 sb.append("\t");
-                sb.append(m.get(s));
+                sb.append(".");
                 sb.append("\t");
                 sb.append(junction[0].contains("-") ? "+" : "-");
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
                 sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append(" ");
+                sb.append("locus_id \""+gene.getLocusID()+"\";");
+                sb.append(" ");
+                sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS+" "+String.format("%1$f", (float) m.get(s)));// +";");
                 sb.append("\n");
             }
             Log.print(sb.toString());
@@ -338,7 +341,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
                 sb.append("\t");
-                sb.append(m.get(s)[0].intValue());
+                sb.append(".");
                 sb.append("\t");
                 sb.append(intron[0].contains("-")?"+":"-");
                 sb.append("\t");
@@ -346,7 +349,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append("gene_id \""+gene.getGeneID()+"\";");
                 sb.append(" ");
-                sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" \""+m.get(s)[1]+"\";");
+                sb.append("locus_id \""+gene.getLocusID()+"\";");
+                sb.append(" ");
+                sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS+" "+String.format("%1$f", (float) m.get(s)[0].intValue()) +";");
+                sb.append(" ");
+                sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" "+m.get(s)[1]);//+";");
                 sb.append("\n");
             }
             Log.print(sb.toString());
@@ -371,7 +378,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             double valOF = solver == null ? 0 : solver.getValObjFunc();
             if (valOF > FluxCapacitorConstants.BIG) {
                 ++nrUnsolved;
-                Log.warn("Unsolved system: " + gene.getGeneID());
+                Log.warn("Unsolved system: " + gene.getLocusID());
             }
 
             // pre-build rpkm hash
@@ -940,7 +947,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             // output coverage stats
             if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                 writeCoverageStats(
-                        tx.getGene().getGeneID(),
+                        tx.getGene().getLocusID(),
                         tx.getTranscriptID(),
                         tx.isCoding(),
                         tx.getExonicLength(),
@@ -2768,7 +2775,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     if (output) {
                         System.out.println(gene[i].getChromosome() + " " +
                                 gene[i].getStrand() +
-                                " cluster " + gene[i].getGeneID());
+                                " cluster " + gene[i].getLocusID());
                         // TODO beds.size() no longer available
                         //", "+beds.size()+" reads.");
                         if ((lastStr != gene[i].getStrand()

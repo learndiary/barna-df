@@ -233,7 +233,7 @@ public class Profiler implements Callable<Void> {
                     }
                     String transcriptID = aG.getTranscripts()[j].getTranscriptID();
                     v.add(new ByteArrayCharSequence(transcriptID));
-                    ByteArrayCharSequence locName = new ByteArrayCharSequence(aG.getGeneID());
+                    ByteArrayCharSequence locName = new ByteArrayCharSequence(aG.getLocusID());
                     vLoc.add(locName);
                     int[] a = new int[2];
                     a[0] = aG.getTranscripts()[j].getExonicLength();

@@ -1719,7 +1719,7 @@ public class SplicingGraph {
                     for (int k = 0; k < v[0].size(); k++) {
                         for (int m = 0; m < v[1].size(); m++) {
                             buffy.write(">");
-                            buffy.write(trpts[0].getGene().getGeneID());
+                            buffy.write(trpts[0].getGene().getLocusID());
                             buffy.write("_");
                             int start = Math.abs(n[i].getSite().getPos()), end = Math.abs(n[j].getSite().getPos());
 //							if (start> end) {

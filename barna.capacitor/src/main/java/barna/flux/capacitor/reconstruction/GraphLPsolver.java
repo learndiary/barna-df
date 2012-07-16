@@ -899,7 +899,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		String tmpOutFName= null;
 		if (fileLPdir!= null) {
 			tmpOutFName= fileLPdir+ File.separator
-				+ aMapper.trpts[0].getGene().getGeneID().replace(":", "_")
+				+ aMapper.trpts[0].getGene().getLocusID().replace(":", "_")
 				+ SFX_LPOUT;
 		}
 		try {

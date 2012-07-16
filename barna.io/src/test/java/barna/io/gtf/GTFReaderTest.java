@@ -85,7 +85,7 @@ public class GTFReaderTest {
                         counter++;
                         Transcript transcript = gene.getTranscripts()[j];
                         ByteArrayCharSequence id = new ByteArrayCharSequence(transcript.getTranscriptID());
-                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getGeneID());
+                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getLocusID());
                         int exonicLength = transcript.getExonicLength();
 
                         if(id.toString().equals("YAL068W-A")){
@@ -135,7 +135,7 @@ public class GTFReaderTest {
                         counter++;
                         Transcript transcript = gene.getTranscripts()[j];
                         ByteArrayCharSequence id = new ByteArrayCharSequence(transcript.getTranscriptID());
-                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getGeneID());
+                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getLocusID());
                         int exonicLength = transcript.getExonicLength();
 
                         if(id.toString().equals("YAL068W-A")){
@@ -185,7 +185,7 @@ public class GTFReaderTest {
                         counter++;
                         Transcript transcript = gene.getTranscripts()[j];
                         ByteArrayCharSequence id = new ByteArrayCharSequence(transcript.getTranscriptID());
-                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getGeneID());
+                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getLocusID());
                         int exonicLength = transcript.getExonicLength();
 
                         if(id.toString().equals("YAL068W-A")){
@@ -238,7 +238,7 @@ public class GTFReaderTest {
                         counter++;
                         Transcript transcript = gene.getTranscripts()[j];
                         ByteArrayCharSequence id = new ByteArrayCharSequence(transcript.getTranscriptID());
-                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getGeneID());
+                        ByteArrayCharSequence locName = new ByteArrayCharSequence(gene.getLocusID());
                         int exonicLength = transcript.getExonicLength();
 
                         if(id.toString().equals("YAL068W-A")){

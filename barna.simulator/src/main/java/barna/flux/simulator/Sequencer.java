@@ -349,7 +349,7 @@ public class Sequencer implements Callable<Void> {
 
 
         // FURI
-        obj.append(t.getGene().getGeneID());
+        obj.append(t.getGene().getLocusID());
         obj.append(BYTE_DELIM_FMOLI);
         obj.append(t.getTranscriptID());
         obj.append(BYTE_DELIM_FMOLI);
@@ -708,7 +708,7 @@ public class Sequencer implements Callable<Void> {
             }
             
             // process every transcript in the gene
-            String baseID = gene.getGeneID() + FluxSimulatorSettings.SEP_LOC_TID;
+            String baseID = gene.getLocusID() + FluxSimulatorSettings.SEP_LOC_TID;
             for (int j = 0; j < gene.getTranscripts().length; j++) {
                 Transcript t = gene.getTranscripts()[j];
                 int elen= t.getExonicLength();
@@ -892,7 +892,7 @@ public class Sequencer implements Callable<Void> {
 
             // update profiler counts
             // TODO use the profiler to get the global ID ?
-            ByteArrayCharSequence id = new ByteArrayCharSequence(t.getGene().getGeneID() + FluxSimulatorSettings.SEP_LOC_TID + t.getTranscriptID());
+            ByteArrayCharSequence id = new ByteArrayCharSequence(t.getGene().getLocusID() + FluxSimulatorSettings.SEP_LOC_TID + t.getTranscriptID());
             totalReads++;
 
             // coverage stats
