@@ -25,6 +25,7 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         this.wrappedIterator = wrappedIterator;
         this.start = start;
         this.end = end;
+        this.currPos = this.markedPos = -1;
         init();
     }
 
@@ -34,18 +35,24 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         List<SAMMapping> tmp=null;
         while(wrappedIterator.hasNext()) {
             record = wrappedIterator.next();
+
+            if (record.getReadUnmappedFlag())
+                continue;
+
             String name = record.getReadName();
             if (record.getMateNegativeStrandFlag())
                 record.setReadName(name+"/2");
             else
                 record.setReadName(name+"/1");
             mapping = new SAMMapping(record);
+
             if (mapping.hasAlternates()) {
                 tmp = mapping.getAlternates();
             }
             if (tmp==null)
                 tmp = new ArrayList<SAMMapping>();
             tmp.add(mapping);
+
             for (SAMMapping m : tmp) {
                 if (mappings==null)
                    mappings=new ArrayList<SAMMapping>();
@@ -53,7 +60,9 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
             }
             tmp.clear();
         }
-        Collections.sort(tmp, new SAMMapping.SAMIdComparator());
+        if (mappings!=null) {
+            Collections.sort(mappings, new SAMMapping.SAMIdComparator());
+        }
 
         wrappedIterator.close();
     }

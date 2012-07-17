@@ -796,11 +796,11 @@ public class AnnotationMapperTest extends TestCase {
             b.map(iter2, settings);
 
 //            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
-            assertEquals(a.getNrMappingsMapped(),b.getNrMappingsMapped());
-            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
+//            assertEquals(a.getNrMappingsMapped(),b.getNrMappingsMapped());
+//            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
 
-            Map<String, Integer> m = a.getSJReads(true);
-            Map<String, Integer> m1 = b.getSJReads(true);
+            Map<String, Integer> m = a.getSJReads(false);
+            Map<String, Integer> m1 = b.getSJReads(false);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
                 count[0] += m.get(e);

@@ -5,10 +5,7 @@ import barna.model.Mapping;
 //import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
 import net.sf.samtools.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -25,7 +22,8 @@ public class SAMMapping implements Mapping{
     private int readLength;
     private int mappingQuality;
     private byte strandFlag;
-    private List<String> alternates;
+    private String cigarString;
+    private HashMap<String,String> alternates;
 
     public SAMMapping() {
     }
@@ -39,6 +37,7 @@ public class SAMMapping implements Mapping{
         readLength = r.getReadLength();
         mappingQuality = r.getMappingQuality();
         strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
+        cigarString = r.getCigarString();
 
         initBlocks(r.getCigar());
 
@@ -129,10 +128,16 @@ public class SAMMapping implements Mapping{
         for (SAMRecord.SAMTagAndValue attr : attributes) {
             if (attr.tag.equals("XA")) {
                 if (alternates==null)
-                    alternates=new ArrayList<String>();
+                    alternates=new HashMap<String,String>();
                 String[] alts = attr.value.toString().split(";");
                 for (String s : alts) {
-                    alternates.add(s);
+                    String[] fields=s.split(",");
+                    String key = fields[0]+","+fields[1]+","+fields[2];
+                    if (this.getString().equals(key))
+                        continue;
+                    if (!alternates.containsKey(key)) {
+                        alternates.put(key,fields[3]);
+                    }
                 }
             }
         }
@@ -162,7 +167,7 @@ public class SAMMapping implements Mapping{
 
         ArrayList<SAMMapping> list = new ArrayList<SAMMapping>();
 
-        for (String alt : alternates) {
+        for (String alt : alternates.keySet()) {
             String[] s = alt.split(",");
             SAMMapping mapping = new SAMMapping();
 
@@ -173,7 +178,7 @@ public class SAMMapping implements Mapping{
             mapping.alignmentStart = Integer.parseInt(s[1].substring(1))-1;
             mapping.alignmentEnd = mapping.alignmentStart+c.getReferenceLength();
             mapping.readLength = c.getReferenceLength();
-            mapping.mappingQuality = Integer.parseInt(s[3]);
+            mapping.mappingQuality = Integer.parseInt(alternates.get(alt));//Integer.parseInt(s[3]);
             mapping.strandFlag = s[1].substring(0,1).equals("+")?(byte)1:-1;
 
             mapping.initBlocks(c);
@@ -186,6 +191,10 @@ public class SAMMapping implements Mapping{
 
     public Boolean hasAlternates() {
         return (alternates!=null);
+    }
+
+    public String getString() {
+        return this.getChromosome()+","+(this.getStrand()>0?"+":"-")+(this.getStart()+1)+","+this.cigarString;
     }
 
     public static class SAMIdComparator implements Comparator<SAMMapping> {
