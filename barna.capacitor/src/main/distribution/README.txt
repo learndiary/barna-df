@@ -23,8 +23,13 @@ REQUIREMENTS
 CHANGES
 ---------------
 
-FluxCapacitor SNAPSHOT
-    - BARNA-149 - Count reads to splice junctions
+FluxCapacitor 1.0.2
+    - BARNA-188	Check Capacitor number of reads for transcript
+    - BARNA-186	Update BED wrapper for CASAVA 1.8 read descriptor
+    - BARNA-160	FC should accept multi-split mappings for annotation mapping
+    - BARNA-149 Count reads to splice junctions
+ 	- BARNA-140	Too many open files
+ 	- BARNA-132 Count reads to all-intronic regions
     - BARNA-168 - ByteArrayCharSequence.complement() cannot handle IUPAC ambiguities
 
 FluxCapacitor 1.0.1
