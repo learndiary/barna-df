@@ -611,7 +611,7 @@ public class ASEvent {
 		result.append(GENE_ID_TAG);
 		result.append(' ');
 		result.append('\"');
-		result.append(getGene().getGeneID());	// getGene().getReferenceTranscript()
+		result.append(getGene().getLocusID());	// getGene().getReferenceTranscript()
 		result.append('\"');
 		result.append(';');
 		result.append(' ');

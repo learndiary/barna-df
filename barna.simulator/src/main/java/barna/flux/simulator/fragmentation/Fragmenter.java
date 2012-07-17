@@ -379,7 +379,7 @@ public class Fragmenter implements Callable<Void> {
                                     s = s + polyA.substring(0, (sourceLength + rightFlank) - s.length());
                                 }
                             }
-                            ByteArrayCharSequence combID = new ByteArrayCharSequence(g[i].getGeneID());
+                            ByteArrayCharSequence combID = new ByteArrayCharSequence(g[i].getLocusID());
                             combID.append((byte) FluxSimulatorSettings.SEP_LOC_TID);
                             combID.append(t.getTranscriptID());
                             mapTxSeq.put(combID, s);

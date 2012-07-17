@@ -30,6 +30,7 @@ package barna.model;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.StringUtils;
 import barna.model.commons.MyHashMap;
+import barna.model.gff.GFFObject;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -874,7 +875,7 @@ public class Gene extends DirectedRegion {
 	/**
 	 * @return
 	 */
-	public String getGeneID() {
+	public String getLocusID() {
 		//return geneID;
 		StringBuffer sb= new StringBuffer(getChromosome());
 		sb.append(":");
@@ -891,6 +892,10 @@ public class Gene extends DirectedRegion {
 		sb.append(getWatsonCrickStrandSymbol());
 		return sb.toString();
 	}
+
+    public String getGeneID() {
+        return transcripts[0].getAttribute(GFFObject.GENE_ID_TAG).toString();
+    }
 	
 	/**
 	 * @return

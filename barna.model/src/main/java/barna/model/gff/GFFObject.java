@@ -247,7 +247,7 @@ public class GFFObject {
 	
 
 	public final static String[] FEATURE_VALID= {"ATG", "CDS", "start_codon", "stop_codon", "exon", "intron", "splice_site", "gene", "mRNA", "5UTR", "3UTR", "CDS"};
-	public final static String GENE_ID_TAG= "gene_id", LOCUS_ID_TAG= "locus_id";	
+	public final static String GENE_ID_TAG= "gene_id", LOCUS_ID_TAG= "locus_id";
 	public final static String TRANSCRIPT_ID_TAG= "transcript_id";
 	public final static String EXON_ID_TAG= "exon_id";
 	public final static String GENE_ALIAS_TAG= "gene_alias";
@@ -486,7 +486,7 @@ public class GFFObject {
 			gtf.setEnd(y);
 		}
 		gtf.addAttribute(TRANSCRIPT_ID_TAG, t.getTranscriptID());
-		gtf.addAttribute(GENE_ID_TAG, t.getGene().getGeneID());
+		gtf.addAttribute(GENE_ID_TAG, t.getGene().getLocusID());
 		return gtf;
 	}
 	
@@ -570,9 +570,9 @@ public class GFFObject {
 	
 		Vector addObjV= new Vector();
 		if (reg instanceof Gene) {
-			obj.addAttribute(GENE_ID_TAG, ((Gene) reg).getGeneID());
+			obj.addAttribute(GENE_ID_TAG, ((Gene) reg).getLocusID());
 		} else if (reg instanceof Transcript) {
-			obj.addAttribute(GENE_ID_TAG, ((Transcript) reg).getGene().getGeneID());
+			obj.addAttribute(GENE_ID_TAG, ((Transcript) reg).getGene().getLocusID());
 			obj.addAttribute(TRANSCRIPT_ID_TAG, ((Transcript) reg).getTranscriptID());
 			obj.setSource(((Transcript) reg).getSource());
 		} else if (reg instanceof Exon) {
@@ -580,7 +580,7 @@ public class GFFObject {
 			
 			for (int i = 0; i < exon.getTranscripts().length; i++) {
 				GFFObject ex= (GFFObject) obj.clone();
-				ex.addAttribute(GENE_ID_TAG, exon.getGene().getGeneID());
+				ex.addAttribute(GENE_ID_TAG, exon.getGene().getLocusID());
 				ex.addAttribute(EXON_ID_TAG, exon.getExonID());
 				ex.setSource(exon.getTranscripts()[i].getSource());
 				
@@ -653,7 +653,7 @@ public class GFFObject {
 		}
 		obj.addAttribute(TRANSCRIPT_ID_TAG, sb.toString());
 		
-		obj.addAttribute(GENE_ID_TAG, g.getGeneID());
+		obj.addAttribute(GENE_ID_TAG, g.getLocusID());
 
 		return obj;
 	}
@@ -671,8 +671,11 @@ public class GFFObject {
 			e.printStackTrace();
 		}
 		obj.addAttribute(TRANSCRIPT_ID_TAG, t.getTranscriptID());
-		
-		obj.addAttribute(GENE_ID_TAG, t.getGene().getGeneID());
+        if (!t.getTranscriptID().equals(t.getGene().getGeneID())) {
+            obj.addAttribute(GENE_ID_TAG, t.getGene().getGeneID());
+        }
+        obj.addAttribute(LOCUS_ID_TAG, t.getGene().getLocusID());
+
 		return obj;
 	}
 	
@@ -692,7 +695,7 @@ public class GFFObject {
 		GFFObject ex= (GFFObject) obj.clone();
 		ex.addAttribute(TRANSCRIPT_ID_TAG, trpt.getTranscriptID());
 		if (trpt.getGene()!= null)
-			ex.addAttribute(GENE_ID_TAG, trpt.getGene().getGeneID());
+			ex.addAttribute(GENE_ID_TAG, trpt.getGene().getLocusID());
 		if (exon.getExonID()!= null)
 			ex.addAttribute(EXON_ID_TAG, exon.getExonID());
 		ex.setSource(trpt.getSource());
