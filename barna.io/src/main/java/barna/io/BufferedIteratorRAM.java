@@ -113,7 +113,12 @@ public class BufferedIteratorRAM implements BufferedIterator{
 		currentIndex= markedIndex;
 	}
 
-	/**
+    @Override
+    public void setAtStart() {
+        currentIndex = 0;
+    }
+
+    /**
 	 * frees memory occupied by the elements
 	 */
 	@Override

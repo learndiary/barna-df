@@ -452,17 +452,22 @@ public class Graph implements Serializable {
 			sb.append(seq.charAt(i));
 		return sb.toString();
 	}
-	
+
+    public static char complementaryCharacter(char c) {
+        boolean wasLow= Character.isLowerCase(c);
+        c= Constants2.NA_COMPL_IUPAC[Character.toUpperCase(c)- 65];
+        if (wasLow)
+            c= Character.toLowerCase(c);
+        return c;
+    }
+
 	public static String complementarySequence(String seq) {
 		
 		StringBuffer sb= new StringBuffer(seq.length());
 		for (int i = 0; i < seq.length(); i++) {
 			
 			char c= seq.charAt(i);
-			boolean wasLow= Character.isLowerCase(c);
-			c= Constants2.NA_COMPL_IUPAC[Character.toUpperCase(c)- 65];
-			if (wasLow)
-				c= Character.toLowerCase(c);
+            c= complementaryCharacter(c);
 			sb.append(c);
 		}
 		return sb.toString();
@@ -1073,7 +1078,8 @@ public class Graph implements Serializable {
 						System.currentTimeMillis();
 				
 					if (end- start+ 1!= to- from)
-						throw new RuntimeException("ByteArrayCharSequence too small: "+ (to- from)+ " needs "+ (end- start+ 1));
+						throw new RuntimeException("Byte array size does not match expectation: "+
+                                (to- from)+ " expects "+ (end- start+ 1));
 					
 					if (!forwardStrand) {	// WAS: (start< 0), neg strand genes
 						start= -start;
@@ -1103,22 +1109,27 @@ public class Graph implements Serializable {
 						// p= offset+ 1+ start+ (start/line);
 						// 100215: should be proper now
 						//String pfx= null, sfx= null;
+                        int delayedRead= 0;
 						if (start< 0) {		// circular genomes
 							//System.err.println("Neg seek: "+forwardStrand+", "+start+", "+end);
 							int diff= (int) (from- start);	// start< 0
-							int pfxFrom= forwardStrand? from: to- diff,	// append @start or @end
-								pfxTo= forwardStrand? from+ diff: to;
-							readSequence(spe, chromosome, forwardStrand, chrLen+ start, chrLen,
-									cs, pfxFrom, pfxTo);	// start< 0
+//							int pfxFrom= forwardStrand? from: to- diff,	// append @start or @end
+//								pfxTo= forwardStrand? from+ diff: to;
+//							readSequence(spe, chromosome, forwardStrand, chrLen+ start, chrLen,
+//									cs, pfxFrom, pfxTo);	// start< 0
+                            delayedRead= -diff;
+                            to-= diff;
 							start= 0;
 						}
 						if (end> chrLen) {
 							int diff= (int) (end- chrLen);
-							int sfxFrom= forwardStrand? to- diff: from,
-								sfxTo= forwardStrand? to: from+ diff;
-							readSequence(spe, chromosome, forwardStrand, 1, (end- chrLen)+ 1,
-									cs, sfxFrom, sfxTo);
+//							int sfxFrom= forwardStrand? to- diff: from,
+//								sfxTo= forwardStrand? to: from+ diff;
+//							readSequence(spe, chromosome, forwardStrand, 1, diff,
+//									cs, sfxFrom, sfxTo);
 							end= chrLen;
+                            to-= diff;
+                            delayedRead= diff;
 						}
 						
 						p= headerOffset+ fileSep.length()+ start+ ((start/lineLen)* fileSep.length());
@@ -1126,7 +1137,7 @@ public class Graph implements Serializable {
 						raf.seek(p);	// fpointer is different from reading point!
 						int mark= cs.end;
 						int nextN= (int) (lineLen- (start% lineLen));				// read (end of) first line
-						while (cs.end+ nextN<= to) {		// full lines
+						while (cs.end+ nextN< to) {		// full lines
 							assert(p+ (cs.end- mark)+ nextN< raf.length());
 							raf.readFully(cs.chars,cs.end,nextN);
 							raf.skipBytes(1);
@@ -1155,7 +1166,16 @@ public class Graph implements Serializable {
 							System.err.println("check for the right species/genome version!");
 							e.printStackTrace();
 							return;
-						}				
+						}
+
+                        if (delayedRead< 0) {
+                            System.arraycopy(cs, 0, cs, -delayedRead, -delayedRead);
+                            readSequence(spe, chromosome, forwardStrand, chrLen+ delayedRead, chrLen,
+									cs, 0, -delayedRead);	// start< 0
+                        } else if (delayedRead> 0) {
+                            readSequence(spe, chromosome, forwardStrand, 1, delayedRead,
+                                    cs, cs.end, cs.end+ delayedRead);	// start< 0
+                        }
 						
 	//					s= new String(seq);
 	//					if (seq.length- pos> rest)

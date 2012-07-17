@@ -101,7 +101,7 @@ public class GEMobject {
 					vampire.write(Integer.toString(go.p[0]));
 					vampire.write("\t");
 					vampire.write(Integer.toString(go.p[0]+ go.getSequence().length()));
-					ByteArrayCharSequence nameCS= go.getName();	// TODO FMRD !!!
+					ByteArrayCharSequence nameCS= go.getName();
 					maxName= nameCS.toCharArray(maxName);
 					vampire.write(maxName, 0, nameCS.length());
 					vampire.write("\t.\t");	// score

@@ -288,7 +288,8 @@ public class GraphLPsolver implements ReadStatCalculator {
     /**
      * Outputs the constraint map for debugging purposes.
      * @param p stream to which the output is requested
-     */
+     * @deprecated currently not in use
+    */
 	strictfp void printConstraintMap(PrintStream p) {
 		
 			// edges
@@ -424,7 +425,8 @@ public class GraphLPsolver implements ReadStatCalculator {
 	 * offset(+split.X,-split.X)= costSplit
 	 * 
 	 * @param e
-	 */
+     * @deprecated currently not in use
+    */
 	private int[] reuseIdx;
 	private double[] reuseVal;
 	void setConstraints(SimpleEdge e) {
@@ -897,7 +899,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		String tmpOutFName= null;
 		if (fileLPdir!= null) {
 			tmpOutFName= fileLPdir+ File.separator
-				+ aMapper.trpts[0].getGene().getGeneID().replace(":", "_")
+				+ aMapper.trpts[0].getGene().getLocusID().replace(":", "_")
 				+ SFX_LPOUT;
 		}
 		try {
@@ -1138,6 +1140,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 		return trptExprHash;
 	}
 
+    /**
+     * @deprecated currently not in use
+     */
 	void addRestrictions() {
 				
 		costIdx= new IntVector();
@@ -1155,8 +1160,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 		}
 		
 	}
-	
-	void setObjectiveFunction() {
+
+
+    void setObjectiveFunction() {
 		// set objective function
 		double[] a= createArray(costIdx.toIntArray(),costVal.toDoubleArray());
 		try {
@@ -1167,7 +1173,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 		}
 	}
 
-	public static int calcReadsInTranscript(int len, int readLen) {
+    public static int calcReadsInTranscript(int len, int readLen) {
 		int cnt= (len+readLen-1)-(2*(readLen-1));	// expected reads, normalized to transcript length
 		return cnt;
 	}
@@ -1264,7 +1270,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 	
 	private void getConstraints(AbstractEdge e, long[] sig, IntVector v,
 			HashMap<AbstractEdge, IntVector> mapE, boolean sense, boolean count) {
-		
+
 		// for the edge itself
 		IntVector w= mapE.get(e);
 		if (count) 
@@ -1282,6 +1288,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 		// iterate super-edges
 		for (int j = 0; e.getSuperEdges()!= null&& j < e.getSuperEdges().size(); j++) {
 			SuperEdge se= e.getSuperEdges().elementAt(j);
+            // skip intronic super-edges (wrong deconvolution)
+            if (se.isPend()&& se.isIntronic())
+                continue;
 			if (SplicingGraph.isNull(SplicingGraph.intersect(se.getTranscripts(), sig)))
 				continue;
 			// sense/anti-sense.. e must be first/last in super-edge
@@ -1308,7 +1317,9 @@ public class GraphLPsolver implements ReadStatCalculator {
 			for (int k = 0; se.getSuperEdges()!= null&& k < se.getSuperEdges().size(); k++) {
 				SuperEdge se2= se.getSuperEdges().elementAt(k);
 				assert(se2.isPend());
-				if (SplicingGraph.isNull(SplicingGraph.intersect(se2.getTranscripts(), sig)))
+                if (se2.isPend()&& se2.isIntronic())
+                    continue;
+                if (SplicingGraph.isNull(SplicingGraph.intersect(se2.getTranscripts(), sig)))
 					continue;
 				// sense/anti-sense.. e must be first/last in super-edge
 				if ((sense&& se2.getEdges()[0]!= se)|| ((!sense)&& se2.getEdges()[se2.getEdges().length- 1]!= se))
@@ -1462,6 +1473,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 //					if (f.toString().equals("-1611848--1611703^-1611848--1609293]PE"))
 //						System.currentTimeMillis();
 					boolean paird= (f instanceof SuperEdge)&& ((SuperEdge) f).isPend();
+
 					int nr= ((paird|| sa== 0)? ((MappingsInterface) f).getMappings().getReadNr()
 							: ((MappingsInterface) f).getMappings().getRevReadNr());
 					v= mapE.remove(f);

@@ -163,7 +163,16 @@ public class SuperEdge extends AbstractEdge {
         return count;
     }
 
+    public boolean isSpliceJunction() {
+        if (this.countEJ() > 0)
+            return true && !pairedEnd;
+        return false;
+    }
+
     public boolean isIntronic() {
+        for(AbstractEdge e : edges)
+            if(e.isIntronic())
+                return true;
 		return false;
 	}
 	
@@ -173,6 +182,16 @@ public class SuperEdge extends AbstractEdge {
 				return false;
 		return true;
 	}
+
+    public boolean isAllIntronic() {
+        boolean b= true;
+        for(AbstractEdge e : edges)
+            if(e.isAllIntronic())
+                b&= true;
+            else
+                b&=false;
+        return b;
+    }
 	
 	public void setEdges(AbstractEdge[] edges) {
 //		long[] trpts= edges[0].getTranscripts();

@@ -25,39 +25,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io;
+package barna.flux.simulator.error;
 
-import barna.commons.ByteArrayCharSequence;
+import org.junit.Test;
 
-import java.util.Iterator;
+import static junit.framework.Assert.assertEquals;
 
 /**
- * The interface defines methods for marking a position in 
- * the data, to which the iterator subsequently can be 
- * repositioned.
- * 
- * @author Micha Sammeth (gmicha@gmail.com)
- *
+ * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-public interface BufferedIterator extends Iterable<ByteArrayCharSequence>, Iterator<ByteArrayCharSequence>{
+public class ModelPoolTest {
 
-	/**
-	 * marks the actual element
-	 */
-	public void mark();
-	
-	/**
-	 * resets to last marked element (if any)
-	 */
-	public void reset();
+    @Test
+    public void testScalingPosition(){
+        assertEquals(0, ModelPool.scalePosition(0, 100, 100));
+        for (int i = 0; i < 100; i++) {
+            assertEquals(i, ModelPool.scalePosition(i, 100, 100));
+        }
+        assertEquals(49, ModelPool.scalePosition(100, 50, 100));
+        assertEquals(24, ModelPool.scalePosition(50, 50, 100));
+        assertEquals(0, ModelPool.scalePosition(2, 50, 100));
+        assertEquals(48, ModelPool.scalePosition(98, 50, 100));
 
-    /**
-     * reset to the start position
-     */
-    public void setAtStart();
-	
-	/**
-	 * frees resources occupied by the iterator
-	 */
-	public void clear();
+
+        assertEquals(99, ModelPool.scalePosition(50, 100, 50));
+        assertEquals(49, ModelPool.scalePosition(25, 100, 50));
+        assertEquals(3, ModelPool.scalePosition(2, 100, 50));
+        assertEquals(95, ModelPool.scalePosition(48, 100, 50));
+
+    }
 }
