@@ -30,7 +30,7 @@ public class FluxCapacitorTest {
     final File BED_MM9_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test.bam");
+    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test1.bam");
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -462,7 +462,7 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "CASAVA18",
+                    "PAIRED",
                     // keep sorted
                     false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 
@@ -496,7 +496,7 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "CASAVA18",
+                    "PAIRED",
                     // keep sorted
                     false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
 
@@ -529,7 +529,7 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "CASAVA18",
+                    "PAIRED",
                     // keep sorted
                     false, false, true, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
@@ -562,7 +562,7 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "CASAVA18",
+                    "PAIRED",
                     // keep sorted
                     false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 

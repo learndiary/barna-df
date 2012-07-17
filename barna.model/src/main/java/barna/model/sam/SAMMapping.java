@@ -202,4 +202,29 @@ public class SAMMapping implements Mapping{
             return o1.getName().compareTo(o2.getName());
         }
     }
+
+    @Override
+    public boolean equals(Mapping otherMapping) {
+        SAMMapping sam = null;
+        try {
+            sam = (SAMMapping)otherMapping;
+            if (!this.referenceName.equals(sam.getChromosome()))
+                return false;
+            if (!this.readName.equals(sam.getName()))
+                return false;
+            if (this.alignmentStart!=sam.getStart())
+                return false;
+            if (this.alignmentEnd!=sam.getEnd())
+                return false;
+            if (this.hasAlternates()) {
+                for (String s : alternates.keySet()) {
+                    if (!sam.alternates.containsKey(s))
+                        return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

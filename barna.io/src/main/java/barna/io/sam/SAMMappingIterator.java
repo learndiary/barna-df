@@ -56,10 +56,7 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
             if (tmp==null)
                 tmp=new ArrayList<SAMMapping>();
             tmp.add(mapping);
-            int i=0;
             for (SAMMapping m : tmp) {
-//                if (i>30)
-//                    break;
                 if (m.getChromosome().equals(chromosome)) {
                     if (m.getStart()>=start && m.getEnd()<=end) {
                         if (mappings == null)
@@ -67,7 +64,6 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
                         mappings.add(m);
                     }
                 }
-//                i++;
             }
             tmp.clear();
         }

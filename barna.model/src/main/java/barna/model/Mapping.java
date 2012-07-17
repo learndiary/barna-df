@@ -4,6 +4,7 @@
 package barna.model;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.model.sam.SAMMapping;
 
 /**
  * @author emilio
@@ -70,4 +71,6 @@ public interface Mapping {
 	 * @return the size of the next block
 	 */
 	public int getNextBlockSize();
+
+    public boolean equals(Mapping otherMapping);
 }

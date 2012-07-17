@@ -559,4 +559,9 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
     public CharSequence getChromosome() {
         return getChr();
     }
+
+    @Override
+    public boolean equals(Mapping otherMapping) {
+        return false;
+    }
 }

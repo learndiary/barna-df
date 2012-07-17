@@ -27,7 +27,8 @@ public class AnnotationMapperTest extends TestCase {
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     //private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
-    private final File hgBamFile = new File("/home/emilio/fromMicha/test.bam");
+    private final File hgBamIndexFile = new File("/home/emilio/fromMicha/test.bam");
+    private final File hgBamFile = new File("/home/emilio/fromMicha/test1.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
@@ -700,7 +701,7 @@ public class AnnotationMapperTest extends TestCase {
                 count[0] += m.get(e)[0];
             }
             readGtf(g,hgGtfFile);
-            Map<String, Integer> m1 = getAllIntronicReads(g, false,hgBedFile);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false, hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
@@ -761,9 +762,10 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareBAMSJReadsSingle() throws Exception {
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_PAIRED, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         SAMReader sam = new SAMReader(hgBamFile);
+        SAMReader samIndex = new SAMReader(hgBamIndexFile);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
         //gtf = new GTFwrapper((gtf.sort()));
@@ -790,17 +792,19 @@ public class AnnotationMapperTest extends TestCase {
             end = end + tol;
             MSIterator<Mapping> iter1 = bed.read(g.getChromosome(), start, end);
             MSIterator<Mapping> iter2 = sam.read(g.getChromosome(), start, end);
+//            MSIterator<Mapping> iter3 = samIndex.read(g.getChromosome(), start, end);
+
             AnnotationMapper a = new AnnotationMapper(g);
             AnnotationMapper b = new AnnotationMapper(g);
             a.map(iter1, settings);
             b.map(iter2, settings);
 
-//            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
-//            assertEquals(a.getNrMappingsMapped(),b.getNrMappingsMapped());
-//            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
+            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
+            assertEquals(a.getNrMappingsMapped(),b.getNrMappingsMapped());
+            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
 
-            Map<String, Integer> m = a.getSJReads(false);
-            Map<String, Integer> m1 = b.getSJReads(false);
+            Map<String, Integer> m = a.getSJReads(true);
+            Map<String, Integer> m1 = b.getSJReads(true);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
                 count[0] += m.get(e);
