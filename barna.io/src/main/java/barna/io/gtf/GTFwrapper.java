@@ -861,19 +861,19 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				++negStrand;
 			if (ge[i].getStart() == 0 || ge[i].getEnd() == 0
 					|| ge[i].getChromosome() == null || ge[i].getStrand() == 0) {
-				System.err.println("Gene not inited " + ge[i].getGeneID());
+				System.err.println("Gene not inited " + ge[i].getLocusID());
 				ok = false;
 			}
 			Transcript[] trpt = ge[i].getTranscripts();
 			if (trpt.length == 0 || trpt.length > 10) {
 				System.err.println("Too many transcripts per gene "
-						+ ge[i].getGeneID());
+						+ ge[i].getLocusID());
 				ok = false;
 			}
 			Exon[] ex = ge[i].getExons();
 			if (ex.length == 0 || ex.length > 100) {
 				System.err.println("Too many exons per gene "
-						+ ge[i].getGeneID());
+						+ ge[i].getLocusID());
 				ok = false;
 			}
 
@@ -1419,8 +1419,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 							} else {
 //                                Object a1 = trpt.getGene().getAttribute(GFFObject.GENE_ID_TAG);
 //                                Object a2 = geneV.elementAt(geneV.size() - 1).getAttribute(GFFObject.GENE_ID_TAG);
-                                Object a1 = trpt.getGene().getGeneID();
-                                Object a2 = geneV.elementAt(geneV.size() - 1).getGeneID();
+                                Object a1 = trpt.getGene().getLocusID();
+                                Object a2 = geneV.elementAt(geneV.size() - 1).getLocusID();
                                 if (a1.equals(a2))
 									geneV.elementAt(geneV.size()-1).merge(trpt.getGene());
 								else

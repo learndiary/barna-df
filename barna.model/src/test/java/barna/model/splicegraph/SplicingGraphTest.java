@@ -30,7 +30,7 @@ package barna.model.splicegraph;
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class GraphTest {
+public class SplicingGraphTest {
 
 //    static void _240808_test_multithread(String[] args) {
 //        SpliceGraphIO io = new SpliceGraphIO();
