@@ -22,6 +22,12 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.0.3
+    - BARNA-189 Simulation of poly-dT primer RT after Fragmentation produces 1nt Fragments
+    - BARNA-184 Mutated characters should be lower case
+    - BARNA-171 Antisense polyA reads not reverse complemented
+    - BARNA-167 The error model should be scaled to other read length
+
 FluxSimulator 1.0.2
     - BARNA-170 - BEDobject2 limited to 128 chars up to the end of the name field
     - BARNA-169 - Error Model should catch IUPAC ambiguities
