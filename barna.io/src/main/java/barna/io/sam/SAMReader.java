@@ -87,7 +87,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         if (reader == null)
             reader = new SAMFileReader(this.inputFile);
         if (reader.hasIndex())
-            return new SAMMappingQueryIterator(reader.query(chromosome,start,end, true),start,end);
+            return new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, true), start, end);
         else
             return new SAMMappingIterator(chromosome, start, end, reader.iterator());
     }
