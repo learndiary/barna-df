@@ -44,6 +44,12 @@ public class SAMMapping implements Mapping{
         initAlternates(r.getAttributes());
     }
 
+    public SAMMapping(SAMRecord r, String suffix) {
+
+        this(r);
+        this.readName+=suffix;
+    }
+
     @Override
     public String getName() {
         return readName;
@@ -189,7 +195,7 @@ public class SAMMapping implements Mapping{
         return list;
     }
 
-    public Boolean hasAlternates() {
+    public boolean hasAlternates() {
         return (alternates!=null);
     }
 

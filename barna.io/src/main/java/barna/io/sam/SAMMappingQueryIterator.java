@@ -6,7 +6,6 @@ import net.sf.samtools.*;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,8 +16,11 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     private final File inputFile;
     private final SAMRecordIterator wrappedIterator;
-    ArrayList<SAMMapping> mappings;
+    private SAMRecord nextRecord, nextMate;
+    private SAMMapping nextMapping, nextMappingMate;
     int currPos, markedPos,start,end;
+    private boolean returnedMapping, returnedMate;
+    private int altMappingIndex, altMateIndex;
 
     public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, int start, int end) {
         this.inputFile = inputFile;
@@ -26,46 +28,8 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         this.start = start;
         this.end = end;
         this.currPos = this.markedPos = -1;
-        init();
-    }
-
-    private void init() {
-        SAMRecord record;
-        SAMMapping mapping;
-        List<SAMMapping> tmp=null;
-        SAMFileReader reader=null;
-        SAMRecord mate =null;
-        while(wrappedIterator.hasNext()) {
-            record = wrappedIterator.next();
-
-            if (record.getReadUnmappedFlag())
-                continue;
-
-            int mateStart = record.getMateAlignmentStart();
-
-            if (record.getMateReferenceName().equals(record.getReferenceName()) && (mateStart>=end || mateStart<start)) {
-                if (reader==null)
-                    reader = new SAMFileReader(inputFile);
-                mate=reader.queryMate(record);
-                if (mate != null)
-                    tmp = addRecord(mate, tmp);
-            }
-
-            tmp = addRecord(record, tmp);
-
-            for (SAMMapping m : tmp) {
-                if (mappings==null)
-                   mappings=new ArrayList<SAMMapping>();
-                if (m.getStart()>=start && m.getEnd()<=end)
-                    mappings.add(m);
-            }
-            tmp.clear();
-        }
-        if (mappings!=null) {
-            Collections.sort(mappings, new SAMMapping.SAMIdComparator());
-        }
-
-        wrappedIterator.close();
+        this.altMappingIndex = this.altMateIndex = -1;
+        getNext();
     }
 
     private List<SAMMapping> addRecord(SAMRecord record, List<SAMMapping> tmp) {
@@ -123,18 +87,68 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public boolean hasNext() {
-        if (mappings==null)
-            return false;
-        return currPos<mappings.size()-1;
+        return nextRecord!=null;
     }
 
     @Override
     public SAMMapping next() {
-        return (mappings.get(++currPos));
+        if (!returnedMapping) {
+            returnedMapping = true;
+            return nextMapping;
+        }
+        if (nextMappingMate!=null) {
+            if (!returnedMate) {
+                returnedMate = true;
+                return nextMappingMate;
+            }
+            if (nextMappingMate.hasAlternates()) {
+                if (altMateIndex<nextMappingMate.getAlternates().size()-1)
+                    return nextMappingMate.getAlternates().get(++altMateIndex);
+            }
+        }
+        if (nextMapping.hasAlternates()) {
+            altMateIndex = -1;
+            if (altMappingIndex<nextMapping.getAlternates().size()-1)
+                return nextMapping.getAlternates().get(++altMappingIndex);
+        }
+        getNext();
+        returnedMapping = true;
+        return nextMapping;
     }
 
     @Override
     public void remove() {
         wrappedIterator.remove();
+    }
+
+    private void getNext() {
+        nextRecord = nextMate = null;
+        //nextMapping = nextMappingMate = null;
+        returnedMapping = false;
+        returnedMate = false;
+        altMappingIndex = -1;
+        altMateIndex = -1;
+        while (nextRecord==null&&wrappedIterator.hasNext()) {
+            SAMRecord rec = wrappedIterator.next();
+//            if (rec.getFirstOfPairFlag()) {
+                nextRecord = rec;
+                nextMapping = new SAMMapping(rec,"/1");
+                break;
+//            }
+        }
+        if (nextRecord!=null) {// && nextRecord.getFirstOfPairFlag()) {
+            SAMFileReader reader=null;
+            SAMRecord mate=null;
+            if (reader==null)
+                reader = new SAMFileReader(inputFile);
+            mate = reader.queryMate(nextRecord);
+            if (mate != null) {
+                if (!(nextRecord.getSecondOfPairFlag() && mate.getAlignmentStart()>=start&&mate.getAlignmentStart()<end)) {
+                    nextMate = mate;
+                    nextMappingMate = new SAMMapping(mate,"/2");
+                }
+            }
+            reader.close();
+        }
     }
 }
