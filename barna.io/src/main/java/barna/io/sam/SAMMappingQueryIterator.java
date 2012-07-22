@@ -17,9 +17,8 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
     private final File inputFile;
     private final SAMRecordIterator wrappedIterator;
     private SAMRecord nextRecord, nextMate;
-    private SAMMapping nextMapping, nextMappingMate;
+    private SAMMapping nextMapping, nextMappingMate, current;
     int currPos, markedPos,start,end;
-    private boolean returnedMapping, returnedMate;
     private int altMappingIndex, altMateIndex;
 
     public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, int start, int end) {
@@ -92,28 +91,9 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public SAMMapping next() {
-        if (!returnedMapping) {
-            returnedMapping = true;
-            return nextMapping;
-        }
-        if (nextMappingMate!=null) {
-            if (!returnedMate) {
-                returnedMate = true;
-                return nextMappingMate;
-            }
-            if (nextMappingMate.hasAlternates()) {
-                if (altMateIndex<nextMappingMate.getAlternates().size()-1)
-                    return nextMappingMate.getAlternates().get(++altMateIndex);
-            }
-        }
-        if (nextMapping.hasAlternates()) {
-            altMateIndex = -1;
-            if (altMappingIndex<nextMapping.getAlternates().size()-1)
-                return nextMapping.getAlternates().get(++altMappingIndex);
-        }
+        SAMMapping ret = current;
         getNext();
-        returnedMapping = true;
-        return nextMapping;
+        return ret;
     }
 
     @Override
@@ -122,21 +102,8 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
     }
 
     private void getNext() {
-        nextRecord = nextMate = null;
-        //nextMapping = nextMappingMate = null;
-        returnedMapping = false;
-        returnedMate = false;
-        altMappingIndex = -1;
-        altMateIndex = -1;
-        while (nextRecord==null&&wrappedIterator.hasNext()) {
-            SAMRecord rec = wrappedIterator.next();
-//            if (rec.getFirstOfPairFlag()) {
-                nextRecord = rec;
-                nextMapping = new SAMMapping(rec,"/1");
-                break;
-//            }
-        }
-        if (nextRecord!=null) {// && nextRecord.getFirstOfPairFlag()) {
+        current = null;
+        if (nextRecord!=null && nextMate==null) {// && nextRecord.getFirstOfPairFlag()) {
             SAMFileReader reader=null;
             SAMRecord mate=null;
             if (reader==null)
@@ -145,10 +112,51 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
             if (mate != null) {
                 if (!(nextRecord.getSecondOfPairFlag() && mate.getAlignmentStart()>=start&&mate.getAlignmentStart()<end)) {
                     nextMate = mate;
-                    nextMappingMate = new SAMMapping(mate,"/2");
+                    nextMappingMate = new SAMMapping(mate,getSuffix(mate));
                 }
             }
             reader.close();
         }
+        while (nextRecord==null&&wrappedIterator.hasNext()) {
+            SAMRecord rec = wrappedIterator.next();
+//            if (rec.getFirstOfPairFlag()) {
+            nextRecord = rec;
+            nextMapping = new SAMMapping(rec,getSuffix(rec));
+//            }
+        }
+        if (nextMate != null) {
+            if (altMateIndex == -1) {
+                current = nextMappingMate;
+                altMateIndex++;
+                if (!nextMappingMate.hasAlternates()) {
+                    altMateIndex = -1;
+                }
+            } else {
+                current = nextMappingMate.getAlternates().get(altMateIndex++);
+                if (altMateIndex==nextMappingMate.getAlternates().size()) {
+                    altMateIndex = -1;
+                    if (altMappingIndex==nextMapping.getAlternates().size()) {
+                        altMappingIndex = altMateIndex = -1;
+                        nextRecord = nextMate = null;
+                    }
+                }
+            }
+            if (altMateIndex == -1) {
+                if (!nextMapping.hasAlternates()) {
+                    altMappingIndex = -1;
+                    nextRecord = nextMate = null;
+                } else {
+                    current = nextMapping.getAlternates().get(altMappingIndex++);
+                }
+            }
+        }
+        if (nextRecord!=null && altMappingIndex==-1) {
+            current = nextMapping;
+            altMappingIndex++;
+        }
+    }
+
+    private String getSuffix(SAMRecord record) {
+        return record.getFirstOfPairFlag()?"/1":"/2";
     }
 }
