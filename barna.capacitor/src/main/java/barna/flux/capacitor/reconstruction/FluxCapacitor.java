@@ -306,7 +306,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
-                sb.append(junction[0].contains("-") ? "+" : "-");
+                sb.append(gene.getStrand() > 0 ? "+" : "-");
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
@@ -343,7 +343,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
-                sb.append(intron[0].contains("-")?"+":"-");
+                sb.append(gene.getStrand() > 0?"+":"-");
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
