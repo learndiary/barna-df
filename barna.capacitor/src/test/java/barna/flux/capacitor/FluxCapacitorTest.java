@@ -128,7 +128,7 @@ public class FluxCapacitorTest {
         settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
                 keepSorted);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-                AnnotationMapping.PAIRED);
+                AnnotationMapping.SINGLE);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,
                 outFile);
         settings.set(FluxCapacitorSettings.STATS_FILE,
@@ -462,7 +462,7 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "PAIRED",
+                    "SIMPLE",
                     // keep sorted
                     false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 

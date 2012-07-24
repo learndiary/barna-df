@@ -26,9 +26,8 @@ public class AnnotationMapperTest extends TestCase {
 
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     //private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-    private final File hgBedFile = new File("/Users/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
-    private final File hgBamIndexFile = new File("/Users/emilio/fromMicha/test.bam");
-    private final File hgBamFile = new File("/Users/emilio/fromMicha/test.bam");
+    private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
+    private final File hgBamFile = new File("/home/emilio/fromMicha/test.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
@@ -753,17 +752,16 @@ public class AnnotationMapperTest extends TestCase {
 //                assertEquals(m1.getStrand(),m2.getStrand());
 //            }
 
-            assertEquals(count[0],count[1]);
+            assertEquals(181,count[1]);
         }
 
     }
 
     @Test
     public void testCompareBAMSJReadsSingle() throws Exception {
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_PAIRED, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         SAMReader sam = new SAMReader(hgBamFile);
-        SAMReader samIndex = new SAMReader(hgBamIndexFile);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
         //gtf = new GTFwrapper((gtf.sort()));
@@ -772,12 +770,12 @@ public class AnnotationMapperTest extends TestCase {
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-            if (lastStr!=0&&lastStr!=g.getStrand()) {
-                bed.reset(g.getChromosome());
-                lastStr = g.getStrand();
-            }
-            if (lastStr == 0)
-                lastStr = g.getStrand();
+//            if (lastStr!=0&&lastStr!=g.getStrand()) {
+//                bed.reset(g.getChromosome());
+//                lastStr = g.getStrand();
+//            }
+//            if (lastStr == 0)
+//                lastStr = g.getStrand();
             int start = 0, end = 0, tol = 0;
             start = g.getStart();
             end = g.getEnd();
@@ -790,25 +788,22 @@ public class AnnotationMapperTest extends TestCase {
             end = end + tol;
             MSIterator<Mapping> iter1 = bed.read(g.getChromosome(), start, end);
             MSIterator<Mapping> iter2 = sam.read(g.getChromosome(), start, end);
-            MSIterator<Mapping> iter3 = samIndex.read(g.getChromosome(), start, end);
 
             AnnotationMapper a = new AnnotationMapper(g);
             AnnotationMapper b = new AnnotationMapper(g);
             a.map(iter1, settings);
-            b.map(iter3, settings);
+            b.map(iter2, settings);
 
-            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
-//            assertEquals(a.getNrMappingsMapped(),b.getNrMappingsMapped());
-//            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
+            assertEquals(181,b.nrMappingsLocus);
+            assertEquals(158,b.getNrMappingsMapped());
+            assertEquals(23,b.nrMappingsNotMapped);
 
-            Map<String, Integer> m = a.getSJReads(true);
-            Map<String, Integer> m1 = b.getSJReads(true);
+            Map<String, Integer> m = a.getSJReads(false);
+            Map<String, Integer> m1 = b.getSJReads(false);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
                 count[0] += m.get(e);
             }
-//            readGtf(g, hgGtfFile);
-            //Map<String, Integer> m1 = getSJReads(g, false, hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }

@@ -382,17 +382,17 @@ public class AnnotationMapper extends SplicingGraph {
 
 				} else {	// single reads, strand already checked
 					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
-                if (target.isAllIntronic()) {
-					if (sense)
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
-                    else
-                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
-                } else {
-                    if (sense)
-						((MappingsInterface) target).getMappings().incrReadNr();
-					else
-						((MappingsInterface) target).getMappings().incrRevReadNr();
-                }
+                    if (target.isAllIntronic()) {
+                        if (sense)
+                            ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
+                        else
+                            ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
+                    } else {
+                        if (sense)
+                            ((MappingsInterface) target).getMappings().incrReadNr();
+                        else
+                            ((MappingsInterface) target).getMappings().incrRevReadNr();
+                    }
 					++nrMappingsMapped;
 				}
 			} // end: while(iter.hasNext())
