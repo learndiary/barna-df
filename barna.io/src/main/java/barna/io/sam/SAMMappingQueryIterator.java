@@ -92,6 +92,9 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         }
         while (nextMapping==null&&wrappedIterator.hasNext()) {
             SAMRecord rec = wrappedIterator.next();
+            if (rec.getReadUnmappedFlag()) {
+                continue;
+            }
             nextRecord = rec;
             nextMapping = new SAMMapping(rec,getSuffix(rec));
         }
