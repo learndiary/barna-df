@@ -29,6 +29,7 @@ package barna.flux.simulator;
 
 import barna.commons.parameters.*;
 import barna.io.FileHelper;
+import barna.io.RelativePathParser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -735,7 +736,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
         try {
 
             f = new File(f.getCanonicalPath());    // kill Win32ShellFolder instances, they fuck up relative path conversion
-            relativePathParser.parentDir = f.getParentFile();
+            relativePathParser.setParentDir(f.getParentFile());
             FluxSimulatorSettings settings = new FluxSimulatorSettings();
             settings.parameterFile = f;
             in = new FileInputStream(f);
@@ -782,21 +783,6 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public File getParameterFile() {
         return parameterFile;
-    }
-
-    /**
-     * Helper class to allow us to parse file names relative to a parent directory
-     */
-    static class RelativePathParser implements FileNameParser {
-        /**
-         * the Parent directory
-         */
-        File parentDir = null;
-
-        @Override
-        public File parse(String string) {
-            return FileHelper.fromRelative(string, parentDir);
-        }
     }
 
 
