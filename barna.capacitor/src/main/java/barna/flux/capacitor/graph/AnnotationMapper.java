@@ -392,8 +392,8 @@ public class AnnotationMapper extends SplicingGraph {
                             ((MappingsInterface) target).getMappings().incrReadNr();
                         else
                             ((MappingsInterface) target).getMappings().incrRevReadNr();
+                        ++nrMappingsMapped;
                     }
-					++nrMappingsMapped;
 				}
 			} // end: while(iter.hasNext())
 			

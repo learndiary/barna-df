@@ -34,61 +34,29 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
         SAMRecord record;
         SAMMapping mapping;
         List<SAMMapping> tmp = null;
-//        ArrayList<SAMRecord> tmp=new ArrayList<SAMRecord>();
+
         while(wrappedIterator.hasNext()) {
-            //mapping = new SAMMapping(wrappedIterator.next());
             record = wrappedIterator.next();
 
             if (record.getReadUnmappedFlag())
                 continue;
 
-            String name = record.getReadName();
-            if (record.getMateNegativeStrandFlag())
-                record.setReadName(name+"/2");
-            else
-                record.setReadName(name+"/1");
+            mapping = new SAMMapping(record, getSuffix(record));
 
-            mapping = new SAMMapping(record);
-
-            if (mapping.hasAlternates()) {
-                tmp = mapping.getAlternates();
-            }
-            if (tmp==null)
-                tmp=new ArrayList<SAMMapping>();
-            tmp.add(mapping);
-            for (SAMMapping m : tmp) {
-                if (m.getChromosome().equals(chromosome)) {
-                    if (m.getStart()>=start && m.getEnd()<=end) {
-                        if (mappings == null)
-                            mappings = new ArrayList<SAMMapping>();
-                        mappings.add(m);
-                    }
+           if (mapping.getChromosome().equals(chromosome)) {
+                if (mapping.getStart()>=start && mapping.getEnd()<=end) {
+                    if (mappings == null)
+                        mappings = new ArrayList<SAMMapping>();
+                    mappings.add(mapping);
                 }
             }
-            tmp.clear();
         }
-        //Collections.sort(tmp, new SAMRecordQueryNameComparator());
+
         if (mappings!=null) {
             Collections.sort(mappings, new SAMMapping.SAMIdComparator());
         }
 
         wrappedIterator.close();
-
-//        for (SAMRecord r : tmp) {
-//            if (mappings==null)
-//                mappings = new ArrayList<SAMMapping>();
-//            SAMMapping sam = new SAMMapping(r);
-//            mappings.add(sam);
-//            if (sam.hasAlternates()) {
-//                for (SAMMapping m : sam.getAlternates()) {
-//                    if (m.getChromosome().equals(chromosome)) {
-//                        if (m.getStart()>=start&&m.getEnd()<=end) {
-//                            mappings.add(m);
-//                        }
-//                    }
-//                }
-//            }
-//        }
     }
 
     @Override
@@ -138,4 +106,7 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     public void remove() {
         wrappedIterator.remove();
     }
-}
+
+    private String getSuffix(SAMRecord record) {
+        return record.getFirstOfPairFlag()?"/1":"/2";
+    }}

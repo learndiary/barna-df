@@ -25,6 +25,7 @@ import java.util.*;
 public class AnnotationMapperTest extends TestCase {
 
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+//    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12.gtf");
     //private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     private final File hgBedFile = new File("/home/emilio/fromMicha/test_bam.bed");
     //private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
@@ -753,7 +754,7 @@ public class AnnotationMapperTest extends TestCase {
 //                assertEquals(m1.getStrand(),m2.getStrand());
 //            }
 
-            assertEquals(181,count[1]);
+            assertEquals(count[0],count[1]);
         }
 
     }
@@ -766,9 +767,11 @@ public class AnnotationMapperTest extends TestCase {
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
         //gtf = new GTFwrapper((gtf.sort()));
-        gtf.setReadAll(true);
+        //gtf.setReadAll(true);
+        gtf.setChromosomeWise(true);
         gtf.setNoIDs(null);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
+        gtf.sweepToChromosome("chr22");
         gtf.read();
         for (Gene g : gtf.getGenes()) {
 //            if (lastStr!=0&&lastStr!=g.getStrand()) {
@@ -795,9 +798,9 @@ public class AnnotationMapperTest extends TestCase {
             a.map(iter1, settings);
             b.map(iter2, settings);
 
-            assertEquals(181,b.nrMappingsLocus);
-            assertEquals(158,b.getNrMappingsMapped());
-            assertEquals(23,b.nrMappingsNotMapped);
+            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
+            assertEquals(a.nrMappingsMapped,b.nrMappingsMapped);
+            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
 
             Map<String, Integer> m = a.getSJReads(false);
             Map<String, Integer> m1 = b.getSJReads(false);
@@ -809,6 +812,11 @@ public class AnnotationMapperTest extends TestCase {
                 count[1] += m1.get(e);
             }
             assertEquals(count[0], count[1]);
+
+            if (iter1!=null)
+                iter1.clear();
+            if (iter2!=null)
+                iter2.clear();
         }
     }
 

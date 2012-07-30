@@ -23,6 +23,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	private Mapping[] mappings= null;
     private SAMFileReader reader = null;
+    private boolean contained =false;
 
     int countAll;
     int countEntire;
@@ -35,6 +36,11 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	public SAMReader(File inputFile) {
 		super(inputFile);
 	}
+
+    public SAMReader(File inputFile, boolean contained) {
+        super(inputFile);
+        this.contained=contained;
+    }
 	
 	/**
 	 * Creates an instance using a specific path to a file 
@@ -87,7 +93,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         if (reader == null)
             reader = new SAMFileReader(this.inputFile);
         if (reader.hasIndex())
-            return new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, true), start, end);
+            return new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end);
         else
             return new SAMMappingIterator(chromosome, start, end, reader.iterator());
     }
@@ -144,7 +150,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
     public boolean reset(String chr) {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return true;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     /* (non-Javadoc)

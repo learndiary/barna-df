@@ -191,6 +191,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
             AnnotationMapper mapper = null;
 
+            if(tasks.isEmpty())
+                return;
+
             if (!tasks.contains(Task.LEARN)) {
                 mapper = new AnnotationMapper(this.gene);
                 mapper.map(this.mappings, settings);
@@ -2423,7 +2426,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 							+ mappingReader.getCountMappings()+" mappings read from file\n\t"
                             // no info, reads in redundantly many reads
                             //+ nrReadsLoci+" mappings in annotated loci regions\n\t"
-                            + nrReadsMapped + " mappings" + (pairedEnd ? " in pairs" : "s") + " map to annotation\n"
+                            + nrReadsMapped + " mapping" + (pairedEnd ? " in pairs" : "s") + " map to annotation\n"
                             + (pairedEnd ?
                             "\t" + nrPairsNoTxEvidence + " mappings without tx evidence\n"
                                     + "\t" + nrPairsWrongOrientation + " mappings with wrong orientation\n"
@@ -2521,10 +2524,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         Log.info("COUNT", message.toString());
                     }
                     if (currentTasks.contains(Task.DECOMPOSE)) {
-                    Log.info("","");
-                    Log.info("LEARN", "Scanning the input and getting the attributes.");
-                }
-                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
                     Log.info("","");
                     Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
                 }

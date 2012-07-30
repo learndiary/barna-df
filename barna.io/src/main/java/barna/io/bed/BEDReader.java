@@ -716,9 +716,9 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 			BufferedBACSReader buffy= getReaderBACS();
 			//for (cs= getReader().readLine(cs); cs.end!= 0; cs=getReader().readLine(cs)) {
 			while (buffy.readLine(cs)!= null) {
-				bytesRead+= cs.length()+getLineSeparator().length();
-				++nrUniqueLinesRead;
-				if (cs.startsWith(chr))
+                bytesRead+= cs.length()+getLineSeparator().length();
+                ++nrUniqueLinesRead;
+                if (cs.getToken(0).equals(chr))
 					return cs;
 			}
 			
@@ -786,7 +786,8 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		if (reuse) {
 			readerB= null;
 			readerC= null;
-			lastLine= null;
+            if (nrUniqueLinesRead!=1) //only if nothing read or not at the first line
+                lastLine= null;
 		}
 		
 	}

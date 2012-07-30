@@ -28,9 +28,12 @@ public class FluxCapacitorTest {
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
     final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     final File BED_MM9_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
-    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+//    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test.bam");
+    //final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test.bam");
+    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bam");
+    final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
+
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
     final String suffixOutput = "gtf";
@@ -128,7 +131,7 @@ public class FluxCapacitorTest {
         settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
                 keepSorted);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-                AnnotationMapping.PAIRED);
+                AnnotationMapping.SINGLE);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,
                 outFile);
         settings.set(FluxCapacitorSettings.STATS_FILE,
@@ -888,13 +891,13 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "PAIRED",
+                    "SIMPLE",
                     // keep sorted
-                    false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+                    false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
 
-//            File index = new File(mapDir.getAbsolutePath()+File.separator+"test.bam.bai");
-//            FileHelper.copy(new File("/home/emilio/fromMicha/test.bam.bai"),index);
+            File index = new File(mapDir.getAbsolutePath()+File.separator+"NA20778-NA20778.4.M_120208_chr22.bam.bai");
+            FileHelper.copy(new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bam.bai"),index);
 
             runCapacitor();
 

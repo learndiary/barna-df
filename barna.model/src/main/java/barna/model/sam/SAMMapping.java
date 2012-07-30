@@ -1,6 +1,5 @@
 package barna.model.sam;
 
-import barna.commons.ByteArrayCharSequence;
 import barna.model.Mapping;
 //import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
 import net.sf.samtools.*;
@@ -19,7 +18,7 @@ public class SAMMapping implements Mapping{
     int currentBlock = 0;
     private int alignmentStart;
     private int alignmentEnd;
-    private int readLength;
+    private int length;
     private int mappingQuality;
     private byte strandFlag;
     private String cigarString;
@@ -34,7 +33,7 @@ public class SAMMapping implements Mapping{
         referenceName = r.getHeader().getSequence(r.getReferenceIndex()).getSequenceName();
         alignmentStart = r.getAlignmentStart()-1;
         alignmentEnd = r.getAlignmentEnd();
-        readLength = r.getReadLength();
+        length = r.getCigar().getReferenceLength();
         mappingQuality = r.getMappingQuality();
         strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
         cigarString = r.getCigarString();
@@ -72,7 +71,7 @@ public class SAMMapping implements Mapping{
 
     @Override
     public int getLength() {
-        return readLength;
+        return length;
     }
 
     @Override
@@ -183,7 +182,7 @@ public class SAMMapping implements Mapping{
             mapping.referenceName = s[0];
             mapping.alignmentStart = Integer.parseInt(s[1].substring(1))-1;
             mapping.alignmentEnd = mapping.alignmentStart+c.getReferenceLength();
-            mapping.readLength = c.getReferenceLength();
+            mapping.length = c.getReferenceLength();
             mapping.mappingQuality = Integer.parseInt(alternates.get(alt));//Integer.parseInt(s[3]);
             mapping.strandFlag = s[1].substring(0,1).equals("+")?(byte)1:-1;
 
