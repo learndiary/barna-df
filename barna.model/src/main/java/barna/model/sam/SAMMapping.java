@@ -33,7 +33,7 @@ public class SAMMapping implements Mapping{
         referenceName = r.getHeader().getSequence(r.getReferenceIndex()).getSequenceName();
         alignmentStart = r.getAlignmentStart()-1;
         alignmentEnd = r.getAlignmentEnd();
-        length = r.getCigar().getReferenceLength();
+        length = 0;
         mappingQuality = r.getMappingQuality();
         strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
         cigarString = r.getCigarString();
@@ -71,6 +71,14 @@ public class SAMMapping implements Mapping{
 
     @Override
     public int getLength() {
+        if (length == 0) {
+            Cigar c = TextCigarCodec.getSingleton().decode(cigarString);
+            for (CigarElement e : c.getCigarElements()) {
+                if (e.getOperator().equals(CigarOperator.M)||e.getOperator().equals(CigarOperator.D))
+                    length+=e.getLength();
+            }
+
+        }
         return length;
     }
 
