@@ -806,6 +806,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
             if (mappings== null)
                 return;
+            if (!mappings.hasNext())
+                return;
 
             Mapping bed1, bed2;
             UniversalReadDescriptor.Attributes
@@ -926,7 +928,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 }
 
             } // iterate bed objects
-
 
             // output coverage stats
             if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
@@ -2625,7 +2626,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                     MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 
-                    if (mode == FluxCapacitorConstants.MODE_LEARN && mappings != null) {
+                    if (mode == FluxCapacitorConstants.MODE_LEARN ){//&& mappings != null) {
                         solve(gene[i], mappings, EnumSet.of(Task.LEARN));
                                 } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
                         solve(gene[i], mappings, currentTasks);
@@ -2845,7 +2846,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             case BED:			
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
-                return new SAMReader(inputFile);
+                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT);
         }
 
         return null;    // make compiler happy

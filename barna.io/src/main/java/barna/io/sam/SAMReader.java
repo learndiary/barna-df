@@ -21,9 +21,11 @@ import net.sf.samtools.*;
 public class SAMReader extends AbstractFileIOWrapper implements
         MappingReader {
 
+    public static final boolean CONTAINED_DEFAULT = false;
+
 	private Mapping[] mappings= null;
     private SAMFileReader reader = null;
-    private boolean contained =false;
+    private boolean contained = CONTAINED_DEFAULT;
 
     int countAll;
     int countEntire;

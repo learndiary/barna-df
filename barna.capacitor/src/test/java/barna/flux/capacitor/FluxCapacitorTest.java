@@ -31,7 +31,8 @@ public class FluxCapacitorTest {
 //    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     //final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test.bam");
-    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bam");
+    //final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
+    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test_chr22:16122720-16123768W.bed");
     final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
 
     final String subdirMappings = "mappings";
@@ -131,7 +132,7 @@ public class FluxCapacitorTest {
         settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
                 keepSorted);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-                AnnotationMapping.SINGLE);
+                AnnotationMapping.PAIRED);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,
                 outFile);
         settings.set(FluxCapacitorSettings.STATS_FILE,
@@ -891,7 +892,7 @@ public class FluxCapacitorTest {
                     FileHelper.COMPRESSION_NONE,
                     SORTED,
                     false,
-                    "SIMPLE",
+                    "PAIRED",
                     // keep sorted
                     false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
 
