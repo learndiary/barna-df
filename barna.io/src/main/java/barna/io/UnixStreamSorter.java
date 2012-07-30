@@ -190,7 +190,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         }
 
         // make sure in and out are closed
-        output.close();
         input.close();
         if(!silent){
             Log.progressFinish("Done", true);
@@ -210,14 +209,15 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
                     OutputStream out = target;
                     File chunk = null;
                     if(out == null){
-
                         chunk = FileHelper.createTempFile("chunk", ".srt", null);
                         chunk.deleteOnExit();
                         out = new FileOutputStream(chunk);
                     }
                     int lines = mergeFiles(chunks, out, new LineComparator(getLineComparator()), target != null, finalCurrentMerges, numMerges);
                     out.flush();
-                    out.close();
+                    // close the output if it was not passed from the outside
+                    if(target == null)
+                        out.close();
                     return new SorterFile(chunk, lines, chunks);
                 }
             }));
@@ -467,8 +467,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             file.getFile().delete();
         }
         writer.flush();
-        writer.close();
-
         return lines;
     }
 
