@@ -15,6 +15,7 @@ import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import static junit.framework.Assert.assertTrue
+import barna.commons.system.OSChecker
 
 /**
  * 
@@ -150,6 +151,10 @@ class FluxCapacitorTest{
         }
         def cpp= cp.join(":")
         String cmd= "java -cp "+ cpp
+
+        if (OSChecker.isWindows()) {
+            cmd="cmd.exe /c ${cmd}"
+        }
 
 		if (tmpDir!= null)
 			cmd+= " -Dflux.io.deny.tmpdir=yes"
