@@ -86,6 +86,13 @@ subprojects{
 
     test{
         jvmArgs '-Xms128m', '-Xmx1G'
+        //makes the standard streams (err and out) visible at console when running tests
+        testLogging.showStandardStreams = true
+
+        //listening to test execution events
+        beforeTest { descriptor ->
+            logger.lifecycle("Running test: " + descriptor)
+        }
     }
 }
 
