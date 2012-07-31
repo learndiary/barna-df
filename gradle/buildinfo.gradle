@@ -1,6 +1,14 @@
 // collect build info
-private String exec ( String command, File directory = null )
+boolean isWindows = false
+if (System.properties['os.name'].toLowerCase().contains('windows')) {
+    isWindows = true
+}
+
+private String exec ( String command, File directory = null, boolean isWindows = false )
 {
+    if (isWindows){
+        command = "cmd /c ${command}"
+    }
     final process = command.execute(( List ) null, directory )
     ( process.text + process.err.text ).trim()
 }
