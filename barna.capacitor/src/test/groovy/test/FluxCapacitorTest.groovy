@@ -245,12 +245,16 @@ class FluxCapacitorTest{
 	
 	@BeforeClass
 	public static void initExecuter() {
-		Execute.initialize(2);
-	}
+        println "Initializing.."
+
+        Execute.initialize(2);
+
+        println "initialized!"
+    }
 	
 	@AfterClass
 	public static void shutdownExecuter() {
-		Execute.shutdown();
+        Execute.shutdown();
 	}
 	
 	@Test
@@ -269,9 +273,10 @@ class FluxCapacitorTest{
 					// keep sorted
 					false);
 
-			String stderr= runCapacitor();
-			
-			assertFiles(2, 1, stderr, STDERR_MAPPED);
+            println("Before")
+            String stderr= runCapacitor();
+            println("After " + stderr)
+            assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {
 			throw new RuntimeException(e);

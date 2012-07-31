@@ -86,6 +86,16 @@ subprojects{
 
     test{
         jvmArgs '-Xms128m', '-Xmx1G'
+
+        testLogging.showStandardStreams = true
+
+        //listening to test execution events
+        beforeTest { descriptor ->
+            logger.lifecycle("Running test: " + descriptor)
+        }
+        onOutput { descriptor, event ->
+            logger.lifecycle(event.message )
+        }
     }
 }
 
