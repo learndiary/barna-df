@@ -14,7 +14,7 @@ private String exec ( String command, File directory = null, boolean isWindows =
     ( process.text + process.err.text ).trim()
 }
 private String find ( String prefix, String command, boolean isWindows ) { find( prefix, exec( command, null, isWindows).readLines()) }
-private String find ( String prefix, List<String> l, boolean isWindows ) { l.find{ it.startsWith( prefix ) }?.replace( prefix, '' )?.trim() ?: '' }
+private String find ( String prefix, List<String> l ) { l.find{ it.startsWith( prefix ) }?.replace( prefix, '' )?.trim() ?: '' }
 
 def gitBranch = "${ find( '# On branch', 'git status', isWindows ) }"
 def gitVersion = "${ find( 'commit',      'git log -1', isWindows )}"
