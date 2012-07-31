@@ -29,7 +29,7 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
-import barna.io.FileHelper;
+import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
 
@@ -112,22 +112,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 public static enum AnnotationMapping {
 		 PAIRED, STRANDED, SINGLE, COMBINED	    
 	 }
-	 
-	 /**
-	 * Helper class to allow us to parse file names relative to a parent directory
-	 */
-	static class RelativePathParser implements FileNameParser {
-	    /**
-	     * the Parent directory
-	     */
-	    File parentDir = null;
-	
-	    @Override
-	    public File parse(String string) {
-	        return FileHelper.fromRelative(string, parentDir);
-	    }
-	}
-	
+
     /**
      * Helper to parse relative filenames
      */
@@ -399,12 +384,12 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	        InputStream in = null;
 	        try {
 	            FluxCapacitorSettings settings = new FluxCapacitorSettings();
-	            relativePathParser.parentDir = f.getParentFile();
+	            relativePathParser.setParentDir(f.getParentFile());
 	            settings.parameterFile = f;
 	            in = new FileInputStream(f);
 	            settings.parse(in);
 	            return settings;
-	        } finally {
+            } finally {
 	            if (in != null) {
 	                try {
 	                    in.close();

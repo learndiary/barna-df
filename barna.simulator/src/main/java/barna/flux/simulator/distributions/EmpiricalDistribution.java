@@ -257,6 +257,7 @@ public class EmpiricalDistribution extends AbstractDistribution {
      * @param distance the distance to compute the range
      */
     public EmpiricalDistribution(NormalDistribution normal, int bins, final double distance) {
+        this.mean= normal.mean;
         a = new double[bins+2];
         min = 0;
         max = 1.0;
