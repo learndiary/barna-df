@@ -9,7 +9,6 @@ private String exec ( String command, File directory = null, boolean isWindows =
     if (isWindows){
         command = "CMD.EXE /c ${command}"
     }
-    println("Starging ${command} on windows ? ${isWindows}")
     final process = command.execute(( List ) null, directory )
     ( process.text + process.err.text ).trim()
 }
