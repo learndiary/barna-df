@@ -262,36 +262,36 @@ public class SequencerTest {
 
                 // print settings for debugging randomly found fail
                 BEDobject2 obj= new BEDobject2();
-                System.err.println("\n=== Simulation ===");
-                System.err.println("sense= "+ sense+ ";\n" +
-                        "chrSeq= getChrSequence("+ chrSeq.length()+");\n" +
-                        "f= writeSequence(chrSeq);\n" +
-                        "chr= FileHelper.stripExtension(f.getName());\n"+
-                        "Gene g= new Gene(\"myGene\");\n" +
-                        "g.setChromosome(chr);\n" +
-                        "t= new Transcript(g, \""+ t.getTranscriptID()+ "\");\n" +
-                        "t.setStrand((byte) (sense? 1: -1));\n" +
-                        "t.setSource(\".\");");
+//                System.err.println("\n=== Simulation ===");
+//                System.err.println("sense= "+ sense+ ";\n" +
+//                        "chrSeq= getChrSequence("+ chrSeq.length()+");\n" +
+//                        "f= writeSequence(chrSeq);\n" +
+//                        "chr= FileHelper.stripExtension(f.getName());\n"+
+//                        "Gene g= new Gene(\"myGene\");\n" +
+//                        "g.setChromosome(chr);\n" +
+//                        "t= new Transcript(g, \""+ t.getTranscriptID()+ "\");\n" +
+//                        "t.setStrand((byte) (sense? 1: -1));\n" +
+//                        "t.setSource(\".\");");
                 for (int k = 0; k < t.getExons().length; k++) {
                     Exon ee= t.getExons()[k];
-                    System.err.println("t.addExon(new Exon(t, "+ ee.getExonID()+", "
-                            + Math.abs(ee.getStart())+", "+ Math.abs(ee.getEnd())+"));");
+//                    System.err.println("t.addExon(new Exon(t, "+ ee.getExonID()+", "
+//                            + Math.abs(ee.getStart())+", "+ Math.abs(ee.getEnd())+"));");
 
                 }
-                System.err.println("tlen= t.getExonicLength();");
-                System.err.println("polyA= "+ polyA+ ";");
-                System.err.println("truLen= tlen+ polyA;");
-                System.err.println("readStart= "+ readStart+ ";");
-                System.err.println("readEnd= "+ readEnd+ ";");
-                System.err.println("readLen= readEnd- readStart+ 1;");
-                System.err.println("molNr= "+ molNr+ ";");
-                System.err.println("absDir= "+ absDir+ ";");
-                System.err.println("fragStart= "+ fragStart+ ";");
-                System.err.println("fragEnd= "+ fragEnd+ ";");
-                System.err.println("fragLen= fragEnd- fragStart+ 1;");
-                System.err.println("left= "+ left+ ";");
-                System.err.println("mate= "+ mate+ ";");
-                System.err.println();
+//                System.err.println("tlen= t.getExonicLength();");
+//                System.err.println("polyA= "+ polyA+ ";");
+//                System.err.println("truLen= tlen+ polyA;");
+//                System.err.println("readStart= "+ readStart+ ";");
+//                System.err.println("readEnd= "+ readEnd+ ";");
+//                System.err.println("readLen= readEnd- readStart+ 1;");
+//                System.err.println("molNr= "+ molNr+ ";");
+//                System.err.println("absDir= "+ absDir+ ";");
+//                System.err.println("fragStart= "+ fragStart+ ";");
+//                System.err.println("fragEnd= "+ fragEnd+ ";");
+//                System.err.println("fragLen= fragEnd- fragStart+ 1;");
+//                System.err.println("left= "+ left+ ";");
+//                System.err.println("mate= "+ mate+ ";");
+//                System.err.println();
 
                 // create BED
                 int polyAcnt= Sequencer.createRead(
@@ -395,9 +395,6 @@ public class SequencerTest {
 
             }
         }
-
-
-
     }
 
     static final char[] bases= new char[] {'A', 'C', 'G', 'T'};
