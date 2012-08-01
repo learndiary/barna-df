@@ -1,7 +1,6 @@
 package barna.flux.capacitor.integrationtest
 
 import barna.commons.system.OSChecker
-import barna.io.FileHelper
 import groovy.json.JsonSlurper
 
 import java.security.MessageDigest
@@ -10,17 +9,13 @@ import java.util.zip.ZipInputStream
 import com.martiansoftware.jsap.RequiredParameterMissingException
 import barna.io.FileHelper
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
-
+import barna.io.rna.UniversalReadDescriptor
 
 /**
  *
  * @author  Emilio Palumbo (emiliopalumbo@gmail.com)
  */
 class FluxCapacitorRunner {
-    
-    static File parFile;
-    static File tmpDir;
-    static File outFile;
     
     /**
      * Map from the relative filename to the absolute filename within
@@ -65,33 +60,49 @@ class FluxCapacitorRunner {
      */
     private static final Object lock = new Object()
 
+    /**
+     * Creates a temporary directory structure for the current run of the Capacitor
+     *
+     * @param cwd current working directory
+     * @param parameters Map of Capacitor parameters
+     * @throws RequiredParameterMissingException if param name is not a known parameter name
+     * @return the current paramter file
+     */
+    static File createTestDir(File cwd, Map parameters) throws RequiredParameterMissingException {
 
-    static void createTestDir(File cwd, Map parameters) throws RequiredParameterMissingException {
+        //checking for mandatory parameters
         if (!parameters.containsKey("ANNOTATION_FILE"))
             throw new RequiredParameterMissingException("The parameter for annotation file is missing")
         if (!parameters.containsKey("MAPPING_FILE"))
             throw new RequiredParameterMissingException("The parameter for mapping file is missing")
-        if (!parameters.containsKey("TMP_DIR")) {
-            tmpDir = FileHelper.createTempDir("run_tmp","",cwd);
-            parameters.put("TMP_DIR", tmpDir);
-        } else {
-            tmpDir = parameters["TMP_DIR"];
+
+        //getting instance for the read descriptor
+        if (parameters.containsKey("READ_DESCRIPTOR")) {
+            UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
+            descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         }
-        File outDir = FileHelper.createTempDir("output","",cwd);
+
+        //setting up the output file
+        File outDir = new File(cwd, "output");
+        outDir.mkdir();
         if (!parameters.containsKey("STDOUT_FILE")) {
-            outFile = FileHelper.createTempFile("FluxCapacitor","gtf",outDir);
+            File outFile = new File(outDir,"FluxCapacitor.gtf");
             parameters.put("STDOUT_FILE", outFile);
             outFile.delete();
         }
-        //Writing parameter file
-        parFile= File.createTempFile("FluxCapacitorTest", "par", cwd);
+
+        //writing the parameter file
+        File parFile= new File(cwd,"parameters.par");
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
-        for (String s : parameters.keySet()) {
-            settings.set(s,parameters[s]);
+        parameters.each{k,v->
+            settings.set(k,v)
         }
-        BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile));
-        buffy.write(settings.toString());
-        buffy.close();
+        settings.validate();
+        parameters.each{k,v->
+            parFile.append("${k}\t${v}\n")
+        }
+
+        return parFile;
     }
 
     /**
@@ -138,7 +149,7 @@ class FluxCapacitorRunner {
      * is not available locally, the data file is downloaded from the repository.
      * <p>
      *     The data map contains relative paths to the test data pointing to the absolut
-     *     files and directories. For example, to access a gtp file
+     *     files and directories. For example, to access a gtf file
      *     {@code FluxCapacitorRunner.getTestData()['gtf/mydata.gtf']} returns the absolute path
      *     to 'mydata.gtf'
      *
@@ -269,6 +280,9 @@ class FluxCapacitorRunner {
     }
 
     public static void main(String[] args) {
-        println getTestData()
+        //println getTestData()
+        FluxCapacitorSettings s =  new FluxCapacitorSettings();
+        s.set("ANNOTATION_FILE", new File(""));
+        s.set("ANNOTATION_FILE", "ABF");
     }
 }

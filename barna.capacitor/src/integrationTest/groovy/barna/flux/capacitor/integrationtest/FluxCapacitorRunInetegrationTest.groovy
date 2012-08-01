@@ -3,21 +3,17 @@ package barna.flux.capacitor.integrationtest
 
 import barna.commons.Execute
 import barna.commons.system.OSChecker
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
+
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
-import barna.io.Sorter
-import barna.io.rna.UniversalReadDescriptor
 
-import java.util.concurrent.Future
-import java.util.zip.GZIPOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
+import barna.io.rna.UniversalReadDescriptor
 
 import org.junit.*
 
 import static junit.framework.Assert.assertTrue
 import static org.junit.Assert.fail
+import static junit.framework.Assert.fail
 
 /**
  * 
@@ -74,39 +70,11 @@ class FluxCapacitorRunInetegrationTest {
 	static final String[] STDERR_MAPPED= ["8009","8192"]
 	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
 	
-	void assertFiles(int nrFilesInGTF, int nrFilesInBED, String stderr, String[] occurrences) {
+	void assertStdErr(String stderr, String[] occurrences) {
 
-        System.out.println("Error output : " + stderr);
-		
-		// current stderr output
-		//		[INFO] 	7897 reads, 8009 mappings: R-factor 1.0141826
-		//		[INFO] 	6145 entire, 1864 split mappings (2.3273816%)
-		//
-		//		1 single transcript loci
-		//		8009 mappings in file
-		//		566 mappings fall in single transcript loci
-		//		283 mappings map to annotation
-		//		1172 mappings in annotation-mapped pairs
-		//		40,75 min/max read length
-		//
-		//		8009 mappings read from file
-		//		8044 mapping pairs map to annotation
-		//		0 pairs without tx evidence
-		//		208 pairs in wrong orientation
-		//		0 single mappings forced
-		//
-		//		4 transcripts, 4 detected
-				
-		//		println "EXIT: ${process.exitValue()}"
-		//		println "STDOUT: ${process.in.text}"
-		//		// alternative to combine wait and stdout
-		//		println "ls ${parameter}".execute().text
 		for (int i = 0; i < occurrences.length; i++) {
 			assertTrue(stderr.contains(occurrences[i]))
 		}
-
-		if (occurrences!= STDERR_ACCESS_DENIED)
-			assertTrue(FluxCapacitorRunner.getOutFile().exists());
 
 	}
 
@@ -125,17 +93,54 @@ class FluxCapacitorRunInetegrationTest {
 
     @Test
     public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep() {
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-               "ANNOTATION_FILE" : GTF_SORTED,
-               "MAPPING_FILE" : BED_SORTED,
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+               "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
+               "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/chr1_chrX.bed'],
                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-               "READ_DESCRIPTOR" : descriptor,
-               "KEEP_SORTED_FILES" : false
+               "READ_DESCRIPTOR" : "SIMULATOR",
         ])
-        String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, STDERR_MAPPED);
+        assertDir(currentTestDirectory, [
+                FluxCapacitorRunner.DEFAULT_PARAMETER_FILE,
+                FluxCapacitorRunner.DEFAULT_OUTPUT_FILE,
+                "/tmp/asdasd"
+        ])
+
+        assertDir(currentTestDirectory, [
+                "parameters.par" : {File file -> return file.exists()},
+                "output/result.gtf" : [
+                        "lines":20,
+                        "contains": ["transcript", "exon"],
+                        "equals": "expected-result.gtf",
+                        "md5": "34masd314",
+                        "eachLine" : {line-> line.endsWith("abc")}
+                ]
+        ])
+
+    }
+
+    void assertDir(File cwd, Map value){
+
+        def allFile = []
+        cwd.eachFileRecurse{ allFile << it.getAbsolutePath()}
+
+
+        for (Map.Entry e  : value.entrySet()) {
+            if(e.key.equals("eachLine")){
+                if(e.value instanceof Closure){
+                    def v = e.value
+                    for (String line  : new File(file).readLines()) {
+                        if(!v(line)) fail("LIne comparison failed : ")
+                    }
+                }else{
+
+                }
+            }
+        }
     }
 
 	@Test
@@ -143,6 +148,7 @@ class FluxCapacitorRunInetegrationTest {
 
         UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
         descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+
         FluxCapacitorRunner.createTestDir(currentTestDirectory, [
                 "ANNOTATION_FILE" : GTF_SORTED,
                 "MAPPING_FILE" : BED_SORTED,
@@ -151,7 +157,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 	}
 
     @Test
@@ -167,7 +173,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 	
 	}
 	
@@ -184,7 +190,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -201,7 +207,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -218,7 +224,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -235,7 +241,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -252,7 +258,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -269,7 +275,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 	}
 
 	@Test
@@ -285,7 +291,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -302,7 +308,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 	
@@ -319,7 +325,7 @@ class FluxCapacitorRunInetegrationTest {
                 "KEEP_SORTED_FILES" : false
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_MAPPED);
+        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
 	}
 
@@ -337,7 +343,7 @@ class FluxCapacitorRunInetegrationTest {
                 "TMP_DIR" : new File(System.getProperty("java.io.tmpdir"))
         ])
         String stderr= runCapacitor();
-        assertFiles(2, 1, stderr, STDERR_ACCESS_DENIED);
+        assertStdErr(2, 1, stderr, STDERR_ACCESS_DENIED);
 
 	}
 

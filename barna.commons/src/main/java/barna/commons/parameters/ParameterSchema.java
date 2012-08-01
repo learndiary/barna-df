@@ -130,6 +130,22 @@ public abstract class ParameterSchema {
     }
 
     /**
+     * Access a parameter value
+     *
+     * @param paramName the name of the parameter
+     * @param <T> the type
+     * @return value the parameter value
+     */
+    public <T> T get(String paramName) {
+        // find the parameter
+        Parameter local = parameters.get(paramName.toUpperCase());
+        if (local == null) {
+            throw new IllegalArgumentException("Unknown parameter '" + paramName + "'");
+        }
+        return (T) local.get();
+    }
+
+    /**
      * Set a parameter value
      *
      * @param parameter the parameter
@@ -157,6 +173,21 @@ public abstract class ParameterSchema {
             throw new IllegalArgumentException("Unknown parameter '" + paramName + "'");
         }
         local.set(value);
+    }
+
+    /**
+     * Set a parameter value
+     *
+     * @param paramName a <code>String</code> identifying the parameter
+     * @param value the value
+     * @param <T> the type
+     */
+    public <T> void set(String paramName, String value) throws ParameterException {
+        Parameter local = parameters.get(paramName.toUpperCase());
+        if (local == null) {
+            throw new IllegalArgumentException("Unknown parameter '" + paramName + "'");
+        }
+        local.parse(value);
     }
 
     /**
