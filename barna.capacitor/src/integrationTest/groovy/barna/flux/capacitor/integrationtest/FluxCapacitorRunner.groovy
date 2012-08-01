@@ -1,5 +1,6 @@
 package barna.flux.capacitor.integrationtest
 
+import barna.commons.system.OSChecker
 import barna.io.FileHelper
 import groovy.json.JsonSlurper
 
@@ -44,8 +45,58 @@ class FluxCapacitorRunner {
         targetDirectory = System.getProperty("testdata.target", new File("").getAbsolutePath())
     }
 
+    /**
+     * The path to the capacitor executable
+     */
+    private static String executable
+
+    /**
+     * Synchronization lock
+     */
+    private static final Object lock = new Object()
+
+
     static void createTestDir(File cwd, Map parameter) {
 
+    }
+
+    /**
+     * Run the capacitor as external process in the given working directory
+     * with the specified parameter file.
+     *
+     * @param cwd working directory
+     * @param parameterFile the parameter file
+     * @param denyTempDir if true, access to system tmp dir will be forbidden
+     * @return output the output of the capacitor
+     */
+    public static String runCapacitor(File cwd, File parameterFile, boolean denyTempDir = false){
+        synchronized (lock){
+            if(executable == null){
+                executable = System.getProperty("dist.exe")
+                if(executable == null){
+                    throw new RuntimeException("No capacitor executable specified")
+                }
+            }
+        }
+
+        def pb = new ProcessBuilder()
+        pb.environment().put("FLUX_MEM", "1G")
+
+        if (denyTempDir){
+            pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
+        }
+
+        def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
+        if (OSChecker.isWindows()) {
+            cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
+        }
+        def process = pb.directory(cwd)
+                .redirectErrorStream(true)
+                .command(cmd)
+                .start()
+        String output = process.inputStream.text
+        process.waitFor()
+        return output;
     }
 
     /**
