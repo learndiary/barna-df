@@ -7,8 +7,8 @@ private String exec ( String command, File directory = null )
 private String find ( String prefix, String command ) { find( prefix, exec( command ).readLines()) }
 private String find ( String prefix, List<String> l ) { l.find{ it.startsWith( prefix ) }?.replace( prefix, '' )?.trim() ?: '' }
 
-def gitBranch = "${ find( '# On branch', 'git status' ) }"
-def gitVersion = "${ find( 'commit',      'git log -1' )}"
+def gitBranch = "${ find( '# On branch', 'cmd /c git status' ) }"
+def gitVersion = "${ find( 'commit',      'cmd /c git log -1' )}"
 def buildDate  = "${new Date().toString()}"
 
 subprojects.each{project->
