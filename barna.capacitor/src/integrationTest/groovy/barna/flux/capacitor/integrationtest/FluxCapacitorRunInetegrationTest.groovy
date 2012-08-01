@@ -2,6 +2,7 @@
 package barna.flux.capacitor.integrationtest
 
 import barna.commons.Execute
+import barna.commons.system.OSChecker
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
@@ -18,7 +19,6 @@ import java.util.zip.ZipOutputStream
 
 import static junit.framework.Assert.assertTrue
 import static org.junit.Assert.fail
-import barna.commons.system.OSChecker
 
 /**
  * 
@@ -247,7 +247,11 @@ class FluxCapacitorRunInetegrationTest {
 		if (occurrences!= STDERR_ACCESS_DENIED)
 			assertTrue(outFile.exists());
 		String[] files= anoDir.list();
-		assertTrue(files.length== nrFilesInGTF);	// annotation+ parameter+ output
+		assertTrue("""Number of gtf files does not match!
+Expected : ${files.length}
+Found    : ${nrFilesInGTF}
+List of Files : ${files.join(", ")}
+""", files.length== nrFilesInGTF);	// annotation+ parameter+ output
 		files= mapDir.list();
 		assertTrue(files.length== nrFilesInBED);	// mapping file only
 	}
