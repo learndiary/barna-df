@@ -92,7 +92,10 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			}
 
 			protected UniversalReadDescriptor get() {
-				return descriptor;
+                if (descriptor!=null)
+                    return descriptor;
+                else
+                    return this.getDefault();
 			}
 			
 			public Parameter copy() {
@@ -101,6 +104,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				
 				return clone;
 			}
+
+//            public String getValuesString() {
+//                if (descriptor!=null)
+//                    return descriptor.toString();
+//                else
+//                    return this.getDefault().toString();
+//            }
 	 }
 	
 	

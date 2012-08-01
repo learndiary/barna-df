@@ -10,26 +10,37 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
  */
 class FluxCapacitorRunner {
 
+    static File parFile;
+    static File tmpDir;
+    static File outFile;
+
     static void createTestDir(File cwd, Map parameters) throws RequiredParameterMissingException {
         if (!parameters.containsKey("ANNOTATION_FILE"))
             throw new RequiredParameterMissingException("The parameter for annotation file is missing")
         if (!parameters.containsKey("MAPPING_FILE"))
             throw new RequiredParameterMissingException("The parameter for mapping file is missing")
         if (!parameters.containsKey("TMP_DIR")) {
-            parameters.put([ "TMP_DIR" : FileHelper.createTempDir("run_tmp","",cwd).path]);
+            tmpDir = FileHelper.createTempDir("run_tmp","",cwd);
+            parameters.put("TMP_DIR", tmpDir);
+        } else {
+            tmpDir = parameters["TMP_DIR"];
         }
         File outDir = FileHelper.createTempDir("output","",cwd);
         if (!parameters.containsKey("STDOUT_FILE")) {
-            parameters.put([ "STDOUT_FILE" : FileHelper.append(outDir.path+File.separator+"FluxCapacitor.gtf")]);
+            outFile = FileHelper.createTempFile("FluxCapacitor","gtf",outDir);
+            parameters.put("STDOUT_FILE", outFile);
+            outFile.delete();
         }
 
 
         //Writing parameter file
-        File parFile= File.createTempFile("FluxCapacitorTest", "par", cwd);
+        parFile= File.createTempFile("FluxCapacitorTest", "par", cwd);
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
         for (String s : parameters.keySet()) {
             settings.set(s,parameters[s]);
         }
-        settings.write(new BufferedOutputStream(parFile));
+        BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile));
+        buffy.write(settings.toString());
+        buffy.close();
     }
 }

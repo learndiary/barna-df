@@ -73,7 +73,8 @@ import java.util.zip.ZipFile;
  *
  * @author Micha Sammeth (gmicha@gmail.com)
  */
-public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
+public class
+        FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
 
     /**
      * Enumerates possible tasks for the FluxCapacitor
