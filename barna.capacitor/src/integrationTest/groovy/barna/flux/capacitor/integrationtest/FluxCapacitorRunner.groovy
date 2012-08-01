@@ -16,7 +16,13 @@ import barna.io.rna.UniversalReadDescriptor
  * @author  Emilio Palumbo (emiliopalumbo@gmail.com)
  */
 class FluxCapacitorRunner {
-    
+
+    /**
+     * Default common files
+     */
+    public static DEFAULT_PARAMETER_FILE = "params.par"
+    public static DEFAULT_OUTPUT_FILE = "results.gtf"
+
     /**
      * Map from the relative filename to the absolute filename within
      * the test data directory
@@ -86,13 +92,13 @@ class FluxCapacitorRunner {
         File outDir = new File(cwd, "output");
         outDir.mkdir();
         if (!parameters.containsKey("STDOUT_FILE")) {
-            File outFile = new File(outDir,"FluxCapacitor.gtf");
+            File outFile = new File(outDir,DEFAULT_OUTPUT_FILE);
             parameters.put("STDOUT_FILE", outFile);
             outFile.delete();
         }
 
         //writing the parameter file
-        File parFile= new File(cwd,"parameters.par");
+        File parFile= new File(cwd,DEFAULT_PARAMETER_FILE);
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
         parameters.each{k,v->
             settings.set(k,v)
@@ -280,9 +286,6 @@ class FluxCapacitorRunner {
     }
 
     public static void main(String[] args) {
-        //println getTestData()
-        FluxCapacitorSettings s =  new FluxCapacitorSettings();
-        s.set("ANNOTATION_FILE", new File(""));
-        s.set("ANNOTATION_FILE", "ABF");
+        println getTestData()
     }
 }

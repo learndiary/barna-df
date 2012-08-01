@@ -3,16 +3,13 @@ package barna.flux.capacitor.integrationtest
 
 import barna.commons.Execute
 import barna.commons.system.OSChecker
-
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
-
 import barna.io.rna.UniversalReadDescriptor
-
+import groovy.io.FileType
 import org.junit.*
 
 import static junit.framework.Assert.assertTrue
-import static org.junit.Assert.fail
 import static junit.framework.Assert.fail
 
 /**
@@ -21,10 +18,6 @@ import static junit.framework.Assert.fail
  */
 
 class FluxCapacitorRunInetegrationTest {
-
-	static final int SORTED= -1, UNSORT_GTF= 2, UNSORT_BED= 9;
-	final File GTF_SORTED= new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-	final File BED_SORTED= new File(getClass().getResource("/chr1_chrX.bed").getFile());
 
     static String executable
     static File tmpDir
@@ -70,13 +63,40 @@ class FluxCapacitorRunInetegrationTest {
 	static final String[] STDERR_MAPPED= ["8009","8192"]
 	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
 	
-	void assertStdErr(String stderr, String[] occurrences) {
+	void assertStdErr(String stderr, String[] occurrences, Boolean debug = false) {
+
+        if (debug) System.err.println(stderr)
 
 		for (int i = 0; i < occurrences.length; i++) {
 			assertTrue(stderr.contains(occurrences[i]))
 		}
 
 	}
+
+    void assertDir(File cwd, List value){
+
+        def allFile = []
+        cwd.eachFileRecurse(FileType.FILES, { allFile << it.getAbsolutePath() })
+
+        if (allFile.size()!=value.size()) fail("""
+            Differemt number of files.
+            Expected: ${value.each {println it}}
+            Found: ${allFile.each {println it}}
+        """)
+
+//        for (Map.Entry e  : value.entrySet()) {
+//            if(e.key.toString().contains(File.separator)){
+//                if(e.value instanceof Closure){
+//                    def v = e.value
+//                    for (String line  : new File(file).readLines()) {
+//                        if(!v(line)) fail("LIne comparison failed : ")
+//                    }
+//                }else{
+//
+//                }
+//            }
+//        }
+    }
 
     File currentTestDirectory = null
     @Before
@@ -92,11 +112,10 @@ class FluxCapacitorRunInetegrationTest {
     }
 
     @Test
-    public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep() {
-
+    public void testIOflatSortedGTFflatSortedBEDnoKeep() {
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
-               "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/chr1_chrX.bed'],
+               "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],
                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
                "READ_DESCRIPTOR" : "SIMULATOR",
         ])
@@ -107,244 +126,120 @@ class FluxCapacitorRunInetegrationTest {
         assertDir(currentTestDirectory, [
                 FluxCapacitorRunner.DEFAULT_PARAMETER_FILE,
                 FluxCapacitorRunner.DEFAULT_OUTPUT_FILE,
-                "/tmp/asdasd"
         ])
-
-        assertDir(currentTestDirectory, [
-                "parameters.par" : {File file -> return file.exists()},
-                "output/result.gtf" : [
-                        "lines":20,
-                        "contains": ["transcript", "exon"],
-                        "equals": "expected-result.gtf",
-                        "md5": "34masd314",
-                        "eachLine" : {line-> line.endsWith("abc")}
-                ]
-        ])
+//
+//        assertDir(currentTestDirectory, [
+//                "parameters.par" : {File file -> return file.exists()},
+//                "output/result.gtf" : [
+//                        "lines":20,
+//                        "contains": ["transcript", "exon"],
+//                        "equals": "expected-result.gtf",
+//                        "md5": "34masd314",
+//                        "eachLine" : {line-> line.endsWith("abc")}
+//                ]
+//        ])
 
     }
 
-    void assertDir(File cwd, Map value){
-
-        def allFile = []
-        cwd.eachFileRecurse{ allFile << it.getAbsolutePath()}
-
-
-        for (Map.Entry e  : value.entrySet()) {
-            if(e.key.equals("eachLine")){
-                if(e.value instanceof Closure){
-                    def v = e.value
-                    for (String line  : new File(file).readLines()) {
-                        if(!v(line)) fail("LIne comparison failed : ")
-                    }
-                }else{
-
-                }
-            }
-        }
-    }
-
 	@Test
-	public void testIOgzippedSortedWritableGTFflatSortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+	public void testIOgzippedSortedGTFflatSortedBEDnoKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf.gz'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
+                "READ_DESCRIPTOR" : "SIMULATOR",
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-	}
 
-    @Test
-	public void testIOzippedSortedWritableGTFflatSortedWritableBEDnoKeep() {
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
-                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
-        ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-	
-	}
-	
-	@Test
-	public void testIOflatSortedWritableGTFgzippedSortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
-                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
-        ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-
+        assertStdErr(stderr, STDERR_MAPPED);
 	}
 
 	@Test
-	public void testIOflatSortedWritableGTFzippedSortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+	public void testIOflatSortedGTFgzippedSortedBEDnoKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed.gz'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
+                "READ_DESCRIPTOR" : "SIMULATOR",
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
+        assertStdErr(stderr, STDERR_MAPPED);
 	}
 
 	@Test
-	public void testIOgzippedSortedWritableGTFzippedSortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+	public void testIOgzippedSortedGTFgzippedSortedBEDnoKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf.gz'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed.gz'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
+                "READ_DESCRIPTOR" : "SIMULATOR",
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, STDERR_MAPPED);
 	}
 
 	@Test
-	public void testIOzippedSortedWritableGTFgzippedSortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+	public void testIOflatUnsortedGTFflatSortedBEDnoKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
+                "READ_DESCRIPTOR" : "SIMULATOR",
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, STDERR_MAPPED);
 	}
 
 	@Test
-	public void testIOflatUnsortedWritableGTFflatSortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+	public void testIOflatSortedGTFflatUnsortedBEDnoKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
+                "READ_DESCRIPTOR" : "SIMULATOR",
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
 
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, STDERR_MAPPED);
 	}
 
 	@Test
-	public void testIOflatSortedWritableGTFflatUnsortedWritableBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+	public void testIOflatUnSortedGTFflatUnsortedBEDkeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
+                "READ_DESCRIPTOR" : "SIMULATOR",
+                "KEEP_SORTED_FILES" : "true",
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-	}
 
-	@Test
-	public void testIOflatUnSortedWritableGTFflatUnsortedWritableBEDkeep() {
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
-                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
-        ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-
-	}
-
-    @Test
-	public void testIOflatUnSortedReadOnlyGTFflatUnsortedReadOnlyBEDkeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
-                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
-        ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-
-	}
-	
-	@Test
-	public void testIOzippedUnSortedReadOnlyGTFgzippedUnsortedReadOnlyBEDnoKeep() {
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
-                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false
-        ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_MAPPED);
-
+        assertStdErr(stderr, STDERR_MAPPED);
 	}
 
 	@Test
 	public void testTmpDir() {
-
         UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
         descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-                "ANNOTATION_FILE" : GTF_SORTED,
-                "MAPPING_FILE" : BED_SORTED,
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
-                "READ_DESCRIPTOR" : descriptor,
-                "KEEP_SORTED_FILES" : false,
+                "READ_DESCRIPTOR" : "SIMULATOR",
                 "TMP_DIR" : new File(System.getProperty("java.io.tmpdir"))
         ])
-        String stderr= runCapacitor();
-        assertStdErr(2, 1, stderr, STDERR_ACCESS_DENIED);
 
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile,true);
+
+        assertStdErr(stderr, STDERR_ACCESS_DENIED);
 	}
 
 }
