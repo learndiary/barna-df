@@ -44,6 +44,13 @@ task integrationTest(type: Test, dependsOn: "distDir") {
     testClassesDir = sourceSets.integrationTest.output.classesDir
     classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
     systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
+    }
 }
 
 

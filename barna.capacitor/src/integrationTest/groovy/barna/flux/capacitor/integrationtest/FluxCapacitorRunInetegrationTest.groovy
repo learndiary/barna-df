@@ -18,6 +18,7 @@ import java.util.zip.ZipOutputStream
 
 import static junit.framework.Assert.assertTrue
 import static org.junit.Assert.fail
+import barna.commons.system.OSChecker
 
 /**
  * 
@@ -165,9 +166,13 @@ class FluxCapacitorRunInetegrationTest {
         if (tmpDir != null){
             pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
         }
+        def cmd = [executable, "-p", parFile.getAbsolutePath()]
+        if (OSChecker.isWindows()) {
+            cmd = ["cmd", "/c", executable, "-p", parFile.getAbsolutePath()]
+        }
         def process = pb.directory(tmpDir != null ? tmpDir : parFile.getParentFile())
                 .redirectErrorStream(true)
-                .command([executable, "-p", parFile.getAbsolutePath()])
+                .command(cmd)
                 .start()
         String output = process.inputStream.text
         process.waitFor()

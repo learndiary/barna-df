@@ -7,6 +7,7 @@ import org.junit.Test
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
+import barna.commons.system.OSChecker
 
 /**
  * Created with IntelliJ IDEA.
@@ -60,9 +61,13 @@ class FluxSimulatorIntegrationTest {
     public Process runSimulator(File directory, File parameterFile){
         def pb = new ProcessBuilder()
         pb.environment().put("FLUX_MEM", "1G")
+        def cmd = [executable, "-p", parFile.getAbsolutePath()]
+        if (OSChecker.isWindows()) {
+            cmd = ["cmd", "/c", executable, "-p", parFile.getAbsolutePath()]
+        }
         def process = pb.directory(directory)
                 .redirectErrorStream(true)
-                .command([executable, "-p", parameterFile.getAbsolutePath()])
+                .command(cmd)
                 .start()
         for (String line : process.inputStream.readLines()) {
             println(line)
