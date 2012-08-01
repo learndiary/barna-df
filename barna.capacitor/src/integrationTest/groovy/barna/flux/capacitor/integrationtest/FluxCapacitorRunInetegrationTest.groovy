@@ -19,6 +19,8 @@ import java.util.zip.ZipOutputStream
 
 import static junit.framework.Assert.assertTrue
 import static org.junit.Assert.fail
+import org.junit.Before
+import org.junit.After
 
 /**
  * 
@@ -255,9 +257,32 @@ List of Files : ${files.join(", ")}
 		files= mapDir.list();
 		assertTrue(files.length== nrFilesInBED);	// mapping file only
 	}
-	
 
-	@Test
+    File currentTestDirectory = null
+    @Before
+    public void setUpTest(){
+        currentTestDirectory = FileHelper.createTempDir("cap-integration", "", null)
+    }
+
+    @After
+    public void cleanup(){
+        if(currentTestDirectory != null){
+            FileHelper.rmDir(currentTestDirectory)
+        }
+    }
+
+    @Test
+    public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep_new() {
+        FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+               "GTF_ANNOTATION" : GTF_SORTED,
+               "KEEP_SORTED_FILES": "yes",
+        ])
+        String stderr= runCapacitor();
+        assertFiles(2, 1, stderr, STDERR_MAPPED);
+    }
+
+
+    @Test
 	public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep() {
 
 		try {
@@ -548,7 +573,8 @@ List of Files : ${files.join(", ")}
 	@Test
 	public void testIOflatUnSortedReadOnlyGTFflatUnsortedReadOnlyBEDkeep() {
 
-		try {
+        println "Hello"
+        try {
 			initFiles(
 					// GTF: compressed, sorted, readOnly
 					FileHelper.COMPRESSION_NONE,
