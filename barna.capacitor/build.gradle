@@ -1,6 +1,11 @@
 apply plugin: 'groovy'
 
 def outputName = "flux-capacitor-${version}"
+ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
+ext.testdata_repository = "repo"
+ext.testdata_artifact = "barna/test_data-1.0.zip"
+ext.testdata_targetDirectory = new File("").getAbsolutePath()
+
 
 // add integration tests to source sets
 sourceSets{
@@ -51,6 +56,11 @@ task integrationTest(type: Test, dependsOn: "distDir") {
     if (isWindows) {
         systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
     }
+    // set url properties for test data
+    systemProperties["testdata.artifactory"] = testdata_artifactoryUrl
+    systemProperties["testdata.repository"] = testdata_repository
+    systemProperties["testdata.artifact"] = testdata_artifact
+    systemProperties["testdata.target"] = testdata_targetDirectory
 }
 
 
