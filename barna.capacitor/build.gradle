@@ -4,7 +4,7 @@ def outputName = "flux-capacitor-${version}"
 ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
 ext.testdata_repository = "repo"
 ext.testdata_artifact = "barna/test_data-1.0.zip"
-ext.testdata_targetDirectory = new File("").getAbsolutePath()
+ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
 
 
 // add integration tests to source sets

@@ -8,19 +8,16 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMappi
 import barna.io.FileHelper
 import barna.io.Sorter
 import barna.io.rna.UniversalReadDescriptor
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
 
 import java.util.concurrent.Future
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
+import org.junit.*
+
 import static junit.framework.Assert.assertTrue
 import static org.junit.Assert.fail
-import org.junit.Before
-import org.junit.After
 
 /**
  * 
@@ -337,7 +334,7 @@ List of Files : ${files.join(", ")}
 		}
 
 	}
-	
+
     @Test
 	public void testIOzippedSortedWritableGTFflatSortedWritableBEDnoKeep() {
 	
@@ -570,7 +567,7 @@ List of Files : ${files.join(", ")}
 
 	}
 
-	@Test
+    @Test
 	public void testIOflatUnSortedReadOnlyGTFflatUnsortedReadOnlyBEDkeep() {
 
         println "Hello"
