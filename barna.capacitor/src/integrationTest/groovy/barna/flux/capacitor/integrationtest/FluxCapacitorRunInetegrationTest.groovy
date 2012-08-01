@@ -1,5 +1,5 @@
 	
-package test
+package barna.flux.capacitor.integrationtest
 
 import barna.commons.Execute
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
@@ -7,22 +7,24 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMappi
 import barna.io.FileHelper
 import barna.io.Sorter
 import barna.io.rna.UniversalReadDescriptor
+import org.junit.AfterClass
+import org.junit.BeforeClass
+import org.junit.Test
+
 import java.util.concurrent.Future
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
+
 import static junit.framework.Assert.assertTrue
-import barna.commons.system.OSChecker
+import static org.junit.Assert.fail
 
 /**
  * 
  * @author Thasso Griebel (thasso.griebel@gmail.com)
  */
 
-class FluxCapacitorTest{
+class FluxCapacitorRunInetegrationTest {
 
 	static final int SORTED= -1, UNSORT_GTF= 2, UNSORT_BED= 9;
 	final File GTF_SORTED= new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
@@ -39,9 +41,28 @@ class FluxCapacitorTest{
 	protected File parFile= null;
 	protected File gtfFile= null;
 	protected File bedFile= null;
-	
-	
-	private void initFileNames(byte compressionGTF, byte compressionBED) throws Exception {
+
+    static String executable
+
+    @BeforeClass
+    public static void setUp(){
+        executable = System.getProperty("dist.exe")
+        if(executable == null){
+            fail("No capacitor executable specified")
+        }
+        Execute.initialize(2);
+
+    }
+
+    @AfterClass
+    public static void shutdownExecuter() {
+        Execute.shutdown();
+    }
+
+
+
+
+    private void initFileNames(byte compressionGTF, byte compressionBED) throws Exception {
 		// set up file structure
 		anoDir= FileHelper.createTempDir(getClass().getSimpleName(), subdirAnnotation, null);
 		anoDir.deleteOnExit();
@@ -138,41 +159,19 @@ class FluxCapacitorTest{
 	}
 
 	protected String runCapacitor() throws Exception{
-		
-		// start process
-        /**
-         * Get rid of any IDEA jars files in the classpath
-         */
-        def classpath = System.getProperty("java.class.path")
-        def cp  = []
-        // remove libs containing spaces in the name, eg "blabla IDEA bla.jar"
-        classpath.split(":").each {e->
-            if(!e.contains(" ")) cp << e
+
+        def pb = new ProcessBuilder()
+        pb.environment().put("FLUX_MEM", "1G")
+        if (tmpDir != null){
+            pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
         }
-        def cpp= cp.join(":")
-        String cmd= "java -cp "+ cpp
-
-        if (OSChecker.isWindows()) {
-            cmd="cmd.exe /c ${cmd}"
-        }
-
-		if (tmpDir!= null)
-			cmd+= " -Dflux.io.deny.tmpdir=yes"
-		cmd+= " -Xmx1G barna.commons.launcher.Flux -t capacitor -p "+parFile.getAbsolutePath()
-
-        System.out.println("Try executing : " + cmd);
-		Process process= cmd.execute()
-		process.waitFor()
-
-		// internal start
-		//		FluxCapacitor capacitor= new FluxCapacitor();
-		//		capacitor.setFile(parFile);
-		//		Future<Void> captain= Execute.getExecutor().submit(capacitor);
-		//		captain.get();
-		//		outFile.deleteOnExit();
-		
-		String stderr= "STDERR: ${process.err.text}"
-		return stderr;
+        def process = pb.directory(tmpDir != null ? tmpDir : parFile.getParentFile())
+                .redirectErrorStream(true)
+                .command([executable, "-p", parFile.getAbsolutePath()])
+                .start()
+        String output = process.inputStream.text
+        process.waitFor()
+		return output;
 		
 		
 	}
@@ -248,20 +247,7 @@ class FluxCapacitorTest{
 		assertTrue(files.length== nrFilesInBED);	// mapping file only
 	}
 	
-	@BeforeClass
-	public static void initExecuter() {
-        println "Initializing.."
 
-        Execute.initialize(2);
-
-        println "initialized!"
-    }
-	
-	@AfterClass
-	public static void shutdownExecuter() {
-        Execute.shutdown();
-	}
-	
 	@Test
 	public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep() {
 
@@ -277,10 +263,7 @@ class FluxCapacitorTest{
 					false,
 					// keep sorted
 					false);
-
-            println("Before")
             String stderr= runCapacitor();
-            println("After " + stderr)
             assertFiles(2, 1, stderr, STDERR_MAPPED);
 			
 		} catch (Exception e) {

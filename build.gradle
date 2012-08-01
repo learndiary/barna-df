@@ -87,7 +87,7 @@ subprojects{
     test{
         jvmArgs '-Xms128m', '-Xmx1G'
         //makes the standard streams (err and out) visible at console when running tests
-        testLogging.showStandardStreams = true
+        //testLogging.showStandardStreams = true
 
         //listening to test execution events
         beforeTest { descriptor ->
@@ -155,4 +155,13 @@ buildscript {
 task wrapper(type: Wrapper) {
     // HHH-6106 - this is needed for IntellJ generation until 1.0-milestone-3 is released.
     gradleVersion = '1.1'
+}
+
+idea{
+    module {
+        //if you love browsing Javadoc
+        downloadJavadoc = true
+        //and hate reading sources :)
+        downloadSources = true
+    }
 }
