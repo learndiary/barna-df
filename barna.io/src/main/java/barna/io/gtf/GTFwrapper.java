@@ -1695,20 +1695,24 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * written
 	 */
 	public void sort(File targetFile) {
-        if(!silent && stars){
+        if (!silent && stars) {
             Log.progressStart("sorting GTF file");
         }
+        OutputStream oStream = null;
         try {
-			OutputStream oStream= new FileOutputStream(targetFile);
-			sort(oStream);
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
-		} finally {
-	        if(!silent && stars){
-	            Log.progressFinish(StringUtils.OK, true);
-	        }
-		}
-	}
+            oStream = new FileOutputStream(targetFile);
+            sort(oStream);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (!silent && stars) {
+                Log.progressFinish(StringUtils.OK, true);
+            }
+            if (oStream != null) {
+                try {oStream.close();} catch (IOException e) {}
+            }
+        }
+    }
 
 	/**
 	 * Sorts the source data read from <code>inputFile</code>

@@ -1601,7 +1601,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         } else {
             // create default settings
             settings = new FluxCapacitorSettings();
-            FluxCapacitorSettings.relativePathParser.parentDir = new File("");
+            FluxCapacitorSettings.relativePathParser.setParentDir(new File(""));
         }
 
         // add command line parameter

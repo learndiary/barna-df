@@ -525,13 +525,14 @@ public class Graph implements Serializable {
 				// p= offset+ 1+ start+ (start/line);
 				// 100215: should be proper now
 				String pfx= null, sfx= null;
+                int fw= forwardStrand? 1: -1;
 				if (start< 0) {		// circular genomes
 					//System.err.println("Neg seek: "+forwardStrand+", "+start+", "+end);
-					pfx= readSequence(spe, chromosome, forwardStrand, chrLen+ start, chrLen);	// start< 0
+					pfx= readSequence(spe, chromosome, forwardStrand, fw* (chrLen+ start), fw* chrLen);	// start< 0
 					start= 0;
 				}
 				if (end> chrLen) {
-					sfx= readSequence(spe, chromosome, forwardStrand, 1, (end- chrLen)+ 1);
+					sfx= readSequence(spe, chromosome, forwardStrand, fw* 1, fw* ((end- chrLen)+ 1));
 					end= chrLen;
 				}
 				

@@ -54,4 +54,5 @@ fi
 java -Xmx$FLUX_MEM -DwrapperDir="$dir/bin" $MISC \
 -Dflux.tool=@flux.tool@ \
 -Dflux.app="@flux.app@" \
+${JAVA_OPTS} \
 -cp $cp barna.commons.launcher.Flux "$@"

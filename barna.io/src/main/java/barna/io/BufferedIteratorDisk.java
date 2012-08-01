@@ -97,8 +97,12 @@ public class BufferedIteratorDisk implements BufferedIterator {
 	 * method has already been invoked.
 	 */
 	boolean inited= false;
-	
-	/**
+    /**
+     * Store access to the current output stream
+     */
+    private FileOutputStream currentOutputStream;
+
+    /**
 	 * Creates an instance with <i>sorted</i> BED lines read from a stream
 	 * and written to the intermediate file.
 	 * 
@@ -206,6 +210,9 @@ public class BufferedIteratorDisk implements BufferedIterator {
 		while (captain != null) {
 			try {
 				captain.get();
+                if(this.currentOutputStream != null){
+                    this.currentOutputStream.close();
+                }
 				captain= null;
 			} catch (InterruptedException e) {
 				; // :)
@@ -246,25 +253,18 @@ public class BufferedIteratorDisk implements BufferedIterator {
 				
 			} else {
 				tmpFile= inputFile;
-				Callable<Void> callme= new Callable<Void>() {
-					@Override
-					public Void call() throws Exception {
-						return null;
-					}
-				};
 				this.captain= null; // TODO deadlocks: Execute.getExecutor().submit(callme);
 			}
 			
 		} else {	// unsorted
 			
 			if (inputFile== null) {
-				FileOutputStream fos= new FileOutputStream(tmpFile);
-				Sorter s= Sorter.create(inputStream, fos, true, null)
+			    currentOutputStream= new FileOutputStream(tmpFile);
+				Sorter s= Sorter.create(inputStream, currentOutputStream, true, null)
 					.field(comparator);
 				this.captain= s.sortInBackground();
 
 			} else {
-				
 				Callable<Void> callme= new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
@@ -278,9 +278,15 @@ public class BufferedIteratorDisk implements BufferedIterator {
 						Future future2= s.sortInBackground();
 						future1.get();
 						future2.get();
+                        // close the output streams
+                        fos.close();
 						return null;
 					}
 				};
+                if(this.currentOutputStream != null){
+                    this.currentOutputStream.close();
+                }
+                this.currentOutputStream = null;
 				this.captain= Execute.getExecutor().submit(callme); 
 			}
 		}
