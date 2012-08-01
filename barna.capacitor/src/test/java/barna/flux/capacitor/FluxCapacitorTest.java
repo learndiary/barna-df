@@ -31,9 +31,9 @@ public class FluxCapacitorTest {
 //    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     //final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test.bam");
-    //final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
-    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test_chr22:16122720-16123768W.bed");
-    final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
+//    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
+    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bam");
+    final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
 
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";
@@ -48,6 +48,7 @@ public class FluxCapacitorTest {
     protected File gtfFile = null;
     protected File bedFile = null;
     protected File statsFile = null;
+    protected File indexFile = null;
 
 
     private void initFileNames(File GTF_SORTED, byte compressionGTF, File BED_SORTED, byte compressionBED) throws Exception {
@@ -69,6 +70,14 @@ public class FluxCapacitorTest {
                 File.separator +
                 BED_SORTED.getName(), null, false, FileHelper.getCompressionExtension(compressionBED)));
         bedFile.delete();
+
+        indexFile = null;
+        if (BED_SORTED.getName().endsWith("bam")) {
+            indexFile = new File(FileHelper.append(mapDir.getAbsolutePath() +
+                    File.separator +
+                    BED_SORTED.getName() + ".bai", null, false, FileHelper.getCompressionExtension(compressionBED)));
+            indexFile.delete();
+        }
     }
 
     protected void copy(File source, File target, int sortField, byte compression) throws Exception {
@@ -178,6 +187,9 @@ public class FluxCapacitorTest {
             // put files in location
             copy(GTF_SORTED, gtfFile, sortGTF, compressionGTF);
             copy(BED_SORTED, bedFile, sortBED, compressionBED);
+            if (indexFile!=null) {
+                copy(new File(BED_SORTED.getAbsolutePath().concat(".bai")),indexFile,sortBED,compressionBED);
+            }
             writeParFile(descriptor, keepSorted, sortInRam, noDecompose, countElements);
 
             // folder rights
@@ -895,10 +907,6 @@ public class FluxCapacitorTest {
                     "PAIRED",
                     // keep sorted
                     false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-
-
-            File index = new File(mapDir.getAbsolutePath()+File.separator+"NA20778-NA20778.4.M_120208_chr22.bam.bai");
-            FileHelper.copy(new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bam.bai"),index);
 
             runCapacitor();
 

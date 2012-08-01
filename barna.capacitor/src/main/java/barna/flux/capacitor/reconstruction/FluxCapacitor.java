@@ -1655,7 +1655,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             Log.progressStart("Scanning mapping file");
             wrapperMappings =
                     fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
-            fileStats((MappingReader) wrapperMappings);
+            fileStats((MappingReader)wrapperMappings);
             Log.progressFinish("OK", true);
             Log.info("Annotation and mapping input checked");
 
@@ -2806,7 +2806,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
 		Log.info("\t"+ nrBEDreads+ " reads"
-                + (nrBEDmappings > 0 ? nrBEDmappings + " mappings: R-factor " + (wrapper.getCountMappings() / (float) wrapper.getCountReads()) : ""));
+                + (nrBEDmappings > 0 ? ", " + nrBEDmappings + " mappings: R-factor " + (wrapper.getCountMappings() / (float) wrapper.getCountReads()) : ""));
         if (nrBEDmappings > 0)
             Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
                     + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
@@ -2846,7 +2846,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             case BED:			
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
-                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT);
+                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT, settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)?true:false);
         }
 
         return null;    // make compiler happy

@@ -568,7 +568,8 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 
 			final String COMA= ",";
 			for(String s; (s= buffy.readLine())!= null;bRead+= s.length()+ sepLen) {
-                if(!s.isEmpty())++countAll;
+                if(!s.isEmpty())
+                    ++countAll;
 				++nrUniqueLinesRead;
 				if (s.startsWith(BROWSER)|| s.startsWith(TRACK)) {
 					++skippedLines;
@@ -1349,7 +1350,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
 		//				String chk= r2.readLine();
 		//				r2.close();
-						
+
 						if (cs.startsWith(TRACK)|| cs.startsWith(BROWSER))
 							continue;
 						
@@ -1510,11 +1511,17 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 						
 		
 						boolean stop= false, continues= false;
+
 						if (start>= 0&& bedEnd< start)
 							continues= true;
 						else if (end>= 0&& bedStart> end)
 							stop= true;
-						
+
+                        if (!continues && !stop) {
+                            if (bedStart<start||bedEnd>end)
+                                continue;
+                        }
+
 						if (continues)
 							continue;
 						if (stop) {	// not found on this chr
@@ -1597,7 +1604,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	}*/
 
 	@Override
-	public int getNrInvalidLines() {		
+	public int getNrInvalidLines() {
 		return skippedLines;
 	}
 

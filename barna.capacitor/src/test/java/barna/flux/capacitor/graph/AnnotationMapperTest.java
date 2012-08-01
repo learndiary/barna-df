@@ -711,7 +711,7 @@ public class AnnotationMapperTest extends TestCase {
     @Test
     public void testCompareBEDtoBAM() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile);
+        SAMReader sam = new SAMReader(hgBamFile, false);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         gtf.setReadAll(true);
@@ -763,7 +763,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareBAMSJReadsSingle() throws Exception {
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile);
+        SAMReader sam = new SAMReader(hgBamFile, false);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
         //gtf = new GTFwrapper((gtf.sort()));

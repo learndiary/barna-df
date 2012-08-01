@@ -12,19 +12,22 @@ import java.util.Iterator;
  */
 public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
-    private final File inputFile;
     private SAMRecordIterator wrappedIterator;
+    private File mappingFile;
     private SAMRecord nextRecord;
     private SAMMapping nextMapping;
+    private SAMRecord mate;
     private int start,end;
     private boolean marked;
+    private boolean paired;
 
-    public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, int start, int end) {
-        this.inputFile = inputFile;
+    public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, int start, int end, boolean isPaired) {
+        this.mappingFile = inputFile;
         this.wrappedIterator = wrappedIterator;
         this.start = start;
         this.end = end;
         marked = false;
+        paired = isPaired;
         getNext();
     }
 
@@ -35,15 +38,14 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public void reset() {
-        if (marked)
+        if (marked) {
             marked = false;
+        }
     }
 
     @Override
     public void setAtStart() {
         wrappedIterator.close();
-//        SAMFileReader reader = new SAMFileReader(inputFile);
-//        wrappedIterator = reader.query("",start,end,true);
     }
 
     @Override
@@ -63,6 +65,8 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     @Override
     public SAMMapping next() {
+        if (marked && mate !=null)
+            nextMapping = new SAMMapping(mate, getSuffix(mate));
         SAMMapping ret = nextMapping;
         getNext();
         return ret;
@@ -75,29 +79,24 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
 
     private void getNext() {
         nextMapping = null;
-        if (marked) {
-            if (nextRecord!=null) {// && nextRecord.getFirstOfPairFlag()) {
-                SAMFileReader reader=null;
-                SAMRecord mate=null;
-                if (reader==null)
-                    reader = new SAMFileReader(inputFile);
-                mate = reader.queryMate(nextRecord);
-                if (mate != null) {
-                    if (!(nextRecord.getSecondOfPairFlag() && mate.getAlignmentStart()>=start&&mate.getAlignmentStart()<end)) {
-                        nextMapping = new SAMMapping(mate,getSuffix(mate));
-                    }
-                }
-                reader.close();
-            }
-        }
         while (nextMapping==null&&wrappedIterator.hasNext()) {
-            SAMRecord rec = wrappedIterator.next();
+            SAMRecord rec;
+            if (paired && nextRecord!=null && nextRecord.getFirstOfPairFlag()) {
+                getMate();
+            }
+            rec = wrappedIterator.next();
             if (rec.getReadUnmappedFlag()) {
                 continue;
             }
             nextRecord = rec;
             nextMapping = new SAMMapping(rec,getSuffix(rec));
         }
+    }
+
+    private void getMate() {
+        SAMFileReader reader = new SAMFileReader(mappingFile);
+        mate = reader.queryMate(nextRecord);
+        reader.close();
     }
 
     private String getSuffix(SAMRecord record) {
