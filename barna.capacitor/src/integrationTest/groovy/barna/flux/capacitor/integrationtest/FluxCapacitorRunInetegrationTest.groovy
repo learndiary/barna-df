@@ -133,33 +133,7 @@ class FluxCapacitorRunInetegrationTest {
 		target.deleteOnExit();
 	}
 	
-	protected void writeParFile(boolean keepSorted) throws Exception {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
-		FluxCapacitorSettings settings= new FluxCapacitorSettings();
-		settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
-				new File(gtfFile.getAbsolutePath()));
-		settings.set(FluxCapacitorSettings.MAPPING_FILE,
-				new File(bedFile.getAbsolutePath()));
-		settings.set(FluxCapacitorSettings.READ_DESCRIPTOR,
-				descriptor);
-		settings.set(FluxCapacitorSettings.SORT_IN_RAM,
-				false);
-		settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
-				keepSorted);
-		settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-				AnnotationMapping.PAIRED);
-		settings.set(FluxCapacitorSettings.STDOUT_FILE,
-				outFile);
-		if (tmpDir!= null)
-			settings.set(FluxCapacitorSettings.TMP_DIR, tmpDir);
-		
-		BufferedWriter buffy= new BufferedWriter(new FileWriter(parFile));
-		buffy.write(settings.toString());
-		buffy.close();
-		
-		parFile.deleteOnExit();
-	}
+
 
 	protected String runCapacitor() throws Exception{
 
@@ -274,8 +248,8 @@ List of Files : ${files.join(", ")}
     @Test
     public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep_new() {
         FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-               "GTF_ANNOTATION" : GTF_SORTED,
-               "KEEP_SORTED_FILES": "yes",
+               "ANNOTATION_FILE" : GTF_SORTED,
+               "MAPPING_FILE" : BED_SORTED,
         ])
         String stderr= runCapacitor();
         assertFiles(2, 1, stderr, STDERR_MAPPED);

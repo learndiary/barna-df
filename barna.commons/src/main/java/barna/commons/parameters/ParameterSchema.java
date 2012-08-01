@@ -145,6 +145,21 @@ public abstract class ParameterSchema {
     }
 
     /**
+     * Set a parameter value
+     *
+     * @param paramName a <code>String</code> identifying the parameter
+     * @param value the value
+     * @param <T> the type
+     */
+    public <T> void set(String paramName, T value) {
+        Parameter local = parameters.get(paramName.toUpperCase());
+        if (local == null) {
+            throw new IllegalArgumentException("Unknown parameter '" + paramName + "'");
+        }
+        local.set(value);
+    }
+
+    /**
      * Return the {@code key-> value} string for the given parameter. This prints the current value.
      *
      * @param parameter the parameter

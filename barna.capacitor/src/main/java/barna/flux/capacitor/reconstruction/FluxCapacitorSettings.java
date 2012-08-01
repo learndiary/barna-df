@@ -51,13 +51,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 		 	ParameterException parseException;
 			UniversalReadDescriptor descriptor;
 			
-			public UniversalReadDescriptorParameter() {				
+			public UniversalReadDescriptorParameter() {
 				super("READ_DESCRIPTOR",
-					  " Expression how to parse the read IDs, or one of the shorthand names ("
-						+ StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',')+ ")",
-					  null,
-					  UniversalReadDescriptor.class,
-					  null);
+                        " Expression how to parse the read IDs, or one of the shorthand names ("
+                                + StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',') + ")",
+                        UniversalReadDescriptor.getDefaultDescriptor(),
+                        UniversalReadDescriptor.class,
+                        null);
 			}
 			
 			public UniversalReadDescriptorParameter(UniversalReadDescriptorParameter anotherURDP) {
