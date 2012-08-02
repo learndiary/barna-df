@@ -191,7 +191,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 if (file == null) {
-                    throw new ParameterException("You have to specify an mapping file");
+                    throw new ParameterException("You have to specify a mapping file");
                 }
                 if (!file.exists()) {
                     throw new ParameterException("The mapping file " + file.getAbsolutePath() 

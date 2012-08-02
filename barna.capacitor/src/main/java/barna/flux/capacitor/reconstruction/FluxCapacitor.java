@@ -2846,7 +2846,6 @@ public class
                 }
             }
             inputFile = f;
-            inputFile.deleteOnExit();    // carefully
         }
 
         // (2) sort, if needed
