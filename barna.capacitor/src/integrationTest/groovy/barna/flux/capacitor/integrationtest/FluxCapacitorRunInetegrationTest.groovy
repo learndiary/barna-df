@@ -166,7 +166,7 @@ class FluxCapacitorRunInetegrationTest {
         ])
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        assertStdErr(stderr, STDERR_MAPPED,true);
+        assertStdErr(stderr, STDERR_MAPPED);
         assertFileExist(currentTestDirectory, [
                 (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
                 (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
@@ -186,7 +186,13 @@ class FluxCapacitorRunInetegrationTest {
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        assertStdErr(stderr, STDERR_MAPPED);
+        assertStdErr(stderr, STDERR_MAPPED,true);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+        ])
 	}
 
 	@Test
@@ -200,7 +206,13 @@ class FluxCapacitorRunInetegrationTest {
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        assertStdErr(stderr, STDERR_MAPPED);
+        assertStdErr(stderr, STDERR_MAPPED, true);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+        ])
 	}
 
 	@Test

@@ -2905,12 +2905,8 @@ public class
                 if (lockCreated)
                     lock.delete();
 
-                // if unzipped before
-                if (cb != FileHelper.COMPRESSION_NONE)
-                    inputFile.delete();    // carefully
-
-                inputFile = f;
             }
+            inputFile = f;
             wrapper = getWrapper(inputFile);
         }
 
