@@ -374,8 +374,6 @@ public class Sequencer implements Callable<Void> {
     }
 
     public void appendReadName(BEDobject2 obj, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean sense, int pairedEndSide) {
-
-
         // FURI
         obj.append(t.getGene().getLocusID());
         obj.append(BYTE_DELIM_FMOLI);
@@ -390,12 +388,19 @@ public class Sequencer implements Callable<Void> {
         obj.append(fragEnd);
 
         if (pairedEndSide == 1 || pairedEndSide == 2) {
-            obj.append(BYTE_DELIM_BARNA);
-            obj.append(pairedEndSide);
             if(!isUniqueIds()){
                 // always append sense antisens to single end reads
                 obj.append(BYTE_DELIM_FMOLI);
                 obj.append(sense ? "S" : "A");
+            }
+
+            obj.append(BYTE_DELIM_BARNA);
+            if(isUniqueIds()){
+                // make sure we use sense/antisense information fot the pairing
+                // in case we generate unique reads
+                obj.append(sense ? 1 : 2);
+            }else{
+                obj.append(pairedEndSide);
             }
         }else{
             // always append sense antisens to single end reads
