@@ -763,6 +763,7 @@ public class Sequencer implements Callable<Void> {
                         // try for the rest
                         double r = rnd.nextDouble();
                         if (r < rest) {
+                            ++k;
                             if(pairedEnd){
                                 int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
                                 writer.writeRead(true, dir, t, coverage, fstart, fend, k);
@@ -779,7 +780,6 @@ public class Sequencer implements Callable<Void> {
                                     ++cntMinus;
                                 }
                             }
-                            ++k;
                             readsSequenced++;
                         }
                     } // end all fragments
