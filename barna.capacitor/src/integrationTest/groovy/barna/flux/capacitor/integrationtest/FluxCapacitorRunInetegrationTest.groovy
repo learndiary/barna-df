@@ -6,7 +6,7 @@ import barna.commons.system.OSChecker
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
 import barna.io.rna.UniversalReadDescriptor
-import groovy.io.FileType
+
 import org.junit.*
 
 import static junit.framework.Assert.assertTrue
@@ -73,29 +73,22 @@ class FluxCapacitorRunInetegrationTest {
 
 	}
 
-    void assertDir(File cwd, List value){
+    static void assertFileExist(File cwd, Map files){
 
-        def allFile = []
-        cwd.eachFileRecurse(FileType.FILES, { allFile << it.getAbsolutePath() })
-
-        if (allFile.size()!=value.size()) fail("""
-            Differemt number of files.
-            Expected: ${value.each {println it}}
-            Found: ${allFile.each {println it}}
+        for (Map.Entry e  : files.entrySet()) {
+            String fileName = e.key.toString();
+            File file = new File(fileName)
+            if (!fileName.startsWith(File.separator)) {
+                file = new File(cwd, fileName)
+            }
+            if(e.value instanceof Closure){
+                Closure v = e.value
+                if(!v(file)) fail("""
+            File does not exsits.
+            Expected: ${fileName}
         """)
-
-//        for (Map.Entry e  : value.entrySet()) {
-//            if(e.key.toString().contains(File.separator)){
-//                if(e.value instanceof Closure){
-//                    def v = e.value
-//                    for (String line  : new File(file).readLines()) {
-//                        if(!v(line)) fail("LIne comparison failed : ")
-//                    }
-//                }else{
-//
-//                }
-//            }
-//        }
+            }
+        }
     }
 
     File currentTestDirectory = null
@@ -123,12 +116,12 @@ class FluxCapacitorRunInetegrationTest {
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
         assertStdErr(stderr, STDERR_MAPPED);
-        assertDir(currentTestDirectory, [
-                FluxCapacitorRunner.DEFAULT_PARAMETER_FILE,
-                FluxCapacitorRunner.DEFAULT_OUTPUT_FILE,
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
         ])
 //
-//        assertDir(currentTestDirectory, [
+//        assertFileExist(currentTestDirectory, [
 //                "parameters.par" : {File file -> return file.exists()},
 //                "output/result.gtf" : [
 //                        "lines":20,

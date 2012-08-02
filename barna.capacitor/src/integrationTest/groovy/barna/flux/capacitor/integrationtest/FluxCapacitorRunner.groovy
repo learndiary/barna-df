@@ -21,7 +21,7 @@ class FluxCapacitorRunner {
      * Default common files
      */
     public static DEFAULT_PARAMETER_FILE = "params.par"
-    public static DEFAULT_OUTPUT_FILE = "results.gtf"
+    public static DEFAULT_OUTPUT_FILE = "output"+File.separator+"results.gtf"
 
     /**
      * Map from the relative filename to the absolute filename within
@@ -92,7 +92,7 @@ class FluxCapacitorRunner {
         File outDir = new File(cwd, "output");
         outDir.mkdir();
         if (!parameters.containsKey("STDOUT_FILE")) {
-            File outFile = new File(outDir,DEFAULT_OUTPUT_FILE);
+            File outFile = new File(cwd, DEFAULT_OUTPUT_FILE);
             parameters.put("STDOUT_FILE", outFile);
             outFile.delete();
         }
