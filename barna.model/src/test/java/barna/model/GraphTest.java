@@ -1,6 +1,7 @@
 package barna.model;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.system.OSChecker;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -22,12 +23,12 @@ import static org.junit.Assert.fail;
 public class GraphTest {
 
     public static String BASIC_SEQUENCE=
-            "The two of them keep their eyes on each other...........  \n"+
-            "She sits down.  They sit around her.  Nick sits directly  \n"+
-            "across from her.  She lights up a cigarette.  They watch  \n"+
-            "her.  She is poised, cool, in complete command of herself.\n"+
-            "------- There is no smoking in this building, Ms. Tramell.\n"+
-            "------- What are you going to do?  Charge me with smoking?\n"+
+            "The two of them keep their eyes on each other...........  "+OSChecker.NEW_LINE+
+            "She sits down.  They sit around her.  Nick sits directly  "+OSChecker.NEW_LINE+
+            "across from her.  She lights up a cigarette.  They watch  "+OSChecker.NEW_LINE+
+            "her.  She is poised, cool, in complete command of herself."+OSChecker.NEW_LINE+
+            "------- There is no smoking in this building, Ms. Tramell."+OSChecker.NEW_LINE+
+            "------- What are you going to do?  Charge me with smoking?"+OSChecker.NEW_LINE+
             "Ever so casually, she blows her smoke across at Nick......";
 
 
@@ -74,7 +75,7 @@ public class GraphTest {
 
         int seqLen= 0;
         for (int i = 0; i < seq.length(); i++) {
-            if (seq.charAt(i)!= '\n')
+            if (seq.charAt(i)!= '\n' && seq.charAt(i) != '\r')
                 ++seqLen;
         }
 
