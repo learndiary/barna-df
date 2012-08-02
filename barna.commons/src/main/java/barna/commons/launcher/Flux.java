@@ -195,7 +195,7 @@ public class Flux {
         if(parameter != null){
             try{
                 JSAPResult toolParameter = jsap.parse(args);
-                if (!tool.validateParameter(toolParameter)){
+                if(!tool.validateParameter(toolParameter)){
                     printUsage(tool, jsap, tools, null);
                 }
             } catch (Exception e) {
