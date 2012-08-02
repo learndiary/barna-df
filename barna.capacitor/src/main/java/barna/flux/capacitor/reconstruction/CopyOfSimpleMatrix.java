@@ -157,7 +157,7 @@ public class CopyOfSimpleMatrix implements Matrix {
 				sb.append("\t");
 			}
 			sb.deleteCharAt(sb.length()- 1);
-			sb.append("\n");
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 		}
 		return sb;
 	}
