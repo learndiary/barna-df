@@ -1,15 +1,14 @@
 package barna.flux.capacitor.integrationtest
 
 import barna.commons.system.OSChecker
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
+import barna.io.FileHelper
+import barna.io.rna.UniversalReadDescriptor
+import com.martiansoftware.jsap.RequiredParameterMissingException
 import groovy.json.JsonSlurper
 
 import java.security.MessageDigest
 import java.util.zip.ZipInputStream
-
-import com.martiansoftware.jsap.RequiredParameterMissingException
-import barna.io.FileHelper
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
-import barna.io.rna.UniversalReadDescriptor
 
 /**
  *
@@ -115,7 +114,7 @@ class FluxCapacitorRunner {
         }
         settings.validate();
         parameters.each{k,v->
-            parFile.append("${k}\t${v}\n")
+            parFile.append("${k}\t${v}"+OSChecker.NEW_LINE)
         }
 
         return parFile;

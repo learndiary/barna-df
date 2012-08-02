@@ -617,7 +617,7 @@ public class IsotigToGTF {
 		
 		final String tab= "\t", exon= "exon", plus= "+", minus= "-", 
 				dot= ".", space= " ", txID= "transcriptID", quot= "\"", 
-				semic= ";", nl= "\n";
+				semic= ";", nl= barna.commons.system.OSChecker.NEW_LINE;
 		
 		try {
 			BufferedWriter writer= new BufferedWriter(new FileWriter(f, true));
@@ -754,7 +754,7 @@ public class IsotigToGTF {
 						Integer.parseInt(s[2]));
 				tix.plus= cox.plus= s[8].equals("+");
 				if (cox.length()!= tix.length())
-					System.err.println("Inconsistent alignment length "+ cox.length()+"<>"+tix.length()+"\n"+line);
+					System.err.println("Inconsistent alignment length "+ cox.length()+"<>"+tix.length()+barna.commons.system.OSChecker.NEW_LINE+line);
 
 				if (g== lastG) {
 					if (!s[0].equals(lastTx.id)) {	// new tx

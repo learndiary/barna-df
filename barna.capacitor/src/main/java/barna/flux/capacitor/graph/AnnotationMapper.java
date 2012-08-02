@@ -35,15 +35,12 @@ import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
 import barna.model.splicegraph.*;
-import barna.model.splicegraph.Node;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Class to handle the <i>annotation</i> mapping of <i>genomic</i> mappings
@@ -497,7 +494,7 @@ public class AnnotationMapper extends SplicingGraph {
             if (isizes[i] != v) {
                 ++cc;
                 try {
-                    buffy.write(pfx + Integer.toString(isizes[i]) + sfx + cc + "," + Integer.toString(c) + "," + tt.length + "\n");
+                    buffy.write(pfx + Integer.toString(isizes[i]) + sfx + cc + "," + Integer.toString(c) + "," + tt.length + barna.commons.system.OSChecker.NEW_LINE);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

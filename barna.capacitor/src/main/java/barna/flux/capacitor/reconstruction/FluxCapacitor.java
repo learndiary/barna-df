@@ -32,6 +32,7 @@ import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
@@ -316,7 +317,7 @@ public class
                 sb.append("locus_id \""+gene.getLocusID()+"\";");
                 sb.append(" ");
                 sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS+" "+String.format("%1$f", (float) m.get(s)));// +";");
-                sb.append("\n");
+                sb.append(barna.commons.system.OSChecker.NEW_LINE);
             }
             Log.print(sb.toString());
         }
@@ -355,7 +356,7 @@ public class
                 sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS+" "+String.format("%1$f", (float) m.get(s)[0].intValue()) +";");
                 sb.append(" ");
                 sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_FRAC_COVERED+" "+m.get(s)[1]);//+";");
-                sb.append("\n");
+                sb.append(barna.commons.system.OSChecker.NEW_LINE);
             }
             Log.print(sb.toString());
         }
@@ -500,7 +501,7 @@ public class
                             //sb.append(rpkmMap.get(g.trpts[i].getTranscriptID()));
                             // avoid scientific notation
                             sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));
-                            sb.append("\n");
+                            sb.append(barna.commons.system.OSChecker.NEW_LINE);
                         }
                     }
                     // EXONS
@@ -622,7 +623,7 @@ public class
                         }
                         if (allPos && !(outputObs || outputPred))
                             ++nrEventsExp;
-                        sb.replace(sb.length() - 1, sb.length(), "\";\n");
+                        sb.replace(sb.length() - 1, sb.length(), "\";"+OSChecker.NEW_LINE);
                     }
 
                 }
@@ -704,7 +705,7 @@ public class
                             sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));    // rgasp parser does not like scientific notation
                         else
                             sb.append(Constants.NULL);
-                        sb.append(";\n");
+                        sb.append(";"+ OSChecker.NEW_LINE);
                     }
 
                     Log.print(sb.toString());
@@ -744,7 +745,7 @@ public class
                             sb.append(String.format("%1$f", rpkmMap.get(tid).floatValue()));    // rgasp parser does not like scientific notation
                         else
                             sb.append(Constants.NULL);
-                        sb.append(";\n");
+                        sb.append(";"+OSChecker.NEW_LINE);
                     }
 
 
@@ -1541,7 +1542,7 @@ public class
                 Log.info("Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
             } else
                 Log.warn("Failed to move coverage statistics to " +
-                        settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + "\n"
+                        settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
                         + "\tinformation in " + fileTmpCovStats.getAbsolutePath());
         }
 
@@ -1964,7 +1965,7 @@ public class
             for (int i = 0; i < mm.length; i++) {
                 String lenString = Integer.toString(mm[i].getLength());
                 buffy.write(lenString);
-                buffy.write("\n");
+                buffy.write(barna.commons.system.OSChecker.NEW_LINE);
                 buffy.write(mm[i].toStringBuilder(20).toString());
             }
             buffy.close();
@@ -2000,7 +2001,7 @@ public class
                     geneID + "\t" + transcriptID + "\t" + (cds ? "CDS" : "NC") + "\t"
                             + Integer.toString(length) + "\t" + Integer.toString(nrReads) + "\t"
                             + Float.toString(fracCov) + "\t" + Long.toString(chiSquare) + "\t"
-                            + Float.toString((float) cv) + "\n"
+                            + Float.toString((float) cv) + barna.commons.system.OSChecker.NEW_LINE
             );
 
         } catch (Exception e) {
@@ -2058,7 +2059,7 @@ public class
         if (getFile() != null && !getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
-            Log.error("\n");
+            Log.error(barna.commons.system.OSChecker.NEW_LINE);
             return false;
         }
 
@@ -2576,7 +2577,7 @@ public class
                             + (outputGene ? "\n\t" + nrLoci + " loci, " + nrLociExp + " detected" : "")
                             + (outputTranscript ? "\n\t" + nrTx + " transcripts, " + nrTxExp + " detected" : "")
                             + (outputEvent ? "\n\t" + nrEvents + " ASevents of dimension " + eventDim + ", " + nrEventsExp + " detected" : "")
-                            + "\n"
+                            + barna.commons.system.OSChecker.NEW_LINE
                             //+ nrUnsolved+" unsolved systems."
                     );
                 }

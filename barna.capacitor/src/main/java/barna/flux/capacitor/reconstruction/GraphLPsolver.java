@@ -27,6 +27,7 @@
 
 package barna.flux.capacitor.reconstruction;
 
+import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.model.SpliceSite;
@@ -324,7 +325,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 				Transcript t= (Transcript) oo;
 				p.print("\t"+t.getExonicLength());
 			}
-			p.print("\n");
+			p.print(barna.commons.system.OSChecker.NEW_LINE);
 		}
 	}
 
@@ -851,7 +852,7 @@ public class GraphLPsolver implements ReadStatCalculator {
 				if (i< vals.length- 1&& vals[i+1]>= 0)
 					buffy.write(" +");
 			}
-			buffy.write(COND_SYMBOLS[cond]+Double.toString(rhs)+";\n");
+			buffy.write(COND_SYMBOLS[cond]+Double.toString(rhs)+";"+ OSChecker.NEW_LINE);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
