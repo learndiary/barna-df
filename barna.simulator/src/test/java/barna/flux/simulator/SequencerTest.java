@@ -53,8 +53,9 @@ public class SequencerTest {
 
     @Test
 	public void testReadGeneration() throws Exception {
-		
-		int nrTests= 100; // nr. of tests per transcript
+
+        Sequencer sequencer = new Sequencer(null, null);
+        int nrTests= 100; // nr. of tests per transcript
 		int maxBoundary= 100; // nt added at beginning/end of tx
 		Random rand= new Random();
 		
@@ -90,7 +91,7 @@ public class SequencerTest {
 						int end= (left? fragStart+ readLen- 1: fragEnd);
 						assert(start<= end);
 						BEDobject2 obj= new BEDobject2();
-						int polyA= Sequencer.createRead(obj, start, end, t, k,
+						int polyA= sequencer.createRead(obj, start, end, t, k,
                                 absDir, fragStart, fragEnd, left, 1);
 						
 						assertEquals(readLen, obj.getLength());
@@ -121,7 +122,7 @@ public class SequencerTest {
 
     @Test
     public void testSequenceAmbiguities() {
-
+        Sequencer sequencer = new Sequencer(null, null);
         String allChars= "ACGUTWSRYMKBDHV";
 
         // write sequence
@@ -161,7 +162,7 @@ public class SequencerTest {
 
             // do it
             ByteArrayCharSequence cs= new ByteArrayCharSequence(10);
-            Sequencer.createQSeq(cs,
+            sequencer.createQSeq(cs,
                     obj,
                     allChars.length(),  // 3p of tx
                     (byte) 1,  // tx dir
@@ -202,7 +203,7 @@ public class SequencerTest {
 
     @Test
     public void testSequenceRead() {
-
+        Sequencer sequencer = new Sequencer(null, null);
         int nrTests= 100;
         int nrReadTests= 100;
         Random rnd= new Random();
@@ -294,7 +295,7 @@ public class SequencerTest {
 //                System.err.println();
 
                 // create BED
-                int polyAcnt= Sequencer.createRead(
+                int polyAcnt= sequencer.createRead(
                         obj,
                         readStart- 1,  // read start in tx (0-based)
                         readEnd- 1, // read end in tx (0-based)
@@ -346,8 +347,8 @@ public class SequencerTest {
 
                 // create FASTA
                 ByteArrayCharSequence cs= new ByteArrayCharSequence(200);
-                Sequencer.createQname(obj, cs, null);
-                Sequencer.createQSeq(cs, obj, t.get3PrimeEdge(), t.getStrand(), readLen, fragLen, null);
+                sequencer.createQname(obj, cs, null);
+                sequencer.createQSeq(cs, obj, t.get3PrimeEdge(), t.getStrand(), readLen, fragLen, null);
 
                 // test FASTA
                 //System.err.println(cs);
