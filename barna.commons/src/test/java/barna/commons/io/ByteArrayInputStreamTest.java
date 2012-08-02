@@ -35,7 +35,7 @@ public class ByteArrayInputStreamTest {
             read = stream.read();
             assertEquals('3', read);
             read = stream.read();
-            assertEquals('\n', read);
+            assertEquals(OSChecker.NEW_LINE, read);
             read = stream.read();
             assertEquals('3', read);
             read = stream.read();

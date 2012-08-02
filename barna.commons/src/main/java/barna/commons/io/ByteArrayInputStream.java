@@ -92,6 +92,9 @@ public class ByteArrayInputStream extends InputStream {
             // last character was a newline
             // remove this from the sequence
             seq.end = seq.end - 1;
+            if(seq.charAt(seq.end) == '\r'){
+                seq.end -= 1;
+            }
         }
         return l;
     }
