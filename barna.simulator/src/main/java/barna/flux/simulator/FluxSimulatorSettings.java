@@ -300,6 +300,17 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
+
+    /**
+     * Create unique paired end reads
+     */
+    public static final Parameter<Boolean> UNIQUE_IDS = Parameters.booleanParameter("UNIQUE_IDS",
+                    "If set to TRUE, the simulator will NOT add \n" +
+                    "sense/anti-sense information to paired reads (not A/S is appended to the read ID)\n" +
+                    "in order to create unique ids paired end ids where the only difference\n"+
+                    "is the /1 /2 at the end of the ID. To keep track of orientation, /1 is always\n" +
+                    "used for sens reads, while /2 is always appended to anti-sense reads.", false);
+
     /**
      * Number of RNA molecules initially in the experiment.
      */

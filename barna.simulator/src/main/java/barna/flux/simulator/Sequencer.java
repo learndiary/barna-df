@@ -106,6 +106,9 @@ public class Sequencer implements Callable<Void> {
     public Sequencer(FluxSimulatorSettings settings, Profiler profiler) {
         this.settings = settings;
         this.profiler = profiler;
+        if(settings != null){
+            setUniqueIds(settings.get(FluxSimulatorSettings.UNIQUE_IDS));
+        }
     }
 
     /**
