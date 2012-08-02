@@ -50,7 +50,7 @@ public class FileHelperTest {
 
         assertEquals("", no);
         assertEquals("\r\n", win);
-        assertEquals(barna.commons.system.OSChecker.NEW_LINE, unix);
+        assertEquals("\n", unix);
     }
     @Test
     public void testCountLines(){

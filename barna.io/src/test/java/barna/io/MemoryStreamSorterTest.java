@@ -77,6 +77,30 @@ public class MemoryStreamSorterTest {
 
     }
     @Test
+    public void testSmallSortWithWindowsNewLines(){
+        ByteArrayInputStream in = new ByteArrayInputStream(
+                ("C\tY\t2\r\n"+
+                "B\tZ\t1\r\n"+
+                "A\tX\t3\r\n").getBytes());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        MemoryStreamSorter sorter = new MemoryStreamSorter(0, false, "\t");
+        try {
+            sorter.sort(in, out);
+
+            String outString = new String(out.toByteArray());
+            assertEquals(
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
+                    ,outString);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+    }
+    @Test
     public void testSmallSortNewLIneLines(){
         ByteArrayInputStream in = new ByteArrayInputStream(SIMPLE_INPUT_WITH_NEWLINES.getBytes());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
