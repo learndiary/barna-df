@@ -6,7 +6,6 @@ import barna.io.bed.BEDwrapper;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Gene;
-import barna.model.Transcript;
 import junit.framework.TestCase;
 import org.junit.Test;
 
@@ -47,8 +46,8 @@ public class AnnotationMapperTest extends TestCase {
                 descriptor);
         settings.set(FluxCapacitorSettings.SORT_IN_RAM,
                 false);
-        settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
-                false);
+//        settings.set(FluxCapacitorSettings.KEEP_SORTED,
+//                false);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
                 mapping);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,

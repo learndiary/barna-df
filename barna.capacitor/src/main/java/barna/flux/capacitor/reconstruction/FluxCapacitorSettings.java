@@ -420,9 +420,20 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 
 	     */
-	    public static final Parameter<Boolean> KEEP_SORTED_FILES = Parameters.booleanParameter("KEEP_SORTED_FILES", "Keeps input files ("+ 
-	    		ANNOTATION_FILE.getName()+ ", "+ MAPPING_FILE+ ")", false);
-	    /**
+	    public static final Parameter<File> KEEP_SORTED = Parameters.fileParameter("KEEP_SORTED", "Keeps input files (" +
+                ANNOTATION_FILE.getName() + ", " + MAPPING_FILE + ")", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                if (file != null && !file.getParentFile().exists()) {
+                    throw new ParameterException("Folder for keeping sorted files " + file.getAbsolutePath()
+                            + " could not be found!");
+                }
+            }
+        }, relativePathParser);
+
+
+    /**
 	     * The parameter file
 	     */
 	    private File parameterFile;

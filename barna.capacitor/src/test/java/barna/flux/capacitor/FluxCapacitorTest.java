@@ -124,8 +124,8 @@ public class FluxCapacitorTest {
                 descriptor);
         settings.set(FluxCapacitorSettings.SORT_IN_RAM,
                 false);
-        settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
-                keepSorted);
+//        settings.set(FluxCapacitorSettings.KEEP_SORTED,
+//                keepSorted);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
                 AnnotationMapping.PAIRED);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,

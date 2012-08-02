@@ -60,17 +60,15 @@ class FluxCapacitorRunInetegrationTest {
 		
 	}
 
-	static final String[] STDERR_MAPPED= ["8009","8192"]
+	static final String[] STDERR_MAPPED= ["8005","8184"]
 	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
 	
 	void assertStdErr(String stderr, String[] occurrences, Boolean debug = false) {
-
         if (debug) System.err.println(stderr)
 
 		for (int i = 0; i < occurrences.length; i++) {
 			assertTrue(stderr.contains(occurrences[i]))
 		}
-
 	}
 
     static void assertFileExist(File cwd, Map files){
@@ -186,7 +184,7 @@ class FluxCapacitorRunInetegrationTest {
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        assertStdErr(stderr, STDERR_MAPPED,true);
+        assertStdErr(stderr, STDERR_MAPPED);
         assertFileExist(currentTestDirectory, [
                 (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
                 (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
@@ -206,7 +204,7 @@ class FluxCapacitorRunInetegrationTest {
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
-        assertStdErr(stderr, STDERR_MAPPED, true);
+        assertStdErr(stderr, STDERR_MAPPED);
         assertFileExist(currentTestDirectory, [
                 (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
                 (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
@@ -214,6 +212,28 @@ class FluxCapacitorRunInetegrationTest {
                 (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
         ])
 	}
+
+    @Test
+    public void testIOflatUnsortedGTFflatSortedBEDKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],
+                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
+                "READ_DESCRIPTOR" : "SIMULATOR",
+                "KEEP_SORTED" : "tmp_sorted",
+        ])
+
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, STDERR_MAPPED);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+                "tmp_sorted/mm9_chr1_chrX_sorted.gtf" : {File file -> return file.exists()},
+        ])
+    }
 
 	@Test
 	public void testIOflatSortedGTFflatUnsortedBEDnoKeep() {
@@ -227,7 +247,35 @@ class FluxCapacitorRunInetegrationTest {
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
         assertStdErr(stderr, STDERR_MAPPED);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+        ])
 	}
+
+    @Test
+    public void testIOflatSortedGTFflatUnsortedBEDKeep() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
+                "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX.bed'],
+                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
+                "READ_DESCRIPTOR" : "SIMULATOR",
+                "KEEP_SORTED" : "tmp_sorted",
+        ])
+
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, STDERR_MAPPED);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+                "tmp_sorted/mm9_chr1_chrX_sorted.bed" : {File file -> return file.exists()},
+        ])
+    }
 
 	@Test
 	public void testIOflatUnSortedGTFflatUnsortedBEDkeep() {
@@ -236,12 +284,20 @@ class FluxCapacitorRunInetegrationTest {
                 "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
                 "READ_DESCRIPTOR" : "SIMULATOR",
-                "KEEP_SORTED_FILES" : "true",
+                "KEEP_SORTED" : "tmp_sorted",
         ])
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
         assertStdErr(stderr, STDERR_MAPPED);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+                "tmp_sorted/mm9_chr1_chrX_sorted.gtf" : {File file -> return file.exists()},
+                "tmp_sorted/mm9_chr1_chrX_sorted.bed" : {File file -> return file.exists()},
+        ])
 	}
 
 	@Test

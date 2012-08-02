@@ -2851,7 +2851,12 @@ public class
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile);
         if (!wrapper.isApplicable()) {
-            File f = FileHelper.getSortedFile(inputFile);
+            File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
+            File f;
+            if (sortedDir!=null)
+                f = FileHelper.getSortedFile(new File(sortedDir, inputFile.getName()));
+            else
+                f = FileHelper.getSortedFile(inputFile);
             File lock = FileHelper.getLockFile(f);
 
             if (f.exists() && !lock.exists()) {
@@ -2861,7 +2866,7 @@ public class
             } else {    // we have to sort
 
                 boolean lockCreated = false;
-                if (settings.get(FluxCapacitorSettings.KEEP_SORTED_FILES)) {    // try to store in original
+                if (sortedDir!=null) {//settings.get(FluxCapacitorSettings.KEEP_SORTED)) {    // try to store in original
 
                     if (lock.exists()) {    // switch to sorting to temp
                         Log.warn("Seems that another process is just sorting file " + inputFile +

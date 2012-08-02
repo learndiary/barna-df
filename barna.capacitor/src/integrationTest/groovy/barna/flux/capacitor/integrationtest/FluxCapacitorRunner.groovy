@@ -76,19 +76,29 @@ class FluxCapacitorRunner {
      */
     static File createTestDir(File cwd, Map parameters) throws RequiredParameterMissingException {
 
-        //checking for mandatory parameters
+        //check for mandatory parameters
         if (!parameters.containsKey("ANNOTATION_FILE"))
             throw new RequiredParameterMissingException("The parameter for annotation file is missing")
         if (!parameters.containsKey("MAPPING_FILE"))
             throw new RequiredParameterMissingException("The parameter for mapping file is missing")
 
-        //getting instance for the read descriptor
+        //get instance for the read descriptor
         if (parameters.containsKey("READ_DESCRIPTOR")) {
             UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
             descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         }
 
-        //setting up the output file
+        //check if sorted files should be kept and set up directory
+        if (parameters.containsKey("KEEP_SORTED")) {
+            String sortedPath = parameters['KEEP_SORTED']
+            if (!sortedPath.startsWith(File.separator)) {
+                File sortDir = new File(cwd, parameters["KEEP_SORTED"]);
+                sortDir.mkdir();
+                parameters.put("KEEP_SORTED", sortDir);
+            }
+        }
+
+        //set up the output file
         File outDir = new File(cwd, "output");
         outDir.mkdir();
         if (!parameters.containsKey("STDOUT_FILE")) {
@@ -97,7 +107,7 @@ class FluxCapacitorRunner {
             outFile.delete();
         }
 
-        //writing the parameter file
+        //write the parameter file
         File parFile= new File(cwd,DEFAULT_PARAMETER_FILE);
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
         parameters.each{k,v->
