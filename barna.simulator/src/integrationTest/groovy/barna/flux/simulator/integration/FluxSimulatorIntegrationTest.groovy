@@ -1,5 +1,6 @@
 package barna.flux.simulator.integration
 
+import barna.commons.system.OSChecker
 import barna.flux.simulator.FluxSimulatorSettings
 import barna.io.FileHelper
 import org.junit.BeforeClass
@@ -7,7 +8,6 @@ import org.junit.Test
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
-import barna.commons.system.OSChecker
 
 /**
  * Created with IntelliJ IDEA.
@@ -61,9 +61,9 @@ class FluxSimulatorIntegrationTest {
     public Process runSimulator(File directory, File parameterFile){
         def pb = new ProcessBuilder()
         pb.environment().put("FLUX_MEM", "1G")
-        def cmd = [executable, "-p", parFile.getAbsolutePath()]
+        def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
         if (OSChecker.isWindows()) {
-            cmd = ["cmd", "/c", executable, "-p", parFile.getAbsolutePath()]
+            cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
         }
         def process = pb.directory(directory)
                 .redirectErrorStream(true)
