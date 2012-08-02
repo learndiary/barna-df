@@ -397,6 +397,40 @@ public class SequencerTest {
             }
         }
     }
+    @Test
+    public void testSequenceReadWithUniqueIds() {
+        Sequencer sequencer = new Sequencer(null, null);
+
+        BEDobject2 seq = new BEDobject2();
+        Gene gene = new Gene("gene1");
+        gene.setChromosome("chr1");
+
+        Transcript transcript = new Transcript(gene, "trans-id");
+        // single end reads
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  true, -1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:S", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  false, -1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:A", seq.getName().toString());
+        //paired reads non unique ids
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  true, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:S/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  true, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:S/2", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  false, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:A/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  false, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:A/2", seq.getName().toString());
+        //paired reads unique ids
+        sequencer.setUniqueIds(true);
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  true, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  true, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  false, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/2", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  false, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/2", seq.getName().toString());
+    }
 
     static final char[] bases= new char[] {'A', 'C', 'G', 'T'};
 

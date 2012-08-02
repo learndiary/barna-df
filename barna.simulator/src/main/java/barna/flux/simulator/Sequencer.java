@@ -373,7 +373,7 @@ public class Sequencer implements Callable<Void> {
         cs.append(BYTE_NL);
     }
 
-    public void appendReadName(BEDobject2 obj, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean sense, int pairedEndSide) {
+    public void appendReadName(BEDobject2 obj, Transcript t, int molNr, int fragStart, int fragEnd, boolean sense, int pairedEndSide) {
         // FURI
         obj.append(t.getGene().getLocusID());
         obj.append(BYTE_DELIM_FMOLI);
@@ -432,7 +432,7 @@ public class Sequencer implements Callable<Void> {
         obj.append(BYTE_TAB);
         obj.append(end - start + 1);    // (+1) for end being excluded in BED, included in tx coordinates
         obj.append(BYTE_TAB);
-        appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
+        appendReadName(obj, t, molNr, fragStart, fragEnd, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -555,8 +555,8 @@ public class Sequencer implements Callable<Void> {
         obj.append(bedEnd);
         obj.append(BYTE_TAB);
         appendReadName(obj, t,
-                molNr, aDir, fragStart, fragEnd,
-                originalStart, originalEnd, left, pairedEndSide);
+                molNr, fragStart, fragEnd,
+                left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
