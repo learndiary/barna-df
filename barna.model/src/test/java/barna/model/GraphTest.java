@@ -109,7 +109,7 @@ public class GraphTest {
 
         int seqLen= 0;
         for (int i = 0; i < seq.length(); i++) {
-            if (seq.charAt(i)!= '\n')
+            if (seq.charAt(i)!= '\n' || seq.charAt(i) != '\r')
                 ++seqLen;
         }
 
@@ -141,7 +141,7 @@ public class GraphTest {
 //        System.err.println(seq.substring(offCR+ posStart, offCR+ posStart+ posEnd));
         StringBuffer sb= new StringBuffer(seq.substring(offCR + posStart, off2CR + posEnd));
         for (int i = 0; i < sb.length(); i++) {
-            if (sb.charAt(i)== '\n')
+            if (sb.charAt(i)== '\n' || sb.charAt(i)== '\r')
                 sb.deleteCharAt(i--);
         }
 
