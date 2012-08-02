@@ -35,7 +35,11 @@ public class ByteArrayInputStreamTest {
             read = stream.read();
             assertEquals('3', read);
             read = stream.read();
-            assertEquals(OSChecker.NEW_LINE, Character.toString((char) read));
+            if(OSChecker.isWindows()){
+                assertEquals('\r', read);
+                read = stream.read();
+            }
+            assertEquals('\n', read);
             read = stream.read();
             assertEquals('3', read);
             read = stream.read();
@@ -61,6 +65,29 @@ public class ByteArrayInputStreamTest {
     @Test
     public void testReadLine(){
         java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream(TEST_STRING.getBytes());
+        ByteArrayCharSequence seq = new ByteArrayCharSequence(16);
+        ByteArrayInputStream stream = new ByteArrayInputStream(seq, in);
+
+        try {
+            int l = stream.readLine();
+            assertEquals("abc123", seq.toString());
+            assertEquals(6, l);
+            l = stream.readLine();
+            assertEquals("abc123321cba", seq.toString());
+            assertEquals(6, l);
+            l = stream.readLine();
+            assertEquals(-1, l);
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+    @Test
+    public void testReadLineWithWindowsNewLIne(){
+        java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream("abc123\r\n321cba".getBytes());
         ByteArrayCharSequence seq = new ByteArrayCharSequence(16);
         ByteArrayInputStream stream = new ByteArrayInputStream(seq, in);
 
