@@ -98,11 +98,35 @@ public class Sequencer implements Callable<Void> {
      */
     private int proFields = 4;
 
+    /**
+     * Create unique read ids for paired reads and skip the sense/antisense information
+     */
+    private boolean uniqueIds = false;
+
     public Sequencer(FluxSimulatorSettings settings, Profiler profiler) {
         this.settings = settings;
         this.profiler = profiler;
     }
 
+    /**
+     * Returns true if the sequencer generates unique ids for paired reads and
+     * skips the A/S sense/anti-sense information from the read ids.
+     *
+     * @return uniqueIds true if unique paiered read ids are generated
+     */
+    public boolean isUniqueIds() {
+        return uniqueIds;
+    }
+
+    /**
+     * Set to true if the sequencer should generates unique ids for paired reads and
+     * skips the A/S sense/anti-sense information from the read ids.
+     *
+     * @param uniqueIds generate unique reads
+     */
+    public void setUniqueIds(boolean uniqueIds) {
+        this.uniqueIds = uniqueIds;
+    }
 
     public Void call() throws Exception {
         Log.info("SEQUENCING", "getting the reads");
@@ -361,13 +385,19 @@ public class Sequencer implements Callable<Void> {
         obj.append(fragStart);
         obj.append(BYTE_DELIM_FMOLI);
         obj.append(fragEnd);
-        obj.append(BYTE_DELIM_FMOLI);
-        obj.append(sense ? "S" : "A");
-
 
         if (pairedEndSide == 1 || pairedEndSide == 2) {
             obj.append(BYTE_DELIM_BARNA);
             obj.append(pairedEndSide);
+            if(!isUniqueIds()){
+                // always append sense antisens to single end reads
+                obj.append(BYTE_DELIM_FMOLI);
+                obj.append(sense ? "S" : "A");
+            }
+        }else{
+            // always append sense antisens to single end reads
+            obj.append(BYTE_DELIM_FMOLI);
+            obj.append(sense ? "S" : "A");
         }
     }
 
