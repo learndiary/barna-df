@@ -28,6 +28,7 @@
 package barna.commons.parameters;
 
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -216,7 +217,7 @@ public abstract class ParameterSchema {
             sb.append(name);
             sb.append(" ");
             sb.append(o.toString());
-            sb.append("\n");
+            sb.append(OSChecker.NEW_LINE);
         }
         return sb.toString();
     }
@@ -296,16 +297,16 @@ public abstract class ParameterSchema {
             for (Parameter p : params) {
 	            String name = p.getName();
 	            if (p.getDescription() != null) {
-	                writer.write("# " + cleanDescription(p.getDescription()) + "\n");
+	                writer.write("# " + cleanDescription(p.getDescription()) + OSChecker.NEW_LINE);
 	            }
-	            writer.write("#\n");
+	            writer.write("#"+OSChecker.NEW_LINE);
 	            String valuesString = p.getValuesString();
 	            if (valuesString != null && !valuesString.isEmpty()) {
-	                writer.write("# " + cleanDescription(valuesString) + " default: " + (p.getDefault() != null ? p.getDefault() : "") + "\n");
+	                writer.write("# " + cleanDescription(valuesString) + " default: " + (p.getDefault() != null ? p.getDefault() : "") + OSChecker.NEW_LINE);
 	            }
 	            Object o = get(p);
-	            writer.write(name + "\t" + (o != null ? o : "") + "\n");
-	            writer.write("\n");
+	            writer.write(name + "\t" + (o != null ? o : "") + OSChecker.NEW_LINE);
+	            writer.write(OSChecker.NEW_LINE);
 	        }
 	    } catch (IOException e) {
 	        try {writer.close();} catch (IOException ignore) {}
@@ -327,6 +328,6 @@ public abstract class ParameterSchema {
      * @return clean cleaned description
      */
     private static String cleanDescription(String s) {
-        return s.replaceAll("\n", "\n# ");
+        return s.replaceAll(OSChecker.NEW_LINE, OSChecker.NEW_LINE+"# ");
     }
 }

@@ -1,6 +1,7 @@
 package barna.commons.io;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.system.OSChecker;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ import static junit.framework.Assert.fail;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public class ByteArrayInputStreamTest {
-    static final String TEST_STRING = "abc123\n321cba";
+    static final String TEST_STRING = "abc123"+ OSChecker.NEW_LINE+"321cba";
 
     @Test
     public void testRead(){

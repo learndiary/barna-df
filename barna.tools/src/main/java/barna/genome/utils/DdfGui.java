@@ -365,7 +365,7 @@ public class DdfGui implements ActionListener {
 						value = (String)((JLabel)obj).getText() ; 
 					}
 					String seperator = "\t"; 
-					if ( col %  gridLayout.getColumns() == 0) seperator = "\n" ; 
+					if ( col %  gridLayout.getColumns() == 0) seperator = barna.commons.system.OSChecker.NEW_LINE ;
 					ps.print(value + seperator) ; 
 				}
 			}
@@ -448,7 +448,7 @@ public class DdfGui implements ActionListener {
 							//c.setEnabled(true);
 						}
 						catch (ClassCastException e){
-							System.out.println("Problem with " + componentList.indexOf(c)  + "\n" + e.getMessage()); 
+							System.out.println("Problem with " + componentList.indexOf(c)  + barna.commons.system.OSChecker.NEW_LINE + e.getMessage());
 						}
 				}
 			}

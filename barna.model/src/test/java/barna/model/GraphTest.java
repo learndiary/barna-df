@@ -1,12 +1,14 @@
 package barna.model;
+
 import barna.commons.ByteArrayCharSequence;
 import junit.framework.Assert;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 
@@ -32,8 +34,8 @@ public class GraphTest {
     private String writeTmpChromosome(String seq, File tmpFile) throws Exception {
         String chr= tmpFile.getName().substring(0, tmpFile.getName().lastIndexOf('.'));
         BufferedWriter writer= new BufferedWriter(new FileWriter(tmpFile));
-        writer.write(">"+ chr+ "\n");
-        writer.write(seq+ "\n");
+        writer.write(">"+ chr+ barna.commons.system.OSChecker.NEW_LINE);
+        writer.write(seq+ barna.commons.system.OSChecker.NEW_LINE);
         writer.close();
         return chr;
     }
@@ -76,7 +78,7 @@ public class GraphTest {
                 ++seqLen;
         }
 
-        int lineLen= seq.indexOf("\n");
+        int lineLen= seq.indexOf(barna.commons.system.OSChecker.NEW_LINE);
         int nrLines= (int) Math.ceil(seqLen/ (lineLen+ 1d));
         int lineNr= rnd.nextInt(nrLines);
         int posStart= rnd.nextInt(lineLen);
@@ -110,7 +112,7 @@ public class GraphTest {
                 ++seqLen;
         }
 
-        int lineLen= seq.indexOf("\n");
+        int lineLen= seq.indexOf(barna.commons.system.OSChecker.NEW_LINE);
         int nrLines= (int) Math.ceil(seqLen/ (double) (lineLen+ 1));
         int lineNr= rnd.nextInt(nrLines- 1);
         int endLineNr= lineNr+ 1+ rnd.nextInt(nrLines- lineNr- 1);
@@ -154,7 +156,7 @@ public class GraphTest {
                  ++seqLen;
         }
 
-        int lineLen= seq.indexOf("\n");
+        int lineLen= seq.indexOf(barna.commons.system.OSChecker.NEW_LINE);
         int nrLines= (int) Math.ceil(seq.length()/ (double) (lineLen+ 1));
         int endLineNr= 1+ rnd.nextInt(nrLines- 1);
         int lineNr= rnd.nextInt(endLineNr);

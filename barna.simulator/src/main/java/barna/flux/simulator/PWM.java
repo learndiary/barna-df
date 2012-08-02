@@ -501,14 +501,14 @@ public class PWM implements WeightMatrix {
             BufferedWriter writer = new BufferedWriter(new FileWriter(fileBed + "_sense.pwm"));
             for (int i = 0; i < sense.length; i++) {
                 int pos = (i >= flank5 ? i - flank5 + 1 : i - flank5);
-                writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + "\n");
+                writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + barna.commons.system.OSChecker.NEW_LINE);
             }
             writer.flush();
             writer.close();
             writer = new BufferedWriter(new FileWriter(fileBed + "_asense.pwm"));
             for (int i = 0; i < asense.length; i++) {
                 int pos = (i >= flank5 ? i - flank5 + 1 : i - flank5);
-                writer.write(pos + "\t" + asense[i][0] + "\t" + asense[i][1] + "\t" + asense[i][2] + "\t" + asense[i][3] + "\n");
+                writer.write(pos + "\t" + asense[i][0] + "\t" + asense[i][1] + "\t" + asense[i][2] + "\t" + asense[i][3] + barna.commons.system.OSChecker.NEW_LINE);
             }
             writer.flush();
             writer.close();
@@ -879,14 +879,14 @@ public class PWM implements WeightMatrix {
             BufferedWriter writer = new BufferedWriter(new FileWriter(fileBed + "_sense.pwm"));
             for (int i = 0; i < sense.length; i++) {
                 int pos = (i >= flank5 ? i - flank5 + 1 : i - flank5);
-                writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + "\n");
+                writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + barna.commons.system.OSChecker.NEW_LINE);
             }
             writer.flush();
             writer.close();
             writer = new BufferedWriter(new FileWriter(fileBed + "_asense.pwm"));
             for (int i = 0; i < asense.length; i++) {
                 int pos = (i >= flank5 ? i - flank5 + 1 : i - flank5);
-                writer.write(pos + "\t" + asense[i][0] + "\t" + asense[i][1] + "\t" + asense[i][2] + "\t" + asense[i][3] + "\n");
+                writer.write(pos + "\t" + asense[i][0] + "\t" + asense[i][1] + "\t" + asense[i][2] + "\t" + asense[i][3] + barna.commons.system.OSChecker.NEW_LINE);
             }
             writer.flush();
             writer.close();

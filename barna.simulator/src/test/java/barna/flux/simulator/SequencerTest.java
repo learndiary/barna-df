@@ -130,8 +130,8 @@ public class SequencerTest {
         try {
             f= File.createTempFile(this.getClass().getSimpleName(), ".fa");
             BufferedWriter writer= new BufferedWriter(new FileWriter(f));
-            writer.write(">"+ FileHelper.stripExtension(f.getName())+ "\n");
-            writer.write(allChars+ "\n");
+            writer.write(">"+ FileHelper.stripExtension(f.getName())+ barna.commons.system.OSChecker.NEW_LINE);
+            writer.write(allChars+ barna.commons.system.OSChecker.NEW_LINE);
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -169,7 +169,7 @@ public class SequencerTest {
                     allChars.length(), // read length
                     allChars.length(), // fragment length
                     babes);
-            String[] scs= cs.toString().split("\n");
+            String[] scs= cs.toString().split(barna.commons.system.OSChecker.NEW_LINE);
             Assert.assertTrue(allChars.equals(scs[0]));
 
         } catch (Exception e) {
@@ -352,7 +352,7 @@ public class SequencerTest {
 
                 // test FASTA
                 //System.err.println(cs);
-                String[] fasta= cs.toString().split("\n");
+                String[] fasta= cs.toString().split(barna.commons.system.OSChecker.NEW_LINE);
                 Assert.assertEquals(obj.getName().toString(), fasta[0].substring(1));
                 Assert.assertEquals(readLen, fasta[1].length());
                 if (readStart> tlen) {
@@ -459,8 +459,8 @@ public class SequencerTest {
         try {
             f= File.createTempFile(SequencerTest.class.getSimpleName(), ".fa");
             BufferedWriter writer= new BufferedWriter(new FileWriter(f));
-            writer.write(">"+ FileHelper.stripExtension(f.getName())+ "\n");
-            writer.write(chrSeq+ "\n");
+            writer.write(">"+ FileHelper.stripExtension(f.getName())+ barna.commons.system.OSChecker.NEW_LINE);
+            writer.write(chrSeq+ barna.commons.system.OSChecker.NEW_LINE);
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();

@@ -957,7 +957,7 @@ public class Graph implements Serializable {
 			fName= dirPath+ File.separator+ chrFile;
 		}
 		File f= new File(fName);
-		fileSep= "\n"; // TODO: Factory FileHelper.guessFileSep(f);
+		fileSep= barna.commons.system.OSChecker.NEW_LINE; // TODO: Factory FileHelper.guessFileSep(f);
 		try {
 			BufferedReader buffy= new BufferedReader(new FileReader(f));
 			headerOffset= 0;
@@ -1031,7 +1031,7 @@ public class Graph implements Serializable {
 
 
 			File f= new File(fName);
-			fileSep= "\n";// TODO: Factory: FileHelper.guessFileSep(f);
+			fileSep= barna.commons.system.OSChecker.NEW_LINE;// TODO: Factory: FileHelper.guessFileSep(f);
 			try {
 				if (raf!= null)
 					raf.close();

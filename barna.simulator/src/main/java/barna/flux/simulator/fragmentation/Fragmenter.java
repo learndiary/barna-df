@@ -602,7 +602,7 @@ public class Fragmenter implements Callable<Void> {
                             }
                             // write the fragment
                             fos.write(frag.toString());
-                            fos.write("\n");
+                            fos.write(barna.commons.system.OSChecker.NEW_LINE);
                             currentNumberOfFragments++;
                         }
                     }
@@ -706,7 +706,7 @@ public class Fragmenter implements Callable<Void> {
                 for (int x = 0; x < molecules; x++) {
                     ++moleculesInitilized;
                     ints = processInitial(origLen, tssMean, polyaShape, polyaScale, ints);
-                    fos.write(ints[0] + "\t" + ints[1] + "\t" + compIDstring + "\n");
+                    fos.write(ints[0] + "\t" + ints[1] + "\t" + compIDstring + barna.commons.system.OSChecker.NEW_LINE);
                 }
             }
             Log.progressFinish("OK", true);

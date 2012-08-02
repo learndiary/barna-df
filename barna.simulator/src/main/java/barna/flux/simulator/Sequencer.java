@@ -29,6 +29,7 @@ package barna.flux.simulator;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
 import barna.flux.simulator.error.MarkovErrorModel;
 import barna.flux.simulator.error.ModelPool;
@@ -370,7 +371,8 @@ public class Sequencer implements Callable<Void> {
             throw new RuntimeException(e);
         }
         cs.end += (p2 - p1);
-        cs.append(BYTE_NL);
+        //cs.append(BYTE_NL);
+        cs.append(OSChecker.NEW_LINE);
     }
 
     public void appendReadName(BEDobject2 obj, Transcript t, int molNr, int fragStart, int fragEnd, boolean sense, int pairedEndSide) {
@@ -965,7 +967,7 @@ public class Sequencer implements Callable<Void> {
                 }
 
                 bedOut.write(obj.toString());
-                bedOut.write("\n");
+                bedOut.write(barna.commons.system.OSChecker.NEW_LINE);
             }
 
 
@@ -974,7 +976,7 @@ public class Sequencer implements Callable<Void> {
                 createQname(obj, cs, babes);
                 createQSeq(cs, obj, t.get3PrimeEdge(), t.getStrand(), rLen, flen, babes);
                 qFastaOut.write(cs.toString());
-                qFastaOut.write("\n");
+                qFastaOut.write(barna.commons.system.OSChecker.NEW_LINE);
             }
         }
 

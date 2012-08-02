@@ -645,11 +645,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "Size distribution of fragments after filtering,\n" +
             "either specified by the fully qualified path of a file with an empirical distribution" +
             "where each line represents the length of a read, no ordering required,\n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "or attributes of a gaussian distribution (mean and standard deviation) in the form:\n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "N(mean, sd) \n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "for example: N(800, 200)\n" +
             "If no size distribution is provided, an empirical Illumina fragment size distribution is employed."
     );
@@ -664,7 +664,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
             "Method for sub-sampling fragments according to the characteristics of (see SIZE_DISTRIBUTION) \n" +
-                    "\n" +
+                    barna.commons.system.OSChecker.NEW_LINE +
                     "MH the Metropolis-Hastings algorithm is used for filtering\n" +
                     "RJ rejection sampling, employing probability directly from the distribution\n" +
                     "AC (acceptance) transforms the probability distribution, s.t. the 'most likely'\n" +
@@ -709,7 +709,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE",
             "path to the file with the error model\n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "for the values '35' or '76', default error models are provided for the corresponding read lengths,\n" +
             "otherwise the path to a custom error model file is expected\n", null, new ParameterValidator(){
         @Override
@@ -720,7 +720,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
                 if(!v.equals("35") && !v.equals("76")){
                     // check file
                     if((v.startsWith("/") && !new File(v).canRead())){
-                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
+                        throw new ParameterException("Unable to read error model from " + v + barna.commons.system.OSChecker.NEW_LINE + "Use either the defaults '36' od '76' or specify an error model file");
                     }
                 }
             }

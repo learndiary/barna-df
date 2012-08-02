@@ -59,7 +59,7 @@ abstract class Distribution {
     public String toString() {
         StringBuffer b = new StringBuffer();
         for (int i = 0; i < size; i++) {
-            b.append(i).append("\t").append(getValue(i)).append("\n");
+            b.append(i).append("\t").append(getValue(i)).append(barna.commons.system.OSChecker.NEW_LINE);
         }
         return b.toString();
     }

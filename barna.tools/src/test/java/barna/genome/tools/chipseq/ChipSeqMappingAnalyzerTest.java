@@ -104,9 +104,9 @@ public class ChipSeqMappingAnalyzerTest {
         try {
             parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
             writer = new BufferedWriter(new FileWriter(parF));
-            writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + "\n");
-            writer.write(ChipSeqSettings.FILE_OUTPUT.getName() + " " + tmpF.getAbsolutePath()+".out" + "\n");
-            writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + "\n");
+            writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE);
+            writer.write(ChipSeqSettings.FILE_OUTPUT.getName() + " " + tmpF.getAbsolutePath()+".out" + barna.commons.system.OSChecker.NEW_LINE);
+            writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + barna.commons.system.OSChecker.NEW_LINE);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -156,9 +156,9 @@ public class ChipSeqMappingAnalyzerTest {
         try {
             parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
             writer = new BufferedWriter(new FileWriter(parF));
-            writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + "\n");
+            writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE);
 
-            writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + "\n");
+            writer.write(ChipSeqSettings.READ_DESCRIPTOR.getName() + " " + UniversalReadDescriptor.DESCRIPTORID_PAIRED + barna.commons.system.OSChecker.NEW_LINE);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

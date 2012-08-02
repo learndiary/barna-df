@@ -29,6 +29,7 @@ package barna.io.bed;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
+import barna.commons.system.OSChecker;
 import barna.io.BufferedIteratorDisk;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.bed.BEDobject2;
@@ -89,7 +90,7 @@ public class BEDiteratorDiskTest {
 			OutputStreamWriter writer= new OutputStreamWriter(pout);
 			for (int i = 0; i < beds.length; i++) {
 				writer.write(beds[i]);
-				writer.write('\n');
+				writer.write(OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();

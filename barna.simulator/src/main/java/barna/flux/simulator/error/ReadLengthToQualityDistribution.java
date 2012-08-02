@@ -63,7 +63,7 @@ class ReadLengthToQualityDistribution extends Distribution {
         }
 
 //        try {
-//            w.write("\n");
+//            w.write(barna.commons.system.OSChecker.NEW_LINE);
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }

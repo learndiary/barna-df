@@ -249,7 +249,7 @@ public class FileHelper {
         String l = null;
         StringBuffer b = new StringBuffer();
         while( (l = bufferedReader.readLine()) != null){
-            b.append(l).append("\n");
+            b.append(l).append(barna.commons.system.OSChecker.NEW_LINE);
         }
         return b.toString();
     }
@@ -396,7 +396,7 @@ public class FileHelper {
         String lastNChars = new String(bytearray);
         StringBuffer sb = new StringBuffer(lastNChars);
         lastNChars = sb.reverse().toString();
-        StringTokenizer tokens = new StringTokenizer(lastNChars, "\n");
+        StringTokenizer tokens = new StringTokenizer(lastNChars, barna.commons.system.OSChecker.NEW_LINE);
         while (tokens.hasMoreTokens()) {
             StringBuffer sbLine = new StringBuffer((String) tokens.nextToken());
             lastNlines.add(sbLine.reverse().toString());

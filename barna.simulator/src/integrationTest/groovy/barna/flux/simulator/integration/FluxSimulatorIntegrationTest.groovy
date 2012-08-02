@@ -110,7 +110,7 @@ class FluxSimulatorIntegrationTest {
             PAIRED_END    NO
             FASTA    YES
             ERR_FILE    76
-            """.split("\n").collect {it.trim()}.join("\n")) // get rid of the spaces at the beginning
+            """.split(barna.commons.system.OSChecker.NEW_LINE).collect {it.trim()}.join(barna.commons.system.OSChecker.NEW_LINE)) // get rid of the spaces at the beginning
             assertEquals(0, runSimulator(dir, targetParams).exitValue());
 
         } catch (Exception e) {
