@@ -55,7 +55,11 @@ public class Sequencer implements Callable<Void> {
     public final static String NAME_SEQ = "Sequencing";
     static final String SFX_FASTA = "fasta", SFX_FASTQ = "fastq";
     private static final byte BYTE_a = 97, BYTE_t = 116;
-    
+    public static final byte BYTE_DELIM_FMOLI = ':';
+    public static final byte BYTE_DELIM_BARNA = '/';
+    public final static byte[] BYTE_ARRAY_FROM_STRAND_TO_BLOCKS = new byte[]{'\t', '.', '\t', '.', '\t', '0', ',', '0', ',', '0'};
+
+
     private static final ByteArrayCharSequence CHR_POLYA = new ByteArrayCharSequence("polyA");
     /**
      * Helper to create only one instance for the initial profiler map
@@ -92,13 +96,40 @@ public class Sequencer implements Callable<Void> {
     /**
      * Number of fields written to .PRO file.
      */
-    private int proFields= 4;
-    
+    private int proFields = 4;
+
+    /**
+     * Create unique read ids for paired reads and skip the sense/antisense information
+     */
+    private boolean uniqueIds = false;
+
     public Sequencer(FluxSimulatorSettings settings, Profiler profiler) {
         this.settings = settings;
         this.profiler = profiler;
+        if(settings != null){
+            setUniqueIds(settings.get(FluxSimulatorSettings.UNIQUE_IDS));
+        }
     }
 
+    /**
+     * Returns true if the sequencer generates unique ids for paired reads and
+     * skips the A/S sense/anti-sense information from the read ids.
+     *
+     * @return uniqueIds true if unique paiered read ids are generated
+     */
+    public boolean isUniqueIds() {
+        return uniqueIds;
+    }
+
+    /**
+     * Set to true if the sequencer should generates unique ids for paired reads and
+     * skips the A/S sense/anti-sense information from the read ids.
+     *
+     * @param uniqueIds generate unique reads
+     */
+    public void setUniqueIds(boolean uniqueIds) {
+        this.uniqueIds = uniqueIds;
+    }
 
     public Void call() throws Exception {
         Log.info("SEQUENCING", "getting the reads");
@@ -113,7 +144,7 @@ public class Sequencer implements Callable<Void> {
         p = Math.min(1,
                 settings.get(FluxSimulatorSettings.READ_NUMBER) / (double) fragmentIndex.getNumberOfFragments());
         if (settings.get(FluxSimulatorSettings.PAIRED_END))
-            p/= 2;  // half the probability for a fragment to be sequenced
+            p /= 2;  // half the probability for a fragment to be sequenced
 
         File referenceFile = settings.get(FluxSimulatorSettings.REF_FILE);
 
@@ -146,7 +177,7 @@ public class Sequencer implements Callable<Void> {
     public boolean loadErrors() {
         // load model
         String errorFile = settings.get(FluxSimulatorSettings.ERR_FILE);
-        if(!errorFile.startsWith("/") || !new File(errorFile).exists()) {
+        if (!errorFile.startsWith("/") || !new File(errorFile).exists()) {
             errorFile = new File(settings.getParameterFile().getParentFile(), errorFile).getAbsolutePath();
         }
         boolean fastOutput = settings.get(FluxSimulatorSettings.FASTA);
@@ -159,15 +190,15 @@ public class Sequencer implements Callable<Void> {
                 Fix BARNA-166 and make sure we only use the name of the file
                  */
                 String fileName = new File(errorFile).getName();
-                if(fileName.equals("35")){
+                if (fileName.equals("35")) {
                     input = getClass().getResource("/35_error.model").openStream();
                     name = "35 bases model";
-                }else if(fileName.equals("76")){
+                } else if (fileName.equals("76")) {
                     input = getClass().getResource("/76_error.model").openStream();
                     name = "76 bases model";
-                }else {
+                } else {
                     File file = new File(errorFile);
-                    if(!file.canRead()){
+                    if (!file.canRead()) {
                         throw new RuntimeException("unable to read error model from file " + errorFile);
                     }
                     input = new FileInputStream(file);
@@ -184,14 +215,14 @@ public class Sequencer implements Callable<Void> {
             // check length
             int readLength = settings.get(FluxSimulatorSettings.READ_LENGTH);
             int modelLength = errorModel.getReadLength();
-            if(readLength != modelLength){
+            if (readLength != modelLength) {
                 Log.warn("The error model supports a read length of " + modelLength + " but\n" +
                         "you are trying to create reads of length " + readLength +
                         ". We are scaling.");
             }
 
             return true;
-        }else if( fastOutput){
+        } else if (fastOutput) {
             // just plain fasta
             babes = new ModelPool(true, null, settings.get(FluxSimulatorSettings.READ_LENGTH));
         }
@@ -241,7 +272,7 @@ public class Sequencer implements Callable<Void> {
 
             SequenceWriter writer = new SequenceWriter(tmpFile, tmpFasta, readLength);
             Processor processor = new Processor(writer, pairs, index);
-            long fileLen= referenceFile.length();
+            long fileLen = referenceFile.length();
             for (reader.read(); (g = reader.getGenes()) != null; reader.read()) {
                 for (Gene aG : g) {
                     processor.process(aG);
@@ -254,19 +285,19 @@ public class Sequencer implements Callable<Void> {
 
             Log.progressFinish(StringUtils.OK, true);
             Log.message("");
-            Log.message("\t" +  index.getNumberOfFragments()+ " fragments found (" + index.getNumberOfLines() + " without PCR duplicates)");
+            Log.message("\t" + index.getNumberOfFragments() + " fragments found (" + index.getNumberOfLines() + " without PCR duplicates)");
             Log.message("\t" + writer.totalReads + " reads sequenced");
             Log.message("\t" + writer.countPolyAReads + " reads fall in poly-A tail");
             Log.message("\t" + writer.countTruncatedReads + " truncated reads");
-            if(tmpFasta != null && babes != null){
+            if (tmpFasta != null && babes != null) {
                 Log.message("");
                 Log.message("\tQuality stats: ");
                 String avg = StringUtils.fprint(babes.getAverageMutations(), 8);
-                if(avg.equals("0.00000000") && babes.getAverageMutations() > 0.0){
+                if (avg.equals("0.00000000") && babes.getAverageMutations() > 0.0) {
                     avg = Double.toString(babes.getAverageMutations());
                 }
-                Log.message("\t" + avg +" % average mutations per sequence");
-                Log.message("\t" + StringUtils.fprint(babes.getAverageQuality(), 2)+" average quality ");
+                Log.message("\t" + avg + " % average mutations per sequence");
+                Log.message("\t" + StringUtils.fprint(babes.getAverageQuality(), 2) + " average quality ");
             }
 
             // store reads
@@ -282,29 +313,29 @@ public class Sequencer implements Callable<Void> {
                 FileHelper.move(tmpFasta, fileFASTA);
                 Log.progressFinish();
             }
-            
+
             // write profile
-            HashMap<CharSequence, Number> map2= null;
+            HashMap<CharSequence, Number> map2 = null;
             for (int i = 0; i < proFields; i++) {
-            	Iterator<CharSequence> iter= map.keySet().iterator();
-            	if (map2== null)
-            		map2= new HashMap<CharSequence, Number>(map.size(), 1f);
-            	else
-            		map2.clear();
-            	while(iter.hasNext()) {
-            		CharSequence id= iter.next();
-            		Number[] n= map.get(id);
-            		map2.put(id, n[i]);
-            	}
-            	int colNr= ProfilerFile.PRO_COL_NR_SEQ+ i;
-            	if (i> 0)
-            		++colNr; // add. col fraction
+                Iterator<CharSequence> iter = map.keySet().iterator();
+                if (map2 == null)
+                    map2 = new HashMap<CharSequence, Number>(map.size(), 1f);
+                else
+                    map2.clear();
+                while (iter.hasNext()) {
+                    CharSequence id = iter.next();
+                    Number[] n = map.get(id);
+                    map2.put(id, n[i]);
+                }
+                int colNr = ProfilerFile.PRO_COL_NR_SEQ + i;
+                if (i > 0)
+                    ++colNr; // add. col fraction
                 ProfilerFile.appendProfile(settings.get(
-                		FluxSimulatorSettings.PRO_FILE), 
-                		colNr, 
-                		map2, i== 0);
-			}
-             
+                        FluxSimulatorSettings.PRO_FILE),
+                        colNr,
+                        map2, i == 0);
+            }
+
             return true;
         } catch (Exception e) {
             Log.error("Error while sequencing : " + e.getMessage(), e);
@@ -322,7 +353,7 @@ public class Sequencer implements Callable<Void> {
         return FileHelper.replaceSfx(settings.get(FluxSimulatorSettings.SEQ_FILE), "." + (hasQualities() ? SFX_FASTQ : SFX_FASTA));
     }
 
-    public static void createQname(BEDobject2 obj2, ByteArrayCharSequence cs, ModelPool babes) {
+    public void createQname(BEDobject2 obj2, ByteArrayCharSequence cs, ModelPool babes) {
 
         byte[] a = obj2.chars;
         cs.clear();
@@ -335,65 +366,73 @@ public class Sequencer implements Callable<Void> {
         try {
             System.arraycopy(a, p1, b, 1, (p2 - p1));
         } catch (ArrayIndexOutOfBoundsException e) {
-            Log.error("Problem when generating read ID: "+ p1+ ", "+ p2+ ", "+ a.length+ ", "+ b.length);
+            Log.error("Problem when generating read ID: " + p1 + ", " + p2 + ", " + a.length + ", " + b.length);
             throw new RuntimeException(e);
         }
         cs.end += (p2 - p1);
         cs.append(BYTE_NL);
     }
 
-    public static final byte BYTE_DELIM_FMOLI= ':';
-    public static final byte BYTE_DELIM_BARNA= '/';
-
-    public static void appendReadName(BEDobject2 obj, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, int readStart, int readEnd, boolean sense, int pairedEndSide) {
-
-
+    public void appendReadName(BEDobject2 obj, Transcript t, int molNr, int fragStart, int fragEnd, boolean sense, int pairedEndSide) {
         // FURI
         obj.append(t.getGene().getLocusID());
         obj.append(BYTE_DELIM_FMOLI);
         obj.append(t.getTranscriptID());
         obj.append(BYTE_DELIM_FMOLI);
-        obj.append((int) (molNr+1));
+        obj.append((int) (molNr + 1));
         obj.append(BYTE_DELIM_FMOLI);
         obj.append(t.getExonicLength());
         obj.append(BYTE_DELIM_FMOLI);
         obj.append(fragStart);
         obj.append(BYTE_DELIM_FMOLI);
         obj.append(fragEnd);
-        obj.append(BYTE_DELIM_FMOLI);
-        obj.append(sense ? "S" : "A");
-
 
         if (pairedEndSide == 1 || pairedEndSide == 2) {
+            if(!isUniqueIds()){
+                // always append sense antisens to single end reads
+                obj.append(BYTE_DELIM_FMOLI);
+                obj.append(sense ? "S" : "A");
+            }
+
             obj.append(BYTE_DELIM_BARNA);
-            obj.append(pairedEndSide);
+            if(isUniqueIds()){
+                // make sure we use sense/antisense information fot the pairing
+                // in case we generate unique reads
+                obj.append(sense ? 1 : 2);
+            }else{
+                obj.append(pairedEndSide);
+            }
+        }else{
+            // always append sense antisens to single end reads
+            obj.append(BYTE_DELIM_FMOLI);
+            obj.append(sense ? "S" : "A");
         }
     }
 
     /**
      * Create polya read
      *
-     * @param obj       the bed object to fill
-     * @param start     the read start
-     * @param end       the read end
-     * @param t         the transcript
-     * @param molNr     the molecule number
-     * @param absDir    the global direction
-     * @param fragStart fragment start
-     * @param fragEnd   fragment end
-     * @param left      read direction
+     * @param obj           the bed object to fill
+     * @param start         the read start
+     * @param end           the read end
+     * @param t             the transcript
+     * @param molNr         the molecule number
+     * @param absDir        the global direction
+     * @param fragStart     fragment start
+     * @param fragEnd       fragment end
+     * @param left          read direction
      * @param pairedEndSide paired end side, either 1 or 2 or 0 for no paired ends
      * @return bed the filled bed object
      */
-    public static BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public BEDobject2 createReadPolyA(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte absDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
         obj.clear();
         obj.append(CHR_POLYA);
         obj.append(BYTE_TAB);
         obj.append(0);
         obj.append(BYTE_TAB);
-        obj.append(end - start+ 1);	// (+1) for end being excluded in BED, included in tx coordinates
+        obj.append(end - start + 1);    // (+1) for end being excluded in BED, included in tx coordinates
         obj.append(BYTE_TAB);
-        appendReadName(obj, t, molNr, absDir, fragStart, fragEnd, start, end, left, pairedEndSide);
+        appendReadName(obj, t, molNr, fragStart, fragEnd, left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -418,43 +457,43 @@ public class Sequencer implements Callable<Void> {
         return obj;
     }
 
-    public final static byte[] BYTE_ARRAY_FROM_STRAND_TO_BLOCKS = new byte[]{'\t', '.', '\t', '.', '\t', '0', ',', '0', ',', '0'};
+
 
 
     /**
      * Prepare a read and fill the given bed object
      *
-     * @param obj       the bed object to fill
-     * @param start     the start read start position in transcript coordinates (0-based)
-     * @param end       the end read end position in transcript coordinates (0-based)
-     * @param t         the transcript with genomic positions (1-based)
-     * @param molNr     molecule number of the transcript
-     * @param aDir    absolute direction of the transcript
-     * @param fragStart fragment start start position of the fragment in transcript coordinates (0-based)
-     * @param fragEnd   fragment end end position of the fragment in transcript coordinates (0-based)
-     * @param left      flag indicating whether the read is the left end of the fragment
+     * @param obj           the bed object to fill
+     * @param start         the start read start position in transcript coordinates (0-based)
+     * @param end           the end read end position in transcript coordinates (0-based)
+     * @param t             the transcript with genomic positions (1-based)
+     * @param molNr         molecule number of the transcript
+     * @param aDir          absolute direction of the transcript
+     * @param fragStart     fragment start start position of the fragment in transcript coordinates (0-based)
+     * @param fragEnd       fragment end end position of the fragment in transcript coordinates (0-based)
+     * @param left          flag indicating whether the read is the left end of the fragment
      * @param pairedEndSide either 1 or 2 or anything else if no pairedend reads are produced
      * @return polyA the number of nucleotides in the poly-A tail
      */
-    public static int createRead(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte aDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
+    public int createRead(BEDobject2 obj, int start, int end, Transcript t, int molNr, byte aDir, int fragStart, int fragEnd, boolean left, int pairedEndSide) {
 
-        byte tDir= t.getStrand();
+        byte tDir = t.getStrand();
         int originalStart = start;
         int originalEnd = end;
         int tlen = t.getExonicLength();
 
-        if (start > tlen- 1) {
+        if (start > tlen - 1) {
             createReadPolyA(obj, start, end, t, molNr, aDir, fragStart, fragEnd, left, pairedEndSide);    // read in polyA tail
-            return (end- start+ 1);
+            return (end - start + 1);
         }
         int offsStart = 0, offsEnd = 0;
         if (start < 0) {
             offsStart = start; // t-coords 0-based, offs negative
             start = 0;
         }
-        if (end > tlen- 1) {
-            offsEnd = end - tlen+ 1;    // positive, pos's after annotated end
-            end = tlen- 1;
+        if (end > tlen - 1) {
+            offsEnd = end - tlen + 1;    // positive, pos's after annotated end
+            end = tlen - 1;
         } else if (end < 1) {
             offsEnd = end;    // negative, pos's before annotated start
             end = 0;
@@ -465,14 +504,14 @@ public class Sequencer implements Callable<Void> {
         byte strand = t.getStrand();
         // 0-based transcript coordinates
         int bedStart = Math.abs(t.getGenomicPosition(start)),
-                bedEnd = Math.abs(t.getGenomicPosition(end)); 
+                bedEnd = Math.abs(t.getGenomicPosition(end));
         int idxExA = t.getExonIdx(strand * bedStart),
                 idxExB = t.getExonIdx(strand * bedEnd);    // exon indices
         if (idxExA == -1 || idxExB == -1) {
             throw new RuntimeException("Invalid read (out of exons): " +
-            		"tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+ 
-            		"], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
-            		"], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
+                    "tx strand/length [" + strand + "," + tlen + "], index first/second exon [" + idxExA + "," + idxExB +
+                    "], bedStartEnd [" + bedStart + "," + bedEnd + "], originalStartEnd [" + originalStart + "," + originalEnd +
+                    "], offsetStartEnd [" + offsStart + "," + offsEnd + "]");
         }
         bedEnd = offsEnd >= 0 ? bedEnd + (offsEnd * strand)
                 : bedStart + (offsEnd * strand);    // use original bedstart, before!
@@ -495,9 +534,9 @@ public class Sequencer implements Callable<Void> {
         if (bedStart > bedEnd) {
             if (t.getStrand() >= 0) {
                 throw new RuntimeException("Invalid read (end before start): " +
-                        "tx strand/length ["+ strand+ ","+ tlen+ "], index first/second exon ["+ idxExA + "," + idxExB+
-                        "], bedStartEnd ["+ bedStart+ ","+ bedEnd+ "], originalStartEnd ["+ originalStart+ ","+ originalEnd+
-                        "], offsetStartEnd ["+ offsStart+ ","+ offsEnd+ "]");
+                        "tx strand/length [" + strand + "," + tlen + "], index first/second exon [" + idxExA + "," + idxExB +
+                        "], bedStartEnd [" + bedStart + "," + bedEnd + "], originalStartEnd [" + originalStart + "," + originalEnd +
+                        "], offsetStartEnd [" + offsStart + "," + offsEnd + "]");
             }
             int h = bedStart;
             bedStart = bedEnd;
@@ -516,8 +555,8 @@ public class Sequencer implements Callable<Void> {
         obj.append(bedEnd);
         obj.append(BYTE_TAB);
         appendReadName(obj, t,
-                molNr, aDir, fragStart, fragEnd,
-                originalStart, originalEnd, left, pairedEndSide);
+                molNr, fragStart, fragEnd,
+                left, pairedEndSide);
         obj.append(BYTE_TAB);
         obj.append(BYTE_0);
         obj.append(BYTE_TAB);
@@ -583,7 +622,7 @@ public class Sequencer implements Callable<Void> {
         return null;
     }
 
-    public static ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, int t3p, byte tDir, int len, int flen, ModelPool babes) {
+    public ByteArrayCharSequence createQSeq(ByteArrayCharSequence cs, BEDobject2 obj, int t3p, byte tDir, int len, int flen, ModelPool babes) {
 
         //int flen= fend- fstart+ 1;
         cs.ensureLength(cs.end, len);
@@ -599,19 +638,19 @@ public class Sequencer implements Callable<Void> {
         if (x != CHR_POLYA.length()) {        // not in pA, at least partially
             obj.readSequence(cs);    // not completely in poly-A
             cs.toUpperCase(seqStart, cs.end);
-            int diff= (tDir> 0? obj.getEnd(): -(obj.getStart()+ 1)) - t3p;
+            int diff = (tDir > 0 ? obj.getEnd() : -(obj.getStart() + 1)) - t3p;
             // remove trailing N's outside of chr sequence if in polyA-tail
-            if (diff> 0) {
-                diff= Math.min(diff, cs.end- seqStart);
-                if (obj.getStrand()< 0)
+            if (diff > 0) {
+                diff = Math.min(diff, cs.end - seqStart);
+                if (obj.getStrand() < 0)
                     try {
-                        System.arraycopy(cs.chars, seqStart+ diff, cs.chars, seqStart, cs.end- (seqStart+ diff));
+                        System.arraycopy(cs.chars, seqStart + diff, cs.chars, seqStart, cs.end - (seqStart + diff));
                     } catch (ArrayIndexOutOfBoundsException e) {
                         System.err.println(obj);
-                        System.err.println(t3p+ "; "+ diff+ ", "+ seqStart+ ": "+ cs.chars.length);
+                        System.err.println(t3p + "; " + diff + ", " + seqStart + ": " + cs.chars.length);
                         throw (e);
                     }
-                cs.end-= diff;
+                cs.end -= diff;
             }
         }
 
@@ -621,14 +660,14 @@ public class Sequencer implements Callable<Void> {
         int diff = Math.min(flen, len) - (cs.end - seqStart);    // fill trailing As
         if (diff > 0) {
 
-            if (obj.getStrand()* tDir> 0) { // sense reads
+            if (obj.getStrand() * tDir > 0) { // sense reads
                 Arrays.fill(cs.chars, cs.end, cs.end + diff, BYTE_a);
             } else {
                 //System.err.println("before:"+ cs.subSequence(seqStart, cs.end));
                 try {
-                    System.arraycopy(cs.chars, seqStart, cs.chars, seqStart + diff, cs.end- seqStart);
+                    System.arraycopy(cs.chars, seqStart, cs.chars, seqStart + diff, cs.end - seqStart);
                 } catch (ArrayIndexOutOfBoundsException e) {
-                    System.err.println(diff+ ", "+ seqStart+ ": "+ cs.chars.length);
+                    System.err.println(diff + ", " + seqStart + ": " + cs.chars.length);
                 }
                 Arrays.fill(cs.chars, seqStart, seqStart + diff, BYTE_t);
                 //System.err.println("after:"+ cs.subSequence(seqStart, cs.end));
@@ -656,7 +695,7 @@ public class Sequencer implements Callable<Void> {
         return totalReads;
     }
 
-	/**
+    /**
      * Process reads and pass them to the writer
      */
     class Processor {
@@ -693,8 +732,8 @@ public class Sequencer implements Callable<Void> {
         /**
          * Coverage profile of a sequenced transcript.
          */
-        private Coverage coverage= null;
-        
+        private Coverage coverage = null;
+
         public Processor(SequenceWriter writer, boolean pairedEnd, FragmentDB index) throws IOException {
             this.writer = writer;
             this.pairedEnd = pairedEnd;
@@ -702,20 +741,20 @@ public class Sequencer implements Callable<Void> {
         }
 
         public void process(Gene gene) {
-            
-        	if (gene == null) {
+
+            if (gene == null) {
                 throw new NullPointerException("Null gene not permitted");
             }
-            
+
             // process every transcript in the gene
             String baseID = gene.getLocusID() + FluxSimulatorSettings.SEP_LOC_TID;
             for (int j = 0; j < gene.getTranscripts().length; j++) {
                 Transcript t = gene.getTranscripts()[j];
-                int elen= t.getExonicLength();
-                if (coverage== null)
-                	coverage= new Coverage(elen);
+                int elen = t.getExonicLength();
+                if (coverage == null)
+                    coverage = new Coverage(elen);
                 else
-                	coverage.reset(elen);
+                    coverage.reset(elen);
                 String compID = baseID + t.getTranscriptID();
 
 
@@ -730,29 +769,29 @@ public class Sequencer implements Callable<Void> {
                         int fstart = cs.getTokenInt(0);
                         int fend = cs.getTokenInt(1);
                         int dups = cs.getTokenInt(3);
-                        dups = Math.max(dups, 1);	// file provides nr. of duplicates, not molecules
+                        dups = Math.max(dups, 1);    // file provides nr. of duplicates, not molecules
 
 
                         double q = p * dups;
-                        int frags = (int) q;	
-                        double rest = q-frags;
+                        int frags = (int) q;
+                        double rest = q - frags;
 
                         // write fragments
-                        for(int dd = 0; dd< frags;dd++){
+                        for (int dd = 0; dd < frags; dd++) {
                             readsSequenced++;
                             ++k;
-                            if(pairedEnd){
-                                int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
-                                writer.writeRead(true, dir,t, coverage, fstart, fend, k);
+                            if (pairedEnd) {
+                                int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1 : 2;
+                                writer.writeRead(true, dir, t, coverage, fstart, fend, k);
                                 ++cntPlus;
 
-                                writer.writeRead(false, dir==1?2:1, t, coverage, fstart, fend, k);
+                                writer.writeRead(false, dir == 1 ? 2 : 1, t, coverage, fstart, fend, k);
                                 ++cntMinus;
-                            }else{
+                            } else {
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true, 0 ,t, coverage, fstart, fend, k);
+                                    writer.writeRead(true, 0, t, coverage, fstart, fend, k);
                                     ++cntPlus;
-                                }else{
+                                } else {
                                     writer.writeRead(false, 0, t, coverage, fstart, fend, k);
                                     ++cntMinus;
                                 }
@@ -763,56 +802,56 @@ public class Sequencer implements Callable<Void> {
                         // try for the rest
                         double r = rnd.nextDouble();
                         if (r < rest) {
-                            if(pairedEnd){
-                                int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1:2;
+                            ++k;
+                            if (pairedEnd) {
+                                int dir = rndFiftyFifty.nextDouble() <= 0.5 ? 1 : 2;
                                 writer.writeRead(true, dir, t, coverage, fstart, fend, k);
                                 ++cntPlus;
 
-                                writer.writeRead(false,dir==1?2:1, t, coverage, fstart, fend, k);
+                                writer.writeRead(false, dir == 1 ? 2 : 1, t, coverage, fstart, fend, k);
                                 ++cntMinus;
-                            }else{
+                            } else {
                                 if (rndFiftyFifty.nextDouble() < 0.5) {
-                                    writer.writeRead(true,0, t, coverage, fstart, fend, k);
+                                    writer.writeRead(true, 0, t, coverage, fstart, fend, k);
                                     ++cntPlus;
-                                }else{
-                                    writer.writeRead(false,0, t, coverage, fstart, fend, k);
+                                } else {
+                                    writer.writeRead(false, 0, t, coverage, fstart, fend, k);
                                     ++cntMinus;
                                 }
                             }
-                            ++k;
                             readsSequenced++;
                         }
                     } // end all fragments
-                
-                // catch I/O errors
+
+                    // catch I/O errors
                 } catch (IOException e) {
                     throw new RuntimeException("Error while reading from fragment index sequencer: " + e.getMessage(), e);
                 }
 
-                Number[] n= null;
+                Number[] n = null;
                 if (map.containsKey(compID))
-                	n= map.get(compID);
+                    n = map.get(compID);
                 else {
-            		n= new Number[proFields];
-                	map.put(compID, n);
+                    n = new Number[proFields];
+                    map.put(compID, n);
                 }
                 // reads produced
-                n[0]= new Integer(pairedEnd? 2* readsSequenced: readsSequenced);
+                n[0] = new Integer(pairedEnd ? 2 * readsSequenced : readsSequenced);
                 // covered positions
-                n[1]= new Double(coverage.getFractionCovered());
+                n[1] = new Double(coverage.getFractionCovered());
                 // chi-square, exclude 0-positions
-				n[2]= new Long(coverage.getChiSquare(true));
-				// CV, exclude 0-positions
-				n[3]= new Double(coverage.getCV(true));
-                
-            }	// end all transcripts
+                n[2] = new Long(coverage.getChiSquare(true));
+                // CV, exclude 0-positions
+                n[3] = new Double(coverage.getCV(true));
+
+            }    // end all transcripts
         }
 
         /**
          * Closes the zip stream and de-allocates no longer needed objects.
          */
         public void close() {
-        	coverage= null;
+            coverage = null;
         }
 
     }
@@ -872,15 +911,15 @@ public class Sequencer implements Callable<Void> {
         /**
          * Process a transcript and write the read
          *
-         * @param left   read direction
+         * @param left          read direction
          * @param pairedEndSide either 1 or 2 (or anything if no pairedend reads are produced)
-         * @param t      the transcript
-         * @param fstart the fragment start
-         * @param fend   the fragment end
-         * @param k      the molecule number
+         * @param t             the transcript
+         * @param fstart        the fragment start
+         * @param fend          the fragment end
+         * @param k             the molecule number
          * @throws IOException in case of any errors
          */
-        public void writeRead(boolean left,int pairedEndSide, Transcript t, Coverage cov, int fstart, int fend, int k) throws IOException {
+        public void writeRead(boolean left, int pairedEndSide, Transcript t, Coverage cov, int fstart, int fend, int k) throws IOException {
             byte absDir = (byte) (t.getStrand() >= 0 ? 1 : -1);
             byte antiDir = (byte) (t.getStrand() >= 0 ? -1 : 1);
 
@@ -897,19 +936,19 @@ public class Sequencer implements Callable<Void> {
 
             // coverage stats
             if (left) {
-            	for (int i = Math.max(fstart, 0); i < Math.max(Math.min(fstart + rLen - 1, fend), 0); i++) {
-            		cov.increment(i);
-				}
+                for (int i = Math.max(fstart, 0); i < Math.max(Math.min(fstart + rLen - 1, fend), 0); i++) {
+                    cov.increment(i);
+                }
             } else {
-            	for (int i = Math.max(Math.max(fend - rLen + 1, fstart), 0); i< Math.max(0, fend); i++) {
-					cov.increment(i);
-				}
+                for (int i = Math.max(Math.max(fend - rLen + 1, fstart), 0); i < Math.max(0, fend); i++) {
+                    cov.increment(i);
+                }
             }
 
             // bed object
             if (bedOut != null) {
-            	
-            	int polyA= 0;
+
+                int polyA = 0;
                 if (left) {
                     polyA = createRead(obj,
                             fstart, Math.min(fstart + rLen - 1, fend),     // start, end
@@ -921,7 +960,7 @@ public class Sequencer implements Callable<Void> {
                             t, k, antiDir,
                             fstart, fend, left, pairedEndSide);
                 }
-                if (polyA> 0) {
+                if (polyA > 0) {
                     countPolyAReads++;
                 }
 
@@ -948,14 +987,14 @@ public class Sequencer implements Callable<Void> {
                 try {
                     bedOut.close();
                 } catch (IOException ignore) {
-                	throw new RuntimeException(ignore);
+                    throw new RuntimeException(ignore);
                 }
             }
             if (qFastaOut != null) {
                 try {
                     qFastaOut.close();
                 } catch (IOException ignore) {
-                	throw new RuntimeException(ignore);
+                    throw new RuntimeException(ignore);
                 }
             }
         }
