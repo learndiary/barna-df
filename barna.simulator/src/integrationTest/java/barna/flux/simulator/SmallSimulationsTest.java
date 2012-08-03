@@ -30,6 +30,7 @@ package barna.flux.simulator;
 import barna.commons.Execute;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
+import barna.model.Graph;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -135,7 +136,7 @@ public class SmallSimulationsTest {
 
     @Test
     public void testRunWithoutCustomErrorModelAndFastAOutput() {
-
+        Graph.fileSep = null;
         // disable any questions
         Log.setInteractive(false);
         // the setting file

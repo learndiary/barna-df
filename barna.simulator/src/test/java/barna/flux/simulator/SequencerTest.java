@@ -124,6 +124,7 @@ public class SequencerTest {
     public void testSequenceAmbiguities() {
         Sequencer sequencer = new Sequencer(null, null);
         String allChars= "ACGUTWSRYMKBDHV";
+        Graph.fileSep = null;
 
         // write sequence
         File f= null;
@@ -207,6 +208,7 @@ public class SequencerTest {
         int nrTests= 100;
         int nrReadTests= 100;
         Random rnd= new Random();
+        Graph.fileSep = null;
 
         for (int j= 0; j< nrTests; ++j) {
 
