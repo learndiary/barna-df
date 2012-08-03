@@ -6,7 +6,6 @@ import barna.commons.system.OSChecker
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
 import barna.io.rna.UniversalReadDescriptor
-
 import org.junit.*
 
 import static junit.framework.Assert.assertTrue
@@ -76,7 +75,14 @@ class FluxCapacitorRunInetegrationTest {
         for (Map.Entry e  : files.entrySet()) {
             String fileName = e.key.toString();
             File file = new File(fileName)
-            if (!fileName.startsWith(File.separator)) {
+            boolean isRelative = true;
+            for (File root : File.listRoots()) {
+                if(fileName.startsWith(root.getAbsolutePath())){
+                    isRelative = false
+                    break;
+                }
+            }
+            if(isRelative) {
                 file = new File(cwd, fileName)
             }
             if(e.value instanceof Closure){

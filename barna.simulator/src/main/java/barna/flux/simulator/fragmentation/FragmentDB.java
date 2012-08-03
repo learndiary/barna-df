@@ -31,6 +31,7 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.io.ByteArrayInputStream;
 import barna.commons.io.RandomAccessInputStream;
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import jdbm.PrimaryTreeMap;
@@ -152,6 +153,14 @@ public class FragmentDB {
             }
 
             // read the sorted file and put it in a zip form
+            String newlinecharacters = null;
+            try{
+                newlinecharacters = FileHelper.guessFileSep(libraryFile);
+            }catch(Exception e){
+                newlinecharacters = OSChecker.NEW_LINE;
+            }
+
+            int lineSeparatorLength =  newlinecharacters.length();
             libFileReader = new BufferedReader(new FileReader(libraryFile));
 
             long totalSize = libraryFile.length();
@@ -195,8 +204,8 @@ public class FragmentDB {
 
 
                 numberOfLines++;
-                currentPosition += cs.length() + 1; // one for the missing newline
-                entryLength += cs.length() + 1;
+                currentPosition += cs.length() + lineSeparatorLength; // one for the missing newline
+                entryLength += cs.length() + lineSeparatorLength;
                 if (isPrintStatus()) {
                     Log.progress(currentPosition, totalSize);
                 }

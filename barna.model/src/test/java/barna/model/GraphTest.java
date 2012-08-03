@@ -45,6 +45,7 @@ public class GraphTest {
     @Test
     public void testReadChromosome() {
         File f = null;
+        Graph.fileSep = null;
         try {
             String seq = BASIC_SEQUENCE;
             f = File.createTempFile(getClass().getSimpleName(), ".fa");
@@ -54,7 +55,7 @@ public class GraphTest {
             // tests
             Random rnd = new Random();
             ByteArrayCharSequence cs = new ByteArrayCharSequence(seq.length());
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1000; i++) {
                 cs.end = 0;
                 testReadWithinLine(rnd, chr, seq, cs);
                 cs.end = 0;
@@ -125,6 +126,7 @@ public class GraphTest {
                 0,      // int from,
                 posEnd     // int to)
         );
+        Graph.fileSep = null;
         assertEquals("HIJKLM", result_unix.toString());
 
         Graph.overrideSequenceDirPath = chr_file_win.getParentFile().getAbsolutePath();
@@ -140,6 +142,7 @@ public class GraphTest {
                 0,      // int from,
                 posEnd     // int to)
         );
+        Graph.fileSep = null;
         assertEquals("HIJKLM", result_win.toString());
 
 
@@ -168,7 +171,12 @@ public class GraphTest {
                 0,      // int from,
                 posEnd     // int to)
         );
-        Assert.assertEquals(seq.substring(offCR+ posStart, offCR+ posStart+ posEnd), cs.toString());
+        Assert.assertEquals("Tast failed: " +
+                "lineNr: "+lineNr+
+                " posStart: "+posStart+
+                " posEnd: "+posEnd+"\n"+
+                "fileSep: "+Graph.fileSep.length()
+                ,seq.substring(offCR+ posStart, offCR+ posStart+ posEnd), cs.toString());
     }
 
 
