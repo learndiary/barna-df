@@ -86,7 +86,7 @@ public class FluxSimulatorSettingsTest {
             FluxSimulatorSettings s1 = FluxSimulatorSettings.createSettings(par1);
 
             assertNotNull(s1.get(FluxSimulatorSettings.REF_FILE));
-            assertEquals(FluxSimulatorTest.class.getResource("/spike_sequences.gtf").getFile(), s1.get(FluxSimulatorSettings.REF_FILE).getAbsolutePath());
+            assertEquals(new File(FluxSimulatorTest.class.getResource("/spike_sequences.gtf").getFile()).getAbsolutePath(), s1.get(FluxSimulatorSettings.REF_FILE).getAbsolutePath());
 
             assertNotNull(s1.get(FluxSimulatorSettings.PRO_FILE));
             assertEquals("simulator_v10.pro", s1.get(FluxSimulatorSettings.PRO_FILE).getName());
