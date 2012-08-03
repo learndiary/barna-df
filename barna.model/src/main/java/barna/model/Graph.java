@@ -958,6 +958,17 @@ public class Graph implements Serializable {
 			fName= dirPath+ File.separator+ chrFile;
 		}
 		File f= new File(fName);
+        if(fileSep == null){
+            FileReader reader = null;
+            fileSep =OSChecker.NEW_LINE;
+            try{
+                reader = new FileReader(f);
+                fileSep = guessFileSep(reader);
+            }catch (Exception e){
+            }finally {
+                try {reader.close();} catch (IOException e) {}
+            }
+        }
 		//fileSep= barna.commons.system.OSChecker.NEW_LINE; // TODO: Factory FileHelper.guessFileSep(f);
 		try {
 			BufferedReader buffy= new BufferedReader(new FileReader(f));
