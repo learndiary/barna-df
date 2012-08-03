@@ -147,6 +147,70 @@ public class Profile {
 		}
 		return cnt;
 	}
+	
+	public TProfile getSuperProfile_old(int len, int readLen, int reads, boolean strandSpecific, boolean pairedEnd) {
+		
+/*		float lenLo= (binMaxLengthDistance<= 10)?len/binMaxLengthDistance:len-binMaxLengthDistance,
+				lenHi= (binMaxLengthDistance<= 10)?len*binMaxLengthDistance:len+binMaxLengthDistance,
+				redLo= (binMaxExprDistance<= 10)?len/binMaxExprDistance:len-binMaxExprDistance,
+				redHi= (binMaxExprDistance<= 10)?len*binMaxExprDistance:len+binMaxExprDistance;
+		
+		len= Math.max(0,len);
+		TProfile dummy= new TProfile(len, strandSpecific, pairedEnd);	// , reads
+		if (len<= 0)
+			return dummy;
+		int p= Arrays.binarySearch(getTProfiles(), dummy, getDefaultTProfileByLengthComaparator());
+		if (p< 0)
+			p= -(p+1);
+		if (p== getTProfiles().length)
+			--p;
+		
+		// try to fulfil both criteria
+		if (p< 0)
+			System.currentTimeMillis();
+		dummy.addProfile(getTProfiles()[p], readLen);
+		int counter= recruitProfiles(dummy, readLen, p, lenLo, lenHi, redLo, redHi);
+		
+		// try only length
+		if (counter< binMinTranscripts|| dummy.getReads()< binMinReads) {	// getReadsInBin()
+			counter+= recruitProfiles(dummy, readLen, p, lenLo, lenHi, -1, -1);
+		}
+		// take everything
+		if (counter< binMinTranscripts|| dummy.getReads()< binMinReads) {	// getReadsInBin()
+			counter+= recruitProfiles(dummy, readLen, p, -1, -1, -1, -1);
+		}
+		//supa.fill();
+		return dummy;
+*/
+		return null;
+	}
+
+	private int recruitProfiles(TSuperProfile supa, int readLen, int[] insertMinMax, int p, float lenLo, float lenHi, float redLo, float redHi) {
+		
+		int counter= 0;
+		for (int i = 1; i < Math.max(getTProfiles().length-p, p); i++) {
+			int loIdx= p-i, upIdx= p+i;
+			if (loIdx> 0
+					&& (lenLo< 0|| getTProfiles()[loIdx].getLength()>= lenLo)
+					&& (lenHi< 0|| getTProfiles()[loIdx].getLength()<= lenHi)
+					&& (redLo< 0|| getTProfiles()[loIdx].getReads()>= redLo)
+					&& (redHi< 0|| getTProfiles()[loIdx].getReads()<= redHi)) {
+				supa.addProfile(getTProfiles()[loIdx]);
+				++counter;
+			}
+			if (upIdx< getTProfiles().length
+					&& (lenLo< 0|| getTProfiles()[upIdx].getLength()>= lenLo)
+					&& (lenHi< 0|| getTProfiles()[upIdx].getLength()<= lenHi)
+					&& (redLo< 0|| getTProfiles()[upIdx].getReads()>= redLo)
+					&& (redHi< 0|| getTProfiles()[upIdx].getReads()<= redHi)) {
+				supa.addProfile(getTProfiles()[upIdx]);
+				++counter;
+			}
+			if (counter>= binMinTranscripts&& supa.getAllReads()>= binMinReads)
+				break;
+		}
+		return counter;
+	}
 
 	public int getBinMinReads() {
 		return binMinReads;
@@ -211,14 +275,10 @@ public class Profile {
 	}
 
 	/**
-     * Assigns a bias matrix according to the spliced length
-     * and the expression level (i.e., RPK reads per kilobase)
-     * detected for that transcript.
-     *
-	 * @param tlen length of processed transcript
-	 * @param rpk reads per kilobase in that transcript
-     * @deprecated unused
-     * @return unused
+	 * @deprecated
+	 * @param tlen
+	 * @param rpk
+	 * @return
 	 */
 	public UniversalMatrix getMatrix(int tlen, float rpk) {
 		int lenBin= 0;
