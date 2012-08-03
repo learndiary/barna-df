@@ -133,9 +133,8 @@ public class LPSolverLoader {
             // get a filename
             String jniFile = getJNILibraryName();
             files[0] = new File(targetDirectory, jniFile);
-            URL urlToLib = LPSolverLoader.class.getResource(dir + jniFile);
-            long expectedSize= new File(urlToLib.getPath()).length();
-            if((!files[0].exists())|| (files[0].length()!= expectedSize)){
+            if(!files[0].exists()){
+                URL urlToLib = LPSolverLoader.class.getResource(dir + jniFile);
                 write2File(urlToLib, files[0]);
             }
         }
@@ -149,9 +148,8 @@ public class LPSolverLoader {
             String libFile = getSharedLibraryName();
             if(libFile != null){
                 files[1] = new File(targetDirectory, libFile);
-                URL urlToLib = LPSolverLoader.class.getResource(dir + libFile);
-                long expectedSize= new File(urlToLib.getPath()).length();
-                if((!files[1].exists())|| (files[1].length()!= expectedSize)){
+                if(!files[1].exists()){
+                    URL urlToLib = LPSolverLoader.class.getResource(dir + libFile);
                     write2File(urlToLib, files[1]);
                 }
             }
@@ -237,8 +235,6 @@ public class LPSolverLoader {
                 while (-1 != (len = in.read(buff))) {
                     out.write(buff, 0, len);
                 }
-            } catch (Exception e) {
-                System.currentTimeMillis();
             } finally{
                 if(out != null)out.close();
                 if(in != null) in.close();

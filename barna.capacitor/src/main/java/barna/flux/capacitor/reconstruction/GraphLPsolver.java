@@ -27,7 +27,6 @@
 
 package barna.flux.capacitor.reconstruction;
 
-import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
@@ -56,7 +55,7 @@ import java.util.*;
  * @author Micha Sammeth (micha@sammeth.net)
  *
  */
-public class GraphLPsolver {
+public class GraphLPsolver implements ReadStatCalculator {
 
     /**
      * Set of in-equation symbols.
@@ -115,23 +114,26 @@ public class GraphLPsolver {
 	int readLen= 0;
 
     /**
+     * Array with the {minimum,maximum} insert length.
+     */
+	int[] insertLen= null;
+
+    /**
      * Value of the objective function after solving the linear system (i.e., deconvolution).
      */
-	double valObjFunc= -1d;
+	double valObjFunc= 0d;
 
     /**
      * Sum of all deviations from observations in positive direction,
      * i.e., all reads added before deconvolution.
-     * @deprecated not active
      */
-    double valDeltaPos= -1d;
+    double valDeltaPos= 0d;
 
     /**
      * Sum of all deviations from observations in negative direction,
      * i.e., all reads removed before deconvolution.
-     * @deprecated not active
      */
-    double valDeltaNeg= -1d;
+    double valDeltaNeg= 0d;
 
     /**
      * Array with the primal solution.
@@ -139,8 +141,7 @@ public class GraphLPsolver {
 	double[] result= null;
 
     /**
-     * Hash that maps transcripts to their
-     * predicted expression level after deconvolution.
+     * Hash that maps transcripts to their predicted expression level after deconvolution.
      */
 	HashMap<Object,Double> trptExprHash= null;
 
@@ -304,28 +305,28 @@ public class GraphLPsolver {
 			map.put(s,o[i]);
 		}
 		Arrays.sort(ids);
-        for (String id : ids) {
-            Object oo = map.get(id);
-            int[] c = getConstraintHash().get(oo);
-            p.print(id + "\tC" + c[0]);
-            for (int j = 1; j < c.length; j++)
-                p.print("\tC" + c[j]);
-            if (oo instanceof SimpleEdge) {
-                SimpleEdge e = (SimpleEdge) oo;
-                int a = ((MappingsInterface) e).getMappings().getReadNr();
-                //int b= e.getPossReadNr();
-                p.print("\t" + Integer.toString(a));
-                //p.print("\t"+Integer.toString(b));
-                //p.print("\t"+Double.toString(((double) a)/((double) b)));
-                Transcript[] t = aMapper.decodeTset(e.getTranscripts());
-                for (Transcript aT : t)
-                    p.print("\t" + aT.getTranscriptID());
-            } else if (oo instanceof Transcript) {
-                Transcript t = (Transcript) oo;
-                p.print("\t" + t.getExonicLength());
-            }
-            p.print("\n");
-        }
+		for (int i = 0; i < ids.length; i++) {
+			Object oo= map.get(ids[i]);
+			int[] c= getConstraintHash().get(oo);
+			p.print(ids[i]+"\tC"+c[0]);
+			for (int j = 1; j < c.length; j++) 
+				p.print("\tC"+c[j]);
+			if (oo instanceof SimpleEdge) {
+				SimpleEdge e= (SimpleEdge) oo;
+				int a= ((MappingsInterface) e).getMappings().getReadNr();
+				//int b= e.getPossReadNr();
+				p.print("\t"+Integer.toString(a));
+				//p.print("\t"+Integer.toString(b));
+				//p.print("\t"+Double.toString(((double) a)/((double) b)));
+				Transcript[] t= aMapper.decodeTset(e.getTranscripts());
+				for (int j = 0; j < t.length; j++) 
+					p.print("\t"+t[j].getTranscriptID());				
+			} else if (oo instanceof Transcript) {
+				Transcript t= (Transcript) oo;
+				p.print("\t"+t.getExonicLength());
+			}
+			p.print(barna.commons.system.OSChecker.NEW_LINE);
+		}
 	}
 
     /**
@@ -336,21 +337,21 @@ public class GraphLPsolver {
 	public double getNFactor() {
 		//if (Double.isNaN(nFactor)|| true) {
 			double fictReads= 0;
-        for (Object o : getTrptExprHash().keySet()) {
-            if (!(o instanceof String))
-                continue;
-            fictReads += getTrptExprHash().get(o);
-        }
+			Iterator iter= getTrptExprHash().keySet().iterator();
+			while (iter.hasNext()) {
+				Object o= iter.next();
+				if (!(o instanceof String))
+					continue;
+				fictReads+= getTrptExprHash().get(o);
+			}
 
 			if (fictReads< nrMappingsObs)
 				++nrUnderPredicted;
 			else
 				++nrOverPredicted;
-            // can happen, when reads are where none expected
-//            if (fictReads== 0^ nrMappingsObs== 0)
-//				System.currentTimeMillis();
-            // avoid large scaling; was 0, avoid NaN; 0.5 too large
-            if (fictReads> 0.000001) {
+			if (fictReads== 0^ nrMappingsObs== 0)
+				System.currentTimeMillis(); // TODO can happen, when reads are where none expected
+			if (fictReads> 0.000001) {	// TODO: avoid large scaling; was 0, avoid NaN; 0.5 too large
 				nFactor= nrMappingsObs/ fictReads;
 			} else 
 				nFactor= 1d;
@@ -383,11 +384,11 @@ public class GraphLPsolver {
 	/**
      * Assigns the integer constraint numbers associated with the
      * restriction that is implied by the specified graph edge.
-     *
+	 * @param e an edge in the splicing graph
 	 * @return array of constraint indices assigned to the specified
      * edge
 	 */
-	int[] getConstraintIDs() {
+	int[] getConstraintIDs(AbstractEdge e) {
 		
 		int size= 2; // plus minus
 		if (costUseMultimap)	// 
@@ -415,31 +416,21 @@ public class GraphLPsolver {
 
 		return allTrptIdx;
 	}
-
-    /**
-     * Array to be reused for index values.
-     */
-	private int[] reuseIdx;
-
-    /**
-     * Array to be reused for values of the indices.
-     */
-	private double[] reuseVal;
-
-    /**
-     * Adds the constraints for a certain edge of the graph
-     * to the LP system. The model size must already have been
-     * determined.<br>
-     * constraints[] organization:<br>
-     * +splitW1 ... +splitWN -splitW1 ... -splitW2 (+multiW)<br>
-     * +splitC1 ... +splitCN -splitC1 ... -splitC2 (+multiC)<br>
-     * <br>
-     * offset(+split.X,-split.X)= costSplit<br>
-     *
-     * @param e the edge for which the constraints are to be set
+	
+	/**
+	 * model size must have been determined
+	 * constraints[] organization:
+	 * +splitW1 ... +splitWN -splitW1 ... -splitW2 (+multiW)
+	 * +splitC1 ... +splitCN -splitC1 ... -splitC2 (+multiC)
+	 * 
+	 * offset(+split.X,-split.X)= costSplit
+	 * 
+	 * @param e
      * @deprecated currently not in use
-     */
-    void setConstraints(SimpleEdge e) {
+    */
+	private int[] reuseIdx;
+	private double[] reuseVal;
+	void setConstraints(SimpleEdge e) {
 		
 		int[] a= getConstraintHash().get(e);
 		assert(a!= null);
@@ -447,7 +438,8 @@ public class GraphLPsolver {
 		int restrEdgeConstr= costSplitWC? a.length/ 2: a.length;
 		if (reuseIdx== null) {
 			reuseIdx= new int[restrEdgeConstr+ t.length];
-            System.arraycopy(t, 0, reuseIdx, reuseIdx.length - t.length, t.length);
+			for (int i = 0; i < t.length; i++) 
+				reuseIdx[reuseIdx.length- t.length+ i]= t[i];	// c_t, invariant
 			reuseVal= new double[reuseIdx.length];
 			reuseVal[0]= 1d;	// add
 			reuseVal[1]= -1d;	// substract
@@ -470,23 +462,24 @@ public class GraphLPsolver {
 			
 			// fill in transcript constraints
 			double totVal= 0d;
-            for (Transcript aTt : tt) {
-                int tlen = aTt.getExonicLength();
-                UniversalMatrix m = getMatrixMap().get(aTt.getTranscriptID());
-                int[] area = e.getFrac(aTt, getReadLen(), dir);
-                int reads = m.get(area[0], area[1], tlen, dir);
-                int sum = m.getSum(dir);
-                double val = reads / (double) sum;
-                totVal += val;
-                if (val < 0 || Double.isNaN(val) || Double.isInfinite(val)) {
-                    System.err.println("invalid val " + Double.toString(val) + " " + aMapper.trpts[0] + " " + e);
-                }
-                int tOffset = getConstraintHash().get(aTt)[0] - t[0];    // gotta be consecutive
-                reuseVal[restrEdgeConstr + tOffset] = val;
-            }
+			for (int j = 0; j < tt.length; j++) {
+				int tlen= tt[j].getExonicLength();
+				UniversalMatrix m= getMatrixMap().get(tt[j].getTranscriptID());
+				int[] area= e.getFrac(tt[j], readLen, dir);
+				int reads= m.get(area[0], area[1], tlen, dir);
+				int sum= m.getSum(dir);
+				double val= reads/ (double) sum;
+				totVal+= val;
+				if (val< 0|| Double.isNaN(val)|| Double.isInfinite(val)) { 
+					System.err.println("invalid val "+Double.toString(val)+" "+aMapper.trpts[0]+" "+e);
+				}
+				int tOffset= getConstraintHash().get(tt[j])[0]- t[0];	// gotta be consecutive
+				reuseVal[restrEdgeConstr+ tOffset]= val;
+			}
 			if (totVal== 0) {
 				System.err.println("edge with 0 expectation! "+aMapper.trpts[0]+" "+e);
-					continue; // TODO check whether edge really should be disregarded
+					continue; // TODO !!! we throw it out ?!! brutal...
+				
 			}
 			
 			
@@ -511,14 +504,12 @@ public class GraphLPsolver {
 	}
 		
 	/**
-     * Sets the costs given the constraint indices of a certain
-     * edge and the number of bins for increasing cost functions.<br>
-	 * Organization of the indices:<br>
-	 * +splitW1 ... +splitWN -splitW1 ... -splitW2 (+multiW)<br>
-	 * +splitC1 ... +splitCN -splitC1 ... -splitC2 (+multiC)<br>
-	 * @param a indices of the constraints for the edge
+	 * a[] organization:
+	 * +splitW1 ... +splitWN -splitW1 ... -splitW2 (+multiW)
+	 * +splitC1 ... +splitCN -splitC1 ... -splitC2 (+multiC)
+	 * @param a
 	 * @param baseSize size of W/C cluster
-	 * @param e the edge for which
+	 * @param e
 	 */
 	private void setConstraintsCostsConstant(int[] a, int baseSize, SimpleEdge e) {
 		
@@ -533,26 +524,20 @@ public class GraphLPsolver {
 				// adjust bounds				
 				if (costBounds!= null&& j== costSplit- 1) 	// last split, use stabi
 					try {
-
 						long obs= i== 0? ((MappingsInterface) e).getMappings().getReadNr(): 
 							((MappingsInterface) e).getMappings().getRevReadNr();
 						double obs1= obs== 0? 1: obs;
 						double div= obs1/ costSplit;
-						double maxSub;
+						double maxSub= div, maxAdd= div;
 						if(!Double.isNaN(costBounds[0])) {
-                            // maxSub= div;
-							// maxSub= Math.max(0, (obs1/ costBounds[0])- ((costSplit-1)*div));
+							//maxSub= Math.max(0, (obs1/ costBounds[0])- ((costSplit-1)*div));
 							maxSub= Math.max(0, (obs1* costBounds[0])- ((costSplit-1)*div));
 							getLPsolve().setUpbo(a[i*baseSize+j], maxSub);	// ub of substracting values, +1 in matrix
 						}
-
-//                      double maxAdd;
-//						if (!Double.isNaN(costBounds[1])) {
-//                          maxAdd= div;
-//							maxAdd= Math.max(0, (obs1*costBounds[1])- ((costSplit-1)*div));
-//							getLPsolve().setUpbo(a[i+ j+ costSplit], maxAdd);		// ub of adding reads, -1 in matrix
-//						}
-
+						if (!Double.isNaN(costBounds[1])) {
+							maxAdd= Math.max(0, (obs1*costBounds[1])- ((costSplit-1)*div));
+							;//getLPsolve().setUpbo(a[i+ j+ costSplit], maxAdd);		// ub of adding reads, -1 in matrix
+						}
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
@@ -563,23 +548,20 @@ public class GraphLPsolver {
 	}
 	
 	/**
-	 * Sets cost values for constraint bins that are logarithmically
-     * increasing.
-     *
-	 *
-     * @param a	return value, array size is elementar block
-     *          (either plus or minus)
-     * @param e the edge for which
-     * @deprecated debug before use
+	 * 
+	 * @param a	return value, array size is elementar block (either plus or minus)
+	 * @param baseLen
+     * @param e
+	 * @return
+	 * @deprecated debug
 	 */
-	private void setConstraintsCostsLogarithmical(int[] a, SimpleEdge e) {
+	private void setConstraintsCostsLogarithmical(int[] a, int baseLen, SimpleEdge e) {
 						
 		long obs= ((MappingsInterface) e).getMappings().getReadNr();
 		double obs1= (obs==0)?1:obs;
 		double incr= obs1/ costSplit;
 		
-		double lastX= 0, lastY= 0d;
-        double m;
+		double lastX= 0, lastY= 0d, m= 0;
 		int costOffset= costSplit* 2- 1;
 		for (int j = 0; j < costSplit; ++j) {	// m0,t1,m1,t2,m2..
 
@@ -646,55 +628,37 @@ public class GraphLPsolver {
 						
 		
 	}
-
-    /**
-     * Returns the (minimal) length of read mappings.
-     */
-    public int getReadLen() {
+		
+	public int getReadLen() {
 		return readLen;
 	}
 
-    /**
-     * Overwrites the (minimal) length of read mappings.
-     */
-    public void setReadLen(int readLen) {
+	public void setReadLen(int readLen) {
 		this.readLen = readLen;
 	}
 
-    /**
-     * Retruns a map of transcript objects mapped to
-     * their respective expression levels after
-     * deconvolution and normalization.
-     *
-     * @return predicted expression levels after
-     * deconvolution and normalization
-     */
 	public HashMap<Object, Double> getTrptExprHash() {
 		return trptExprHash;
 	}
 
-    /**
-     * Returns the value of the objective function
-     * after deconvolution has been performed,
-     * or (-1) if the linear system has not yet been
-     * solved.
-     *
-     * @return value -1 before deconvolution,
-     * otherwise the value of the objective function
-     */
 	public double getValObjFunc() {
 		return valObjFunc;
 	}
 
+	public double getValDeltaNeg() {
+		return valDeltaNeg;
+	}
+
+	public double getValDeltaPos() {
+		return valDeltaPos;
+	}
+
 	/**
-     * Estimates the error for the segment of a transcript
-     * based on the total edge error.
-     *
-	 * @param e edge representing a segment in the transcript
-	 * @param t transcript supporting the edge
-	 * @return error along the segment of
-     * @deprecated orphaned
-     */
+	 * @deprecated 
+	 * @param e
+	 * @param t
+	 * @return
+	 */
 	private double calcEdgeError(SimpleEdge e, Transcript t) {
 		/*double tcov= getTrptExprHash().get(t.getTranscriptID()).doubleValue();
 		int possReads= e.getPossReadNr();
@@ -717,22 +681,18 @@ public class GraphLPsolver {
 		return 0d;
 	}
 
-    /**
-     * Hash that maps transcript IDs to bias matrix.
-     */
-	HashMap<String, UniversalMatrix> matrixMap;
+	public int[] getInsertLen() {
+		return insertLen;
+	}
 
-    /**
-     * Constructs a map that maps the transcripts of the locus
-     * by their ID to the appropriate bias matrix.
-     *
-     * @return hash that maps transcript IDs to bias matrix
-     * @see #setConstraints(barna.model.splicegraph.SimpleEdge)
-     * @deprecated orphaned
-     */
+	public void setInsertLen(int[] insertLen) {
+		this.insertLen = insertLen;
+	}
+
+	HashMap<String, UniversalMatrix> matrixMap; 
 	HashMap<String, UniversalMatrix> getMatrixMap() {
 		if (matrixMap == null) {
-			matrixMap = new HashMap<String, UniversalMatrix>(aMapper.trpts.length, 1f);
+			matrixMap = new HashMap<String, UniversalMatrix>();
 			int lenSum= 0;
 			for (int i = 0; i < aMapper.trpts.length; i++) 
 				lenSum+= aMapper.trpts[i].getExonicLength();
@@ -747,15 +707,7 @@ public class GraphLPsolver {
 
 		return matrixMap;
 	}
-
-    /**
-     * Adds a row to the LP system.
-     *
-     * @param idx array with indices of constraints
-     * @param val array with factor values for constraints
-     * @param eq equation type
-     * @param cap right hand side of the equation
-     */
+	
 	private void addConstraintToLp(int[] idx, double[] val, int eq, double cap) {
 		
 //		if (writeFile)
@@ -773,11 +725,116 @@ public class GraphLPsolver {
 
 	}
 
+	
+	public double getReads(Vector<AbstractEdge> v, byte dir, long[] sig, boolean normalized) {
+		return getReadsAvg(v, dir, aMapper, sig, false, normalized);
+	}
+	
+	public static double[] bounds2rel(int[] bounds, int len) {
+		double[] dd= new double[bounds.length];
+		for (int i = 0; i < dd.length; i++) 
+			dd[i]= bounds[i]/ (double) len;
+		return dd;
+	}
+	
 	static int nrUnderPredicted= 0, nrOverPredicted= 0;
 	private double fracs= 0;
+	public double getReadsAvg(Vector<AbstractEdge> v, byte dir, SplicingGraph g, long[] sig, boolean excl, boolean normalized) {
+		
+		double reads= 0, fracSum= 0;
+		for (int i = 0; i < v.size(); i++) {
+			AbstractEdge e= v.elementAt(i);
+			if (!e.isExonic())
+				continue;
 
+			long[] trpts= e.getTranscripts();
+			long[] inter= SplicingGraph.intersect(trpts,sig);
+			if (SplicingGraph.isNull(inter)|| (excl&& !SplicingGraph.equalSet(trpts, sig)))
+				continue;	// here, and for superedges !!!
 
+			fracs= 0d;
+			if (pairedEnd) {
+				for (int j = 0; v.elementAt(i).getSuperEdges()!= null&& 
+						j < v.elementAt(i).getSuperEdges().size(); j++) {
+					SuperEdge se= v.elementAt(i).getSuperEdges().elementAt(j);
+					if (!se.isPend())
+						continue;
+					int cnt= 0;
+					for (int k = 0; k < se.getEdges().length; k++) 
+						if (se.getEdges()[k]== e)
+							++cnt; 
+					reads+= getReadsAvgCalc(se, dir, sig, excl, cnt, normalized);
+				}
+			} else 
+				reads+= getReadsAvgCalc(e, dir, sig, excl, 1, normalized);
+			
+			fracSum+= fracs;
+		}
+		
+		//assert(fracs== 1);	// only for transcripts
+		return reads;
+	}
+	
 
+	double getReadsAvgCalc(AbstractEdge e, byte dir, long[] sig, boolean excl, int cnt, boolean normalized) {
+		
+		long[] trpts= e.getTranscripts();
+		long[] inter= SplicingGraph.intersect(trpts,sig);
+		if (SplicingGraph.isNull(inter)|| (excl&& !SplicingGraph.equalSet(trpts, sig)))
+			return 0d;
+		Transcript[] t= aMapper.decodeTset(inter);
+
+		// (de?)normalize from transcript coverage
+		int length= -1;
+
+		double reads= 0; // fracs= 0;;
+		for (int j = 0; j < t.length; j++) {
+			
+			if (t[j].getExonicLength()< readLen)
+				continue;
+			
+			int[] bounds= e.getFrac(t[j], readLen);
+			if (length== -1)
+				length= bounds[1]- bounds[0]+ 1;
+			else
+				try{assert(length== (bounds[1]- bounds[0]+ 1));}catch(AssertionError err){
+					if (Constants.verboseLevel> Constants.VERBOSE_NORMAL)
+						System.err.println("[ASSERTION FAILED] bounds differ in GraphLPSolver.getReadsAvgCalc()\n\t" +
+								(bounds[1]- bounds[0]+ 1)+" <> "+ length);
+				}
+			
+			double pred= getTrptExprHash().get(t[j].getTranscriptID());
+			double nf= getNFactor();
+
+			if (normalized) {
+				double cov= (cnt* pred* nf)/ t[j].getExonicLength();
+				double freq= cov* length;
+				reads+= freq;
+			} else {
+				TSuperProfile supa= null; // getSuperProfileMap().get(t[j].getTranscriptID());
+				double[] relBounds= bounds2rel(bounds, t[j].getExonicLength()- readLen);
+				double frac= supa.getAreaFrac(aMapper, t[j], relBounds, readLen, insertMinMax, dir);
+				fracs+= frac;
+				reads+= (cnt* pred* nf* frac);
+	//			if (t[j].getTranscriptID().endsWith("RA")) {
+	//				System.out.print((cnt* pred* nf* frac)+"\t"+(cnt*frac)+"\t"+frac+"\t"+e);
+	//				SuperEdge se= (SuperEdge) e;
+	//				for (int i = 0; i < se.getEdges().length; i++) 
+	//					System.out.print("\t"+ se.getEdges()[i]);
+	//				System.out.println();
+	//			}
+	//			for (int i = 0; i < se.getEdges().length; i++) 
+	//				System.out.print("\t"+ se.getEdges()[i]);
+	//			System.out.println();
+
+			//System.out.println(t[j].getTranscriptID()+" "+(pred* nf* frac)+" "+(pred* frac)+" "+pred+" "+frac);
+			}
+		}
+		
+		return reads;
+	}
+
+	
 //	public static final int LE = 1;
 //	public static final int GE = 2;
 //	public static final int EQ = 3;
@@ -800,18 +857,7 @@ public class GraphLPsolver {
 			e.printStackTrace();
 		}
 	}
-
-    /**
-     * Writer for linear programs.
-     */
 	BufferedWriter lpWriter;
-
-    /**
-     * Returns the LP writer, eventually initializes it.
-     * @return writer for linear programs
-     * @see #writeFile
-     * @deprecated init missing
-     */
 	BufferedWriter getLPWriter() {		
 		if (lpWriter == null) {
 			try {
@@ -826,18 +872,15 @@ public class GraphLPsolver {
 		return lpWriter;
 	}
 
-    /**
-     * Algorithm to set up system of linear equations
-     * and call the LP solver.
-     */
-	public strictfp void run() {
 
+	PrintStream p= null;
+	public strictfp void run() {
+		
 //		if (costModel== COSTS_LINEAR&& costBounds== null)
 //			costBounds= new int[] {100,100};
-
+		
 		long t0= System.currentTimeMillis();
-
-		setConstraints(true, null);
+		setConstraints(true);
 		getLPsolve();
 		constraintCtr= 0;
 		debug= false;		
@@ -847,7 +890,7 @@ public class GraphLPsolver {
 */			
 
 		// set up program
-		HashMap<String, Integer> tMap= setConstraints(false, null);
+		HashMap<String, Integer> tMap= setConstraints(false);
 		
 	
 //		for (int i = 0; i < g.trpts.length; i++) {
@@ -900,7 +943,7 @@ public class GraphLPsolver {
 			e.printStackTrace();
 		}
 
-		// write out additional debug info
+		// write out
 		if (debug|| tmpOutFName!= null) {
 			getLPsolve().printLp();
 			getLPsolve().printObjective();
@@ -908,13 +951,15 @@ public class GraphLPsolver {
 			
 			// additional stream only afterwards
 			try {
-				PrintStream p= new PrintStream(new FileOutputStream(tmpOutFName, true));
-                setConstraints(true, p);
-            } catch (Exception e) {
+				p= new PrintStream(new FileOutputStream(tmpOutFName, true));				
+
+			} catch (Exception e) {
 				//e.printStackTrace();
 				if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 					System.err.println("[FATAL] failed to set lp output to:\n\t"+ tmpOutFName);
 			}
+			
+			setConstraints(true);
 		}
 			
 		// get transcription expression levels		
@@ -922,41 +967,57 @@ public class GraphLPsolver {
 		//normalizeBack2LocusExpr(trptExprHash);
 		getLPsolve().deleteLp();	// closes file outFName
 		
-		// output debug info
 		if (debug) {
+			System.err.flush(); // doesnt work
+			p= System.out;
+			for (int i = 0; i < aMapper.trpts.length; i++) {
+				; //getAllPercent(g.trpts[i]);
+			}
+		}
+		
+		// output additionally
+		if (p!= null) {
 			Iterator<Object> idIter= trptExprHash.keySet().iterator();
 			while(idIter.hasNext()) {
 				Object o= idIter.next();
 				if (!(o instanceof String))
 					continue;
 				String id= (String) o;
-                Log.debug(id + " " + trptExprHash.get(id));
+				p.println(id+" "+trptExprHash.get(id));
 			}
-			Log.debug("\n");
-			Log.debug("Settings:");
-			Log.debug("paired-end\t" + pairedEnd);
+			p.println();
+			p.println("Settings:");
+			p.println("paired-end\t"+pairedEnd);
 			if (costBounds!= null) {
 				if (!Double.isNaN(costBounds[0]))
-					Log.debug("cost boundaries:\tlower /" + costBounds[0]);
+					p.print("cost boundaries:\tlower /"+costBounds[0]);
 				if (!Double.isNaN(costBounds[1]))
-					Log.debug(" upper *" + costBounds[1]);
+					p.print(" upper *"+costBounds[1]);
+				p.println();
 			}
+			p.print("costfunc\t");
 			if (costModel== COSTS_LINEAR)
-				Log.debug("costfunc\tlinear");
+				p.println("linear");
 			else if(costModel== COSTS_LOG)
-				Log.debug("costfunc\tlog");
-			Log.debug(toStringConstraints());
+				p.println("log");
+			printConstraintHash(p);
 			
-			Log.debug("\n");
-			Log.debug("Transcripts:");
+			p.println();
+			p.println("Transcripts:");
 			for (int i = 0; i < aMapper.trpts.length; i++) {
-				StringBuilder sb= new StringBuilder(aMapper.trpts[i].getTranscriptID()+"\t");
+				p.print(aMapper.trpts[i].getTranscriptID()+"\t");
 				SpliceSite[] ss= aMapper.trpts[i].getSpliceSitesAll();
 				for (int j = 0; j < ss.length; j++) 
-					sb.append(ss[j].toString());
-				Log.debug(sb.toString());
+					p.print(ss[j].toString());
+				p.println();
 			}
 		}
+		
+		// close file
+		if (p!= null)
+			p.flush();
+		if (tmpOutFName!= null) 
+			p.close();
 		
 //		System.err.println("solved "+g.trpts[0].getTranscriptID()+": "+g.trpts.length+" trpts, "+constraintCtr+" constr, "+restrNr+" restr"
 //				+ ((System.currentTimeMillis()- t0)/ 1000)+ " sec.");
@@ -964,24 +1025,18 @@ public class GraphLPsolver {
 			System.currentTimeMillis();
 	}
 
-    /**
-     * Generates a string representation of the constraint hash.
-     *
-     * @return string representing the hash of constraints.
-     */
-	public String toStringConstraints() {
+	private void printConstraintHash(PrintStream p) {
 		Iterator iter= getConstraintHash().keySet().iterator();
-        StringBuilder sb= new StringBuilder();
 		while (iter.hasNext()) {
 			Object o= iter.next();
 			if (!(o instanceof SimpleEdge))
 				continue;
-			sb.append(o);
-			sb.append(":\t\t");
+			p.print(o);
+			p.print(":\t\t");
 			int[] c= getConstraintHash().get(o);
 			for (int i = 0; i < c.length; i++) 
-				sb.append("C" + Integer.toString(c[i]) + " ");
-			sb.append("\n");
+				p.print("C"+Integer.toString(c[i])+" ");
+			p.println();
 		}
 		
 		iter= getConstraintHash().keySet().iterator();
@@ -989,15 +1044,13 @@ public class GraphLPsolver {
 			Object o= iter.next();
 			if (!(o instanceof Transcript))
 				continue;
-			sb.append(o);
-			sb.append(":\t\t");
+			p.print(o);
+			p.print(":\t\t");
 			int[] c= getConstraintHash().get(o);
 			for (int i = 0; i < c.length; i++) 
-				sb.append("C" + Integer.toString(c[i]) + " ");
-			sb.append("\n");
+				p.print("C"+Integer.toString(c[i])+" ");
+			p.println();
 		}
-
-        return sb.toString();
 	}
 
 	private HashMap<Object, Double> getResult() {
@@ -1033,18 +1086,8 @@ public class GraphLPsolver {
 			
 		return trptExprHash;
 	}
-
-    /**
-     * Returns a hash with transcripts and their predicted
-     * expression levels as extracted from the results of the
-     * deconvolution process. Additional normalization steps
-     * are performed to eliminate artifacts of the
-     * deconvolution.
-     *
-     * @param tMap results of the deconvolution
-     * @return normalized transcript expression levels
-     */
-	protected HashMap<Object, Double> getResult(HashMap<String, Integer> tMap) {
+	
+	private HashMap<Object, Double> getResult(HashMap<String, Integer> tMap) {
 		
 		result= new double[1+ restrNr+ constraintCtr];
 		try {
@@ -1099,7 +1142,6 @@ public class GraphLPsolver {
 	}
 
     /**
-     *
      * @deprecated currently not in use
      */
 	void addRestrictions() {
@@ -1165,9 +1207,9 @@ public class GraphLPsolver {
 				if (!edges[i].isExonic())
 					continue;
 				// add the edge itself
-				if ((!pairedEnd)&& edges[i].length()>= getReadLen()) {
+				if ((!pairedEnd)&& edges[i].length()>= readLen) {
 					
-					constraintHash.put(edges[i], getConstraintIDs());
+					constraintHash.put(edges[i], getConstraintIDs(edges[i]));
 				}
 				for (int j = 0; edges[i].getSuperEdges()!= null&& j < edges[i].getSuperEdges().size(); j++) {
 					SuperEdge se= edges[i].getSuperEdges().elementAt(j);
@@ -1186,14 +1228,14 @@ public class GraphLPsolver {
 								if (se2.getEdges()[0]!= se)
 									continue;
 								assert(!constraintHash.containsKey(se2));
-								constraintHash.put(se2, getConstraintIDs());
+								constraintHash.put(se2, getConstraintIDs(se2));
 							}
 							continue;
 						} // else add 
 					}
 					
 					// add EJ, ggf PE
-					constraintHash.put(se, getConstraintIDs());
+					constraintHash.put(se, getConstraintIDs(se));
 					
 				}
 			}
@@ -1212,10 +1254,23 @@ public class GraphLPsolver {
 	public void setFileLPdir(File dir) {
 		this.fileLPdir = dir;
 	}
+	public double getAllExpectedFracs(AnnotationMapper g, HashMap<String, TSuperProfile> supaMap, long[] partition, SimpleEdge[] edges, int readLen) {
+		Transcript[] t= g.decodeTset(partition);
+		double val= 0d;
+		for (int i = 0; i < t.length; i++) {
+			TSuperProfile profile= supaMap.get(t[i].getTranscriptID());
+			int[] coord= SuperEdge.getPEfrac(t[i], readLen, edges);
+			val+= profile.getAreaFrac(g, t[i],
+					bounds2rel(coord, t[i].getExonicLength()- readLen), 
+					readLen, insertMinMax, Constants.DIR_BOTH);
+		}
+	
+		return val;
+	}
 	
 	
 	private void getConstraints(AbstractEdge e, long[] sig, IntVector v,
-			HashMap<AbstractEdge, IntVector> mapE, boolean sense, boolean count, PrintStream p) {
+			HashMap<AbstractEdge, IntVector> mapE, boolean sense, boolean count) {
 
 		// for the edge itself
 		IntVector w= mapE.get(e);
@@ -1298,7 +1353,7 @@ public class GraphLPsolver {
 	 * watch out with hash function of edges
 	 * @return
 	 */
-	public HashMap<String, Integer> setConstraints(boolean count, PrintStream p) {
+	public HashMap<String, Integer> setConstraints(boolean count) {
 		
 		//boolean debug= false;
 //		if (g.trpts[0].getTranscriptID().equals("ENST00000323441")) {
@@ -1355,7 +1410,7 @@ public class GraphLPsolver {
 						p.print(e+"\t"+(sa==0?"sense":"asense")+"\t"+tt[x]+"\t");
 
 					long[] sig= aMapper.encodeTset(tt[x]);
-					getConstraints(e, sig, v, mapE, sa== 0, count, p);
+					getConstraints(e, sig, v, mapE, sa== 0, count);
 					
 					// add transcript constraint
 					if (!count) {
