@@ -28,6 +28,7 @@
 package barna.flux.capacitor.reconstruction;
 
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.model.SpliceSite;
