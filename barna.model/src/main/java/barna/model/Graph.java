@@ -36,6 +36,7 @@ package barna.model;
 //import gphase.NMDSimulator;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.StringUtils;
 import barna.model.constants.Constants2;
@@ -601,7 +602,7 @@ public class Graph implements Serializable {
 	private static CharSequence lastChr= null;
 	private static int lineLen= -1, headerOffset= -1;
 	private static long chrLen= -1;	// make int !!!
-	private static String fileSep= null;
+	public static String fileSep= null;
 	private static RandomAccessFile raf= null;
 	private static RandomAccessFile readChromosome_old(CharSequence chromosome) {
 		
@@ -957,7 +958,18 @@ public class Graph implements Serializable {
 			fName= dirPath+ File.separator+ chrFile;
 		}
 		File f= new File(fName);
-		fileSep= "\n"; // TODO: Factory FileHelper.guessFileSep(f);
+        if(fileSep == null){
+            FileReader reader = null;
+            fileSep =OSChecker.NEW_LINE;
+            try{
+                reader = new FileReader(f);
+                fileSep = guessFileSep(reader);
+            }catch (Exception e){
+            }finally {
+                try {reader.close();} catch (IOException e) {}
+            }
+        }
+		//fileSep= barna.commons.system.OSChecker.NEW_LINE; // TODO: Factory FileHelper.guessFileSep(f);
 		try {
 			BufferedReader buffy= new BufferedReader(new FileReader(f));
 			headerOffset= 0;
@@ -1000,7 +1012,43 @@ public class Graph implements Serializable {
 		return chrSeq;
 	}
 
-	private static RandomAccessFile getRAF(Species spe, CharSequence chromosome) {
+    protected static String guessFileSep(Reader f) throws IOException{
+        String fileSep = "";
+        BufferedReader buffy = null;
+        try {
+            buffy = new BufferedReader(f);
+            char[] b = new char[1];
+            while (buffy.read(b) != -1) {
+                if (b[0] == '\n' || b[0] == '\r') {
+                    // found a separator
+                    char first = b[0];
+                    fileSep += b[0];
+                    // check if this is followed by another new line \r or \n
+                    if (buffy.read(b) != -1) {
+                        if (b[0] == '\n' || b[0] == '\r') {
+                            if (first == '\r' || b[0] == '\r') {
+                                fileSep += b[0];
+                            }
+                        }
+                    }
+                    //return fileSep;
+                    break;
+                }
+            }
+        } finally {
+            if (buffy != null) {
+                try {
+                    buffy.close();
+                } catch (IOException ignore) {
+                    // ignore
+                }
+            }
+        }
+        return fileSep;
+    }
+
+
+    private static RandomAccessFile getRAF(Species spe, CharSequence chromosome) {
 		
 		if (raf == null|| !chromosome.equals(lastChr)) {
 			String dirPath= getSequenceDirectory(spe); 
@@ -1031,7 +1079,18 @@ public class Graph implements Serializable {
 
 
 			File f= new File(fName);
-			fileSep= "\n";// TODO: Factory: FileHelper.guessFileSep(f);
+            if(fileSep == null){
+                FileReader reader = null;
+                fileSep = OSChecker.NEW_LINE;
+                try {
+                    reader = new FileReader(f);
+                    fileSep = guessFileSep(reader);
+                } catch (Exception e) {
+                    try {reader.close();} catch (IOException e1) {}
+                }
+
+            }
+			//fileSep= barna.commons.system.OSChecker.NEW_LINE;// TODO: Factory: FileHelper.guessFileSep(f);
 			try {
 				if (raf!= null)
 					raf.close();
@@ -1074,10 +1133,6 @@ public class Graph implements Serializable {
 					long start, long end,
 					ByteArrayCharSequence cs, int from, int to) 
 						throws RuntimeException {
-					
-					if (start< 0|| (end- start+ 1> 1000))
-						System.currentTimeMillis();
-				
 					if (end- start+ 1!= to- from)
 						throw new RuntimeException("Byte array size does not match expectation: "+
                                 (to- from)+ " expects "+ (end- start+ 1));
@@ -1092,19 +1147,9 @@ public class Graph implements Serializable {
 						}
 					}
 					start--;	// this is ok
-					// now cs
-					//byte[] seq= new byte[(int) (end- start)];
-					//String s= null;
-					
 					long p= -1;
 					try {
-		//				System.out.println(getSequenceDirectory(speRealName)+ File.separator+ "chr"+ chromosome+ Constants2.CHROMOSOME_EXT);
-		//				System.out.println(start+"-"+end);				
-		//				if (spe== null)
-		//					return null; // no sequence available
-						
 						RandomAccessFile raf= getRAF(spe, chromosome);
-						
 						// this has to be done properly, with the file linebreak-length x
 						// offset+x+start+(start/line)*x
 						// p= offset+ 1+ start+ (start/line);
@@ -1112,22 +1157,13 @@ public class Graph implements Serializable {
 						//String pfx= null, sfx= null;
                         int delayedRead= 0;
 						if (start< 0) {		// circular genomes
-							//System.err.println("Neg seek: "+forwardStrand+", "+start+", "+end);
 							int diff= (int) (from- start);	// start< 0
-//							int pfxFrom= forwardStrand? from: to- diff,	// append @start or @end
-//								pfxTo= forwardStrand? from+ diff: to;
-//							readSequence(spe, chromosome, forwardStrand, chrLen+ start, chrLen,
-//									cs, pfxFrom, pfxTo);	// start< 0
                             delayedRead= -diff;
                             to-= diff;
 							start= 0;
 						}
 						if (end> chrLen) {
 							int diff= (int) (end- chrLen);
-//							int sfxFrom= forwardStrand? to- diff: from,
-//								sfxTo= forwardStrand? to: from+ diff;
-//							readSequence(spe, chromosome, forwardStrand, 1, diff,
-//									cs, sfxFrom, sfxTo);
 							end= chrLen;
                             to-= diff;
                             delayedRead= diff;
@@ -1141,7 +1177,8 @@ public class Graph implements Serializable {
 						while (cs.end+ nextN< to) {		// full lines
 							assert(p+ (cs.end- mark)+ nextN< raf.length());
 							raf.readFully(cs.chars,cs.end,nextN);
-							raf.skipBytes(1);
+							//raf.skipBytes(1);
+							raf.skipBytes(fileSep.length());
 							cs.end+= nextN;
 							nextN= lineLen;
 						}

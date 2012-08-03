@@ -28,6 +28,7 @@
 package barna.commons;
 
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,7 +102,7 @@ public class Execute {
      */
     public static ExecutorService getExecutor(){
         if(executor == null){
-            Log.warn("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!\n" +
+            Log.warn("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!"+ OSChecker.NEW_LINE +
                     "The executor will be initialized with 2 threads now!");
             initialize(2);
             //throw new RuntimeException("The executor was not initialized properly! Make sure you call initialize first, and remember to call shutdown at the end!");

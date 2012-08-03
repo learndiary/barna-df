@@ -794,7 +794,7 @@ public class GraphLPsolver {
 				if (i< vals.length- 1&& vals[i+1]>= 0)
 					buffy.write(" +");
 			}
-			buffy.write(COND_SYMBOLS[cond]+Double.toString(rhs)+";\n");
+			buffy.write(COND_SYMBOLS[cond]+Double.toString(rhs)+";"+ OSChecker.NEW_LINE);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

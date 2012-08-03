@@ -1309,8 +1309,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     volatile int nrPairsWrongOrientation = 0;
 
     /**
-     * Array with the {minimum,maximum} insert length found
-     * in the mappings.
+     * The minimum and the maximum insert size found.
      */
     int[] insertMinMax = null;   // TODO check if correctly used
 

@@ -50,7 +50,7 @@ public class UniversalReadDescriptor {
 			return sb.toString();
 		}
 	}
-	
+
 	public static String TAG_ID= "ID";
 	public static String TAG_PAIR= "MATE"; 
 	public static String TAG_STRAND= "STRAND";
@@ -69,7 +69,7 @@ public class UniversalReadDescriptor {
 	public static char SYMBOL_STAR= '*';
 	public static char SYMBOL_QUESTION= '?';
 
-	public static String 
+	public static String
 		DESCRIPTORID_SIMPLE= "SIMPLE",
         DESCRIPTORID_SENSE= "SENSE",
         DESCRIPTORID_ANTISENSE= "ANTISENSE",
@@ -81,8 +81,10 @@ public class UniversalReadDescriptor {
 		DESCRIPTORID_SIMULATOR= "SIMULATOR",
 		DESCRIPTORID_BARNA= "BARNA",
         DESCRIPTORID_CASAVA18 = "CASAVA18";
-	
-	static HashMap<String, String> mapSimpleDescriptors= new HashMap<String, String>();
+
+    public static String DESCRIPTORID_DEFAULT = DESCRIPTORID_SIMPLE;
+
+    static HashMap<String, String> mapSimpleDescriptors= new HashMap<String, String>();
 	static {
 		mapSimpleDescriptors.put(DESCRIPTORID_SIMPLE, 
 				SYMBOL_TAG_LEFT+ 
@@ -165,6 +167,12 @@ public class UniversalReadDescriptor {
 	public static HashMap<String, String> getMapSimpleDescriptors() {
 		return mapSimpleDescriptors;
 	}
+
+    public static UniversalReadDescriptor getDefaultDescriptor() {
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(mapSimpleDescriptors.get(DESCRIPTORID_DEFAULT));
+        return d;
+    }
 
 
     /**

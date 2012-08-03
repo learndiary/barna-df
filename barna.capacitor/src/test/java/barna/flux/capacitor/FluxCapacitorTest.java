@@ -124,8 +124,8 @@ public class FluxCapacitorTest {
                 descriptor);
         settings.set(FluxCapacitorSettings.SORT_IN_RAM,
                 false);
-        settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES,
-                keepSorted);
+//        settings.set(FluxCapacitorSettings.KEEP_SORTED,
+//                keepSorted);
         settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
                 AnnotationMapping.PAIRED);
         settings.set(FluxCapacitorSettings.STDOUT_FILE,
@@ -257,10 +257,10 @@ public class FluxCapacitorTest {
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             try {
                 buffy.write(FluxCapacitorSettings.ANNOTATION_MAPPING.getName() + " " +
-                        AnnotationMapping.STRANDED + "\n");
+                        AnnotationMapping.STRANDED + barna.commons.system.OSChecker.NEW_LINE);
                 buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName() + " " +
                         UniversalReadDescriptor.getDescriptor(
-                                UniversalReadDescriptor.DESCRIPTORID_SENSE) + "\n");
+                                UniversalReadDescriptor.DESCRIPTORID_SENSE) + barna.commons.system.OSChecker.NEW_LINE);
                 buffy.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -302,10 +302,10 @@ public class FluxCapacitorTest {
             BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
             /*try {
                 buffy.write(FluxCapacitorSettings.ANNOTATION_MAPPING.getName()+" "+
-                        AnnotationMapping.STRANDED+ "\n");
+                        AnnotationMapping.STRANDED+ barna.commons.system.OSChecker.NEW_LINE);
                 buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName()+" "+
                         UniversalReadDescriptor.getDescriptor(
-                                UniversalReadDescriptor.DESCRIPTORID_SENSE)+ "\n");
+                                UniversalReadDescriptor.DESCRIPTORID_SENSE)+ barna.commons.system.OSChecker.NEW_LINE);
                 buffy.close();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -737,7 +737,7 @@ public class FluxCapacitorTest {
             BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile));
             for (String s = null; (s = buffy.readLine()) != null; ) {
                 if (!s.startsWith("chr1"))
-                    writer.write(s + "\n");
+                    writer.write(s + barna.commons.system.OSChecker.NEW_LINE);
             }
             buffy.close();
             bedFile.delete();

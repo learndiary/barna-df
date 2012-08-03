@@ -1,7 +1,10 @@
 package barna.flux.capacitor.integrationtest
 
 import barna.commons.system.OSChecker
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
 import barna.io.FileHelper
+import barna.io.rna.UniversalReadDescriptor
+import com.martiansoftware.jsap.RequiredParameterMissingException
 import groovy.json.JsonSlurper
 
 import java.security.MessageDigest
@@ -9,9 +12,16 @@ import java.util.zip.ZipInputStream
 
 /**
  *
- * @author Emilio Palumbo (emiliopalumbo@gmail.com)
+ * @author  Emilio Palumbo (emiliopalumbo@gmail.com)
  */
 class FluxCapacitorRunner {
+
+    /**
+     * Default common files
+     */
+    public static DEFAULT_PARAMETER_FILE = "params.par"
+    public static DEFAULT_OUTPUT_FILE = "output"+File.separator+"results.gtf"
+
     /**
      * Map from the relative filename to the absolute filename within
      * the test data directory
@@ -55,9 +65,59 @@ class FluxCapacitorRunner {
      */
     private static final Object lock = new Object()
 
+    /**
+     * Creates a temporary directory structure for the current run of the Capacitor
+     *
+     * @param cwd current working directory
+     * @param parameters Map of Capacitor parameters
+     * @throws RequiredParameterMissingException if param name is not a known parameter name
+     * @return the current paramter file
+     */
+    static File createTestDir(File cwd, Map parameters) throws RequiredParameterMissingException {
 
-    static void createTestDir(File cwd, Map parameter) {
+        //check for mandatory parameters
+        if (!parameters.containsKey("ANNOTATION_FILE"))
+            throw new RequiredParameterMissingException("The parameter for annotation file is missing")
+        if (!parameters.containsKey("MAPPING_FILE"))
+            throw new RequiredParameterMissingException("The parameter for mapping file is missing")
 
+        //get instance for the read descriptor
+        if (parameters.containsKey("READ_DESCRIPTOR")) {
+            UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
+            descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+        }
+
+        //check if sorted files should be kept and set up directory
+        if (parameters.containsKey("KEEP_SORTED")) {
+            String sortedPath = parameters['KEEP_SORTED']
+            if (!sortedPath.startsWith(File.separator)) {
+                File sortDir = new File(cwd, parameters["KEEP_SORTED"]);
+                sortDir.mkdir();
+                parameters.put("KEEP_SORTED", sortDir);
+            }
+        }
+
+        //set up the output file
+        File outDir = new File(cwd, "output");
+        outDir.mkdir();
+        if (!parameters.containsKey("STDOUT_FILE")) {
+            File outFile = new File(cwd, DEFAULT_OUTPUT_FILE);
+            parameters.put("STDOUT_FILE", outFile);
+            outFile.delete();
+        }
+
+        //write the parameter file
+        File parFile= new File(cwd,DEFAULT_PARAMETER_FILE);
+        FluxCapacitorSettings settings= new FluxCapacitorSettings();
+        parameters.each{k,v->
+            settings.set(k,v)
+        }
+        settings.validate();
+        parameters.each{k,v->
+            parFile.append("${k}\t${v}"+OSChecker.NEW_LINE)
+        }
+
+        return parFile;
     }
 
     /**
@@ -104,7 +164,7 @@ class FluxCapacitorRunner {
      * is not available locally, the data file is downloaded from the repository.
      * <p>
      *     The data map contains relative paths to the test data pointing to the absolut
-     *     files and directories. For example, to access a gtp file
+     *     files and directories. For example, to access a gtf file
      *     {@code FluxCapacitorRunner.getTestData()['gtf/mydata.gtf']} returns the absolute path
      *     to 'mydata.gtf'
      *

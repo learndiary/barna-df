@@ -251,9 +251,9 @@ public class TupleMatrix implements Matrix {
 				sb.append(Integer.toString(m[i].get(j)));
 				sb.append("\t");
 			}
-			//sb.replace(sb.length()- 1, sb.length()- 1, "\n");
+			//sb.replace(sb.length()- 1, sb.length()- 1, barna.commons.system.OSChecker.NEW_LINE);
 			sb.deleteCharAt(sb.length()-1);
-			sb.append("\n");
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 		}
 		return sb;
 	}

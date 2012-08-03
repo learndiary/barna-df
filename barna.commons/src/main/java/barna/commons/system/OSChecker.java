@@ -47,6 +47,10 @@ public class OSChecker {
     private static boolean macOSX= false;
     private static boolean is32bit= false;
     private static boolean is64bit= false;
+    /**
+     * The new line separator
+     */
+    public static String NEW_LINE = System.getProperty("line.separator");
 
     public static enum OS {
         win("Windows"), linux("Linux"), sun("Solaris (x86)"), mac("Mac OS"), unknown("Unknown");

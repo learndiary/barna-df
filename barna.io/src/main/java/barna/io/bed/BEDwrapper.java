@@ -31,6 +31,7 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.Progressable;
 import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
@@ -603,7 +604,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 				if (from>= 0&& to>= 0) {
 					String id= s.substring(from, to);
 					tmpWriter.write(id);
-					tmpWriter.write((int) '\n');
+					tmpWriter.write(OSChecker.NEW_LINE);
 				} else {
 					++skippedLines;
 					if (warnFirstSkip) {
@@ -632,7 +633,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		try {
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(getInputFile(), append));
 			for (int i = 0; beds!= null&& i < beds.length&&beds[i]!= null; i++) {
-				buffy.write(beds[i].toString()+"\n");
+				buffy.write(beds[i].toString()+barna.commons.system.OSChecker.NEW_LINE);
 			}
 			buffy.flush();
 			buffy.close();

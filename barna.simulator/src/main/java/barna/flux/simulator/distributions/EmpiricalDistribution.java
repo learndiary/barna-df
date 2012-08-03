@@ -408,7 +408,7 @@ public class EmpiricalDistribution extends AbstractDistribution {
         BufferedWriter writer = new BufferedWriter(new FileWriter(path));
         for (int i = 0; i < a.length; i++) {
             writer.write(Double.toString(a[i] / sum));
-            writer.write("\n");
+            writer.write(barna.commons.system.OSChecker.NEW_LINE);
         }
         writer.flush();
         writer.close();

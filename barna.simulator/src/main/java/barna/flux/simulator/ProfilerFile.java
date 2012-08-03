@@ -72,7 +72,7 @@ public class ProfilerFile {
     /**
      * Profile file newline character
      */
-    public static final String PRO_FILE_CR = "\n";
+    public static final String PRO_FILE_CR = barna.commons.system.OSChecker.NEW_LINE;
 
     /**
      * This appends counts, relative and absolute, at the given column. If the column already exists, the columns and
@@ -290,7 +290,7 @@ public class ProfilerFile {
                                 profile.getId(i) + ProfilerFile.PRO_FILE_SEP +
                                 (profile.isCds(i) ? ProfilerFile.PRO_FILE_CDS : ProfilerFile.PRO_FILE_NC) + ProfilerFile.PRO_FILE_SEP +
                                 Integer.toString(profile.getLength(i)) +
-                                "\n");
+                                barna.commons.system.OSChecker.NEW_LINE);
             }
             writer.flush();
         } finally {

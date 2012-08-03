@@ -106,7 +106,7 @@ public class GEMobject {
 					vampire.write(maxName, 0, nameCS.length());
 					vampire.write("\t.\t");	// score
 					vampire.write(Character.toString(go.p[1]> 0? SYMBOL_POSITIVE: SYMBOL_NEGATIVE));
-					vampire.write("\n");
+					vampire.write(barna.commons.system.OSChecker.NEW_LINE);
 					vampire.flush();
 				}
 				

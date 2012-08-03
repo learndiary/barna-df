@@ -1,3 +1,0 @@
-this is a newline test
-
-and another line
