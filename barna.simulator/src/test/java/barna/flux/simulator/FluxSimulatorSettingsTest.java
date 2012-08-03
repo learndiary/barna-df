@@ -68,7 +68,15 @@ public class FluxSimulatorSettingsTest {
             fail();
         } catch (Exception e) {
             if(! (e instanceof ParameterException)) fail();
-            assertEquals("The temp-directory /some/unknown/directory does not exist or is not writable!", e.getMessage());
+            StringBuilder tmpDir = new StringBuilder();
+            tmpDir.append(new File(".").listRoots()[0]);
+            tmpDir.append("some");
+            tmpDir.append(File.separator);
+            tmpDir.append("unknown");
+            tmpDir.append(File.separator);
+            tmpDir.append("directory");
+
+            assertEquals("The temp-directory " + tmpDir + " does not exist or is not writable!", e.getMessage());
         }
     }
 
