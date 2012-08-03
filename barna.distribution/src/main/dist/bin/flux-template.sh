@@ -1,4 +1,4 @@
-#!/bin/bashk
+#!/bin/bash
 
 
 ## CONFIGURATION
