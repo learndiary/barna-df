@@ -150,7 +150,8 @@ public class FileHelper {
 		}
 	}
 
-    
+
+
     /**
      * Reads the file until the first new line character appears. This looks for
      * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
@@ -159,10 +160,25 @@ public class FileHelper {
      * @return separator the file separator or empty string
      */
     public static String guessFileSep(File f) {
+        try {
+            return guessFileSep(new FileReader(f));
+        } catch (IOException e) {
+            Log.error("Unable to identify newline character in " + f.getAbsolutePath(), e);
+            throw new RuntimeException("Unable to identify newline character in " + f.getAbsolutePath());
+        }
+    }
+        /**
+        * Reads the file until the first new line character appears. This looks for
+        * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
+        *
+        * @param f the file
+        * @return separator the file separator or empty string
+        */
+    protected static String guessFileSep(Reader f) throws IOException{
         String fileSep = "";
         BufferedReader buffy = null;
         try {
-            buffy = new BufferedReader(new FileReader(f));
+            buffy = new BufferedReader(f);
             char[] b = new char[1];
             while (buffy.read(b) != -1) {
                 if (b[0] == '\n' || b[0] == '\r') {
@@ -181,8 +197,6 @@ public class FileHelper {
                     break;
                 }
             }
-        } catch (IOException e) {
-            Log.error("Unable to identify newline character in " + f.getAbsolutePath(), e);
         } finally {
             if (buffy != null) {
                 try {

@@ -43,29 +43,32 @@ public class GraphTest {
 
     @Test
     public void testReadChromosome() {
-
+        File f = null;
         try {
-
-            String seq= BASIC_SEQUENCE;
-            File f = File.createTempFile(getClass().getSimpleName(), ".fa");
-            String chr= writeTmpChromosome(seq, f);
-            Graph.overrideSequenceDirPath= f.getParentFile().getAbsolutePath();
+            String seq = BASIC_SEQUENCE;
+            f = File.createTempFile(getClass().getSimpleName(), ".fa");
+            String chr = writeTmpChromosome(seq, f);
+            Graph.overrideSequenceDirPath = f.getParentFile().getAbsolutePath();
 
             // tests
-            Random rnd= new Random();
-            ByteArrayCharSequence cs= new ByteArrayCharSequence(seq.length());
+            Random rnd = new Random();
+            ByteArrayCharSequence cs = new ByteArrayCharSequence(seq.length());
             for (int i = 0; i < 100; i++) {
-                cs.end= 0;
+                cs.end = 0;
                 testReadWithinLine(rnd, chr, seq, cs);
-                cs.end= 0;
+                cs.end = 0;
                 testReadMultiLines(rnd, chr, seq, cs);
-                cs.end= 0;
+                cs.end = 0;
                 testReadOverflow(rnd, chr, seq, cs);
             }
 
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             fail();
+        } finally {
+            if (f != null && f.exists()) {
+                f.delete();
+            }
         }
 
 
@@ -79,7 +82,7 @@ public class GraphTest {
                 ++seqLen;
         }
 
-        int lineLen= seq.indexOf(barna.commons.system.OSChecker.NEW_LINE);
+        int lineLen= seq.indexOf(OSChecker.NEW_LINE);
         int nrLines= (int) Math.ceil(seqLen/ (lineLen+ 1d));
         int lineNr= rnd.nextInt(nrLines);
         int posStart= rnd.nextInt(lineLen);
@@ -87,8 +90,6 @@ public class GraphTest {
 
         int offCR= lineNr* (lineLen+ 1);
         int off= lineNr* lineLen;
-//        System.err.println("lineLen= "+ lineLen+", nrLines= "+ nrLines+ ", lineNr= "+ lineNr+ ", posStart= "+ posStart+ ", posEnd= "+posEnd+
-//                        ", off= "+ off);
         Graph.readSequence(
                 null,   // Species spe,
                 chr,    // CharSequence chromosome,
@@ -99,10 +100,7 @@ public class GraphTest {
                 0,      // int from,
                 posEnd     // int to)
         );
-//        System.err.println(cs.toString());
-//        System.err.println(seq.substring(offCR+ posStart, offCR+ posStart+ posEnd));
         Assert.assertEquals(seq.substring(offCR+ posStart, offCR+ posStart+ posEnd), cs.toString());
-
     }
 
     private void testReadMultiLines(Random rnd, CharSequence chr, String seq, ByteArrayCharSequence cs) {
