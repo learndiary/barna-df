@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Random;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 
@@ -32,11 +33,11 @@ public class GraphTest {
             "Ever so casually, she blows her smoke across at Nick......";
 
 
-    private String writeTmpChromosome(String seq, File tmpFile) throws Exception {
+    private String writeTmpChromosome(String seq, File tmpFile, String newline) throws Exception {
         String chr= tmpFile.getName().substring(0, tmpFile.getName().lastIndexOf('.'));
         BufferedWriter writer= new BufferedWriter(new FileWriter(tmpFile));
-        writer.write(">"+ chr+ barna.commons.system.OSChecker.NEW_LINE);
-        writer.write(seq+ barna.commons.system.OSChecker.NEW_LINE);
+        writer.write(">"+ chr+ newline);
+        writer.write(seq+ newline);
         writer.close();
         return chr;
     }
@@ -47,7 +48,7 @@ public class GraphTest {
         try {
             String seq = BASIC_SEQUENCE;
             f = File.createTempFile(getClass().getSimpleName(), ".fa");
-            String chr = writeTmpChromosome(seq, f);
+            String chr = writeTmpChromosome(seq, f, OSChecker.NEW_LINE);
             Graph.overrideSequenceDirPath = f.getParentFile().getAbsolutePath();
 
             // tests
@@ -74,13 +75,80 @@ public class GraphTest {
 
     }
 
+
+    @Test
+    public void testReadWithinLineSetup() throws Exception {
+
+        String line_unix = "ABCDE\nFGHIJ\nKLMNO";
+        String line_win = "ABCDE\r\nFGHIJ\r\nKLMNO";
+
+        // check full length
+        int seqLen_u = getSeqLength(line_unix);
+        int seqLen_w = getSeqLength(line_win);
+        assertEquals(15, seqLen_u);
+        assertEquals(15, seqLen_w);
+
+        // check single line length
+        int lineLen_u = line_unix.indexOf("\n");
+        int lineLen_w = line_win.indexOf("\r\n");
+        assertEquals(5, lineLen_u);
+        assertEquals(5, lineLen_w);
+
+        // check number of lines
+        int nrLines_u = (int) Math.ceil(seqLen_u / (lineLen_u + 1d));
+        int nrLines_w = (int) Math.ceil(seqLen_w / (lineLen_w + 1d));
+        assertEquals(3, nrLines_u);
+        assertEquals(3, nrLines_w);
+
+        int lineNr= 1;
+        int posStart = 2;
+        int posEnd = 6;
+
+        int offCR_u = lineNr * (lineLen_u+1);
+        int off_u= lineNr* lineLen_u;
+
+        File chr_file_unix = File.createTempFile(getClass().getSimpleName(), ".fa");
+        String chr_unix = writeTmpChromosome(line_unix, chr_file_unix, "\n");
+        File chr_file_win = File.createTempFile(getClass().getSimpleName(), ".fa");
+        String chr_win = writeTmpChromosome(line_win, chr_file_win, "\r\n");
+
+        Graph.overrideSequenceDirPath = chr_file_unix.getParentFile().getAbsolutePath();
+        Graph.fileSep = "\n";
+        ByteArrayCharSequence result_unix = new ByteArrayCharSequence(10);
+        Graph.readSequence(
+                null,   // Species spe,
+                chr_unix,    // CharSequence chromosome,
+                true,   // boolean forwardStrand,
+                off_u + posStart + 1,   // start
+                off_u + posStart + posEnd,  // end
+                result_unix,     // ByteArrayCharSequence cs,
+                0,      // int from,
+                posEnd     // int to)
+        );
+        assertEquals("HIJKLM", result_unix.toString());
+
+        Graph.overrideSequenceDirPath = chr_file_win.getParentFile().getAbsolutePath();
+        Graph.fileSep = "\r\n";
+        ByteArrayCharSequence result_win = new ByteArrayCharSequence(10);
+        Graph.readSequence(
+                null,   // Species spe,
+                chr_win,    // CharSequence chromosome,
+                true,   // boolean forwardStrand,
+                off_u + posStart + 1,   // start
+                off_u + posStart + posEnd,  // end
+                result_win,     // ByteArrayCharSequence cs,
+                0,      // int from,
+                posEnd     // int to)
+        );
+        assertEquals("HIJKLM", result_win.toString());
+
+
+
+    }
+
     private void testReadWithinLine(Random rnd, CharSequence chr, String seq, ByteArrayCharSequence cs) {
 
-        int seqLen= 0;
-        for (int i = 0; i < seq.length(); i++) {
-            if (seq.charAt(i)!= '\n' && seq.charAt(i) != '\r')
-                ++seqLen;
-        }
+        int seqLen = getSeqLength(seq);
 
         int lineLen= seq.indexOf(OSChecker.NEW_LINE);
         int nrLines= (int) Math.ceil(seqLen/ (lineLen+ 1d));
@@ -101,6 +169,21 @@ public class GraphTest {
                 posEnd     // int to)
         );
         Assert.assertEquals(seq.substring(offCR+ posStart, offCR+ posStart+ posEnd), cs.toString());
+    }
+
+    /**
+     * Get the number of characters without newline characters
+     *
+     * @param seq the sequence
+     * @return length length if the sequence without newline characters
+     */
+    private int getSeqLength(String seq) {
+        int seqLen= 0;
+        for (int i = 0; i < seq.length(); i++) {
+            if (seq.charAt(i)!= '\n' && seq.charAt(i) != '\r')
+                ++seqLen;
+        }
+        return seqLen;
     }
 
     private void testReadMultiLines(Random rnd, CharSequence chr, String seq, ByteArrayCharSequence cs) {
