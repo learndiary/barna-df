@@ -33,11 +33,12 @@ dependencies{
 
 
 task integrationTest(type: Test, dependsOn: "distDir") {
-    ignoreFailures = true
+    test.ext["ignoreFailures"] = true
     description = "Run integration tests"
     jvmArgs '-Xms128m', '-Xmx1G'
     beforeTest { descriptor ->
         logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
     }
     testClassesDir = sourceSets.integrationTest.output.classesDir
     classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)

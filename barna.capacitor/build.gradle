@@ -6,7 +6,6 @@ ext.testdata_repository = "repo"
 ext.testdata_artifact = "barna/test_data-1.0.zip"
 ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
 
-
 // add integration tests to source sets
 sourceSets{
     integrationTest{
@@ -41,11 +40,11 @@ dependencies{
 }
 
 task integrationTest(type: Test, dependsOn: "distDir") {
-    ignoreFailures = true
     description = "Run integration tests"
     jvmArgs '-Xms128m', '-Xmx1G'
     beforeTest { descriptor ->
         logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
     }
     testClassesDir = sourceSets.integrationTest.output.classesDir
     classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
@@ -63,7 +62,6 @@ task integrationTest(type: Test, dependsOn: "distDir") {
     systemProperties["testdata.artifact"] = testdata_artifact
     systemProperties["testdata.target"] = testdata_targetDirectory
 }
-
 
 ext.distSpec = copySpec {
     from(project.rootDir){

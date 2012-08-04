@@ -36,7 +36,6 @@ if(nightly){
     version=version.replaceAll("SNAPSHOT", ext.timestamp)
 }
 
-
 // make sure version defined here are applied to subprojects
 subprojects.each{p->
     def av = project(":").appVersions[p.name]
@@ -92,6 +91,7 @@ subprojects{
         //listening to test execution events
         beforeTest { descriptor ->
             logger.lifecycle("Running test: " + descriptor)
+            ignoreFailures = true
         }
     }
 }
@@ -122,12 +122,10 @@ task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
         }
     }
 }
-
 /**
  * Test all subprojects
  */
 task test(){
-    ignoreFailures = true
     dependsOn{
         subprojects.collectAll{sp-> sp.tasks.test}
     }    
