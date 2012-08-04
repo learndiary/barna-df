@@ -127,6 +127,7 @@ task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
  * Test all subprojects
  */
 task test(){
+    ignoreFailures = true
     dependsOn{
         subprojects.collectAll{sp-> sp.tasks.test}
     }    
