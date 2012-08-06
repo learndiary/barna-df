@@ -27,9 +27,10 @@
 
 package barna.io;
 
-import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.log.Log;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 
 import java.io.*;
@@ -499,5 +500,10 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
             }
         }
 	}
-	
+
+    @Override
+    public Iterator<Mapping> getMates(Mapping firstMapping, UniversalReadDescriptor descriptor) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
 }

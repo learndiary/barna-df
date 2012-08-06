@@ -27,7 +27,8 @@
 
 package barna.io;
 
-import barna.commons.ByteArrayCharSequence;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Mapping;
 
 import java.util.Iterator;
 
@@ -60,4 +61,10 @@ public interface MSIterator<T> extends Iterator<T>, Iterable<T>{
 	 * frees resources occupied by the iterator
 	 */
 	public void clear();
+
+    /**
+     * In case of paired reads retrieve the mate given a <code>Iterator<Mapping></code>
+     * @return the mate
+     */
+    public Iterator<Mapping> getMates(Mapping firstMapping, UniversalReadDescriptor descriptor);
 }

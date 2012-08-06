@@ -767,40 +767,6 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		return true;
 	}
 
-    @Override
-    public Mapping getMate(Mapping firstMate) {
-        currentIter.mark();
-        while (currentIter.hasNext()) {
-            UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
-            attr1 = getAttributes(firstMate,descriptor,attr1);
-            attr2 = getAttributes(currentIter.next(),descriptor,attr2);
-            if (!attr1.id.equals(attr2.id))
-                break;
-            if (attr2 == null || attr2.flag == 1)
-                continue;
-        }
-        currentIter.reset();
-    }
-
-    UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
-
-        CharSequence tag= mapping.getName();
-        attributes= desc.getAttributes(tag, attributes);
-        if (attributes == null) {
-            Log.warn("Error in read ID: could not parse read identifier " + tag);
-            return null;
-        }
-        if (desc.isPaired()&& attributes.flag<= 0) {
-            Log.warn("Error in read ID: could not find mate in " + tag);
-            return null;
-        }
-        if (desc.isStranded()&& attributes.strand< 0) {
-            Log.warn("Error in read ID: could not find strand in " + tag);
-            return null;
-        }
-        return attributes;
-    }
-
     public void reset(long bytes, int lines) {
 
 		if (readerB!= null)

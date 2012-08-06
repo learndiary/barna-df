@@ -349,14 +349,15 @@ public class AnnotationMapper extends SplicingGraph {
             if (paired) {
 
                 // scan for mates
-                mappings.mark();
-                while (mappings.hasNext()) {
-						otherMapping= mappings.next();
-						attributes2= getAttributes(otherMapping, descriptor, attributes2);
-                    if (!attributes.id.equals(attributes2.id))
-                        break;
-                    if (attributes2 == null || attributes2.flag == 1)
-                        continue;
+                //mappings.mark();
+                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+                while (mates.hasNext()) {
+						otherMapping= mates.next();
+//						attributes2= getAttributes(otherMapping, descriptor, attributes2);
+//                    if (!attributes.id.equals(attributes2.id))
+//                        break;
+//                    if (attributes2 == null || attributes2.flag == 1)
+//                        continue;
 
 						AbstractEdge target2= getEdge2(otherMapping);
                     if (target2 == null) {
@@ -412,7 +413,7 @@ public class AnnotationMapper extends SplicingGraph {
                     if (buffy != null)
 							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
                 }
-                mappings.reset();
+//                mappings.reset();
 
             } else {    // single reads, strand already checked
 					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge

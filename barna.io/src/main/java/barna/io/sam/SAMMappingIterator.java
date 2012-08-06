@@ -1,13 +1,16 @@
 package barna.io.sam;
 
 import barna.io.MSIterator;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
 import net.sf.samtools.SAMRecord;
-import net.sf.samtools.SAMRecordComparator;
 import net.sf.samtools.SAMRecordIterator;
-import net.sf.samtools.SAMRecordQueryNameComparator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -83,6 +86,11 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     @Override
     public void clear() {
         wrappedIterator.close();
+    }
+
+    @Override
+    public Iterator<Mapping> getMates(Mapping firstMapping, UniversalReadDescriptor descriptor) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
