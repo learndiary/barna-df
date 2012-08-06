@@ -2060,6 +2060,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             return false;
         }
 
+        if (getFile() == null) {
+            Log.error("");
+            Log.error("No parameter file specified!");
+            Log.error(barna.commons.system.OSChecker.NEW_LINE);
+            return false;
+        }
+
         if (getFile() != null && !getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
@@ -2808,19 +2815,19 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * Obtains global statistics from the mapping file, e.g., number of total mappings etc.
      *
-     * @param wrapper mapping file reader
+     * @param reader mapping file reader
      */
-	private void fileStats(MappingReader wrapper) {
+	private void fileStats(MappingReader reader) {
 
         if (settings.get(FluxCapacitorSettings.NR_READS_MAPPED) <= 0) {
             // (3) scan
-            ((AbstractFileIOWrapper) wrapper).scanFile();
-            if (((AbstractFileIOWrapper) wrapper).getNrInvalidLines() > 0)
-                Log.warn("Skipped " + ((AbstractFileIOWrapper) wrapper).getNrInvalidLines() + " lines.");
+            ((AbstractFileIOWrapper) reader).scanFile();
+            if (((AbstractFileIOWrapper) reader).getNrInvalidLines() > 0)
+                Log.warn("Skipped " + ((AbstractFileIOWrapper) reader).getNrInvalidLines() + " lines.");
 
-            checkBEDscanMappings = wrapper.getCountMappings();
-            nrBEDreads = wrapper.getCountReads();
-            nrBEDmappings = wrapper.getCountMappings();
+            checkBEDscanMappings = reader.getCountMappings();
+            nrBEDreads = reader.getCountReads();
+            nrBEDmappings = reader.getCountMappings();
         } else {
             checkBEDscanMappings = -1;
             nrBEDreads = settings.get(FluxCapacitorSettings.NR_READS_MAPPED);
@@ -2828,13 +2835,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
 		Log.info("\t"+ nrBEDreads+ " reads"
-                + (nrBEDmappings > 0 ? ", " + nrBEDmappings + " mappings: R-factor " + (wrapper.getCountMappings() / (float) wrapper.getCountReads()) : ""));
+                + (nrBEDmappings > 0 ? ", " + nrBEDmappings + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
         if (nrBEDmappings > 0)
-            Log.info("\t" + wrapper.getCountContinuousMappings() + " entire, " + wrapper.getCountSplitMappings()
-                    + " split mappings (" + (wrapper.getCountSplitMappings() * 10f / wrapper.getCountMappings()) + "%)");
+            Log.info("\t" + reader.getCountContinuousMappings() + " entire, " + reader.getCountSplitMappings()
+                    + " split mappings (" + (reader.getCountSplitMappings() * 10f / reader.getCountMappings()) + "%)");
 
         // (4) check if read descriptor is applicable
-        if (wrapper.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
+        if (reader.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
             Log.info("\tRead descriptor seems OK");
         else {
             String msg = "Read Descriptor " + settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)

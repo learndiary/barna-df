@@ -283,12 +283,12 @@ public class AnnotationMapper extends SplicingGraph {
     /**
      * Maps genome-mapped reads into the graph.
      *
-     * @param lineIterator iterator of input lines
+     * @param mappings iterator of input lines
      * @param settings
      */
-	public void map(MSIterator<Mapping> lineIterator, FluxCapacitorSettings settings) {
+	public void map(MSIterator<Mapping> mappings, FluxCapacitorSettings settings) {
 
-        if (lineIterator == null)
+        if (mappings == null)
             return;
 
         UniversalReadDescriptor descriptor = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
@@ -318,9 +318,9 @@ public class AnnotationMapper extends SplicingGraph {
         nrMappingsWrongStrand = 0;
 
         // map read pairs
-        while (lineIterator.hasNext()) {
+        while (mappings.hasNext()) {
 
-				mapping= lineIterator.next();
+				mapping= mappings.next();
             ++nrMappingsLocus;
 				CharSequence name= mapping.getName();
             if (name.equals(lastName))
@@ -349,9 +349,9 @@ public class AnnotationMapper extends SplicingGraph {
             if (paired) {
 
                 // scan for mates
-                lineIterator.mark();
-                while (lineIterator.hasNext()) {
-						otherMapping= lineIterator.next();
+                mappings.mark();
+                while (mappings.hasNext()) {
+						otherMapping= mappings.next();
 						attributes2= getAttributes(otherMapping, descriptor, attributes2);
                     if (!attributes.id.equals(attributes2.id))
                         break;
@@ -412,7 +412,7 @@ public class AnnotationMapper extends SplicingGraph {
                     if (buffy != null)
 							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
                 }
-                lineIterator.reset();
+                mappings.reset();
 
             } else {    // single reads, strand already checked
 					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge

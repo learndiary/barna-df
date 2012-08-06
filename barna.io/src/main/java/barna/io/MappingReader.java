@@ -28,10 +28,7 @@
 package barna.io;
 
 import barna.io.rna.UniversalReadDescriptor;
-import barna.model.Gene;
 import barna.model.Mapping;
-
-import java.io.OutputStream;
 
 
 public interface MappingReader extends Iterable<Mapping>{
@@ -81,9 +78,27 @@ public interface MappingReader extends Iterable<Mapping>{
 	 */
 	public boolean isApplicable(UniversalReadDescriptor descriptor);
 
+    /**
+     * Close the reader
+     * @return true if the reader was closed without problems
+     */
     public boolean close();
 
+    /**
+     * Reset the reader to the beginning of the file
+     */
     public void reset();
 
+    /**
+     * Reset the reader to the start of the specified chromosome
+     * @param chr the chromosome
+     * @return true if the reader can be reset to the beginning of the chromosome
+     */
     public boolean reset(String chr);
+
+    /**
+     * In case of paired reads retrieve the mate given a <code>Iterator<Mapping></code>
+     * @return the mate
+     */
+    public Mapping getMate();
 }

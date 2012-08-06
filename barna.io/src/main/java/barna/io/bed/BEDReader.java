@@ -65,6 +65,7 @@ public class BEDReader extends AbstractFileIOWrapper implements MappingReader {
     File tmpDir = null;
     boolean sortInRam = false;
     UniversalReadDescriptor descriptor;
+    MSIterator<BEDMapping> currentIter;
 	/**
 	 * Creates an instance using a given file and
 	 * line comparator.
@@ -765,8 +766,42 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		reset(bytesNlines[0], (int) bytesNlines[1]);
 		return true;
 	}
-	
-	public void reset(long bytes, int lines) {
+
+    @Override
+    public Mapping getMate(Mapping firstMate) {
+        currentIter.mark();
+        while (currentIter.hasNext()) {
+            UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
+            attr1 = getAttributes(firstMate,descriptor,attr1);
+            attr2 = getAttributes(currentIter.next(),descriptor,attr2);
+            if (!attr1.id.equals(attr2.id))
+                break;
+            if (attr2 == null || attr2.flag == 1)
+                continue;
+        }
+        currentIter.reset();
+    }
+
+    UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
+
+        CharSequence tag= mapping.getName();
+        attributes= desc.getAttributes(tag, attributes);
+        if (attributes == null) {
+            Log.warn("Error in read ID: could not parse read identifier " + tag);
+            return null;
+        }
+        if (desc.isPaired()&& attributes.flag<= 0) {
+            Log.warn("Error in read ID: could not find mate in " + tag);
+            return null;
+        }
+        if (desc.isStranded()&& attributes.strand< 0) {
+            Log.warn("Error in read ID: could not find strand in " + tag);
+            return null;
+        }
+        return attributes;
+    }
+
+    public void reset(long bytes, int lines) {
 
 		if (readerB!= null)
 			try {
@@ -967,21 +1002,21 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates elements of an array stored in RAM
      */
-    private BEDMappingIterator readRAM(String chromosome, int from, int to) {
+    private MSIterator<BEDMapping> readRAM(String chromosome, int from, int to) {
 
         if (from> to|| from< 0|| to< 0)
             throw new RuntimeException("BED reading range error: "+from+" -> "+to);
         // init iterator
-        BEDMappingIterator iter= null;
+        currentIter= null;
         // memory
         MappingReaderState state= readState(chromosome, from, to);
         if (state.result== null)
             return null;
         ArrayList<BEDMapping> beds= /*(BEDMapping[])*/ state.result;//TODO move to Mapping
         Collections.sort(beds, getDescriptorComparator());
-        iter= new BEDMappingIterator(beds);
+        currentIter= new BEDMappingIterator(beds);
 
-        return iter;
+        return currentIter;
 
     }
 
@@ -992,13 +1027,13 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
      * @param to end coordinate on chromosome
      * @return an iterator instance that enumerates elements of an array stored in RAM
      */
-    private BEDMappingIteratorDisk readDisk(String chromosome, int from, int to, int retryCount, long timeInSeconds) {
+    private MSIterator<BEDMapping> readDisk(String chromosome, int from, int to, int retryCount, long timeInSeconds) {
 
         if (from> to|| from< 0|| to< 0)
             throw new RuntimeException("BED reading range error: "+from+" -> "+to);
 
         // init iterator
-        BEDMappingIteratorDisk iter= null;
+        currentIter= null;
 
         try {
             // read, maintain main thread
@@ -1008,7 +1043,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
             File tmpFile= createTempFile(null, chromosome+ ":"+ from+ "-"+ to+ ".", "bed", true);
             BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, c);
             biter.init();
-            iter= biter;
+            currentIter= biter;
             MappingReaderState state= readState(pout, chromosome, from, to);
             pout.flush();
             pout.close();
@@ -1030,7 +1065,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
                     "Could not get reads for locus "+ chromosome+ ":"+ from+ "-"+ to +", retried " + retryCount + " times", e);
         }
 
-        return iter;
+        return currentIter;
 
     }
 
