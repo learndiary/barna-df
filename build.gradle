@@ -36,7 +36,6 @@ if(nightly){
     version=version.replaceAll("SNAPSHOT", ext.timestamp)
 }
 
-
 // make sure version defined here are applied to subprojects
 subprojects.each{p->
     def av = project(":").appVersions[p.name]
@@ -86,6 +85,14 @@ subprojects{
 
     test{
         jvmArgs '-Xms128m', '-Xmx1G'
+        //makes the standard streams (err and out) visible at console when running tests
+        //testLogging.showStandardStreams = true
+
+        //listening to test execution events
+        beforeTest { descriptor ->
+            logger.lifecycle("Running test: " + descriptor)
+            ignoreFailures = true
+        }
     }
 }
 
@@ -115,7 +122,6 @@ task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
         }
     }
 }
-
 /**
  * Test all subprojects
  */
@@ -147,5 +153,14 @@ buildscript {
 //  3) /wrapper which is a directory named by the "jarPath" config which contains other needed files.
 task wrapper(type: Wrapper) {
     // HHH-6106 - this is needed for IntellJ generation until 1.0-milestone-3 is released.
-    gradleVersion = '1.0-rc-1'
+    gradleVersion = '1.1'
+}
+
+idea{
+    module {
+        //if you love browsing Javadoc
+        downloadJavadoc = true
+        //and hate reading sources :)
+        downloadSources = true
+    }
 }

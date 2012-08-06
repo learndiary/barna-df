@@ -9,7 +9,6 @@ import barna.io.FileHelper;
 import barna.io.Sorter;
 import barna.io.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
-import junit.framework.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -124,8 +123,8 @@ public class FluxCapacitorReadsOutputTest {
 				descriptor);
 		settings.set(FluxCapacitorSettings.SORT_IN_RAM, 
 				false);
-		settings.set(FluxCapacitorSettings.KEEP_SORTED_FILES, 
-				keepSorted);
+//		settings.set(FluxCapacitorSettings.KEEP_SORTED,
+//				keepSorted);
 		settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, 
 				AnnotationMapping.PAIRED);
 		settings.set(FluxCapacitorSettings.STDOUT_FILE, 

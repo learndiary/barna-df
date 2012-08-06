@@ -148,12 +148,12 @@ public class Bed2Wig {
 			BufferedWriter writer= new BufferedWriter(new FileWriter(out, true));
 			++start;
 			if (header) {
-				writer.write("track type=wiggle_0 name="+ name+ "\n");
+				writer.write("track type=wiggle_0 name="+ name+ barna.commons.system.OSChecker.NEW_LINE);
 				writer.write("fixedStep chrom="+chr+" start="+start+" step=1\n");
 			}
 			for (int i = 0; i < v.size(); i++) {
 				writer.write(Integer.toString(v.get(i)));
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();
@@ -179,12 +179,12 @@ public class Bed2Wig {
 			BufferedWriter writer= new BufferedWriter(new FileWriter(out, true));
 			++start;
 			if (header) {
-				writer.write("track type=wiggle_0 name="+ name+ "\n");
+				writer.write("track type=wiggle_0 name="+ name+ barna.commons.system.OSChecker.NEW_LINE);
 				writer.write("variableStep chrom="+chr+" start="+start+" step=1\n");
 			}
 			for (int i = 0; i < v.size(); i++) {
 				writer.write(Integer.toString(v.get(i)));
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();
@@ -213,7 +213,7 @@ public class Bed2Wig {
 						break;
 				
 				if (val!= 0) 
-					writer.write(chr+ " "+ (start+ i)+ " "+ (start+ j)+" "+ Integer.toString(val)+ "\n");
+					writer.write(chr+ " "+ (start+ i)+ " "+ (start+ j)+" "+ Integer.toString(val)+ barna.commons.system.OSChecker.NEW_LINE);
 				
 				i= (j-1);
 			}

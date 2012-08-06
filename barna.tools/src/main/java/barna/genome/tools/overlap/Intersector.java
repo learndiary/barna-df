@@ -365,7 +365,7 @@ public class Intersector implements FluxTool<Void> {
 		charBuf= bed.toCharArray(charBuf);		
 		try {
 			writer.write(charBuf, 0, bed.length());
-			writer.write("\n");
+			writer.write(barna.commons.system.OSChecker.NEW_LINE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

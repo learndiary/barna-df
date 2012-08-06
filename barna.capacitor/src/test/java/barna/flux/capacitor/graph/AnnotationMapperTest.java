@@ -527,8 +527,8 @@ public class AnnotationMapperTest extends TestCase {
 //                count[1] += m1.get(e);
 //            }
             assertEquals(count[0], 4);
+            }
         }
-    }
 
 //    @Test
 //    public void testSJReadsPaired() throws Exception {
@@ -700,7 +700,7 @@ public class AnnotationMapperTest extends TestCase {
                 count[0] += m.get(e)[0];
             }
             readGtf(g,hgGtfFile);
-            Map<String, Integer> m1 = getAllIntronicReads(g, false, hgBedFile);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false,hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }

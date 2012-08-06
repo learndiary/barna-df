@@ -161,8 +161,8 @@ public class FragmentEnzymatic implements FragmentProcessor {
 
     @Override
     public String getConfiguration() {
-        return "Left Flank : " + leftFlank + "\n" +
-               "Right Flank : " + rightFlank+ "\n"+
+        return "Left Flank : " + leftFlank + barna.commons.system.OSChecker.NEW_LINE +
+               "Right Flank : " + rightFlank+ barna.commons.system.OSChecker.NEW_LINE+
                "Motif: " + ezMotif.getName();
     }
 

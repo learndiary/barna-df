@@ -90,7 +90,7 @@ public class BEDiteratorDiskTest {
 			OutputStreamWriter writer= new OutputStreamWriter(pout);
 			for (int i = 0; i < beds.length; i++) {
 				writer.write(beds[i]);
-				writer.write('\n');
+				writer.write(OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();

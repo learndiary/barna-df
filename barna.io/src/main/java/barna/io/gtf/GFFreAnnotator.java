@@ -190,7 +190,7 @@ public class GFFreAnnotator {
 					try {
 						cdsObj.stop= Integer.parseInt(cds.substring(sep+ 2));
 					} catch (NumberFormatException ex) {
-						System.err.println("\n"+ s);
+						System.err.println(barna.commons.system.OSChecker.NEW_LINE+ s);
 						ex.printStackTrace();
 					}
 					if (cdsObj.startCodon) 
@@ -432,7 +432,7 @@ public class GFFreAnnotator {
 						
 						GFFObject[] obj= GFF.fromTranscript(t, true, true, true, true, false);
 						for (int k = 0; k < obj.length; k++) {
-							writer.write(obj[k].toString()+ "\n"); 
+							writer.write(obj[k].toString()+ barna.commons.system.OSChecker.NEW_LINE);
 						}
 					}
 				}

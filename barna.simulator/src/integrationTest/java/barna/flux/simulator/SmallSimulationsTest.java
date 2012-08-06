@@ -30,6 +30,7 @@ package barna.flux.simulator;
 import barna.commons.Execute;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
+import barna.model.Graph;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +58,7 @@ public class SmallSimulationsTest {
     }
 
     @Test
-    public void simpleSim1(){
+    public void simpleSim1() {
 
         // disable any questions
         Log.setInteractive(false);
@@ -80,8 +81,9 @@ public class SmallSimulationsTest {
         // check read count
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
     }
+
     @Test
-    public void testRunForCustomErrorModelBarna106(){
+    public void testRunForCustomErrorModelBarna106() {
 
         // disable any questions
         Log.setInteractive(false);
@@ -104,8 +106,9 @@ public class SmallSimulationsTest {
         // check read count
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
     }
+
     @Test
-    public void testRunWithCustomErrorModelAndParameters(){
+    public void testRunWithCustomErrorModelAndParameters() {
 
         // disable any questions
         Log.setInteractive(false);
@@ -130,9 +133,10 @@ public class SmallSimulationsTest {
         // we should have a fastq file
         assertTrue(new File(settings.getParentFile(), "human100.fastq").exists());
     }
-    @Test
-    public void testRunWithoutCustomErrorModelAndFastAOutput(){
 
+    @Test
+    public void testRunWithoutCustomErrorModelAndFastAOutput() {
+        Graph.fileSep = null;
         // disable any questions
         Log.setInteractive(false);
         // the setting file
@@ -156,8 +160,9 @@ public class SmallSimulationsTest {
         // we should have a fastq file
         assertTrue(new File(settings.getParentFile(), "human100-2.fasta").exists());
     }
+
     @Test
-    public void testRunWithoutDefaultErrorModelAndFastQOutput(){
+    public void testRunWithoutDefaultErrorModelAndFastQOutput() {
 
         // disable any questions
         Log.setInteractive(false);
@@ -184,7 +189,7 @@ public class SmallSimulationsTest {
     }
 
     @Test
-    public void testMinimalProfile(){
+    public void testMinimalProfile() {
         // disable any questions
         Log.setInteractive(false);
         // the setting file
@@ -209,7 +214,7 @@ public class SmallSimulationsTest {
 
 
     @Test
-    public void testMinimal(){
+    public void testMinimal() {
         // disable any questions
         Log.setInteractive(false);
         // the setting file
@@ -231,8 +236,9 @@ public class SmallSimulationsTest {
         // check read count
         assertEquals(pipeline.getSequencer().getTotalReads(), FileHelper.countLines(pipeline.getSettings().get(FluxSimulatorSettings.SEQ_FILE)));
     }
+
     @Test
-    public void testStatisticsOutput(){
+    public void testStatisticsOutput() {
         // disable any questions
         Log.setInteractive(false);
         final StringWriter stringWriter = new StringWriter();
@@ -263,19 +269,19 @@ public class SmallSimulationsTest {
             stringWriter.close();
             String allLines = stringWriter.toString();
             BufferedReader reader = new BufferedReader(new StringReader(allLines));
-            long fragments =-1;
-            long reads =-1;
+            long fragments = -1;
+            long reads = -1;
 
             Pattern fragP = Pattern.compile("\\s+(\\d+).*fragments found.*");
             Pattern readP = Pattern.compile("\\s+(\\d+).*reads sequenced.*");
-            for(String l = reader.readLine(); l != null; l = reader.readLine()){
+            for (String l = reader.readLine(); l != null; l = reader.readLine()) {
                 Matcher m = fragP.matcher(l);
                 System.out.println(l);
-                if(m.matches()){
+                if (m.matches()) {
                     fragments = Long.parseLong(m.group(1));
                 }
                 m = readP.matcher(l);
-                if(m.matches()){
+                if (m.matches()) {
                     reads = Long.parseLong(m.group(1));
                 }
             }
@@ -294,11 +300,8 @@ public class SmallSimulationsTest {
 
     @Test
     public void testpattern() throws Exception {
-
         Pattern fragP = Pattern.compile("\\s+(\\d+) fragments found");
         Matcher m = fragP.matcher("  123 fragments found");
         assertTrue(m.matches());
-        System.out.println(m.group(1));
-
     }
 }

@@ -27,12 +27,14 @@
 
 package barna.io;
 
+import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.log.Log;
 import barna.model.bed.BEDMapping;
 
 import java.io.*;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -97,8 +99,12 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 * method has already been invoked.
 	 */
 	boolean inited= false;
-	
-	/**
+    /**
+     * Store access to the current output stream
+     */
+    private FileOutputStream currentOutputStream;
+
+    /**
 	 * Creates an instance with <i>sorted</i> BED lines read from a stream
 	 * and written to the intermediate file.
 	 * 
@@ -207,6 +213,9 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 		while (captain != null) {
 			try {
 				captain.get();
+                if(this.currentOutputStream != null){
+                    this.currentOutputStream.close();
+                }
 				captain= null;
 			} catch (InterruptedException e) {
 				; // :)
@@ -280,9 +289,15 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 						Future future2= s.sortInBackground();
 						future1.get();
 						future2.get();
+                        // close the output streams
+                        fos.close();
 						return null;
 					}
 				};
+                if(this.currentOutputStream != null){
+                    this.currentOutputStream.close();
+                }
+                this.currentOutputStream = null;
 				this.captain= Execute.getExecutor().submit(callme); 
 			}
 		}

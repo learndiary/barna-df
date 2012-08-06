@@ -152,7 +152,7 @@ public class Subsetter implements FluxTool<Void> {
 				if (t> p) 
 					continue;
 				
-				writer.write(s+ "\n");
+				writer.write(s+ barna.commons.system.OSChecker.NEW_LINE);
 			}
 			
 		} catch (Exception e) {
@@ -266,12 +266,12 @@ public class Subsetter implements FluxTool<Void> {
 				
 				String[] ss= s.split("\\s");
 				if (ss[3].charAt(ss[3].length()- 3)== 'S') {
-					writer.write(s+ "\n");
+					writer.write(s+ barna.commons.system.OSChecker.NEW_LINE);
 					s= buffy.readLine();
-					writer.write(s+ "\n");
+					writer.write(s+ barna.commons.system.OSChecker.NEW_LINE);
 				} else if (last!= null) {
-					writer.write(last+ "\n");
-					writer.write(s+ "\n");
+					writer.write(last+ barna.commons.system.OSChecker.NEW_LINE);
+					writer.write(s+ barna.commons.system.OSChecker.NEW_LINE);
 				}
 			}
 			

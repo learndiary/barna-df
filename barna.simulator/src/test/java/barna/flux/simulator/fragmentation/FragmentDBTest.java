@@ -55,6 +55,24 @@ public class FragmentDBTest {
     }
 
     @Test
+    public void testIndexEntriesAreCorrect() throws Exception {
+        File libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
+        long lines = FileHelper.countLines(libFile);
+
+        FragmentDB fragmentDB = new FragmentDB(libFile);
+        fragmentDB.createIndex();
+        assertEquals(lines, fragmentDB.getNumberOfLines());
+        assertEquals(9060, fragmentDB.getNumberOfLines());
+        assertEquals(3751, fragmentDB.getNumberOfEntries());
+        assertEquals(14072, fragmentDB.getNumberOfFragments());
+        for (String id : fragmentDB.fragmentIDs()) {
+            for (ByteArrayCharSequence c : fragmentDB.getEntries(id)) {
+                assertEquals(4, c.toString().split("\t").length);
+            }
+        }
+    }
+
+    @Test
     public void testThatTheIDIteratorHasTheRightSize() throws Exception {
         File libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
 
@@ -66,7 +84,6 @@ public class FragmentDBTest {
         }
 
         assertEquals(3751, c);
-
     }
 
     @Test

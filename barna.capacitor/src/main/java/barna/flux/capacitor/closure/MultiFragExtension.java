@@ -130,7 +130,7 @@ class MultiFragExtension extends MultiFrag {
 	
 	public String toString() {
 		
-		String result= super.toString()+ "\n";
+		String result= super.toString()+ barna.commons.system.OSChecker.NEW_LINE;
 		
 		if (matchTable== null)
 			return result;
@@ -140,9 +140,9 @@ class MultiFragExtension extends MultiFrag {
 			result+= ";\t\tapplicables: "+ applicables;
 			result+= ",\tapplicable ratio: "+ ((float) applicables/ (float) ext);
 		}
-		result+= "\n";
+		result+= barna.commons.system.OSChecker.NEW_LINE;
 		
-		result+= sequences[0]+ "   "+ sequences[0]+ "\n";
+		result+= sequences[0]+ "   "+ sequences[0]+ barna.commons.system.OSChecker.NEW_LINE;
 		for (int i= 0; i< matchTable.length; ++i)
 			result+= (matchTable[i]== 0)? "X":"|";
 		if (applicTable== null)
@@ -150,7 +150,7 @@ class MultiFragExtension extends MultiFrag {
 		result+= "   ";
 		for (int i= 0; i< applicTable.length; ++i)
 			result+= (applicTable[i]== 0)? "*":((applicTable[i]== (-1))?"X":"|");
-		result+= "\n"+ sequences[1]+ "   "+ sequences[1]+ "\n";
+		result+= barna.commons.system.OSChecker.NEW_LINE+ sequences[1]+ "   "+ sequences[1]+ barna.commons.system.OSChecker.NEW_LINE;
 
 		return result;
 	}

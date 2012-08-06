@@ -61,8 +61,8 @@ public class LpSolveTest {
 	public void testTwoProblems() throws Exception {
 		LpSolve problem1 = LpSolve.makeLp(3, 4);
 		LpSolve problem2 = LpSolve.makeLp(5, 6);
-		assertTrue(problem1.getLp() > 0);
-		assertTrue(problem2.getLp() > 0);
+		assertTrue("Problem1 should be > 0 ut is : " + problem1.getLp(), problem1.getLp() > 0);
+		assertTrue("Problem2 should be > 0 ut is : " + problem2.getLp(), problem2.getLp() > 0);
 		assertTrue(problem1.getLp() != problem2.getLp());
 
 		assertEquals(3, problem1.getNrows());

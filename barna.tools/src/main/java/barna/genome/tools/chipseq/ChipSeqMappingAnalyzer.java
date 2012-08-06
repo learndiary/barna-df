@@ -194,14 +194,14 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 			System.err.println("writing peak descriptions to "+ f.getAbsolutePath());
 			writer= new BufferedWriter(new FileWriter(f));
 			int mid= (bounds.length- 1)/ 2;
-			writer.write(ChipSeqSettings.DISTO_PEAK_MAIN_MAX.getName()+ "\t"+bounds[mid]+ "\n");
+			writer.write(ChipSeqSettings.DISTO_PEAK_MAIN_MAX.getName()+ "\t"+bounds[mid]+ barna.commons.system.OSChecker.NEW_LINE);
 			if (mid> 0&& mid< bounds.length- 1) {	// flanks
-				writer.write(ChipSeqSettings.DISTO_PEAK_MAIN_LEFT.getName()+ "\t"+ bounds[mid- 1]+ "\n");
-				writer.write(ChipSeqSettings.DISTO_PEAK_MAIN_RIGHT.getName()+ "\t"+ bounds[mid+ 1]+ "\n");
+				writer.write(ChipSeqSettings.DISTO_PEAK_MAIN_LEFT.getName()+ "\t"+ bounds[mid- 1]+ barna.commons.system.OSChecker.NEW_LINE);
+				writer.write(ChipSeqSettings.DISTO_PEAK_MAIN_RIGHT.getName()+ "\t"+ bounds[mid+ 1]+ barna.commons.system.OSChecker.NEW_LINE);
 			}
 			if (mid> 1&& mid< bounds.length- 2) {	// secondary peaks
-				writer.write(ChipSeqSettings.DISTO_PEAK_SEC_LEFT.getName()+ "\t"+ bounds[mid- 2]+ "\n");
-				writer.write(ChipSeqSettings.DISTO_PEAK_SEC_RIGHT.getName()+ "\t"+ bounds[mid+ 2]+ "\n");
+				writer.write(ChipSeqSettings.DISTO_PEAK_SEC_LEFT.getName()+ "\t"+ bounds[mid- 2]+ barna.commons.system.OSChecker.NEW_LINE);
+				writer.write(ChipSeqSettings.DISTO_PEAK_SEC_RIGHT.getName()+ "\t"+ bounds[mid+ 2]+ barna.commons.system.OSChecker.NEW_LINE);
 			}
 		
 		} catch (Exception e) {
@@ -230,7 +230,7 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 				System.err.println("writing distogram to "+ f.getAbsolutePath());
 				writer= new BufferedWriter(new FileWriter(f));
 				for (int i = 0; i < a.length; i++) 
-					writer.write(Integer.toString(i)+ "\t"+ Integer.toString(a[i])+ "\n");
+					writer.write(Integer.toString(i)+ "\t"+ Integer.toString(a[i])+ barna.commons.system.OSChecker.NEW_LINE);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			} finally {

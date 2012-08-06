@@ -68,7 +68,15 @@ public class FluxSimulatorSettingsTest {
             fail();
         } catch (Exception e) {
             if(! (e instanceof ParameterException)) fail();
-            assertEquals("The temp-directory /some/unknown/directory does not exist or is not writable!", e.getMessage());
+            StringBuilder tmpDir = new StringBuilder();
+            tmpDir.append(new File(".").listRoots()[0]);
+            tmpDir.append("some");
+            tmpDir.append(File.separator);
+            tmpDir.append("unknown");
+            tmpDir.append(File.separator);
+            tmpDir.append("directory");
+
+            assertEquals("The temp-directory " + tmpDir + " does not exist or is not writable!", e.getMessage());
         }
     }
 
@@ -78,7 +86,7 @@ public class FluxSimulatorSettingsTest {
             FluxSimulatorSettings s1 = FluxSimulatorSettings.createSettings(par1);
 
             assertNotNull(s1.get(FluxSimulatorSettings.REF_FILE));
-            assertEquals(FluxSimulatorTest.class.getResource("/spike_sequences.gtf").getFile(), s1.get(FluxSimulatorSettings.REF_FILE).getAbsolutePath());
+            assertEquals(new File(FluxSimulatorTest.class.getResource("/spike_sequences.gtf").getFile()).getAbsolutePath(), s1.get(FluxSimulatorSettings.REF_FILE).getAbsolutePath());
 
             assertNotNull(s1.get(FluxSimulatorSettings.PRO_FILE));
             assertEquals("simulator_v10.pro", s1.get(FluxSimulatorSettings.PRO_FILE).getName());

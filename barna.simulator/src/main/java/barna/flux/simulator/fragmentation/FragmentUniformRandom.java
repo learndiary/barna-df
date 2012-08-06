@@ -230,13 +230,13 @@ public class FragmentUniformRandom implements FragmentProcessor {
     @Override
     public String getConfiguration() {
         StringBuffer b = new StringBuffer();
-        b.append("\t\t").append("D0: ").append(d0).append("\n");
+        b.append("\t\t").append("D0: ").append(d0).append(barna.commons.system.OSChecker.NEW_LINE);
         if(!Double.isNaN(urDelta)){
-            b.append("\t\t").append("Delta: ").append(urDelta).append("\n");
+            b.append("\t\t").append("Delta: ").append(urDelta).append(barna.commons.system.OSChecker.NEW_LINE);
         }else{
             b.append("\t\t").append("Delta: ").append(" Not specified, depends on sequence length\n");
         }
-        b.append("\t\t").append("Eta: ").append(getFragUReta()).append("\n");
+        b.append("\t\t").append("Eta: ").append(getFragUReta()).append(barna.commons.system.OSChecker.NEW_LINE);
         return b.toString();
     }
 

@@ -28,6 +28,7 @@
 package barna.io.tools;
 
 import barna.commons.cli.jsap.JSAPParameters;
+import barna.commons.launcher.Flux;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
@@ -116,6 +117,10 @@ public class BEDSorterTool implements FluxTool {
         if(args.userSpecified("output"))
             setOutFile(args.getFile("output"));
 
+        if (getInFile()==null) {
+            Log.error("You must specify an input file");
+            return false;
+        }
         if (getInFile() == null || !getInFile().canRead()) {
             Log.error("Unable to read input file " + getInFile().getAbsolutePath());
             return false;

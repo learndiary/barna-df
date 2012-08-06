@@ -1728,11 +1728,11 @@ public class SplicingGraph {
                             buffy.write(Integer.toString(start));
                             buffy.write("_");
                             buffy.write(Integer.toString(end));
-                            buffy.write(sfx + "\n");
+                            buffy.write(sfx + barna.commons.system.OSChecker.NEW_LINE);
                             // seq
                             buffy.write(v[0].elementAt(k).toString());
                             buffy.write(v[1].elementAt(m).toString());
-                            buffy.write("\n");
+                            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
                         }
                     }
                 }

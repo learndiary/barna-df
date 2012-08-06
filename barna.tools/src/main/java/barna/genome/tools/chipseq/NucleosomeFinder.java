@@ -444,7 +444,7 @@ public class NucleosomeFinder implements FluxTool<Void> {
 			int end, String id, double score) {
 		
 		try {
-			writer.write(chr+"\t"+ start+"\t"+ end+ "\t"+ id+ "\t"+ Float.toString((float) score)+ "\n");
+			writer.write(chr+"\t"+ start+"\t"+ end+ "\t"+ id+ "\t"+ Float.toString((float) score)+ barna.commons.system.OSChecker.NEW_LINE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -557,7 +557,7 @@ public class NucleosomeFinder implements FluxTool<Void> {
 	void writeBedGraph(BufferedWriter writer, String chr, int pos, double val) {
 		if (val!= 0)
 			try {
-				writer.write(chr+" "+ pos+" "+ (pos+1)+ " "+ Float.toString((float) val)+ "\n");
+				writer.write(chr+" "+ pos+" "+ (pos+1)+ " "+ Float.toString((float) val)+ barna.commons.system.OSChecker.NEW_LINE);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -159,7 +159,7 @@ public class MappingFilter implements FluxTool<Void> {
 					Iterator<ByteArrayCharSequence> iter2= map.iterator();
 					while(iter2.hasNext()) {
 						writer.write(iter2.next().toCharArray());
-						writer.write("\n");
+						writer.write(barna.commons.system.OSChecker.NEW_LINE);
 					}
 					writer.flush();
 					map.clear();
@@ -186,7 +186,7 @@ public class MappingFilter implements FluxTool<Void> {
 					if (dist> insertMin&& dist< insertMax) {
 						if (!written1) {
 							writer.write(bed1.toCharArray());
-							writer.write("\n");
+							writer.write(barna.commons.system.OSChecker.NEW_LINE);
 							written1= true;
 						}
 						// don't break for + --> - - constellation
@@ -203,7 +203,7 @@ public class MappingFilter implements FluxTool<Void> {
 			Iterator<ByteArrayCharSequence> iter2= map.iterator();
 			while(iter2.hasNext()) {
 				writer.write(iter2.next().toCharArray());
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			map.clear();

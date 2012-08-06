@@ -182,12 +182,12 @@ public class FragmentNebulization implements FragmentProcessor {
     @Override
     public String getConfiguration() {
         StringBuffer b = new StringBuffer();
-        b.append("\t\t").append("Lambda: ").append(this.lambda).append("\n");
-        //b.append("\t\t").append("Threshold: ").append(this.thold).append("\n");
-        b.append("\t\t").append("M: ").append(M).append("\n");
-        //b.append("\t\t").append("C: ").append(nebuC).append("\n");
-        b.append("\t\t").append("Max Length: ").append(maxLen).append("\n");
-        b.append("\t\t").append("Recursions: ").append(nebuRecursionDepth).append("\n");
+        b.append("\t\t").append("Lambda: ").append(this.lambda).append(barna.commons.system.OSChecker.NEW_LINE);
+        //b.append("\t\t").append("Threshold: ").append(this.thold).append(barna.commons.system.OSChecker.NEW_LINE);
+        b.append("\t\t").append("M: ").append(M).append(barna.commons.system.OSChecker.NEW_LINE);
+        //b.append("\t\t").append("C: ").append(nebuC).append(barna.commons.system.OSChecker.NEW_LINE);
+        b.append("\t\t").append("Max Length: ").append(maxLen).append(barna.commons.system.OSChecker.NEW_LINE);
+        b.append("\t\t").append("Recursions: ").append(nebuRecursionDepth).append(barna.commons.system.OSChecker.NEW_LINE);
         return b.toString();
 
     }

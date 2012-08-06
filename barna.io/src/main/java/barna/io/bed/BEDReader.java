@@ -31,7 +31,7 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.Progressable;
 import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
-import barna.commons.thread.SyncIOHandler2;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
@@ -616,7 +616,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 				if (from>= 0&& to>= 0) {
 					String id= s.substring(from, to);
 					tmpWriter.write(id);
-					tmpWriter.write((int) '\n');
+					tmpWriter.write(OSChecker.NEW_LINE);
 				} else {
 					++skippedLines;
 					if (warnFirstSkip) {
@@ -645,7 +645,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		try {
 			BufferedWriter buffy= new BufferedWriter(new FileWriter(getInputFile(), append));
 			for (int i = 0; beds!= null&& i < beds.length&&beds[i]!= null; i++) {
-				buffy.write(beds[i].toString()+"\n");
+				buffy.write(beds[i].toString()+barna.commons.system.OSChecker.NEW_LINE);
 			}
 			buffy.flush();
 			buffy.close();
@@ -839,224 +839,6 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		return scanFileReadLines;
 	}
 
-	public int get(String chr, int start, int end, SyncIOHandler2 handler, OutputStream ostream) {
-			
-			int count= 0;
-			
-			if (mapChr.containsKey(chr)) {
-				if (mapChr.get(chr)== null)
-					return count;
-			}  
-				
-			
-			--start;	// convert to bed coordinate
-			try {
-				BufferedBACSReader buffy= getReaderBACS();
-				ByteArrayCharSequence cs= this.cs; // new ByteArrayCharSequence(100);
-				String lastChrRead= null;
-				getLineSeparator();
-				boolean inited= false;
-				if (reuse&& lastLine!= null) {
-					cs= lastLine;
-					lastLine= null;
-					inited= true;
-				}
-	
-				//for (cs= buffy.readLine(cs); cs.end!= 0; cs= buffy.readLine(cs)) {
-				while (true) {
-					
-					long tmpBytes= bytesRead;			
-	
-					if (inited) {
-						inited= false;
-					} else {
-						if (buffy.readLine(cs)== null)
-							break;	// EOF
-						bytesRead+= cs.length()+ lineSeparator.length();
-						++nrUniqueLinesRead;
-					}
-					
-					// use this for debugging fpointer
-	//				File file = new File(this.fPath+MyFile.separator+this.fName);
-	//				InputStream inputStream = new FileInputStream(file);
-	//				inputStream.skip(bytesRead);	// must read next line 
-	//				BufferedReader r2 = new BufferedReader(new InputStreamReader(inputStream));
-	//				String chk= r2.readLine();
-	//				r2.close();
-					
-					if (cs.startsWith(TRACK)|| cs.startsWith(BROWSER))
-						continue;
-					
-					// check if in range
-					int bedStart= -1, bedEnd= -1;
-					String chrToki= null;
-					try {
-						int toks= cs.countTokens();
-						if (identTok< 0)
-							identTok= toks;
-						else
-							if (identTok!= toks&& false) {	// can be now, we read reads and split reads
-								if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-									System.err.println("\t\n[OHLALA] line "+nrUniqueLinesRead+" has not "+identTok+" elements as the lines before!");
-									System.err.println("\t"+ cs.toString());
-									System.err.println("\tcheck file "+ getInputFile().getName());
-								}
-							}
-						if (toks< 3) {
-							if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP) {
-								System.err.println("\t\n[OHNOO] line "+nrUniqueLinesRead+" has less than 3 token, I am skipping.");
-								System.err.println("\t"+ cs.toString());
-								System.err.println("\tcheck file "+ getInputFile().getName());
-							}
-							continue;
-						}
-						chrToki= cs.getToken(0).toString();
-						try {
-							bedStart= BEDobject.encodeInt(cs.getToken(1));
-							bedEnd= BEDobject.encodeInt(cs.getToken(2));
-						} catch (NumberFormatException e) {
-							e.printStackTrace();
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-					if (chrToki.compareTo(chr)> 0) {	// 090520 check whether reads too far
-						if (reuse)
-							lastLine= cs;
-						else {
-							bytesRead= tmpBytes; 
-							--nrUniqueLinesRead;
-						}
-						addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
-						return count;
-					}
-						
-					if (lastChrRead== null) {	// first line read in this batch
-						
-						addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead- 1);
-						
-						if (chr!= null&& !cs.subSequence(0, chr.length()).equals(chr)) {
-							if (mapChr.containsKey(chr)) {
-								if (mapChr.get(chr)== null) {
-									if (reuse)
-										lastLine= cs;
-									else {
-										bytesRead= tmpBytes;
-										--nrUniqueLinesRead;
-									}
-									return 0;
-								} else {
-									if (mapChr.get(chr)[0]> tmpBytes) { 	// only jump forward, never back
-										long[] bytesNlines= mapChr.get(chr);
-										reset(bytesNlines[0], (int) bytesNlines[1]);
-										lastChrRead= chr.toString();
-										buffy= getReaderBACS();
-										if (buffy.readLine(cs)== null)
-											break;
-										bytesRead+= cs.length()+ lineSeparator.length();
-										++nrUniqueLinesRead;
-										chrToki= cs.getToken(0).toString();
-										try {
-											bedStart= BEDobject.encodeInt(cs.getToken(1));
-											bedEnd= BEDobject.encodeInt(cs.getToken(2));
-										} catch (Exception e) {
-											System.err.println("[ERROR] encodeint:\n"+ cs.toString());
-											System.currentTimeMillis();
-										}
-									} else {
-										reset(tmpBytes, nrUniqueLinesRead-1);
-										return 0;
-									}
-								}
-							} else {
-								ByteArrayCharSequence newCS= sweepToChromosome(chr);
-								if (newCS== null) {	// not found
-									mapChr.put(chr, null);	// BUG: not chrToki
-									if (reuse) 
-										lastLine= cs;
-									else {
-										bytesRead= tmpBytes;
-										--nrUniqueLinesRead;
-										readerB= null;
-									}
-									return 0; 
-								} else {
-									
-									this.cs= newCS;
-									cs= newCS;
-									chrToki= cs.getToken(0).toString();
-									addChr(chrToki,
-											bytesRead- cs.length()- getLineSeparator().length(), 
-											nrUniqueLinesRead-1);
-											
-									buffy= getReaderBACS();
-									lastChrRead= chr.toString();
-									chrToki= cs.getToken(0).toString();
-									bedStart= BEDobject.encodeInt(cs.getToken(1));
-									bedEnd= BEDobject.encodeInt(cs.getToken(2));
-								}
-							}
-						}
-					}
-	
-					//line= line.trim();
-					if (cs.startsWith("browser")|| cs.startsWith("track")|| cs.length()< 1)
-						continue;
-					
-					if (lastChrRead== null)
-						lastChrRead= chrToki;
-					else {
-						if (!lastChrRead.equals(chrToki)) {	// changes chr
-							if (reuse)
-								lastLine= cs;
-							else {
-								bytesRead= tmpBytes;
-								--nrUniqueLinesRead;
-							}
-							addChr(chrToki, bytesRead- cs.length()- getLineSeparator().length(), nrUniqueLinesRead);
-							break;
-						} 
-					}
-					
-	
-					boolean stop= false, continues= false;
-					
-					if (start>= 0&& bedEnd< start)
-						continues= true;
-					else if (end>= 0&& bedStart> end)
-						stop= true;
-					
-					if (continues)
-						continue;
-					if (stop) {	// not found on this chr
-						if (reuse)
-							lastLine= cs;
-						else {
-							bytesRead= tmpBytes;
-							--nrUniqueLinesRead;
-						}
-						return count;
-					}
-					
-					
-					// write line
-					handler.writeLine(cs, ostream);
-					++count;
-//					BEDMapping bed= new BEDMapping(cs);
-//					objV.add(bed);
-					
-	
-				}
-				
-				//readerB= null;	// always reset, for jumping around
-	
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			return count;
-		}
 
 
 	/**
