@@ -44,7 +44,6 @@ import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.sam.SAMReader;
 import barna.model.*;
-import barna.model.Mapping;
 import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
@@ -2373,129 +2372,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 		return mappingReader;*/  // TODO pull up to MappingReader
         mappingReader = new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
         return null;// removed mappingReader;
-    }
-
-    /**
-     * Retrieves all mappings in a certain region from a BED input file.
-     *
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to   end coordinate on chromosome
-     * @return an iterator instance that enumerates all mappings in the specified region
-     */
-    private BufferedIterator readBedFile(Gene gene, int from, int to) {
-        return readBedFile(gene, from, to, 0, 1);
-    }
-
-    /**
-     * Out-of-memory-proof method that retrieves all mappings in a certain region from a BED input file.
-     * The strategy is try-and-see, first it is attempted to try to load all requested reads into memory (RAM);
-     * if latter attempt fails, the iterator is initialized on disk. Method retries if disk/filesystem blocks.
-     * in the latter case.
-     *
-     * @param gene          the locus for which reads are to be read
-     * @param from          start coordinate on chromosome
-     * @param to            end coordinate on chromosome
-     * @param retryCount    number of retries that are attempted in the case of disk/filesystem temporarily unreachable
-     * @param timeInSeconds time between retries
-     * @return an iterator instance that enumerates all mappings in the specified region
-     */
-    private BufferedIterator readBedFile(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
-        if (settings.get(FluxCapacitorSettings.SORT_IN_RAM)) {
-            try {
-                return readBedFileRAM(gene, from, to);
-            } catch (OutOfMemoryError memoryError) {
-                System.gc();
-                Thread.yield();
-                Log.warn("Not enough memory to sort BED entries in RAM. Switching to disk sorting. This run is NOT failed!\n " +
-                        "You can increase the amount of memory used " +
-                        "by the capacitor using the FLUX_MEM environment variable. For example: export FLUX_MEM=\"6G\"; flux-capacitor ... to use" +
-                        "6 GB of memory.");
-                return readBedFileDisk(gene, from, to, retryCount, timeInSeconds);
-            }
-        } else {
-            return readBedFileDisk(gene, from, to, retryCount, timeInSeconds);
-        }
-    }
-
-
-    /**
-     * Loads all mappings in the respective region into RAM.
-     *
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to   end coordinate on chromosome
-     * @return an iterator instance that enumerates elements of an array stored in RAM
-     */
-    private BufferedIterator readBedFileRAM(Gene gene, int from, int to) {
-
-        if (from > to || from < 0 || to < 0)
-            throw new RuntimeException("BED reading range error: " + from + " -> " + to);
-        // init iterator
-        BufferedIterator iter = null;
-        // memory
-        MappingWrapperState state = bedWrapper.read(gene.getChromosome(), from, to);
-        if (state.result == null)
-            return null;
-        BEDMapping[] beds = (BEDMapping[]) state.result;//TODO move to Mapping
-        Arrays.sort(beds, getDescriptorComparator());
-        iter = new BufferedIteratorRAM(beds);
-
-        return iter;
-
-    }
-
-    /**
-     * Writes all mappings in the respective region to disk, retries if disk/filesystem blocks.
-     *
-     * @param gene the locus for which reads are to be read
-     * @param from start coordinate on chromosome
-     * @param to   end coordinate on chromosome
-     * @return an iterator instance that enumerates elements of an array stored in RAM
-     */
-    private BufferedIterator readBedFileDisk(Gene gene, int from, int to, int retryCount, long timeInSeconds) {
-
-        if (from > to || from < 0 || to < 0)
-            throw new RuntimeException("BED reading range error: " + from + " -> " + to);
-
-        // init iterator
-        BufferedIterator iter = null;
-
-        try {
-            // read, maintain main thread
-            PipedInputStream pin = new PipedInputStream();
-            PipedOutputStream pout = new PipedOutputStream(pin);
-            Comparator<CharSequence> c = new BEDDescriptorComparator(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
-            File tmpFile = createTempFile(null, gene.getChromosome() + ":" + from + "-" + to + ".", "bed", true);
-            BufferedIteratorDisk biter = new BufferedIteratorDisk(pin, tmpFile, c);
-            biter.init();
-            iter = biter;
-            MappingWrapperState state = bedWrapper.read(pout, gene.getChromosome(), from, to);
-            pout.flush();
-            pout.close();
-            if (state.count == 0)
-                return null;
-        } catch (IOException e) {
-            /*
-             * "Resource temporarily unavailable"
-             * Catch this exception and try again after sleeping for a while
-             */
-            if (e.getMessage().contains("Resource temporarily unavailable")) {
-                if (retryCount < 6) {
-                    Log.warn("Filesystem reports : 'Resource temporarily unavailable', I am retrying (" + (retryCount + 1) + ")");
-                    try {
-                        Thread.sleep(1000 * (timeInSeconds));
-                    } catch (InterruptedException e1) {
-                    }
-                    return readBedFileDisk(gene, from, to, retryCount + 1, timeInSeconds * 6);
-                }
-            }
-            throw new RuntimeException(
-                    "Could not get reads for locus " + gene.getChromosome() + ":" + from + "-" + to + ", retried " + retryCount + " times", e);
-        }
-
-        return iter;
-
     }
 
 

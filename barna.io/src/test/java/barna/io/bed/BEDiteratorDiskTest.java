@@ -29,7 +29,7 @@ package barna.io.bed;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.io.BEDMappingIteratorDisk;
+import barna.commons.system.OSChecker;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.bed.BEDobject2;
