@@ -1637,6 +1637,7 @@ public class
         settings.validate();
 
 
+
         FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
 
         // prepare output files
@@ -2053,6 +2054,13 @@ public class
         if (isPrintParameters()) {
             FluxCapacitorSettings settings = new FluxCapacitorSettings();
             settings.write(System.out);
+            return false;
+        }
+
+        if (getFile() == null) {
+            Log.error("");
+            Log.error("No parameter file specified!");
+            Log.error(barna.commons.system.OSChecker.NEW_LINE);
             return false;
         }
 
