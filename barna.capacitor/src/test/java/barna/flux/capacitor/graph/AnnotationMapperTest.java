@@ -23,11 +23,11 @@ import java.util.*;
  */
 public class AnnotationMapperTest extends TestCase {
 
-//    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
-//    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12.gtf");
-//    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
-    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
+    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+//    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
+    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+//    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
+//    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
 //    private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
     private final File hgBamFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
@@ -484,7 +484,7 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareSJReadsPaired() throws Exception {
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_PAIRED, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
@@ -524,7 +524,7 @@ public class AnnotationMapperTest extends TestCase {
 //            for (String e : m1.keySet()) {
 //                count[1] += m1.get(e);
 //            }
-            assertEquals(count[0], 4);
+            assertEquals(count[0], 1);
             }
         }
 
@@ -611,8 +611,8 @@ public class AnnotationMapperTest extends TestCase {
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
-            //assertEquals(count[0], count[1]);
-            System.err.println(count[0] + "\t" + count[1]);
+
+            assertEquals(count[0], count[1]);
         }
     }
 
@@ -663,9 +663,9 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareIntronReadsPaired() throws Exception { //TODO update getAllIntronic reads to work for paired end reads
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_PAIRED, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        BEDReader bed = new BEDReader(hgBedFile, false, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
         //gtf = new GTFwrapper((gtf.sort()));
         gtf.setReadAll(true);
@@ -698,7 +698,7 @@ public class AnnotationMapperTest extends TestCase {
                 count[0] += m.get(e)[0];
             }
             readGtf(g,hgGtfFile);
-            Map<String, Integer> m1 = getAllIntronicReads(g, false,hgBedFile);
+            Map<String, Integer> m1 = getAllIntronicReads(g, false, hgBedFile);
             for (String e : m1.keySet()) {
                 count[1] += m1.get(e);
             }
@@ -707,11 +707,11 @@ public class AnnotationMapperTest extends TestCase {
     }
 
     @Test
-    public void testCompareBEDtoBAM() throws Exception {
+    public void testCompareBEDtoBAMMappingPaired() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         SAMReader sam = new SAMReader(hgBamFile, false);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_PAIRED, FluxCapacitorSettings.AnnotationMapping.PAIRED);
         gtf.setNoIDs(null);
         gtf.setReadGene(true);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
@@ -740,9 +740,6 @@ public class AnnotationMapperTest extends TestCase {
             //iter1.clear();
             iter2.clear();
 
-            if (am1.nrMappingsLocus>0)
-                System.currentTimeMillis();
-
             assertEquals(am1.nrMappingsLocus, am2.nrMappingsLocus);
             assertEquals(am1.nrMappingsMapped, am2.nrMappingsMapped);
             assertEquals(am1.nrMappingsNotMapped, am2.nrMappingsNotMapped);
@@ -756,64 +753,51 @@ public class AnnotationMapperTest extends TestCase {
     }
 
     @Test
-    public void testCompareBAMSJReadsSingle() throws Exception {
-        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+    public void testCompareBEDtoBAMMappingSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
         SAMReader sam = new SAMReader(hgBamFile, false);
-        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
-        byte lastStr = 0;
-        //gtf = new GTFwrapper((gtf.sort()));
-        //gtf.setReadAll(true);
-        gtf.setChromosomeWise(true);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         gtf.setNoIDs(null);
+        gtf.setReadGene(true);
         gtf.setReadFeatures(new String[]{"exon", "CDS"});
-        gtf.sweepToChromosome("chr22");
+        //gtf.setReadAheadTranscripts(1);    // only one locus a time
+        gtf.setChromosomeWise(true);
+        gtf.setPrintStatistics(false);
+        gtf.setReuse(true);
+        Transcript.removeGaps = false;
         gtf.read();
         for (Gene g : gtf.getGenes()) {
-//            if (lastStr!=0&&lastStr!=g.getStrand()) {
-//                bed.reset(g.getChromosome());
-//                lastStr = g.getStrand();
-//            }
-//            if (lastStr == 0)
-//                lastStr = g.getStrand();
-            int start = 0, end = 0, tol = 0;
+            int start = 0, end = 0;
             start = g.getStart();
             end = g.getEnd();
             if (g.getStrand() < 0) {
                 start = -start;
                 end = -end;
             }
-            tol = 0;
-            start = Math.max(1, start - tol);
-            end = end + tol;
-            MSIterator<Mapping> iter1 = bed.read(g.getChromosome(), start, end);
-            MSIterator<Mapping> iter2 = sam.read(g.getChromosome(), start, end);
+            start = Math.max(1, start);
 
-            AnnotationMapper a = new AnnotationMapper(g);
-            AnnotationMapper b = new AnnotationMapper(g);
-            a.map(iter1, settings);
-            b.map(iter2, settings);
+            MSIterator<Mapping> iter1 = bed.read(g.getChromosome(),start,end);
+            MSIterator<Mapping> iter2 = sam.read(g.getChromosome(),start,end);
+            AnnotationMapper am1 = new AnnotationMapper(g);
+            AnnotationMapper am2 = new AnnotationMapper(g);
+            am1.map(iter1, settings);
+            am2.map(iter2, settings);
+            //iter1.clear();
+            iter2.clear();
 
-            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
-            assertEquals(a.nrMappingsMapped,b.nrMappingsMapped);
-            assertEquals(a.nrMappingsNotMapped,b.nrMappingsNotMapped);
+            assertEquals(am1.nrMappingsLocus, am2.nrMappingsLocus);
+            assertEquals(am1.nrMappingsMapped, am2.nrMappingsMapped);
+            assertEquals(am1.nrMappingsNotMapped, am2.nrMappingsNotMapped);
+            assertEquals(am1.nrMappingsNotMappedAsPair, am2.nrMappingsNotMappedAsPair);
+            assertEquals(am1.nrMappingsWrongPairOrientation, am2.nrMappingsWrongPairOrientation);
+            assertEquals(am1.nrMappingsWrongStrand, am2.nrMappingsWrongStrand);
+            assertEquals(am1.nrMappingsLocusMultiMaps, am2.nrMappingsLocusMultiMaps);
 
-            Map<String, Integer> m = a.getSJReads(false);
-            Map<String, Integer> m1 = b.getSJReads(false);
-            int count[] = new int[]{0, 0};
-            for (String e : m.keySet()) {
-                count[0] += m.get(e);
-            }
-            for (String e : m1.keySet()) {
-                count[1] += m1.get(e);
-            }
-            assertEquals(count[0], count[1]);
-
-            if (iter1!=null)
-                iter1.clear();
-            if (iter2!=null)
-                iter2.clear();
+            gtf.read();
         }
     }
+
+
 
 }

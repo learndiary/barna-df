@@ -1,11 +1,10 @@
 package barna.model.bed;
 
-import java.util.Comparator;
-
 import barna.commons.ByteArrayCharSequence;
 import barna.model.Graph;
 import barna.model.Mapping;
-import barna.model.sam.SAMMapping;
+
+import java.util.Comparator;
 
 public class BEDMapping extends ByteArrayCharSequence implements Mapping {
 
@@ -533,9 +532,4 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	public void setNext(BEDMapping next) {
 		this.next = next;
 	}
-
-    @Override
-    public boolean equals(Mapping otherMapping) {
-        return false;
-    }
 }

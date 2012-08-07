@@ -1,6 +1,5 @@
 package barna.io.sam;
 
-import barna.commons.log.Log;
 import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
@@ -84,8 +83,6 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
     @Override
     public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
         ArrayList<Mapping> mates = new ArrayList<Mapping>();
-        UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
-        attr1 = getAttributes(firstMate,descriptor,attr1);
         SAMFileReader reader = new SAMFileReader(mappingFile);
         SAMRecordIterator iter = reader.query(firstMate.getChromosome().toString(),firstMate.getStart()+1,firstMate.getEnd(),true);
         SAMRecord rec = null;
@@ -96,29 +93,15 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         }
         iter.close();
         mate = reader.queryMate(rec);
-        if (mate != null)
+        if (mate != null) {
+            if (rec.getSecondOfPairFlag()&&mate.getMateAlignmentStart()==rec.getAlignmentStart()) {
+                reader.close();
+                return mates.iterator();
+            }
             mates.add(new SAMMapping(mate, getSuffix(mate)));
+        }
         reader.close();
         return mates.iterator();
-    }
-
-    private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
-
-        CharSequence tag= mapping.getName();
-        attributes= desc.getAttributes(tag, attributes);
-        if (attributes == null) {
-            Log.warn("Error in read ID: could not parse read identifier " + tag);
-            return null;
-        }
-        if (desc.isPaired()&& attributes.flag<= 0) {
-            Log.warn("Error in read ID: could not find mate in " + tag);
-            return null;
-        }
-        if (desc.isStranded()&& attributes.strand< 0) {
-            Log.warn("Error in read ID: could not find strand in " + tag);
-            return null;
-        }
-        return attributes;
     }
 
     private void getNext() {

@@ -876,16 +876,17 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                 if (pairedEnd) {
 
-                    mappings.mark();
-                    while(mappings.hasNext()) {
-                        bed2= mappings.next();
-                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
-                        if (attributes2 == null)
-                            continue;
-                        if (!attributes.id.equals(attributes2.id))
-                            break;
-                        if (attributes2.flag == 1)    // not before break, inefficient
-                            continue;
+//                    mappings.mark();
+                    Iterator<Mapping> mates = mappings.getMates(bed1,settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+                    while(mates.hasNext()) {
+                        bed2= mates.next();
+//                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
+//                        if (attributes2 == null)
+//                            continue;
+//                        if (!attributes.id.equals(attributes2.id))
+//                            break;
+//                        if (attributes2.flag == 1)    // not before break, inefficient
+//                            continue;
 
                         int bpoint2 = getBpoint(tx, bed2);
                         if (bpoint2 < 0 || bpoint2 >= elen) {
@@ -930,7 +931,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         nrReadsSingleLociPairsMapped += 2;
 
                     }
-                    mappings.reset();
+//                    mappings.reset();
 
                 } else {    // single reads
                     m.add(bpoint1, -1, elen,
@@ -2658,9 +2659,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
                     if (mode == FluxCapacitorConstants.MODE_LEARN ){//&& mappings != null) {
                         solve(gene[i], mappings, EnumSet.of(Task.LEARN));
-                                } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                    } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
                         solve(gene[i], mappings, currentTasks);
-                                }
+                    }
 
                     if (mappings != null)
                         mappings.clear();

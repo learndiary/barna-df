@@ -349,7 +349,7 @@ public class AnnotationMapper extends SplicingGraph {
             if (paired) {
 
                 // scan for mates
-                //mappings.mark();
+//                mappings.mark();
                 Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
 
                 while (mates.hasNext()) {

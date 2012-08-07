@@ -504,20 +504,20 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 
     @Override
     public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
-        ArrayList<Mapping> mappings = new ArrayList<Mapping>();;
+        ArrayList<Mapping> mappings = new ArrayList<Mapping>();
+        UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
+        attr1 = getAttributes(firstMate,descriptor,attr1);
+        if (attr1.flag == 2)
+            return mappings.iterator();
         this.mark();
         while (this.hasNext()) {
-            Mapping currentMapping = this.next();
-            UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
-            attr1 = getAttributes(firstMate,descriptor,attr1);
+            BEDMapping currentMapping = this.next();
             attr2 = getAttributes(currentMapping,descriptor,attr2);
             if (!attr1.id.equals(attr2.id))
                 break;
             if (attr2 == null || attr2.flag == 1)
                 continue;
-            if (mappings==null)
-                mappings = new ArrayList<Mapping>();
-            mappings.add(currentMapping);
+            mappings.add(new BEDMapping(currentMapping));
         }
         this.reset();
         return mappings.iterator();

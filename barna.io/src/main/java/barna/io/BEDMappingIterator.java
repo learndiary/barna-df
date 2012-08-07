@@ -135,6 +135,8 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
         ArrayList<Mapping> mappings = new ArrayList<Mapping>();
         UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
         attr1 = getAttributes(firstMate,descriptor,attr1);
+        if (attr1.flag == 2)
+            return mappings.iterator();
         this.mark();
         while (this.hasNext()) {
             Mapping currentMapping = this.next();

@@ -1,10 +1,14 @@
 package barna.model.sam;
 
 import barna.model.Mapping;
-//import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
 import net.sf.samtools.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+
+//import com.sun.xml.internal.fastinfoset.algorithm.BooleanEncodingAlgorithm;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -216,7 +220,6 @@ public class SAMMapping implements Mapping{
         }
     }
 
-    @Override
     public boolean equals(Mapping otherMapping) {
         SAMMapping sam = null;
         try {
