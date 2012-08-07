@@ -34,6 +34,7 @@ import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
@@ -502,8 +503,43 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	}
 
     @Override
-    public Iterator<Mapping> getMates(Mapping firstMapping, UniversalReadDescriptor descriptor) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
+        ArrayList<Mapping> mappings = new ArrayList<Mapping>();;
+        this.mark();
+        while (this.hasNext()) {
+            Mapping currentMapping = this.next();
+            UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
+            attr1 = getAttributes(firstMate,descriptor,attr1);
+            attr2 = getAttributes(currentMapping,descriptor,attr2);
+            if (!attr1.id.equals(attr2.id))
+                break;
+            if (attr2 == null || attr2.flag == 1)
+                continue;
+            if (mappings==null)
+                mappings = new ArrayList<Mapping>();
+            mappings.add(currentMapping);
+        }
+        this.reset();
+        return mappings.iterator();
+    }
+
+    private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
+
+        CharSequence tag= mapping.getName();
+        attributes= desc.getAttributes(tag, attributes);
+        if (attributes == null) {
+            Log.warn("Error in read ID: could not parse read identifier " + tag);
+            return null;
+        }
+        if (desc.isPaired()&& attributes.flag<= 0) {
+            Log.warn("Error in read ID: could not find mate in " + tag);
+            return null;
+        }
+        if (desc.isStranded()&& attributes.strand< 0) {
+            Log.warn("Error in read ID: could not find strand in " + tag);
+            return null;
+        }
+        return attributes;
     }
 
 }

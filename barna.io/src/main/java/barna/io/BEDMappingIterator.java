@@ -132,26 +132,24 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 
     @Override
     public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
-        ArrayList<Mapping> mappings = new ArrayList<Mapping>();;
+        ArrayList<Mapping> mappings = new ArrayList<Mapping>();
+        UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
+        attr1 = getAttributes(firstMate,descriptor,attr1);
         this.mark();
         while (this.hasNext()) {
             Mapping currentMapping = this.next();
-            UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
-            attr1 = getAttributes(firstMate,descriptor,attr1);
             attr2 = getAttributes(currentMapping,descriptor,attr2);
             if (!attr1.id.equals(attr2.id))
                 break;
             if (attr2 == null || attr2.flag == 1)
                 continue;
-            if (mappings==null)
-                mappings = new ArrayList<Mapping>();
             mappings.add(currentMapping);
         }
         this.reset();
         return mappings.iterator();
     }
 
-    UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
+    private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
 
         CharSequence tag= mapping.getName();
         attributes= desc.getAttributes(tag, attributes);

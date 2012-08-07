@@ -23,12 +23,12 @@ import java.util.*;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+//    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12.gtf");
 //    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-//    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
-    //private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
-    private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
+    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
+    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
+//    private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
     private final File hgBamFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());

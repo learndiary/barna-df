@@ -351,6 +351,7 @@ public class AnnotationMapper extends SplicingGraph {
                 // scan for mates
                 //mappings.mark();
                 Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+
                 while (mates.hasNext()) {
 						otherMapping= mates.next();
 //						attributes2= getAttributes(otherMapping, descriptor, attributes2);
