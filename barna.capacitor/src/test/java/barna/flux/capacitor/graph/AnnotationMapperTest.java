@@ -24,12 +24,10 @@ import java.util.*;
 public class AnnotationMapperTest extends TestCase {
 
 //    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
-//    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
+    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
 //    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-//    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
-    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr1.gtf");
-    private final File hgBedFile = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr1.bed");
-    private final File hgBamFile = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr1.bam");
+    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
+    private final File hgBamFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
@@ -708,9 +706,9 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareBEDtoBAMMappingPaired() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile, false);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_CASAVA18, FluxCapacitorSettings.AnnotationMapping.PAIRED);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        SAMReader sam = new SAMReader(hgBamFile, false, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         gtf.setNoIDs(null);
         gtf.setReadGene(true);
@@ -754,9 +752,9 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareBEDtoBAMMappingSingle() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile, false);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        SAMReader sam = new SAMReader(hgBamFile, false, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         gtf.setNoIDs(null);
         gtf.setReadGene(true);
@@ -800,9 +798,9 @@ public class AnnotationMapperTest extends TestCase {
 
     @Test
     public void testCompareBEDtoBAMLoci() throws Exception {
-        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile, false);
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        SAMReader sam = new SAMReader(hgBamFile, false, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         gtf.setNoIDs(null);
         gtf.setReadGene(true);
@@ -831,13 +829,17 @@ public class AnnotationMapperTest extends TestCase {
             count[1] = 0;
 
             if (iter1!=null) {
-                while (iter1.hasNext())
+                while (iter1.hasNext()) {
                     ++count[0];
+                    iter1.next();
+                }
             }
 
             if (iter2!=null) {
-                while (iter2.hasNext())
+                while (iter2.hasNext()) {
                     ++count[1];
+                    iter2.next();
+                }
             }
 
             iter2.clear();

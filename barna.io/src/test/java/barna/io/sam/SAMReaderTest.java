@@ -1,15 +1,16 @@
 package barna.io.sam;
 
-import java.io.File;
-
+import barna.commons.Execute;
 import barna.io.MSIterator;
+import barna.io.rna.UniversalReadDescriptor;
 import barna.model.sam.SAMMapping;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
-import barna.commons.Execute;
+import java.io.File;
+
+import static org.junit.Assert.assertEquals;
 
 public class SAMReaderTest {
 	
@@ -28,7 +29,7 @@ public class SAMReaderTest {
 
 	@Test
 	public void testRead() {
-        SAMReader reader = new SAMReader(testfile, true);
+        SAMReader reader = new SAMReader(testfile, true, UniversalReadDescriptor.getDefaultDescriptor());
         MSIterator iter = reader.read("chr22", 24030323, 24041363);
         SAMMapping mapping = (SAMMapping)iter.next();
 

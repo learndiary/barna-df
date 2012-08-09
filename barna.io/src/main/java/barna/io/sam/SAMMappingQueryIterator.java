@@ -1,6 +1,5 @@
 package barna.io.sam;
 
-import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
@@ -15,64 +14,30 @@ import java.util.Iterator;
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
  */
-public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
+public class SAMMappingQueryIterator implements Iterator<SAMMapping> {
 
     private SAMRecordIterator wrappedIterator;
     private File mappingFile;
-    private SAMRecord nextRecord;
-    private SAMMapping nextMapping;
-    private SAMRecord mate;
-    private int start,end;
-    private boolean marked;
-    private boolean paired;
+    private final UniversalReadDescriptor descriptor;
+    private SAMRecord lastRecord;
 
-    public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, int start, int end, boolean isPaired) {
+    public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, UniversalReadDescriptor descriptor) {
         this.mappingFile = inputFile;
         this.wrappedIterator = wrappedIterator;
-        this.start = start;
-        this.end = end;
-        marked = false;
-        paired = isPaired;
+        this.descriptor = descriptor;
         getNext();
-    }
-
-    @Override
-    public void mark() {
-        marked = true;
-    }
-
-    @Override
-    public void reset() {
-        if (marked) {
-            marked = false;
-        }
-    }
-
-    @Override
-    public void setAtStart() {
-        wrappedIterator.close();
-    }
-
-    @Override
-    public void clear() {
-        wrappedIterator.close();
-    }
-
-    @Override
-    public Iterator<SAMMapping> iterator() {
-        return this;
     }
 
     @Override
     public boolean hasNext() {
-        return nextMapping!=null;
+        return wrappedIterator.hasNext();
     }
 
     @Override
     public SAMMapping next() {
-        SAMMapping ret = nextMapping;
-        getNext();
-        return ret;
+        SAMRecord rec = getNext();
+        lastRecord = rec;
+        return new SAMMapping(rec,getSuffix(rec));
     }
 
     @Override
@@ -80,21 +45,13 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         wrappedIterator.remove();
     }
 
-    @Override
+    //very slow because always access to disk
     public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
         ArrayList<Mapping> mates = new ArrayList<Mapping>();
         SAMFileReader reader = new SAMFileReader(mappingFile);
-        SAMRecordIterator iter = reader.query(firstMate.getChromosome().toString(),firstMate.getStart()+1,firstMate.getEnd(),true);
-        SAMRecord rec = null;
-        while (iter.hasNext()) {
-            rec = iter.next();
-            if (firstMate.getName().toString().contains(rec.getReadName()))
-                break;
-        }
-        iter.close();
-        mate = reader.queryMate(rec);
+        SAMRecord mate = reader.queryMate(lastRecord);
         if (mate != null) {
-            if (rec.getSecondOfPairFlag()&&mate.getMateAlignmentStart()==rec.getAlignmentStart()) {
+            if (lastRecord.getSecondOfPairFlag()&&mate.getMateAlignmentStart()==lastRecord.getAlignmentStart()) {
                 reader.close();
                 return mates.iterator();
             }
@@ -104,20 +61,22 @@ public class SAMMappingQueryIterator implements MSIterator<SAMMapping> {
         return mates.iterator();
     }
 
-    private void getNext() {
-        nextMapping = null;
-        while (nextMapping==null&&wrappedIterator.hasNext()) {
-            SAMRecord rec;
+    private SAMRecord getNext() {
+        SAMRecord rec = null;
+        while (rec==null&&wrappedIterator.hasNext()) {
             rec = wrappedIterator.next();
             if (rec.getReadUnmappedFlag()) {
                 continue;
             }
-            nextRecord = rec;
-            nextMapping = new SAMMapping(rec,getSuffix(rec));
         }
+        return rec;
     }
 
     private String getSuffix(SAMRecord record) {
-        return record.getFirstOfPairFlag()?"/1":"/2";
+        if (descriptor.isPaired()) {
+            char sep = descriptor.toString().charAt(descriptor.toString().indexOf("{MATE}")-1);
+            return record.getFirstOfPairFlag()?sep+"1":sep+"2";
+        }
+        return "";
     }
 }

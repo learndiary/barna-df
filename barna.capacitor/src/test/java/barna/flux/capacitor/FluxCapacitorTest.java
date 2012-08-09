@@ -31,8 +31,8 @@ public class FluxCapacitorTest {
 //    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
 //    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
-    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr1.bed");
-    final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr1.gtf");
+    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
+    final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
 
     final String subdirMappings = "mappings";
     final String subdirAnnotation = "annotation";

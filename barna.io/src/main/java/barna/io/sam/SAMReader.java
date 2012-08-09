@@ -10,6 +10,7 @@ import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
+import net.sf.samtools.SAMFileHeader;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
 
@@ -24,11 +25,10 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     public static final boolean CONTAINED_DEFAULT = false;
 
-	private Mapping[] mappings;
     private SAMFileReader reader;
+    private final UniversalReadDescriptor descriptor;
     private boolean contained;
     private MSIterator iter;
-    private boolean paired;
 
     int countAll;
     int countEntire;
@@ -39,31 +39,45 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	/**
      * Creates an instance of the reader
 	 * @param inputFile the file to read
+     * @param descriptor the descriptor to be used
 	 */
-	public SAMReader(File inputFile, boolean isPaired) {
-		this(inputFile, CONTAINED_DEFAULT, isPaired);
+	public SAMReader(File inputFile, UniversalReadDescriptor descriptor) {
+		this(inputFile, CONTAINED_DEFAULT, descriptor);
 	}
+
+    /**
+     * Creates an instance using a specific path to a file.	 .
+     * @param absolutePath path to the file the wrapper is based on
+     * @param descriptor the descriptor to be used
+     */
+    public SAMReader(String absolutePath, UniversalReadDescriptor descriptor) {
+        this(new File(absolutePath), CONTAINED_DEFAULT, descriptor);
+    }
+
+    /**
+     * Creates an instance using a specific path to a file.	 .
+     * @param absolutePath path to the file the wrapper is based on
+     * @param contained flag to decide whether return mappings which are
+     *                  contained/overlapping the query region
+     * @param descriptor the descriptor to be used
+     */
+    public SAMReader(String absolutePath, boolean contained, UniversalReadDescriptor descriptor) {
+        this(new File(absolutePath), contained, descriptor);
+    }
 
     /**
      * Creates an instance of the reader
      * @param inputFile the file to read
      * @param contained flag to decide whether return mappings which are
      *                  contained/overlapping the query region
+     * @param descriptor the descriptor to be used
      */
-    public SAMReader(File inputFile, boolean contained, boolean isPaired) {
+    public SAMReader(File inputFile, boolean contained, UniversalReadDescriptor descriptor) {
         super(inputFile);
         reader = new SAMFileReader(this.inputFile);
         this.contained = contained;
-        paired = isPaired;
+        this.descriptor = descriptor;
     }
-	
-	/**
-	 * Creates an instance using a specific path to a file.	 .
-	 * @param absolutePath path to the file the wrapper is based on
-	 */
-	public SAMReader(String absolutePath, boolean isPaired) {
-		this(new File(absolutePath), isPaired);
-	}
 
     @Override
     public void read() {
@@ -71,13 +85,12 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public void write() {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public boolean isApplicable() {
 		if (reader==null)
-            return false;
+            reader = new SAMFileReader(this.inputFile);
         if (!reader.isBinary())
             return false;
         if (!reader.hasIndex())
@@ -90,7 +103,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	 */
 	@Override
 	public void sort(OutputStream outputStream) {
-        //do nothing
+        //do nothing for the moment
 	}
 
     @Override
@@ -100,9 +113,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
         }
         if (isApplicable())
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
-            iter = new SAMMappingIterator(chromosome, start, end, reader.query(chromosome, start, end, contained));
+            iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
         else
-            throw new UnsupportedOperationException("Currently only indexed BAM files are supported!");
+            throw new UnsupportedOperationException("Only indexed BAM files are currently supported!");
         return iter;
     }
 
@@ -140,7 +153,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		return true;
+		return isApplicable();
 	}
 
     @Override
@@ -172,14 +185,22 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	public void scanFile() {
         if (reader == null)
             reader = new SAMFileReader(this.inputFile);
-
+        reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);
         countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
+        String lastReadId = null;
 
         for(SAMRecord rec : reader) {
-            countReads++;
-            if (rec.getReadUnmappedFlag())
+            if (rec.getReadUnmappedFlag()) {
                 ++countSkippedLines;
-            else {
+            } else {
+                String readId = rec.getReadName();
+                if (rec.getReadPairedFlag()) {
+                    readId += "/"+(rec.getFirstOfPairFlag()?1:2);
+                }
+                if (!readId.equals(lastReadId)) {
+                    ++countReads;
+                    lastReadId=readId;
+                }
                 ++countAll;
                 if (rec.getAlignmentBlocks().size()>1) {
                     if (rec.getCigarString().contains("N"))
