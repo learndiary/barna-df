@@ -25,7 +25,8 @@ import static junit.framework.Assert.*;
 public class FluxCapacitorTest {
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+    final File GTF_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     final File BED_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
     final File BED_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.bed").getFile());
     final File BED_MM9_SORTED_NO_CHR1 = new File(getClass().getResource("/mm9_chr1_chrX_sorted_no_chr1.bed").getFile());
@@ -99,6 +100,27 @@ public class FluxCapacitorTest {
         assertTrue(GTF_MM9_SORTED.exists());
         assertTrue(BED_MM9_UNSORTED.exists());
         assertTrue(new File(currentTestDirectory, "tmp_sorted" + File.separator + BED_MM9_SORTED.getName()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
+    }
+
+    @Test
+    public void testIOflatUnsortedWritableGTFflatSortedWritableBEDKeep() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_UNSORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("KEEP_SORTED", "tmp_sorted");
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        runCapacitor(parFile);
+
+        // check
+        assertTrue(GTF_MM9_SORTED.exists());
+        assertTrue(BED_MM9_UNSORTED.exists());
+        assertTrue(new File(currentTestDirectory, "tmp_sorted" + File.separator + GTF_MM9_SORTED.getName()).exists());
         assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()).exists());
         assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
     }
