@@ -12,8 +12,8 @@ public class FluxCapacitorSettingsTest {
     public void testThatSpacesAreAcceptedInReadDescriptor() throws Exception {
         FluxCapacitorSettings settings = new FluxCapacitorSettings();
         ByteArrayInputStream input = new ByteArrayInputStream(("READ_DESCRIPTOR\t{ID} {MATE}" + barna.commons.system.OSChecker.NEW_LINE +
-                "MAPPING_FILE "+getClass().getResource("/chr1_chrX.bed").getFile()+barna.commons.system.OSChecker.NEW_LINE +
-                "ANNOTATION_FILE "+getClass().getResource("/mm9_chr1_chrX.gtf").getFile()+barna.commons.system.OSChecker.NEW_LINE).getBytes());
+                "MAPPING_FILE "+getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile()+barna.commons.system.OSChecker.NEW_LINE +
+                "ANNOTATION_FILE "+getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile()+barna.commons.system.OSChecker.NEW_LINE).getBytes());
 
         try{
             settings.parse(input);

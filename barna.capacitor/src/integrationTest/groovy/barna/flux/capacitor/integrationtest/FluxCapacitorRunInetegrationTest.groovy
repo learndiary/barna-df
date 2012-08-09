@@ -284,12 +284,12 @@ class FluxCapacitorRunInetegrationTest {
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
         try {
-            assertStdErr(stderr, STDERR_MAPPED);
-            assertFileExist(currentTestDirectory, [
-                    (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
-                    (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
+        assertStdErr(stderr, STDERR_MAPPED);
+        assertFileExist(currentTestDirectory, [
+                (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
+                (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
                     (System.getProperty("java.io.tmpdir")+File.separator+"mm9_chr1_chrX_sorted.bed") : {File file -> return file.exists()},
-            ])
+        ])
         } catch (Exception e) {
         }
         finally {

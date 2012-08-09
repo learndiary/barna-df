@@ -1,206 +1,35 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
-import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
+import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
-import barna.io.Sorter;
 import barna.io.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
 import junit.framework.Assert;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.EnumSet;
-import java.util.concurrent.Future;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
-    final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    final File BED_MM9_SORTED = new File(getClass().getResource("/chr1_chrX.bed").getFile());
-//    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
-//    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-//    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
-    final File BED_HG_SORTED = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr22.bed");
-    final File GTF_HG_SORTED = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
-
-    final String subdirMappings = "mappings";
-    final String subdirAnnotation = "annotation";
-    final String suffixOutput = "gtf";
-    final String suffixParameter = "par";
-
-    protected File tmpDir = null;
-    protected File anoDir = null;
-    protected File mapDir = null;
-    protected File outFile = null;
-    protected File parFile = null;
-    protected File gtfFile = null;
-    protected File bedFile = null;
-    protected File statsFile = null;
-    protected File indexFile = null;
-
-
-    private void initFileNames(File GTF_SORTED, byte compressionGTF, File BED_SORTED, byte compressionBED) throws Exception {
-        // set up file structure
-        tmpDir = new File(System.getProperty("java.io.tmpdir"));
-        anoDir = FileHelper.createTempDir(getClass().getSimpleName(), subdirAnnotation, tmpDir);
-        anoDir.deleteOnExit();
-        mapDir = FileHelper.createTempDir(getClass().getSimpleName(), subdirMappings, tmpDir);
-        mapDir.deleteOnExit();
-        outFile = File.createTempFile(getClass().getSimpleName(), suffixOutput, anoDir);
-        outFile.delete();
-        parFile = File.createTempFile(getClass().getSimpleName(), suffixParameter, anoDir);
-        statsFile = File.createTempFile(getClass().getSimpleName(), suffixParameter, tmpDir);
-        statsFile.delete();
-        gtfFile = new File(FileHelper.append(anoDir.getAbsolutePath() + File.separator +
-                GTF_SORTED.getName(), null, false, FileHelper.getCompressionExtension(compressionGTF)));
-        gtfFile.delete();
-        bedFile = new File(FileHelper.append(mapDir.getAbsolutePath() +
-                File.separator +
-                BED_SORTED.getName(), null, false, FileHelper.getCompressionExtension(compressionBED)));
-        bedFile.delete();
-
-        indexFile = null;
-        if (BED_SORTED.getName().endsWith("bam")) {
-            indexFile = new File(FileHelper.append(mapDir.getAbsolutePath() +
-                    File.separator +
-                    BED_SORTED.getName() + ".bai", null, false, FileHelper.getCompressionExtension(compressionBED)));
-            indexFile.delete();
-        }
-    }
-
-    protected void copy(File source, File target, int sortField, byte compression) throws Exception {
-        if (sortField < 0) {
-            if (compression == FileHelper.COMPRESSION_NONE)
-                FileHelper.copy(source, target);
-            else
-                FileHelper.deflate(source, target, compression);
-        } else {
-
-            // init input stream
-            PipedInputStream pin = new PipedInputStream();
-            PipedOutputStream pout = new PipedOutputStream(pin);
-
-            // init output stream
-            OutputStream ostream = new FileOutputStream(target);
-            if (compression == FileHelper.COMPRESSION_GZIP)
-                ostream = new GZIPOutputStream(ostream);
-            else if (compression == FileHelper.COMPRESSION_ZIP) {
-                ZipOutputStream zstream = new ZipOutputStream(ostream);
-                zstream.putNextEntry(new ZipEntry(source.getName()));
-                ostream = zstream;
-            }
-
-            // init sorter
-            Sorter s = Sorter.create(pin, ostream, true, "\\s")
-                    .field(sortField, false);
-            Future captain = s.sortInBackground();
-
-            // feed
-            BufferedReader buffy = new BufferedReader(new FileReader(source));
-            BufferedWriter owriter = new BufferedWriter(new OutputStreamWriter(pout));
-            char[] buf = new char[1024];
-            int x = -1;
-            while ((x = buffy.read(buf)) != -1)
-                owriter.write(buf, 0, x);
-            owriter.close();
-
-            // close handles
-            captain.get();
-            if (compression == FileHelper.COMPRESSION_ZIP)
-                ((ZipOutputStream) ostream).closeEntry();
-            ostream.close();
-        }
-
-        target.deleteOnExit();
-    }
-
-    protected void writeParFile(String descriptorString, boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet<FluxCapacitorSettings.CountElements> countElements) throws Exception {
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor(descriptorString));
-        FluxCapacitorSettings settings = new FluxCapacitorSettings();
-        settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
-                new File(gtfFile.getAbsolutePath()));
-        settings.set(FluxCapacitorSettings.MAPPING_FILE,
-                new File(bedFile.getAbsolutePath()));
-        settings.set(FluxCapacitorSettings.READ_DESCRIPTOR,
-                descriptor);
-        settings.set(FluxCapacitorSettings.SORT_IN_RAM,
-                false);
-//        settings.set(FluxCapacitorSettings.KEEP_SORTED,
-//                keepSorted);
-        settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING,
-                AnnotationMapping.SINGLE);
-        settings.set(FluxCapacitorSettings.STDOUT_FILE,
-                outFile);
-        settings.set(FluxCapacitorSettings.STATS_FILE,
-                statsFile);
-        settings.set(FluxCapacitorSettings.SORT_IN_RAM,
-                sortInRam);
-        settings.set(FluxCapacitorSettings.NO_DECOMPOSE,
-                noDecompose);
-        if (countElements != null)
-            settings.set(FluxCapacitorSettings.COUNT_ELEMENTS,
-                    countElements);
-//		settings.set(FluxCapacitorSettings.COVERAGE_STATS,
-//				true);
-//		settings.set(FluxCapacitorSettings.COVERAGE_FILE, 
-//				new File(anoDir.getAbsolutePath()+ File.separator+ getClass().getSimpleName()+ "_coverage.txt"));
-
-        BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile));
-        buffy.write(settings.toString());
-        buffy.close();
-
-        parFile.deleteOnExit();
-    }
-
-    protected FluxCapacitorStats runCapacitor() throws Exception {
-        FluxCapacitor capacitor = new FluxCapacitor();
-        capacitor.setFile(parFile);
-        Future<FluxCapacitorStats> captain = Execute.getExecutor().submit(capacitor);
-        FluxCapacitorStats stats = captain.get();
-        outFile.deleteOnExit();
-        parFile.deleteOnExit();
-        return stats;
-    }
-
-    protected void initFiles(File GTF_SORTED, byte compressionGTF, int sortGTF, boolean writeProtectGTF,
-                             File BED_SORTED, byte compressionBED, int sortBED, boolean writeProtectBED,
-                             String descriptor, boolean keepSorted, boolean sortInRam, boolean noDecompose, EnumSet countElements) {
-
-        try {
-
-            // file names
-            initFileNames(GTF_SORTED, compressionGTF, BED_SORTED, compressionBED);
-
-            // put files in location
-            copy(GTF_SORTED, gtfFile, sortGTF, compressionGTF);
-            copy(BED_SORTED, bedFile, sortBED, compressionBED);
-            if (indexFile!=null) {
-                copy(new File(BED_SORTED.getAbsolutePath().concat(".bai")),indexFile,sortBED,compressionBED);
-            }
-            writeParFile(descriptor, keepSorted, sortInRam, noDecompose, countElements);
-
-            // folder rights
-            if (writeProtectGTF)
-                anoDir.setReadOnly();
-            if (writeProtectBED)
-                mapDir.setReadOnly();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+    final File GTF_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
+    final File BED_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
+    final File BED_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.bed").getFile());
+    final File BED_MM9_SORTED_NO_CHR1 = new File(getClass().getResource("/mm9_chr1_chrX_sorted_no_chr1.bed").getFile());
+    final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+    final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
 
     @BeforeClass
     public static void initExecuter() {
@@ -212,713 +41,425 @@ public class FluxCapacitorTest {
         Execute.shutdown();
     }
 
-    @Test
-    public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep() {
+    File currentTestDirectory = null;
+    @Before
+    public void setUpTest() throws Exception {
+        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorUnitTest", "", null);
+    }
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-
-            runCapacitor();
-
-            // check
-            assertTrue(gtfFile.exists());
-            assertTrue(bedFile.exists());
-            assertTrue(outFile.exists());
-            String[] files = anoDir.list();
-            assertTrue(files.length == 3);    // annotation+ parameter+ output
-            files = mapDir.list();
-            assertTrue(files.length == 1);    // mapping file only
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
+    @After
+    public void cleanup(){
+        if(currentTestDirectory != null){
+            FileHelper.rmDir(currentTestDirectory);
         }
-
     }
 
     @Test
-    public void testReadsStranded() {
+    public void testIOflatSortedWritableGTFflatSortedWritableBEDnoKeep() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
-            try {
-                buffy.write(FluxCapacitorSettings.ANNOTATION_MAPPING.getName() + " " +
-                        AnnotationMapping.STRANDED + barna.commons.system.OSChecker.NEW_LINE);
-                buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName() + " " +
-                        UniversalReadDescriptor.getDescriptor(
-                                UniversalReadDescriptor.DESCRIPTORID_SENSE) + barna.commons.system.OSChecker.NEW_LINE);
-                buffy.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        FluxCapacitorRunner.runCapacitor(parFile);
 
-
-            runCapacitor();
-
-            // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        // check
+        assertTrue(GTF_MM9_SORTED.exists());
+        assertTrue(BED_MM9_SORTED.exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
     }
 
     @Test
-    public void testWithSortInRAM() {
+    public void testIOflatSortedWritableGTFflatUnsortedWritableBEDKeep() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_UNSORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("KEEP_SORTED", "tmp_sorted");
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
-            /*try {
-                buffy.write(FluxCapacitorSettings.ANNOTATION_MAPPING.getName()+" "+
-                        AnnotationMapping.STRANDED+ barna.commons.system.OSChecker.NEW_LINE);
-                buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName()+" "+
-                        UniversalReadDescriptor.getDescriptor(
-                                UniversalReadDescriptor.DESCRIPTORID_SENSE)+ barna.commons.system.OSChecker.NEW_LINE);
-                buffy.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }*/
+        FluxCapacitorRunner.runCapacitor(parFile);
 
-
-            runCapacitor();
-
-            // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        // check
+        assertTrue(GTF_MM9_SORTED.exists());
+        assertTrue(BED_MM9_UNSORTED.exists());
+        assertTrue(new File(currentTestDirectory, "tmp_sorted" + File.separator + BED_MM9_SORTED.getName()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
     }
 
     @Test
-    public void testStasAreWrittenAndContainValidData() {
+    public void testIOflatUnsortedWritableGTFflatSortedWritableBEDKeep() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_UNSORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("KEEP_SORTED", "tmp_sorted");
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            FluxCapacitorStats stats = runCapacitor();
-            assertNotNull(stats);
-            assertTrue(statsFile.exists());
+        FluxCapacitorRunner.runCapacitor(parFile);
 
-            FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
-            assertNotNull(loaded);
-
-            assertEquals(loaded.getLociSingle(), stats.getLociSingle());
-            assertEquals(loaded.getLociExp(), stats.getLociExp());
-            assertEquals(loaded.getTxExp(), stats.getTxExp());
-            assertEquals(loaded.getEventsExp(), stats.getEventsExp());
-            assertEquals(loaded.getMappingsSingle(), stats.getMappingsSingle());
-            assertEquals(loaded.getMappingsSinglePairs(), stats.getMappingsSinglePairs());
-            assertEquals(loaded.getMappingsSinglePairsMapped(), stats.getMappingsSinglePairsMapped());
-            assertEquals(loaded.getMappingsTotal(), stats.getMappingsTotal());
-            assertEquals(loaded.getMappingsMapped(), stats.getMappingsMapped());
-            assertEquals(loaded.getMappingsPairsNa(), stats.getMappingsPairsNa());
-            assertEquals(loaded.getMappingsPairsWo(), stats.getMappingsPairsWo());
-            assertEquals(loaded.getMappingsNotSens(), stats.getMappingsNotSens());
-
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        // check
+        assertTrue(GTF_MM9_SORTED.exists());
+        assertTrue(BED_MM9_UNSORTED.exists());
+        assertTrue(new File(currentTestDirectory, "tmp_sorted" + File.separator + GTF_MM9_SORTED.getName()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
     }
 
     @Test
-    public void testIOgzippedSortedWritableGTFflatSortedWritableBEDnoKeep() {
+    public void testIOgzippedSortedWritableGTFflatSortedWritableBEDnoKeep() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_GZIP,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            runCapacitor();
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
-            // check
-            assertTrue(gtfFile.exists());
-            assertTrue(bedFile.exists());
-            assertTrue(outFile.exists());
-            String[] files = anoDir.list();
-            assertTrue(files.length == 3);    // annotation+ parameter+ output
-            files = mapDir.list();
-            assertTrue(files.length == 1);    // mapping file only
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        // check
+        assertTrue(GTF_MM9_SORTED.exists());
+        assertTrue(BED_MM9_SORTED.exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()).exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
     }
 
     @Test
-    public void testNoDecompose() {
+    public void testNoDecompose() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("NO_DECOMPOSE", true);
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, true, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-
-            runCapacitor();
-
-            // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
-    public void testSJCount() {
+    public void testSJCount() throws Exception {
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "CASAVA18",
-                    // keep sorted
-                    false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "PAIRED");
+        pars.put("NO_DECOMPOSE", true);
+        pars.put("COUNT_ELEMENTS", EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            runCapacitor();
-
-            // check
-            System.currentTimeMillis();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
-    public void testIntronsCount() {
+    public void testIntronsCount() throws Exception {
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "CASAVA18",
-                    // keep sorted
-                    false, false, true, EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "PAIRED");
+        pars.put("NO_DECOMPOSE", true);
+        pars.put("COUNT_ELEMENTS", EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
 
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            runCapacitor();
-
-            // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
-    public void testAllCounters() {
+    public void testAllCounters() throws Exception {
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "CASAVA18",
-                    // keep sorted
-                    false, false, true, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "PAIRED");
+        pars.put("NO_DECOMPOSE", true);
+        pars.put("COUNT_ELEMENTS", EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            runCapacitor();
-
-            // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
-    public void testDeconvolveAndCount() {
+    public void testDeconvolveAndCount() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "PAIRED");
+        pars.put("COUNT_ELEMENTS", EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "CASAVA18",
-                    // keep sorted
-                    false, false, false, EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-
-            runCapacitor();
-
-            // check
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
-    public void testRPKMwithNrReadsMapped() {
+    public void testReadsStranded() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.STRANDED);
+        pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SENSE);
 
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorRunner.runCapacitor(parFile);
+
+        // check
+    }
+
+    @Test
+    public void testWithSortInRAM() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("SORT_IN_RAM", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorRunner.runCapacitor(parFile);
+
+        // check
+    }
+
+    @Test
+    public void testStasAreWrittenAndContainValidData() throws Exception {
+        File statsFile = new File(currentTestDirectory, "stats.txt");
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("STATS_FILE", statsFile);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+
+        assertNotNull(stats);
+        assertTrue(statsFile.exists());
+
+        FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
+        assertNotNull(loaded);
+
+        assertEquals(loaded.getLociSingle(), stats.getLociSingle());
+        assertEquals(loaded.getLociExp(), stats.getLociExp());
+        assertEquals(loaded.getTxExp(), stats.getTxExp());
+        assertEquals(loaded.getEventsExp(), stats.getEventsExp());
+        assertEquals(loaded.getMappingsSingle(), stats.getMappingsSingle());
+        assertEquals(loaded.getMappingsSinglePairs(), stats.getMappingsSinglePairs());
+        assertEquals(loaded.getMappingsSinglePairsMapped(), stats.getMappingsSinglePairsMapped());
+        assertEquals(loaded.getMappingsTotal(), stats.getMappingsTotal());
+        assertEquals(loaded.getMappingsMapped(), stats.getMappingsMapped());
+        assertEquals(loaded.getMappingsPairsNa(), stats.getMappingsPairsNa());
+        assertEquals(loaded.getMappingsPairsWo(), stats.getMappingsPairsWo());
+        assertEquals(loaded.getMappingsNotSens(), stats.getMappingsNotSens());
+    }
+
+    @Test
+    public void testRPKMwithNrReadsMapped() throws Exception {
+        File firstResults = new File(currentTestDirectory, "output/firstResults.gtf");
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("STDOUT_FILE", firstResults);
+
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorRunner.runCapacitor(parFile);
+
+        pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("NR_READS_MAPPED", 7893);
+
+        parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorRunner.runCapacitor(parFile);
+
+        BufferedReader b1 =null, b2 = null;
         try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-            runCapacitor();
-            File out1 = outFile;
-
-
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
-            try {
-                buffy.write(FluxCapacitorSettings.NR_READS_MAPPED.getName() + " " +
-                        Integer.toString(7897));
-                buffy.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            runCapacitor();
-
-            // check
-            try {
-                BufferedReader b1 = new BufferedReader(new FileReader(out1)),
-                        b2 = new BufferedReader(new FileReader(outFile));
-                String s1, s2;
-                while ((s1 = b1.readLine()) != null && (s2 = b2.readLine()) != null) {
-                    System.err.println(s1);
-                    String[] ss = s1.split("\\s");
-                    if (ss[1].equals("transcript")) {
-                        if (ss[9].contains("NM_001159750"))
-                            assertEquals(ss[ss.length - 1], "244929.484375");
-                        else if (ss[9].contains("NM_001159751"))
-                            assertEquals(ss[ss.length - 1], "32835.675781");
-                        else if (ss[9].contains("NM_011541"))
-                            assertEquals(ss[ss.length - 1], "77404.234375");
-                        else if (ss[9].contains("NM_019397"))
-                            assertEquals(ss[ss.length - 1], "27483.478516");
-                        else
-                            Assert.fail("Unknown Transcript ID: " + ss[9]);
-                    }
-
-                    assertEquals(s1, s2);
+            b1 = new BufferedReader(new FileReader(firstResults));
+            b2 = new BufferedReader(new FileReader(new File(currentTestDirectory,FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString())));
+            String s1, s2;
+            while ((s1 = b1.readLine()) != null && (s2 = b2.readLine()) != null) {
+                System.err.println(s1);
+                String[] ss = s1.split("\\s");
+                if (ss[1].equals("transcript")) {
+                    if (ss[9].contains("NM_001159750"))
+                        assertEquals(ss[ss.length - 1], "244929.484375");
+                    else if (ss[9].contains("NM_001159751"))
+                        assertEquals(ss[ss.length - 1], "32835.675781");
+                    else if (ss[9].contains("NM_011541"))
+                        assertEquals(ss[ss.length - 1], "77404.234375");
+                    else if (ss[9].contains("NM_019397"))
+                        assertEquals(ss[ss.length - 1], "27483.478516");
+                    else
+                        Assert.fail("Unknown Transcript ID: " + ss[9]);
                 }
-                assertFalse(b1.ready());
-                assertFalse(b2.ready());
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                assertEquals(s1, s2);
             }
-
+            assertFalse(b1.ready());
+            assertFalse(b2.ready());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw e;
         } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
+            if (b1!=null)
+                b1.close();
+            if (b2!=null)
+                b2.close();
         }
-
     }
 
     @Test
-    public void testWrongReadDescriptor() {
+    public void testWrongReadDescriptor() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
 
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        String msg = "";
         try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
-            try {
-                buffy.write(FluxCapacitorSettings.READ_DESCRIPTOR.getName() + " " +
-                        UniversalReadDescriptor.getDescriptor(
-                                UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL));
-                buffy.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            String msg = "";
-            try {
-                runCapacitor();
-            } catch (Exception e) {
-                msg = e.getMessage();
-            }
-            assertTrue(msg.contains("incompatible with read IDs"));
-
+            FluxCapacitorRunner.runCapacitor(parFile);
         } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
+            msg = e.getMessage();
         }
-
+        assertTrue(msg.contains("incompatible with read IDs"));
     }
 
     /**
      * A test to guarantee correct handling of loci without reads.
      */
     @Test
-    public void testLocusWithoutReads() {
-        try {
+    public void testLocusWithoutReads() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED_NO_CHR1);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
 
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            // filter chr1 off mapping file
-            BufferedReader buffy = new BufferedReader(new FileReader(bedFile));
-            File tmpFile = FileHelper.createTempFile(bedFile.getName(), FileHelper.getExtension(bedFile), bedFile.getParentFile());
-            BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFile));
-            for (String s = null; (s = buffy.readLine()) != null; ) {
-                if (!s.startsWith("chr1"))
-                    writer.write(s + barna.commons.system.OSChecker.NEW_LINE);
-            }
-            buffy.close();
-            bedFile.delete();
-            writer.close();
-            bedFile = tmpFile;
-
-            // lazily append new mapping file to parameters
-            writer = new BufferedWriter(new FileWriter(parFile, true));
-            writer.write(FluxCapacitorSettings.MAPPING_FILE.getName() + " " + bedFile.getAbsolutePath());
-            writer.close();
-
-            // check for exceptions when run
-            runCapacitor();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
 
     @Test
-    public void testIOinsertSizes() {
+    public void testIOinsertSizes() throws Exception {
+        File insFile = FileHelper.replaceSfx(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString()), "_ins.txt");
 
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("INSERT_FILE", insFile);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getLociSingle());
+        assertEquals(0, stats.getLociExp());
+        assertEquals(4, stats.getTxExp());
+        assertEquals(0, stats.getEventsExp());
+        assertEquals(566, stats.getMappingsSingle());
+        assertEquals(586, stats.getMappingsSinglePairs());
+        assertEquals(283, stats.getMappingsSinglePairsMapped());
+        assertEquals(8005, stats.getMappingsTotal());
+        assertEquals(8184, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingsPairsNa());
+        assertEquals(208, stats.getMappingsPairsWo());
+        assertEquals(0, stats.getMappingsNotSens());
+
+        // check
+        BufferedReader buffy2 = null;
         try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-
-            File insFile = FileHelper.replaceSfx(outFile, "_ins.txt");
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
-            try {
-                buffy.write(FluxCapacitorSettings.INSERT_FILE.getName() + " " + insFile.getAbsolutePath());
-                buffy.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            FluxCapacitorStats stats = runCapacitor();
-            assertNotNull(stats);
-            assertEquals(1, stats.getLociSingle());
-            assertEquals(0, stats.getLociExp());
-            assertEquals(4, stats.getTxExp());
-            assertEquals(0, stats.getEventsExp());
-            assertEquals(566, stats.getMappingsSingle());
-            assertEquals(586, stats.getMappingsSinglePairs());
-            assertEquals(283, stats.getMappingsSinglePairsMapped());
-            assertEquals(8009, stats.getMappingsTotal());
-            assertEquals(8192, stats.getMappingsMapped());
-            assertEquals(0, stats.getMappingsPairsNa());
-            assertEquals(208, stats.getMappingsPairsWo());
-            assertEquals(0, stats.getMappingsNotSens());
-
-            // check
-            BufferedReader buffy2 = new BufferedReader(new FileReader(insFile));
+            buffy2 = new BufferedReader(new FileReader(insFile));
             String s = null;
             while ((s = buffy2.readLine()) != null) {
                 String[] ss = s.split("\\s");
                 assertEquals(9, ss.length);
             }
-            buffy2.close();
-
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw e;
         } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
+            if (buffy2!=null)
+                buffy2.close();
         }
-
     }
 
     @Test
-    public void testOutputProfiles() {
+    public void testOutputProfiles() throws Exception {
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), "_profiles", true, "txt"));
 
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("PROFILE_FILE", proFile);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorRunner.runCapacitor(parFile);
+
+        BufferedReader b1 = null;
         try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_MM9_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMULATOR",
-                    // keep sorted
-                    false, false, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
-            File proFile = new File(FileHelper.append(outFile.getAbsolutePath(), "_profiles", true, "txt"));
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(parFile, true));
-            try {
-                buffy.write(FluxCapacitorSettings.PROFILE_FILE.getName() + " " +
-                        proFile.getAbsolutePath());
-                buffy.close();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            b1 = new BufferedReader(new FileReader(proFile));
+            String s1;
+            while ((s1 = b1.readLine()) != null) {
+                System.err.println(s1);
             }
-            runCapacitor();
-
-            // check
-            try {
-                BufferedReader b1 = new BufferedReader(new FileReader(proFile));
-                String s1;
-                while ((s1 = b1.readLine()) != null) {
-                    System.err.println(s1);
-                }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (b1!=null)
                 b1.close();
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
         }
-
     }
 
     @Test
-    public void testReadsPerTranscript() {
+    public void testReadsPerTranscript() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_SORTED);
+        pars.put("MAPPING_FILE", BED_HG_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "CASAVA18");
 
-        try {
-            initFiles(
-                    // GTF: compressed, sorted, readOnly
-                    GTF_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    // BED: compressed, sorted, readOnly
-                    BED_HG_SORTED,
-                    FileHelper.COMPRESSION_NONE,
-                    SORTED,
-                    false,
-                    "SIMPLE",
-                    // keep sorted
-                    false, true, false, EnumSet.noneOf(FluxCapacitorSettings.CountElements.class));
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-            runCapacitor();
-
-            // check
-
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            FileHelper.rmDir(mapDir);
-            FileHelper.rmDir(anoDir);
-        }
-
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
-
 }
