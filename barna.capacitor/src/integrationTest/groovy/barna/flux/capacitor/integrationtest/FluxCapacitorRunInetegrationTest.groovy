@@ -278,17 +278,25 @@ class FluxCapacitorRunInetegrationTest {
                 "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
                 "READ_DESCRIPTOR" : "SIMULATOR",
-                "KEEP_SORTED" : "/tmp",
+                "KEEP_SORTED" : new File(System.getProperty("java.io.tmpdir")),
         ])
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
 
+        try {
         assertStdErr(stderr, STDERR_MAPPED);
         assertFileExist(currentTestDirectory, [
                 (FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
                 (FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
-                "/tmp/mm9_chr1_chrX_sorted.bed" : {File file -> return file.exists()},
+                    (System.getProperty("java.io.tmpdir")+File.separator+"mm9_chr1_chrX_sorted.bed") : {File file -> return file.exists()},
         ])
+        } catch (Exception e) {
+        }
+        finally {
+            File f = new File(System.getProperty("java.io.tmpdir")+File.separator+"mm9_chr1_chrX_sorted.bed");
+            if (f.exists())
+                f.delete();
+        }
     }
 
 	@Test

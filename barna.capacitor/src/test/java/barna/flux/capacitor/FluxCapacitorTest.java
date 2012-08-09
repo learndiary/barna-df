@@ -44,7 +44,7 @@ public class FluxCapacitorTest {
     File currentTestDirectory = null;
     @Before
     public void setUpTest() throws Exception {
-        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorIntegration", "", null);
+        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorUnitTest", "", null);
     }
 
     @After

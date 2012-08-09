@@ -13,10 +13,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Emilio Palumbo
- * Date: 5/31/12
- * Time: 12:39 PM
+ * @author  Emilio Palumbo (emiliopalumbo@gmail.com)
  */
 public class AnnotationMapperTest extends TestCase {
 
