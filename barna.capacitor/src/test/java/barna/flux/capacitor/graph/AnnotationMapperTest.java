@@ -23,8 +23,8 @@ public class AnnotationMapperTest extends TestCase {
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
 
-    private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
-    private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
+    private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+    private final File mm9BedFile = new File(getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
     private FluxCapacitorSettings settings;
     Map<String, ArrayList<String[]>> nodes = new HashMap<String, ArrayList<String[]>>();
 

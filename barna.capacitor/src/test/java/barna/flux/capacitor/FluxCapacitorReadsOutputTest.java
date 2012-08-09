@@ -1,10 +1,9 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
-import barna.flux.capacitor.integrationtest.FluxCapacitorRunner;
-import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
+import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import com.google.gson.GsonBuilder;
 import org.junit.*;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
@@ -23,14 +21,6 @@ public class FluxCapacitorReadsOutputTest {
 
 	final File GTF_SORTED= new File(getClass().getResource("/hg_havana_chr7_small_sorted.gtf").getFile());
 	final File BED_SORTED= new File(getClass().getResource("/hg_chr7_small_sorted.bed").getFile());
-
-    protected FluxCapacitorStats runCapacitor(File parFile) throws Exception{
-		FluxCapacitor capacitor= new FluxCapacitor();
-		capacitor.setFile(parFile);
-		Future<FluxCapacitorStats> captain= Execute.getExecutor().submit(capacitor);
-        FluxCapacitorStats stats = captain.get();
-        return stats;
-	}
 
 	@BeforeClass
 	public static void initExecuter() {
@@ -66,7 +56,7 @@ public class FluxCapacitorReadsOutputTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
-        FluxCapacitorStats stats = runCapacitor(parFile);
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());

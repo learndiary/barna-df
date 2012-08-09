@@ -1,11 +1,10 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
-import barna.flux.capacitor.integrationtest.FluxCapacitorRunner;
-import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
+import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import barna.io.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
@@ -18,7 +17,6 @@ import java.io.FileReader;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 import static junit.framework.Assert.*;
 
@@ -32,14 +30,6 @@ public class FluxCapacitorTest {
     final File BED_MM9_SORTED_NO_CHR1 = new File(getClass().getResource("/mm9_chr1_chrX_sorted_no_chr1.bed").getFile());
     final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
-
-    protected FluxCapacitorStats runCapacitor(File parFile) throws Exception {
-        FluxCapacitor capacitor = new FluxCapacitor();
-        capacitor.setFile(parFile);
-        Future<FluxCapacitorStats> captain = Execute.getExecutor().submit(capacitor);
-        FluxCapacitorStats stats = captain.get();
-        return stats;
-    }
 
     @BeforeClass
     public static void initExecuter() {
@@ -70,11 +60,11 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
-        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
         assertTrue(GTF_MM9_SORTED.exists());
@@ -94,7 +84,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
         assertTrue(GTF_MM9_SORTED.exists());
@@ -115,7 +105,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
         assertTrue(GTF_MM9_SORTED.exists());
@@ -135,7 +125,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = runCapacitor(parFile);
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
         assertTrue(GTF_MM9_SORTED.exists());
@@ -155,7 +145,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = runCapacitor(parFile);
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
@@ -171,7 +161,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
@@ -187,7 +177,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
@@ -203,7 +193,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
@@ -217,7 +207,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
@@ -230,7 +220,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
     }
@@ -246,7 +236,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
     }
@@ -264,7 +254,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = runCapacitor(parFile);
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
@@ -300,7 +290,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
@@ -311,7 +301,7 @@ public class FluxCapacitorTest {
 
         parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         BufferedReader b1 =null, b2 = null;
         try {
@@ -360,7 +350,7 @@ public class FluxCapacitorTest {
 
         String msg = "";
         try {
-            runCapacitor(parFile);
+            FluxCapacitorRunner.runCapacitor(parFile);
         } catch (Exception e) {
             msg = e.getMessage();
         }
@@ -380,7 +370,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 
 
@@ -397,7 +387,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = runCapacitor(parFile);
+        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         assertNotNull(stats);
         assertEquals(1, stats.getLociSingle());
@@ -443,7 +433,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
 
         BufferedReader b1 = null;
         try {
@@ -470,6 +460,6 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        runCapacitor(parFile);
+        FluxCapacitorRunner.runCapacitor(parFile);
     }
 }
