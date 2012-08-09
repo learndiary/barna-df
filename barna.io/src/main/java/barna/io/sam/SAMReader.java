@@ -3,11 +3,6 @@
  */
 package barna.io.sam;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.lang.instrument.Instrumentation;
-import java.util.Iterator;
-
 import barna.commons.log.Log;
 import barna.io.AbstractFileIOWrapper;
 import barna.io.MSIterator;
@@ -15,7 +10,11 @@ import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.*;
+import net.sf.samtools.SAMFileReader;
+import net.sf.samtools.SAMRecord;
+
+import java.io.File;
+import java.io.OutputStream;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -96,12 +95,14 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
     public MSIterator read(String chromosome, int start, int end) {
-        if (reader==null)
+        if (reader==null) {
             reader = new SAMFileReader(this.inputFile);
+        }
         if (isApplicable())
-            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
+//            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
+            iter = new SAMMappingIterator(chromosome, start, end, reader.query(chromosome, start, end, contained));
         else
-            iter = new SAMMappingIterator(chromosome, start, end, reader.iterator());
+            throw new UnsupportedOperationException("Currently only indexed BAM files are supported!");
         return iter;
     }
 

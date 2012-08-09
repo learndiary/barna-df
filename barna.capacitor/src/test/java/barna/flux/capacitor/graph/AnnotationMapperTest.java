@@ -23,13 +23,13 @@ import java.util.*;
  */
 public class AnnotationMapperTest extends TestCase {
 
-    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
+//    private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
 //    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22.gtf");
-    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
+//    private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
 //    private final File hgBedFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bed");
-//    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr22_17517460-17539682W.gtf");
-//    private final File hgBedFile = new File("/home/emilio/fromMicha/test-chr22-24030323-24041363_new.bed");
-    private final File hgBamFile = new File("/home/emilio/fromMicha/test_chr22_17517460-17539682W.bam");
+    private final File hgGtfFile = new File("/home/emilio/fromMicha/gencode_v12_chr1.gtf");
+    private final File hgBedFile = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr1.bed");
+    private final File hgBamFile = new File("/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr1.bam");
     private final File mm9GtfFile = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     private final File mm9BedFile = new File(getClass().getResource("/chr1_chrX.bed").getFile());
     private FluxCapacitorSettings settings;
@@ -793,6 +793,56 @@ public class AnnotationMapperTest extends TestCase {
             assertEquals(am1.nrMappingsWrongPairOrientation, am2.nrMappingsWrongPairOrientation);
             assertEquals(am1.nrMappingsWrongStrand, am2.nrMappingsWrongStrand);
             assertEquals(am1.nrMappingsLocusMultiMaps, am2.nrMappingsLocusMultiMaps);
+
+            gtf.read();
+        }
+    }
+
+    @Test
+    public void testCompareBEDtoBAMLoci() throws Exception {
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        SAMReader sam = new SAMReader(hgBamFile, false);
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
+        gtf.setNoIDs(null);
+        gtf.setReadGene(true);
+        gtf.setReadFeatures(new String[]{"exon", "CDS"});
+        //gtf.setReadAheadTranscripts(1);    // only one locus a time
+        gtf.setChromosomeWise(true);
+        gtf.setPrintStatistics(false);
+        gtf.setReuse(true);
+        Transcript.removeGaps = false;
+        gtf.read();
+        int[] count = {0,0};
+        for (Gene g : gtf.getGenes()) {
+            int start = 0, end = 0;
+            start = g.getStart();
+            end = g.getEnd();
+            if (g.getStrand() < 0) {
+                start = -start;
+                end = -end;
+            }
+            start = Math.max(1, start);
+
+            MSIterator<Mapping> iter1 = bed.read(g.getChromosome(),start,end);
+            MSIterator<Mapping> iter2 = sam.read(g.getChromosome(),start,end);
+
+            count[0] = 0;
+            count[1] = 0;
+
+            if (iter1!=null) {
+                while (iter1.hasNext())
+                    ++count[0];
+            }
+
+            if (iter2!=null) {
+                while (iter2.hasNext())
+                    ++count[1];
+            }
+
+            iter2.clear();
+
+            assertEquals(count[0],count[1]);
 
             gtf.read();
         }

@@ -1295,11 +1295,13 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		
 						boolean stop= false, continues= false;
 
-						if (start>= 0&& bedEnd< start)
+                        //put the "=" to exclude reads on the boundaries
+						if (start>= 0&& bedEnd<= start)
 							continues= true;
-						else if (end>= 0&& bedStart> end)
+						else if (end>= 0&& bedStart>= end)
 							stop= true;
 
+                        //take only reads entirely contained into the locus
                         if (!continues && !stop) {
                             if (bedStart<start||bedEnd>end)
                                 continue;

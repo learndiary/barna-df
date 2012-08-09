@@ -387,7 +387,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
             // pre-build rpkm hash
             HashMap<String, Double> rpkmMap = null;
-            double base = (nrBEDreads < 0 ? 1 : nrBEDreads);
+//            double base = (nrBEDreads < 0 ? 1 : nrBEDreads);
+            double base = (nrBEDmappings < 0 ? 1 : nrBEDmappings);
             Transcript[] tt = gene.getTranscripts();
             if (outputBalanced) {
                 rpkmMap = new HashMap<String, Double>(tt.length, 1f);
@@ -829,6 +830,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             if (!mappings.hasNext())
                 return;
 
+            boolean entered = false;
             Mapping bed1, bed2;
             UniversalReadDescriptor.Attributes
                     attributes = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes(),
@@ -846,7 +848,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             }
 
             while (mappings.hasNext()) {
-
+                entered = true;
                 ++nrReadsSingleLoci;
                 bed1= mappings.next();
                 CharSequence tag = bed1.getName();
@@ -952,7 +954,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 
             // output coverage stats
-            if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+            if (entered && settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                 writeCoverageStats(
                         tx.getGene().getLocusID(),
                         tx.getTranscriptID(),

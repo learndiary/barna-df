@@ -1,5 +1,6 @@
 package barna.io.sam;
 
+import barna.commons.log.Log;
 import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
@@ -46,13 +47,9 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
 
             mapping = new SAMMapping(record, getSuffix(record));
 
-           if (mapping.getChromosome().equals(chromosome)) {
-                if (mapping.getStart()>=start && mapping.getEnd()<=end) {
-                    if (mappings == null)
-                        mappings = new ArrayList<SAMMapping>();
-                    mappings.add(mapping);
-                }
-            }
+            if (mappings == null)
+                mappings = new ArrayList<SAMMapping>();
+            mappings.add(mapping);
         }
 
         if (mappings!=null) {
@@ -89,8 +86,43 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     }
 
     @Override
-    public Iterator<Mapping> getMates(Mapping firstMapping, UniversalReadDescriptor descriptor) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
+        ArrayList<Mapping> mappings = new ArrayList<Mapping>();
+        UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
+        attr1 = getAttributes(firstMate,descriptor,attr1);
+        if (attr1.flag == 2)
+            return mappings.iterator();
+        this.mark();
+        while (this.hasNext()) {
+            Mapping currentMapping = this.next();
+            attr2 = getAttributes(currentMapping,descriptor,attr2);
+            if (!attr1.id.equals(attr2.id))
+                break;
+            if (attr2 == null || attr2.flag == 1)
+                continue;
+            mappings.add(currentMapping);
+        }
+        this.reset();
+        return mappings.iterator();
+    }
+
+    private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
+
+        CharSequence tag= mapping.getName();
+        attributes= desc.getAttributes(tag, attributes);
+        if (attributes == null) {
+            Log.warn("Error in read ID: could not parse read identifier " + tag);
+            return null;
+        }
+        if (desc.isPaired()&& attributes.flag<= 0) {
+            Log.warn("Error in read ID: could not find mate in " + tag);
+            return null;
+        }
+        if (desc.isStranded()&& attributes.strand< 0) {
+            Log.warn("Error in read ID: could not find strand in " + tag);
+            return null;
+        }
+        return attributes;
     }
 
     @Override
