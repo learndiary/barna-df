@@ -60,6 +60,10 @@ public class FragmentDB {
      */
     private File libraryFile;
     /**
+     * The index database file
+     */
+    private File indexFile;
+    /**
      * The index store
      */
     private PrimaryTreeMap<String, Entry> index;
@@ -140,8 +144,7 @@ public class FragmentDB {
     public void createIndex() throws IOException {
 
         // create index
-        File indexFile = FileHelper.createTempFile("fragment-", "-index.db");
-        indexFile.deleteOnExit();
+        indexFile = FileHelper.createTempFile("fragment-", "-index.db");
         recman = RecordManagerFactory.createRecordManager(indexFile.getAbsolutePath());
         index = recman.treeMap(RECORD_NAME);
 
@@ -308,6 +311,18 @@ public class FragmentDB {
                 access.close();
             }
             recman.close();
+            if (index!=null && indexFile.exists()) {
+                File dir = indexFile.getParentFile();
+                File[] files = dir.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return name.contains(indexFile.getName());
+                    }
+                });
+                for (File f : files) {
+                    f.delete();
+                }
+            }
         } catch (IOException e) {
             Log.error("Unable to close Fragment DB!");
         } finally {

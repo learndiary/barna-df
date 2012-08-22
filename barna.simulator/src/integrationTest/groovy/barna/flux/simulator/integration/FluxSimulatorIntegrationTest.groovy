@@ -56,13 +56,9 @@ class FluxSimulatorIntegrationTest {
         buffy.close();
     }
 
-
-    public String runSimulator(File directory, File parameterFile){
-        return runSimulator(directory,parameterFile,false);
-    }
-
-    public String runSimulator(File directory, File parameterFile, boolean tmpDirDeny){
+    public Process runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
         def pb = new ProcessBuilder()
+        def out = new HashMap<String,String>()
         pb.environment().put("FLUX_MEM", "1G")
         if (tmpDirDeny) {
             pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
@@ -75,11 +71,10 @@ class FluxSimulatorIntegrationTest {
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
-
-        def stdOut = process.inputStream.readLines().join(OSChecker.NEW_LINE)
+        //out["stdOut"] = process.inputStream.readLines().join(OSChecker.NEW_LINE)
         process.waitFor()
-
-        return stdOut
+        //out["exitValue"] = process.exitValue()
+        return process
     }
 
     @Test
@@ -136,7 +131,7 @@ class FluxSimulatorIntegrationTest {
         File parFile= FileHelper.createTempFile(getClass().getSimpleName(), ".par")
         writeParFile(parFile, settings)
         try{
-            String stdOut= runSimulator(tmpDir, parFile, true)
+            String stdOut= runSimulator(tmpDir, parFile, true).inputStream.readLines().join(OSChecker.NEW_LINE)
             String[] denied= ["access denied"]
             assertTrue(stdOut,stdOut.contains(denied[0]));
         }catch (Exception e){
