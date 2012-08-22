@@ -6,8 +6,7 @@ import barna.io.FileHelper
 import org.junit.BeforeClass
 import org.junit.Test
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.fail
+import static org.junit.Assert.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -58,9 +57,16 @@ class FluxSimulatorIntegrationTest {
     }
 
 
-    public Process runSimulator(File directory, File parameterFile){
+    public String runSimulator(File directory, File parameterFile){
+        return runSimulator(directory,parameterFile,false);
+    }
+
+    public String runSimulator(File directory, File parameterFile, boolean tmpDirDeny){
         def pb = new ProcessBuilder()
         pb.environment().put("FLUX_MEM", "1G")
+        if (tmpDirDeny) {
+            pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
+        }
         def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
         if (OSChecker.isWindows()) {
             cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
@@ -69,11 +75,11 @@ class FluxSimulatorIntegrationTest {
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
-        for (String line : process.inputStream.readLines()) {
-            println(line)
-        }
+
+        def stdOut = process.inputStream.readLines().join(OSChecker.NEW_LINE)
         process.waitFor()
-        return process
+
+        return stdOut
     }
 
     @Test
@@ -130,16 +136,15 @@ class FluxSimulatorIntegrationTest {
         File parFile= FileHelper.createTempFile(getClass().getSimpleName(), ".par")
         writeParFile(parFile, settings)
         try{
-            String stdErr= runSimulator(tmpDir, parFile)
+            String stdOut= runSimulator(tmpDir, parFile, true)
             String[] denied= ["access denied"]
-            //assertResult(stdErr, denied)
-            println stdErr
+            assertTrue(stdOut,stdOut.contains(denied[0]));
         }catch (Exception e){
             e.printStackTrace()
             fail()
         }finally{
-            tmpDir.eachFile {it.delete()}
-            tmpDir.delete()
+            if (parFile!=null && parFile.exists())
+                parFile.delete();
         }
 
     }
