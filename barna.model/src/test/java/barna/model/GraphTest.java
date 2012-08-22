@@ -80,71 +80,81 @@ public class GraphTest {
     @Test
     public void testReadWithinLineSetup() throws Exception {
 
-        String line_unix = "ABCDE\nFGHIJ\nKLMNO";
-        String line_win = "ABCDE\r\nFGHIJ\r\nKLMNO";
+        File chr_file_unix = null,
+             chr_file_win = null;
+        try {
+            String line_unix = "ABCDE\nFGHIJ\nKLMNO";
+            String line_win = "ABCDE\r\nFGHIJ\r\nKLMNO";
 
-        // check full length
-        int seqLen_u = getSeqLength(line_unix);
-        int seqLen_w = getSeqLength(line_win);
-        assertEquals(15, seqLen_u);
-        assertEquals(15, seqLen_w);
+            // check full length
+            int seqLen_u = getSeqLength(line_unix);
+            int seqLen_w = getSeqLength(line_win);
+            assertEquals(15, seqLen_u);
+            assertEquals(15, seqLen_w);
 
-        // check single line length
-        int lineLen_u = line_unix.indexOf("\n");
-        int lineLen_w = line_win.indexOf("\r\n");
-        assertEquals(5, lineLen_u);
-        assertEquals(5, lineLen_w);
+            // check single line length
+            int lineLen_u = line_unix.indexOf("\n");
+            int lineLen_w = line_win.indexOf("\r\n");
+            assertEquals(5, lineLen_u);
+            assertEquals(5, lineLen_w);
 
-        // check number of lines
-        int nrLines_u = (int) Math.ceil(seqLen_u / (lineLen_u + 1d));
-        int nrLines_w = (int) Math.ceil(seqLen_w / (lineLen_w + 1d));
-        assertEquals(3, nrLines_u);
-        assertEquals(3, nrLines_w);
+            // check number of lines
+            int nrLines_u = (int) Math.ceil(seqLen_u / (lineLen_u + 1d));
+            int nrLines_w = (int) Math.ceil(seqLen_w / (lineLen_w + 1d));
+            assertEquals(3, nrLines_u);
+            assertEquals(3, nrLines_w);
 
-        int lineNr= 1;
-        int posStart = 2;
-        int posEnd = 6;
+            int lineNr= 1;
+            int posStart = 2;
+            int posEnd = 6;
 
-        int offCR_u = lineNr * (lineLen_u+1);
-        int off_u= lineNr* lineLen_u;
+            int offCR_u = lineNr * (lineLen_u+1);
+            int off_u= lineNr* lineLen_u;
 
-        File chr_file_unix = File.createTempFile(getClass().getSimpleName(), ".fa");
-        String chr_unix = writeTmpChromosome(line_unix, chr_file_unix, "\n");
-        File chr_file_win = File.createTempFile(getClass().getSimpleName(), ".fa");
-        String chr_win = writeTmpChromosome(line_win, chr_file_win, "\r\n");
+            chr_file_unix = File.createTempFile(getClass().getSimpleName(), ".fa");
+            String chr_unix = writeTmpChromosome(line_unix, chr_file_unix, "\n");
+            chr_file_win = File.createTempFile(getClass().getSimpleName(), ".fa");
+            String chr_win = writeTmpChromosome(line_win, chr_file_win, "\r\n");
 
-        Graph.overrideSequenceDirPath = chr_file_unix.getParentFile().getAbsolutePath();
-        Graph.fileSep = "\n";
-        ByteArrayCharSequence result_unix = new ByteArrayCharSequence(10);
-        Graph.readSequence(
-                null,   // Species spe,
-                chr_unix,    // CharSequence chromosome,
-                true,   // boolean forwardStrand,
-                off_u + posStart + 1,   // start
-                off_u + posStart + posEnd,  // end
-                result_unix,     // ByteArrayCharSequence cs,
-                0,      // int from,
-                posEnd     // int to)
-        );
-        Graph.fileSep = null;
-        assertEquals("HIJKLM", result_unix.toString());
+            Graph.overrideSequenceDirPath = chr_file_unix.getParentFile().getAbsolutePath();
+            Graph.fileSep = "\n";
+            ByteArrayCharSequence result_unix = new ByteArrayCharSequence(10);
+            Graph.readSequence(
+                    null,   // Species spe,
+                    chr_unix,    // CharSequence chromosome,
+                    true,   // boolean forwardStrand,
+                    off_u + posStart + 1,   // start
+                    off_u + posStart + posEnd,  // end
+                    result_unix,     // ByteArrayCharSequence cs,
+                    0,      // int from,
+                    posEnd     // int to)
+            );
+            Graph.fileSep = null;
+            assertEquals("HIJKLM", result_unix.toString());
 
-        Graph.overrideSequenceDirPath = chr_file_win.getParentFile().getAbsolutePath();
-        Graph.fileSep = "\r\n";
-        ByteArrayCharSequence result_win = new ByteArrayCharSequence(10);
-        Graph.readSequence(
-                null,   // Species spe,
-                chr_win,    // CharSequence chromosome,
-                true,   // boolean forwardStrand,
-                off_u + posStart + 1,   // start
-                off_u + posStart + posEnd,  // end
-                result_win,     // ByteArrayCharSequence cs,
-                0,      // int from,
-                posEnd     // int to)
-        );
-        Graph.fileSep = null;
-        assertEquals("HIJKLM", result_win.toString());
-
+            Graph.overrideSequenceDirPath = chr_file_win.getParentFile().getAbsolutePath();
+            Graph.fileSep = "\r\n";
+            ByteArrayCharSequence result_win = new ByteArrayCharSequence(10);
+            Graph.readSequence(
+                    null,   // Species spe,
+                    chr_win,    // CharSequence chromosome,
+                    true,   // boolean forwardStrand,
+                    off_u + posStart + 1,   // start
+                    off_u + posStart + posEnd,  // end
+                    result_win,     // ByteArrayCharSequence cs,
+                    0,      // int from,
+                    posEnd     // int to)
+            );
+            Graph.fileSep = null;
+            assertEquals("HIJKLM", result_win.toString());
+        } finally {
+            if (chr_file_unix != null && chr_file_unix.exists()) {
+                chr_file_unix.delete();
+            }
+            if (chr_file_win != null && chr_file_win.exists()) {
+                chr_file_win.delete();
+            }
+        }
 
 
     }
