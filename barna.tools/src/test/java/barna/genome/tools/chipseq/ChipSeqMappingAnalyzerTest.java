@@ -35,7 +35,9 @@ import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -48,12 +50,10 @@ import static org.junit.Assert.fail;
 
 public class ChipSeqMappingAnalyzerTest {
 
-    @BeforeClass
     public static void setUp() {
         Execute.initialize(2);
     }
 
-    @AfterClass
     public static void shutdown() {
         Execute.shutdown();
     }
@@ -73,6 +73,7 @@ public class ChipSeqMappingAnalyzerTest {
 
     @Test
     public void testPaired() {
+        setUp();
         // copy input file
         File f = new File(getClass().getResource("/Paired_sorted_chrY.bed").getFile());
         long start = System.currentTimeMillis();
@@ -96,6 +97,7 @@ public class ChipSeqMappingAnalyzerTest {
         if (distr != null)
             System.err.println("peak " + distr[1] + ", bounds=[" + distr[0] + "," + distr[2] + "]");
         System.out.println((System.currentTimeMillis()-start) / 1000+"s");
+        shutdown();
     }
 
     @Test
