@@ -38,7 +38,9 @@ import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -50,6 +52,19 @@ import java.util.Random;
 import static junit.framework.Assert.assertEquals;
 
 public class SequencerTest {
+
+    File currentTestDirectory = null;
+    @Before
+    public void setUpTest() throws Exception {
+        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorUnitTest", "", null);
+    }
+
+    @After
+    public void cleanup(){
+        if(currentTestDirectory != null){
+            FileHelper.rmDir(currentTestDirectory);
+        }
+    }
 
     @Test
 	public void testReadGeneration() throws Exception {
@@ -129,7 +144,7 @@ public class SequencerTest {
         // write sequence
         File f= null;
         try {
-            f= File.createTempFile(this.getClass().getSimpleName(), ".fa");
+            f= File.createTempFile(this.getClass().getSimpleName(), ".fa",currentTestDirectory);
             BufferedWriter writer= new BufferedWriter(new FileWriter(f));
             writer.write(">"+ FileHelper.stripExtension(f.getName())+ barna.commons.system.OSChecker.NEW_LINE);
             writer.write(allChars+ barna.commons.system.OSChecker.NEW_LINE);
@@ -434,14 +449,14 @@ public class SequencerTest {
         assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/2", seq.getName().toString());
     }
 
-    static final char[] bases= new char[] {'A', 'C', 'G', 'T'};
+     final char[] bases= new char[] {'A', 'C', 'G', 'T'};
 
     /**
      * Creates a random sequence for a chromosome of a certain length
      * @param maxLen maximum length, highest chromosomal coordinate
      * @return a random sequence for the chromosome
      */
-    static protected String getChrSequence(int maxLen) {
+     protected String getChrSequence(int maxLen) {
         char[] seq= new char[maxLen];
         Random rnd= new Random();
         for (int i= 0; i< maxLen; ++i) {
@@ -455,11 +470,11 @@ public class SequencerTest {
      * @param chrSeq the chromosome sequence to be written
      * @return handle of the file to which sequence has been written
      */
-    static protected File writeSequence(String chrSeq) {
+     protected File writeSequence(String chrSeq) {
         // write sequence
         File f= null;
         try {
-            f= File.createTempFile(SequencerTest.class.getSimpleName(), ".fa");
+            f= File.createTempFile(SequencerTest.class.getSimpleName(), ".fa", currentTestDirectory);
             BufferedWriter writer= new BufferedWriter(new FileWriter(f));
             writer.write(">"+ FileHelper.stripExtension(f.getName())+ barna.commons.system.OSChecker.NEW_LINE);
             writer.write(chrSeq+ barna.commons.system.OSChecker.NEW_LINE);
