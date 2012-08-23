@@ -35,6 +35,8 @@ import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -56,15 +58,29 @@ public class ChipSeqMappingAnalyzerTest {
         Execute.shutdown();
     }
 
+    File currentTestDirectory = null;
+    @Before
+    public void setUpTest() throws Exception {
+        currentTestDirectory = FileHelper.createTempDir(this.getClass().getSimpleName(), "", null);
+    }
+
+    @After
+    public void cleanup(){
+        if(currentTestDirectory != null){
+            FileHelper.rmDir(currentTestDirectory);
+        }
+    }
+
     @Test
     public void testPaired() {
         setUp();
         // copy input file
-        File f = new File(ChipSeqMappingAnalyzerTest.class.getResource("/Paired_sorted_chrY.bed").getFile());
+        File f = new File(getClass().getResource("/Paired_sorted_chrY.bed").getFile());
         long start = System.currentTimeMillis();
         // instantiate and run
         ChipSeqMappingAnalyzer myRun = new ChipSeqMappingAnalyzer();
-        myRun.fileInput= f; 
+        myRun.fileInput= f;
+        myRun.fileOutput = new File(currentTestDirectory,f.getName().replace("bed","txt"));
         myRun.descriptor = new UniversalReadDescriptor();
         myRun.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 
@@ -88,10 +104,10 @@ public class ChipSeqMappingAnalyzerTest {
     public void testPairedFlux() {
 
         // copy input file
-        File f = new File(ChipSeqMappingAnalyzerTest.class.getResource("/Paired_sorted_chrY.bed").getFile());
+        File f = new File(getClass().getResource("/Paired_sorted_chrY.bed").getFile());
         File tmpF = null;
         try {
-            tmpF = FileHelper.createTempFile(FileHelper.stripExtension(f.getName()), FileHelper.getExtension(f));
+            tmpF = FileHelper.createTempFile(FileHelper.stripExtension(f.getName()), FileHelper.getExtension(f),currentTestDirectory);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -102,7 +118,7 @@ public class ChipSeqMappingAnalyzerTest {
         File parF = null;
         BufferedWriter writer = null;
         try {
-            parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
+            parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par",currentTestDirectory);
             writer = new BufferedWriter(new FileWriter(parF));
             writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE);
             writer.write(ChipSeqSettings.FILE_OUTPUT.getName() + " " + tmpF.getAbsolutePath()+".out" + barna.commons.system.OSChecker.NEW_LINE);
@@ -134,7 +150,7 @@ public class ChipSeqMappingAnalyzerTest {
         File f = new File(ChipSeqMappingAnalyzerTest.class.getResource("/Paired_sorted_chrY.bed").getFile());
         File tmpF = null;
         try {
-            tmpF = FileHelper.createTempFile(FileHelper.stripExtension(f.getName()), FileHelper.getExtension(f));
+            tmpF = FileHelper.createTempFile(FileHelper.stripExtension(f.getName()), FileHelper.getExtension(f),currentTestDirectory);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -154,7 +170,7 @@ public class ChipSeqMappingAnalyzerTest {
         File parF = null;
         BufferedWriter writer = null;
         try {
-            parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par");
+            parF = FileHelper.createTempFile(ChipSeqMappingAnalyzerTest.class.getSimpleName(), ".par",currentTestDirectory);
             writer = new BufferedWriter(new FileWriter(parF));
             writer.write(ChipSeqSettings.FILE_INPUT.getName() + " " + tmpF.getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE);
 

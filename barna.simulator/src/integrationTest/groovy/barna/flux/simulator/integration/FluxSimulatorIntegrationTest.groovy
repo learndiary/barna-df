@@ -6,8 +6,7 @@ import barna.io.FileHelper
 import org.junit.BeforeClass
 import org.junit.Test
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.fail
+import static org.junit.Assert.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -57,10 +56,13 @@ class FluxSimulatorIntegrationTest {
         buffy.close();
     }
 
-
-    public Process runSimulator(File directory, File parameterFile){
+    public Process runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
         def pb = new ProcessBuilder()
+        def out = new HashMap<String,String>()
         pb.environment().put("FLUX_MEM", "1G")
+        if (tmpDirDeny) {
+            pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
+        }
         def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
         if (OSChecker.isWindows()) {
             cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
@@ -69,9 +71,6 @@ class FluxSimulatorIntegrationTest {
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
-        for (String line : process.inputStream.readLines()) {
-            println(line)
-        }
         process.waitFor()
         return process
     }
@@ -117,8 +116,8 @@ class FluxSimulatorIntegrationTest {
             e.printStackTrace()
             fail(e.getMessage())
         }finally{
-            dir.eachFile {it.delete()}
-            dir.delete()
+            if (dir!=null)
+                FileHelper.rmDir(dir)
         }
     }
 
@@ -130,16 +129,15 @@ class FluxSimulatorIntegrationTest {
         File parFile= FileHelper.createTempFile(getClass().getSimpleName(), ".par")
         writeParFile(parFile, settings)
         try{
-            String stdErr= runSimulator(tmpDir, parFile)
+            String stdOut= runSimulator(tmpDir, parFile, true).inputStream.readLines().join(OSChecker.NEW_LINE)
             String[] denied= ["access denied"]
-            //assertResult(stdErr, denied)
-            println stdErr
+            assertTrue(stdOut,stdOut.contains(denied[0]));
         }catch (Exception e){
             e.printStackTrace()
             fail()
         }finally{
-            tmpDir.eachFile {it.delete()}
-            tmpDir.delete()
+            if (parFile!=null)
+                FileHelper.rmDir(parFile)
         }
 
     }

@@ -163,6 +163,7 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 		// sort
 		File sortedInput= new BEDReader(fileInput).getSortedFile(null,    //TODO bad
                 ((descriptor != null && descriptor.isPaired()) ? BEDReader.COMPARATOR_PAIRED_END : null));
+        sortedInput.deleteOnExit();
 		System.gc();
 		Thread.yield();
 		
