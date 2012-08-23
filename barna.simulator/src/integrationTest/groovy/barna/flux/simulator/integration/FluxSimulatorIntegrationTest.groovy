@@ -71,9 +71,7 @@ class FluxSimulatorIntegrationTest {
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
-        //out["stdOut"] = process.inputStream.readLines().join(OSChecker.NEW_LINE)
         process.waitFor()
-        //out["exitValue"] = process.exitValue()
         return process
     }
 
@@ -118,8 +116,8 @@ class FluxSimulatorIntegrationTest {
             e.printStackTrace()
             fail(e.getMessage())
         }finally{
-            dir.eachFile {it.delete()}
-            dir.delete()
+            if (dir!=null)
+                FileHelper.rmDir(dir)
         }
     }
 
@@ -138,8 +136,8 @@ class FluxSimulatorIntegrationTest {
             e.printStackTrace()
             fail()
         }finally{
-            if (parFile!=null && parFile.exists())
-                parFile.delete();
+            if (parFile!=null)
+                FileHelper.rmDir(parFile)
         }
 
     }
