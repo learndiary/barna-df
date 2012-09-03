@@ -14,17 +14,18 @@ if(System.properties['nightly']){
  * This is the  global flux suite version used to identify
  * library/jar versions
  */
-version = "1.15-SNAPSHOT"
+version = "1.16-SNAPSHOT"
 
 /**
  * Versions for applications
  */
 ext.appVersions = [
     "barna.astalavista":"1.0-SNAPSHOT",
-    "barna.simulator":"1.0.4-SNAPSHOT",
-    "barna.capacitor":"1.0.3-SNAPSHOT",
+    "barna.simulator":"1.1.1-SNAPSHOT",
+    "barna.capacitor":"1.1.1-SNAPSHOT",
     "barna.tools":"1.0-SNAPSHOT"
 ]
+
 ext.appNames = [
     "barna.astalavista":"Astalavista",
     "barna.simulator":"Flux-Simulator",

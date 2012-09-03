@@ -22,6 +22,26 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.1
+    * [BARNA-13] - UnixStreamSorter shouldn't close streams
+    * [BARNA-22] - Synchronization between Log.setInteractive() and CommandLine.confirm()
+    * [BARNA-25] - LineComparator Caching
+    * [BARNA-52] - weight matrices deal with "N" read from chromosome sequence
+    * [BARNA-92] - Fixed issues with the FragmentDB
+    * [BARNA-194] - Reading gene sequences close to the chromosome border
+    * [BARNA-196] - SIZE_DISTRIBUTION with N(mean, sd) won't work.
+    * [BARNA-197] - Size Distribution Statistics
+    * [BARNA-198] - Too many split-maps
+    * [BARNA-200] - The gradle builds fail on windows because we call git directly
+    * [BARNA-206] - Duplicated reads have no unique ids
+    * [BARNA-210] - Null pointer exception when calling flux -t {TOOL} with no parameters
+    * [BARNA-211] - LPSolverLoader assumes that libraries in the destination folder are correct, if identical by name
+    * [BARNA-68] - Refactor FluxSimulatorSettings.RelativePathParser to a more general class outside of the Simulator settings
+    * [BARNA-87] - Check SyncIOhandler2 for removal
+    * [BARNA-193] - Gene Identifier preserved in GTF wrapper
+    * [BARNA-156] - Enzymatic Fragmentation produces invalid fragments (start>end)
+    * [BARNA-187] - Make mated Flux Simulator IDs equal
+
 FluxSimulator 1.0.3
     - BARNA-189 Simulation of poly-dT primer RT after Fragmentation produces 1nt Fragments
     - BARNA-184 Mutated characters should be lower case
