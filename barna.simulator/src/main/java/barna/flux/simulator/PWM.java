@@ -28,13 +28,13 @@
 package barna.flux.simulator;
 
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.MSIterator;
+import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.state.MappingWrapperState;
 import barna.model.Gene;
 import barna.model.Graph;
+import barna.model.Mapping;
 import barna.model.Transcript;
-import barna.model.bed.BEDobject2;
 import barna.model.commons.IntVector;
 
 import java.io.*;
@@ -379,13 +379,13 @@ public class PWM implements WeightMatrix {
             System.err.println();
 
             File ff = new File(fileBed + "_sorted");
-            BEDwrapper bedReader = null;
+            BEDReader bedReader = null;
             if (ff.exists()) {
                 System.err.println("\tusing sorted file " + ff.getName());
                 fileBed = ff.getAbsolutePath();
-                bedReader = new BEDwrapper(fileBed);
+                bedReader = new BEDReader(fileBed);
             } else {
-                bedReader = new BEDwrapper(fileBed);
+                bedReader = new BEDReader(fileBed);
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
                     File f = new File(fileBed);
@@ -396,7 +396,7 @@ public class PWM implements WeightMatrix {
                         fileBed = f.getAbsolutePath();
                     }
                     System.err.println("\tsorted file in " + fileBed);
-                    bedReader = new BEDwrapper(fileBed);
+                    bedReader = new BEDReader(fileBed);
                 }
             }
 
@@ -421,23 +421,25 @@ public class PWM implements WeightMatrix {
                     }
                     ++cntTrpt;
                     Transcript t = genes[i].getTranscripts()[0];
-                    MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                    /*MappingReaderState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
                     BEDobject2[] beds = (BEDobject2[]) state.result;
                     if (beds == null) {
                         continue;
-                    }
+                    }  */
                     String s = t.getSplicedSequence().toUpperCase();
-                    for (int j = 0; j < beds.length; j++) {
+                    for (MSIterator<Mapping> mappingIterator = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());mappingIterator.hasNext();) {
+                    //for (int j = 0; j < beds.length; j++) {
                         // get t-coordinates
-                        int tstart = t.getExonicPosition(beds[j].getStart() + 1),
-                                tend = t.getExonicPosition(beds[j].getEnd());    // t-coordinates, 0-based
+                        Mapping mapping = mappingIterator.next();
+                        int tstart = t.getExonicPosition(mapping.getStart() + 1),
+                                tend = t.getExonicPosition(mapping.getEnd());    // t-coordinates, 0-based
                         if (tstart < 0 || tstart >= s.length()) {
                             continue;
                         }
 
                         // count on subsequence
                         ++cntReads;
-                        boolean sens = beds[j].getStrand() == t.getStrand();
+                        boolean sens = mapping.getStrand() == t.getStrand();
                         int[][] a = sens ? sense : asense;
                         if (sens) {
                             for (int k = 0; k < a.length; ++k) {
@@ -661,7 +663,7 @@ public class PWM implements WeightMatrix {
 
 
     /**
-     * @param ci s encoded as colnr of letter
+     * @param s encoded as colnr of letter
      * @param p  position in s
      * @return
      */
@@ -746,13 +748,13 @@ public class PWM implements WeightMatrix {
             System.err.println();
 
             File ff = new File(fileBed + "_sorted");
-            BEDwrapper bedReader = null;
+            BEDReader bedReader = null;
             if (ff.exists()) {
                 System.err.println("\tusing sorted file " + ff.getName());
                 fileBed = ff.getAbsolutePath();
-                bedReader = new BEDwrapper(fileBed);
+                bedReader = new BEDReader(fileBed);
             } else {
-                bedReader = new BEDwrapper(fileBed);
+                bedReader = new BEDReader(fileBed);
                 if (!bedReader.isApplicable()) {
                     System.err.println("\tsorting BED file");
                     File f = new File(fileBed);
@@ -763,7 +765,7 @@ public class PWM implements WeightMatrix {
                         fileBed = f.getAbsolutePath();
                     }
                     System.err.println("\tsorted file in " + fileBed);
-                    bedReader = new BEDwrapper(fileBed);
+                    bedReader = new BEDReader(fileBed);
                 }
             }
 
@@ -795,23 +797,25 @@ public class PWM implements WeightMatrix {
                     ++cntTrpt;
                     Transcript t = genes[i].getTranscripts()[0];
                     
-                    MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                    /*MappingReaderState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
                     BEDobject2[] beds = (BEDobject2[]) state.result;
                     if (beds == null) {
                         continue;
-                    }
+                    }    */
                     String s = t.getSplicedSequence().toUpperCase();
-                    for (int j = 0; j < beds.length; j++) {
+                    //for (int j = 0; j < beds.length; j++) {
+                    for (MSIterator<Mapping> mappingIterator = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());mappingIterator.hasNext();) {
                         // get t-coordinates
-                        int tstart = t.getExonicPosition(beds[j].getStart() + 1),
-                                tend = t.getExonicPosition(beds[j].getEnd());    // t-coordinates, 0-based
+                        Mapping mapping = mappingIterator.next();
+                        int tstart = t.getExonicPosition(mapping.getStart() + 1),
+                                tend = t.getExonicPosition(mapping.getEnd());    // t-coordinates, 0-based
                         if (tstart < 0 || tstart >= s.length()) {
                             continue;
                         }
 
                         // count on subsequence
                         ++cntReads;
-                        boolean sens = beds[j].getStrand() == t.getStrand();
+                        boolean sens = mapping.getStrand() == t.getStrand();
                         int[][] a = sens ? sense : asense;
                         int[][] b = sens ? diSense : diASense;
                         if (sens) {

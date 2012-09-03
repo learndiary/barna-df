@@ -32,7 +32,7 @@ import barna.commons.launcher.Flux;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDReader;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -132,7 +132,7 @@ public class BEDSorterTool implements FluxTool {
 
     @Override
     public Object call() throws Exception {
-        BEDwrapper w= new BEDwrapper(inFile);
+        BEDReader w= new BEDReader(inFile);
         if(getOutFile() != null){
             Log.info("SORT", "Sorting " + getInFile().getAbsolutePath() +" to " + getOutFile().getAbsolutePath());
             Log.progressStart("Sorting " + getInFile().getName());

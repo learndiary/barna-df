@@ -34,9 +34,9 @@ import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
 import barna.commons.log.Log.Level;
 import barna.flux.capacitor.reconstruction.Kernel;
-import barna.io.BufferedIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
@@ -161,9 +161,8 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 			
 		
 		// sort
-		File sortedInput= BEDwrapper.getSortedFile(fileInput, null, 
-				((descriptor!= null&& descriptor.isPaired())?BEDwrapper.COMPARATOR_PAIRED_END:null));
-        sortedInput.deleteOnExit();
+		File sortedInput= new BEDReader(fileInput).getSortedFile(null,    //TODO bad
+                ((descriptor != null && descriptor.isPaired()) ? BEDReader.COMPARATOR_PAIRED_END : null));
 		System.gc();
 		Thread.yield();
 		
@@ -273,7 +272,7 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 
 	int[] getDistances(File f, int[] a) {
 		
-		BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
+		BEDMappingIteratorDisk iter= new BEDMappingIteratorDisk(f);      //
 		BEDobject2 bed1= null, bed2= null;
 		int ctr= 0;
 		boolean pairedEnd= descriptor.isPaired();

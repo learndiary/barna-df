@@ -27,7 +27,14 @@
 
 package barna.io.state;
 
-public class MappingWrapperState {
+import barna.model.Mapping;
+import barna.model.bed.BEDMapping;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+public class MappingReaderState {
 
 	public static final int STATE_OK= 0;
 	
@@ -38,11 +45,11 @@ public class MappingWrapperState {
 	public static final int STATE_CHROMOSOME_NOT_FOUND= 3;
 
 	public long count= 0l;
-	public Object result= null;
+	public ArrayList<BEDMapping> result= null;
 	public byte state= STATE_OK;
 	public String nextChr= null;
 	
-	public MappingWrapperState() {
+	public MappingReaderState() {
 		reset();
 	}
 	

@@ -150,7 +150,7 @@ public class FileHelper {
 		}
 	}
 
-
+    
 
     /**
      * Reads the file until the first new line character appears. This looks for

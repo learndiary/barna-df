@@ -456,7 +456,7 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_HG_SORTED);
         pars.put("MAPPING_FILE", BED_HG_SORTED);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
-        pars.put("READ_DESCRIPTOR", "CASAVA18");
+        pars.put("READ_DESCRIPTOR", "PAIRED");
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 

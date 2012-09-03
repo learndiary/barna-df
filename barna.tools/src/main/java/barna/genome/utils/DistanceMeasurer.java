@@ -27,7 +27,8 @@ package barna.genome.utils;/*
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.io.BufferedIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
 
 import java.io.*;
 
@@ -85,7 +86,7 @@ public class DistanceMeasurer {
 	// pile chr pos F/R
 	static long getDistances_copy(File f, int pile, boolean sameStrand, int uDistance, int dDistance, PrintStream ps) {
 		long nrPiles= 0;
-		BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
+		BEDMappingIteratorDisk iter= new BEDMappingIteratorDisk(f);
 		ByteArrayCharSequence cs= null;
 		long t0= System.currentTimeMillis();
 		int ctr= 0;
@@ -157,7 +158,7 @@ public class DistanceMeasurer {
 		
 	}
 
-	static private void getDistances_copy(BufferedIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
+	static private void getDistances_copy(BEDMappingIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
 			boolean forward, int dist, int summand, int factor, PrintStream ps) {
 		
 		while (iter.hasNext()) {
@@ -188,7 +189,7 @@ public class DistanceMeasurer {
 	// pile chr pos F/R
 		static long getDistances(File f, int pile, boolean sameStrand, int distance, PrintStream ps) {
 			long nrPiles= 0;
-			BufferedIteratorDisk iter= new BufferedIteratorDisk(f);
+			BEDMappingIteratorDisk iter= new BEDMappingIteratorDisk(f);
 			ByteArrayCharSequence cs= null;
 			long t0= System.currentTimeMillis();
 			int ctr= 0;
@@ -240,7 +241,7 @@ public class DistanceMeasurer {
 			return nrPiles;
 		}
 
-		static private void getDistances(BufferedIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
+		static private void getDistances(BEDMappingIteratorDisk iter, int pile, ByteArrayCharSequence chr, int pos,
 				boolean forward, int dist, int offset, PrintStream ps) {
 			
 			while (iter.hasNext()) {

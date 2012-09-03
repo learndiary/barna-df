@@ -25,39 +25,46 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io;
+package barna.model.bed;
 
 import barna.commons.ByteArrayCharSequence;
+import org.junit.Test;
 
-import java.util.Iterator;
+import static org.junit.Assert.assertEquals;
 
-/**
- * The interface defines methods for marking a position in 
- * the data, to which the iterator subsequently can be 
- * repositioned.
- * 
- * @author Micha Sammeth (gmicha@gmail.com)
- *
- */
-public interface BufferedIterator extends Iterable<ByteArrayCharSequence>, Iterator<ByteArrayCharSequence>{
 
-	/**
-	 * marks the actual element
-	 */
-	public void mark();
+public class BEDMappingTest {
 	
-	/**
-	 * resets to last marked element (if any)
-	 */
-	public void reset();
+	@Test
+	public void testInit() {
+		String chr= "chrX";
+		int start= 123;
+		int end= 456;
+		String name= "test1";
+		int score= 1;
+		String strand= "-";
+		int thickStart= 0;
+		int thickEnd= 0;
+		String col= "0,0,0";
+		int blockNr= 2;
+		int blockSizes1= 111, blockSizes2= 222;
+		int blockStart1= 0, blockStart2= 111;
+		
+		String bedLine= chr+ "\t"+ start+ "\t"+ end+ "\t"+name+ "\t"+ score+ "\t"+ strand+
+			"\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+ 
+			blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
+		ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
+		BEDMapping bed2= new BEDMapping(bacs);
 
-    /**
-     * reset to the start position
-     */
-    public void setAtStart();
-	
-	/**
-	 * frees resources occupied by the iterator
-	 */
-	public void clear();
+		assertEquals(start, bed2.getStart());
+		assertEquals(end, bed2.getEnd());
+		assertEquals(chr, bed2.getChromosome().toString());
+		assertEquals(score, bed2.getScore());
+		assertEquals((byte) -1, bed2.getStrand());
+		assertEquals(blockNr, bed2.getBlockCount());
+		assertEquals(blockSizes1, bed2.getNextBlockSize());
+		assertEquals(blockStart1, bed2.getNextBlockStart());
+		assertEquals(blockSizes2, bed2.getNextBlockSize());
+		assertEquals(blockStart2, bed2.getNextBlockStart());
+	}
 }

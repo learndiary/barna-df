@@ -28,41 +28,43 @@
 package barna.io;
 
 import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Mapping;
 
+import java.util.Iterator;
 
-public interface MappingWrapper {
+/**
+ * The interface defines methods for marking a position in 
+ * the data, to which the iterator subsequently can be 
+ * repositioned.
+ * 
+ * @author Micha Sammeth (gmicha@gmail.com)
+ *
+ */
+public interface MSIterator<T> extends Iterator<T>, Iterable<T>{
 
 	/**
-	 * Retrieve the number of unique reads in the mapping set.
-	 * @return the number of unique reads
+	 * marks the actual element
 	 */
-	public int getCountReads();
+	public void mark();
 	
 	/**
-	 * Retrieve the number of mappings in the mapping set.
-	 * @return the number of mappings
+	 * resets to last marked element (if any)
 	 */
-	public int getCountMappings();
-	
-	/**
-	 * Retrieve the number of continuous mappings in the mapping set.
-	 * @return the number of continuous mappings
-	 */
-	public int getCountContinuousMappings();
-	
-	/**
-	 * Retrieve the number of split mappings in the mapping set.
-	 * @return the number of split mappings
-	 */
-	public int getCountSplitMappings();
+	public void reset();
 
+    /**
+     * reset to the start position
+     */
+    public void setAtStart();
+	
 	/**
-	 * Checks if a given read descriptor can be applied to
-	 * the data wrapped by the <code>this</code> instance.
-	 * @param descriptor a read descriptor
-	 * @return <code>true</code> if the mappings wrapped by <code>this</code>
-	 * are applicable too the rules of the read descriptor, <code>false</code>
-	 * otherwise 
+	 * frees resources occupied by the iterator
 	 */
-	public boolean isApplicable(UniversalReadDescriptor descriptor);
+	public void clear();
+
+    /**
+     * In case of paired reads retrieve the mate given a <code>Iterator<Mapping></code>
+     * @return the mate
+     */
+    public Iterator<Mapping> getMates(Mapping firstMapping, UniversalReadDescriptor descriptor);
 }
