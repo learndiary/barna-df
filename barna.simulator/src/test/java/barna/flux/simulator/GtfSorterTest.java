@@ -73,7 +73,7 @@ public class GtfSorterTest {
             StringBuffer bb = new StringBuffer();
             String l = null;
             while((l = reader.readLine()) != null){
-                bb.append(l).append("\n");
+                bb.append(l).append(barna.commons.system.OSChecker.NEW_LINE);
                 System.out.println(l);
             }
         }catch (Exception e){
@@ -101,7 +101,7 @@ public class GtfSorterTest {
             StringBuffer bb = new StringBuffer();
             String l = null;
             while((l = reader.readLine()) != null){
-                bb.append(l).append("\n");
+                bb.append(l).append(barna.commons.system.OSChecker.NEW_LINE);
                 System.out.println(l);
             }
         }catch (Exception e){

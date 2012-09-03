@@ -1,5 +1,32 @@
 apply plugin: 'groovy'
 
+def outputName = "flux-capacitor-${version}"
+ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
+ext.testdata_repository = "repo"
+ext.testdata_artifact = "barna/test_data-1.0.zip"
+ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
+
+// add integration tests to source sets
+sourceSets{
+    integrationTest{
+        java {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+        groovy {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+
 dependencies{
     compile project(':barna.commons')
     compile project(':barna.model')
@@ -12,7 +39,30 @@ dependencies{
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
 
-def outputName = "flux-capacitor-${version}"
+task integrationTest(type: Test, dependsOn: "distDir") {
+    description = "Run integration tests"
+    jvmArgs '-Xms128m', '-Xmx1G'
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
+    }
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
+    systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
+    }
+    // set url properties for test data
+    systemProperties["testdata.artifactory"] = testdata_artifactoryUrl
+    systemProperties["testdata.repository"] = testdata_repository
+    systemProperties["testdata.artifact"] = testdata_artifact
+    systemProperties["testdata.target"] = testdata_targetDirectory
+}
+
 ext.distSpec = copySpec {
     from(project.rootDir){
         include 'LICENSE'
@@ -63,8 +113,48 @@ task distZip(type: Zip) {
     with distSpec
 }
 
+
+
+/**
+ * Create aggregated javaDoc from all subprojects
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for all capacitor modules"
+    source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.capacitor"),project(":barna.lpsolver") ].collectAll{p-> p.sourceSets.main.java}
+    destinationDir = file("${buildDir}/docs/flux-capacitor-${version}")
+    configure(options) {
+        windowTitle = 'Flux-Capacitor API Documentation'
+        docTitle = "Flux-Capacitor JavaDoc (${project(':barna.capacitor').version})"
+        links = [ 'http://download.oracle.com/javase/6/docs/api/',
+                'http://download.oracle.com/javaee/6/api/' ]
+    }
+}
+
+task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
+    description = "Zip the aggregated javadoc"
+    classifier = "javadoc"
+    baseName = "flux-capacitor"
+    from("${buildDir}/docs/flux-capacitor-${version}"){
+        if(version =~ /.*SNAPSHOT.*/){
+            into "flux-capacitor-DEVEL"
+        }else{
+            into "flux-capacitor-${version}"
+        }
+    }
+}
+
+
 task dist(dependsOn: ['distTar', 'distZip'])
 
 artifacts{
     archives distTar 
 }
+
+idea{
+    module {
+        //if for some reason you want to add an extra sourceDirs
+        testSourceDirs += file('src/integrationTest/groovy')
+        testSourceDirs += file('src/integrationTest/java')
+    }
+}
+

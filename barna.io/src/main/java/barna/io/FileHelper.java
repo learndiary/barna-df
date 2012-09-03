@@ -151,6 +151,7 @@ public class FileHelper {
 	}
 
     
+
     /**
      * Reads the file until the first new line character appears. This looks for
      * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
@@ -159,10 +160,25 @@ public class FileHelper {
      * @return separator the file separator or empty string
      */
     public static String guessFileSep(File f) {
+        try {
+            return guessFileSep(new FileReader(f));
+        } catch (IOException e) {
+            Log.error("Unable to identify newline character in " + f.getAbsolutePath(), e);
+            throw new RuntimeException("Unable to identify newline character in " + f.getAbsolutePath());
+        }
+    }
+        /**
+        * Reads the file until the first new line character appears. This looks for
+        * Unix (\n) and Windows (\r) separators. If none is found, an empty string is returned.
+        *
+        * @param f the file
+        * @return separator the file separator or empty string
+        */
+    protected static String guessFileSep(Reader f) throws IOException{
         String fileSep = "";
         BufferedReader buffy = null;
         try {
-            buffy = new BufferedReader(new FileReader(f));
+            buffy = new BufferedReader(f);
             char[] b = new char[1];
             while (buffy.read(b) != -1) {
                 if (b[0] == '\n' || b[0] == '\r') {
@@ -181,8 +197,6 @@ public class FileHelper {
                     break;
                 }
             }
-        } catch (IOException e) {
-            Log.error("Unable to identify newline character in " + f.getAbsolutePath(), e);
         } finally {
             if (buffy != null) {
                 try {
@@ -249,7 +263,7 @@ public class FileHelper {
         String l = null;
         StringBuffer b = new StringBuffer();
         while( (l = bufferedReader.readLine()) != null){
-            b.append(l).append("\n");
+            b.append(l).append(barna.commons.system.OSChecker.NEW_LINE);
         }
         return b.toString();
     }
@@ -396,7 +410,7 @@ public class FileHelper {
         String lastNChars = new String(bytearray);
         StringBuffer sb = new StringBuffer(lastNChars);
         lastNChars = sb.reverse().toString();
-        StringTokenizer tokens = new StringTokenizer(lastNChars, "\n");
+        StringTokenizer tokens = new StringTokenizer(lastNChars, barna.commons.system.OSChecker.NEW_LINE);
         while (tokens.hasMoreTokens()) {
             StringBuffer sbLine = new StringBuffer((String) tokens.nextToken());
             lastNlines.add(sbLine.reverse().toString());
@@ -659,9 +673,9 @@ public class FileHelper {
 
     public static boolean copy(File from, File to) {
         try {
-            BufferedReader buffy = new BufferedReader(new FileReader(from));
-            BufferedWriter wright = new BufferedWriter(new FileWriter(to));
-            char[] cbuf = new char[1024];
+            BufferedInputStream buffy = new BufferedInputStream(new FileInputStream(from));
+            BufferedOutputStream wright = new BufferedOutputStream(new FileOutputStream(to));
+            byte[] cbuf = new byte[1024];
             long bytesRead = 0, bytesTotal = from.length();
             int perc = 0;
             for (int c = 0, nb = 0; (nb = buffy.read(cbuf)) >= 0; ++c) {

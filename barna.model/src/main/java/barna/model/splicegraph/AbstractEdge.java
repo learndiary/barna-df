@@ -214,7 +214,14 @@ public abstract class AbstractEdge {
 	 */
 	public abstract boolean isExonic();
 
-	/**
+    /**
+     * Returns whether an all-intronic stretch is represented.
+     * @return <code>true</code> if all parts of this edge are all-intronic,
+     * <code>false</code> otherwise.
+     */
+    public abstract boolean isAllIntronic();
+
+    /**
 	 * Returns super-edges that include <code>this</code> edge.
 	 * @return super-edges that include <code>this</code> edge
 	 */

@@ -85,7 +85,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
      * @param fieldSeparator the field separator
      */
     public UnixStreamSorter(int field, boolean numeric, String fieldSeparator) {
-        this((long) (Runtime.getRuntime().maxMemory() * 0.001), field, numeric, fieldSeparator);
+        this((long) (Runtime.getRuntime().maxMemory() /16), field, numeric, fieldSeparator);
     }
 
     /**
@@ -97,7 +97,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
      * @param fieldSeparator the field separator
      */
     public UnixStreamSorter(boolean silent, int field, boolean numeric, String fieldSeparator) {
-        this((long) (Runtime.getRuntime().maxMemory() * 0.001), silent, field, numeric, fieldSeparator);
+        this((long) (Runtime.getRuntime().maxMemory() /16), silent, field, numeric, fieldSeparator);
     }
 
     /**
@@ -127,9 +127,13 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         if (memoryBound <= 0) {
             throw new IllegalArgumentException("You have to allow memory chunk size > 0");
         }
-        this.memoryBound = memoryBound;
+        this.memoryBound = Math.min((128*1024*1024), Math.max(2*1024*1024, memoryBound));
         this.silent = silent;
         lineComparator = new LineComparator(numeric, fieldSeparator, field);
+    }
+
+    public void setSilent(boolean silent) {
+        this.silent = silent;
     }
 
     public void sort(InputStream input, OutputStream output) throws IOException {
@@ -186,7 +190,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
         }
 
         // make sure in and out are closed
-        output.close();
         input.close();
         if(!silent){
             Log.progressFinish("Done", true);
@@ -206,14 +209,15 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
                     OutputStream out = target;
                     File chunk = null;
                     if(out == null){
-
                         chunk = FileHelper.createTempFile("chunk", ".srt", null);
                         chunk.deleteOnExit();
                         out = new FileOutputStream(chunk);
                     }
                     int lines = mergeFiles(chunks, out, new LineComparator(getLineComparator()), target != null, finalCurrentMerges, numMerges);
                     out.flush();
-                    out.close();
+                    // close the output if it was not passed from the outside
+                    if(target == null)
+                        out.close();
                     return new SorterFile(chunk, lines, chunks);
                 }
             }));
@@ -257,7 +261,11 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
 
         int blocks = (int) ((fileSize / memoryBound) + 1);
         if (!silent) {
-            Log.progressStart("\tdividing input to ~"+blocks + " blocks ");
+            if(fileSize > 0){
+                Log.progressStart("\tDividing input to ~"+blocks + " blocks ");
+            }else{
+                Log.progressStart("\tDividing into blocks of " + ((memoryBound/1024)/1024) + "MB");
+            }
         }
 
         try {
@@ -459,8 +467,6 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             file.getFile().delete();
         }
         writer.flush();
-        writer.close();
-
         return lines;
     }
 

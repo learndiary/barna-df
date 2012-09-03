@@ -23,8 +23,37 @@ REQUIREMENTS
 CHANGES
 ---------------
 
-FluxCapacitor SNAPSHOT
-    - BARNA-149 - Count reads to splice junctions
+FluxCapacitor 1.1
+    * [BARNA-13] - UnixStreamSorter shouldn't close streams
+    * [BARNA-22] - Synchronization between Log.setInteractive() and CommandLine.confirm()
+    * [BARNA-25] - LineComparator Caching
+    * [BARNA-114] - Capacitor stats are not written properly sometimes
+    * [BARNA-119] - Line length is used instead of the mapping length for retrieving coverage stats within the learn() method
+    * [BARNA-131] - Capacitor Tests run into endless runs when GTF reader is not properly initialized (NULL pointer)
+    * [BARNA-190] - FC need full path for output file on command line
+    * [BARNA-194] - Reading gene sequences close to the chromosome border
+    * [BARNA-199] - FC output wrong strand information for countings
+    * [BARNA-200] - The gradle builds fail on windows because we call git directly
+    * [BARNA-207] - FluxCapacitor deletes existing uncompressed BED file
+    * [BARNA-208] - FluxCapacitor does not use sorted file for unsorted input if it already exists
+    * [BARNA-210] - Null pointer exception when calling flux -t {TOOL} with no parameters
+    * [BARNA-211] - LPSolverLoader assumes that libraries in the destination folder are correct, if identical by name
+    * [BARNA-18] - ParameterSchema with multiple Settings instances
+    * [BARNA-68] - Refactor FluxSimulatorSettings.RelativePathParser to a more general class outside of the Simulator settings
+    * [BARNA-87] - Check SyncIOhandler2 for removal
+    * [BARNA-193] - Gene Identifier preserved in GTF wrapper
+    * [BARNA-209] - Move KEEP_SORTED to File parameter
+    * [BARNA-212] - Clean up class GraphLPsolver
+    * [BARNA-214] - Unit test and integration tests do not delete all files
+    * [BARNA-138] - Implement BAM Reader to read BAM files
+
+FluxCapacitor 1.0.2
+    - BARNA-188	Check Capacitor number of reads for transcript
+    - BARNA-186	Update BED wrapper for CASAVA 1.8 read descriptor
+    - BARNA-160	FC should accept multi-split mappings for annotation mapping
+    - BARNA-149 Count reads to splice junctions
+ 	- BARNA-140	Too many open files
+ 	- BARNA-132 Count reads to all-intronic regions
     - BARNA-168 - ByteArrayCharSequence.complement() cannot handle IUPAC ambiguities
 
 FluxCapacitor 1.0.1

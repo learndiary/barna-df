@@ -29,7 +29,7 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
-import barna.io.FileHelper;
+import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
 
@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.EnumSet;
 
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
@@ -50,13 +51,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 		 	ParameterException parseException;
 			UniversalReadDescriptor descriptor;
 			
-			public UniversalReadDescriptorParameter() {				
+			public UniversalReadDescriptorParameter() {
 				super("READ_DESCRIPTOR",
-					  " Expression how to parse the read IDs, or one of the shorthand names ("
-						+ StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',')+ ")",
-					  null,
-					  UniversalReadDescriptor.class,
-					  null);
+                        " Expression how to parse the read IDs, or one of the shorthand names ("
+                                + StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',') + ")",
+                        UniversalReadDescriptor.getDefaultDescriptor(),
+                        UniversalReadDescriptor.class,
+                        null);
 			}
 			
 			public UniversalReadDescriptorParameter(UniversalReadDescriptorParameter anotherURDP) {
@@ -91,7 +92,10 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			}
 
 			protected UniversalReadDescriptor get() {
-				return descriptor;
+                if (descriptor!=null)
+                    return descriptor;
+                else
+                    return this.getDefault();
 			}
 			
 			public Parameter copy() {
@@ -100,6 +104,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				
 				return clone;
 			}
+
+//            public String getValuesString() {
+//                if (descriptor!=null)
+//                    return descriptor.toString();
+//                else
+//                    return this.getDefault().toString();
+//            }
 	 }
 	
 	
@@ -111,22 +122,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 public static enum AnnotationMapping {
 		 PAIRED, STRANDED, SINGLE, COMBINED	    
 	 }
-	 
-	 /**
-	 * Helper class to allow us to parse file names relative to a parent directory
-	 */
-	static class RelativePathParser implements FileNameParser {
-	    /**
-	     * the Parent directory
-	     */
-	    File parentDir = null;
-	
-	    @Override
-	    public File parse(String string) {
-	        return FileHelper.fromRelative(string, parentDir);
-	    }
-	}
-	
+
     /**
      * Helper to parse relative filenames
      */
@@ -195,7 +191,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 if (file == null) {
-                    throw new ParameterException("You have to specify an mapping file");
+                    throw new ParameterException("You have to specify a mapping file");
                 }
                 if (!file.exists()) {
                     throw new ParameterException("The mapping file " + file.getAbsolutePath() 
@@ -359,6 +355,27 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
             }
         });
+
+        public static enum CountElements {SPLICE_JUNCTIONS,INTRONS};
+
+        /**
+         * Parameter for counting reads that falls into specific elements
+         */
+        public static final Parameter<EnumSet<CountElements>> COUNT_ELEMENTS = Parameters.enumSetParameter(
+                "COUNT_ELEMENTS",
+                " Count elements specified in the list",
+                EnumSet.noneOf(CountElements.class),
+                CountElements.class,
+                null);
+
+        /**
+         * Parameter for skipping deconvolution
+         */
+        public static final Parameter<Boolean> NO_DECOMPOSE = Parameters.booleanParameter(
+                "NO_DECOMPOSE",
+                " Avoid running deconvolution step on the dataset",
+                false,
+                null);
 	    
 	    /**
 	     * Load the setting from a file. NOTE that this does not validate the settings!
@@ -376,14 +393,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	        }
 	        InputStream in = null;
 	        try {
-
 	            FluxCapacitorSettings settings = new FluxCapacitorSettings();
-	            relativePathParser.parentDir = f.getParentFile();
+	            relativePathParser.setParentDir(f.getParentFile());
 	            settings.parameterFile = f;
 	            in = new FileInputStream(f);
 	            settings.parse(in);
 	            return settings;
-	        } finally {
+            } finally {
 	            if (in != null) {
 	                try {
 	                    in.close();
@@ -404,9 +420,20 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 
 	     */
-	    public static final Parameter<Boolean> KEEP_SORTED_FILES = Parameters.booleanParameter("KEEP_SORTED_FILES", "Keeps input files ("+ 
-	    		ANNOTATION_FILE.getName()+ ", "+ MAPPING_FILE+ ")", false);
-	    /**
+	    public static final Parameter<File> KEEP_SORTED = Parameters.fileParameter("KEEP_SORTED", "Keeps input files (" +
+                ANNOTATION_FILE.getName() + ", " + MAPPING_FILE + ")", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                if (file != null && !file.getParentFile().exists()) {
+                    throw new ParameterException("Folder for keeping sorted files " + file.getAbsolutePath()
+                            + " could not be found!");
+                }
+            }
+        }, relativePathParser);
+
+
+    /**
 	     * The parameter file
 	     */
 	    private File parameterFile;
@@ -423,6 +450,4 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public int getMaxThreads() {
 	        return 1;
 	    }
-
-
 }

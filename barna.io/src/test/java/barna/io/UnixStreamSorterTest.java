@@ -28,13 +28,12 @@
 package barna.io;
 
 import barna.commons.Execute;
+import barna.commons.system.OSChecker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,17 +47,17 @@ import static junit.framework.Assert.fail;
  */
 public class UnixStreamSorterTest {
     private static final String SIMPLE_INPUT =
-            "C\tY\t2\n" +
-            "B\tZ\t1\n" +
-            "A\tX\t3\n";
+            "C\tY\t2"+OSChecker.NEW_LINE +
+            "B\tZ\t1"+OSChecker.NEW_LINE +
+            "A\tX\t3"+OSChecker.NEW_LINE;
 
     private static final String SIMPLE_INPUT_WITH_NEWLINES =
-            "\n" +
-            "C\tY\t2\n" +
-            "\n" +
-            "B\tZ\t1\n" +
-            "\n" +
-            "A\tX\t3\n";
+            barna.commons.system.OSChecker.NEW_LINE +
+            "C\tY\t2"+OSChecker.NEW_LINE +
+            barna.commons.system.OSChecker.NEW_LINE +
+            "B\tZ\t1"+OSChecker.NEW_LINE +
+            barna.commons.system.OSChecker.NEW_LINE +
+            "A\tX\t3"+OSChecker.NEW_LINE;
 
 
     @Before
@@ -81,9 +80,9 @@ public class UnixStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "A\tX\t3\n"+
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -104,9 +103,9 @@ public class UnixStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "A\tX\t3\n"+
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -125,12 +124,12 @@ public class UnixStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "\n"+
-                    "\n"+
-                    "\n"+
-                    "A\tX\t3\n"+
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"
+                    barna.commons.system.OSChecker.NEW_LINE+
+                    barna.commons.system.OSChecker.NEW_LINE+
+                    barna.commons.system.OSChecker.NEW_LINE+
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -149,9 +148,9 @@ public class UnixStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"+
-                    "A\tX\t3\n"
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE+
+                    "A\tX\t3"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -167,7 +166,7 @@ public class UnixStreamSorterTest {
         List<Double> data = new ArrayList<Double>();
         for (int i = 0; i < 1000; i++) {
             double d = r.nextDouble();
-            bb.append(d).append("\n");
+            bb.append(d).append(barna.commons.system.OSChecker.NEW_LINE);
             data.add(d);
         }
 
@@ -181,7 +180,7 @@ public class UnixStreamSorterTest {
             sorter.sort(in, out);
 
             String outString = new String(out.toByteArray());
-            String[] lines = outString.split("\\n");
+            String[] lines = outString.split("\\"+ OSChecker.NEW_LINE);
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 assertEquals(data.get(i).toString(), line);
@@ -191,5 +190,25 @@ public class UnixStreamSorterTest {
             fail();
         }
     }
+
+    public static void main(String[] args) throws Exception {
+        Execute.initialize(16);
+        UnixStreamSorter sorter = new UnixStreamSorter(-1, false, "\t");
+        sorter.setSilent(false);
+
+//        UnixStreamSorter sorter = new UnixStreamSorter(200*1024*1024, new Comparator<String>(){
+//            @Override
+//            public int compare(String o1, String o2) {
+//                return o1.compareTo(o2);
+//            }
+//        });
+        String input = "/home/thasso/data/simulator/genomes/mm9/mm9.fasta";
+        String output = "/home/thasso/data/simulator/genomes/mm9/mm9.fasta.sorted";
+        long t = System.currentTimeMillis();
+        sorter.sort(new BufferedInputStream(new FileInputStream(input)), new BufferedOutputStream(new FileOutputStream(output)));
+        System.out.println((System.currentTimeMillis()-t)/1000+"s");
+        Execute.shutdown();
+    }
+
 
 }

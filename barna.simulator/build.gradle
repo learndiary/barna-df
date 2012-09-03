@@ -1,5 +1,27 @@
 apply plugin: 'groovy'
 
+def outputName = "flux-simulator-${version}"
+
+// add integration tests to source sets
+sourceSets{
+    integrationTest{
+        java {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+        groovy {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
 dependencies{
     compile "jdbm:jdbm:2.3"
     compile project(":barna.model")
@@ -8,7 +30,28 @@ dependencies{
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
 
-def outputName = "flux-simulator-${version}"
+
+
+task integrationTest(type: Test, dependsOn: "distDir") {
+    test.ext["ignoreFailures"] = true
+    description = "Run integration tests"
+    jvmArgs '-Xms128m', '-Xmx1G'
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
+    }
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
+    systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-simulator"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
+    }
+}
+
 ext.distSpec = copySpec {
     from(project.rootDir){
         include 'LICENSE'
@@ -61,6 +104,46 @@ task distZip(type: Zip) {
 
 task dist(dependsOn: ['distTar', 'distZip'])
 
+
+/**
+ * Create aggregated javaDoc from all subprojects
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for all simulator modules"
+    source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.simulator") ].collectAll{p-> p.sourceSets.main.java}
+    destinationDir = file("${buildDir}/docs/flux-simulator-${version}")
+    configure(options) {
+        windowTitle = 'Flux-Simulator API Documentation'
+        docTitle = "Flux-Simulator JavaDoc (${project(':barna.simulator').version})"
+        links = [ 'http://download.oracle.com/javase/6/docs/api/',
+                'http://download.oracle.com/javaee/6/api/' ]
+    }
+}
+
+task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
+    description = "Zip the aggregated javadoc"
+    classifier = "javadoc"
+    baseName = "flux-simulator"
+    from("${buildDir}/docs/flux-simulator-${version}"){
+        if(version =~ /.*SNAPSHOT.*/){
+            into "flux-simulator-DEVEL"
+        }else{
+            into "flux-simulator-${version}"
+        }
+    }
+}
+
+
+
 artifacts{
     archives distTar 
+}
+
+
+idea{
+    module {
+        //if for some reason you want to add an extra sourceDirs
+        testSourceDirs += file('src/integrationTest/groovy')
+        testSourceDirs += file('src/integrationTest/java')
+    }
 }

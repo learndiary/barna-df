@@ -50,7 +50,7 @@ public class UniversalReadDescriptor {
 			return sb.toString();
 		}
 	}
-	
+
 	public static String TAG_ID= "ID";
 	public static String TAG_PAIR= "MATE"; 
 	public static String TAG_STRAND= "STRAND";
@@ -69,7 +69,7 @@ public class UniversalReadDescriptor {
 	public static char SYMBOL_STAR= '*';
 	public static char SYMBOL_QUESTION= '?';
 
-	public static String 
+	public static String
 		DESCRIPTORID_SIMPLE= "SIMPLE",
         DESCRIPTORID_SENSE= "SENSE",
         DESCRIPTORID_ANTISENSE= "ANTISENSE",
@@ -79,9 +79,12 @@ public class UniversalReadDescriptor {
 		DESCRIPTORID_MATE1_SENSE= "MATE1_SENSE",
 		DESCRIPTORID_MATE2_SENSE= "MATE2_SENSE",
 		DESCRIPTORID_SIMULATOR= "SIMULATOR",
-		DESCRIPTORID_BARNA= "BARNA";
-	
-	static HashMap<String, String> mapSimpleDescriptors= new HashMap<String, String>();
+		DESCRIPTORID_BARNA= "BARNA",
+        DESCRIPTORID_CASAVA18 = "CASAVA18";
+
+    public static String DESCRIPTORID_DEFAULT = DESCRIPTORID_SIMPLE;
+
+    static HashMap<String, String> mapSimpleDescriptors= new HashMap<String, String>();
 	static {
 		mapSimpleDescriptors.put(DESCRIPTORID_SIMPLE, 
 				SYMBOL_TAG_LEFT+ 
@@ -141,7 +144,11 @@ public class UniversalReadDescriptor {
 				SYMBOL_SET_LEFT+ "S,A"+ SYMBOL_SET_RIGHT+
 				"/"+
 				SYMBOL_TAG_LEFT+ TAG_PAIR+ SYMBOL_TAG_RIGHT+
-				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);	
+				SYMBOL_SET_LEFT+ "1,2"+ SYMBOL_SET_RIGHT);
+        mapSimpleDescriptors.put(DESCRIPTORID_CASAVA18,
+                SYMBOL_TAG_LEFT+ TAG_ID+ SYMBOL_TAG_RIGHT+
+                        " "+
+                        SYMBOL_TAG_LEFT+ TAG_PAIR + SYMBOL_TAG_RIGHT);
 	}
 //	static {
 //		mapSimpleDescriptors.put(DESCRIPTORID_SIMPLE, "#");
@@ -160,6 +167,12 @@ public class UniversalReadDescriptor {
 	public static HashMap<String, String> getMapSimpleDescriptors() {
 		return mapSimpleDescriptors;
 	}
+
+    public static UniversalReadDescriptor getDefaultDescriptor() {
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(mapSimpleDescriptors.get(DESCRIPTORID_DEFAULT));
+        return d;
+    }
 
 
     /**

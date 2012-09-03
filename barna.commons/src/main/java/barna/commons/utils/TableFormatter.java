@@ -27,6 +27,8 @@
 
 package barna.commons.utils;
 
+import barna.commons.system.OSChecker;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -130,7 +132,7 @@ public class TableFormatter {
                 }
                 s.append(CHAR_SPACE);
             }
-            s.append("\n");
+            s.append(OSChecker.NEW_LINE);
             if (i == 0 && header) {
                 for (int j = 0; j < max.length; j++) {
                     for (int m = 0; m < max[j] + 1; m++)    // +1 for spacer
@@ -138,7 +140,7 @@ public class TableFormatter {
                         s.append(CHAR_HBAR);
                     }
                 }
-                s.append("\n");
+                s.append(OSChecker.NEW_LINE);
             }
         }
         return s.toString();

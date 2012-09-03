@@ -122,7 +122,7 @@ public class TranscriptSequenceRetriever {
 				}
 				sb.deleteCharAt(sb.length()- 1);
 				sb.append("\"; gene_id \"");
-				sb.append(g.trpts[0].getGene().getGeneID());
+				sb.append(g.trpts[0].getGene().getLocusID());
 				sb.append("\";");
 				p.println(sb.toString());
 			}

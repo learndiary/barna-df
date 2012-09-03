@@ -180,7 +180,7 @@ public class UniversalMatrix {
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
-		sb.append("\n");
+		sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 		// anti-sense
 		for (int i = 0; i < asense.length; i++) {
@@ -188,7 +188,7 @@ public class UniversalMatrix {
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
-		sb.append("\n");
+		sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 		// sum
 		for (int i = 0; i < sense.length; i++) {
@@ -196,7 +196,7 @@ public class UniversalMatrix {
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
-		sb.append("\n");
+		sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 		return sb;
 	}
@@ -226,7 +226,7 @@ public class UniversalMatrix {
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
-		sb.append("\n");
+		sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 		// anti-sense
 		for (int i = 0; i < aBins.length; i++) {
@@ -234,7 +234,7 @@ public class UniversalMatrix {
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
-		sb.append("\n");
+		sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 		// sum
 		for (int i = 0; i < sBins.length; i++) {
@@ -242,7 +242,7 @@ public class UniversalMatrix {
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
-		sb.append("\n");
+		sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 		return sb;
 	}

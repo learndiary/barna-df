@@ -135,13 +135,19 @@ public class Transcript extends DirectedRegion {
 		return defaultIDComparator;
 	}
 	/**
-	 * Gives position relative to transcript start (0-based). 
+	 * Gives 0-based position relative to transcript start.
 	 * Negative values indicate position before the transcription start site,
-	 * values >= transcript length positions after the cleavage site.
+     * counted 1-based, i.e., (-3) is 3 positions upstream of the transcript
+     * start site.
+	 * Values >= (transcript length) are positions after the cleavage site,
+     * also counted 1based, i.e., the distance to the cleavage site can
+     * by reconstructed by (exon pos) - (transcript length).
+     * Consequently, the value of the transcript length is never returned by
+     * the method.
 	 * Integer.MIN_VALUE indicates that the position falls in an intron.
 	 * 
 	 * @param pos genomic position, positive or negative
-	 * @return exonic position, 0-based (110119: confirmed)
+	 * @return transcript-relative position of the genomic location
 	 */
 	public int getExonicPosition(int pos) {
 		
@@ -149,27 +155,23 @@ public class Transcript extends DirectedRegion {
 		if (pos> 0&& !isForward())
 			pos= -pos;
 		
-		// before transcription start
+		// before transcription start, 1-based distance
 		if (pos< exons[0].get5PrimeEdge())
 			return pos- exons[0].get5PrimeEdge();
 		
-		// find containing exon
-		int x;
+		// find containing exon, 0-based coordinates
 		int dist= 0;
-		for (x = 0; x < exons.length; x++) {
+		for (int x = 0; x < exons.length; x++) {
 			if (exons[x].get5PrimeEdge()> pos) 
 				return Integer.MIN_VALUE;	// pos was in preceeding intron
 			if (exons[x].contains(pos))
-				break;
+                return dist+ (pos- exons[x].get5PrimeEdge());
 			else
 				dist+= exons[x].getLength();
 		}
 	
-		// not in exons
-		if (x== exons.length)
-			return dist+ (pos- exons[exons.length- 1].get3PrimeEdge());
-		
-		return dist+ (pos- exons[x].get5PrimeEdge());	// not +1, for 0-based coord
+		// after transcript end, 1-based distance
+		return dist+ (pos- exons[exons.length- 1].get3PrimeEdge());
 	}
 
 	/**
