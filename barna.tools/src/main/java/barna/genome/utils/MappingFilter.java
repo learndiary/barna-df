@@ -30,9 +30,9 @@ import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
-import barna.io.BufferedIteratorDisk;
+import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.bed.BEDReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
@@ -112,8 +112,8 @@ public class MappingFilter implements FluxTool<Void> {
 		
 		// sort
 		File sortedInput= fileIn;
-		sortedInput= BEDwrapper.getSortedFile(fileIn, null, 
-				((descriptor!= null&& descriptor.isPaired())?BEDwrapper.COMPARATOR_PAIRED_END:null));
+		sortedInput= new BEDReader(fileIn).getSortedFile(null,
+                ((descriptor != null && descriptor.isPaired()) ? BEDReader.COMPARATOR_PAIRED_END : null));
 
 		// doit
 		filter(sortedInput, fileOut);
@@ -126,7 +126,7 @@ public class MappingFilter implements FluxTool<Void> {
 	protected void filter(File sortedInput, File fileOut) {
 		
 		try {
-			BufferedIteratorDisk iter= new BufferedIteratorDisk(sortedInput);
+			BEDMappingIteratorDisk iter= new BEDMappingIteratorDisk(sortedInput);
 			BufferedWriter writer= new BufferedWriter(new FileWriter(fileOut));
 
 			BEDobject2 bed1, bed2, bedLeft, bedRight; 
@@ -159,7 +159,7 @@ public class MappingFilter implements FluxTool<Void> {
 					Iterator<ByteArrayCharSequence> iter2= map.iterator();
 					while(iter2.hasNext()) {
 						writer.write(iter2.next().toCharArray());
-						writer.write("\n");
+						writer.write(barna.commons.system.OSChecker.NEW_LINE);
 					}
 					writer.flush();
 					map.clear();
@@ -186,7 +186,7 @@ public class MappingFilter implements FluxTool<Void> {
 					if (dist> insertMin&& dist< insertMax) {
 						if (!written1) {
 							writer.write(bed1.toCharArray());
-							writer.write("\n");
+							writer.write(barna.commons.system.OSChecker.NEW_LINE);
 							written1= true;
 						}
 						// don't break for + --> - - constellation
@@ -203,7 +203,7 @@ public class MappingFilter implements FluxTool<Void> {
 			Iterator<ByteArrayCharSequence> iter2= map.iterator();
 			while(iter2.hasNext()) {
 				writer.write(iter2.next().toCharArray());
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			map.clear();

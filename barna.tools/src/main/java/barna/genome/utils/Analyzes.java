@@ -107,7 +107,7 @@ public class Analyzes {
 						sb.append("\t");
 						sb.append(v.elementAt(x)[i-1][j-1]);
 					}
-					sb.append("\n");
+					sb.append(barna.commons.system.OSChecker.NEW_LINE);
 					writer.write(sb.toString());
 				}
 				writer.flush();
@@ -175,7 +175,7 @@ public class Analyzes {
 				StringBuilder sb= new StringBuilder(idv.elementAt(x));
 				sb.append("\t");
 				sb.append(v.getValue(x));
-				sb.append("\n");
+				sb.append(barna.commons.system.OSChecker.NEW_LINE);
 				writer.write(sb.toString());
 			}
 			writer.flush();
@@ -244,7 +244,7 @@ public class Analyzes {
 						sb.append("\t");
 						sb.append(v.elementAt(x)[i-1][j-1]);
 					}
-					sb.append("\n");
+					sb.append(barna.commons.system.OSChecker.NEW_LINE);
 					writer.write(sb.toString());
 				}
 				writer.flush();

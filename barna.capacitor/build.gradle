@@ -1,5 +1,32 @@
 apply plugin: 'groovy'
 
+def outputName = "flux-capacitor-${version}"
+ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
+ext.testdata_repository = "repo"
+ext.testdata_artifact = "barna/test_data-1.0.zip"
+ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
+
+// add integration tests to source sets
+sourceSets{
+    integrationTest{
+        java {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+        groovy {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+
+    }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+
 dependencies{
     compile project(':barna.commons')
     compile project(':barna.model')
@@ -12,7 +39,30 @@ dependencies{
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
 }
 
-def outputName = "flux-capacitor-${version}"
+task integrationTest(type: Test, dependsOn: "distDir") {
+    description = "Run integration tests"
+    jvmArgs '-Xms128m', '-Xmx1G'
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
+    }
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
+    systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
+    }
+    // set url properties for test data
+    systemProperties["testdata.artifactory"] = testdata_artifactoryUrl
+    systemProperties["testdata.repository"] = testdata_repository
+    systemProperties["testdata.artifact"] = testdata_artifact
+    systemProperties["testdata.target"] = testdata_targetDirectory
+}
+
 ext.distSpec = copySpec {
     from(project.rootDir){
         include 'LICENSE'
@@ -99,3 +149,12 @@ task dist(dependsOn: ['distTar', 'distZip'])
 artifacts{
     archives distTar 
 }
+
+idea{
+    module {
+        //if for some reason you want to add an extra sourceDirs
+        testSourceDirs += file('src/integrationTest/groovy')
+        testSourceDirs += file('src/integrationTest/java')
+    }
+}
+

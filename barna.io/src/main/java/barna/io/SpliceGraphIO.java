@@ -76,32 +76,32 @@ public class SpliceGraphIO {
     public void outputStats(Writer writer) {
         BufferedWriter buffy= new BufferedWriter(writer);
         try {
-            buffy.write("# started\t"+new Date(System.currentTimeMillis())+"\n");
-            buffy.write("# input\t"+inputFile.getAbsolutePath()+"\n");
+            buffy.write("# started\t"+new Date(System.currentTimeMillis())+barna.commons.system.OSChecker.NEW_LINE);
+            buffy.write("# input\t"+inputFile.getAbsolutePath()+barna.commons.system.OSChecker.NEW_LINE);
             buffy.write("# output");
             if (!SplicingGraph.writeStdOut)
-                buffy.write("\t"+outputFname+"\n");
+                buffy.write("\t"+outputFname+barna.commons.system.OSChecker.NEW_LINE);
             else
                 buffy.write("\tstdout\n");
             if (barna.model.Graph.overrideSequenceDirPath== null) {
                 if (DEBUG)
-                    buffy.write("# genome\t"+ SplicingGraph.EventExtractorThread.species+"\n");
+                    buffy.write("# genome\t"+ SplicingGraph.EventExtractorThread.species+barna.commons.system.OSChecker.NEW_LINE);
             } else
-                buffy.write("# genome\t"+ barna.model.Graph.overrideSequenceDirPath+"\n");
-            buffy.write("# dimension\t"+ SplicingGraph.EventExtractorThread.n+"\n");
-            buffy.write("# internalOnly\t"+ SplicingGraph.onlyInternal +"\n");
-            //buffy.write("# canonicalSS "+canonicalSS+"\n");
-            //buffy.write("# acceptableIntrons "+acceptableIntrons+"\n");
+                buffy.write("# genome\t"+ barna.model.Graph.overrideSequenceDirPath+barna.commons.system.OSChecker.NEW_LINE);
+            buffy.write("# dimension\t"+ SplicingGraph.EventExtractorThread.n+barna.commons.system.OSChecker.NEW_LINE);
+            buffy.write("# internalOnly\t"+ SplicingGraph.onlyInternal +barna.commons.system.OSChecker.NEW_LINE);
+            //buffy.write("# canonicalSS "+canonicalSS+barna.commons.system.OSChecker.NEW_LINE);
+            //buffy.write("# acceptableIntrons "+acceptableIntrons+barna.commons.system.OSChecker.NEW_LINE);
             if (SplicingGraph.acceptableIntrons)
-                buffy.write("# intronConfidenceLevel "+SplicingGraph.intronConfidenceLevel+"\n");
+                buffy.write("# intronConfidenceLevel "+SplicingGraph.intronConfidenceLevel+barna.commons.system.OSChecker.NEW_LINE);
             if (!SplicingGraph.onlyInternal)
-                buffy.write("# edgeConfidenceLevel "+ Transcript.getEdgeConfidenceLevel()+"\n");
+                buffy.write("# edgeConfidenceLevel "+ Transcript.getEdgeConfidenceLevel()+barna.commons.system.OSChecker.NEW_LINE);
             buffy.write("# as_events\t");
             if (SplicingGraph.retrieveASEvents)
                 buffy.write("true");
             else
                 buffy.write("false");
-            buffy.write("\n");
+            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
             if (SplicingGraph.retrieveDSEvents) {
                 buffy.write("# ds_events\t");
                 if (SplicingGraph.retrieveDSEvents)
@@ -109,15 +109,15 @@ public class SpliceGraphIO {
                 else
                     buffy.write("false");
             }
-            buffy.write("\n");
+            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
             buffy.write("# vs_events\t");
             if (SplicingGraph.retrieveVSEvents)
                 buffy.write("true");
             else
                 buffy.write("false");
-            buffy.write("\n");
+            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
 
-            buffy.write("\n");
+            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
             buffy.flush();
 
         } catch (Exception e) {
@@ -147,26 +147,26 @@ public class SpliceGraphIO {
                         "at http://mblab.wustl.edu/GTF2.html.\n"+
                         "There may also be CDS features, but they become only interesting when checking for additional things " +
                         "as NMD probability etc.."+
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-o, --output <output file|\'stdout\'>");
                 System.err.println("Optional, the name of the output file (fully qualified path) OR the keyword \'stdout\' for " +
                         "writing everything to the standard output stream. " +
                         "If nothing is specified, the output will be written to a file \'<input file>_astalavista.gtf.gz\'. " +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-g, --genome <path to directory>");
                 System.err.println("Path to the directory containing sequence files corresponding to the <seqname> field " +
                         "in the input GTF. A genome directory is required if a intron confidence value is specified." +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-k, --dimension <int value>");
                 System.err.println("Dimension >1 of the events to be extracted. Default is 2 (i.e., \'pairwise events\'). " +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-tmp");
                 System.err.println("Set temporary directory" +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-ext, +ext");
                 System.err.println("(De-)activate external events, i.e. events that include the transcript start or the " +
                         "poly-adenylation site" +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-ic, --intronConfidence [int value]");
                 System.err.println("Level of intron confidence. The default is to trust all introns. Introns are assigned " +
                         "a confidency class:\n" +
@@ -175,21 +175,21 @@ public class SpliceGraphIO {
                         "\t 2 if 'EST' appears in the source field of the annotation\n" +
                         "\t 3 if if none of the above applies\n" +
                         "all introns of confidency level > intronConfidence will be checked for proper splice sites when extracting events." +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-as, +as");
                 System.err.println("Deactivate (\'-as\') or activate (\'+as\') the retrieval of Alternative Splicing events. See documentation " +
                         "for the definition of events that suffice an alternative splicing event." +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-ds, +ds");
                 System.err.println("Deactivate (\'-ds\') or activate (\'+ds\') the retrieval of aDditional splicing events. See documentation " +
                         "for the definition of events that suffice an additional splicing event." +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("-s, --seqsite");
                 System.err.println("Output splice site sequences with events. Requires a reference genome."+
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("--flankType");
                 System.err.println("Output the type of the event flanks, i.e., \'constitutive\' or \'alternative\'."+
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
 
                 // reactivated on 20100112
                 System.err.println("-ec, --edgeConfidence [int value]");
@@ -202,7 +202,7 @@ public class SpliceGraphIO {
                         "\t 3 if if none of the above applies\n" +
                         "all transcript edges of confidency level > edgeConfidence will be extended in case the annotation shows " +
                         "another exon with the same adjacent splice site and an earlier/later start/end." +
-                        "\n");
+                        barna.commons.system.OSChecker.NEW_LINE);
                 System.err.println("AStalavista.");
                 System.exit(0);
             }

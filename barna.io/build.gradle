@@ -1,5 +1,4 @@
 dependencies{
     compile project(":barna.commons")
     compile project(":barna.model")
-    compile 'net.sf.samtools:samtools:1.67'
 }

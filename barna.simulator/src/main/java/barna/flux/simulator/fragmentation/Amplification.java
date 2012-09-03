@@ -265,7 +265,7 @@ public class Amplification implements FragmentProcessor{
             b.append("\t\tMean: " + mean+" \n");
             b.append("\t\tStandard Deviation: " + sigma+" \n");
         }
-        b.append("\n");
+        b.append(barna.commons.system.OSChecker.NEW_LINE);
         return b.toString();
     }
 

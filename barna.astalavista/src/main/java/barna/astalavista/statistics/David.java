@@ -101,7 +101,7 @@ public class David extends Thread {
 					if (i< attrIDs.length-1)
 						buffy.write(tabStr);
 				}
-				buffy.write("\n");
+				buffy.write(barna.commons.system.OSChecker.NEW_LINE);
 				
 				buffy.flush();
 				buffy.close();
@@ -257,8 +257,8 @@ public class David extends Thread {
 			if (twotail > 1)
 				twotail = 1;
 			if (console)
-				System.out.println("\n" + " TABLE = [ " + n11 + " , " + n12 + " , "
-						+ n21 + " , " + n22 + " ]" + "\n" + "Left   : p-value = "
+				System.out.println(barna.commons.system.OSChecker.NEW_LINE + " TABLE = [ " + n11 + " , " + n12 + " , "
+						+ n21 + " , " + n22 + " ]" + barna.commons.system.OSChecker.NEW_LINE + "Left   : p-value = "
 						+ left + "\nRight  : p-value = " + right
 						+ "\n2-Tail : p-value = " + twotail
 						+ "\n------------------------------------------");
@@ -628,7 +628,7 @@ public class David extends Thread {
 					+category+"\t"+term+"\t"+
 				call+"\t"+upos+"\t"+uall+"\t"+bpos+"\t"+ball+"\t"+
 				formatDouble(getPValCUB())+"\t"+formatDouble(getPValUB())+"\t"+formatDouble(getPValCU())+"\t"+
-				(cpos*100f/uall)+"\t"+(((float) cpos*ball)/(uall*bpos))+"\t"+(upos*100f/uall)+"\t"+(((float)upos*ball)/(uall*bpos))+"\n";
+				(cpos*100f/uall)+"\t"+(((float) cpos*ball)/(uall*bpos))+"\t"+(upos*100f/uall)+"\t"+(((float)upos*ball)/(uall*bpos))+barna.commons.system.OSChecker.NEW_LINE;
 			return s;
 		}
 
@@ -1466,7 +1466,7 @@ public class David extends Thread {
 				writer.write("\t");
 				s= Integer.toString(mapCountBg.get(s));
 				writer.write(s);
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();
@@ -1656,7 +1656,7 @@ public class David extends Thread {
 				writer.write("\t");
 				s= Integer.toString(mapCountBg.get(s));
 				writer.write(s);
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();

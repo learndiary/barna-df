@@ -201,15 +201,15 @@ public class LParser {
 			for (int i = 0; i < m.length; i++) {
 				for (int j = 1; j < m[i].length; j++) 
 					sb.append(Double.toString(m[i][j])+ "\t");
-				sb.append(m[i][0]+ "\n");
+				sb.append(m[i][0]+ barna.commons.system.OSChecker.NEW_LINE);
 			}
-			sb.append("\n");
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 			
 			sb.append("Values:\n");
-			sb.append("OF\t"+vals[0]+"\n");
+			sb.append("OF\t"+vals[0]+barna.commons.system.OSChecker.NEW_LINE);
 			for (int i = 1; i < vals.length; i++) 
-				sb.append("C"+ i+ "\t"+ vals[i]+ "\n");
-			sb.append("\n");
+				sb.append("C"+ i+ "\t"+ vals[i]+ barna.commons.system.OSChecker.NEW_LINE);
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 			sb.append("Key:\n");
 			Iterator iter= mapConstraints.keySet().iterator();
@@ -229,14 +229,14 @@ public class LParser {
 				sb.append(id+ "\t");
 				for (int i = 0; i < cc.length; i++) 
 					sb.append("C"+ cc[i]+ " ");
-				sb.append("\n");
+				sb.append(barna.commons.system.OSChecker.NEW_LINE);
 			}
-			sb.append("\n");
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 
 			sb.append("Coordinates:\n");
 			for (int i = 0; i < coords.length; i++) 
-				sb.append(coords[i]+ "\t"+ types[i]+ "\n");
-			sb.append("\n");
+				sb.append(coords[i]+ "\t"+ types[i]+ barna.commons.system.OSChecker.NEW_LINE);
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 			
 			return sb.toString();
 		}

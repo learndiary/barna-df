@@ -105,7 +105,7 @@ public class SequenceRetriever {
 				p.println(">"+ ss[0]+ ":"+ ss[3]+ "-"+ ss[4]+ ""+ ss[6]);
 				p.println(sb.toString());
 				sb.setLength(0);
-				//p.println(ss[0]+"\t"+ss[3]+"\t"+ss[4]+"\t"+seq.length()+" "+(end- start+ 1)+"\n"+seq);	
+				//p.println(ss[0]+"\t"+ss[3]+"\t"+ss[4]+"\t"+seq.length()+" "+(end- start+ 1)+barna.commons.system.OSChecker.NEW_LINE+seq);
 				//System.currentTimeMillis();
 			}
 			

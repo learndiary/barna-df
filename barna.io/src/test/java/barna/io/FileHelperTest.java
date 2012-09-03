@@ -29,9 +29,11 @@ package barna.io;
 
 import org.junit.Test;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 
 /**
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
@@ -40,17 +42,21 @@ public class FileHelperTest {
 
     @Test
     public void testGuessFileSeparator(){
-        File unixFile = new File(FileHelperTest.class.getResource("/TestFileSepUnix.txt").getFile());
-        File nosepFile = new File(FileHelperTest.class.getResource("/TestFileSepNoSep.txt").getFile());
-        File winFile = new File(FileHelperTest.class.getResource("/TestFileSepWindows.txt").getFile());
+        InputStreamReader unix_nl = new InputStreamReader(new ByteArrayInputStream("I am a line un unix\n".getBytes()));
+        InputStreamReader win_nl = new InputStreamReader(new ByteArrayInputStream("I am a line un unix\r\n".getBytes()));
+        InputStreamReader no_nl = new InputStreamReader(new ByteArrayInputStream("I have no newline".getBytes()));
+        try{
+            String unix = FileHelper.guessFileSep(unix_nl);
+            String win = FileHelper.guessFileSep(win_nl);
+            String no = FileHelper.guessFileSep(no_nl);
 
-        String unix = FileHelper.guessFileSep(unixFile);
-        String win = FileHelper.guessFileSep(winFile);
-        String no = FileHelper.guessFileSep(nosepFile);
-
-        assertEquals("", no);
-        assertEquals("\r\n", win);
-        assertEquals("\n", unix);
+            assertEquals("", no);
+            assertEquals("\r\n", win);
+            assertEquals("\n", unix);
+        }catch (Exception err){
+            err.printStackTrace();
+            fail();
+        }
     }
     @Test
     public void testCountLines(){

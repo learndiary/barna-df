@@ -29,6 +29,8 @@ package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.io.FileHelper;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -41,13 +43,25 @@ import static org.junit.Assert.assertEquals;
 
 public class FragmentDBTest {
 
+    private long lines;
+    private FragmentDB fragmentDB;
+    private File libFile;
+
+    @Before
+    public void setUp() throws Exception{
+        libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
+        lines = FileHelper.countLines(libFile);
+        fragmentDB = new FragmentDB(libFile);
+        fragmentDB.createIndex();
+    }
+
+    @After
+    public void closeDB(){
+        fragmentDB.close();
+    }
+
     @Test
     public void testThatIndexCreationWorks() throws Exception {
-        File libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
-        long lines = FileHelper.countLines(libFile);
-
-        FragmentDB fragmentDB = new FragmentDB(libFile);
-        fragmentDB.createIndex();
         assertEquals(lines, fragmentDB.getNumberOfLines());
         assertEquals(9060, fragmentDB.getNumberOfLines());
         assertEquals(3751, fragmentDB.getNumberOfEntries());
@@ -55,26 +69,30 @@ public class FragmentDBTest {
     }
 
     @Test
-    public void testThatTheIDIteratorHasTheRightSize() throws Exception {
-        File libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
+    public void testIndexEntriesAreCorrect() throws Exception {
+        assertEquals(lines, fragmentDB.getNumberOfLines());
+        assertEquals(9060, fragmentDB.getNumberOfLines());
+        assertEquals(3751, fragmentDB.getNumberOfEntries());
+        assertEquals(14072, fragmentDB.getNumberOfFragments());
+        for (String id : fragmentDB.fragmentIDs()) {
+            for (ByteArrayCharSequence c : fragmentDB.getEntries(id)) {
+                assertEquals(4, c.toString().split("\t").length);
+            }
+        }
+    }
 
-        FragmentDB fragmentDB = new FragmentDB(libFile);
-        fragmentDB.createIndex();
+    @Test
+    public void testThatTheIDIteratorHasTheRightSize() throws Exception {
         long c = 0;
         for (String s : fragmentDB.fragmentIDs()) {
             c++;
         }
 
         assertEquals(3751, c);
-
     }
 
     @Test
     public void testThatAllIteratedEntriesHaveTheSameIDAndTheNumebrOfFragmentsmatches() throws Exception {
-        File libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
-
-        FragmentDB fragmentDB = new FragmentDB(libFile);
-        fragmentDB.createIndex();
         long entryCounter = 0;
         long fragmentCounter = 0;
         for (String id : fragmentDB.fragmentIDs()) {
@@ -92,10 +110,6 @@ public class FragmentDBTest {
     }
     @Test
     public void test_that_the_fragmentsets_are_complete() throws Exception {
-        File libFile = new File(getClass().getResource("/fragmentdb_test.txt").getFile());
-
-        FragmentDB fragmentDB = new FragmentDB(libFile);
-        fragmentDB.createIndex();
 
         BufferedReader libFileReader = null;
         try {

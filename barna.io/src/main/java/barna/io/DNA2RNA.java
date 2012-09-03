@@ -118,7 +118,7 @@ public class DNA2RNA {
 	
 	void write(String s) {
 		try {
-			getBuffy().write(s+ "\n");
+			getBuffy().write(s+ barna.commons.system.OSChecker.NEW_LINE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

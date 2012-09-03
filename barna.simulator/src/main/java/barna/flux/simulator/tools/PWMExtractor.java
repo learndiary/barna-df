@@ -30,13 +30,13 @@ package barna.flux.simulator.tools;
 import barna.commons.Execute;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
-import barna.io.bed.BEDwrapper;
+import barna.io.MSIterator;
+import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.state.MappingWrapperState;
 import barna.model.Gene;
 import barna.model.Graph;
+import barna.model.Mapping;
 import barna.model.Transcript;
-import barna.model.bed.BEDobject2;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -119,13 +119,13 @@ public class PWMExtractor {  //implements FluxTool {
         Log.message("");
 
         File ff = new File(bedFile.getAbsolutePath() + "_sorted");
-        BEDwrapper bedReader = null;
+        BEDReader bedReader = null;
         if (ff.exists()) {
             Log.message("\tusing sorted file " + ff.getName());
             bedFile = ff;
-            bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+            bedReader = new BEDReader(bedFile.getAbsolutePath());
         } else {
-            bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+            bedReader = new BEDReader(bedFile.getAbsolutePath());
             if (!bedReader.isApplicable()) {
                 Log.message("\tsorting BED file");
 
@@ -137,7 +137,7 @@ public class PWMExtractor {  //implements FluxTool {
                     bedFile = f;
                 }
                 Log.message("\tsorted file in " + bedFile.getAbsolutePath());
-                bedReader = new BEDwrapper(bedFile.getAbsolutePath());
+                bedReader = new BEDReader(bedFile.getAbsolutePath());
             }
         }
 
@@ -163,23 +163,25 @@ public class PWMExtractor {  //implements FluxTool {
                 ++cntTrpt;
                 Transcript t = genes[i].getTranscripts()[0];
                 
-                MappingWrapperState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd()); 
+                /*MappingReaderState state= bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());
                 BEDobject2[] beds = (BEDobject2[]) state.result;
                 if (beds == null) {
                     continue;
-                }
+                } */
                 String s = t.getSplicedSequence().toUpperCase();
-                for (int j = 0; j < beds.length; j++) {
+                for (MSIterator<Mapping> mappingIterator = bedReader.read(t.getChromosome(), t.getStart(), t.getEnd());mappingIterator.hasNext();) {
+                //for (int j = 0; j < beds.length; j++) {
                     // get t-coordinates
-                    int tstart = t.getExonicPosition(beds[j].getStart() + 1),
-                            tend = t.getExonicPosition(beds[j].getEnd());    // t-coordinates, 0-based
+                    Mapping mapping = mappingIterator.next();
+                    int tstart = t.getExonicPosition(mapping.getStart() + 1),
+                            tend = t.getExonicPosition(mapping.getEnd());    // t-coordinates, 0-based
                     if (tstart < 0 || tstart >= s.length()) {
                         continue;
                     }
 
                     // count on subsequence
                     ++cntReads;
-                    boolean sens = beds[j].getStrand() == t.getStrand();
+                    boolean sens = mapping.getStrand() == t.getStrand();
                     int[][] a = sens ? sense : asense;
                     if (sens) {
                         for (int k = 0; k < a.length; ++k) {
@@ -243,7 +245,7 @@ public class PWMExtractor {  //implements FluxTool {
         BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
         for (int i = 0; i < sense.length; i++) {
             int pos = (i >= flank5 ? i - flank5 + 1 : i - flank5);
-            writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + "\n");
+            writer.write(pos + "\t" + sense[i][0] + "\t" + sense[i][1] + "\t" + sense[i][2] + "\t" + sense[i][3] + barna.commons.system.OSChecker.NEW_LINE);
         }
         writer.flush();
         writer.close();
@@ -252,7 +254,7 @@ public class PWMExtractor {  //implements FluxTool {
 //        writer= new BufferedWriter(new FileWriter(fileBed+"_asense.pwm"));
 //        for (int i = 0; i < asense.length; i++) {
 //            int pos= (i>= flank5? i- flank5+ 1: i- flank5);
-//            writer.write(pos+ "\t"+ asense[i][0]+ "\t"+ asense[i][1]+ "\t"+ asense[i][2]+ "\t"+ asense[i][3]+ "\n");
+//            writer.write(pos+ "\t"+ asense[i][0]+ "\t"+ asense[i][1]+ "\t"+ asense[i][2]+ "\t"+ asense[i][3]+ barna.commons.system.OSChecker.NEW_LINE);
 //        }
 //        writer.flush();
 //        writer.close();

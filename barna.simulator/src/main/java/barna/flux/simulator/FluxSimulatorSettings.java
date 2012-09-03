@@ -29,6 +29,7 @@ package barna.flux.simulator;
 
 import barna.commons.parameters.*;
 import barna.io.FileHelper;
+import barna.io.RelativePathParser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -299,6 +300,17 @@ public class FluxSimulatorSettings extends ParameterSchema {
             }
         }
     });
+
+    /**
+     * Create unique paired end reads
+     */
+    public static final Parameter<Boolean> UNIQUE_IDS = Parameters.booleanParameter("UNIQUE_IDS",
+                    "If set to TRUE, the simulator will NOT add \n" +
+                    "sense/anti-sense information to paired reads (not A/S is appended to the read ID)\n" +
+                    "in order to create unique ids paired end ids where the only difference\n"+
+                    "is the /1 /2 at the end of the ID. To keep track of orientation, /1 is always\n" +
+                    "used for sens reads, while /2 is always appended to anti-sense reads.", false);
+
     /**
      * Number of RNA molecules initially in the experiment.
      */
@@ -633,11 +645,11 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "Size distribution of fragments after filtering,\n" +
             "either specified by the fully qualified path of a file with an empirical distribution" +
             "where each line represents the length of a read, no ordering required,\n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "or attributes of a gaussian distribution (mean and standard deviation) in the form:\n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "N(mean, sd) \n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "for example: N(800, 200)\n" +
             "If no size distribution is provided, an empirical Illumina fragment size distribution is employed."
     );
@@ -652,7 +664,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<SizeSamplingModes> SIZE_SAMPLING = Parameters.enumParameter("SIZE_SAMPLING",
             "Method for sub-sampling fragments according to the characteristics of (see SIZE_DISTRIBUTION) \n" +
-                    "\n" +
+                    barna.commons.system.OSChecker.NEW_LINE +
                     "MH the Metropolis-Hastings algorithm is used for filtering\n" +
                     "RJ rejection sampling, employing probability directly from the distribution\n" +
                     "AC (acceptance) transforms the probability distribution, s.t. the 'most likely'\n" +
@@ -697,7 +709,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public static final Parameter<String> ERR_FILE = Parameters.stringParameter("ERR_FILE",
             "path to the file with the error model\n" +
-            "\n" +
+            barna.commons.system.OSChecker.NEW_LINE +
             "for the values '35' or '76', default error models are provided for the corresponding read lengths,\n" +
             "otherwise the path to a custom error model file is expected\n", null, new ParameterValidator(){
         @Override
@@ -708,7 +720,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
                 if(!v.equals("35") && !v.equals("76")){
                     // check file
                     if((v.startsWith("/") && !new File(v).canRead())){
-                        throw new ParameterException("Unable to read error model from " + v + "\n" + "Use either the defaults '36' od '76' or specify an error model file");
+                        throw new ParameterException("Unable to read error model from " + v + barna.commons.system.OSChecker.NEW_LINE + "Use either the defaults '36' od '76' or specify an error model file");
                     }
                 }
             }
@@ -735,7 +747,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
         try {
 
             f = new File(f.getCanonicalPath());    // kill Win32ShellFolder instances, they fuck up relative path conversion
-            relativePathParser.parentDir = f.getParentFile();
+            relativePathParser.setParentDir(f.getParentFile());
             FluxSimulatorSettings settings = new FluxSimulatorSettings();
             settings.parameterFile = f;
             in = new FileInputStream(f);
@@ -782,21 +794,6 @@ public class FluxSimulatorSettings extends ParameterSchema {
      */
     public File getParameterFile() {
         return parameterFile;
-    }
-
-    /**
-     * Helper class to allow us to parse file names relative to a parent directory
-     */
-    static class RelativePathParser implements FileNameParser {
-        /**
-         * the Parent directory
-         */
-        File parentDir = null;
-
-        @Override
-        public File parse(String string) {
-            return FileHelper.fromRelative(string, parentDir);
-        }
     }
 
 

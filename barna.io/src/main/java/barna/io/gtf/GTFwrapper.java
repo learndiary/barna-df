@@ -1341,7 +1341,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
                 if (tid== null) {
                     throw new RuntimeException(
                             "I have no transcript ID, and I want to scream!\n" +
-                            line+ "\n"+
+                            line+ barna.commons.system.OSChecker.NEW_LINE+
                             obj.getAttribute(GFFObject.TRANSCRIPT_ID_TAG)
                     );
                 }
@@ -1471,7 +1471,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				for (int j = 0; j < g.getTranscripts().length; j++) {
 					nrExons+= g.getTranscripts()[j].getExons().length;
 //					www.write(g.getTranscripts()[j].getTranscriptID()
-//							+"\t"+g.getTranscripts()[j].getExons().length+ "\n");					
+//							+"\t"+g.getTranscripts()[j].getExons().length+ barna.commons.system.OSChecker.NEW_LINE);
 					if (g.getTranscripts()[j].getExons().length== 0)
 						if (Constants.verboseLevel> Constants.VERBOSE_SHUTUP)
 							System.err.println("[SOS] transcript "
@@ -1695,20 +1695,24 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * written
 	 */
 	public void sort(File targetFile) {
-        if(!silent && stars){
+        if (!silent && stars) {
             Log.progressStart("sorting GTF file");
         }
+        OutputStream oStream = null;
         try {
-			OutputStream oStream= new FileOutputStream(targetFile);
-			sort(oStream);
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
-		} finally {
-	        if(!silent && stars){
-	            Log.progressFinish(StringUtils.OK, true);
-	        }
-		}
-	}
+            oStream = new FileOutputStream(targetFile);
+            sort(oStream);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (!silent && stars) {
+                Log.progressFinish(StringUtils.OK, true);
+            }
+            if (oStream != null) {
+                try {oStream.close();} catch (IOException e) {}
+            }
+        }
+    }
 
 	/**
 	 * Sorts the source data read from <code>inputFile</code>
@@ -1959,8 +1963,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				for (int i = 0; i < fields.length; i++) {
 					if (fields[i]== null) {
                         throw new RuntimeException("I could not find field number "+fieldNrs[i]+" in line " + lineCounter
-                        +"\n"
-                        +"\tline skipped check format of GTF file"+"\n"
+                        +barna.commons.system.OSChecker.NEW_LINE
+                        +"\tline skipped check format of GTF file"+barna.commons.system.OSChecker.NEW_LINE
                         +"\t(first 8 fields and transcript_id in the same column!)");
 					}
 				}

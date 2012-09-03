@@ -166,7 +166,7 @@ public class ProteinAnnotator {
 						obj[i].getAttributes().put(ATTRIBUTE_DOMAIN_EVENT, sb.toString());
 					}
 					writer.write(obj[i].toString());
-					writer.write("\n");
+					writer.write(barna.commons.system.OSChecker.NEW_LINE);
 				}
 			}
 			System.err.println();
@@ -178,7 +178,7 @@ public class ProteinAnnotator {
 		}
 		
 	}
-	
+
 	public static void annotateWithDavid() {
 		File inFile= new File("M:\\work\\claudia\\sarray3\\source\\hg17_RefSeq-UCSC081117_mRNA-UCSC081117_intronEST-UCSC081117_realign_events_loc.gtf"),
 			outFile= new File("M:\\work\\claudia\\sarray3\\source\\hg17_RefSeq-UCSC081117_mRNA-UCSC081117_intronEST-UCSC081117_realign_events_loc_david.gtf"),
@@ -314,7 +314,7 @@ public class ProteinAnnotator {
 					writer.write(sb.toString());
 					++objCtr;
 				}
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 				writer.flush();
 				
 //				if (objCtr> 10)
@@ -373,7 +373,7 @@ public class ProteinAnnotator {
 					}
 					
 					writer.write(obj[i].toString());
-					writer.write("\n");
+					writer.write(barna.commons.system.OSChecker.NEW_LINE);
 					
 //					if (obj[i].getAttributes().size()> 20)
 //						++objCtr;
@@ -471,7 +471,7 @@ public class ProteinAnnotator {
 					if (sb.length()> 1)
 						obj[i].addAttribute(ATTRIBUTE_DOMAIN_TRANSCRIPT, sb.toString());
 					writer.write(obj[i].toString());
-					writer.write("\n");
+					writer.write(barna.commons.system.OSChecker.NEW_LINE);
 				}
 			}
 			System.err.println();

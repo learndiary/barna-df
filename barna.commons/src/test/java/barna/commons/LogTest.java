@@ -37,6 +37,6 @@ public class LogTest {
         Log.setLogLevel(Log.Level.INFO);
         // issue a log message
         Logger.getLogger("MYLOGGER").info("first message");
-        assertEquals("[MYLOGGER] first message\n", out.toString());
+        assertEquals("[MYLOGGER] first message", out.toString().trim());
     }
 }

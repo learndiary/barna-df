@@ -381,7 +381,7 @@ public class AliGraphClosure {
 			for (x= 0; x < clos.seqNbr; x++)
 				System.out.print(clos.succFrontier[nd][x]+ " ");
 
-		System.out.print("\n");
+		System.out.print(barna.commons.system.OSChecker.NEW_LINE);
 
 	}
 
