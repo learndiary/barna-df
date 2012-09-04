@@ -134,7 +134,22 @@ class FluxCapacitorRunner {
             if(executable == null){
                 executable = System.getProperty("dist.exe")
                 if(executable == null){
-                    throw new RuntimeException("No capacitor executable specified")
+                    if(executable == null){
+                        // try to load from properties
+                        def resource = FluxCapacitorRunner.class.getResource("/integration-build.properties")
+                        if(!resource){
+                            throw new RuntimeException("No capacitor executable specified")
+                        }else{
+                            Properties p = new Properties()
+                            p.load(resource.openStream())
+                            executable = p.getProperty("dist.exe", null)
+                            if(executable == null){
+                                throw new RuntimeException("No capacitor executable specified and integration tests properties do not contain a path")
+                            }
+                        }
+                    }
+
+
                 }
             }
         }
