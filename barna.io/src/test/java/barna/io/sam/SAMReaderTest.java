@@ -14,11 +14,10 @@ import static org.junit.Assert.assertEquals;
 
 public class SAMReaderTest {
 	
-	private static File testfile;
+	private File testfile = new File(getClass().getResource("/test.bam").getFile());
 
 	@BeforeClass
 	public static void setUp() {
-		testfile = new File("/home/emilio/fromMicha/test.bam");
         Execute.initialize(4);
 	}
 
@@ -42,8 +41,8 @@ public class SAMReaderTest {
 
         assertEquals(181, c);
         assertEquals("chr22", mapping.getChromosome());
-        assertEquals(24236618, mapping.getStart());
-        assertEquals(24236692, mapping.getEnd());
+        assertEquals(24034554, mapping.getStart());
+        assertEquals(24034629, mapping.getEnd());
 	}
 
 }
