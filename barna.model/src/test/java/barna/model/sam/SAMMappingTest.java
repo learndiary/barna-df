@@ -76,4 +76,14 @@ public class SAMMappingTest {
         mapping = new SAMMapping(r);
         assertEquals(-1, mapping.getStrand());
     }
+
+    @Test
+    public void testSequence() throws Exception {
+        assertEquals("ATAGCTTCAGT", mapping.getSequence());
+    }
+
+    @Test
+    public void testCigar() throws Exception {
+        assertEquals("6M14N5M", mapping.getCigar());
+    }
 }

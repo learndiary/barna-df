@@ -394,8 +394,18 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
 		return parseInt(x, lastBsize);
 	}
-	
-	@Override
+
+    @Override
+    public CharSequence getSequence() {
+        throw new UnsupportedOperationException("BED mappings don't contains read sequence information");
+    }
+
+    @Override
+    public CharSequence getCigar() {
+        throw new UnsupportedOperationException("BED mappings don't contains Cigar information");
+    }
+
+    @Override
 	public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);

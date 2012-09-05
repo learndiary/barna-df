@@ -68,4 +68,16 @@ public interface Mapping {
 	 * @return the size of the next block
 	 */
 	public int getNextBlockSize();
+
+    /**
+     *
+     * @return the mapped read sequence
+     */
+    public CharSequence getSequence();
+
+    /**
+     *
+     * @return the extended Cigar string
+     */
+    public CharSequence getCigar();
 }
