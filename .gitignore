@@ -11,6 +11,5 @@ atlassian-ide-plugin.xml
 **.iws
 out/
 */bin/
-test_data/
-**/test_data/
-**/test_data*.zip*
+**test_data/
+**test_data*.zip*
