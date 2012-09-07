@@ -25,7 +25,18 @@ class FluxSimulatorIntegrationTest {
     public static void setUp(){
         executable = System.getProperty("dist.exe")
         if(executable == null){
-            fail("No simulator executable specified")
+            // try to load from properties
+            def resource = FluxSimulatorIntegrationTest.class.getResource("/integration-build.properties")
+            if(!resource){
+                fail("No simulator executable specified")
+            }else{
+                Properties p = new Properties()
+                p.load(resource.openStream())
+                executable = p.getProperty("dist.exe", null)
+                if(executable == null){
+                    fail("No simulator executable specified and integration tests properties do not contain a path")
+                }
+            }
         }
     }
 

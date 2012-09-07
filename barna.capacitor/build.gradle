@@ -91,7 +91,7 @@ ext.distSpec = copySpec {
     }
 }
 
-task distDir(type: Copy){
+task distDir(type: Copy, dependsOn: ['writeIntegrationTestProperties']){
     description = "Prepare a directory for distribution"
     into "${distsDir}/${outputName}"
     with distSpec
@@ -143,8 +143,49 @@ task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
     }
 }
 
-
 task dist(dependsOn: ['distTar', 'distZip'])
+
+/**
+ * Write a properties file for integration tests
+ */
+task writeIntegrationTestProperties(){
+    ext.bp = file("${sourceSets.test.output.resourcesDir.absolutePath}/integration-build.properties")
+    outputs.file file(bp)
+    ext.props = [:]
+    props["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        props["dist.exe"] = props["dist.exe"] + ".bat"
+    }
+    inputs.properties(props)
+
+    doLast{
+        if(!bp.exists()){
+            bp.getParentFile().mkdirs();
+            bp.createNewFile();
+        }else{
+            // delete old
+            bp.delete()
+            bp.createNewFile();
+        }
+        props.each{k,v->
+            bp.append("${k}=${v}\n")
+        }
+        // hardcoded fix to prepare for IDEA defualt paths
+        def ideaDir = project(":").file("out/test/barna.capacitor/")
+        if(ideaDir.exists()){
+            copy{
+                from bp.parentFile.absolutePath
+                into ideaDir.absolutePath
+                include 'integration-build.properties'
+            }
+        }
+
+    }
+}
 
 artifacts{
     archives distTar 

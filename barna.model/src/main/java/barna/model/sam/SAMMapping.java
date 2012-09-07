@@ -21,7 +21,8 @@ public class SAMMapping implements Mapping{
     private int length;
     private int mappingQuality;
     private byte strandFlag;
-    private String cigarString;
+    private byte[] sequence;
+    private Cigar cigar;
 
     public SAMMapping(SAMRecord r) {
 
@@ -32,9 +33,9 @@ public class SAMMapping implements Mapping{
         length = 0;
         mappingQuality = r.getMappingQuality();
         strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
-        cigarString = r.getCigarString();
-
-        initBlocks(r.getCigar());
+        cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
+        sequence = r.getReadBases();
+        initBlocks();
     }
 
     public SAMMapping(SAMRecord r, String suffix) {
@@ -66,8 +67,7 @@ public class SAMMapping implements Mapping{
     @Override
     public int getLength() {
         if (length == 0) {
-            Cigar c = TextCigarCodec.getSingleton().decode(cigarString);
-            for (CigarElement e : c.getCigarElements()) {
+            for (CigarElement e : cigar.getCigarElements()) {
                 if (e.getOperator().equals(CigarOperator.M)||e.getOperator().equals(CigarOperator.D))
                     length+=e.getLength();
             }
@@ -93,11 +93,11 @@ public class SAMMapping implements Mapping{
         else return -1;
     }
 
-    private void initBlocks(Cigar c) {
+    private void initBlocks() {
         int bStart =0, bLength = 0;
         blocks = new ArrayList<Integer[]>();
         if (blocks.size() == 0) {
-            for (CigarElement e : c.getCigarElements()) {
+            for (CigarElement e : cigar.getCigarElements()) {
                 if (!e.getOperator().equals(CigarOperator.N)) {
                     if (e.getOperator().equals(CigarOperator.M)) {
                         bLength+=e.getLength();
@@ -131,8 +131,18 @@ public class SAMMapping implements Mapping{
         }
     }
 
+    @Override
+    public CharSequence getSequence() {
+        return new String(sequence);
+    }
+
+    @Override
+    public CharSequence getCigar() {
+        return cigar.toString();
+    }
+
     public String getString() {
-        return this.getChromosome()+","+(this.getStrand()>0?"+":"-")+(this.getStart()+1)+","+this.cigarString;
+        return this.getChromosome()+","+(this.getStrand()>0?"+":"-")+(this.getStart()+1)+","+this.cigar.toString();
     }
 
     public static class SAMIdComparator implements Comparator<SAMMapping> {
