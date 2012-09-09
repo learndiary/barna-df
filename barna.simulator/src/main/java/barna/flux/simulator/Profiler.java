@@ -335,7 +335,8 @@ public class Profiler implements Callable<Void> {
                 // generate random permutation of ranks
                 Random r = new Random();
                 for (int i = 0; i < molecules.length; i++) {
-                    molecules[i] = 1 + r.nextInt(molecules.length - 1);
+                    // BARNA-219 added Math.max to work with single molecules
+                    molecules[i] = 1 + r.nextInt(Math.max(1, molecules.length - 1));
                 }
                 /*
                 Expressions
