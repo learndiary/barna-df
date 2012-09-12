@@ -90,10 +90,10 @@ public class GParam {
     float EW = GeneIDconstants.NOVALUE;
 
     /* Detection of PolyPTracts in Acceptors */
-    int PPT=0;
+    static int PPT=0;
 
     /* Detection of BranchPoints in Acceptors */
-    int BP=0;
+    static int BP=0;
 
     /* Detection of recursive splice sites */
     int RSS=0;

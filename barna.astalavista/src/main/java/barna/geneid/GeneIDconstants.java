@@ -12,6 +12,41 @@ import java.text.DecimalFormat;
 public class GeneIDconstants {
 
     /**
+     * Infinity: score functions
+     */
+    public static final double INF= Double.POSITIVE_INFINITY;   // 1.7976931348623157E+308;
+
+    /**
+     * Array range in C: 0..N-1
+     */
+    public static final int COFFSET= 1;
+
+    /**
+     * Forward strand
+     */
+    public static final int FORWARD= 0;
+
+    /**
+     * Reverse strand
+     */
+    public static final int REVERSE= 1;
+
+    /**
+     * Number of different coding frames.
+     */
+    public static final int FRAMES= 3;
+
+    /**
+     * Dictionary definitions (hash)
+     */
+    public static final int MAXTYPE= 50;
+
+    /**
+     * Maximum length for strings (mess)
+     */
+    public static final int MAXSTRING= 600;
+
+    /**
      * Infinity: positions in sequence
      */
     public static final int INFI= Integer.MAX_VALUE; // 2147483647;

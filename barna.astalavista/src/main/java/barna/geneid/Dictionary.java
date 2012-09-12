@@ -18,7 +18,6 @@ public class Dictionary {
 
     /* Dictionary definitions (hash)            */
     public static final int MAXENTRY= 97;
-    public static final int MAXTYPE= 50;
     public static final int MAXINFO= 100;
     public static final int NOTFOUND= -1;
     public static final char UNKNOWNAA= 'X';

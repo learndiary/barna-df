@@ -9,10 +9,10 @@ package barna.geneid;
  */
 public class Site {
     long Position;
-    float Score;
-    float ScoreAccProfile;
-    float ScoreBP;
-    float ScorePPT;
+    double Score;
+    double ScoreAccProfile;
+    double ScoreBP;
+    double ScorePPT;
     int PositionBP;
     int PositionPPT;
     String type;

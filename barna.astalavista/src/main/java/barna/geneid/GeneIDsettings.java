@@ -30,7 +30,8 @@ public class GeneIDsettings {
     int scanORF = 0;
 
     /* Input annotations or homology to protein information/reads to UTR prediction */
-    int EVD = 0, SRP = 0, UTR=0;
+    int EVD = 0, SRP = 0;
+    static int UTR=0;
 
     /* Output formats */
     int GFF = 0, GFF3 = 0, X10 = 0, XML = 0, cDNA = 0, PSEQ = 0, tDNA = 0;
