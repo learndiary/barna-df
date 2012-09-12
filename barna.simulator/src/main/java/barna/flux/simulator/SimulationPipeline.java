@@ -317,13 +317,13 @@ public class SimulationPipeline implements FluxTool<Void> {
         if (getFile() == null) {
             Log.error("");
             Log.error("No parameter file specified !");
-            Log.error("\n");
+            Log.error(barna.commons.system.OSChecker.NEW_LINE);
             return false;
         }
         if (!getFile().canRead()) {
             Log.error("");
             Log.error("Parameter file " + getFile().getAbsolutePath() + " does not exist or I can not read it!");
-            Log.error("\n");
+            Log.error(barna.commons.system.OSChecker.NEW_LINE);
             return false;
         }
 

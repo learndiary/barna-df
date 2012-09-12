@@ -126,7 +126,7 @@ public class BinVector {
 			sb.append(ax[i]);
 			sb.append("\t");
 			sb.append(ay[i]);
-			sb.append("\n");
+			sb.append(barna.commons.system.OSChecker.NEW_LINE);
 		}
 		
 		return sb.toString();

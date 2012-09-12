@@ -1,10 +1,10 @@
 package barna.model.bed;
 
-import java.util.Comparator;
-
 import barna.commons.ByteArrayCharSequence;
 import barna.model.Graph;
 import barna.model.Mapping;
+
+import java.util.Comparator;
 
 public class BEDMapping extends ByteArrayCharSequence implements Mapping {
 
@@ -130,8 +130,7 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	public boolean isInited() {
 		return (bedStart>= 0&& bedEnd>= 0&& chrP2>= 0&& nameP1>= 0&& nameP2>= 0);
 	}
-	
-	@Override
+
 	public void setChromosome(CharSequence chr) {
 		if (end== start) {
 			assert(end== start);
@@ -154,7 +153,6 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	 * Sets the &quot;start&quot;field of the bed object.<br>
 	 * @param x new start position
 	 */
-	@Override
 	public void setStart(int x) {
 		bedStart= x;
 		if (countTokens()< 2) {
@@ -178,7 +176,6 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	 * a BED string.
 	 * @param x new end position
 	 */
-	@Override
 	public void setEnd(int x) {
 		bedEnd= x;
 		if (countTokens()< 3) {
@@ -198,7 +195,6 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	}
 	
 	// optional fields
-	@Override
 	public void setName(CharSequence name) {
 		if (cnt== 2&& p2== end) {
 			assert(nameP1< 0|| nameP2< 0);
@@ -219,7 +215,6 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
 	}
 	
-	@Override
 	public void setScore(int score) {
 		this.score= score;
 		if (cnt== 3&& p2== end) {
@@ -241,7 +236,6 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
 	}
 	
-	@Override
 	public void setStrand(byte strand) {
 		this.strand= strand;
 		byte strandByte= strand== 1? BYTE_PLUS: (strand== -1? BYTE_MINUS: BYTE_DOT);
@@ -311,7 +305,6 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
 	}
 
-	@Override
 	public void setBlockCount(int count) {
 		this.blockCount= (byte) count;
 		if (cnt< 3&& nameP1>= 0&& nameP2>= 0) {
@@ -345,8 +338,7 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 			p1= p2= end;	// empty fields
 		}
 	}
-	
-	@Override
+
 	public void setNextBlockSize(int x) {
 		if (blockSizeP1< 0|| blockSizeP2< 0) 
 			forceBlocksField();
@@ -368,8 +360,7 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		blockSizeP1= p1;
 		blockSizeP2= p2;
 	}
-	
-	@Override
+
 	public void setNextBlockStart(int x) {
 		if (blockSizeP1< 0|| blockSizeP2< 0) 
 			forceBlocksField();
@@ -403,8 +394,18 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
 		return parseInt(x, lastBsize);
 	}
-	
-	@Override
+
+    @Override
+    public CharSequence getSequence() {
+        throw new UnsupportedOperationException("BED mappings don't contains read sequence information");
+    }
+
+    @Override
+    public CharSequence getCigar() {
+        throw new UnsupportedOperationException("BED mappings don't contains Cigar information");
+    }
+
+    @Override
 	public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);
@@ -541,5 +542,4 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	public void setNext(BEDMapping next) {
 		this.next = next;
 	}
-
 }

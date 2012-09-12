@@ -28,6 +28,7 @@
 package barna.commons.io;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.system.OSChecker;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -175,7 +176,7 @@ class SimpleIOHandler implements IOHandler {
         }
 
         outputStream.write(cs.chars, 0, cs.length());
-        outputStream.write(BYTE_NL);
+        outputStream.write(OSChecker.NEW_LINE.getBytes());
     }
 
     public void writeLine(Object object, OutputStream out) throws IOException {

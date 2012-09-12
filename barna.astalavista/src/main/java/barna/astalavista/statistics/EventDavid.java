@@ -122,7 +122,7 @@ public class EventDavid extends Thread {
 					if (i< attrIDs.length-1)
 						buffy.write(tabStr);
 				}
-				buffy.write("\n");
+				buffy.write(barna.commons.system.OSChecker.NEW_LINE);
 				
 				buffy.flush();
 				buffy.close();
@@ -278,8 +278,8 @@ public class EventDavid extends Thread {
 			if (twotail > 1)
 				twotail = 1;
 			if (console)
-				System.out.println("\n" + " TABLE = [ " + n11 + " , " + n12 + " , "
-						+ n21 + " , " + n22 + " ]" + "\n" + "Left   : p-value = "
+				System.out.println(barna.commons.system.OSChecker.NEW_LINE + " TABLE = [ " + n11 + " , " + n12 + " , "
+						+ n21 + " , " + n22 + " ]" + barna.commons.system.OSChecker.NEW_LINE + "Left   : p-value = "
 						+ left + "\nRight  : p-value = " + right
 						+ "\n2-Tail : p-value = " + twotail
 						+ "\n------------------------------------------");
@@ -701,7 +701,7 @@ public class EventDavid extends Thread {
 				
 				/*formatDouble(getPValCUB())+"\t"+formatDouble(getPValUB())+"\t"+formatDouble(getPValCU())+"\t"+
 				(cpos*100f/uall)+"\t"+(((float) cpos*ball)/(uall*bpos))+"\t"+(upos*100f/uall)+"\t"+(((float)upos*ball)/(uall*bpos))*/
-				+"\n";
+				+barna.commons.system.OSChecker.NEW_LINE;
 			return s;
 		}
 
@@ -1331,7 +1331,7 @@ public class EventDavid extends Thread {
 					sb.append("\t");
 				}
 				sb.deleteCharAt(sb.length()- 1);
-				sb.append("\n");
+				sb.append(barna.commons.system.OSChecker.NEW_LINE);
 				writer.write(sb.toString());
 			}
 			writer.flush();
@@ -1828,7 +1828,7 @@ public class EventDavid extends Thread {
 				writer.write("\t");
 				s= Integer.toString(mapCountBg.get(s));
 				writer.write(s);
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();
@@ -2018,7 +2018,7 @@ public class EventDavid extends Thread {
 				writer.write("\t");
 				s= Integer.toString(mapCountBg.get(s));
 				writer.write(s);
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();
@@ -2390,7 +2390,7 @@ public class EventDavid extends Thread {
 			for (int j = 0; j < o.length; j++) {
 				sb.append(o[j]);
 				if (j< o.length-1)
-					sb.append("\n");
+					sb.append(barna.commons.system.OSChecker.NEW_LINE);
 			}
 
 			clusters[i].geneTerms= sb.toString();
@@ -2615,7 +2615,7 @@ public class EventDavid extends Thread {
 				writer.write("\t");
 				s= Integer.toString(mapCountBg.get(s));
 				writer.write(s);
-				writer.write("\n");
+				writer.write(barna.commons.system.OSChecker.NEW_LINE);
 			}
 			writer.flush();
 			writer.close();

@@ -182,10 +182,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
     @Override
     public String getConfiguration() {
         StringBuffer b = new StringBuffer();
-        b.append("\t\t").append("Mode: ").append(mode).append("\n");
-        b.append("\t\t").append("PWM: ").append(pwmFile == null ? "No" : pwmFile.getName()).append("\n");
-        b.append("\t\t").append("RT MIN: ").append(rtMin).append("\n");
-        b.append("\t\t").append("RT MAX: ").append(rtMax).append("\n");
+        b.append("\t\t").append("Mode: ").append(mode).append(barna.commons.system.OSChecker.NEW_LINE);
+        b.append("\t\t").append("PWM: ").append(pwmFile == null ? "No" : pwmFile.getName()).append(barna.commons.system.OSChecker.NEW_LINE);
+        b.append("\t\t").append("RT MIN: ").append(rtMin).append(barna.commons.system.OSChecker.NEW_LINE);
+        b.append("\t\t").append("RT MAX: ").append(rtMax).append(barna.commons.system.OSChecker.NEW_LINE);
         return b.toString();
     }
 

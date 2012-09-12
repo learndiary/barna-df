@@ -27,6 +27,7 @@
 
 package barna.io;
 
+import barna.commons.system.OSChecker;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -41,17 +42,17 @@ import static junit.framework.Assert.fail;
  */
 public class MemoryStreamSorterTest {
     private static final String SIMPLE_INPUT =
-            "C\tY\t2\n" +
-            "B\tZ\t1\n" +
-            "A\tX\t3\n";
+            "C\tY\t2"+ OSChecker.NEW_LINE +
+            "B\tZ\t1"+ OSChecker.NEW_LINE +
+            "A\tX\t3"+ OSChecker.NEW_LINE;
 
     private static final String SIMPLE_INPUT_WITH_NEWLINES =
-            "\n" +
-            "C\tY\t2\n" +
-            "\n" +
-            "B\tZ\t1\n" +
-            "\n" +
-            "A\tX\t3\n";
+            barna.commons.system.OSChecker.NEW_LINE +
+            "C\tY\t2"+ OSChecker.NEW_LINE +
+            barna.commons.system.OSChecker.NEW_LINE +
+            "B\tZ\t1"+ OSChecker.NEW_LINE +
+            barna.commons.system.OSChecker.NEW_LINE +
+            "A\tX\t3"+ OSChecker.NEW_LINE;
 
 
     @Test
@@ -65,9 +66,33 @@ public class MemoryStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "A\tX\t3\n"+
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
+                    ,outString);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+    }
+    @Test
+    public void testSmallSortWithWindowsNewLines(){
+        ByteArrayInputStream in = new ByteArrayInputStream(
+                ("C\tY\t2\r\n"+
+                "B\tZ\t1\r\n"+
+                "A\tX\t3\r\n").getBytes());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        MemoryStreamSorter sorter = new MemoryStreamSorter(0, false, "\t");
+        try {
+            sorter.sort(in, out);
+
+            String outString = new String(out.toByteArray());
+            assertEquals(
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,12 +111,12 @@ public class MemoryStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "\n"+
-                    "\n"+
-                    "\n"+
-                    "A\tX\t3\n"+
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"
+                    barna.commons.system.OSChecker.NEW_LINE+
+                    barna.commons.system.OSChecker.NEW_LINE+
+                    barna.commons.system.OSChecker.NEW_LINE+
+                    "A\tX\t3"+ OSChecker.NEW_LINE+
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();
@@ -110,9 +135,9 @@ public class MemoryStreamSorterTest {
 
             String outString = new String(out.toByteArray());
             assertEquals(
-                    "B\tZ\t1\n"+
-                    "C\tY\t2\n"+
-                    "A\tX\t3\n"
+                    "B\tZ\t1"+ OSChecker.NEW_LINE+
+                    "C\tY\t2"+ OSChecker.NEW_LINE+
+                    "A\tX\t3"+ OSChecker.NEW_LINE
                     ,outString);
         } catch (IOException e) {
             e.printStackTrace();

@@ -233,7 +233,7 @@ public class Profiler implements Callable<Void> {
                     }
                     String transcriptID = aG.getTranscripts()[j].getTranscriptID();
                     v.add(new ByteArrayCharSequence(transcriptID));
-                    ByteArrayCharSequence locName = new ByteArrayCharSequence(aG.getGeneID());
+                    ByteArrayCharSequence locName = new ByteArrayCharSequence(aG.getLocusID());
                     vLoc.add(locName);
                     int[] a = new int[2];
                     a[0] = aG.getTranscripts()[j].getExonicLength();
@@ -335,7 +335,8 @@ public class Profiler implements Callable<Void> {
                 // generate random permutation of ranks
                 Random r = new Random();
                 for (int i = 0; i < molecules.length; i++) {
-                    molecules[i] = 1 + r.nextInt(molecules.length - 1);
+                    // BARNA-219 added Math.max to work with single molecules
+                    molecules[i] = 1 + r.nextInt(Math.max(1, molecules.length - 1));
                 }
                 /*
                 Expressions

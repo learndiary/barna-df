@@ -18,25 +18,35 @@ task testJar(type: Jar) {
  * Write a properties file that contains version and build information
  */
 task writeBuildProperties(){
-    File bp = file("${sourceSets.main.output.resourcesDir.absolutePath}/${project.name}-build.properties")
-    if(!bp.exists()){
-        bp.getParentFile().mkdirs();
-        bp.createNewFile();
-    }else{
-        // delete old
-        bp.delete()
-        bp.createNewFile();
-    }
-    bp.append("barna.version=${project(":").version}\n")
+    ext.bp = file("${sourceSets.main.output.resourcesDir.absolutePath}/${project.name}-build.properties")
+    outputs.file file(bp)
+
+    ext.props = [:]
+    props["barna.version"] = project(":").version
     if(project(":").appVersions[project.name]){
-        bp.append("flux.appversion=${project.version}\n")
+        props["flux.appversion"]= project.version
     }
     if(project(":").appNames[project.name]){
-        bp.append("flux.appname=${project(":").appNames[project.name]}\n")
+        props["flux.appname"] = project(":").appNames[project.name]
     }
-    bp.append("build.date=${buildDate}\n")
-    bp.append("build.version=${gitVersion}\n")
-    bp.append("build.branch=${gitBranch}\n")
+    props["build.version"] = gitVersion
+    props["build.branch"] = gitBranch
+    inputs.properties(props)
+
+    doLast{
+        if(!bp.exists()){
+            bp.getParentFile().mkdirs();
+            bp.createNewFile();
+        }else{
+            // delete old
+            bp.delete()
+            bp.createNewFile();
+        }
+        props["build.date"] = buildDate
+        props.each{k,v->
+            bp.append("${k}=${v}\n")
+        }
+    }
 }
 tasks.classes.dependsOn tasks.writeBuildProperties
 

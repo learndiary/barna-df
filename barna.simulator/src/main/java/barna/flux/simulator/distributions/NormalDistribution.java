@@ -29,7 +29,6 @@ package barna.flux.simulator.distributions;
 
 public class NormalDistribution extends AbstractDistribution {
 
-    double mean = Double.NaN;
     double sd = Double.NaN;
     private boolean pdf;
     double sdSquare = Double.NaN;

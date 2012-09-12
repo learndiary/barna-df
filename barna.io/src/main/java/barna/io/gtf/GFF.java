@@ -229,7 +229,7 @@ public class GFF {
                     obj.setFeature(Pedro.getDigSiteQualifier(digSite)+"_"+(cnt+1));
                     obj.setSeqname(transcript.getChromosome());
                     obj.setSource(transcript.getSource());
-                    //obj.addAttribute(GFFObject.GENE_ID_TAG, getGene().getGeneID());
+                    //obj.addAttribute(GFFObject.GENE_ID_TAG, getGene().getLocusID());
                     obj.addAttribute(GFFObject.TRANSCRIPT_ID_TAG, transcript.getTranscriptID());
                     obj.addAttribute(GFFObject.ID_ATTRIBUTE_SEQUENCE, tag);
 

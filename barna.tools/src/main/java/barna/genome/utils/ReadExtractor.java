@@ -112,7 +112,7 @@ public class ReadExtractor {
 		if (line== null)
 			return 0;
 		wri.write(line);
-		wri.write("\n");
+		wri.write(barna.commons.system.OSChecker.NEW_LINE);
 		int nr= 1, tot= 1;
 		long t0= System.currentTimeMillis();		
 		while ((line= buf.readLine())!= null&& line.startsWith(chrName)) {
@@ -133,7 +133,7 @@ public class ReadExtractor {
 				continue;
 			
 			wri.write(line);
-			wri.write("\n");
+			wri.write(barna.commons.system.OSChecker.NEW_LINE);
 			++nr;
 		}
 		wri.flush();

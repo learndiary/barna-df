@@ -158,10 +158,10 @@ public class CrossTalkModel {
         StringBuffer b = new StringBuffer();
 
         for (int s = 0; s < transitions.length; s++) {
-            b.append("State " + s).append("\n");
+            b.append("State " + s).append(barna.commons.system.OSChecker.NEW_LINE);
             b.append(toTable(s));
         }
-        b.append("\n");
+        b.append(barna.commons.system.OSChecker.NEW_LINE);
         return b.toString();
     }
 
@@ -194,7 +194,7 @@ public class CrossTalkModel {
                 b.append(p(i, k, k)).append("\t");
             }
 
-            b.append("\n");
+            b.append(barna.commons.system.OSChecker.NEW_LINE);
         }
         return b.toString();
     }

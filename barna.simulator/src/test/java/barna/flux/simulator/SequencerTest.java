@@ -38,7 +38,9 @@ import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.Transcript;
 import barna.model.bed.BEDobject2;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
@@ -51,10 +53,24 @@ import static junit.framework.Assert.assertEquals;
 
 public class SequencerTest {
 
+    File currentTestDirectory = null;
+    @Before
+    public void setUpTest() throws Exception {
+        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorUnitTest", "", null);
+    }
+
+    @After
+    public void cleanup(){
+        if(currentTestDirectory != null){
+            FileHelper.rmDir(currentTestDirectory);
+        }
+    }
+
     @Test
 	public void testReadGeneration() throws Exception {
-		
-		int nrTests= 100; // nr. of tests per transcript
+
+        Sequencer sequencer = new Sequencer(null, null);
+        int nrTests= 100; // nr. of tests per transcript
 		int maxBoundary= 100; // nt added at beginning/end of tx
 		Random rand= new Random();
 		
@@ -90,7 +106,7 @@ public class SequencerTest {
 						int end= (left? fragStart+ readLen- 1: fragEnd);
 						assert(start<= end);
 						BEDobject2 obj= new BEDobject2();
-						int polyA= Sequencer.createRead(obj, start, end, t, k,
+						int polyA= sequencer.createRead(obj, start, end, t, k,
                                 absDir, fragStart, fragEnd, left, 1);
 						
 						assertEquals(readLen, obj.getLength());
@@ -121,16 +137,17 @@ public class SequencerTest {
 
     @Test
     public void testSequenceAmbiguities() {
-
+        Sequencer sequencer = new Sequencer(null, null);
         String allChars= "ACGUTWSRYMKBDHV";
+        Graph.fileSep = null;
 
         // write sequence
         File f= null;
         try {
-            f= File.createTempFile(this.getClass().getSimpleName(), ".fa");
+            f= File.createTempFile(this.getClass().getSimpleName(), ".fa",currentTestDirectory);
             BufferedWriter writer= new BufferedWriter(new FileWriter(f));
-            writer.write(">"+ FileHelper.stripExtension(f.getName())+ "\n");
-            writer.write(allChars+ "\n");
+            writer.write(">"+ FileHelper.stripExtension(f.getName())+ barna.commons.system.OSChecker.NEW_LINE);
+            writer.write(allChars+ barna.commons.system.OSChecker.NEW_LINE);
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -161,14 +178,14 @@ public class SequencerTest {
 
             // do it
             ByteArrayCharSequence cs= new ByteArrayCharSequence(10);
-            Sequencer.createQSeq(cs,
+            sequencer.createQSeq(cs,
                     obj,
                     allChars.length(),  // 3p of tx
                     (byte) 1,  // tx dir
                     allChars.length(), // read length
                     allChars.length(), // fragment length
                     babes);
-            String[] scs= cs.toString().split("\n");
+            String[] scs= cs.toString().split(barna.commons.system.OSChecker.NEW_LINE);
             Assert.assertTrue(allChars.equals(scs[0]));
 
         } catch (Exception e) {
@@ -202,10 +219,11 @@ public class SequencerTest {
 
     @Test
     public void testSequenceRead() {
-
+        Sequencer sequencer = new Sequencer(null, null);
         int nrTests= 100;
         int nrReadTests= 100;
         Random rnd= new Random();
+        Graph.fileSep = null;
 
         for (int j= 0; j< nrTests; ++j) {
 
@@ -262,39 +280,39 @@ public class SequencerTest {
 
                 // print settings for debugging randomly found fail
                 BEDobject2 obj= new BEDobject2();
-                System.err.println("\n=== Simulation ===");
-                System.err.println("sense= "+ sense+ ";\n" +
-                        "chrSeq= getChrSequence("+ chrSeq.length()+");\n" +
-                        "f= writeSequence(chrSeq);\n" +
-                        "chr= FileHelper.stripExtension(f.getName());\n"+
-                        "Gene g= new Gene(\"myGene\");\n" +
-                        "g.setChromosome(chr);\n" +
-                        "t= new Transcript(g, \""+ t.getTranscriptID()+ "\");\n" +
-                        "t.setStrand((byte) (sense? 1: -1));\n" +
-                        "t.setSource(\".\");");
+//                System.err.println("\n=== Simulation ===");
+//                System.err.println("sense= "+ sense+ ";\n" +
+//                        "chrSeq= getChrSequence("+ chrSeq.length()+");\n" +
+//                        "f= writeSequence(chrSeq);\n" +
+//                        "chr= FileHelper.stripExtension(f.getName());\n"+
+//                        "Gene g= new Gene(\"myGene\");\n" +
+//                        "g.setChromosome(chr);\n" +
+//                        "t= new Transcript(g, \""+ t.getTranscriptID()+ "\");\n" +
+//                        "t.setStrand((byte) (sense? 1: -1));\n" +
+//                        "t.setSource(\".\");");
                 for (int k = 0; k < t.getExons().length; k++) {
                     Exon ee= t.getExons()[k];
-                    System.err.println("t.addExon(new Exon(t, "+ ee.getExonID()+", "
-                            + Math.abs(ee.getStart())+", "+ Math.abs(ee.getEnd())+"));");
+//                    System.err.println("t.addExon(new Exon(t, "+ ee.getExonID()+", "
+//                            + Math.abs(ee.getStart())+", "+ Math.abs(ee.getEnd())+"));");
 
                 }
-                System.err.println("tlen= t.getExonicLength();");
-                System.err.println("polyA= "+ polyA+ ";");
-                System.err.println("truLen= tlen+ polyA;");
-                System.err.println("readStart= "+ readStart+ ";");
-                System.err.println("readEnd= "+ readEnd+ ";");
-                System.err.println("readLen= readEnd- readStart+ 1;");
-                System.err.println("molNr= "+ molNr+ ";");
-                System.err.println("absDir= "+ absDir+ ";");
-                System.err.println("fragStart= "+ fragStart+ ";");
-                System.err.println("fragEnd= "+ fragEnd+ ";");
-                System.err.println("fragLen= fragEnd- fragStart+ 1;");
-                System.err.println("left= "+ left+ ";");
-                System.err.println("mate= "+ mate+ ";");
-                System.err.println();
+//                System.err.println("tlen= t.getExonicLength();");
+//                System.err.println("polyA= "+ polyA+ ";");
+//                System.err.println("truLen= tlen+ polyA;");
+//                System.err.println("readStart= "+ readStart+ ";");
+//                System.err.println("readEnd= "+ readEnd+ ";");
+//                System.err.println("readLen= readEnd- readStart+ 1;");
+//                System.err.println("molNr= "+ molNr+ ";");
+//                System.err.println("absDir= "+ absDir+ ";");
+//                System.err.println("fragStart= "+ fragStart+ ";");
+//                System.err.println("fragEnd= "+ fragEnd+ ";");
+//                System.err.println("fragLen= fragEnd- fragStart+ 1;");
+//                System.err.println("left= "+ left+ ";");
+//                System.err.println("mate= "+ mate+ ";");
+//                System.err.println();
 
                 // create BED
-                int polyAcnt= Sequencer.createRead(
+                int polyAcnt= sequencer.createRead(
                         obj,
                         readStart- 1,  // read start in tx (0-based)
                         readEnd- 1, // read end in tx (0-based)
@@ -346,12 +364,12 @@ public class SequencerTest {
 
                 // create FASTA
                 ByteArrayCharSequence cs= new ByteArrayCharSequence(200);
-                Sequencer.createQname(obj, cs, null);
-                Sequencer.createQSeq(cs, obj, t.get3PrimeEdge(), t.getStrand(), readLen, fragLen, null);
+                sequencer.createQname(obj, cs, null);
+                sequencer.createQSeq(cs, obj, t.get3PrimeEdge(), t.getStrand(), readLen, fragLen, null);
 
                 // test FASTA
                 //System.err.println(cs);
-                String[] fasta= cs.toString().split("\n");
+                String[] fasta= cs.toString().split(barna.commons.system.OSChecker.NEW_LINE);
                 Assert.assertEquals(obj.getName().toString(), fasta[0].substring(1));
                 Assert.assertEquals(readLen, fasta[1].length());
                 if (readStart> tlen) {
@@ -386,6 +404,9 @@ public class SequencerTest {
                             Assert.assertEquals(Character.toString(Graph.complementaryCharacter(seq.charAt(x))),
                                     Character.toString(fasta[1].charAt(readLen- 1- x)));
                     }
+                    if (x < readLen) {  // read contains poly-A tail
+                        Assert.assertEquals(tlen, readStart+ x- 1);   // check whether last informative position corresponds to the end of the transcript
+                    }
                     for (; x< readLen; ++x)
                         if (left)
                             Assert.assertEquals('a', fasta[1].charAt(x));
@@ -395,19 +416,50 @@ public class SequencerTest {
 
             }
         }
+    }
+    @Test
+    public void testSequenceReadWithUniqueIds() {
+        Sequencer sequencer = new Sequencer(null, null);
 
+        BEDobject2 seq = new BEDobject2();
+        Gene gene = new Gene("gene1");
+        gene.setChromosome("chr1");
 
-
+        Transcript transcript = new Transcript(gene, "trans-id");
+        // single end reads
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  true, -1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:S", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  false, -1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:A", seq.getName().toString());
+        //paired reads non unique ids
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  true, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:S/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  true, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:S/2", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  false, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:A/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  false, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100:A/2", seq.getName().toString());
+        //paired reads unique ids
+        sequencer.setUniqueIds(true);
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  true, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  true, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/1", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) 1, 1000, 1100,  false, 1);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/2", seq.getName().toString());
+        sequencer.createRead(seq, 1, 100, transcript, 1, (byte) -1, 1000, 1100,  false, 2);
+        assertEquals("chr1:0-0W:trans-id:2:0:1000:1100/2", seq.getName().toString());
     }
 
-    static final char[] bases= new char[] {'A', 'C', 'G', 'T'};
+     final char[] bases= new char[] {'A', 'C', 'G', 'T'};
 
     /**
      * Creates a random sequence for a chromosome of a certain length
      * @param maxLen maximum length, highest chromosomal coordinate
      * @return a random sequence for the chromosome
      */
-    static protected String getChrSequence(int maxLen) {
+     protected String getChrSequence(int maxLen) {
         char[] seq= new char[maxLen];
         Random rnd= new Random();
         for (int i= 0; i< maxLen; ++i) {
@@ -421,14 +473,14 @@ public class SequencerTest {
      * @param chrSeq the chromosome sequence to be written
      * @return handle of the file to which sequence has been written
      */
-    static protected File writeSequence(String chrSeq) {
+     protected File writeSequence(String chrSeq) {
         // write sequence
         File f= null;
         try {
-            f= File.createTempFile(SequencerTest.class.getSimpleName(), ".fa");
+            f= File.createTempFile(SequencerTest.class.getSimpleName(), ".fa", currentTestDirectory);
             BufferedWriter writer= new BufferedWriter(new FileWriter(f));
-            writer.write(">"+ FileHelper.stripExtension(f.getName())+ "\n");
-            writer.write(chrSeq+ "\n");
+            writer.write(">"+ FileHelper.stripExtension(f.getName())+ barna.commons.system.OSChecker.NEW_LINE);
+            writer.write(chrSeq+ barna.commons.system.OSChecker.NEW_LINE);
             writer.close();
         } catch (Exception e) {
             e.printStackTrace();

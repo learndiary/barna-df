@@ -28,6 +28,7 @@
 package barna.flux.simulator.error;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.system.OSChecker;
 import barna.model.Qualities;
 
 import java.util.Random;
@@ -94,7 +95,7 @@ public class ModelPool {
 
         // prepare sequence for fastQ
         if (fastaOutput && errorModel != null) {
-            cs.append("\n+\n");
+            cs.append(OSChecker.NEW_LINE+"+"+ OSChecker.NEW_LINE);
             seqEnd += 3;
             cs.ensureLength(cs.end, len);    // for qualities
         }
@@ -123,7 +124,7 @@ public class ModelPool {
                     // SIMULATOR-29 make sure we count only for "real" mutations
                     if (a[characterPosition] != character){
                         sumMutations++;
-                        // BARNA-184 makre sure mutations are lowe case
+                        // BARNA-184 make sure mutations are lowe case
                         a[characterPosition] = (byte) Character.toLowerCase(a[characterPosition]);
                     }
                 }

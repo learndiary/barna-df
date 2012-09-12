@@ -30,6 +30,7 @@ package barna.commons.parameters;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 
 /**
  * Helper class to create parameters
@@ -170,12 +171,20 @@ public class Parameters {
     }
 
 
-    public static <E extends Enum<E>> Parameter<E> enumParameter(String name, String description, E value) {
-        return new EnumParameter<E>(name, description, value);
+    public static <E extends Enum<E>> Parameter<E> enumParameter(String name, String description, E defaultValue) {
+        return new EnumParameter<E>(name, description, defaultValue);
     }
 
-    public static <E extends Enum<E>> Parameter<E> enumParameter(String name, String description, E value, final ParameterValidator validator) {
-        return new EnumParameter<E>(name, description, value, validator);
+    public static <E extends Enum<E>> Parameter<E> enumParameter(String name, String description, E defaultValue, final ParameterValidator validator) {
+        return new EnumParameter<E>(name, description, defaultValue, validator);
+    }
+
+    public static <E extends Enum<E>> Parameter<EnumSet<E>> enumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values) {
+        return new EnumSetParameter<E>(name, description, defaultValue, values);
+    }
+
+    public static <E extends Enum<E>> Parameter<EnumSet<E>> enumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values, final ParameterValidator validator) {
+        return new EnumSetParameter<E>(name, description, defaultValue, values, validator);
     }
 
 }

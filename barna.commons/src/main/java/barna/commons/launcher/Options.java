@@ -239,7 +239,7 @@ public class Options {
             isBoolean = true;
         }
 
-        String[] cc = new String[l];
+        Object[] cc = new Object[l];
         if (cc.length + i >= args.length) {
             throw new RuntimeException("Missing arguments for parameter " + args[i] + "!");
         }

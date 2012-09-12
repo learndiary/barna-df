@@ -31,14 +31,10 @@ import barna.model.Qualities;
 import com.thoughtworks.xstream.XStream;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Random;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class MarkovErrorModelTest {
 
@@ -121,7 +117,7 @@ public class MarkovErrorModelTest {
 //                    w.write(""+qs[j][i]);
 //                    if(j < qs.length-1) w.write("\t");
 //                }
-//                w.write("\n");
+//                w.write(barna.commons.system.OSChecker.NEW_LINE);
 //            }
 //            w.close();
 //
@@ -133,7 +129,7 @@ public class MarkovErrorModelTest {
 //                        w.write(""+t[x][y][z]);
 //                        if(z < t[x][y].length-1) w.write("\t");
 //                    }
-//                    w.write("\n");
+//                    w.write(barna.commons.system.OSChecker.NEW_LINE);
 //                }
 //            }
 //            w.close();

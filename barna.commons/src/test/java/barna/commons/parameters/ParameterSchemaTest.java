@@ -1,5 +1,6 @@
 package barna.commons.parameters;
 
+import barna.commons.system.OSChecker;
 import org.junit.Test;
 
 import static junit.framework.Assert.*;
@@ -35,11 +36,11 @@ public class ParameterSchemaTest {
         // parameters
         java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream(
                 ("" +
-                        "# Comment\n" +
-                        "STRING1 B\n"+
-                        "BOOLEAN\tyes\n"+
-                        "INT\t20\n"+
-                        "DOUBLE\t5.8\n"+
+                        "# Comment"+ OSChecker.NEW_LINE +
+                        "STRING1 B"+ OSChecker.NEW_LINE+
+                        "BOOLEAN\tyes"+ OSChecker.NEW_LINE+
+                        "INT\t20"+ OSChecker.NEW_LINE+
+                        "DOUBLE\t5.8"+ OSChecker.NEW_LINE+
                 "").getBytes());
 
         try {
@@ -63,11 +64,11 @@ public class ParameterSchemaTest {
         // parameters
         java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream(
                 ("" +
-                        "# Comment\n" +
-                        "STRING1 B\n"+
-                        "BOOLEAN\tyes\n"+
-                        "INT\t20\n"+
-                        "DOUBLE\t5.8sa\n"+
+                        "# Comment"+ OSChecker.NEW_LINE +
+                        "STRING1 B"+ OSChecker.NEW_LINE+
+                        "BOOLEAN\tyes"+ OSChecker.NEW_LINE+
+                        "INT\t20"+ OSChecker.NEW_LINE+
+                        "DOUBLE\t5.8sa"+ OSChecker.NEW_LINE+
                 "").getBytes());
 
         try {

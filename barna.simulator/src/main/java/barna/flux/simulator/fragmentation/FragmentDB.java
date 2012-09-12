@@ -31,6 +31,7 @@ import barna.commons.ByteArrayCharSequence;
 import barna.commons.io.ByteArrayInputStream;
 import barna.commons.io.RandomAccessInputStream;
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import jdbm.PrimaryTreeMap;
@@ -58,6 +59,10 @@ public class FragmentDB {
      * The original library file
      */
     private File libraryFile;
+    /**
+     * The index database file
+     */
+    private File indexFile;
     /**
      * The index store
      */
@@ -139,8 +144,7 @@ public class FragmentDB {
     public void createIndex() throws IOException {
 
         // create index
-        File indexFile = FileHelper.createTempFile("fragment-", "-index.db");
-        indexFile.deleteOnExit();
+        indexFile = FileHelper.createTempFile("fragment-", "-index.db");
         recman = RecordManagerFactory.createRecordManager(indexFile.getAbsolutePath());
         index = recman.treeMap(RECORD_NAME);
 
@@ -152,6 +156,14 @@ public class FragmentDB {
             }
 
             // read the sorted file and put it in a zip form
+            String newlinecharacters = null;
+            try{
+                newlinecharacters = FileHelper.guessFileSep(libraryFile);
+            }catch(Exception e){
+                newlinecharacters = OSChecker.NEW_LINE;
+            }
+
+            int lineSeparatorLength =  newlinecharacters.length();
             libFileReader = new BufferedReader(new FileReader(libraryFile));
 
             long totalSize = libraryFile.length();
@@ -195,8 +207,8 @@ public class FragmentDB {
 
 
                 numberOfLines++;
-                currentPosition += cs.length() + 1; // one for the missing newline
-                entryLength += cs.length() + 1;
+                currentPosition += cs.length() + lineSeparatorLength; // one for the missing newline
+                entryLength += cs.length() + lineSeparatorLength;
                 if (isPrintStatus()) {
                     Log.progress(currentPosition, totalSize);
                 }
@@ -299,6 +311,18 @@ public class FragmentDB {
                 access.close();
             }
             recman.close();
+            if (index!=null && indexFile.exists()) {
+                File dir = indexFile.getParentFile();
+                File[] files = dir.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return name.contains(indexFile.getName());
+                    }
+                });
+                for (File f : files) {
+                    f.delete();
+                }
+            }
         } catch (IOException e) {
             Log.error("Unable to close Fragment DB!");
         } finally {
