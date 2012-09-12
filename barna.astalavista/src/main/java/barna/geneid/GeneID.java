@@ -1,9 +1,6 @@
 package barna.geneid;
 
 import barna.commons.log.Log;
-import com.sun.xml.internal.bind.v2.TODO;
-
-import java.io.File;
 
 /**
  * Created with IntelliJ IDEA.
@@ -158,7 +155,7 @@ public class GeneID {
         int index = 0;
         int weight = 1;
 
-        for (int i= ls-1; i>= 0; --i) {
+        for (int i= ls- 1; i>= 0; --i) {
             index += weight* TRANS[(int) s.charAt(i)];
             weight *= cardinal;
         }
@@ -237,7 +234,7 @@ public class GeneID {
                     score = score + scoreBP;
                     score = p.afactor + (p.bfactor * score);
                     if(GeneIDsettings.UTR!= 0){
-                        score = score + PeakEdgeScore(is + p.order,Strand,external,l1,l2,6);
+                        score = score + peakEdgeScore(is + p.order, Strand, external, l1, l2, 6);
                     }
                     /* Acceptor core is used as a global cutoff */
 
@@ -296,7 +293,7 @@ public class GeneID {
                     score = score + scoreBP;
                     score = p.afactor + (p.bfactor * score);
                     if(GeneIDsettings.UTR!= 0){
-                        score = score + PeakEdgeScore(left + is + p.offset,Strand,external,l1,l2,6);
+                        score = score + peakEdgeScore(left + is + p.offset, Strand, external, l1, l2, 6);
                     }
                     if (score >= p.cutoff)
                     {
@@ -349,7 +346,7 @@ public class GeneID {
                     score = score + scoreBP;
                     score = p.afactor + (p.bfactor * score);
                     if(GeneIDsettings.UTR!= 0){
-                        score = score + PeakEdgeScore(left + is + p.offset,Strand,external,l1,l2,6);
+                        score = score + peakEdgeScore(left + is + p.offset, Strand, external, l1, l2, 6);
                     }
 
                     if (score >= p.cutoff)
@@ -405,7 +402,7 @@ public class GeneID {
                     score = score + scoreBP;
                     score = p.afactor + (p.bfactor * score);
                     if(GeneIDsettings.UTR!= 0){
-                        score = score + PeakEdgeScore(left + is + p.offset,Strand,external,l1,l2,6);
+                        score = score + peakEdgeScore(left + is + p.offset, Strand, external, l1, l2, 6);
                     }
 
                     if (score >= p.cutoff)
@@ -432,7 +429,50 @@ public class GeneID {
     }
 
 
+    float scoreDonor(String s, Profile p) {
 
+        float score= 0f;
+        // prefix_donor = (offset+ order)
+        // prefix_acceptor = (dimension- offset- 2)+ order
+        // suffix_donor = ..
+        // suffix_acceptor = ..
+
+
+        /* Applying part of the profile */
+        for (int i= p.offset, j=0; i < p.dimension; i++,j++)
+        {
+            /* i is the position inside the region */
+            int index = OligoToInt(s.substring(j), p.order+ 1, 5);
+
+            if (index >= p.dimensionTrans)
+                score = score + -GeneIDconstants.INFI;
+            else
+                score = score + p.transitionValues[i][index];
+        }
+        score = p.afactor + (p.bfactor * score);
+
+        return score;
+    }
+
+
+
+    /**
+     *
+     * @param s sequence to be scored
+     * @param klass copied to each site found, TODO REMOVE
+     * @param type copied to each site found, TODO REMOVE
+     * @param subtype copied to each site found, TODO REMOVE
+     * @param p donor site profile
+     * @param st array to store objects that describe the site predictions
+     * @param l1 flag, switches with <code>0</code> to "normal" prediction mode (using the whole profile),
+     *           otherwise sites are searched between the beginning of the sequence and <code>p.offset</code>
+     * @param l2 sequence clipping, marks the end of prediction in the string provided as <code>s</code>
+     * @param ns number of sites that have already been predicted
+     * @param nsites maximum number of sites to predict
+     * @param strand directionality of prediction
+     * @param external
+     * @return
+     */
     long buildDonors(String s,
                       short klass,
                       String type,
@@ -443,7 +483,7 @@ public class GeneID {
                       int l2,
                       int ns,
                       long nsites,
-                      int Strand,
+                      int strand,
                       PackExternalInformation external) {
 
         float score;
@@ -451,8 +491,8 @@ public class GeneID {
         int index;
 
         /* 1. Searching sites between beginning of the sequence and p.offset */
-        if (l1!= 0)
-        {
+        if (l1!= 0) {
+
             for (int is = 0; is < p.offset && (ns<nsites); is++)
             {
                 score=0f;
@@ -460,7 +500,7 @@ public class GeneID {
                 for (int i= p.offset- is, j=0; i < p.dimension; i++,j++)
                 {
                     /* i is the position inside the region */
-                    index = OligoToInt(s+j, p.order+1,5);
+                    index = OligoToInt(s.substring(j), p.order+ 1,5);
 
                     if (index >= p.dimensionTrans)
                         score = score + -GeneIDconstants.INFI;
@@ -469,7 +509,7 @@ public class GeneID {
                 }
                 score = p.afactor + (p.bfactor * score);
                 if(GeneIDsettings.UTR!= 0){
-                    score = score - PeakEdgeScore(is + p.order,Strand,external,l1,l2,6);
+                    score = score - peakEdgeScore(is + p.order, strand, external, l1, l2, 6);
                 }
                 if (score >= p.cutoff)
                 {
@@ -508,7 +548,7 @@ public class GeneID {
                 }
                 score = p.afactor + (p.bfactor * score);
                 if(GeneIDsettings.UTR!= 0){
-                    score = score - PeakEdgeScore(left + is + p.offset,Strand,external,l1,l2,6);
+                    score = score - peakEdgeScore(left + is + p.offset, strand, external, l1, l2, 6);
                 }
                 if (score >= p.cutoff)
                 {
@@ -542,7 +582,7 @@ public class GeneID {
                 }
                 score = p.afactor + (p.bfactor * score);
                 if(GeneIDsettings.UTR!= 0){
-                    score = score - PeakEdgeScore(left + is + p.offset,Strand,external,l1,l2,6);
+                    score = score - peakEdgeScore(left + is + p.offset, strand, external, l1, l2, 6);
                 }
                 if (score >= p.cutoff)
                 {
@@ -579,7 +619,7 @@ public class GeneID {
                 }
                 score = p.afactor + (p.bfactor * score);
                 if(GeneIDsettings.UTR!= 0){
-                    score = score - PeakEdgeScore(left + is + p.offset,Strand,external,l1,l2,6);
+                    score = score - peakEdgeScore(left + is + p.offset, strand, external, l1, l2, 6);
                 }
                 if (score >= p.cutoff)
                 {
@@ -602,7 +642,7 @@ public class GeneID {
     }
 
 
-    float PeakEdgeScore(int Position,
+    float peakEdgeScore(int Position,
                         int Strand,
                         PackExternalInformation external,
                         int l1, long l2, int win)

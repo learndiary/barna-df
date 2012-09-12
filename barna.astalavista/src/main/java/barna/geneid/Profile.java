@@ -16,8 +16,21 @@ import java.text.DecimalFormat;
  */
 public class Profile {
 
+    /**
+     * Length of the profile as by <code>(offset + 2)</code> plus
+     * the number of nucleotides that are considered after the
+     * di-nucleotide.
+     */
     int    dimension;
+
+    /**
+     * Position of the di-nucleotide in the profile, i.e.,
+     * number of exonic positions before the "GT" of donors
+     * and number of intronic positions before the "AG" of
+     * acceptors.
+     */
     int    offset;
+
     float  cutoff;
     int    order;
     float  afactor= 0f;

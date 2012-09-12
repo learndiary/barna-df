@@ -28,7 +28,30 @@ public class ProfileTest {
     public void testReadProfile() throws Exception {
         GeneIDsettings settings= new GeneIDsettings();
         GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
+    }
+
+    @Test
+    public void testBuildDonors() throws Exception {
+        GeneIDsettings settings= new GeneIDsettings();
+        GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
         System.currentTimeMillis();
+
+        GeneID myGID= new GeneID();
+        myGID.scoreDonor("GTACCCC", isochores[0].DonorProfile);
+//        myGID.buildDonors(
+//                "",
+//                (short) 0,
+//                "", // type
+//                "", // sub-type
+//                isochores[0].DonorProfile, // Profile
+//                new Site[1], //Site[] st
+//                0,  // l1
+//                0,  // l2
+//                0,  // ns
+//                1,  // nsites
+//                GeneIDconstants.FORWARD,    // Strand
+//                null    // Pack external
+//        );
     }
 
 }
