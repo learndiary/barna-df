@@ -31,13 +31,26 @@ public class ProfileTest {
     }
 
     @Test
-    public void testBuildDonors() throws Exception {
+    public void testScoreSpliceSites() throws Exception {
         GeneIDsettings settings= new GeneIDsettings();
         GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
         System.currentTimeMillis();
 
         GeneID myGID= new GeneID();
-        myGID.scoreDonor("GTACCCC", isochores[0].DonorProfile);
+
+        // sequence length: (dimesion+ order)
+
+        // prefix_donor = (offset+ order)
+        // suffix_donor = (dimension- offset- order- 2)
+        // DonorProfile: order= 1, offset= 1, dimension= 9
+        // prefix 2, suffix
+        float donScore= myGID.scoreDonor("ACGTACCCC", isochores[0].DonorProfile);
+        System.err.println("score "+ donScore);
+
+        // prefix_acceptor = (dimension- offset- 2)+ order
+        // suffix_acceptor = offset
+        //
+
 //        myGID.buildDonors(
 //                "",
 //                (short) 0,

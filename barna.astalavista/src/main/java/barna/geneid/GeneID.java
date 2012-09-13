@@ -439,8 +439,8 @@ public class GeneID {
 
 
         /* Applying part of the profile */
-        for (int i= p.offset, j=0; i < p.dimension; i++,j++)
-        {
+        for (int i= p.offset, j=0; i < p.dimension; i++,j++) {
+
             /* i is the position inside the region */
             int index = OligoToInt(s.substring(j), p.order+ 1, 5);
 

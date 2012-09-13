@@ -195,8 +195,8 @@ public class AStalavista implements FluxTool<Void>{
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         AStalavistaSettings settings= new AStalavistaSettings();
-        Collection<barna.commons.parameters.Parameter> pars= null;
-                //settings.getParameters().values();
+        Collection<barna.commons.parameters.Parameter> pars=
+                settings.getParameters().values();
         for (barna.commons.parameters.Parameter parameter : pars) {
 
             Class c= parameter.getType();

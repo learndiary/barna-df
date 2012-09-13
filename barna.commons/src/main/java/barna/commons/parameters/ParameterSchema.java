@@ -147,6 +147,14 @@ public abstract class ParameterSchema {
     }
 
     /**
+     * Retrieve all parameters
+     * @return a map with the identifier x parameter tuples
+     */
+    public Map<String, Parameter> getParameters() {
+        return parameters;
+    }
+
+    /**
      * Set a parameter value
      *
      * @param parameter the parameter
