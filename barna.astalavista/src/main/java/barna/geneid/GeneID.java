@@ -428,6 +428,77 @@ public class GeneID {
         return(ns);
     }
 
+    public float scoreAcceptor(String s, Profile profileAcc, Profile profilePPT, Profile profileBP) {
+
+        float score= scoreSite(s, profileAcc);
+
+//        float scorePPT = 0f;
+//        float scoreBP = 0f;
+//        float scoreAcc = 0f;
+/*        if (score >= profileAcc.cutoff){
+            // Using additional profiles
+            if (GParam.PPT!= 0)
+                scorePPT = computeU2PPTProfile(sOriginal,profileAcc.offset-is,l2,ppt, st[ns]);
+
+            if (GParam.BP!= 0)
+                scoreBP = computeU2BranchProfile(sOriginal,profileAcc.offset-is,l2,bp, st[ns]);
+
+            // For the time being, we will not use the BP or PPT scores
+            // if (scoreBP > 0){score = score + scoreBP;} */ /* + scorePPT
+            scoreAcc = score;
+            score = score + scoreBP;
+            score = profileAcc.afactor + (profileAcc.bfactor * score);
+            if(GeneIDsettings.UTR!= 0){
+                score = score + peakEdgeScore(is + profileAcc.order, Strand, external, l1, l2, 6);
+            }
+            // Acceptor core is used as a global cutoff
+
+            if (score >= profileAcc.cutoff)
+            {
+                st[ns].Position = is + profileAcc.order;
+                st[ns].ScoreBP = scoreBP;
+                st[ns].ScorePPT = scorePPT;
+                st[ns].ScoreAccProfile = scoreAcc;
+                st[ns].Score = score;
+                st[ns].sclass= klass;
+                st[ns].type= type;
+                st[ns].subtype= subtype;
+                ns++;
+            }
+        }
+*/
+        return score;
+    }
+
+    /**
+     * Returns the sum of log-likelihood scores for a certain sequence
+     * matching the given site profile.
+     * @param s sequence that is evaluated
+     * @param p site profile for evaluation
+     * @return
+     */
+    public float scoreSite(String s, Profile p) {
+        float score= 0f;
+        if (s.length()!= p.dimension)
+            throw new RuntimeException("Site sequence "+ s.length()+ "nt, expected "+ p.dimension+ "nt!");
+
+        /* Applying part of the profile */
+        //System.err.println(p.offset+",dim="+p.dimension+",slen="+s.length());
+        for (int i= 0; i < (p.dimension- p.order- 1); i++) {
+
+
+            /* i is the position inside the region */
+            int index = OligoToInt(s.substring(i), p.order+ 1, 5);
+
+            if (index >= p.dimensionTrans)
+                score = score + -GeneIDconstants.INFI;
+            else
+                score = score + p.transitionValues[i+ 1][index];
+        }
+        score = p.afactor + (p.bfactor * score);
+
+        return score;
+    }
 
     float scoreDonor(String s, Profile p) {
 

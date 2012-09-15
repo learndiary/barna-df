@@ -44,12 +44,15 @@ public class ProfileTest {
         // suffix_donor = (dimension- offset- order- 2)
         // DonorProfile: order= 1, offset= 1, dimension= 9
         // prefix 2, suffix
-        float donScore= myGID.scoreDonor("ACGTACCCC", isochores[0].DonorProfile);
+        float donScore= myGID.scoreDonor("GCGTACCCC", isochores[0].DonorProfile);
         System.err.println("score "+ donScore);
 
         // prefix_acceptor = (dimension- offset- 2)+ order
         // suffix_acceptor = offset
+        // AcceptorProfile: order= 1, offset= 24, dimension= 27
         //
+        float accScore= myGID.scoreAcceptor("CTCTCTCTCTCTCTCTCTCTCTAGCGC", isochores[0].AcceptorProfile, null, null);
+        System.err.println("score "+ accScore);
 
 //        myGID.buildDonors(
 //                "",
@@ -65,6 +68,7 @@ public class ProfileTest {
 //                GeneIDconstants.FORWARD,    // Strand
 //                null    // Pack external
 //        );
+
     }
 
 }

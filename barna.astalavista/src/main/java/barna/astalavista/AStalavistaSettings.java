@@ -69,6 +69,21 @@ public class AStalavistaSettings extends ParameterSchema {
     public static final Parameter<Boolean> OUTPUT_SITESEQ = Parameters.booleanParameter("OUTPUT_SITESEQ",
             "output splice site sequences", false, null).longOption("seqsite").shortOption('s');
 
+
+    /**
+     * Score splice site sequences.
+     */
+    public static final Parameter<Boolean> SCORE_SITES = Parameters.booleanParameter("SCORE_SITES",
+            "score splice site sequences", false, null).longOption("scoresites");
+
+    /**
+     * File with GeneID parameters / splice site profiles.
+     */
+    public static final Parameter<File> GENEID_PARAM = Parameters.fileParameter("GENEID_PARAM",
+            "name and path of a file with the GeneID models for splice sites",
+            null, null, null).longOption("gparam");
+
+
     /**
      * Path to the GTF output annotation.
      */

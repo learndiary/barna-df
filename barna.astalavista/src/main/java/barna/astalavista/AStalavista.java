@@ -99,7 +99,7 @@ public class AStalavista implements FluxTool<Void>{
     }
 
     /**
-     * Input with the transcriptome annotation in GTF.
+     * Input file containing with the transcriptome annotation in GTF.
      */
     private static File inputFile;
     public static int counter= 0;
@@ -270,6 +270,18 @@ public class AStalavista implements FluxTool<Void>{
             // Confirm o..+"\n by typing \'yes\':"
             System.err.println("Overwriting output file "+ SplicingGraph.writerThread.outputFname+".");
         }
+
+        // splice site scoring, requires geneID parameters and genomic sequence
+        if (args.getBoolean(AStalavistaSettings.SCORE_SITES.getName())) {
+            if(args.getFile(AStalavistaSettings.GEN_DIR.getName())== null) {
+                Log.error("Splice site scoring requires the genomic sequence, set parameter \'GEN_DIR\'");
+                return false;
+            }
+            if(args.getFile(AStalavistaSettings.GENEID_PARAM.getName())== null) {
+                Log.warn("No GeneID parameter file for scoring models, using default");
+           }
+        }
+
 
         //setFile(args.getFile(""))
 
