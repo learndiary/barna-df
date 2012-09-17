@@ -211,7 +211,11 @@ public class AStalavista implements FluxTool<Void>{
 
                 // score splice sites
                 if (siteScoreWriter!= null) {
-                    scoreSites(g[i].getSpliceSites());
+                    try {
+                        scoreSites(g[i].getSpliceSites());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     continue;
                 }
 
@@ -505,12 +509,16 @@ public class AStalavista implements FluxTool<Void>{
             }
 
             if (j+ vv[4].length()- del<= seq.length()) {
+
+                varSeq= seq.substring(0, j)+ vv[4];
+                if (j+ del< seq.length())
+                    varSeq+= seq.substring(j+ del+ 1);
+
+                // trim start
                 int start= 0;
                 if (insertion&& j< flank5)
                     start= vv[4].length()- vv[3].length();
-                varSeq= seq.substring(start, j)+ vv[4];
-                if (j+ del< seq.length())
-                    varSeq+= seq.substring(j+ del+ 1);
+                // trim end
                 if (varSeq.length()> seq.length())  // dirty
                     varSeq= varSeq.substring(0, seq.length());
             } else
