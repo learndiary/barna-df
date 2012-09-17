@@ -36,6 +36,15 @@ public class GParam {
     Profile AcceptorProfile;
     Profile PolyPTractProfile;
     Profile BranchPointProfile;
+
+    public Profile getAcceptorProfile() {
+        return AcceptorProfile;
+    }
+
+    public Profile getDonorProfile() {
+        return DonorProfile;
+    }
+
     Profile DonorProfile;
     Profile U2gcagDonorProfile;
     Profile U2gtaDonorProfile;

@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class PartitionSet {
-	HashMap<Partition,Partition> partitions= null;
+	public HashMap<Partition,Partition> partitions= null;
 	public PartitionSet() {
 		partitions= new HashMap<Partition,Partition>(4,1f);
 		//this.src= newSrc; this.snk= newSnk;

@@ -1,6 +1,7 @@
 package barna.geneid;
 
 import barna.commons.Execute;
+import barna.geneid.GeneID;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -36,22 +37,20 @@ public class ProfileTest {
         GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
         System.currentTimeMillis();
 
-        GeneID myGID= new GeneID();
-
         // sequence length: (dimesion+ order)
 
         // prefix_donor = (offset+ order)
         // suffix_donor = (dimension- offset- order- 2)
         // DonorProfile: order= 1, offset= 1, dimension= 9
         // prefix 2, suffix
-        float donScore= myGID.scoreDonor("GCGTACCCC", isochores[0].DonorProfile);
+        float donScore= GeneID.scoreDonor("GCGTACCCC", isochores[0].DonorProfile);
         System.err.println("score "+ donScore);
 
         // prefix_acceptor = (dimension- offset- 2)+ order
         // suffix_acceptor = offset
         // AcceptorProfile: order= 1, offset= 24, dimension= 27
-        //
-        float accScore= myGID.scoreAcceptor("CTCTCTCTCTCTCTCTCTCTCTAGCGC", isochores[0].AcceptorProfile, null, null);
+        // "CTCTCTCTCTCTCTCTCTCTCTAGCGC"
+        float accScore= GeneID.scoreAcceptor("CTCTCTCTCTCTCTCTCTCTCTCAGCG", isochores[0].AcceptorProfile, null, null);
         System.err.println("score "+ accScore);
 
 //        myGID.buildDonors(

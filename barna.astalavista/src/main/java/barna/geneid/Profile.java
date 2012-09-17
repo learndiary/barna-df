@@ -23,6 +23,54 @@ public class Profile {
      */
     int    dimension;
 
+    public int getAcc_context() {
+        return acc_context;
+    }
+
+    public float getAfactor() {
+        return afactor;
+    }
+
+    public float getBfactor() {
+        return bfactor;
+    }
+
+    public float getCutoff() {
+        return cutoff;
+    }
+
+    public int getDimension() {
+        return dimension;
+    }
+
+    public int getDimensionTrans() {
+        return dimensionTrans;
+    }
+
+    public int getDist() {
+        return dist;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public int getOpt_dist() {
+        return opt_dist;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public float getPenalty_factor() {
+        return penalty_factor;
+    }
+
+    public float[][] getTransitionValues() {
+        return transitionValues;
+    }
+
     /**
      * Position of the di-nucleotide in the profile, i.e.,
      * number of exonic positions before the "GT" of donors

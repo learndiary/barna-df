@@ -1569,21 +1569,29 @@ public class Gene extends DirectedRegion {
 		chromosome= string;
 	}
 
+    /**
+     * Creates an array of sites in this gene, sorted by their position
+     * and type. If the list has already been generated, it is lazily
+     * returned.
+     * @return an array of sites
+     */
 	public SpliceSite[] getSpliceSites() {
+
+        if (spliceSites== null|| spliceSites.length< spliceHash.size()) {
+
+            int n= 0;
+            for (Vector<SpliceSite> siteV : spliceHash.values())
+                n+= siteV.size();
+            spliceSites= new SpliceSite[n];
+            n= 0;
+            for (Vector<SpliceSite> siteV : spliceHash.values())
+                for (SpliceSite spliceSite : siteV)
+                    spliceSites[n++]= spliceSite;
+
+            Arrays.sort(spliceSites, new SpliceSite.PositionTypeComparator());
+        }
+
 		return spliceSites;	// evtl lazy extractions from exons
-//		spliceSites= new SpliceSite[0];
-//		Comparator compi= new SpliceSite.PositionTypeComparator();
-//		for (int i = 0; i < getTranscripts().length; i++) {
-//			SpliceSite[] ss= getTranscripts()[i].getSpliceChain();
-//			for (int j = 0; j < ss.length; j++) {
-//				int p= Arrays.binarySearch(spliceSites, ss[j], compi);
-//				if (p< 0)
-//					spliceSites= (SpliceSite[]) ArrayUtils.insert(spliceSites, ss[j], p);
-//				else
-//					spliceSites[p].addTranscript(getTranscripts()[i]);
-//			}
-//		}
-//		return spliceSites;
 	}
 	
 	public Vector<SpliceSite> getSpliceSites(Integer pos) {

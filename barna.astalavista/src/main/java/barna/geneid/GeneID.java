@@ -150,7 +150,7 @@ public class GeneID {
      * @param cardinal length of the alphabet
      * @return
      */
-    int OligoToInt(String s, int ls, int cardinal) {
+    static int OligoToInt(String s, int ls, int cardinal) {
 
         int index = 0;
         int weight = 1;
@@ -428,7 +428,7 @@ public class GeneID {
         return(ns);
     }
 
-    public float scoreAcceptor(String s, Profile profileAcc, Profile profilePPT, Profile profileBP) {
+    public static float scoreAcceptor(String s, Profile profileAcc, Profile profilePPT, Profile profileBP) {
 
         float score= scoreSite(s, profileAcc);
 
@@ -477,7 +477,7 @@ public class GeneID {
      * @param p site profile for evaluation
      * @return
      */
-    public float scoreSite(String s, Profile p) {
+    public static float scoreSite(String s, Profile p) {
         float score= 0f;
         if (s.length()!= p.dimension)
             throw new RuntimeException("Site sequence "+ s.length()+ "nt, expected "+ p.dimension+ "nt!");
@@ -500,7 +500,7 @@ public class GeneID {
         return score;
     }
 
-    float scoreDonor(String s, Profile p) {
+    public static float scoreDonor(String s, Profile p) {
 
         float score= 0f;
         // prefix_donor = (offset+ order)

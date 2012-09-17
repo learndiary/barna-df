@@ -2,13 +2,10 @@ package barna.astalavista;
 
 import barna.commons.log.Log;
 import barna.commons.parameters.*;
-import barna.io.gtf.GTFwrapper;
 import barna.model.ASEvent;
 import barna.model.Graph;
 import barna.model.Species;
 import barna.model.Transcript;
-import barna.model.commons.MyFile;
-import barna.model.constants.Constants;
 import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
@@ -73,8 +70,8 @@ public class AStalavistaSettings extends ParameterSchema {
     /**
      * Score splice site sequences.
      */
-    public static final Parameter<Boolean> SCORE_SITES = Parameters.booleanParameter("SCORE_SITES",
-            "score splice site sequences", false, null).longOption("scoresites");
+    public static final Parameter<File> SCORE_SITES = Parameters.fileParameter("SCORE_SITES",
+            "score splice site sequences", null, null, null).longOption("scoresites");
 
     /**
      * File with GeneID parameters / splice site profiles.
@@ -83,6 +80,13 @@ public class AStalavistaSettings extends ParameterSchema {
             "name and path of a file with the GeneID models for splice sites",
             null, null, null).longOption("gparam");
 
+
+    /**
+     * File with variant information (vcf format).
+     */
+    public static final Parameter<File> VARIANTS = Parameters.fileParameter("VARIANTS",
+            "name and path of a file with the variant information (vcf)",
+            null, null, null).longOption("vcf");
 
     /**
      * Path to the GTF output annotation.
@@ -130,7 +134,7 @@ public class AStalavistaSettings extends ParameterSchema {
                     }
                     Species spe= new Species(s[0]);
                     spe.setGenomeVersion(s[1]);
-                    SplicingGraph.EventExtractorThread.setSpecies(spe);
+                    SplicingGraph.EventExtractor.setSpecies(spe);
                 }
                 acceptableIntrons= true;
                 continue;
@@ -154,7 +158,7 @@ public class AStalavistaSettings extends ParameterSchema {
                 }
                 Species spe= new Species(s[0]);
                 spe.setGenomeVersion(s[1]);
-                SplicingGraph.EventExtractorThread.setSpecies(spe);
+                AStalavista.setSpecies(spe);
 
             }
 
@@ -195,7 +199,7 @@ public class AStalavistaSettings extends ParameterSchema {
                     int x= Integer.parseInt(args[++i]);
                     if (x< -1|| ((x> -1)&& (x< 2)))
                         System.err.println(args[i]+" is not a valid dimension, ignored");
-                    SplicingGraph.EventExtractorThread.n= x;
+                    SplicingGraph.EventExtractor.n= x;
                 } catch (NumberFormatException e) {
                     System.err.println(args[i]+" is not a valid dimension, ignored"); // :)
                 }
@@ -204,9 +208,9 @@ public class AStalavistaSettings extends ParameterSchema {
 
             int v= (Integer) schema.get(parameter);
             if (v< 2)
-                SplicingGraph.EventExtractorThread.n= (-1); // complete events
+                EventExtractor.n= (-1); // complete events
             else
-                SplicingGraph.EventExtractorThread.n= 2;
+                EventExtractor.n= 2;
         }
     }).longOption("dimension").shortOption('k');
 
