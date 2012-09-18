@@ -212,6 +212,7 @@ public class AStalavista implements FluxTool<Void>{
                 // score splice sites
                 if (siteScoreWriter!= null) {
                     try {
+                        g[i].markAlternativeSpliceSites();
                         scoreSites(g[i].getSpliceSites());
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -564,9 +565,9 @@ public class AStalavista implements FluxTool<Void>{
             scoreStr= scoreStr+ String.copyValueOf(ext);
         }
 
-
         String line= ss.getGene().getChromosome()+ "\t"+
                 ss.toString()+ "\t"+
+                (ss.isAlternative()? "ALT": "CON")+ "\t"+
                 id+ "\t"+
                 scoreStr+ "\t"+
                 seq+ "\n";
