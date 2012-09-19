@@ -32,7 +32,6 @@ import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
 import barna.geneid.*;
-import barna.io.FileHelper;
 import barna.io.GeneAheadReaderThread;
 import barna.io.gtf.GTFwrapper;
 import barna.model.*;
@@ -43,7 +42,6 @@ import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
-import sun.nio.cs.ext.MacThai;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -352,13 +350,24 @@ public class AStalavista implements FluxTool<Void>{
             } else
                 continue;
 
+            // get variants, if annotated
+            Vector<String> vvec= getVariants(spliceSites[i], flank5, flank3);
+            int nrCombinations= (int) Math.pow(2, vvec== null? 0: vvec.size());
+
+            // arrays to store reference results and
+            String[] seqs= new String[nrCombinations];
+            float[] scores= new float[nrCombinations];
+            String[] varTuples= new String[nrCombinations];
+
             // genomic sequence
             seq= Graph.readSequence(spliceSites[i], flank5, flank3);
             score= scoreSite(spliceSites[i], seq);
-            outputSite(spliceSites[i], null, seq, score);
+            // outputSite(spliceSites[i], null, seq, score);
+            seqs[0]= seq;
+            scores[0]= score;
+            varTuples[0]= "reference";
 
-            // get variants, if annotated
-            Vector<String> vvec= getVariants(spliceSites[i], flank5, flank3);
+            // recursion to do all tuple combinations
             if (vvec!= null) {
 
                 if (vvec.size()> 1)
@@ -370,12 +379,11 @@ public class AStalavista implements FluxTool<Void>{
                 } else {// donor
                     flank5-= 1;
                 }
-                int nr= scoreVariants(vvec, "", 0, 0, 0, spliceSites[i], flank5, flank3, seq.toLowerCase());
-                assert((nr+ 1)== Math.pow(2, vvec.size()));
-
+                int nr= scoreVariants(vvec, "", 0, 0, 0, spliceSites[i], flank5, flank3, seq.toLowerCase(), seqs, scores, varTuples);
+                assert((nr+ 1)== nrCombinations);
             }
 
-
+            outputSitesVCF(spliceSites[i], vvec, seqs, scores, varTuples);
         }
 
     }
@@ -471,7 +479,8 @@ public class AStalavista implements FluxTool<Void>{
 
     }
 
-    protected int scoreVariants(Vector<String> vvec, String varID, int rec, int nr, int idx, SpliceSite ss, int flank5, int flank3, String seq) {
+    protected int scoreVariants(Vector<String> vvec, String varID, int rec, int nr, int idx, SpliceSite ss, int flank5, int flank3, String seq,
+                                String[] seqs, float[] scores, String[] varTuples) {
 
         // break
         if (idx>= vvec.size())
@@ -537,17 +546,109 @@ public class AStalavista implements FluxTool<Void>{
                 }
             }
             float score= scoreSite(ss, varSeq);
-            String vvarID= varID+ ","+ vv[2];
-            outputSite(ss, vvarID, varSeq, score);
+            String vvarID= varID+ (varID.length()> 0? ",": "")+ vv[2];
+            //outputSite(ss, vvarID, varSeq, score);
+            seqs[nr]= varSeq;
+            scores[nr]= score;
+            varTuples[nr]= vvarID;
 
             // start recursion
-            nr= scoreVariants(vvec, vvarID, rec+ 1, nr, i + 1, ss, flank5, flank3, varSeq);
+            nr= scoreVariants(vvec, vvarID, rec+ 1, nr, i + 1, ss, flank5, flank3, varSeq, seqs, scores, varTuples);
         }
 
         return nr;
 
     }
 
+    /**
+     *
+     * @param ss
+     * @param variants
+     * @param sequences
+     * @param scores
+     * @param varTuples
+     */
+    private void outputSitesVCF(SpliceSite ss, Vector<String> variants, String[] sequences, float[] scores, String[] varTuples) {
+
+        // CHROM: number/letter without "chr"
+        String chr= ss.getGene().getChromosome();
+        if (chr.startsWith("chr"))
+            chr= chr.substring(3);
+        StringBuilder sb= new StringBuilder(chr);
+        sb.append("\t");
+
+        // POS: last/first exonic position flanking splice site di-nucleotide
+        sb.append(Integer.toString(Math.abs(ss.getPos())));
+        sb.append("\t");
+
+        // ID: strand, coord, chromosome
+        sb.append(ss.toString());
+        sb.append(chr);
+        sb.append("\t");
+
+        // REF: genomic splice site sequence
+        sb.append(sequences[0]);
+        sb.append("\t");
+
+        // VAR: missing value ".", or comma-separated list of variant sequences
+        if (sequences.length== 1)
+            sb.append(".\t");
+        else {
+            for (int i = 1; i < sequences.length; i++) {
+                sb.append(sequences[i]);
+                sb.append(",");
+            }
+            sb.replace(sb.length() - 1, sb.length(), "\t");
+        }
+
+        // SCORE: score of the reference splice site
+        sb.append(Float.toString(scores[0]));
+        sb.append("\t");
+
+        // FILLTER: "PASS" if the site is possible, otherwise a semicolon-separated list of codes for filters that fail.
+        // e.g. “q10;s50” might indicate that at this site the quality is below 10
+        sb.append(scores[0]< (-1000)? "q-1000":"PASS");
+        sb.append("\t");
+
+        // INFO
+        // modality: alternative/constitutive
+        sb.append("MOD=");
+        sb.append(ss.isAlternative()? "ALT;": "CON;");
+        // variant list
+        for (int i = 1; i < varTuples.length; ++i) {
+            sb.append("ALT");
+            sb.append(Integer.toString(i));
+            sb.append("=");
+            sb.append(varTuples[i]);
+            sb.append(";");
+        }
+        if (scores.length> 1)
+            sb.append("VAR_SCORES=");
+        for (int i = 1; i < scores.length; ++i) {
+            sb.append(Float.toString(scores[i]));
+            sb.append(",");
+        }
+        if (scores.length> 1)
+            sb.replace(sb.length()- 1, sb.length(), ";");
+            // non-redundant snp list
+        if (variants!= null&& variants.size()> 0) {
+            sb.append("SNPS=");
+            for (int i = 0; i < variants.size(); i++) {
+                String[] a= variants.elementAt(i).split("@");
+                sb.append(a[2]);
+                sb.append(",");
+            }
+            sb.deleteCharAt(sb.length()- 1);
+        }
+
+        sb.append("\n");
+
+        try {
+            siteScoreWriter.write(sb.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void outputSite(SpliceSite ss, String varID, String seq, float score) {
 
