@@ -347,4 +347,18 @@ class FluxCapacitorRunInetegrationTest {
         assertStdErr(stderr, STDERR_ACCESS_DENIED);
 	}
 
+	@Test
+	public void testLong() {
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
+                "ANNOTATION_FILE" : new File('/home/emilio/fromMicha/gencode_v12_chr1.gtf'),
+                "MAPPING_FILE" : new File('/home/emilio/fromMicha/NA20778-NA20778.4.M_120208_chr1.bam'),
+                "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
+                "READ_DESCRIPTOR" : "PAIRED",
+        ])
+
+        String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
+
+        assertStdErr(stderr, "Cheers!");
+	}
+
 }
