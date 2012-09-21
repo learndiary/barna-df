@@ -1,6 +1,7 @@
 package barna.flux.capacitor.improvementtest
 
 import barna.commons.Execute
+import org.rosuda.JRI.Rengine
 
 import java.util.concurrent.Executors
 
@@ -42,42 +43,6 @@ class FluxCapacitorRunImprovementTest {
         Execute.shutdown();
     }
 
-	static final String[] STDERR_MAPPED= ["8005","8184"]
-	static final String[] STDERR_ACCESS_DENIED= ["access denied"]
-
-	void assertStdErr(String stderr, String[] occurrences, Boolean debug = false) {
-        if (debug) System.err.println(stderr)
-
-		for (int i = 0; i < occurrences.length; i++) {
-			Assert.assertTrue(stderr.contains(occurrences[i]))
-		}
-	}
-
-    static void assertFileExist(File cwd, Map files){
-
-        for (Map.Entry e  : files.entrySet()) {
-            String fileName = e.key.toString();
-            File file = new File(fileName)
-            boolean isRelative = true;
-            for (File root : File.listRoots()) {
-                if(fileName.startsWith(root.getAbsolutePath())){
-                    isRelative = false
-                    break;
-                }
-            }
-            if(isRelative) {
-                file = new File(cwd, fileName)
-            }
-            if(e.value instanceof Closure){
-                Closure v = e.value
-                if(!v(file)) Assert.fail("""
-            File does not exsits.
-            Expected: ${fileName}
-        """)
-            }
-        }
-    }
-
     File currentTestDirectory = null
     @Before
     public void setUpTest(){
@@ -89,7 +54,7 @@ class FluxCapacitorRunImprovementTest {
     public void cleanup(){
         /*if(currentTestDirectory != null){
             FileHelper.rmDir(currentTestDirectory)
-        } */
+        }*/
     }
 
     @Test
@@ -114,7 +79,7 @@ class FluxCapacitorRunImprovementTest {
                 public void run() {
                     barna.flux.capacitor.improvementtest.FluxCapacitorRunner.runCapacitor(fileDir,parFile)
                 }
-            } */
+            }*/
 
             //pool.submit(t);
             println "$name submitted to pool"
@@ -126,10 +91,9 @@ class FluxCapacitorRunImprovementTest {
                 pool = Executors.newFixedThreadPool(THREADS)
             }
         }
-        println "======Deconvolution completed======"
         println "======Building transcripts RPKM table======"
-        def i = 0
         def file = []
+        def i = 0
         file[0] = "TargetID\tGene_Symbol\tChr\tCoord"
         currentTestDirectory.eachDir {
             def sample = it.toString().split("/").last().substring(0,26)
@@ -138,7 +102,7 @@ class FluxCapacitorRunImprovementTest {
             def j = 1
             gtf.eachLine {
                 def tokens = it.split("\t")
-                def chr = tokens[0]
+                def chr = tokens[0].replace("chr","")
                 def coord = tokens[3]
                 def options = tokens.last().split(";")
                 def optionMap = [:]
@@ -152,22 +116,55 @@ class FluxCapacitorRunImprovementTest {
                 if (i == 0)
                     file[j]="$transcript\t$gene\t$chr\t$coord"
                 file[j] = file[j].toString().concat("\t$rpkm")
-                i++
                 j++
             }
+            i++
         }
-        File table = new File(currentTestDirectory.absolutePath+"/transcriptsRPKM.txt")
+        def table = new File(currentTestDirectory.absolutePath+"/transcriptsRPKM.txt")
+        if (table.exists())
+            table.delete()
         file.each {
             table.append(it)
             table.append(barna.commons.system.OSChecker.NEW_LINE)
         }
-        println "======RPKM table completed======"
         println "======Building correlation matrix of samples======"
-        println "======Correlation matrix completed======"
-        println "======SVD of the corelation matrix======"
-        println "======SVD completed======"
+        def corMat = new File(currentTestDirectory.absolutePath+"/corMat.txt")
+        def pb = new ProcessBuilder()
+        def cmd = ["Rscript", FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"], table.absolutePath, corMat.absolutePath,"1",SAMPLES.toString()]
+        /*def process = pb.directory(new File(FluxCapacitorRunner.testData["R"]))
+                .redirectErrorStream(true)
+                .command(cmd)
+                .start()
+        String output = process.inputStream.text
+        process.waitFor()*/
+        //Runtime.getRuntime().exec("Rscript " + FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"] + " " + table.absoluteFile + " " + corMat.absoluteFile + " 1 " + SAMPLES, null, new File(FluxCapacitorRunner.testData["R"]))
+        println "======Performing SVD of the corelation matrix======"
+        def args = new String[1]
+        args[0] = "--vanilla"
+        Rengine re = new Rengine(args,false,null)
+        re.eval("mat_raw_trrpkm <- read.table(\"" + corMat.absolutePath + "\", header=T, row.names=1, sep=\"\t\")")
+        re.eval("data <- list(mat_raw_trrpkm)")
+        re.eval("names <- c(\"TR_RPKM by Lab - chr1\",\"TR_RPKM by Population\")")
+        re.eval("ind <- rownames(mat_raw_trrpkm)")
+        re.eval("qc <- read.table(\"" + FluxCapacitorRunner.testData["stats/mRNA.stats"] + "\", header=T, row.names=1, sep=\"\t\")")
+        re.eval("qcind <- rownames(qc)")
+        re.eval("qc <- qc[qcind,]")
+        re.eval("data <- lapply(data, function(x) {x[qcind,qcind]})")
+        re.eval("colvec <- as.character(qc[,\"LabColor\"])")
+        re.eval("m <- cmdscale(as.dist(1-data[[1]]))")
+        def svd = re.eval("m")
+//        re.eval("X11()")
+//        re.eval("plot(m[,1],-m[,2], main=names[1], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec)")
+//        re.eval("colvec1 <- as.character(qc[,\"PopColor\"])")
+//        re.eval("X11()")
+//        re.eval("plot(m[,1], -m[,2], main=names[2], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec1)")
+
         println "======Evaluating dataset======"
-        println "======Evaluation completed======"
+        def dist = 0;
+        svd.asDoubleMatrix().each {
+            dist += Math.sqrt(Math.pow(it[0],  2) + Math.pow(it[1], 2))
+        }
+        println "Overall distance: $dist"
 
         /*File parFile = barna.flux.capacitor.improvementtest.FluxCapacitorRunner.createTestDir(currentTestDirectory, [
                "ANNOTATION_FILE" : barna.flux.capacitor.improvementtest.FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
