@@ -152,50 +152,37 @@ class FluxCapacitorRunImprovementTest {
         re.eval("data <- lapply(data, function(x) {x[qcind,qcind]})")
         re.eval("colvec <- as.character(qc[,\"LabColor\"])")
         re.eval("m <- cmdscale(as.dist(1-data[[1]]))")
-        def svd = re.eval("m")
-//        re.eval("X11()")
-//        re.eval("plot(m[,1],-m[,2], main=names[1], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec)")
-//        re.eval("colvec1 <- as.character(qc[,\"PopColor\"])")
-//        re.eval("X11()")
-//        re.eval("plot(m[,1], -m[,2], main=names[2], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec1)")
+        //Plot for debugging purposes
+        /*re.eval("X11()")
+        re.eval("plot(m[,1],-m[,2], main=names[1], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec)")
+        re.eval("colvec1 <- as.character(qc[,\"PopColor\"])")
+        re.eval("X11()")
+        re.eval("plot(m[,1], -m[,2], main=names[2], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec1)")*/
 
         println "======Evaluating dataset======"
+        def svd = re.eval("m")
+        def overDist = computeDist(svd.asDoubleMatrix())
+        println "Overall distance: ${String.format('%1$2.6s',overDist)}\n"
+
+
+        def colvec = re.eval("colvec")
+        def colors = [] as Set
         def dist = 0;
-        svd.asDoubleMatrix().each {
+        colvec.asStringArray().each {colors.add(it)}
+        colors.eachWithIndex {color,n ->
+            def ind = colvec.asStringArray().findIndexValues {it == color}
+            dist = computeDist(svd.asDoubleMatrix()[ind])
+            println "Lab ${n+1} normalized distance: ${String.format('%1$2.6s',dist/overDist)}"
+        }
+
+    }
+
+    private double computeDist(matrix) {
+        def dist = 0
+        matrix.each {
             dist += Math.sqrt(Math.pow(it[0],  2) + Math.pow(it[1], 2))
         }
-        println "Overall distance: $dist"
-
-        /*File parFile = barna.flux.capacitor.improvementtest.FluxCapacitorRunner.createTestDir(currentTestDirectory, [
-               "ANNOTATION_FILE" : barna.flux.capacitor.improvementtest.FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
-               "MAPPING_FILE" : barna.flux.capacitor.improvementtest.FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],
-               "ANNOTATION_MAPPING" : FluxCapacitorSettings.AnnotationMapping.PAIRED,
-               "READ_DESCRIPTOR" : "SIMULATOR",
-        ])
-
-        String stderr= barna.flux.capacitor.improvementtest.FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
-
-        assertStdErr(stderr, STDERR_MAPPED);
-        assertFileExist(currentTestDirectory, [
-                (barna.flux.capacitor.improvementtest.FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf']) : {File file -> return file.exists()},
-                (barna.flux.capacitor.improvementtest.FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed']) : {File file -> return file.exists()},
-                (barna.flux.capacitor.improvementtest.FluxCapacitorRunner.DEFAULT_PARAMETER_FILE) : {File file -> return file.exists()},
-                (barna.flux.capacitor.improvementtest.FluxCapacitorRunner.DEFAULT_OUTPUT_FILE) : {File file -> return file.exists()},
-        ]) */
-
-//        Possible use case>
-//
-//        assertFileExist(currentTestDirectory, [
-//                "parameters.par" : {File file -> return file.exists()},
-//                "output/result.gtf" : [
-//                        "lines":20,
-//                        "contains": ["transcript", "exon"],
-//                        "equals": "expected-result.gtf",
-//                        "md5": "34masd314",
-//                        "eachLine" : {line-> line.endsWith("abc")}
-//                ]
-//        ])
-
+        return dist
     }
 
 }
