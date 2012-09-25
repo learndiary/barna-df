@@ -1,7 +1,8 @@
 package barna.flux.capacitor.improvementtest
 
-import barna.commons.Execute
 import org.rosuda.JRI.Rengine
+
+import barna.commons.Execute
 
 import java.util.concurrent.Executors
 
@@ -161,7 +162,7 @@ class FluxCapacitorRunImprovementTest {
 
         println "======Evaluating dataset======"
         def svd = re.eval("m")
-        def overDist = computeDist(svd.asDoubleMatrix())
+        def overDist = computeDist(svd.asDoubleMatrix(),[0,0])
         println "Overall distance: ${String.format('%1$2.6s',overDist)}\n"
 
 
@@ -171,18 +172,28 @@ class FluxCapacitorRunImprovementTest {
         colvec.asStringArray().each {colors.add(it)}
         colors.eachWithIndex {color,n ->
             def ind = colvec.asStringArray().findIndexValues {it == color}
-            dist = computeDist(svd.asDoubleMatrix()[ind])
+            dist = computeDist(svd.asDoubleMatrix()[ind],computeCentroid(svd.asDoubleMatrix()[ind]))
             println "Lab ${n+1} normalized distance: ${String.format('%1$2.6s',dist/overDist)}"
         }
 
     }
 
-    private double computeDist(matrix) {
+    private double computeDist(matrix, centroid) {
         def dist = 0
         matrix.each {
-            dist += Math.sqrt(Math.pow(it[0],  2) + Math.pow(it[1], 2))
+            dist += Math.sqrt(Math.pow(it[0]-centroid[0],  2) + Math.pow(it[1]-centroid[1], 2))
         }
         return dist
+    }
+
+    private double[][] computeCentroid(matrix) {
+        def x=0,y=0,n=0
+        matrix.each {
+            x+=it[0]
+            y+=it[1]
+            n++
+        }
+        return [x/n,y/n]
     }
 
 }
