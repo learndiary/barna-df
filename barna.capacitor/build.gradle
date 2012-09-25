@@ -197,6 +197,7 @@ idea{
         //if for some reason you want to add an extra sourceDirs
         testSourceDirs += file('src/integrationTest/groovy')
         testSourceDirs += file('src/integrationTest/java')
+        testSourceDirs += file('src/improvementTest/groovy')
     }
 }
 
