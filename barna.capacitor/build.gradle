@@ -5,6 +5,7 @@ ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
 ext.testdata_repository = "repo"
 ext.testdata_artifact = "barna/test_data-1.0.zip"
 ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
+ext.improvedata_path = "/home/emilio/improve_data"
 
 // add integration tests to source sets
 sourceSets{
@@ -19,11 +20,19 @@ sourceSets{
         }
 
     }
+    improvementTest{
+        groovy {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+    }
 }
 
 configurations {
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
+    improvementTestCompile.extendsFrom testCompile
+    improvementTestRuntime.extendsFrom testRuntime
 }
 
 
@@ -39,6 +48,27 @@ dependencies{
     compile 'org.nuiton.thirdparty:JRI:0.8-4'
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
+}
+
+task improvementTest(type: Test, dependsOn: "distDir") {
+    description = "Run improvement tests"
+    jvmArgs '-Xms128m', '-Xmx1G'
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
+    }
+    testClassesDir = sourceSets.improvementTest.output.classesDir
+    classpath = sourceSets.improvementTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
+    systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
+    }
+    // set url properties for test data
+    systemProperties["improvedata.path"] = improvedata_path
 }
 
 task integrationTest(type: Test, dependsOn: "distDir") {

@@ -27,20 +27,9 @@ class FluxCapacitorRunner {
     private static Map testData
 
     /**
-     * The test data artifact
-     */
-    private static String artifact
-
-    /**
      * The test data target directory
      */
-    private static String targetDirectory
-
-    static {
-        // initialize defaults
-        artifact = System.getProperty("testdata.artifact", "barna/test_data_imp-1.0.tgz")
-        targetDirectory = System.getProperty("testdata.target", new File("").getAbsolutePath())
-    }
+    private static String testDir
 
     /**
      * The path to the capacitor executable
@@ -173,7 +162,11 @@ class FluxCapacitorRunner {
     static synchronized Map getTestData() {
         if (this.testData == null) {
             this.testData = [:]
-            File testDir = new File(System.getProperty("test.data"))
+            testDir = System.getProperty("improvedata.path")
+            if (testDir==null) {
+                throw new RuntimeException("No path for test data specified")
+            }
+            File testDir = new File(testDir)
             testDir.eachFileRecurse {file ->
                 def relPath = file.getAbsolutePath().replace(testDir.getAbsolutePath(), "")
                 relPath = relPath.replaceAll("\\\\", "/")
