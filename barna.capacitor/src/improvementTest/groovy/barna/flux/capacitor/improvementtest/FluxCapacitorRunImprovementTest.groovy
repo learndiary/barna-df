@@ -1,8 +1,7 @@
 package barna.flux.capacitor.improvementtest
 
-import org.rosuda.JRI.Rengine
-
 import barna.commons.Execute
+import org.rosuda.JRI.Rengine
 
 import java.util.concurrent.Executors
 
@@ -151,42 +150,56 @@ class FluxCapacitorRunImprovementTest {
         re.eval("qcind <- rownames(qc)")
         re.eval("qc <- qc[qcind,]")
         re.eval("data <- lapply(data, function(x) {x[qcind,qcind]})")
-        re.eval("colvec <- as.character(qc[,\"LabColor\"])")
         re.eval("m <- cmdscale(as.dist(1-data[[1]]))")
         //Plot for debugging purposes
-        /*re.eval("X11()")
+/*
+        re.eval("colvec <- as.character(qc[,\"LabColor\"])")
+        re.eval("X11()")
         re.eval("plot(m[,1],-m[,2], main=names[1], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec)")
         re.eval("colvec1 <- as.character(qc[,\"PopColor\"])")
         re.eval("X11()")
-        re.eval("plot(m[,1], -m[,2], main=names[2], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec1)")*/
+        re.eval("plot(m[,1], -m[,2], main=names[2], xlab=\"1st dimension\", ylab=\"2nd dimension\", cex.axis=1.2, cex.lab=1.2, col=colvec1)")
+*/
 
         println "======Evaluating dataset======"
         def svd = re.eval("m")
         def overDist = computeDist(svd.asDoubleMatrix(),[0,0])
-        println "Overall distance: ${String.format('%1$2.6s',overDist)}\n"
+        println "Overall distance from origin: ${String.format('%1$2.6s',overDist)}\n"
 
 
-        def colvec = re.eval("colvec")
-        def colors = [] as Set
+        def labvec = re.eval("as.character(qc[,\"LabColor\"])")
+        def labcolors = [] as Set
         def dist = 0;
-        colvec.asStringArray().each {colors.add(it)}
-        colors.eachWithIndex {color,n ->
-            def ind = colvec.asStringArray().findIndexValues {it == color}
+        labvec.asStringArray().each {labcolors.add(it)}
+        labcolors.eachWithIndex {color,n ->
+            def ind = labvec.asStringArray().findIndexValues {it == color}
             dist = computeDist(svd.asDoubleMatrix()[ind],computeCentroid(svd.asDoubleMatrix()[ind]))
-            println "Lab ${n+1} normalized distance: ${String.format('%1$2.6s',dist/overDist)}"
+            println "Lab ${n+1} - overall distance from centroid (normalized): ${String.format('%1$2.6s',dist/overDist)}"
         }
 
+        println ""
+
+        def popvec = re.eval("as.character(qc[,\"PopColor\"])")
+        def popcolors = [] as Set
+        dist = 0;
+        popvec.asStringArray().each {popcolors.add(it)}
+        popcolors.eachWithIndex {color,n ->
+            def ind = popvec.asStringArray().findIndexValues {it == color}
+            dist = computeDist(svd.asDoubleMatrix()[ind],computeCentroid(svd.asDoubleMatrix()[ind]))
+            println "Population ${n+1} - overall distance from centroid (normalized): ${String.format('%1$2.6s',dist/overDist)}"
+        }
     }
 
     private double computeDist(matrix, centroid) {
         def dist = 0
+        def diff = []
         matrix.each {
             dist += Math.sqrt(Math.pow(it[0]-centroid[0],  2) + Math.pow(it[1]-centroid[1], 2))
         }
         return dist
     }
 
-    private double[][] computeCentroid(matrix) {
+    private double[] computeCentroid(matrix) {
         def x=0,y=0,n=0
         matrix.each {
             x+=it[0]
