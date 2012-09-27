@@ -53,6 +53,7 @@ dependencies{
 task improvementTest(type: Test, dependsOn: "distDir") {
     description = "Run improvement tests"
     jvmArgs '-Xms128m', '-Xmx1G'
+    testLogging.showStandardStreams = true
     beforeTest { descriptor ->
         logger.lifecycle("Running test: " + descriptor)
         ignoreFailures = true
