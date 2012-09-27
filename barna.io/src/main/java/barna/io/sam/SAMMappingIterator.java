@@ -144,15 +144,12 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     }
 
     private String getSuffix(SAMRecord record) {
-        if (record.getProperPairFlag()) {
-            if (descriptor.isPaired()) {
-                char sep = descriptor.toString().charAt(descriptor.toString().indexOf("{MATE}")-1);
-                return record.getFirstOfPairFlag()?sep+"1":sep+"2";
-            } else {
-                //to get it working also with paired-end data mapped as single end
-                return record.getFirstOfPairFlag()?"/1":"/2";
-            }
+        if (descriptor.isPaired()) {
+            char sep = descriptor.toString().charAt(descriptor.toString().indexOf("{MATE}")-1);
+            return record.getFirstOfPairFlag()?sep+"1":sep+"2";
+        } else {
+            //to get it working also with paired-end data mapped as single end
+            return record.getFirstOfPairFlag()?"/1":"/2";
         }
-        return "";
     }
 }

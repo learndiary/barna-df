@@ -367,7 +367,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	}
 
 	/**
-	 * Obtains the next element of <code>BEDobject2</code> instances
+	 * Obtains the next element of <code>BEDMapping</code> instances
 	 * from the iterator.
 	 * @return the next BED line of this iterator
 	 */
@@ -378,7 +378,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 		try {
 			reader= getReader(-1);
 			cs= new BEDMapping(reader.readLine(cs));
-			// bedObject2 clones byte[]
+			// BEDMapping clones byte[]
 			return cs;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
