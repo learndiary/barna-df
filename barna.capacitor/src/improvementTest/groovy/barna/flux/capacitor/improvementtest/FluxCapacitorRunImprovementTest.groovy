@@ -43,20 +43,19 @@ class FluxCapacitorRunImprovementTest {
     File currentTestDirectory = null
     @Before
     public void setUpTest(){
-//        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
-        currentTestDirectory = new File("FluxCapacitorImprovement", new File("/tmp"))
+        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
     }
 
     @After
     public void cleanup(){
-        /*if(currentTestDirectory != null){
+        if(currentTestDirectory != null){
             FileHelper.rmDir(currentTestDirectory)
-        }*/
+        }
     }
 
     @Test
     public void testDeconvolution() {
-        /*println "======Running deconvolution======"
+        println "======Running deconvolution======"
         def pool = Executors.newFixedThreadPool(THREADS)
         println "Setting up ${SAMPLES/THREADS} pools with $THREADS slots"
         def bams = new File(FluxCapacitorRunner.testData['bam'])
@@ -87,8 +86,8 @@ class FluxCapacitorRunImprovementTest {
                 println "done"
                 pool = Executors.newFixedThreadPool(THREADS)
             }
-        }*/
-        /*println "======Building transcripts RPKM table======"
+        }
+        println "======Building transcripts RPKM table======"
         def file = []
         def i = 0
         file[0] = "TargetID\tGene_Symbol\tChr\tCoord"
@@ -116,14 +115,14 @@ class FluxCapacitorRunImprovementTest {
                 j++
             }
             i++
-        }*/
+        }
         def table = new File(currentTestDirectory.absolutePath+"/transcriptsRPKM.txt")
-        /*if (table.exists())
+        if (table.exists())
             table.delete()
         file.each {
             table.append(it)
             table.append(barna.commons.system.OSChecker.NEW_LINE)
-        }*/
+        }
         println "======Building correlation matrix of samples======"
         def corMat = new File(currentTestDirectory.absolutePath+"/corMat.txt")
         def pb = new ProcessBuilder()
@@ -148,6 +147,7 @@ class FluxCapacitorRunImprovementTest {
         re.eval("qc <- qc[qcind,]")
         re.eval("data <- lapply(data, function(x) {x[qcind,qcind]})")
         re.eval("m <- cmdscale(as.dist(1-data[[1]]))")
+
         //Plot for debugging purposes
 /*
         re.eval("colvec <- as.character(qc[,\"LabColor\"])")
@@ -189,7 +189,6 @@ class FluxCapacitorRunImprovementTest {
 
     private double computeDist(matrix, centroid) {
         def dist = 0
-        def diff = []
         matrix.each {
             dist += Math.sqrt(Math.pow(it[0]-centroid[0],  2) + Math.pow(it[1]-centroid[1], 2))
         }
