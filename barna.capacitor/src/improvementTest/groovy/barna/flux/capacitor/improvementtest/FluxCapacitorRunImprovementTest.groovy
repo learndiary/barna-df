@@ -1,12 +1,7 @@
 package barna.flux.capacitor.improvementtest
 
 import barna.commons.Execute
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
-import barna.io.FileHelper
 import org.rosuda.JRI.Rengine
-
-import java.util.concurrent.Executors
-
 import org.junit.*
 
 /**
@@ -48,19 +43,20 @@ class FluxCapacitorRunImprovementTest {
     File currentTestDirectory = null
     @Before
     public void setUpTest(){
-        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
+//        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
+        currentTestDirectory = new File("FluxCapacitorImprovement", new File("/tmp"))
     }
 
     @After
     public void cleanup(){
-        if(currentTestDirectory != null){
+        /*if(currentTestDirectory != null){
             FileHelper.rmDir(currentTestDirectory)
-        }
+        }*/
     }
 
     @Test
     public void testDeconvolution() {
-        println "======Running deconvolution======"
+        /*println "======Running deconvolution======"
         def pool = Executors.newFixedThreadPool(THREADS)
         println "Setting up ${SAMPLES/THREADS} pools with $THREADS slots"
         def bams = new File(FluxCapacitorRunner.testData['bam'])
@@ -91,7 +87,7 @@ class FluxCapacitorRunImprovementTest {
                 println "done"
                 pool = Executors.newFixedThreadPool(THREADS)
             }
-        }
+        }*/
         println "======Building transcripts RPKM table======"
         def file = []
         def i = 0
