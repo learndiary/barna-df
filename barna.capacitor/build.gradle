@@ -6,6 +6,7 @@ ext.testdata_repository = "repo"
 ext.testdata_artifact = "barna/test_data-1.0.zip"
 ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
 ext.improvedata_path = "/data2/emilio/improve_data"
+ext.jrinative_lib = improvedata_path + "/lib"
 
 // add integration tests to source sets
 sourceSets{
@@ -70,6 +71,7 @@ task improvementTest(type: Test, dependsOn: "distDir") {
     }
     // set url properties for test data
     systemProperties["improvedata.path"] = improvedata_path
+    systemProperties["java.library.path"] = systemProperties["java.library.path"] + ":" + jrinative_lib
 }
 
 task integrationTest(type: Test, dependsOn: "distDir") {
