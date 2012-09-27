@@ -134,6 +134,7 @@ class FluxCapacitorRunImprovementTest {
                 .start()
         String output = process.inputStream.text
         process.waitFor()
+        println output
         println "======Performing SVD of the corelation matrix======"
         def args = new String[1]
         args[0] = "--vanilla"
