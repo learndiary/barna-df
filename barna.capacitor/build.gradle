@@ -5,7 +5,7 @@ ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
 ext.testdata_repository = "repo"
 ext.testdata_artifact = "barna/test_data-1.0.zip"
 ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
-ext.improvedata_path = "/home/emilio/improve_data"
+ext.improvedata_path = "/data2/emilio/improve_data"
 
 // add integration tests to source sets
 sourceSets{
