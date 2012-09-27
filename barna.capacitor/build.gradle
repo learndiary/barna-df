@@ -71,7 +71,7 @@ task improvementTest(type: Test, dependsOn: "distDir") {
     }
     // set url properties for test data
     systemProperties["improvedata.path"] = improvedata_path
-    systemProperties["java.library.path"] = systemProperties["java.library.path"] + ":" + jrinative_lib
+    systemProperties["java.library.path"] = System.properties["java.library.path"] + ":" + jrinative_lib
 }
 
 task integrationTest(type: Test, dependsOn: "distDir") {
