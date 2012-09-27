@@ -131,7 +131,7 @@ class FluxCapacitorRunImprovementTest {
         println "======Building correlation matrix of samples======"
         def corMat = new File(currentTestDirectory.absolutePath+"/corMat.txt")
         def pb = new ProcessBuilder()
-        def cmd = ["Rscript", FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"], table.absolutePath, corMat.absolutePath,"1",SAMPLES.toString()]
+        def cmd = ["/usr/bin/Rscript", FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"], table.absolutePath, corMat.absolutePath,"1",SAMPLES.toString()]
         def process = pb.directory(new File(FluxCapacitorRunner.testData["R"]))
                 .redirectErrorStream(true)
                 .command(cmd)
