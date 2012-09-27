@@ -91,6 +91,7 @@ class BooleanParameter extends Parameter<Boolean> {
     @Override
     public Parameter copy() {
         BooleanParameter booleanParameter = new BooleanParameter(getName(), getDescription(), getDefault(), getValidator());
+        booleanParameter.longOption(getLongOption()).shortOption(getShortOption());
         booleanParameter.set(get());
         return booleanParameter;
     }

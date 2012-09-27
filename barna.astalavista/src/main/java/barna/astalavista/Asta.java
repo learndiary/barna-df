@@ -55,8 +55,8 @@ public class Asta {
 
     static void _240808_test_multithread(String[] args) {
 
-        SplicingGraph.writerThread= new SplicingGraph.WriterThread();
-        inputFile= new MyFile(parseArguments(SplicingGraph.writerThread, args).getAbsolutePath());
+        EventExtractor.writerThread= new WriterThread();
+        inputFile= new MyFile(parseArguments(EventExtractor.writerThread, args).getAbsolutePath());
         //
         // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716.gtf
         // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_mRNAs_fromUCSC070716.gtf
@@ -71,15 +71,16 @@ public class Asta {
 //		if (rusc)
 //			outputFname= "delme.asta";
 
-        SplicingGraph.writerThread.start();
+        EventExtractor.writerThread.start();
 
         // init and start threads
         long t0= System.currentTimeMillis();
         if (output2) {
             // writerThread
-            outputStats(SplicingGraph.writerThread, new OutputStreamWriter(System.err));
+            outputStats(EventExtractor.writerThread, new OutputStreamWriter(System.err));
+            outputStats(EventExtractor.writerThread, new OutputStreamWriter(System.err));
             //Date ti= new Date(t0);
-            //System.out.println("["+ti+"]  started, k= "+EventExtractorThread.n+" species "+EventExtractorThread.species+", input file "+inputFile.getAbsolutePath()+", output file= "+outputFname);
+            //System.out.println("["+ti+"]  started, k= "+EventExtractor.n+" species "+EventExtractor.species+", input file "+inputFile.getAbsolutePath()+", output file= "+outputFname);
         }
         //GTFChrReader reader= new GTFChrReader(file.getAbsolutePath());
         //ChromosomeReaderThread readerThread= new ChromosomeReaderThread(reader);
@@ -94,16 +95,16 @@ public class Asta {
         readerThread.start();
         try {
             readerThread.join();
-            readerThread.getDownstreamThread().join();
+            // readerThread.getDownstreamThread().join();   // TODO deprecated
         } catch (InterruptedException e1) {
             ;	// :)
         }
 
         System.err.println("took "+((System.currentTimeMillis()- t0)/1000)+" sec.");
         try {
-            SplicingGraph.writerThread.setKill(true);
-            SplicingGraph.writerThread.interrupt();
-            SplicingGraph.writerThread.join();
+            EventExtractor.writerThread.setKill(true);
+            EventExtractor.writerThread.interrupt();
+            EventExtractor.writerThread.join();
         } catch (InterruptedException e) {
             // TODO Auto-generated catch block
         }
@@ -121,7 +122,7 @@ public class Asta {
      * @param args
      * @return
      */
-    static File parseArguments(SplicingGraph.WriterThread writerThread, String[] args) {
+    static File parseArguments(WriterThread writerThread, String[] args) {
 
         System.err.println("\nThis is ASta"
                 +", graph-based AS event retriever of the AStalavista package.");
@@ -213,7 +214,7 @@ public class Asta {
                 continue;
             }
             if (args[i].equals("-s")|| args[i].equals("--seqsite")) {
-                SplicingGraph.outputSeq= true;
+                WriterThread.outputSeq= true;
                 continue;
             }
             if (args[i].equals("-o")|| args[i].equals("--output")) {
@@ -240,7 +241,7 @@ public class Asta {
                     }
                     Species spe= new Species(s[0]);
                     spe.setGenomeVersion(s[1]);
-                    SplicingGraph.EventExtractorThread.setSpecies(spe);
+                    setSpecies(spe);
                 }
                 acceptableIntrons= true;
                 continue;
@@ -251,7 +252,7 @@ public class Asta {
                     int x= Integer.parseInt(args[++i]);
                     if (x< -1|| ((x> -1)&& (x< 2)))
                         System.err.println(args[i]+" is not a valid dimension, ignored");
-                    SplicingGraph.EventExtractorThread.n= x;
+                    EventExtractor.n= x;
                 } catch (NumberFormatException e) {
                     System.err.println(args[i]+" is not a valid dimension, ignored"); // :)
                 }
@@ -412,7 +413,18 @@ public class Asta {
         return file;
     }
 
-    static void outputStats(SplicingGraph.WriterThread writerThread, Writer writer) {
+    public static Species species = new Species("human");
+
+    static {
+        species.setGenomeVersion("hg18");
+    }
+
+    public static void setSpecies(Species newSpecies) {
+        species = newSpecies;
+    }
+
+
+    static void outputStats(WriterThread writerThread, Writer writer) {
         BufferedWriter buffy= new BufferedWriter(writer);
         try {
             buffy.write("# started\t"+new Date(System.currentTimeMillis())+barna.commons.system.OSChecker.NEW_LINE);
@@ -424,10 +436,10 @@ public class Asta {
                 buffy.write("\tstdout\n");
             if (Graph.overrideSequenceDirPath== null) {
                 if (DEBUG)
-                    buffy.write("# genome\t"+SplicingGraph.EventExtractorThread.species+barna.commons.system.OSChecker.NEW_LINE);
+                    buffy.write("# genome\t"+ species+barna.commons.system.OSChecker.NEW_LINE);
             } else
                 buffy.write("# genome\t"+Graph.overrideSequenceDirPath+barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# dimension\t"+SplicingGraph.EventExtractorThread.n+barna.commons.system.OSChecker.NEW_LINE);
+            buffy.write("# dimension\t"+ EventExtractor.n+barna.commons.system.OSChecker.NEW_LINE);
             buffy.write("# internalOnly\t"+ SplicingGraph.onlyInternal+ barna.commons.system.OSChecker.NEW_LINE);
             //buffy.write("# canonicalSS "+canonicalSS+barna.commons.system.OSChecker.NEW_LINE);
             //buffy.write("# acceptableIntrons "+acceptableIntrons+barna.commons.system.OSChecker.NEW_LINE);

@@ -1309,15 +1309,29 @@ public class Gene extends DirectedRegion {
 			int p= Arrays.binarySearch(regs, getTranscripts()[i].getExons()[0], DefaultRegion.getDefaultPositionComparator());
 		}
 	}
-	
+
+    /**
+     * Marks the splice sites of a locus by <code>ALTERNATIVE</code> when
+     * there is at least one transcript that contains that site but does not
+     * employ it for splicing. Otherwise the splice site is marked
+     * <code>CONSTITUTIVE</code>.<br>
+     *
+     * <b>Warning:</b> complexity O(T x S) for a locus with T transcripts and
+     * S splice sites.
+     */
 	public void markAlternativeSpliceSites() {
 		SpliceSite[] sites= getSpliceSites();
 		Comparator compi= new SpliceSite.PositionTypeComparator_old();
+        // for each splice site
 		for (int i = 0; i < sites.length; i++) {
+
+            // efficiency, handle the trivial case first
 			if (sites[i].getTranscripts().length== getTranscripts().length) {
 				sites[i].setModality(SpliceSite.CONSTITUTIVE);
 				continue;
-			}
+            }
+
+            // look for a transcript that shows alternative ussage
 			for (int j = 0; j < getTranscripts().length; j++) {
 				SpliceSite[] ss= getTranscripts()[j].getSpliceSitesAll();	// not schain
 				int p= Arrays.binarySearch(ss, sites[i], compi);
@@ -1329,11 +1343,17 @@ public class Gene extends DirectedRegion {
 					}
 				}
 			}
+
+
+            if (sites[i].getModality()== SpliceSite.NOTYPE_SS)
+                sites[i].setModality(SpliceSite.CONSTITUTIVE);
+
 		}
 	}
 	
 	/**
-	 * @param transcripts
+     * Adds a transcript to a locus.
+	 * @param newTranscript the transcript to be added to the locus
 	 */
 	public boolean addTranscript(Transcript newTranscript) {
 
@@ -1569,21 +1589,29 @@ public class Gene extends DirectedRegion {
 		chromosome= string;
 	}
 
+    /**
+     * Creates an array of sites in this gene, sorted by their position
+     * and type. If the list has already been generated, it is lazily
+     * returned.
+     * @return an array of sites
+     */
 	public SpliceSite[] getSpliceSites() {
+
+        if (spliceSites== null|| spliceSites.length< spliceHash.size()) {
+
+            int n= 0;
+            for (Vector<SpliceSite> siteV : spliceHash.values())
+                n+= siteV.size();
+            spliceSites= new SpliceSite[n];
+            n= 0;
+            for (Vector<SpliceSite> siteV : spliceHash.values())
+                for (SpliceSite spliceSite : siteV)
+                    spliceSites[n++]= spliceSite;
+
+            Arrays.sort(spliceSites, new SpliceSite.PositionTypeComparator());
+        }
+
 		return spliceSites;	// evtl lazy extractions from exons
-//		spliceSites= new SpliceSite[0];
-//		Comparator compi= new SpliceSite.PositionTypeComparator();
-//		for (int i = 0; i < getTranscripts().length; i++) {
-//			SpliceSite[] ss= getTranscripts()[i].getSpliceChain();
-//			for (int j = 0; j < ss.length; j++) {
-//				int p= Arrays.binarySearch(spliceSites, ss[j], compi);
-//				if (p< 0)
-//					spliceSites= (SpliceSite[]) ArrayUtils.insert(spliceSites, ss[j], p);
-//				else
-//					spliceSites[p].addTranscript(getTranscripts()[i]);
-//			}
-//		}
-//		return spliceSites;
 	}
 	
 	public Vector<SpliceSite> getSpliceSites(Integer pos) {
