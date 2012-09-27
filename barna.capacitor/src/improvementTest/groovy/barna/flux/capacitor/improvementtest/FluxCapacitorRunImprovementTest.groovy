@@ -124,16 +124,16 @@ class FluxCapacitorRunImprovementTest {
             table.append(it)
             table.append(barna.commons.system.OSChecker.NEW_LINE)
         }*/
-        //println "======Building correlation matrix of samples======"
+        println "======Building correlation matrix of samples======"
         def corMat = new File(currentTestDirectory.absolutePath+"/corMat.txt")
-        /*def pb = new ProcessBuilder()
+        def pb = new ProcessBuilder()
         def cmd = ["/usr/bin/Rscript", FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"], table.absolutePath, corMat.absolutePath,"1",SAMPLES.toString()]
         def process = pb.directory(new File(FluxCapacitorRunner.testData["R"]))
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
         String output = process.inputStream.text
-        process.waitFor()*/
+        process.waitFor()
         println "======Performing SVD of the corelation matrix======"
         def args = new String[1]
         args[0] = "--vanilla"
