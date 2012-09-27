@@ -1,6 +1,8 @@
 package barna.flux.capacitor.improvementtest
 
 import barna.commons.Execute
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
+import barna.io.FileHelper
 import org.rosuda.JRI.Rengine
 
 import java.util.concurrent.Executors
@@ -46,15 +48,14 @@ class FluxCapacitorRunImprovementTest {
     File currentTestDirectory = null
     @Before
     public void setUpTest(){
-        //currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
-        currentTestDirectory = new File("/tmp/FluxCapacitorImprovement")
+        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
     }
 
     @After
     public void cleanup(){
-        /*if(currentTestDirectory != null){
+        if(currentTestDirectory != null){
             FileHelper.rmDir(currentTestDirectory)
-        }*/
+        }
     }
 
     @Test
@@ -66,27 +67,27 @@ class FluxCapacitorRunImprovementTest {
         def c = 0
         bams.eachFileMatch(~/^.*\.bam$/) {
             def name = it.toString().split("/").last().replace(".bam","")
-            //def fileDir = FileHelper.createTempDir(name, "",currentTestDirectory)
-            /*File parFile = barna.flux.capacitor.improvementtest.FluxCapacitorRunner.createTestDir(fileDir, [
+            def fileDir = FileHelper.createTempDir(name, "",currentTestDirectory)
+            File parFile = barna.flux.capacitor.improvementtest.FluxCapacitorRunner.createTestDir(fileDir, [
                     "ANNOTATION_FILE" : barna.flux.capacitor.improvementtest.FluxCapacitorRunner.testData['gtf/gencode_v12.gtf'],
                     "MAPPING_FILE" : it,
                     "ANNOTATION_MAPPING" : FluxCapacitorSettings.AnnotationMapping.PAIRED,
                     "READ_DESCRIPTOR" : "PAIRED",
-            ])*/
+            ])
 
             def i = c++%THREADS
-            /*def t = new Thread() {
+            def t = new Thread() {
                 public void run() {
                     barna.flux.capacitor.improvementtest.FluxCapacitorRunner.runCapacitor(fileDir,parFile)
                 }
-            }*/
+            }
 
-            //pool.submit(t);
+            pool.submit(t);
             println "$name submitted to pool"
             if (i == (THREADS-1)) {
-                //pool.shutdown()
+                pool.shutdown()
                 print "Executing threads in pool ${c/THREADS}..."
-                //while (!pool.isTerminated()) {}
+                while (!pool.isTerminated()) {}
                 println "done"
                 pool = Executors.newFixedThreadPool(THREADS)
             }
@@ -131,13 +132,12 @@ class FluxCapacitorRunImprovementTest {
         def corMat = new File(currentTestDirectory.absolutePath+"/corMat.txt")
         def pb = new ProcessBuilder()
         def cmd = ["Rscript", FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"], table.absolutePath, corMat.absolutePath,"1",SAMPLES.toString()]
-        /*def process = pb.directory(new File(FluxCapacitorRunner.testData["R"]))
+        def process = pb.directory(new File(FluxCapacitorRunner.testData["R"]))
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
         String output = process.inputStream.text
-        process.waitFor()*/
-        //Runtime.getRuntime().exec("Rscript " + FluxCapacitorRunner.testData["R/matrixCalculateCorOps.R"] + " " + table.absoluteFile + " " + corMat.absoluteFile + " 1 " + SAMPLES, null, new File(FluxCapacitorRunner.testData["R"]))
+        process.waitFor()
         println "======Performing SVD of the corelation matrix======"
         def args = new String[1]
         args[0] = "--vanilla"
