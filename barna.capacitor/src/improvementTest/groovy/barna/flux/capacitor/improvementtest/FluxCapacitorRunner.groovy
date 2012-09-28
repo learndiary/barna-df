@@ -130,7 +130,7 @@ class FluxCapacitorRunner {
         }
 
         def pb = new ProcessBuilder()
-        pb.environment().put("FLUX_MEM", "1G")
+        pb.environment().put("FLUX_MEM", "2G")
 
         def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
         if (OSChecker.isWindows()) {
