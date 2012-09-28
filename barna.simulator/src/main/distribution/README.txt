@@ -134,7 +134,7 @@ GETTING STARTED
     to create a file with an exhaustive list of parameters and their default values,
     pipe the output to a file
 
-     flux-simulator --printParameters > myparameters.par
+    flux-simulator --printParameters > myparameters.par
 
 
     NOTE that all file parameters, e.g. the location of the genome or the .gtf annotation file,
@@ -156,7 +156,7 @@ GETTING STARTED
 
     The Simulator documentation contains examples including demo data:
 
-    http://barnaserver.com/confluence/display/SIM/4+-+Example+Simulations
+    http://sammeth.net/confluence/display/SIM/5+-+Example+Simulations
 
 * Memory
 
@@ -173,11 +173,11 @@ GETTING STARTED
 * All pages related to the program are reachable from the program homepage.
   Especially, have a look at the documentation of the FLUX SIMULATOR at
 
-	http://barnaserver.com/confluence/display/SIM
+	http://sammeth.net/confluence/display/SIM
 
 * If you encounter any bugs, use the bugtracking system at
 
-	http://barnaserver.com/jira/browse/BARNA
+	http://sammeth.net/jira/browse/BARNA
 	
   First check for any known bugs, if you don't find your issue described, log
   in and create a new issue.

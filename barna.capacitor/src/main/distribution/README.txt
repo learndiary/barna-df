@@ -119,21 +119,6 @@ GETTING STARTED
     can be specified as either absolute or relative path names; in the latter case the path
     is relative to the location of the parameter file.
 
-* Example
-
-    To get a complete sample project including annotations and the genome, download
-
-      http://fluxcapacitor.googlecode.com/files/fluxcapacitor_demo_mouse-1.0.tar.gz
-
-	and extract the file
-
-	  tar xzvf fluxcapacitor_demo_mouse-1.0.tar.gz
-
-	this will create a demo folder with GTF annotation, the mapped reads' file and
-	a parameter file. Now, to start the capacitor do:
-
-	flux-capacitor -p mouse_demo.par
-
 * Memory
 
     In case you run into out of memory issues--especially when setting parameter 
@@ -167,18 +152,18 @@ GETTING STARTED
 	
 * Especially, have a look at the documentation of the Flux Capacitor at
 
-	http://fluxcapacitor.wikidot.com/capacitor
+	http://sammeth.net/confluence/display/FLUX/Home
 
 * If you encounter any bugs, use the bugtracking system at
 
-	http://code.google.com/p/fluxcapacitor/issues/list
+	http://sammeth.net/jira
 	
   First check for any known bugs, if you don't find your issue described, log
   in and create a new issue.
 
 * If you have any questions, discuss them via the forum 
 	
-	http://fluxcapacitor.wikidot.com/forum:start
+	http://sammeth.net/confluence/display/FLUX/Appendix+D+-+Forum
 	
 or leave me an email.
 
