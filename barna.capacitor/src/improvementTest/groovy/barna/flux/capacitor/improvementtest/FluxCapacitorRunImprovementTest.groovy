@@ -66,7 +66,6 @@ class FluxCapacitorRunImprovementTest {
         println "Setting up ${SAMPLES/THREADS} pools with $THREADS slots"
         def bams = new File(FluxCapacitorRunner.testData['bam'])
         def c = 0
-        def stdout = []
         bams.eachFileMatch(~/^.*\.bam$/) {
             def name = it.toString().split("/").last().replace(".bam","")
             def fileDir = FileHelper.createTempDir(name, "",currentTestDirectory)
@@ -78,10 +77,17 @@ class FluxCapacitorRunImprovementTest {
             ])
 
             def i = c++%THREADS
-            stdout[i] = ""
+            def fileout = new BufferedOutputStream(new FileOutputStream(new File("capacitor.out",fileDir)))
             def t = new Thread() {
                 public void run() {
-                    stdout [i] = barna.flux.capacitor.improvementtest.FluxCapacitorRunner.runCapacitor(fileDir,parFile)
+                     def input = barna.flux.capacitor.improvementtest.FluxCapacitorRunner.runCapacitor(fileDir,parFile)
+                     fileout.withStream {
+                         int len = 0;
+                         byte[] buffer = new byte[4096]
+                         while ((len = input.read(buffer)) > 0) {
+                             fileout.write(buffer, 0, len);
+                         }
+                     }
                 }
             }
 
@@ -92,10 +98,6 @@ class FluxCapacitorRunImprovementTest {
                 print "Executing threads in pool ${c/THREADS}..."
                 while (!pool.isTerminated()) {}
                 println "done"
-                stdout.eachWithIndex {
-                    File out = new File("stderr." + c/THREADS + "." + i + ".gtf",currentTestDirectory)
-                    out.append(it)
-                }
                 pool = Executors.newFixedThreadPool(THREADS)
             }
         }

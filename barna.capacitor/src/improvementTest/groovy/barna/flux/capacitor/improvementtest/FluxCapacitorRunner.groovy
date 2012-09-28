@@ -104,7 +104,7 @@ class FluxCapacitorRunner {
      * @param parameterFile the parameter file
      * @return output the output of the capacitor
      */
-    public static String runCapacitor(File cwd, File parameterFile){
+    public static InputStream runCapacitor(File cwd, File parameterFile){
         synchronized (lock){
             if(executable == null){
                 executable = System.getProperty("dist.exe")
@@ -140,7 +140,7 @@ class FluxCapacitorRunner {
                 .redirectErrorStream(true)
                 .command(cmd)
                 .start()
-        String output = process.inputStream.text
+        InputStream output = process.inputStream
         process.waitFor()
         return output;
     }
