@@ -1,12 +1,7 @@
 package barna.flux.capacitor.improvementtest
 
 import barna.commons.Execute
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
-import barna.io.FileHelper
 import org.rosuda.JRI.Rengine
-
-import java.util.concurrent.Executors
-
 import org.junit.*
 
 /**
@@ -48,7 +43,8 @@ class FluxCapacitorRunImprovementTest {
     File currentTestDirectory = null
     @Before
     public void setUpTest(){
-        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
+//        currentTestDirectory = FileHelper.createTempDir("FluxCapacitorImprovement", "", null)
+        currentTestDirectory = new File("FluxCapacitorImprovement", new File("/tmp"))
     }
 
     @After
@@ -60,7 +56,7 @@ class FluxCapacitorRunImprovementTest {
 
     @Test
     public void testDeconvolution() {
-        println "======Running deconvolution======"
+        /*println "======Running deconvolution======"
         def pool = Executors.newFixedThreadPool(THREADS)
         println "Setting up ${SAMPLES/THREADS} pools with $THREADS slots"
         def bams = new File(FluxCapacitorRunner.testData['bam'])
@@ -120,14 +116,14 @@ class FluxCapacitorRunImprovementTest {
                 j++
             }
             i++
-        }
+        }*/
         def table = new File(currentTestDirectory.absolutePath+"/transcriptsRPKM.txt")
-        if (table.exists())
+        /*if (table.exists())
             table.delete()
         file.each {
             table.append(it)
             table.append(barna.commons.system.OSChecker.NEW_LINE)
-        }
+        }*/
         println "======Building correlation matrix of samples======"
         def corMat = new File(currentTestDirectory.absolutePath+"/corMat.txt")
         def pb = new ProcessBuilder()
