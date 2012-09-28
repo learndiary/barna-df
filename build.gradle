@@ -20,7 +20,7 @@ version = "1.16"
  * Versions for applications
  */
 ext.appVersions = [
-    "barna.astalavista":"2.0",
+    "barna.astalavista":"3.0",
     "barna.simulator":"1.1.1-SNAPSHOT",
     "barna.capacitor":"1.1.1-SNAPSHOT",
     "barna.tools":"1.0-SNAPSHOT"
