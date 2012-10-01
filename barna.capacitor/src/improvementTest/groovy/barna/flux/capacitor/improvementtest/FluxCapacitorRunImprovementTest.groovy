@@ -54,9 +54,9 @@ class FluxCapacitorRunImprovementTest {
 
     @After
     public void cleanup(){
-        /*if(currentTestDirectory != null){
+        if(currentTestDirectory != null){
             FileHelper.rmDir(currentTestDirectory)
-        }*/
+        }
     }
 
     @Test
