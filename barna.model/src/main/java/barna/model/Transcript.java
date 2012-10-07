@@ -1819,6 +1819,13 @@ public class Transcript extends DirectedRegion {
 			return Transcript.TYPE_TO_ID[source];
 	}
 
-
+    public boolean containsSS(SpliceSite ss) {
+        for (int i = 0; i < spliceSites.length; i++) {
+            if (ss.getPos()== spliceSites[i].getPos()&&
+                    ss.isDonor()== spliceSites[i].isDonor())
+                return true;
+        }
+        return false;
+    }
 
 }
