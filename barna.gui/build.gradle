@@ -1,0 +1,11 @@
+dependencies{
+    compile project(":barna.io")
+    compile project(":barna.tools")
+    compile "org.freehep:freehep:2.1"
+}
+
+repositories {
+    maven {
+        url "http://java.freehep.org/maven2"
+    }
+}
