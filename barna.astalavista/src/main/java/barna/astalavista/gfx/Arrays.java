@@ -1,4 +1,4 @@
-package barna.gui.astalavista;
+package barna.astalavista.gfx;
 
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
@@ -387,7 +387,7 @@ public class Arrays {
      * Assuming that a and o share the same class and some other things, this
      * inserts an object in an array at the specified position. Automatically
      * converts (negative) insertion points as proposed by for instance
-     * <code>barna.gui.astalavista.Arrays.binarySearch</code>.
+     * <code>barna.astalavista.gfx.Arrays.binarySearch</code>.
      *
      * @@param a
      * @@param o
@@ -411,7 +411,7 @@ public class Arrays {
                 if (a[i].getClass().isAssignableFrom(c))
                     c= a[i].getClass();	// get the superclass
                 else if (!c.isAssignableFrom(a[i].getClass()))
-                    System.out.println("WARNING: incompatible classes in barna.gui.astalavista.Array, "+c+", "+a[i].getClass());
+                    System.out.println("WARNING: incompatible classes in barna.astalavista.gfx.Array, "+c+", "+a[i].getClass());
             }
         }
 
@@ -499,7 +499,7 @@ public class Arrays {
     }
 
     /**
-     * Converts an eventually highdimensional barna.gui.astalavista.Array or Vector to an barna.gui.astalavista.Array.
+     * Converts an eventually highdimensional barna.astalavista.gfx.Array or Vector to an barna.astalavista.gfx.Array.
      * @@param base
      * @@return
      */
@@ -548,7 +548,7 @@ public class Arrays {
     }
 
     /**
-     * Converts an eventually highdimensional barna.gui.astalavista.Array or Vector to an barna.gui.astalavista.Array.
+     * Converts an eventually highdimensional barna.astalavista.gfx.Array or Vector to an barna.astalavista.gfx.Array.
      * @@param base
      * @@return
      */
@@ -574,7 +574,7 @@ public class Arrays {
         }
         Object[] result= null;
         if (r!= null) {
-//			result= (Object[]) barna.gui.astalavista.Array.newInstance(type, );
+//			result= (Object[]) barna.astalavista.gfx.Array.newInstance(type, );
             //for (int i = 0; i < o.length; i++)
 //			result[i]= toPrimitiveField(o.length);
         }

@@ -1,4 +1,4 @@
-package barna.gui.astalavista;
+package barna.astalavista.gfx;
 // import java.applet.Applet;
 import java.applet.Applet;
 import java.awt.*;

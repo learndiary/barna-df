@@ -1,4 +1,4 @@
-package barna.gui.astalavista;
+package barna.astalavista.gfx;
 
 /**
  * Created with IntelliJ IDEA.

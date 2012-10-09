@@ -1,4 +1,4 @@
-package barna.gui.astalavista;
+package barna.astalavista.gfx;
 
 import barna.commons.IntegerTupleComparator;
 import barna.io.FileHelper;
@@ -10,10 +10,10 @@ import barna.model.Transcript;
 import barna.model.gff.GFFObject;
 
 //import gphase.algo.FilterFactory;
-//import gphase.gui.barna.gui.astalavista.Circle;
-//import gphase.gui.barna.gui.astalavista.ColorMaster;
+//import gphase.gui.barna.astalavista.gfx.Circle;
+//import gphase.gui.barna.astalavista.gfx.ColorMaster;
 //
-//import gphase.tools.barna.gui.astalavista.Arrays;
+//import gphase.tools.barna.astalavista.gfx.Arrays;
 //import gphase.tools.IntegerTupleComparator;
 import org.freehep.util.export.ExportFileType;
 
@@ -21,7 +21,6 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import barna.gui.astalavista.Arrays;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -159,9 +158,9 @@ public class LaVista {
                 p= java.util.Arrays.binarySearch(regsEnd[i], reg, DirectedRegion.getDefaultEndComparator());
                 map= getOvlRegionsAround(p, regsEnd[i], reg, map);
 //				for (int j = 0; j < regs.length; j++) {
-//					int p= java.util.barna.gui.astalavista.Arrays.binarySearch(regsStart[i], regs[i], DirectedRegion.getDefaultPositionComparator());
+//					int p= java.util.barna.astalavista.gfx.Arrays.binarySearch(regsStart[i], regs[i], DirectedRegion.getDefaultPositionComparator());
 //					map= getOvlRegionsAround(p, regsStart[i], regs[i], map);
-//					p= java.util.barna.gui.astalavista.Arrays.binarySearch(regsEnd[i], regs[i], DirectedRegion.getDefaultEndComparator());
+//					p= java.util.barna.astalavista.gfx.Arrays.binarySearch(regsEnd[i], regs[i], DirectedRegion.getDefaultEndComparator());
 //					map= getOvlRegionsAround(p, regsEnd[i], regs[i], map);
 //				}
 
@@ -668,7 +667,7 @@ public class LaVista {
                 mName= "isCompletelyIn3UTR";
 
             Method m = vars[0][0].getClass().getMethod(mName, null);
-            filtClasses= (ASEvent[][]) Arrays.filter(vars, m);
+            filtClasses= (ASEvent[][]) barna.astalavista.gfx.Arrays.filter(vars, m);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -887,7 +886,7 @@ public class LaVista {
         }
         System.gc();
 
-        java.util.Arrays.sort(ev, new Arrays.FieldSizeRevComparator());
+        java.util.Arrays.sort(ev, new barna.astalavista.gfx.Arrays.FieldSizeRevComparator());
         return ev;
     }
 

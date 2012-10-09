@@ -1,4 +1,4 @@
-package barna.gui.astalavista;
+package barna.astalavista.gfx;
 
 import javax.swing.*;
 import java.awt.*;
