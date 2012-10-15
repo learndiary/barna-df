@@ -354,7 +354,8 @@ public class EmpiricalDistribution extends AbstractDistribution {
         double offset = min + binSize / 2d;
         double sumD = 0d;
         double[] b = d.a;
-        for (int i = 0; i < a.length; i++) {
+        int length = Math.min(a.length, b.length); // fix issue BARNA-235 and cover for the 2 element overhang in distributions
+        for (int i = 0; i < length; i++) {
             //gelProb[i]= (oriProb[i]== 0? 0: gelProb[i]/ oriProb[i]);
 //			int lo= d.getBin(min+ i* binSize), hi= d.getBin(min+ (i+ 1)* binSize);
 //			double w= 0d;
@@ -368,7 +369,6 @@ public class EmpiricalDistribution extends AbstractDistribution {
             a[i] = (b[i] == 0 ? 0 : a[i] / b[i]);
 
             //a[i]/= Math.max(d.getBins()[i]/ d.sum, 1);
-            System.currentTimeMillis();
         }
         updateHistogram();
     }
