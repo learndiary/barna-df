@@ -1,7 +1,97 @@
+apply plugin: 'groovy'
+
+def outputName = "astalavista-${version}"
+
 dependencies{
     compile project(':barna.commons')
     compile project(':barna.io')
     compile project(':barna.model')
     compile 'sTASSEL:sTASSEL:1.0'
     compile 'ledatastream:ledatastream:1.0'
+}
+
+ext.distSpec = copySpec {
+    from(project.rootDir){
+        include 'LICENSE'
+        include 'LGPL_LICENSE.txt'
+        include 'APACHE_LICENSE.txt'
+    }
+    from('src/main/distribution/'){
+        include 'README.txt'
+    }
+    into('bin') {
+        from("${project.rootDir}/barna.distribution/src/main/dist/bin")
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens:
+                [
+                        "flux.tool":'astalavista',
+                        "flux.app":project.name
+                ]
+        )
+
+        rename 'flux-template.sh',  'astalavista'
+        rename 'flux-template.bat', 'astalavista.bat'
+        fileMode = 0755
+    }
+    into('lib') {
+        from(jar.outputs.files)
+        from(configurations.runtime)
+    }
+}
+
+task distDir(type: Copy, dependsOn: ['writeIntegrationTestProperties']){
+    description = "Prepare a directory for distribution"
+    into "${distsDir}/${outputName}"
+    with distSpec
+}
+
+
+task distTar(type: Tar) {
+    description = "Tars the binary distribution."
+    baseName "astalavista"
+    into "${outputName}"
+    with distSpec
+    compression = Compression.GZIP
+}
+
+task distZip(type: Zip) {
+    description = "Zip the binary distribution."
+    baseName "astalavista"
+    into "${outputName}"
+    with distSpec
+}
+
+task dist(dependsOn: ['distTar', 'distZip'])
+
+
+/**
+ * Create aggregated javaDoc from all subprojects
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for all astalavista modules"
+    source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.astalavista") ].collectAll{p-> p.sourceSets.main.java}
+    destinationDir = file("${buildDir}/docs/astalavista-${version}")
+    configure(options) {
+        windowTitle = 'Astalavista API Documentation'
+        docTitle = "Astalavista JavaDoc (${project(':barna.astalavista').version})"
+        links = [ 'http://download.oracle.com/javase/6/docs/api/',
+                'http://download.oracle.com/javaee/6/api/' ]
+    }
+}
+
+task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
+    description = "Zip the aggregated javadoc"
+    classifier = "javadoc"
+    baseName = "astalavista"
+    from("${buildDir}/docs/astalavista-${version}"){
+        if(version =~ /.*SNAPSHOT.*/){
+            into "astalavista-DEVEL"
+        }else{
+            into "astalavista-${version}"
+        }
+    }
+}
+
+
+artifacts{
+    archives distTar
 }

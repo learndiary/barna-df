@@ -81,6 +81,7 @@ class FileParameter extends Parameter<File> {
     @Override
     public Parameter copy() {
         FileParameter fileParameter = new FileParameter(getName(), getDescription(), getDefault(), getValidator(), nameParser);
+        fileParameter.longOption(getLongOption()).shortOption(getShortOption());
         fileParameter.set(get());
         return fileParameter;
     }

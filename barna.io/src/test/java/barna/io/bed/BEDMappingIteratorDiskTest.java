@@ -32,7 +32,7 @@ import barna.commons.Execute;
 import barna.commons.system.OSChecker;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.model.bed.BEDobject2;
+import barna.model.bed.BEDMapping;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,7 +42,7 @@ import java.util.Comparator;
 
 import static junit.framework.Assert.*;
 
-public class BEDiteratorDiskTest {
+public class BEDMappingIteratorDiskTest {
 
 	@BeforeClass
 	public static void init() {
@@ -98,7 +98,7 @@ public class BEDiteratorDiskTest {
 			int i= 0;
 			while(biter.hasNext()) {
 				ByteArrayCharSequence cs= biter.next();
-				BEDobject2 obj= new BEDobject2(cs);
+				BEDMapping obj= new BEDMapping(cs);
 				// do not exchange arguments, String.equalsTo() checks OID
 				assertEquals(obj, bedSorted[i++]);
 			}
@@ -136,7 +136,7 @@ public class BEDiteratorDiskTest {
 			boolean first= true;
 			while(biter.hasNext()) {
 				ByteArrayCharSequence cseq= biter.next();
-				BEDobject2 cs= new BEDobject2(cseq);
+				BEDMapping cs= new BEDMapping(cseq);
 				if (count) {
 					++tstL;
 					tstC+= cs.length();

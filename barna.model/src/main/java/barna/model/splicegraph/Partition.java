@@ -32,8 +32,8 @@ import java.util.Iterator;
 
 
 public class Partition {
-	HashMap<PartitionSet, PartitionSet> parents;
-	long[] transcripts;
+	public HashMap<PartitionSet, PartitionSet> parents;
+	public long[] transcripts;
 	public Partition() {
 		transcripts= null;
 		parents= new HashMap<PartitionSet,PartitionSet>(4,1f);

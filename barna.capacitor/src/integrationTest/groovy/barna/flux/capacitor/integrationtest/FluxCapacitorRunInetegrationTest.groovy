@@ -9,7 +9,7 @@ import barna.io.rna.UniversalReadDescriptor
 import org.junit.*
 
 import static junit.framework.Assert.assertTrue
-import static junit.framework.Assert.fail
+import static org.junit.Assert.fail
 
 /**
  * 
@@ -25,7 +25,17 @@ class FluxCapacitorRunInetegrationTest {
     public static void setUp(){
         executable = System.getProperty("dist.exe")
         if(executable == null){
-            fail("No capacitor executable specified")
+            def resource = FluxCapacitorRunInetegrationTest.class.getResource("/integration-build.properties")
+            if(!resource){
+                fail("No capacitor executable specified")
+            }else{
+                Properties p = new Properties()
+                p.load(resource.openStream())
+                executable = p.getProperty("dist.exe", null)
+                if(executable == null){
+                    fail("No capacitor executable specified and integration tests properties do not contain a path")
+                }
+            }
         }
         Execute.initialize(2);
 

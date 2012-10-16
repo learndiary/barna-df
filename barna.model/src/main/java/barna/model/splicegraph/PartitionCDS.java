@@ -35,9 +35,9 @@ import java.util.Vector;
 
 public class PartitionCDS extends Partition {
 
-	boolean cdsValid53;
-	int currFrame5= Translation.FRAME_BYTEVAL[Translation.FRAME_BITNI];
-	int frame3= Translation.FRAME_BYTEVAL[Translation.FRAME_BITNI];
+	public boolean cdsValid53;
+	public int currFrame5= Translation.FRAME_BYTEVAL[Translation.FRAME_BITNI];
+	public int frame3= Translation.FRAME_BYTEVAL[Translation.FRAME_BITNI];
 	HashMap<Integer, Vector<PartitionCDS>> mapConfirmedCDSflanks;
 	
 	public PartitionCDS() {

@@ -404,6 +404,9 @@ public class SequencerTest {
                             Assert.assertEquals(Character.toString(Graph.complementaryCharacter(seq.charAt(x))),
                                     Character.toString(fasta[1].charAt(readLen- 1- x)));
                     }
+                    if (x < readLen) {  // read contains poly-A tail
+                        Assert.assertEquals(tlen, readStart+ x- 1);   // check whether last informative position corresponds to the end of the transcript
+                    }
                     for (; x< readLen; ++x)
                         if (left)
                             Assert.assertEquals('a', fasta[1].charAt(x));

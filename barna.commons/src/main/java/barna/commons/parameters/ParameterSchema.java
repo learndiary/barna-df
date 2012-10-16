@@ -93,7 +93,7 @@ public abstract class ParameterSchema {
 
     /**
      * Manually register a parameter
-     *
+     * @see ParameterSchema()
      * @param parameter the parameter
      */
     public void register(Parameter parameter) {
@@ -144,6 +144,14 @@ public abstract class ParameterSchema {
             throw new IllegalArgumentException("Unknown parameter '" + paramName + "'");
         }
         return (T) local.get();
+    }
+
+    /**
+     * Retrieve all parameters
+     * @return a map with the identifier x parameter tuples
+     */
+    public Map<String, Parameter> getParameters() {
+        return parameters;
     }
 
     /**

@@ -5,6 +5,8 @@ ext.testdata_artifactoryUrl = "http://sammeth.net/artifactory"
 ext.testdata_repository = "repo"
 ext.testdata_artifact = "barna/test_data-1.0.zip"
 ext.testdata_targetDirectory = project(":barna.capacitor").projectDir
+ext.improvedata_path = "/data2/emilio/improve_data"
+ext.jrinative_lib = improvedata_path + "/lib"
 
 // add integration tests to source sets
 sourceSets{
@@ -19,11 +21,19 @@ sourceSets{
         }
 
     }
+    improvementTest{
+        groovy {
+            compileClasspath += main.output
+            runtimeClasspath += main.output + test.output
+        }
+    }
 }
 
 configurations {
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
+    improvementTestCompile.extendsFrom testCompile
+    improvementTestRuntime.extendsFrom testRuntime
 }
 
 
@@ -35,8 +45,33 @@ dependencies{
     compile 'jfree:jfreechart:1.0.13' 
     compile 'jfree:jcommon:1.0.15'
     compile 'com.google.code.gson:gson:2.1'
+    compile 'org.kamranzafar:jtar:2.0.1'
+    compile 'org.nuiton.thirdparty:JRI:0.8-4'
     compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
     groovy group: 'org.codehaus.groovy', name: 'groovy-all', version: '1.8.4'
+}
+
+task improvementTest(type: Test, dependsOn: "distDir") {
+    description = "Run improvement tests"
+    jvmArgs '-Xms128m', '-Xmx1G'
+    testLogging.showStandardStreams = true
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
+    }
+    testClassesDir = sourceSets.improvementTest.output.classesDir
+    classpath = sourceSets.improvementTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
+    systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        systemProperties["dist.exe"] = systemProperties["dist.exe"] + ".bat"
+    }
+    // set url properties for test data
+    systemProperties["improvedata.path"] = improvedata_path
+    systemProperties["java.library.path"] = System.properties["java.library.path"] + ":" + jrinative_lib
 }
 
 task integrationTest(type: Test, dependsOn: "distDir") {
@@ -91,7 +126,7 @@ ext.distSpec = copySpec {
     }
 }
 
-task distDir(type: Copy){
+task distDir(type: Copy, dependsOn: ['writeIntegrationTestProperties']){
     description = "Prepare a directory for distribution"
     into "${distsDir}/${outputName}"
     with distSpec
@@ -143,8 +178,49 @@ task zipJavadoc(type: Zip, dependsOn: aggregatedJavadoc ){
     }
 }
 
-
 task dist(dependsOn: ['distTar', 'distZip'])
+
+/**
+ * Write a properties file for integration tests
+ */
+task writeIntegrationTestProperties(){
+    ext.bp = file("${sourceSets.test.output.resourcesDir.absolutePath}/integration-build.properties")
+    outputs.file file(bp)
+    ext.props = [:]
+    props["dist.exe"] = "${distsDir}/${outputName}/bin/flux-capacitor"
+    boolean isWindows = false
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        isWindows = true
+    }
+    if (isWindows) {
+        props["dist.exe"] = props["dist.exe"] + ".bat"
+    }
+    inputs.properties(props)
+
+    doLast{
+        if(!bp.exists()){
+            bp.getParentFile().mkdirs();
+            bp.createNewFile();
+        }else{
+            // delete old
+            bp.delete()
+            bp.createNewFile();
+        }
+        props.each{k,v->
+            bp.append("${k}=${v}\n")
+        }
+        // hardcoded fix to prepare for IDEA defualt paths
+        def ideaDir = project(":").file("out/test/barna.capacitor/")
+        if(ideaDir.exists()){
+            copy{
+                from bp.parentFile.absolutePath
+                into ideaDir.absolutePath
+                include 'integration-build.properties'
+            }
+        }
+
+    }
+}
 
 artifacts{
     archives distTar 
@@ -155,6 +231,7 @@ idea{
         //if for some reason you want to add an extra sourceDirs
         testSourceDirs += file('src/integrationTest/groovy')
         testSourceDirs += file('src/integrationTest/java')
+        testSourceDirs += file('src/improvementTest/groovy')
     }
 }
 

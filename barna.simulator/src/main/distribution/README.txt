@@ -22,6 +22,26 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.1
+    * [BARNA-13] - UnixStreamSorter shouldn't close streams
+    * [BARNA-22] - Synchronization between Log.setInteractive() and CommandLine.confirm()
+    * [BARNA-25] - LineComparator Caching
+    * [BARNA-52] - weight matrices deal with "N" read from chromosome sequence
+    * [BARNA-92] - Fixed issues with the FragmentDB
+    * [BARNA-194] - Reading gene sequences close to the chromosome border
+    * [BARNA-196] - SIZE_DISTRIBUTION with N(mean, sd) won't work.
+    * [BARNA-197] - Size Distribution Statistics
+    * [BARNA-198] - Too many split-maps
+    * [BARNA-200] - The gradle builds fail on windows because we call git directly
+    * [BARNA-206] - Duplicated reads have no unique ids
+    * [BARNA-210] - Null pointer exception when calling flux -t {TOOL} with no parameters
+    * [BARNA-211] - LPSolverLoader assumes that libraries in the destination folder are correct, if identical by name
+    * [BARNA-68] - Refactor FluxSimulatorSettings.RelativePathParser to a more general class outside of the Simulator settings
+    * [BARNA-87] - Check SyncIOhandler2 for removal
+    * [BARNA-193] - Gene Identifier preserved in GTF wrapper
+    * [BARNA-156] - Enzymatic Fragmentation produces invalid fragments (start>end)
+    * [BARNA-187] - Make mated Flux Simulator IDs equal
+
 FluxSimulator 1.0.3
     - BARNA-189 Simulation of poly-dT primer RT after Fragmentation produces 1nt Fragments
     - BARNA-184 Mutated characters should be lower case
@@ -114,7 +134,7 @@ GETTING STARTED
     to create a file with an exhaustive list of parameters and their default values,
     pipe the output to a file
 
-     flux-simulator --printParameters > myparameters.par
+    flux-simulator --printParameters > myparameters.par
 
 
     NOTE that all file parameters, e.g. the location of the genome or the .gtf annotation file,
@@ -136,7 +156,7 @@ GETTING STARTED
 
     The Simulator documentation contains examples including demo data:
 
-    http://barnaserver.com/confluence/display/SIM/4+-+Example+Simulations
+    http://sammeth.net/confluence/display/SIM/5+-+Example+Simulations
 
 * Memory
 
@@ -153,11 +173,11 @@ GETTING STARTED
 * All pages related to the program are reachable from the program homepage.
   Especially, have a look at the documentation of the FLUX SIMULATOR at
 
-	http://barnaserver.com/confluence/display/SIM
+	http://sammeth.net/confluence/display/SIM
 
 * If you encounter any bugs, use the bugtracking system at
 
-	http://barnaserver.com/jira/browse/BARNA
+	http://sammeth.net/jira/browse/BARNA
 	
   First check for any known bugs, if you don't find your issue described, log
   in and create a new issue.

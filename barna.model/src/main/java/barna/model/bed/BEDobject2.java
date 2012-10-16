@@ -425,8 +425,18 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 		}
 		return parseInt(x, lastBsize);
 	}
-	
-	public int getNextBlockStart() {
+
+    @Override
+    public CharSequence getSequence() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public CharSequence getCigar() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);
 			if (cnt!= FN_BLOCK_SIZES)

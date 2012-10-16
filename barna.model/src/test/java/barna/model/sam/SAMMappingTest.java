@@ -1,10 +1,12 @@
 package barna.model.sam;
 
+import net.sf.samtools.SAMFileHeader;
 import net.sf.samtools.SAMRecord;
+import net.sf.samtools.SAMSequenceRecord;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -15,7 +17,12 @@ public class SAMMappingTest {
 
     @Before
     public void setUp() throws Exception {
+        SAMFileHeader h = new SAMFileHeader();
+        SAMSequenceRecord rec = new SAMSequenceRecord("ref", 100);
+        h.addSequence(rec);
+
         r = new SAMRecord(null);
+        r.setHeader(h);
         r.setReadName("r005");
         r.setReferenceName("ref");
         r.setAlignmentStart(16);
@@ -38,7 +45,7 @@ public class SAMMappingTest {
 
     @Test
     public void testPositions() throws Exception {
-        assertEquals(16,mapping.getStart());
+        assertEquals(15,mapping.getStart());
         assertEquals(40,mapping.getEnd());
     }
 
@@ -51,7 +58,7 @@ public class SAMMappingTest {
     public void testBlocks() throws Exception {
         assertEquals(2, mapping.getBlockCount());
         assertEquals(6,mapping.getNextBlockSize());
-        assertEquals(36,mapping.getNextBlockStart());
+        assertEquals(20,mapping.getNextBlockStart());
         assertEquals(5,mapping.getNextBlockSize());
         assertEquals(-1,mapping.getNextBlockStart());
     }
@@ -68,5 +75,15 @@ public class SAMMappingTest {
         r.setReadNegativeStrandFlag(true);
         mapping = new SAMMapping(r);
         assertEquals(-1, mapping.getStrand());
+    }
+
+    @Test
+    public void testSequence() throws Exception {
+        assertEquals("ATAGCTTCAGT", mapping.getSequence());
+    }
+
+    @Test
+    public void testCigar() throws Exception {
+        assertEquals("6M14N5M", mapping.getCigar());
     }
 }
