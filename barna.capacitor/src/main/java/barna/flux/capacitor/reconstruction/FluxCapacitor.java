@@ -67,8 +67,6 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 
 /**
@@ -140,7 +138,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-    class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
+    static class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
 
         /**
          * The locus that is to be solved.
@@ -1584,8 +1582,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         // TODO close files for non-/mapped reads, insert sizes, LPs, profiles
 
         // profiles
-        if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null)
-            writeProfiles();
+        /*if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null)
+            writeProfiles();*/
 
         // close output
         if (Log.outputStream != System.out && Log.outputStream != System.err)
@@ -1710,8 +1708,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
         if (currentTasks.contains(Task.PROFILE)) {
             BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader,mappingReader);
-            profile = profiler.call();
-            writeProfiles();
+            profiler.call();
         } else {
             // prepare output files
             if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
@@ -1754,6 +1751,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             long t0 = System.currentTimeMillis();
 
             if (currentTasks.contains(Task.DECOMPOSE)) {
+                fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
                 profile = getProfile(stats);
                 if (profile == null) {
                     exit(-1);
@@ -1813,82 +1811,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         }
 
         return stats;
-    }
-
-
-    /**
-     * Reads bias profiles from the provided source file.
-     *
-     * @return an instance describing the bias distribution
-     */
-    private BiasProfile readProfiles() {
-
-        try {
-            profile = new BiasProfile();
-
-            ZipFile zf = new ZipFile(fileProfile);
-            Enumeration entries = zf.entries();
-            String line;
-            Vector<Integer> v = new Vector<Integer>();
-            Vector<UniversalMatrix> w = new Vector<UniversalMatrix>();
-            System.err.println("[LOAD] getting profiles");
-            while (entries.hasMoreElements()) {
-                ZipEntry ze = (ZipEntry) entries.nextElement();
-                BufferedReader buffy = new BufferedReader(
-                        new InputStreamReader(zf.getInputStream(ze)));
-                int lcount = 0;
-                while ((line = buffy.readLine()) != null)
-                    ++lcount;
-                buffy.close();
-                v.add(lcount);
-                UniversalMatrix m = new UniversalMatrix(lcount);
-                buffy = new BufferedReader(
-                        new InputStreamReader(zf.getInputStream(ze)));
-                lcount = 0;
-                while ((line = buffy.readLine()) != null) {
-                    String[] ss = line.split("\t");
-                    assert (ss.length == 2);
-                    m.sense[lcount] = Integer.parseInt(ss[0]);
-                    m.sums += m.sense[lcount];
-                    m.asense[lcount] = Integer.parseInt(ss[1]);
-                    m.suma += m.asense[lcount];
-                    ++lcount;
-                }
-                buffy.close();
-                assert (lcount == m.sense.length);
-                w.add(m);
-            }
-            zf.close();
-
-            int[] len = new int[v.size()];
-            for (int i = 0; i < len.length; i++)
-                len[i] = v.elementAt(i);
-            Arrays.sort(len);
-            profile.masters = new UniversalMatrix[w.size()];
-            for (int i = 0; i < len.length; i++) {
-                for (int j = 0; j < len.length; j++) {
-                    if (len[i] == v.elementAt(j)) {
-                        profile.masters[i] = w.elementAt(j);
-                        // check
-                        for (int n = 0; n < profile.masters[i].getLength(); n++) {
-                            if (profile.masters[i].asense[n] == 0 || profile.masters[i].sense[n] == 0) {
-                                if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP)
-                                    System.err.println("\tprofile with 0-count positions");
-                                return null;
-                            }
-                        }
-                    }
-                }
-            }
-            System.err.println("\tfound " + profile.masters.length + " profiles.");
-
-            return profile;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
 
@@ -1991,32 +1913,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         }
 
         return fileLPdir;
-    }
-
-    /**
-     * Writes bias profiles to disk.
-     */
-    private void writeProfiles() {
-        try {
-            final String MSG_WRITING_PROFILES = "writing profiles";
-
-            Log.progressStart(MSG_WRITING_PROFILES);
-
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.PROFILE_OUTPUT)));
-
-            UniversalMatrix[] mm = profile.getMasters();
-            for (int i = 0; i < mm.length; i++) {
-                String lenString = Integer.toString(mm[i].getLength());
-                buffy.write(lenString);
-                buffy.write(barna.commons.system.OSChecker.NEW_LINE);
-                buffy.write(mm[i].toStringBuilder(20).toString());
-            }
-            buffy.close();
-            Log.progressFinish(StringUtils.OK, true);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -2203,7 +2099,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             profile.fill();
         } else {
             if (fileProfile != null && fileProfile.exists()) {
-                profile = readProfiles();
+                profile = BiasProfiler.readProfile(fileProfile);
                 if (profile != null) {
                     System.err.println("\tsmoothing..");
                     for (int i = 0; i < profile.masters.length; i++) {

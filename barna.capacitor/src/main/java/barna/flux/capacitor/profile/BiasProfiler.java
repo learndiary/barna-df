@@ -15,8 +15,14 @@ import barna.model.Transcript;
 import barna.model.commons.Coverage;
 import barna.model.constants.Constants;
 
+import java.io.*;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.concurrent.Callable;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * A class for profiling read biases on mappings
@@ -89,6 +95,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
     @Override
     public BiasProfile call() throws Exception {
         profile();
+        writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE));
         return profile;
     }
 
@@ -399,5 +406,155 @@ public class BiasProfiler implements Callable<BiasProfile> {
         if (len != Math.abs(epos - epos2) + 1)
             return Integer.MIN_VALUE;
         return epos;
+    }
+
+    public MappingStats getStats() {
+        return stats;
+    }
+
+    /**
+     * Writes bias profiles to disk.
+     */
+    public void writeProfiles(File fileProfile) {
+        try {
+            final String MSG_WRITING_PROFILES = "writing profiles";
+
+            Log.progressStart(MSG_WRITING_PROFILES);
+
+            BufferedWriter buffy = new BufferedWriter(new FileWriter(fileProfile));
+
+            UniversalMatrix[] mm = profile.getMasters();
+            for (int i = 0; i < mm.length; i++) {
+                String lenString = Integer.toString(mm[i].getLength());
+                buffy.write(lenString);
+                buffy.write(barna.commons.system.OSChecker.NEW_LINE);
+                buffy.write(mm[i].toStringBuilder().toString());
+            }
+            buffy.close();
+            Log.progressFinish(StringUtils.OK, true);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Read bias profiles from disk.
+     */
+    public static BiasProfile readProfile(File fileProfile) {
+        try {
+            final String MSG_WRITING_PROFILES = "reading profiles";
+
+            Log.progressStart(MSG_WRITING_PROFILES);
+
+            BufferedReader buffy = new BufferedReader(new FileReader(fileProfile));
+            BiasProfile profile = new BiasProfile();
+            UniversalMatrix[] mm = profile.getMasters();
+            for (int i = 0; i < mm.length; i++) {
+                int length = Integer.parseInt(buffy.readLine());
+                if (length==mm[i].getLength()) {
+                    for (int k = 0; k<3;k++) {
+                        String[] row = buffy.readLine().split(",");
+                        if (k==0)
+                            mm[i] = new UniversalMatrix(row.length);
+                        for (int j=0;j<row.length;j++) {
+                            switch (k) {
+                                case 0:
+                                    mm[i].sense[j] = Integer.parseInt(row[j]);
+                                    mm[i].sums += mm[i].sense[j];
+                                    break;
+                                case 1:
+                                    mm[i].asense[j] = Integer.parseInt(row[j]);
+                                    mm[1].suma += mm[i].asense[j];
+                                    break;
+                            }
+                        }
+                    }
+                } else {
+                    throw new RuntimeException("Wrong profile file format");
+                }
+            }
+            buffy.close();
+            Log.progressFinish(StringUtils.OK, true);
+            return profile;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        return null;
+    }
+
+    /**
+     * Reads bias profiles from the provided source file.
+     *
+     * @return an instance describing the bias distribution
+     */
+    public static BiasProfile readProfiles(File fileProfile) {
+
+        try {
+            BiasProfile profile = new BiasProfile();
+
+            ZipFile zf = new ZipFile(fileProfile);
+            Enumeration entries = zf.entries();
+            String line;
+            Vector<Integer> v = new Vector<Integer>();
+            Vector<UniversalMatrix> w = new Vector<UniversalMatrix>();
+            System.err.println("[LOAD] getting profiles");
+            while (entries.hasMoreElements()) {
+                ZipEntry ze = (ZipEntry) entries.nextElement();
+                BufferedReader buffy = new BufferedReader(
+                        new InputStreamReader(zf.getInputStream(ze)));
+                int lcount = 0;
+                while ((line = buffy.readLine()) != null)
+                    ++lcount;
+                buffy.close();
+                v.add(lcount);
+                UniversalMatrix m = new UniversalMatrix(lcount);
+                buffy = new BufferedReader(
+                        new InputStreamReader(zf.getInputStream(ze)));
+                lcount = 0;
+                while ((line = buffy.readLine()) != null) {
+                    String[] ss = line.split("\t");
+                    assert (ss.length == 2);
+                    m.sense[lcount] = Integer.parseInt(ss[0]);
+                    m.sums += m.sense[lcount];
+                    m.asense[lcount] = Integer.parseInt(ss[1]);
+                    m.suma += m.asense[lcount];
+                    ++lcount;
+                }
+                buffy.close();
+                assert (lcount == m.sense.length);
+                w.add(m);
+            }
+            zf.close();
+
+            int[] len = new int[v.size()];
+            for (int i = 0; i < len.length; i++)
+                len[i] = v.elementAt(i);
+            Arrays.sort(len);
+            profile.masters = new UniversalMatrix[w.size()];
+            for (int i = 0; i < len.length; i++) {
+                for (int j = 0; j < len.length; j++) {
+                    if (len[i] == v.elementAt(j)) {
+                        profile.masters[i] = w.elementAt(j);
+                        // check
+                        for (int n = 0; n < profile.masters[i].getLength(); n++) {
+                            if (profile.masters[i].asense[n] == 0 || profile.masters[i].sense[n] == 0) {
+                                if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP)
+                                    System.err.println("\tprofile with 0-count positions");
+                                return null;
+                            }
+                        }
+                    }
+                }
+            }
+            System.err.println("\tfound " + profile.masters.length + " profiles.");
+
+            return profile;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
