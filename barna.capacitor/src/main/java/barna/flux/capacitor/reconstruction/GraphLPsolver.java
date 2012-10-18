@@ -31,6 +31,8 @@ import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
+import barna.flux.capacitor.matrix.UniversalMatrix;
+import barna.flux.capacitor.profile.BiasProfile;
 import barna.model.SpliceSite;
 import barna.model.Transcript;
 import barna.model.commons.DoubleVector;
@@ -47,7 +49,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
 
 import static lpsolve.LpSolve.LE;
 
@@ -149,7 +154,7 @@ public class GraphLPsolver {
     /**
      * Profile of mapping distribution biases along transcript, from 5' to 3'.
      */
-	Profile profile= null;
+	BiasProfile profile= null;
 
     /**
      * The number of mappings initially observed, for normalization purposes after deconvolution.
@@ -246,7 +251,7 @@ public class GraphLPsolver {
      * Setter method for profile with mapping distribution biases.
      * @param profile profile of the biases
      */
-	public void setProfile(Profile profile) {
+	public void setProfile(BiasProfile profile) {
 		this.profile= profile;
 	}
 

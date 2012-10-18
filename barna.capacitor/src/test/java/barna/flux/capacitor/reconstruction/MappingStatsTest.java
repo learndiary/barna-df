@@ -1,14 +1,15 @@
 package barna.flux.capacitor.reconstruction;
 
+import barna.flux.capacitor.profile.MappingStats;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 
-public class FluxCapacitorStatsTest {
+public class MappingStatsTest {
 
     @Test
     public void testAppendingToStats() throws Exception {
-        FluxCapacitorStats other = new FluxCapacitorStats();
+        MappingStats other = new MappingStats();
         other.setEventsExp(1);
         other.setLociExp(1);
         other.setLociSingle(1);
@@ -22,7 +23,7 @@ public class FluxCapacitorStatsTest {
         other.setMappingsTotal(1);
         other.setTxExp(1);
 
-        FluxCapacitorStats stats = new FluxCapacitorStats();
+        MappingStats stats = new MappingStats();
         stats.add(other);
         assertEquals(1, stats.getEventsExp());
         assertEquals(1, stats.getLociExp());

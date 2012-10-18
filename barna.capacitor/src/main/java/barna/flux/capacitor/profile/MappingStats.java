@@ -25,14 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.profile;
 
 /**
  * Capacitor stats wrapper
  *
  * @author Thasso Griebel (thasso.griebel@gmail.com)
  */
-public class FluxCapacitorStats {
+public class MappingStats {
     /*
     public final static String
             JSON_LOCI_SINGLE= "LOCI_NO-AS",
@@ -163,7 +163,7 @@ public class FluxCapacitorStats {
      *
      * @param other the other stats
      */
-    public void add(FluxCapacitorStats other){
+    public void add(MappingStats other){
         if(other == null) return;
         this.lociSingle                 += other.lociSingle               ;
         this.lociExp                    += other.lociExp                  ;

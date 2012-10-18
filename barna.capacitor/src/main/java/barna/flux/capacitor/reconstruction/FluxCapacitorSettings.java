@@ -194,9 +194,27 @@ public class FluxCapacitorSettings extends ParameterSchema {
                     throw new ParameterException("You have to specify a mapping file");
                 }
                 if (!file.exists()) {
-                    throw new ParameterException("The mapping file " + file.getAbsolutePath() 
+                    throw new ParameterException("The mapping file " + file.getAbsolutePath()
                     		+ " could not be found!");
                 }
+
+            }
+        }, relativePathParser);
+
+        /**
+         * The file containing the read bias profile.
+         */
+        public static final Parameter<File> PROFILE_FILE = Parameters.fileParameter("PROFILE_FILE", "The profile file", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                /*if (file == null) {
+                    throw new ParameterException("You have to specify a profile file");
+                }
+                if (!file.exists()) {
+                    throw new ParameterException("The profile file " + file.getAbsolutePath()
+                            + " could not be found!");
+                }*/
 
             }
         }, relativePathParser);
@@ -220,7 +238,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    /**
 	     * The file for outputting the learned profiles.
 	     */
-		public static final Parameter<File> PROFILE_FILE= Parameters.fileParameter("PROFILE_FILE", "The file for outputting profiles", null, new ParameterValidator() {
+		public static final Parameter<File> PROFILE_OUTPUT = Parameters.fileParameter("PROFILE_OUTPUT", "The file for outputting profiles", null, new ParameterValidator() {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
@@ -290,9 +308,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public static final Parameter<Boolean> COVERAGE_STATS = Parameters.booleanParameter("COVERAGE_STATS", "Flag to output coverage statistics", false, new ParameterValidator() {
 	    		 @Override
 	             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-	                 boolean set= (Boolean) schema.get(parameter);
-	                 File file= (File) schema.get(COVERAGE_FILE);
-	                 if (set&& file== null)
+	                 boolean set = (Boolean) schema.get(parameter);
+	                 File file = (File) schema.get(COVERAGE_FILE);
+	                 if (set && file== null)
 	                	 throw new ParameterException("Parameter "+ COVERAGE_FILE.getName()
 	                			 + " has to be set to output coverage statistics.");
 	             }
@@ -332,8 +350,11 @@ public class FluxCapacitorSettings extends ParameterSchema {
          * run the chromosomes in single runs and want to sum up the stats in one file. NOTE that the stats
          * are actually added and the stats are summed up. You will 'loose' the old stats
          */
-        public static final Parameter<Boolean> STATS_FILE_APPEND = Parameters.booleanParameter("STATS_FILE_APPEND", "Append to the stats file. \n" +
-                "This adds results from this run to an existing capacitor stats file.", false);
+        public static final Parameter<Boolean> STATS_FILE_APPEND = Parameters.booleanParameter(
+                "STATS_FILE_APPEND",
+                "Append to the stats file. \n" +
+                "This adds results from this run to an existing capacitor stats file.",
+                false);
 
 	    /**
 	     * The temporary directory.
@@ -411,11 +432,35 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    }
 
 	    /**
-	     * A <code>boolean</code> value specifying whether locus sorting of reads 
-	     * is carried out in RAM-memory or on disk.
+	     * A <code>boolean</code> value specifying whether the profiling
+	     * is carried out.
 	     */
-	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", false);
-	    
+	    /*public static final Parameter<Boolean> PROFILE = Parameters.booleanParameter(
+                "PROFILE",
+                "Get the read bias profile",
+                false,
+                new ParameterValidator() {
+                    @Override
+                    public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                        boolean set = (Boolean)schema.get(parameter);
+                        if (!set) {
+                            File file = schema.get(PROFILE_FILE);
+                            if (file == null) {
+                                throw new ParameterException("You have to specify a profile file");
+                            }
+                        }
+                    }
+                }).longOption("profile").shortOption('p');*/
+
+        /**
+         * A <code>boolean</code> value specifying whether locus sorting of reads
+         * is carried out in RAM-memory or on disk.
+         */
+        public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter(
+                "SORT_IN_RAM",
+                "Sort reads in RAM memory, not on disk",
+                false);
+
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 

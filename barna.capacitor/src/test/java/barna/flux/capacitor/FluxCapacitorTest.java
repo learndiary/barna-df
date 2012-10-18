@@ -1,9 +1,9 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
-import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import barna.io.rna.UniversalReadDescriptor;
@@ -125,7 +125,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         // check
         assertTrue(GTF_MM9_SORTED.exists());
@@ -145,7 +145,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile);
     }
 
     @Test
@@ -254,12 +254,12 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
 
-        FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
+        MappingStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), MappingStats.class);
         assertNotNull(loaded);
 
         assertEquals(loaded.getLociSingle(), stats.getLociSingle());
@@ -387,7 +387,7 @@ public class FluxCapacitorTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
-        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         assertNotNull(stats);
         assertEquals(1, stats.getLociSingle());

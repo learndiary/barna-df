@@ -1,8 +1,8 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
-import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import com.google.gson.GsonBuilder;
@@ -56,12 +56,12 @@ public class FluxCapacitorReadsOutputTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
-        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
 
-        FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
+        MappingStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), MappingStats.class);
         File outFile = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
         assertTrue(outFile.exists());
         BufferedReader reader = new BufferedReader(new FileReader(outFile));

@@ -3,9 +3,9 @@ package barna.flux.capacitor.utils;
 import barna.commons.Execute;
 import barna.commons.parameters.ParameterException;
 import barna.commons.system.OSChecker;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
-import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
 import barna.io.rna.UniversalReadDescriptor;
 import com.martiansoftware.jsap.RequiredParameterMissingException;
 
@@ -34,11 +34,11 @@ public class FluxCapacitorRunner {
      * @param parFile the parameter file
      * @return output the output of the capacitor
      */
-    public static FluxCapacitorStats runCapacitor(File parFile) throws Exception {
+    public static MappingStats runCapacitor(File parFile) throws Exception {
         FluxCapacitor capacitor= new FluxCapacitor();
         capacitor.setFile(parFile);
-        Future<FluxCapacitorStats> captain= Execute.getExecutor().submit(capacitor);
-        FluxCapacitorStats stats = captain.get();
+        Future<MappingStats> captain= Execute.getExecutor().submit(capacitor);
+        MappingStats stats = captain.get();
         return stats;
     }
 

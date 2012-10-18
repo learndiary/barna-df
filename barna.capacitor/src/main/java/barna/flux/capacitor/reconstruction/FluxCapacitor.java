@@ -36,6 +36,10 @@ import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
+import barna.flux.capacitor.matrix.UniversalMatrix;
+import barna.flux.capacitor.profile.BiasProfile;
+import barna.flux.capacitor.profile.BiasProfiler;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.genome.lpsolver.LPSolverLoader;
 import barna.io.*;
@@ -73,13 +77,13 @@ import java.util.zip.ZipFile;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalculator {
+public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator {
 
     /**
      * Enumerates possible tasks for the FluxCapacitor
      */
     private enum Task {
-        COUNT_INTRONS, COUNT_SJ, LEARN, DECOMPOSE
+        COUNT_INTRONS, COUNT_SJ, PROFILE, DECOMPOSE
     };
 
     /**
@@ -214,7 +218,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             if(tasks.isEmpty())
                 return;
 
-            if (!tasks.contains(Task.LEARN)) {
+            if (!tasks.contains(Task.PROFILE)) {
                 mapper = new AnnotationMapper(this.gene);
                 mapper.map(this.mappings, settings);
 
@@ -236,7 +240,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     case COUNT_SJ:
                         outputSJGFF(this.gene, mapper);
                         break;
-                    case LEARN:
+                    case PROFILE:
                         if (this.gene.getTranscriptCount() == 1) {
                             ++nrSingleTranscriptLearn;
                             learn(this.gene.getTranscripts()[0], mappings);
@@ -966,6 +970,34 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
 
+    }
+
+    /**
+     * Returns the breakpoint indicated by a mapping within a transcript.
+     *
+     * @param tx  transcript to which a read maps
+     * @param bed genomic mappping
+     * @return transcript coordinate of the breakpoint indicated by the mapping
+     */
+    private int getBpoint(Transcript tx, Mapping bed) {
+
+        // TODO add check whether complete read is contained in transcript
+
+        // just depends on genomic position, not on sense/antisense!
+        int gpos = bed.getStrand() >= 0 ? bed.getStart() + 1 : bed.getEnd();
+        int epos = tx.getExonicPosition(gpos);
+
+        // security check, get distance between both exonic coordinates
+        int epos2 = tx.getExonicPosition(bed.getStrand() >= 0 ? bed.getEnd() : bed.getStart() + 1);
+        int len = bed.getLength();
+        if (readLenMin < 0 || len < readLenMin)
+            readLenMin = len;
+        if (len > readLenMax)
+            readLenMax = len;
+
+        if (len != Math.abs(epos - epos2) + 1)
+            return Integer.MIN_VALUE;
+        return epos;
     } /* End of LocusSolver*/
 
 
@@ -1335,7 +1367,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     /**
      * A profile instance representing bias matrices.
      */
-    Profile profile;
+    BiasProfile profile;
 
     /**
      * Object describing the settings of the run.
@@ -1586,7 +1618,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @throws Exception if something went wrong
      */
     @Override
-    public FluxCapacitorStats call() throws Exception {
+    public MappingStats call() throws Exception {
 
         // TODO not here
         if (loadLibraries() < 0)
@@ -1639,25 +1671,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         // validate the settings
         settings.validate();
 
-
         FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
-
-        // prepare output files
-        if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
-            File f = settings.get(FluxCapacitorSettings.STDOUT_FILE);
-            if (f.exists() && !CommandLine.confirm(
-                    "[CAUTION] I overwrite the output file " +
-                            settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
-                            ", please confirm:\n\t(Yes,No,Don't know)")) {
-                exit(-1);
-            }
-
-            try {
-                Log.outputStream = new PrintStream(new FileOutputStream(f));
-            } catch (FileNotFoundException e) {
-                Log.warn("Cannot write log file to " + f.getAbsolutePath());    // let it on stderr?!
-            }
-        }
 
         // prepare input files
         AbstractFileIOWrapper wrapperAnnotation;
@@ -1684,6 +1698,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
         mappingReader = (MappingReader)wrapperMappings;
+        gtfReader = (GTFwrapper)wrapperAnnotation;
 
         // TODO parameters
         pairedEnd = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
@@ -1691,88 +1706,111 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         stranded = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
                 || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 
+        MappingStats stats = new MappingStats();
 
-        if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
-            for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
-                switch (e) {
-                    case SPLICE_JUNCTIONS:
-                        currentTasks.add(Task.COUNT_SJ);
-                        break;
-                    case INTRONS:
-                        currentTasks.add(Task.COUNT_INTRONS);
-                        break;
+        if (currentTasks.contains(Task.PROFILE)) {
+            BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader,mappingReader);
+            profile = profiler.call();
+            writeProfiles();
+        } else {
+            // prepare output files
+            if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
+                File f = settings.get(FluxCapacitorSettings.STDOUT_FILE);
+                if (f.exists() && !CommandLine.confirm(
+                        "[CAUTION] I overwrite the output file " +
+                                settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
+                                ", please confirm:\n\t(Yes,No,Don't know)")) {
+                    exit(-1);
+                }
+
+                try {
+                    Log.outputStream = new PrintStream(new FileOutputStream(f));
+                } catch (FileNotFoundException e) {
+                    Log.warn("Cannot write log file to " + f.getAbsolutePath());    // let it on stderr?!
                 }
             }
-        }
-        //Get from settings the tasks to be executed in the current run
-        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
-            currentTasks.add(Task.DECOMPOSE);
-        }
 
-        //print current run stats
-        printStats();
-
-        // run
-        long t0 = System.currentTimeMillis();
-
-        FluxCapacitorStats stats = new FluxCapacitorStats();
-        if (currentTasks.contains(Task.DECOMPOSE)) {
-            profile = getProfile(stats);
-            if (profile == null) {
-                exit(-1);
+            if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
+                for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
+                    switch (e) {
+                        case SPLICE_JUNCTIONS:
+                            currentTasks.add(Task.COUNT_SJ);
+                            break;
+                        case INTRONS:
+                            currentTasks.add(Task.COUNT_INTRONS);
+                            break;
+                    }
+                }
             }
-        }
+            //Get from settings the tasks to be executed in the current run
+            if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
+                currentTasks.add(Task.DECOMPOSE);
+            }
+
+            //print current run stats
+            printStats();
+
+            // run
+            long t0 = System.currentTimeMillis();
+
+            if (currentTasks.contains(Task.DECOMPOSE)) {
+                profile = getProfile(stats);
+                if (profile == null) {
+                    exit(-1);
+                }
+            }
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
-        // BARNA-103 : write stats to file
-        File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
-        if (statsFile != null) {
-            FluxCapacitorStats statsToWrite = stats;
-            BufferedWriter writer = null;
-            BufferedReader reader = null;
-            Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
+            // BARNA-103 : write stats to file
+            File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
+            if (statsFile != null) {
+                MappingStats statsToWrite = stats;
+                BufferedWriter writer = null;
+                BufferedReader reader = null;
+                Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
 
-            File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
-//            if(!lockFile.exists()) lockFile.createNewFile();
-            FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-            FileLock lock = channel.lock();
+                File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
+    //            if(!lockFile.exists()) lockFile.createNewFile();
+                FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+                FileLock lock = channel.lock();
 
-            try {
-                Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                if (statsFile.exists() && append) {
-                    // read stats file and append
-                    reader = new BufferedReader(new FileReader(statsFile));
-                    FluxCapacitorStats existingStats = gson.fromJson(reader, FluxCapacitorStats.class);
-                    reader.close();
-                    existingStats.add(stats);
-                    statsToWrite = existingStats;
-                }
-                Log.info((append ? "Appending stats to " : "Writing stats to ") + statsFile.getAbsolutePath());
-                writer = new BufferedWriter(new FileWriter(statsFile));
-                gson.toJson(statsToWrite, writer);
-                writer.close();
-            } catch (Exception e) {
-                Log.error("Unable to " + (append ? "append stats to " : "write stats to ") + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
-            } finally {
-                if (reader != null) reader.close();
-                if (writer != null) writer.close();
-                // release the lock
                 try {
-                    lock.release();
-                } catch (IOException e) {
-                    Log.error("Unable to release lock");
+                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                    if (statsFile.exists() && append) {
+                        // read stats file and append
+                        reader = new BufferedReader(new FileReader(statsFile));
+                        MappingStats existingStats = gson.fromJson(reader, MappingStats.class);
+                        reader.close();
+                        existingStats.add(stats);
+                        statsToWrite = existingStats;
+                    }
+                    Log.info((append ? "Appending stats to " : "Writing stats to ") + statsFile.getAbsolutePath());
+                    writer = new BufferedWriter(new FileWriter(statsFile));
+                    gson.toJson(statsToWrite, writer);
+                    writer.close();
+                } catch (Exception e) {
+                    Log.error("Unable to " + (append ? "append stats to " : "write stats to ") + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
+                } finally {
+                    if (reader != null) reader.close();
+                    if (writer != null) writer.close();
+                    // release the lock
+                    try {
+                        lock.release();
+                    } catch (IOException e) {
+                        Log.error("Unable to release lock");
+                    }
+                    channel.close();
                 }
-                channel.close();
             }
+
+            fileFinish();
+
+            Log.info("\n[TICTAC] I finished flux in "
+                    + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
+
+            //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
         }
-
-        fileFinish();
-
-        Log.info("\n[TICTAC] I finished flux in "
-                + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
-
-        //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
 
         return stats;
     }
@@ -1783,10 +1821,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      *
      * @return an instance describing the bias distribution
      */
-    private Profile readProfiles() {
+    private BiasProfile readProfiles() {
 
         try {
-            profile = new Profile(this);
+            profile = new BiasProfile();
 
             ZipFile zf = new ZipFile(fileProfile);
             Enumeration entries = zf.entries();
@@ -1964,7 +2002,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
             Log.progressStart(MSG_WRITING_PROFILES);
 
-            BufferedWriter buffy = new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.PROFILE_FILE)));
+            BufferedWriter buffy = new BufferedWriter(new FileWriter(settings.get(FluxCapacitorSettings.PROFILE_OUTPUT)));
 
             UniversalMatrix[] mm = profile.getMasters();
             for (int i = 0; i < mm.length; i++) {
@@ -2037,6 +2075,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        parameters.add(JSAPParameters.unflaggedParameter("task").type(String.class).help("specify the task to run").get());
         parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
         parameters.add(JSAPParameters.flaggedParameter("annotation", 'a').type(File.class).help("Path to the annotation file").valueName("gtf").get());
         parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed").get());
@@ -2059,6 +2098,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             FluxCapacitorSettings settings = new FluxCapacitorSettings();
             settings.write(System.out);
             return false;
+        }
+
+        if (args.userSpecified("task")) {
+            String task = args.getString("task");
+            if (task.equals("profile")) {
+                currentTasks.add(Task.PROFILE);
+            }
         }
 
         if (getFile() == null) {
@@ -2151,9 +2197,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param stats statistics object for storing attributes
      * @return a model for the bias profile
      */
-    Profile getProfile(FluxCapacitorStats stats) {
+    BiasProfile getProfile(MappingStats stats) {
         if (uniform) {
-            profile = new Profile(this);
+            profile = new BiasProfile();
             profile.fill();
         } else {
             if (fileProfile != null && fileProfile.exists()) {
@@ -2172,7 +2218,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 }
             }
             if (profile == null) {
-                profile = new Profile(this);
+                profile = new BiasProfile();
                 try {
                     explore(FluxCapacitorConstants.MODE_LEARN, stats);
                 } catch (Throwable e) {
@@ -2300,35 +2346,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
 
     /**
-     * Returns the breakpoint indicated by a mapping within a transcript.
-     *
-     * @param tx  transcript to which a read maps
-     * @param bed genomic mappping
-     * @return transcript coordinate of the breakpoint indicated by the mapping
-     */
-    private int getBpoint(Transcript tx, Mapping bed) {
-
-        // TODO add check whether complete read is contained in transcript
-
-        // just depends on genomic position, not on sense/antisense!
-        int gpos = bed.getStrand() >= 0 ? bed.getStart() + 1 : bed.getEnd();
-        int epos = tx.getExonicPosition(gpos);
-
-        // security check, get distance between both exonic coordinates
-        int epos2 = tx.getExonicPosition(bed.getStrand() >= 0 ? bed.getEnd() : bed.getStart() + 1);
-        int len = bed.getLength();
-        if (readLenMin < 0 || len < readLenMin)
-            readLenMin = len;
-        if (len > readLenMax)
-            readLenMax = len;
-
-        if (len != Math.abs(epos - epos2) + 1)
-            return Integer.MIN_VALUE;
-        return epos;
-    }
-
-
-    /**
      * If instantiated, the method returns the GTF file wrapper,
      * otherwise <code>null</code>.
      *
@@ -2390,7 +2407,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param secs  time measured for the iteration, in [sec]
      * @param stats object capturing statistics of the run
      */
-    void exploreFinish(byte mode, long secs, FluxCapacitorStats stats) {
+    void exploreFinish(byte mode, long secs, MappingStats stats) {
 
         try {
 
@@ -2512,7 +2529,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      * @param mode  task carried out during the iteration, profiling or deconvolution
      * @param stats object capturing statistics of the run
      */
-    public boolean explore(byte mode, FluxCapacitorStats stats) {
+    public boolean explore(byte mode, MappingStats stats) {
 
         nrSingleTranscriptLoci = 0;
         nrReadsLoci = 0;
@@ -2538,7 +2555,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                 if (mode == FluxCapacitorConstants.MODE_LEARN) {
                     Log.info("","");
-                    Log.info("LEARN", "Scanning the input and getting the attributes.");
+                    Log.info("PROFILE", "Scanning the input and getting the attributes.");
                 }
                 else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
                     if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
@@ -2658,7 +2675,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 
                     if (mode == FluxCapacitorConstants.MODE_LEARN ){//&& mappings != null) {
-                        solve(gene[i], mappings, EnumSet.of(Task.LEARN));
+                        solve(gene[i], mappings, EnumSet.of(Task.PROFILE));
                     } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
                         solve(gene[i], mappings, currentTasks);
                     }

@@ -25,9 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.profile;
 
 import barna.commons.utils.ArrayUtils;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.model.Transcript;
 import barna.model.splicegraph.SplicingGraph;
 
@@ -40,6 +41,9 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * @deprecated
+ */
 public class TProfileFunction {
 
 	static class TProfileByLengthComparator implements Comparator<TProfile> {
