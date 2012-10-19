@@ -14,6 +14,8 @@ import barna.model.Mapping;
 import barna.model.Transcript;
 import barna.model.commons.Coverage;
 import barna.model.constants.Constants;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.*;
 import java.util.Arrays;
@@ -95,7 +97,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
     @Override
     public BiasProfile call() throws Exception {
         profile();
-        writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE));
+        writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
         return profile;
     }
 
@@ -415,20 +417,26 @@ public class BiasProfiler implements Callable<BiasProfile> {
     /**
      * Writes bias profiles to disk.
      */
-    public void writeProfiles(File fileProfile) {
+    public void writeProfiles(File fileProfile, boolean json) {
         try {
             final String MSG_WRITING_PROFILES = "writing profiles";
 
             Log.progressStart(MSG_WRITING_PROFILES);
 
             BufferedWriter buffy = new BufferedWriter(new FileWriter(fileProfile));
-
             UniversalMatrix[] mm = profile.getMasters();
-            for (int i = 0; i < mm.length; i++) {
-                String lenString = Integer.toString(mm[i].getLength());
-                buffy.write(lenString);
-                buffy.write(barna.commons.system.OSChecker.NEW_LINE);
-                buffy.write(mm[i].toStringBuilder().toString());
+
+            if (json) {
+                Gson gson =  new GsonBuilder().serializeSpecialFloatingPointValues().create();
+                String jstring = gson.toJson(mm);
+                buffy.write(jstring);
+            } else {
+                for (int i = 0; i < mm.length; i++) {
+                    String lenString = Integer.toString(mm[i].getLength());
+                    buffy.write(lenString);
+                    buffy.write(barna.commons.system.OSChecker.NEW_LINE);
+                    buffy.write(mm[i].toStringBuilder().toString());
+                }
             }
             buffy.close();
             Log.progressFinish(StringUtils.OK, true);
@@ -441,7 +449,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
     /**
      * Read bias profiles from disk.
      */
-    public static BiasProfile readProfile(File fileProfile) {
+    public static BiasProfile readProfile(File fileProfile, boolean json) {
         try {
             final String MSG_WRITING_PROFILES = "reading profiles";
 
@@ -449,29 +457,34 @@ public class BiasProfiler implements Callable<BiasProfile> {
 
             BufferedReader buffy = new BufferedReader(new FileReader(fileProfile));
             BiasProfile profile = new BiasProfile();
-            UniversalMatrix[] mm = profile.getMasters();
-            for (int i = 0; i < mm.length; i++) {
-                int length = Integer.parseInt(buffy.readLine());
-                if (length==mm[i].getLength()) {
-                    for (int k = 0; k<3;k++) {
-                        String[] row = buffy.readLine().split(",");
-                        if (k==0)
-                            mm[i] = new UniversalMatrix(row.length);
-                        for (int j=0;j<row.length;j++) {
-                            switch (k) {
-                                case 0:
-                                    mm[i].sense[j] = Integer.parseInt(row[j]);
-                                    mm[i].sums += mm[i].sense[j];
-                                    break;
-                                case 1:
-                                    mm[i].asense[j] = Integer.parseInt(row[j]);
-                                    mm[1].suma += mm[i].asense[j];
-                                    break;
+            if (json) {
+              Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+              profile.masters = gson.fromJson(buffy,UniversalMatrix[].class);
+            } else {
+                UniversalMatrix[] mm = profile.getMasters();
+                for (int i = 0; i < mm.length; i++) {
+                    int length = Integer.parseInt(buffy.readLine());
+                    if (length==mm[i].getLength()) {
+                        for (int k = 0; k<3;k++) {
+                            String[] row = buffy.readLine().split(",");
+                            if (k==0)
+                                mm[i] = new UniversalMatrix(row.length);
+                            for (int j=0;j<row.length;j++) {
+                                switch (k) {
+                                    case 0:
+                                        mm[i].sense[j] = Integer.parseInt(row[j]);
+                                        mm[i].sums += mm[i].sense[j];
+                                        break;
+                                    case 1:
+                                        mm[i].asense[j] = Integer.parseInt(row[j]);
+                                        mm[1].suma += mm[i].asense[j];
+                                        break;
+                                }
                             }
                         }
+                    } else {
+                        throw new RuntimeException("Wrong profile file format");
                     }
-                } else {
-                    throw new RuntimeException("Wrong profile file format");
                 }
             }
             buffy.close();

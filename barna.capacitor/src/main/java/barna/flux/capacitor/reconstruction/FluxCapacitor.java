@@ -138,7 +138,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-    static class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
+    class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
 
         /**
          * The locus that is to be solved.
@@ -1427,7 +1427,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
     /**
      * Writes the initialized settings of a run to a logging stream.
      */
-    private void printStats() {
+    private void printSettings() {
         Log.info("HEHO", "We are set, so let's go!");
         // TODO
         // settings.write(Log.logStream);
@@ -1744,8 +1744,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 currentTasks.add(Task.DECOMPOSE);
             }
 
-            //print current run stats
-            printStats();
+            //print current run settings
+            printSettings();
 
             // run
             long t0 = System.currentTimeMillis();
@@ -2099,7 +2099,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             profile.fill();
         } else {
             if (fileProfile != null && fileProfile.exists()) {
-                profile = BiasProfiler.readProfile(fileProfile);
+                profile = BiasProfiler.readProfile(fileProfile,true);
                 if (profile != null) {
                     System.err.println("\tsmoothing..");
                     for (int i = 0; i < profile.masters.length; i++) {
@@ -2111,6 +2111,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                                 Kernel.smoothen(Kernel.KERNEL_EPANECHNIKOV,
                                         w, profile.masters[i].asense);
                     }
+                }
+                for (UniversalMatrix m : profile.getMasters()) {
+                    System.err.println(m.toStringBuilder(20));
                 }
             }
             if (profile == null) {
