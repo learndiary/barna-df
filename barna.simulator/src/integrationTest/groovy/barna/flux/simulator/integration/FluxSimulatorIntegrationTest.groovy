@@ -83,9 +83,9 @@ class FluxSimulatorIntegrationTest {
                 .redirectErrorStream(true)
                 .command(cmd)
         process.environment().put("FLUX_MEM", "2G")
-        process.start()
-        process.waitFor()
-        return process
+        def pr = process.start()
+        pr.waitFor()
+        return pr
     }
 
     @Test
