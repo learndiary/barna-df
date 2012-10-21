@@ -33,7 +33,7 @@ dependencies{
 
 
 task integrationTest(type: Test, dependsOn: "distDir") {
-    test.ext["ignoreFailures"] = false
+    test.ext["ignoreFailures"] = true
     description = "Run integration tests"
     jvmArgs '-Xms128m', '-Xmx1G'
     beforeTest { descriptor ->
