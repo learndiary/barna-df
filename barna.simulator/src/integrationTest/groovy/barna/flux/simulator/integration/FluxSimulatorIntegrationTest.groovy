@@ -82,8 +82,15 @@ class FluxSimulatorIntegrationTest {
         def process = pb.directory(directory)
                 .redirectErrorStream(true)
                 .command(cmd)
-        process.environment().put("FLUX_MEM", "1600M")
         def pr = process.start()
+
+        // print output
+        BufferedReader reader = new BufferedReader(new InputStreamReader(pr.inputStream))
+        String line = null
+        while((line = reader.readLine()) != null){
+            println(line)
+        }
+        println("Waiting for process to terminate")
         pr.waitFor()
         return pr
     }
