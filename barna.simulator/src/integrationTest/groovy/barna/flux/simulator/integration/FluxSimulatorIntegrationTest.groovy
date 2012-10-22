@@ -70,7 +70,7 @@ class FluxSimulatorIntegrationTest {
     public Process runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
         def pb = new ProcessBuilder()
         def out = new HashMap<String,String>()
-        pb.environment().put("FLUX_MEM", "1G")
+        pb.environment().put("FLUX_MEM", "1600M")
         if (tmpDirDeny) {
             pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
         }
@@ -82,7 +82,7 @@ class FluxSimulatorIntegrationTest {
         def process = pb.directory(directory)
                 .redirectErrorStream(true)
                 .command(cmd)
-        process.environment().put("FLUX_MEM", "1G")
+        process.environment().put("FLUX_MEM", "1600M")
         def pr = process.start()
         pr.waitFor()
         return pr
