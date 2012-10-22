@@ -87,12 +87,13 @@ class FluxSimulatorIntegrationTest {
         // print output
         BufferedReader reader = new BufferedReader(new InputStreamReader(pr.inputStream))
         String line = null
+        def lines = []
         while((line = reader.readLine()) != null){
             println(line)
+            lines.add(line)
         }
         println("Waiting for process to terminate")
-        pr.waitFor()
-        return pr
+        return pr.waitFor() == 0 ? lines : null
     }
 
     @Test
@@ -130,7 +131,7 @@ class FluxSimulatorIntegrationTest {
             FASTA    YES
             ERR_FILE    76
             """.split(barna.commons.system.OSChecker.NEW_LINE).collect {it.trim()}.join(barna.commons.system.OSChecker.NEW_LINE)) // get rid of the spaces at the beginning
-            assertEquals(0, runSimulator(dir, targetParams).exitValue());
+            assertNotNull(runSimulator(dir, targetParams));
 
         } catch (Exception e) {
             e.printStackTrace()
@@ -143,13 +144,14 @@ class FluxSimulatorIntegrationTest {
 
     @Test
     public void testTmpDirFail() {
+        println("Checking tmp dir")
 
         File tmpDir= new File(System.getProperty("java.io.tmpdir")); //FileHelper.createTempDir(getClass().getSimpleName(), "_tmpdir", null)
         FluxSimulatorSettings settings= createSettings(tmpDir)
         File parFile= FileHelper.createTempFile(getClass().getSimpleName(), ".par")
         writeParFile(parFile, settings)
         try{
-            String stdOut= runSimulator(tmpDir, parFile, true).inputStream.readLines().join(OSChecker.NEW_LINE)
+            String stdOut= runSimulator(tmpDir, parFile, true)?.join(OSChecker.NEW_LINE)
             String[] denied= ["access denied"]
             assertTrue(stdOut,stdOut.contains(denied[0]));
         }catch (Exception e){
