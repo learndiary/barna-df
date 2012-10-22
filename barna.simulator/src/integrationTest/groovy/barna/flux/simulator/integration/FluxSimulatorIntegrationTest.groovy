@@ -67,7 +67,7 @@ class FluxSimulatorIntegrationTest {
         buffy.close();
     }
 
-    public Process runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
+    public def runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
         def pb = new ProcessBuilder()
         def out = new HashMap<String,String>()
         pb.environment().put("FLUX_MEM", "1600M")
