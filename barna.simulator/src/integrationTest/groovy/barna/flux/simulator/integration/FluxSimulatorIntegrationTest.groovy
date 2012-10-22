@@ -78,7 +78,7 @@ class FluxSimulatorIntegrationTest {
         if (OSChecker.isWindows()) {
             cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
         }
-        println("Starting simulatoru: ${cmd}")
+        println("Starting simulator run with: ${cmd}")
         def process = pb.directory(directory)
                 .redirectErrorStream(true)
                 .command(cmd)
