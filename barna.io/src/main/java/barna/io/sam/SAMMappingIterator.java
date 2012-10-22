@@ -149,7 +149,10 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
             return record.getFirstOfPairFlag()?sep+"1":sep+"2";
         } else {
             //to get it working also with paired-end data mapped as single end
-            return record.getFirstOfPairFlag()?"/1":"/2";
+            if (record.getReadPairedFlag())
+                return record.getFirstOfPairFlag()?"/1":"/2";
+            else
+                return "";
         }
     }
 }
