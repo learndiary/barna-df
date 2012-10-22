@@ -40,6 +40,10 @@ task integrationTest(type: Test, dependsOn: "distDir") {
         logger.lifecycle("Running test: " + descriptor)
         ignoreFailures = true
     }
+    //makes the standard streams (err and out) visible at console when running tests
+    test.testLogging {
+        showStandardStreams = true
+    }
     testClassesDir = sourceSets.integrationTest.output.classesDir
     classpath = sourceSets.integrationTest.runtimeClasspath + files(sourceSets.test.output.resourcesDir)
     systemProperties["dist.exe"] = "${distsDir}/${outputName}/bin/flux-simulator"

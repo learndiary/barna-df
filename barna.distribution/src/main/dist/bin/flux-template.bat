@@ -1,7 +1,10 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 ::CONFIGURATION
-IF "%FLUX_MEM%" == "" set FLUX_MEM="3G"
+IF "%FLUX_MEM%" == "" set FLUX_MEM=3G
+
+::add java_home to path if its set
+IF defined JAVA_HOME set PATH=%JAVA_HOME%\bin;%Path%
 
 :: test for a java installation in the path
 for %%X in (java.exe) do (set FOUND=%%~$PATH:X)
