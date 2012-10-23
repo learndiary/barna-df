@@ -74,9 +74,9 @@ class FluxSimulatorIntegrationTest {
         if (tmpDirDeny) {
             pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
         }
-        def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
+        def cmd = [executable, "--force", "-p", parameterFile.getAbsolutePath()]
         if (OSChecker.isWindows()) {
-            cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
+            cmd = ["cmd", "/c", executable, "--force", "-p", parameterFile.getAbsolutePath()]
         }
         println("Starting simulator run with: ${cmd}")
         def process = pb.directory(directory)
