@@ -10,12 +10,9 @@ import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.SAMFileHeader;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
+import net.sf.samtools.*;
 
-import java.io.File;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -189,7 +186,34 @@ public class SAMReader extends AbstractFileIOWrapper implements
         countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
         String lastReadId = null;
 
-        for(SAMRecord rec : reader) {
+        PipedInputStream pip = new PipedInputStream();
+
+        try {
+            final PipedOutputStream pop = new PipedOutputStream(pip);
+
+            new Thread(
+                new Runnable(){
+                    public void run(){
+                        SAMFileWriter writer = new SAMFileWriterFactory().makeSAMWriter(reader.getFileHeader(),false, pop);
+                        for(final SAMRecord rec : reader) {
+                            writer.addAlignment(rec);
+                            try {
+                                pop.flush();
+                            } catch (IOException e) {
+                            }
+                        }
+                        writer.close();
+                    }
+                }
+            ).start();
+        } catch (IOException e) {
+            System.err.println("[THREAD]");
+            e.printStackTrace();
+        }
+
+        SAMFileReader r = new SAMFileReader(pip);
+
+        for(final SAMRecord rec : r) {
             if (rec.getReadUnmappedFlag()) {
                 ++countSkippedLines;
             } else {
