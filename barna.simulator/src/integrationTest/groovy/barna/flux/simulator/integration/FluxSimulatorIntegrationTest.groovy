@@ -93,7 +93,7 @@ class FluxSimulatorIntegrationTest {
             lines.add(line)
         }
         println("Waiting for process to terminate")
-        return pr.waitFor() == 0 ? lines : null
+        return [pr.waitFor(), lines]
     }
 
     @Test
@@ -131,7 +131,7 @@ class FluxSimulatorIntegrationTest {
             FASTA    YES
             ERR_FILE    76
             """.split(barna.commons.system.OSChecker.NEW_LINE).collect {it.trim()}.join(barna.commons.system.OSChecker.NEW_LINE)) // get rid of the spaces at the beginning
-            assertNotNull(runSimulator(dir, targetParams));
+            assertEquals(0, runSimulator(dir, targetParams)[0]);
 
         } catch (Exception e) {
             e.printStackTrace()
@@ -151,7 +151,7 @@ class FluxSimulatorIntegrationTest {
         File parFile= FileHelper.createTempFile(getClass().getSimpleName(), ".par")
         writeParFile(parFile, settings)
         try{
-            String stdOut= runSimulator(tmpDir, parFile, true)?.join(OSChecker.NEW_LINE)
+            String stdOut= runSimulator(tmpDir, parFile, true)[1].join(OSChecker.NEW_LINE)
             String[] denied= ["access denied"]
             assertTrue(stdOut,stdOut.contains(denied[0]));
         }catch (Exception e){
