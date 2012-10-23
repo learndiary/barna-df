@@ -5,37 +5,90 @@ import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
-import net.sf.samtools.SAMRecord;
-import net.sf.samtools.SAMRecordIterator;
+import net.sf.samtools.*;
 
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
  */
+
+/**
+ * Class for iterating over a BAM file in a sorted way. The sort order is passed as a parameter to the constructor.
+ */
 public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
+    private final int THRESHOLD=5;
+
     SAMRecordIterator wrappedIterator;
+    SAMMapping mapping;
     ArrayList<SAMMapping> mappings;
     UniversalReadDescriptor descriptor;
-    private final int maxRecordsInRam;
+    SAMFileHeader.SortOrder sortOrder;
+    private final long maxRecordsInRam;
     int currPos, markedPos;
 
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, UniversalReadDescriptor descriptor, int maxRecordsInRam) {
-        this.wrappedIterator = iterator;
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, UniversalReadDescriptor descriptor, SAMFileHeader header, long maxRecordsInRam) {
+        this.wrappedIterator = getSortedIterator(iterator, header);
         this.descriptor = descriptor;
+        this.sortOrder = header.getSortOrder();
         this.maxRecordsInRam = maxRecordsInRam;
         this.currPos = this.markedPos = -1;
         readChunk();
     }
 
+    private SAMRecordIterator getSortedIterator(final SAMRecordIterator iterator, final SAMFileHeader header) {
+        PipedInputStream pip = new PipedInputStream();
+
+        try {
+            final PipedOutputStream pop = new PipedOutputStream(pip);
+
+            new Thread(
+                    new Runnable(){
+                        public void run(){
+                            SAMFileWriter writer = new SAMFileWriterFactory().makeSAMWriter(header,false, pop);
+//                            for(final SAMRecord rec : reader) {
+                            while(iterator.hasNext()) {
+                                final SAMRecord rec = iterator.next();
+                                writer.addAlignment(rec);
+                                try {
+                                    pop.flush();
+                                } catch (IOException e) {
+                                }
+                            }
+                            iterator.close();
+                            writer.close();
+                        }
+                    }
+            ).start();
+        } catch (IOException e) {
+            System.err.println("[SAMWriter THREAD]");
+            e.printStackTrace();
+        }
+
+        SAMFileReader r = new SAMFileReader(pip);
+        return r.iterator();
+    }
+
     private void readChunk() {
         SAMRecord record;
-        SAMMapping mapping;
+//        SAMMapping mapping;
 
         if (mappings == null)
             mappings = new ArrayList<SAMMapping>();
+        else {
+            this.currPos = this.markedPos = -1;
+            if (mapping != null && mappings.get(mappings.size()-1).equals(mapping)) {
+                mapping=null;
+            }
+            mappings.clear();
+            if (mapping!=null)
+                mappings.add(mapping);
+        }
 
         while(wrappedIterator.hasNext() && mappings.size() < maxRecordsInRam) {
             record = wrappedIterator.next();
@@ -45,10 +98,15 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
             mapping = new SAMMapping(record, getSuffix(record));
 
+            if (mappings.size()>1 && !mapping.getName().equals(mappings.get(mappings.size()-1).getName()) && (maxRecordsInRam-mappings.size())<= THRESHOLD) {
+                break;
+            }
+
             mappings.add(mapping);
         }
-
-        //wrappedIterator.close();
+        if (!wrappedIterator.hasNext()) {
+            wrappedIterator.close();
+        }
     }
 
     @Override
@@ -126,7 +184,15 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     public boolean hasNext() {
         if (mappings==null)
             return false;
-        return currPos<mappings.size()-1;
+        if (currPos>=mappings.size()-1) {
+            if (wrappedIterator.hasNext()) {
+                readChunk();
+            } else {
+                wrappedIterator.close();
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

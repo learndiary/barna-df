@@ -26,6 +26,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private final UniversalReadDescriptor descriptor;
     private boolean contained;
     private MSIterator iter;
+    private boolean sortInRam;
 
     int countAll;
     int countEntire;
@@ -33,13 +34,13 @@ public class SAMReader extends AbstractFileIOWrapper implements
     int countReads;
     int countSkippedLines;
 
-	/**
+    /**
      * Creates an instance of the reader
 	 * @param inputFile the file to read
      * @param descriptor the descriptor to be used
 	 */
 	public SAMReader(File inputFile, UniversalReadDescriptor descriptor) {
-		this(inputFile, CONTAINED_DEFAULT, descriptor);
+		this(inputFile, CONTAINED_DEFAULT, descriptor, false);
 	}
 
     /**
@@ -48,7 +49,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      * @param descriptor the descriptor to be used
      */
     public SAMReader(String absolutePath, UniversalReadDescriptor descriptor) {
-        this(new File(absolutePath), CONTAINED_DEFAULT, descriptor);
+        this(new File(absolutePath), CONTAINED_DEFAULT, descriptor, false);
     }
 
     /**
@@ -59,7 +60,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      * @param descriptor the descriptor to be used
      */
     public SAMReader(String absolutePath, boolean contained, UniversalReadDescriptor descriptor) {
-        this(new File(absolutePath), contained, descriptor);
+        this(new File(absolutePath), contained, descriptor, false);
     }
 
     /**
@@ -69,11 +70,12 @@ public class SAMReader extends AbstractFileIOWrapper implements
      *                  contained/overlapping the query region
      * @param descriptor the descriptor to be used
      */
-    public SAMReader(File inputFile, boolean contained, UniversalReadDescriptor descriptor) {
+    public SAMReader(File inputFile, boolean contained, UniversalReadDescriptor descriptor, boolean sortInRam) {
         super(inputFile);
         reader = new SAMFileReader(this.inputFile);
         this.contained = contained;
         this.descriptor = descriptor;
+        this.sortInRam = sortInRam;
     }
 
     @Override
@@ -107,10 +109,20 @@ public class SAMReader extends AbstractFileIOWrapper implements
     public MSIterator read(String chromosome, int start, int end) {
         if (reader==null) {
             reader = new SAMFileReader(this.inputFile);
+            reader.enableIndexCaching(true);
+            reader.enableIndexMemoryMapping(false);
         }
-        if (isApplicable())
+        if (isApplicable()) {
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
-            iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
+            if (sortInRam) {
+                iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
+            } else {
+                SAMFileHeader header =  reader.getFileHeader();
+                header.setSortOrder(SAMFileHeader.SortOrder.queryname);
+                long nRecs = Runtime.getRuntime().freeMemory()/100;
+                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), descriptor, header,nRecs);
+            }
+        }
         else
             throw new UnsupportedOperationException("Only indexed BAM files are currently supported!");
         return iter;
@@ -167,8 +179,14 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
     public void reset() {
-        reader = null;
-        iter = null;
+        if (iter != null) {
+            iter.clear();
+            iter = null;
+        }
+        if (reader != null) {
+            reader.close();
+            reader = null;
+        }
     }
 
     @Override
@@ -180,8 +198,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public void scanFile() {
-        if (reader == null)
+        if (reader == null) {
             reader = new SAMFileReader(this.inputFile);
+        }
         reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);
         countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
         String lastReadId = null;
@@ -192,22 +211,22 @@ public class SAMReader extends AbstractFileIOWrapper implements
             final PipedOutputStream pop = new PipedOutputStream(pip);
 
             new Thread(
-                new Runnable(){
-                    public void run(){
-                        SAMFileWriter writer = new SAMFileWriterFactory().makeSAMWriter(reader.getFileHeader(),false, pop);
-                        for(final SAMRecord rec : reader) {
-                            writer.addAlignment(rec);
-                            try {
-                                pop.flush();
-                            } catch (IOException e) {
+                    new Runnable(){
+                        public void run(){
+                            SAMFileWriter writer = new SAMFileWriterFactory().makeSAMWriter(reader.getFileHeader(),false, pop);
+                            for(final SAMRecord rec : reader) {
+                                writer.addAlignment(rec);
+                                try {
+                                    pop.flush();
+                                } catch (IOException e) {
+                                }
                             }
+                            writer.close();
                         }
-                        writer.close();
                     }
-                }
             ).start();
         } catch (IOException e) {
-            System.err.println("[THREAD]");
+            System.err.println("[SAMWriter THREAD]");
             e.printStackTrace();
         }
 
