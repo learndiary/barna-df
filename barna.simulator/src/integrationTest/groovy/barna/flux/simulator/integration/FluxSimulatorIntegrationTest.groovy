@@ -67,23 +67,33 @@ class FluxSimulatorIntegrationTest {
         buffy.close();
     }
 
-    public Process runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
+    public def runSimulator(File directory, File parameterFile, boolean tmpDirDeny = false){
         def pb = new ProcessBuilder()
         def out = new HashMap<String,String>()
-        pb.environment().put("FLUX_MEM", "1G")
+        pb.environment().put("FLUX_MEM", "1600M")
         if (tmpDirDeny) {
             pb.environment().put("JAVA_OPTS", "-Dflux.io.deny.tmpdir=yes")
         }
-        def cmd = [executable, "-p", parameterFile.getAbsolutePath()]
+        def cmd = [executable, "--force", "-p", parameterFile.getAbsolutePath()]
         if (OSChecker.isWindows()) {
-            cmd = ["cmd", "/c", executable, "-p", parameterFile.getAbsolutePath()]
+            cmd = ["cmd", "/c", executable, "--force", "-p", parameterFile.getAbsolutePath()]
         }
+        println("Starting simulator run with: ${cmd}")
         def process = pb.directory(directory)
                 .redirectErrorStream(true)
                 .command(cmd)
-                .start()
-        process.waitFor()
-        return process
+        def pr = process.start()
+
+        // print output
+        BufferedReader reader = new BufferedReader(new InputStreamReader(pr.inputStream))
+        String line = null
+        def lines = []
+        while((line = reader.readLine()) != null){
+            println(line)
+            lines.add(line)
+        }
+        println("Waiting for process to terminate")
+        return [pr.waitFor(), lines]
     }
 
     @Test
@@ -121,7 +131,7 @@ class FluxSimulatorIntegrationTest {
             FASTA    YES
             ERR_FILE    76
             """.split(barna.commons.system.OSChecker.NEW_LINE).collect {it.trim()}.join(barna.commons.system.OSChecker.NEW_LINE)) // get rid of the spaces at the beginning
-            assertEquals(0, runSimulator(dir, targetParams).exitValue());
+            assertEquals(0, runSimulator(dir, targetParams)[0]);
 
         } catch (Exception e) {
             e.printStackTrace()
@@ -134,13 +144,14 @@ class FluxSimulatorIntegrationTest {
 
     @Test
     public void testTmpDirFail() {
+        println("Checking tmp dir")
 
         File tmpDir= new File(System.getProperty("java.io.tmpdir")); //FileHelper.createTempDir(getClass().getSimpleName(), "_tmpdir", null)
         FluxSimulatorSettings settings= createSettings(tmpDir)
         File parFile= FileHelper.createTempFile(getClass().getSimpleName(), ".par")
         writeParFile(parFile, settings)
         try{
-            String stdOut= runSimulator(tmpDir, parFile, true).inputStream.readLines().join(OSChecker.NEW_LINE)
+            String stdOut= runSimulator(tmpDir, parFile, true)[1].join(OSChecker.NEW_LINE)
             String[] denied= ["access denied"]
             assertTrue(stdOut,stdOut.contains(denied[0]));
         }catch (Exception e){

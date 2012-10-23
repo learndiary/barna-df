@@ -55,7 +55,7 @@ allprojects {
 	repositories {
 	    mavenCentral()
 		maven {
-		    url "http://barnaserver.com/artifactory/repo"
+		    url "http://sammeth.net/artifactory/repo"
 		}
 	}
 }
