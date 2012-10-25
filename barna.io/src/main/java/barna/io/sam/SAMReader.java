@@ -5,6 +5,7 @@ package barna.io.sam;
 
 import barna.commons.log.Log;
 import barna.io.AbstractFileIOWrapper;
+import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
@@ -27,6 +28,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private boolean contained;
     private MSIterator iter;
     private boolean sortInRam;
+    private int maxRecords = (int)(Runtime.getRuntime().maxMemory()/1024);
 
     int countAll;
     int countEntire;
@@ -115,12 +117,18 @@ public class SAMReader extends AbstractFileIOWrapper implements
         if (isApplicable()) {
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
             if (sortInRam) {
-                iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
+                try {
+                    iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
+                }
+                catch (OutOfMemoryError error) {
+                    SAMFileHeader header =  reader.getFileHeader();
+                    header.setSortOrder(SAMFileHeader.SortOrder.queryname);
+                    iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), descriptor, header, maxRecords);
+                }
             } else {
                 SAMFileHeader header =  reader.getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                long nRecs = Runtime.getRuntime().freeMemory()/100;
-                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), descriptor, header,nRecs);
+                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), descriptor, header, maxRecords);
             }
         }
         else
@@ -213,7 +221,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
             new Thread(
                     new Runnable(){
                         public void run(){
-                            SAMFileWriter writer = new SAMFileWriterFactory().makeSAMWriter(reader.getFileHeader(),false, pop);
+                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).setMaxRecordsInRam(maxRecords).makeSAMWriter(reader.getFileHeader(), false, pop);
                             for(final SAMRecord rec : reader) {
                                 writer.addAlignment(rec);
                                 try {
