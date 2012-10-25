@@ -7,7 +7,7 @@ dependencies{
     compile 'org.reflections:reflections:0.9.5'
     compile 'org.slf4j:slf4j-nop:1.6.1'
     compile 'com.martiansoftware:jsap:2.1'
-    compile 'net.sf.samtools:samtools:1.67'
+    compile 'net.sf.samtools:samtools:1.79'
 }
 
 configurations{
