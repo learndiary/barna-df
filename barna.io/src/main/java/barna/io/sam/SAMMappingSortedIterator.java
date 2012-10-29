@@ -1,6 +1,7 @@
 package barna.io.sam;
 
 import barna.commons.log.Log;
+import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
@@ -18,11 +19,13 @@ import java.util.Iterator;
  */
 
 /**
- * Class for iterating over a BAM file in a sorted way. The sort order is passed as a parameter to the constructor.
+ * MSIterator over an indexed BAM file. The class wraps a <code>SAMRecordIterator</code> wich is used to read over
+ * the file.It returns records sorted following the SortOrder defined in the constructor.
  */
 public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
     private final int THRESHOLD=5;
+    private final long TOT_MEMORY=Runtime.getRuntime().totalMemory();
 
     SAMRecordIterator wrappedIterator;
     SAMMapping mapping;
@@ -32,6 +35,13 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     private final long maxRecordsInRam;
     int currPos, markedPos;
 
+    /**
+     * Costruct an instance of the class.
+     * @param iterator <code>SAMMappingIterator</code> used for iterating over the file
+     * @param descriptor read descriptor
+     * @param header SAM/BAM file header
+     * @param maxRecordsInRam max number of records to be loaded in ram
+     */
     public SAMMappingSortedIterator(SAMRecordIterator iterator, UniversalReadDescriptor descriptor, SAMFileHeader header, long maxRecordsInRam) {
         this.wrappedIterator = getSortedIterator(iterator, header);
         this.descriptor = descriptor;
@@ -41,6 +51,12 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         readChunk();
     }
 
+    /**
+     * Returns the sorted iterator
+     * @param iterator <code>SAMMappingIterator<code/> opened on the BAM file
+     * @param header BAM file header
+     * @return a sorted <code>SAMRecordIterator</code>
+     */
     private SAMRecordIterator getSortedIterator(final SAMRecordIterator iterator, final SAMFileHeader header) {
         PipedInputStream pip = new PipedInputStream();
 
@@ -50,7 +66,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             new Thread(
                     new Runnable(){
                         public void run(){
-                            SAMFileWriter writer = new SAMFileWriterFactory().makeSAMWriter(header,false, pop);
+                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).makeSAMWriter(header, false, pop);
 //                            for(final SAMRecord rec : reader) {
                             while(iterator.hasNext()) {
                                 final SAMRecord rec = iterator.next();
@@ -74,6 +90,9 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         return r.iterator();
     }
 
+    /**
+     * Reads at maximum <code>maxRecordsInRam</code> records and load them in memory.
+     */
     private void readChunk() {
         SAMRecord record;
 //        SAMMapping mapping;
@@ -156,6 +175,13 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         return mappings.iterator();
     }
 
+    /**
+     * Returns the attributes of a mapping given a read descriptor.
+     * @param mapping the mapping
+     * @param desc the read descriptor for the mapping
+     * @param attributes an optional <code>Attributes</code> instance for object re-use
+     * @return the instance of <code>Attributes</code>
+     */
     private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
 
         CharSequence tag= mapping.getName();
@@ -205,6 +231,12 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         wrappedIterator.remove();
     }
 
+    /**
+     * Returns a suffix for the SAM record read name for paired end read. I returns "/1"
+     * for the first mate and "/2" for the second.
+     * @param record the SAM record
+     * @return the suffix
+     */
     private String getSuffix(SAMRecord record) {
         if (descriptor.isPaired()) {
             char sep = descriptor.toString().charAt(descriptor.toString().indexOf("{MATE}")-1);
@@ -213,6 +245,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             //to get it working also with paired-end data mapped as single end
             if (record.getReadPairedFlag())
                 return record.getFirstOfPairFlag()?"/1":"/2";
+            //single-end reads
             else
                 return "";
         }

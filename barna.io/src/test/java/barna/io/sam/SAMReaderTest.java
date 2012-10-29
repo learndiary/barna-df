@@ -28,7 +28,7 @@ public class SAMReaderTest {
 
 	@Test
 	public void testRead() {
-        SAMReader reader = new SAMReader(testfile, true, UniversalReadDescriptor.getDefaultDescriptor());
+        SAMReader reader = new SAMReader(testfile, true, UniversalReadDescriptor.getDefaultDescriptor(),true);
         MSIterator iter = reader.read("chr22", 24030323, 24041363);
         SAMMapping mapping = (SAMMapping)iter.next();
 

@@ -276,8 +276,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 //                    learn(this.gene.getTranscripts()[0], beds);
 //                }
 //            }
-
-            mappings = null;
+            if (mappings != null) {
+                mappings.clear();
+                mappings = null;
+            }
             gene = null;
             // makes it terribly slow
             //System.gc();
@@ -1640,7 +1642,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         settings.validate();
 
 
-        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
+        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
 
         // prepare output files
         if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
@@ -2663,8 +2665,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         solve(gene[i], mappings, currentTasks);
                     }
 
-                    if (mappings != null)
+                    if (mappings != null) {
                         mappings.clear();
+                    }
 
                     if (output) {
                         System.out.println(gene[i].getChromosome() + " " +

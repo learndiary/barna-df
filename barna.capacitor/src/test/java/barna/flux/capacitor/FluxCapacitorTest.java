@@ -462,17 +462,4 @@ public class FluxCapacitorTest {
 
         FluxCapacitorRunner.runCapacitor(parFile);
     }
-
-    @Test
-    public void testSAMIterator() throws Exception {
-        Map pars = new HashMap();
-        pars.put("ANNOTATION_FILE", "/users/rg/epalumbo/annotation/mm65.long.and.ia.cuff.wrt.long.exon_sorted.gtf");
-        pars.put("MAPPING_FILE", "/users/rg/epalumbo/flux-test/wgEncodeLicrRnaSeqTestisCellPapMAdult8wksC57bl6AlnRep1.bam");
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.SINGLE);
-        pars.put("READ_DESCRIPTOR", "SIMPLE");
-
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
-
-        FluxCapacitorRunner.runCapacitor(parFile);
-    }
 }
