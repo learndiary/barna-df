@@ -278,8 +278,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 //                    learn(this.gene.getTranscripts()[0], beds);
 //                }
 //            }
-
-            mappings = null;
+            if (mappings != null) {
+                mappings.clear();
+                mappings = null;
+            }
             gene = null;
             // makes it terribly slow
             //System.gc();
@@ -1669,7 +1671,25 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         // validate the settings
         settings.validate();
 
-        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
+
+        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
+
+        // prepare output files
+        if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
+            File f = settings.get(FluxCapacitorSettings.STDOUT_FILE);
+            if (f.exists() && !CommandLine.confirm(
+                    "[CAUTION] I overwrite the output file " +
+                            settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
+                            ", please confirm:\n\t(Yes,No,Don't know)")) {
+                exit(-1);
+            }
+
+            try {
+                Log.outputStream = new PrintStream(new FileOutputStream(f));
+            } catch (FileNotFoundException e) {
+                Log.warn("Cannot write log file to " + f.getAbsolutePath());    // let it on stderr?!
+            }
+        }
 
         // prepare input files
         AbstractFileIOWrapper wrapperAnnotation;
@@ -1727,87 +1747,87 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 }
             }
 
-            if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
-                for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
-                    switch (e) {
-                        case SPLICE_JUNCTIONS:
-                            currentTasks.add(Task.COUNT_SJ);
-                            break;
-                        case INTRONS:
-                            currentTasks.add(Task.COUNT_INTRONS);
-                            break;
-                    }
+        if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
+            for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
+                switch (e) {
+                    case SPLICE_JUNCTIONS:
+                        currentTasks.add(Task.COUNT_SJ);
+                        break;
+                    case INTRONS:
+                        currentTasks.add(Task.COUNT_INTRONS);
+                        break;
                 }
             }
-            //Get from settings the tasks to be executed in the current run
-            if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
-                currentTasks.add(Task.DECOMPOSE);
-            }
+        }
+        //Get from settings the tasks to be executed in the current run
+        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
+            currentTasks.add(Task.DECOMPOSE);
+        }
 
             //print current run settings
             printSettings();
 
-            // run
-            long t0 = System.currentTimeMillis();
+        // run
+        long t0 = System.currentTimeMillis();
 
-            if (currentTasks.contains(Task.DECOMPOSE)) {
+        if (currentTasks.contains(Task.DECOMPOSE)) {
                 fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
-                profile = getProfile(stats);
-                if (profile == null) {
-                    exit(-1);
-                }
+            profile = getProfile(stats);
+            if (profile == null) {
+                exit(-1);
             }
+        }
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
 
-            // BARNA-103 : write stats to file
-            File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
-            if (statsFile != null) {
+        // BARNA-103 : write stats to file
+        File statsFile = settings.get(FluxCapacitorSettings.STATS_FILE);
+        if (statsFile != null) {
                 MappingStats statsToWrite = stats;
-                BufferedWriter writer = null;
-                BufferedReader reader = null;
-                Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
+            BufferedWriter writer = null;
+            BufferedReader reader = null;
+            Boolean append = settings.get(FluxCapacitorSettings.STATS_FILE_APPEND);
 
-                File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
-    //            if(!lockFile.exists()) lockFile.createNewFile();
-                FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-                FileLock lock = channel.lock();
+            File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
+//            if(!lockFile.exists()) lockFile.createNewFile();
+            FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+            FileLock lock = channel.lock();
 
-                try {
-                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                    if (statsFile.exists() && append) {
-                        // read stats file and append
-                        reader = new BufferedReader(new FileReader(statsFile));
+            try {
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                if (statsFile.exists() && append) {
+                    // read stats file and append
+                    reader = new BufferedReader(new FileReader(statsFile));
                         MappingStats existingStats = gson.fromJson(reader, MappingStats.class);
-                        reader.close();
-                        existingStats.add(stats);
-                        statsToWrite = existingStats;
-                    }
-                    Log.info((append ? "Appending stats to " : "Writing stats to ") + statsFile.getAbsolutePath());
-                    writer = new BufferedWriter(new FileWriter(statsFile));
-                    gson.toJson(statsToWrite, writer);
-                    writer.close();
-                } catch (Exception e) {
-                    Log.error("Unable to " + (append ? "append stats to " : "write stats to ") + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
-                } finally {
-                    if (reader != null) reader.close();
-                    if (writer != null) writer.close();
-                    // release the lock
-                    try {
-                        lock.release();
-                    } catch (IOException e) {
-                        Log.error("Unable to release lock");
-                    }
-                    channel.close();
+                    reader.close();
+                    existingStats.add(stats);
+                    statsToWrite = existingStats;
                 }
+                Log.info((append ? "Appending stats to " : "Writing stats to ") + statsFile.getAbsolutePath());
+                writer = new BufferedWriter(new FileWriter(statsFile));
+                gson.toJson(statsToWrite, writer);
+                writer.close();
+            } catch (Exception e) {
+                Log.error("Unable to " + (append ? "append stats to " : "write stats to ") + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
+            } finally {
+                if (reader != null) reader.close();
+                if (writer != null) writer.close();
+                // release the lock
+                try {
+                    lock.release();
+                } catch (IOException e) {
+                    Log.error("Unable to release lock");
+                }
+                channel.close();
             }
+        }
 
-            fileFinish();
+        fileFinish();
 
-            Log.info("\n[TICTAC] I finished flux in "
-                    + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
+        Log.info("\n[TICTAC] I finished flux in "
+                + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
 
-            //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
+        //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
         }
 
         return stats;
@@ -2114,7 +2134,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 }
                 for (UniversalMatrix m : profile.getMasters()) {
                     System.err.println(m.toStringBuilder(20));
-                }
+            }
             }
             if (profile == null) {
                 profile = new BiasProfile();
@@ -2579,8 +2599,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         solve(gene[i], mappings, currentTasks);
                     }
 
-                    if (mappings != null)
+                    if (mappings != null) {
                         mappings.clear();
+                    }
 
                     if (output) {
                         System.out.println(gene[i].getChromosome() + " " +
@@ -2793,7 +2814,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             case BED:			
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
-                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.SORT_IN_RAM));
 
         }
 

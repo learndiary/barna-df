@@ -5,17 +5,15 @@ package barna.io.sam;
 
 import barna.commons.log.Log;
 import barna.io.AbstractFileIOWrapper;
+import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.SAMFileHeader;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
+import net.sf.samtools.*;
 
-import java.io.File;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -29,6 +27,8 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private final UniversalReadDescriptor descriptor;
     private boolean contained;
     private MSIterator iter;
+    private boolean sortInRam;
+    private int maxRecords = (int)(Runtime.getRuntime().maxMemory()/1024);
 
     int countAll;
     int countEntire;
@@ -36,13 +36,13 @@ public class SAMReader extends AbstractFileIOWrapper implements
     int countReads;
     int countSkippedLines;
 
-	/**
+    /**
      * Creates an instance of the reader
 	 * @param inputFile the file to read
      * @param descriptor the descriptor to be used
 	 */
 	public SAMReader(File inputFile, UniversalReadDescriptor descriptor) {
-		this(inputFile, CONTAINED_DEFAULT, descriptor);
+		this(inputFile, CONTAINED_DEFAULT, descriptor, false);
 	}
 
     /**
@@ -51,7 +51,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      * @param descriptor the descriptor to be used
      */
     public SAMReader(String absolutePath, UniversalReadDescriptor descriptor) {
-        this(new File(absolutePath), CONTAINED_DEFAULT, descriptor);
+        this(new File(absolutePath), CONTAINED_DEFAULT, descriptor, false);
     }
 
     /**
@@ -62,7 +62,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      * @param descriptor the descriptor to be used
      */
     public SAMReader(String absolutePath, boolean contained, UniversalReadDescriptor descriptor) {
-        this(new File(absolutePath), contained, descriptor);
+        this(new File(absolutePath), contained, descriptor, false);
     }
 
     /**
@@ -72,11 +72,12 @@ public class SAMReader extends AbstractFileIOWrapper implements
      *                  contained/overlapping the query region
      * @param descriptor the descriptor to be used
      */
-    public SAMReader(File inputFile, boolean contained, UniversalReadDescriptor descriptor) {
+    public SAMReader(File inputFile, boolean contained, UniversalReadDescriptor descriptor, boolean sortInRam) {
         super(inputFile);
         reader = new SAMFileReader(this.inputFile);
         this.contained = contained;
         this.descriptor = descriptor;
+        this.sortInRam = sortInRam;
     }
 
     @Override
@@ -110,10 +111,26 @@ public class SAMReader extends AbstractFileIOWrapper implements
     public MSIterator read(String chromosome, int start, int end) {
         if (reader==null) {
             reader = new SAMFileReader(this.inputFile);
+            reader.enableIndexCaching(true);
+            reader.enableIndexMemoryMapping(false);
         }
-        if (isApplicable())
+        if (isApplicable()) {
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
-            iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
+            if (sortInRam) {
+                try {
+                    iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), descriptor);
+                }
+                catch (OutOfMemoryError error) {
+                    SAMFileHeader header =  reader.getFileHeader();
+                    header.setSortOrder(SAMFileHeader.SortOrder.queryname);
+                    iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), descriptor, header, maxRecords);
+                }
+            } else {
+                SAMFileHeader header =  reader.getFileHeader();
+                header.setSortOrder(SAMFileHeader.SortOrder.queryname);
+                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), descriptor, header, maxRecords);
+            }
+        }
         else
             throw new UnsupportedOperationException("Only indexed BAM files are currently supported!");
         return iter;
@@ -170,8 +187,14 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
     public void reset() {
-        reader = null;
-        iter = null;
+        if (iter != null) {
+            iter.clear();
+            iter = null;
+        }
+        if (reader != null) {
+            reader.close();
+            reader = null;
+        }
     }
 
     @Override
@@ -183,13 +206,41 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public void scanFile() {
-        if (reader == null)
+        if (reader == null) {
             reader = new SAMFileReader(this.inputFile);
+        }
         reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);
         countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
         String lastReadId = null;
 
-        for(SAMRecord rec : reader) {
+        PipedInputStream pip = new PipedInputStream();
+
+        try {
+            final PipedOutputStream pop = new PipedOutputStream(pip);
+
+            new Thread(
+                    new Runnable(){
+                        public void run(){
+                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).setMaxRecordsInRam(maxRecords).makeSAMWriter(reader.getFileHeader(), false, pop);
+                            for(final SAMRecord rec : reader) {
+                                writer.addAlignment(rec);
+                                try {
+                                    pop.flush();
+                                } catch (IOException e) {
+                                }
+                            }
+                            writer.close();
+                        }
+                    }
+            ).start();
+        } catch (IOException e) {
+            System.err.println("[SAMWriter THREAD]");
+            e.printStackTrace();
+        }
+
+        SAMFileReader r = new SAMFileReader(pip);
+
+        for(final SAMRecord rec : r) {
             if (rec.getReadUnmappedFlag()) {
                 ++countSkippedLines;
             } else {
