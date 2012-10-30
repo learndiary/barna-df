@@ -279,8 +279,8 @@ public class TProfileFunction {
 
 	}
 
-	public TSuperProfile getMasterProfile(SplicingGraph g, Transcript t, int len, 
-			int readLen, int[] insertMinMax, int reads, boolean strandSpecific, boolean pairedEnd) {
+	public TSuperProfile getMasterProfile(SplicingGraph g, Transcript t, int len,
+			int readLen, int[] insertMinMax, int reads, long totalReads, boolean strandSpecific, boolean pairedEnd) {
 
 		int lenBin= 0;
 		if (t.getExonicLength()> LEN_LO)
@@ -288,20 +288,20 @@ public class TProfileFunction {
 		if (t.getExonicLength()> LEN_UP)
 			++lenBin;
 		
-		float rpkm= capacitor.calcRPKM(reads, len);
+		float rpkm= capacitor.calcRPKM(reads, len, totalReads);
 		int expBin= 0;
 		if (rpkm> EXP_LO)
 			++expBin;
 		if (rpkm> EXP_UP)
 			++expBin;
 		
-		TSuperProfile supi= getMasterProfiles(strandSpecific, pairedEnd, insertMinMax, readLen)[lenBin][expBin];
+		TSuperProfile supi= getMasterProfiles(strandSpecific, pairedEnd, insertMinMax, readLen, totalReads)[lenBin][expBin];
 		//supi.set(g, t);	// RGASP bug
 		return supi;
 	}
 	
 	TSuperProfile[][] masters= null;
-	public TSuperProfile[][] getMasterProfiles(boolean strandSpec, boolean pairedEnd, int[] instertMinMax, int readLen) {
+	public TSuperProfile[][] getMasterProfiles(boolean strandSpec, boolean pairedEnd, int[] instertMinMax, int readLen, long totalReads) {
 		if (masters == null) {
 			masters = new TSuperProfile[3][3];
 			for (int i = 0; i < masters.length; i++) 
@@ -328,7 +328,7 @@ public class TProfileFunction {
 				if (len> LEN_UP)
 					++lenBin;
 				
-				float rpkm= capacitor.calcRPKM(reads, len);
+				float rpkm= capacitor.calcRPKM(reads, len, totalReads);
 				int expBin= 0;
 				if (rpkm> EXP_LO)
 					++expBin;
