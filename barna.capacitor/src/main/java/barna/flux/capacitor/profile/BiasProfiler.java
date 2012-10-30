@@ -53,33 +53,19 @@ public class BiasProfiler implements Callable<BiasProfile> {
      */
     Coverage coverage;
 
-    /**
-     * Counters
-     */
-    private int nrSingleTranscriptLoci;
-    private int nrReadsLoci;
-    private int nrReadsMapped;
-    private int nrReadsWrongLength;
-    private int nrMappingsWrongStrand;
-    private int nrReadsSingleLoci;
-    private int nrReadsSingleLociMapped;
-    private int nrReadsSingleLociPairsMapped;
-
     private double checkGTFscanExons;
     private double checkBEDscanMappings;
 
     private byte strand;
     private boolean paired;
 
-    private long nrReadsSingleLociNoAnnotation;
-    private int nrPairsWrongOrientation;
     private double readLenMin;
     private double readLenMax;
 
     private GTFwrapper gtfReader;
     private MappingReader mappingReader;
 
-    public BiasProfiler(FluxCapacitorSettings settings, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
+    public BiasProfiler(FluxCapacitorSettings settings, MappingStats stats, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
         if (settings == null) {
             throw new NullPointerException("You have to specify settings! NULL not permitted.");
         }
@@ -90,7 +76,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
         this.gtfReader = gtfReader;
         this.mappingReader = mappingReader;
 
-        stats = new MappingStats();
+        this.stats = stats;
         profile = new BiasProfile();
     }
 
@@ -98,17 +84,11 @@ public class BiasProfiler implements Callable<BiasProfile> {
     public BiasProfile call() throws Exception {
         profile();
         writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
+        stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE),settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
         return profile;
     }
 
     private void profile() {
-        nrSingleTranscriptLoci = 0;
-        nrReadsLoci = 0;
-        nrReadsMapped = 0;
-        nrReadsWrongLength = 0;
-        nrMappingsWrongStrand = 0;
-        nrReadsSingleLoci = 0;
-        nrReadsSingleLociMapped = 0;
 
         //System.out.println(System.getProperty("java.library.path"));
         long t0 = System.currentTimeMillis();
@@ -186,7 +166,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
                     }
 
                     if (gene[i].getTranscriptCount() == 1) {
-                        ++nrSingleTranscriptLoci;
+                        stats.incrSingleTxLoci(1);
 
                         // boundaries
                         int start = gene[i].getStart();
@@ -278,7 +258,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
         }
 
         while (mappings.hasNext()) {
-            ++nrReadsSingleLoci;
+            stats.incrReadsSingleTxLoci(1);
             bed1= mappings.next();
             CharSequence tag = bed1.getName();
             attributes = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);
@@ -292,18 +272,18 @@ public class BiasProfiler implements Callable<BiasProfile> {
             if (strand == 1) {
                 if ((tx.getStrand() == bed1.getStrand() && attributes.strand == 2)
                         || (tx.getStrand() != bed1.getStrand() && attributes.strand == 1)) {
-                    ++nrMappingsWrongStrand;
+                    stats.incrMappingsWrongStrand(1);
                     continue;
                 }
             }
 
             int bpoint1 = getBpoint(tx, bed1);
             if (bpoint1 < 0 || bpoint1 >= elen) {    // outside tx area, or intron (Int.MIN_VALUE)
-                ++nrReadsSingleLociNoAnnotation;
+                stats.incrMappingsSingleTxLociNoAnn(1);
                 continue;
             }
 
-            ++nrReadsSingleLociMapped;    // the (first) read maps
+            stats.incrMappingsSingleTxLoci(1); // the (first) read maps
 
             if (paired) {
 
@@ -321,7 +301,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
 
                     int bpoint2 = getBpoint(tx, bed2);
                     if (bpoint2 < 0 || bpoint2 >= elen) {
-                        ++nrReadsSingleLociNoAnnotation;
+                        stats.incrMappingsSingleTxLociNoAnn(1);
                         continue;
                     }
 
@@ -329,7 +309,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
                     if (strand == 1) {
                         if ((tx.getStrand() == bed2.getStrand() && attributes2.strand == 2)
                                 || (tx.getStrand() != bed2.getStrand() && attributes2.strand == 1)) {
-                            ++nrMappingsWrongStrand;
+                            stats.incrMappingsWrongStrand(1);
                             continue;
                         }
                     }
@@ -338,7 +318,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
                     if ((bed1.getStrand() == bed2.getStrand())
                             || ((bed1.getStart() < bed2.getStart()) && (bed1.getStrand() != DirectedRegion.STRAND_POS))
                             || ((bed2.getStart() < bed1.getStart()) && (bed2.getStrand() != DirectedRegion.STRAND_POS))) {
-                        nrPairsWrongOrientation += 2;
+                        stats.incrPairsWrongOrientation(2);
                         continue;
                     }
 
@@ -359,8 +339,8 @@ public class BiasProfiler implements Callable<BiasProfile> {
                     }
                     //addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
 
-                    nrReadsSingleLociPairsMapped += 2;
-
+                    //nrReadsSingleLociPairsMapped += 2;
+                    stats.incrMappingPairsSingleTxLoci(2);
                 }
 //                    mappings.reset();
 
@@ -449,7 +429,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
     /**
      * Read bias profiles from disk.
      */
-    public static BiasProfile readProfile(File fileProfile, boolean json) {
+    public static BiasProfile readProfile(File fileProfile, boolean json, MappingStats stats) {
         try {
             final String MSG_WRITING_PROFILES = "reading profiles";
 
