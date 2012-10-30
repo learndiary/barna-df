@@ -84,6 +84,11 @@ public class MappingStats {
     private long txsExp;
     private long eventsExp;
     private long lociUnsolved;
+    
+    //Annotation
+    private long txs;
+    private long loci;
+    private long events;
 
 
     public long getSingleTxLoci() {
@@ -94,8 +99,44 @@ public class MappingStats {
         this.singleTxLoci = singleTxLoci;
     }
 
-    public void incrSingleTxLoci() {
-        ++this.singleTxLoci;
+    public void incrSingleTxLoci(long value) {
+        this.singleTxLoci+=value;
+    }
+
+    public long getLoci() {
+        return this.loci;
+    }
+
+    public void setLoci(long loci) {
+        this.loci = loci;
+    }
+
+    public void incrLoci(long value) {
+        this.loci+=value;
+    }
+
+    public long getTxs() {
+        return this.txs;
+    }
+
+    public void setTxs(long txs) {
+        this.txs = txs;
+    }
+
+    public void incrTxs(long value) {
+        this.txs+=value;
+    }
+
+    public long getEvents() {
+        return this.events;
+    }
+
+    public void setEvents(long events) {
+        this.events = events;
+    }
+
+    public void incrEvents(long value) {
+        this.events+=value;
     }
 
     public long getLociExp() {
@@ -106,8 +147,8 @@ public class MappingStats {
         this.lociExp = lociExp;
     }
 
-    public void incrLociExp() {
-        ++this.lociExp;
+    public void incrLociExp(long value) {
+        this.lociExp+=value;
     }
 
     public long getTxsExp() {
@@ -118,8 +159,8 @@ public class MappingStats {
         this.txsExp = txsExp;
     }
 
-    public void incrTxsExp() {
-        ++this.txsExp;
+    public void incrTxsExp(long value) {
+        this.txsExp+=value;
     }
 
     public long getEventsExp() {
@@ -130,8 +171,8 @@ public class MappingStats {
         this.eventsExp = eventsExp;
     }
 
-    public void incrEventsExp() {
-        ++this.eventsExp;
+    public void incrEventsExp(long value) {
+        this.eventsExp+=value;
     }
 
     public long getReadsSingleTxLoci() {
@@ -142,8 +183,8 @@ public class MappingStats {
         this.readsSingleTxLoci = readsSingleTxLoci;
     }
 
-    public void incrReadsSingleTxLoci() {
-        ++this.readsSingleTxLoci;
+    public void incrReadsSingleTxLoci(long value) {
+        this.readsSingleTxLoci+=value;
     }
 
     public long getMappingsSingleTxLoci() {
@@ -154,8 +195,8 @@ public class MappingStats {
         this.mappingsSingleTxLoci = mappingsSingleTxLoci;
     }
 
-    public void incrMappingsSingleTxLoci() {
-        ++this.mappingsSingleTxLoci;
+    public void incrMappingsSingleTxLoci(long value) {
+        this.mappingsSingleTxLoci+=value;
     }
 
     public long getMappingPairs() {
@@ -166,8 +207,8 @@ public class MappingStats {
         this.mappingPairs = mappingPairs;
     }
 
-    public void incrMappingPairs() {
-        ++this.mappingPairs;
+    public void incrMappingPairs(long value) {
+        this.mappingPairs+=value;
     }
 
     public long getMappingsTotal() {
@@ -178,8 +219,8 @@ public class MappingStats {
         this.mappingsTotal = mappingsTotal;
     }
 
-    public void incrMappingsTotal() {
-        ++this.mappingsTotal;
+    public void incrMappingsTotal(long value) {
+        this.mappingsTotal+=value;
     }
 
     public long getMappingsMapped() {
@@ -190,8 +231,8 @@ public class MappingStats {
         this.mappingsMapped = mappingsMapped;
     }
 
-    public void incrMappingsMapped() {
-        ++this.mappingsMapped;
+    public void incrMappingsMapped(long value) {
+        this.mappingsMapped+=value;
     }
 
     public long getMappingPairsNoTx() {
@@ -202,8 +243,8 @@ public class MappingStats {
         this.mappingPairsNoTx = mappingPairsNoTx;
     }
 
-    public void incrMappingPairsNoTx() {
-        ++this.mappingPairsNoTx;
+    public void incrMappingPairsNoTx(long value) {
+        this.mappingPairsNoTx+=value;
     }
 
     public long getPairsWrongOrientation() {
@@ -214,8 +255,8 @@ public class MappingStats {
         this.pairsWrongOrientation = mappingsPairsWa;
     }
 
-    public void incrPairsWrongOrientation() {
-        this.pairsWrongOrientation+=2;
+    public void incrPairsWrongOrientation(long value) {
+        this.pairsWrongOrientation+=value;
     }
 
     public long getMappingsWrongStrand() {
@@ -226,8 +267,8 @@ public class MappingStats {
         this.mappingsWrongStrand = mappingsWrongStrand;
     }
 
-    public void incrMappingsWrongStrand() {
-        ++this.mappingsWrongStrand;
+    public void incrMappingsWrongStrand(long value) {
+        this.mappingsWrongStrand+=value;
     }
 
     public long getReadsTotal() {
@@ -238,8 +279,8 @@ public class MappingStats {
         this.readsTotal = readsTotal;
     }
 
-    public void incrReadsTotal() {
-        ++this.readsTotal;
+    public void incrReadsTotal(long value) {
+        this.readsTotal+=value;
     }
 
     public long getMappingsSingleTxLociNoAnn() {
@@ -250,8 +291,8 @@ public class MappingStats {
         this.mappingsSingleTxLociNoAnn = mappingsSingleTxLociNoAnn;
     }
 
-    public void incrMappingsSingleTxLociNoAnn() {
-        ++this.mappingsSingleTxLociNoAnn;
+    public void incrMappingsSingleTxLociNoAnn(long value) {
+        this.mappingsSingleTxLociNoAnn+=value;
     }
 
     public long getReadsLoci() {
@@ -262,8 +303,8 @@ public class MappingStats {
         this.readsLoci = readsLoci;
     }
 
-    public void incrReadsLoci() {
-        ++this.readsLoci;
+    public void incrReadsLoci(long value) {
+        this.readsLoci+=value;
     }
 
     public long getLociUnsolved() {
@@ -274,8 +315,8 @@ public class MappingStats {
         this.lociUnsolved = lociUnsolved;
     }
 
-    public void incrLociUnsolved() {
-        ++this.lociUnsolved;
+    public void incrLociUnsolved(long value) {
+        this.lociUnsolved+=value;
     }
 
     public long getMappingPairsSingleTxLoci() {
@@ -286,8 +327,8 @@ public class MappingStats {
         this.mappingPairsSingleTxLoci = mappingPairsSingleTxLoci;
     }
 
-    public void incrMappingPairsSingleTxLoci() {
-        this.mappingPairsSingleTxLoci+=2;
+    public void incrMappingPairsSingleTxLoci(long value) {
+        this.mappingPairsSingleTxLoci+=value;
     }
 
     /**
