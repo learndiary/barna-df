@@ -369,6 +369,7 @@ public class MappingStats {
         final String MSG_READING_STATS = "reading mapping stats";
 
         Log.progressStart(MSG_READING_STATS);
+        String status = "OK";
 
         try {
             BufferedReader buffy = new BufferedReader(new FileReader(statsFile));
@@ -377,6 +378,9 @@ public class MappingStats {
             this.add(gson.fromJson(buffy,MappingStats.class));
         } catch (Exception e) {
             Log.error("Cannot read stats from file: " + statsFile.getAbsolutePath());
+            status = "KO";
+        } finally {
+            Log.progressFinish(status, false);
         }
     }
 }
