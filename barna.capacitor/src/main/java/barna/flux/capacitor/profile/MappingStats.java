@@ -27,6 +27,14 @@
 
 package barna.flux.capacitor.profile;
 
+import barna.commons.log.Log;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+
 /**
  * Capacitor stats wrapper
  *
@@ -49,41 +57,69 @@ public class MappingStats {
             JSON_TX_EXP= "TX_EXP",
             JSON_EVENTS_EXP= "EVENTS_EXP";
     */
-    private long lociSingle;
-    private long lociExp;
-    private long txExp;
-    private long eventsExp;
-    private long mappingsSingle;
-    private long mappingsSinglePairs;
-    private long mappingsSinglePairsMapped;
-    private long mappingsTotal;
-    private long mappingsMapped;
-    private long mappingsPairsNa;
-    private long mappingsPairsWo;
-    private long mappingsNotSens;
 
-    public long getLociSingle() {
-        return lociSingle;
+    //Total
+    private long readsTotal;
+    private long mappingsTotal;
+
+    //Learning
+    private long readsSingleTxLoci;
+    private long mappingsSingleTxLoci;
+    private long mappingPairsSingleTxLoci;
+    private long mappingsSingleTxLociNoAnn;
+    private long mappingPairs;
+    private long mappingsWrongStrand;
+
+    //Learning & Annotation Mapping
+    private long pairsWrongOrientation;
+
+    //Annotation Mapping
+    private long singleTxLoci;
+    private long readsLoci;
+    private long mappingsMapped;
+    private long mappingPairsNoTx;
+
+    //Deconvolution
+    private long lociExp;
+    private long txsExp;
+    private long eventsExp;
+    private long lociUnsolved;
+
+
+    public long getSingleTxLoci() {
+        return singleTxLoci;
     }
 
-    public void setLociSingle(long lociSingle) {
-        this.lociSingle = lociSingle;
+    public void setSingleTxLoci(long singleTxLoci) {
+        this.singleTxLoci = singleTxLoci;
+    }
+
+    public void incrSingleTxLoci() {
+        ++this.singleTxLoci;
     }
 
     public long getLociExp() {
-        return lociExp;
+        return this.lociExp;
     }
 
     public void setLociExp(long lociExp) {
         this.lociExp = lociExp;
     }
 
-    public long getTxExp() {
-        return txExp;
+    public void incrLociExp() {
+        ++this.lociExp;
     }
 
-    public void setTxExp(long txExp) {
-        this.txExp = txExp;
+    public long getTxsExp() {
+        return txsExp;
+    }
+
+    public void setTxsExp(long txsExp) {
+        this.txsExp = txsExp;
+    }
+
+    public void incrTxsExp() {
+        ++this.txsExp;
     }
 
     public long getEventsExp() {
@@ -94,28 +130,44 @@ public class MappingStats {
         this.eventsExp = eventsExp;
     }
 
-    public long getMappingsSingle() {
-        return mappingsSingle;
+    public void incrEventsExp() {
+        ++this.eventsExp;
     }
 
-    public void setMappingsSingle(long mappingsSingle) {
-        this.mappingsSingle = mappingsSingle;
+    public long getReadsSingleTxLoci() {
+        return readsSingleTxLoci;
     }
 
-    public long getMappingsSinglePairs() {
-        return mappingsSinglePairs;
+    public void setReadsSingleTxLoci(long readsSingleTxLoci) {
+        this.readsSingleTxLoci = readsSingleTxLoci;
     }
 
-    public void setMappingsSinglePairs(long mappingsSinglePairs) {
-        this.mappingsSinglePairs = mappingsSinglePairs;
+    public void incrReadsSingleTxLoci() {
+        ++this.readsSingleTxLoci;
     }
 
-    public long getMappingsSinglePairsMapped() {
-        return mappingsSinglePairsMapped;
+    public long getMappingsSingleTxLoci() {
+        return mappingsSingleTxLoci;
     }
 
-    public void setMappingsSinglePairsMapped(long mappingsSinglePairsMapped) {
-        this.mappingsSinglePairsMapped = mappingsSinglePairsMapped;
+    public void setMappingsSingleTxLoci(long mappingsSingleTxLoci) {
+        this.mappingsSingleTxLoci = mappingsSingleTxLoci;
+    }
+
+    public void incrMappingsSingleTxLoci() {
+        ++this.mappingsSingleTxLoci;
+    }
+
+    public long getMappingPairs() {
+        return mappingPairs;
+    }
+
+    public void setMappingPairs(long mappingPairs) {
+        this.mappingPairs = mappingPairs;
+    }
+
+    public void incrMappingPairs() {
+        ++this.mappingPairs;
     }
 
     public long getMappingsTotal() {
@@ -126,6 +178,10 @@ public class MappingStats {
         this.mappingsTotal = mappingsTotal;
     }
 
+    public void incrMappingsTotal() {
+        ++this.mappingsTotal;
+    }
+
     public long getMappingsMapped() {
         return mappingsMapped;
     }
@@ -134,28 +190,104 @@ public class MappingStats {
         this.mappingsMapped = mappingsMapped;
     }
 
-    public long getMappingsPairsNa() {
-        return mappingsPairsNa;
+    public void incrMappingsMapped() {
+        ++this.mappingsMapped;
     }
 
-    public void setMappingsPairsNa(long mappingsPairsNa) {
-        this.mappingsPairsNa = mappingsPairsNa;
+    public long getMappingPairsNoTx() {
+        return mappingPairsNoTx;
     }
 
-    public long getMappingsPairsWo() {
-        return mappingsPairsWo;
+    public void setMappingPairsNoTx(long mappingPairsNoTx) {
+        this.mappingPairsNoTx = mappingPairsNoTx;
     }
 
-    public void setMappingsPairsWo(long mappingsPairsWa) {
-        this.mappingsPairsWo = mappingsPairsWa;
+    public void incrMappingPairsNoTx() {
+        ++this.mappingPairsNoTx;
     }
 
-    public long getMappingsNotSens() {
-        return mappingsNotSens;
+    public long getPairsWrongOrientation() {
+        return pairsWrongOrientation;
     }
 
-    public void setMappingsNotSens(long mappingsNotSens) {
-        this.mappingsNotSens = mappingsNotSens;
+    public void setPairsWrongOrientation(long mappingsPairsWa) {
+        this.pairsWrongOrientation = mappingsPairsWa;
+    }
+
+    public void incrPairsWrongOrientation() {
+        this.pairsWrongOrientation+=2;
+    }
+
+    public long getMappingsWrongStrand() {
+        return mappingsWrongStrand;
+    }
+
+    public void setMappingsWrongStrand(long mappingsWrongStrand) {
+        this.mappingsWrongStrand = mappingsWrongStrand;
+    }
+
+    public void incrMappingsWrongStrand() {
+        ++this.mappingsWrongStrand;
+    }
+
+    public long getReadsTotal() {
+        return readsTotal;
+    }
+
+    public void setReadsTotal(long readsTotal) {
+        this.readsTotal = readsTotal;
+    }
+
+    public void incrReadsTotal() {
+        ++this.readsTotal;
+    }
+
+    public long getMappingsSingleTxLociNoAnn() {
+        return mappingsSingleTxLociNoAnn;
+    }
+
+    public void setMappingsSingleTxLociNoAnn(long mappingsSingleTxLociNoAnn) {
+        this.mappingsSingleTxLociNoAnn = mappingsSingleTxLociNoAnn;
+    }
+
+    public void incrMappingsSingleTxLociNoAnn() {
+        ++this.mappingsSingleTxLociNoAnn;
+    }
+
+    public long getReadsLoci() {
+        return readsLoci;
+    }
+
+    public void setReadsLoci(long readsLoci) {
+        this.readsLoci = readsLoci;
+    }
+
+    public void incrReadsLoci() {
+        ++this.readsLoci;
+    }
+
+    public long getLociUnsolved() {
+        return lociUnsolved;
+    }
+
+    public void setLociUnsolved(long lociUnsolved) {
+        this.lociUnsolved = lociUnsolved;
+    }
+
+    public void incrLociUnsolved() {
+        ++this.lociUnsolved;
+    }
+
+    public long getMappingPairsSingleTxLoci() {
+        return mappingPairsSingleTxLoci;
+    }
+
+    public void setMappingPairsSingleTxLoci(long mappingPairsSingleTxLoci) {
+        this.mappingPairsSingleTxLoci = mappingPairsSingleTxLoci;
+    }
+
+    public void incrMappingPairsSingleTxLoci() {
+        this.mappingPairsSingleTxLoci+=2;
     }
 
     /**
@@ -165,17 +297,86 @@ public class MappingStats {
      */
     public void add(MappingStats other){
         if(other == null) return;
-        this.lociSingle                 += other.lociSingle               ;
-        this.lociExp                    += other.lociExp                  ;
-        this.txExp                      += other.txExp                    ;
-        this.eventsExp                  += other.eventsExp                ;
-        this.mappingsSingle             += other.mappingsSingle           ;
-        this.mappingsSinglePairs        += other.mappingsSinglePairs      ;
-        this.mappingsSinglePairsMapped  += other.mappingsSinglePairsMapped;
-        this.mappingsTotal              += other.mappingsTotal            ;
-        this.mappingsMapped             += other.mappingsMapped           ;
-        this.mappingsPairsNa            += other.mappingsPairsNa          ;
-        this.mappingsPairsWo            += other.mappingsPairsWo          ;
-        this.mappingsNotSens            += other.mappingsNotSens          ;
+        this.singleTxLoci               += other.singleTxLoci;
+        this.lociExp                    += other.lociExp;
+        this.txsExp                     += other.txsExp;
+        this.eventsExp                  += other.eventsExp;
+        this.readsSingleTxLoci          += other.readsSingleTxLoci;
+        this.mappingsSingleTxLoci       += other.mappingsSingleTxLoci;
+        this.mappingPairs               += other.mappingPairs;
+        this.mappingsTotal              += other.mappingsTotal;
+        this.mappingsMapped             += other.mappingsMapped;
+        this.mappingPairsNoTx           += other.mappingPairsNoTx;
+        this.pairsWrongOrientation      += other.pairsWrongOrientation;
+        this.mappingsWrongStrand        += other.mappingsWrongStrand;
+        this.readsLoci                  += other.readsLoci;
+        this.readsTotal                 += other.readsTotal;
+        this.mappingsSingleTxLociNoAnn  += other.mappingsSingleTxLociNoAnn;
+        this.lociUnsolved               += other.lociUnsolved;
+    }
+
+    /**
+     * Write the stats to file in JSON format
+     *
+     * @param statsFile the file to write to
+     * @param append whether append the current stats to an existing file
+     * @throws Exception
+     */
+    public void writeStats(File statsFile, boolean append) throws Exception {// BARNA-103 : write stats to file
+        if (statsFile != null) {
+            MappingStats statsToWrite = this;
+            BufferedWriter writer = null;
+            BufferedReader reader = null;
+
+
+            File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
+    //            if(!lockFile.exists()) lockFile.createNewFile();
+            FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+            FileLock lock = channel.lock();
+
+
+            try {
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                if (statsFile.exists() && append) {
+                    // read stats file and append
+                    reader = new BufferedReader(new FileReader(statsFile));
+                    MappingStats existingStats = gson.fromJson(reader, MappingStats.class);
+                    reader.close();
+                    existingStats.add(this);
+                    statsToWrite = existingStats;
+                }
+                Log.info((append ? "Appending stats to " : "Writing stats to ") + statsFile.getAbsolutePath());
+                writer = new BufferedWriter(new FileWriter(statsFile));
+                gson.toJson(statsToWrite, writer);
+                writer.close();
+            } catch (Exception e) {
+                Log.error("Unable to " + (append ? "append stats to " : "write stats to ") + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
+            } finally {
+                if (reader != null) reader.close();
+                if (writer != null) writer.close();
+                // release the lock
+                try {
+                    lock.release();
+                } catch (IOException e) {
+                    Log.error("Unable to release lock");
+                }
+                channel.close();
+            }
+        }
+    }
+
+    public void readStats(File statsFile) {
+        final String MSG_READING_STATS = "reading mapping stats";
+
+        Log.progressStart(MSG_READING_STATS);
+
+        try {
+            BufferedReader buffy = new BufferedReader(new FileReader(statsFile));
+            BiasProfile profile = new BiasProfile();
+            Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+            this.add(gson.fromJson(buffy,MappingStats.class));
+        } catch (Exception e) {
+            Log.error("Cannot read stats from file: " + statsFile.getAbsolutePath());
+        }
     }
 }
