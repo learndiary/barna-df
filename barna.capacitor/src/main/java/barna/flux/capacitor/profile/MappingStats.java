@@ -354,6 +354,7 @@ public class MappingStats {
         this.readsTotal                 += other.readsTotal;
         this.mappingsSingleTxLociNoAnn  += other.mappingsSingleTxLociNoAnn;
         this.lociUnsolved               += other.lociUnsolved;
+        this.mappingPairsSingleTxLoci   += other.mappingPairsSingleTxLoci;
     }
 
     /**
@@ -433,11 +434,29 @@ public class MappingStats {
             this.readsTotal                 = other.readsTotal;
             this.mappingsSingleTxLociNoAnn  = other.mappingsSingleTxLociNoAnn;
             this.lociUnsolved               = other.lociUnsolved;
+            this.mappingPairsSingleTxLoci   = other.mappingPairsSingleTxLoci;
         } catch (Exception e) {
             Log.error("Cannot read stats from file: " + statsFile.getAbsolutePath());
             status = "KO";
         } finally {
             Log.progressFinish(status, false);
         }
+    }
+
+    public void reset() {
+        //Annotation Mapping
+        readsLoci = 0;
+        mappingsMapped = 0;
+        mappingPairsNoTx = 0;
+        pairsWrongOrientation = 0;
+
+        //After deconvolution
+        loci = 0;
+        lociExp = 0;
+        lociUnsolved = 0;
+        txs = 0;
+        txsExp = 0;
+        events = 0;
+        eventsExp = 0;
     }
 }
