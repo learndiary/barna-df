@@ -92,10 +92,14 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	public boolean isApplicable() {
 		if (reader==null)
             reader = new SAMFileReader(this.inputFile);
-        if (!reader.isBinary())
+        if (!reader.isBinary()) {
+            Log.error("MAPPING FILE ERROR","Only BAM files are supported.");
             return false;
-        if (!reader.hasIndex())
+        }
+        if (!reader.hasIndex()) {
+            Log.error("MAPPING FILE ERROR","The BAM file must be indexed.");
             return false;
+        }
         return true;
 	}
 
