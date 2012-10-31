@@ -856,7 +856,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             }
 
             while (mappings.hasNext()) {
-                stats.incrMappingsSingleTxLoci(1);
+                stats.incrReadsSingleTxLoci(1);
                 bed1= mappings.next();
                 CharSequence tag = bed1.getName();
                 attributes = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);
@@ -1685,7 +1685,11 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         AbstractFileIOWrapper wrapperAnnotation;
         AbstractFileIOWrapper wrapperMappings;
 
-        cheatDisableFCheck = true;
+        //Initialize stats
+        if (stats == null)
+            stats = new MappingStats();
+
+        //cheatDisableFCheck = true;
         if (cheatDisableFCheck) {
             Log.warn("Development run, file check disabled !!!");
             wrapperAnnotation = fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
@@ -1759,9 +1763,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             //print current run settings
             printSettings();
 
-            if (stats == null)
-                stats = new MappingStats();
-
             // run
             long t0 = System.currentTimeMillis();
 
@@ -1773,7 +1774,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 }
             }
 
-            explore(FluxCapacitorConstants.MODE_RECONSTRUCT, stats);
+            explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
             stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
 
@@ -2069,6 +2070,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * @return a model for the bias profile
      */
     BiasProfile getProfile(MappingStats stats) {
+        Log.info("PROFILE","Loading profile and stats");
         if (uniform) {
             profile = new BiasProfile();
             profile.fill();
@@ -2091,7 +2093,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             if (profile == null) {
                 profile = new BiasProfile();
                 try {
-                    explore(FluxCapacitorConstants.MODE_LEARN, stats);
+                    explore(FluxCapacitorConstants.MODE_LEARN);
                 } catch (Throwable e) {
                     e.printStackTrace();
                     if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP)
@@ -2402,9 +2404,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * A complete iteration cycle over all mappings, either for profiling or for deconvolution.
      *
      * @param mode  task carried out during the iteration, profiling or deconvolution
-     * @param stats object capturing statistics of the run
      */
-    public boolean explore(byte mode, MappingStats stats) {
+    public boolean explore(byte mode) {
 
         /*nrSingleTranscriptLoci = 0;
         nrReadsLoci = 0;
@@ -2412,10 +2413,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         nrReadsWrongLength = 0;
         nrMappingsWrongStrand = 0;*/
 
-        if (mode == FluxCapacitorConstants.MODE_LEARN) {
-            /*nrReadsSingleLoci = 0;
-            nrReadsSingleLociMapped = 0;*/
-        }
+        /*if (mode == FluxCapacitorConstants.MODE_LEARN) {
+            nrReadsSingleLoci = 0;
+            nrReadsSingleLociMapped = 0;
+        }*/
 
         //System.out.println(System.getProperty("java.library.path"));
         long t0 = System.currentTimeMillis();
@@ -2521,7 +2522,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         lastEnd = -1;
                     }
 
-                    if (gene[i].getTranscriptCount() == 1)
+                    if (mode == FluxCapacitorConstants.MODE_LEARN && gene[i].getTranscriptCount() == 1)
                         stats.incrSingleTxLoci(1);
                     else if (mode == FluxCapacitorConstants.MODE_LEARN)
 							continue;	// performance for not reading mappings
@@ -2639,6 +2640,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile);
         if (!wrapper.isApplicable()) {
+            if (!FileHelper.getExtension(inputFile).toUpperCase().equals("BAM")) {
+                System.exit(-1);
+            }
             File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
             File f;
             if (sortedDir!=null)
@@ -2713,8 +2717,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      */
 	private void fileStats(MappingReader reader) {
 
-        long totalReads = 0, totalMappings = 0;
-
         if (settings.get(FluxCapacitorSettings.NR_READS_MAPPED) <= 0) {
             // (3) scan
             ((AbstractFileIOWrapper) reader).scanFile();
@@ -2722,17 +2724,17 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 Log.warn("Skipped " + ((AbstractFileIOWrapper) reader).getNrInvalidLines() + " lines.");
 
             checkBEDscanMappings = reader.getCountMappings();
-            totalReads = reader.getCountReads();
-            totalMappings = reader.getCountMappings();
+            stats.setReadsTotal(reader.getCountReads());
+            stats.setMappingsTotal(reader.getCountMappings());
         } else {
             checkBEDscanMappings = -1;
-            totalReads = settings.get(FluxCapacitorSettings.NR_READS_MAPPED);
-            totalMappings = -1;
+            stats.setReadsTotal(settings.get(FluxCapacitorSettings.NR_READS_MAPPED));
+            stats.setMappingsTotal(-1);
         }
 
-		Log.info("\t"+ totalReads+ " reads"
-                + (totalMappings > 0 ? ", " + totalMappings + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
-        if (totalMappings > 0)
+		Log.info("\t"+ stats.getReadsTotal() + " reads"
+                + (stats.getMappingsTotal() > 0 ? ", " + stats.getMappingsTotal() + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
+        if (stats.getMappingsTotal() > 0)
             Log.info("\t" + reader.getCountContinuousMappings() + " entire, " + reader.getCountSplitMappings()
                     + " split mappings (" + (reader.getCountSplitMappings() * 10f / reader.getCountMappings()) + "%)");
 
