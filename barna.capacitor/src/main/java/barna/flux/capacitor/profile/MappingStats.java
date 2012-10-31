@@ -414,9 +414,25 @@ public class MappingStats {
 
         try {
             BufferedReader buffy = new BufferedReader(new FileReader(statsFile));
-            BiasProfile profile = new BiasProfile();
-            Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
-            this.add(gson.fromJson(buffy,MappingStats.class));
+            Gson gson = new GsonBuilder().create();
+            MappingStats other = gson.fromJson(buffy,MappingStats.class);
+            if(other == null) return;
+            this.singleTxLoci               = other.singleTxLoci;
+            this.lociExp                    = other.lociExp;
+            this.txsExp                     = other.txsExp;
+            this.eventsExp                  = other.eventsExp;
+            this.readsSingleTxLoci          = other.readsSingleTxLoci;
+            this.mappingsSingleTxLoci       = other.mappingsSingleTxLoci;
+            this.mappingPairs               = other.mappingPairs;
+            this.mappingsTotal              = other.mappingsTotal;
+            this.mappingsMapped             = other.mappingsMapped;
+            this.mappingPairsNoTx           = other.mappingPairsNoTx;
+            this.pairsWrongOrientation      = other.pairsWrongOrientation;
+            this.mappingsWrongStrand        = other.mappingsWrongStrand;
+            this.readsLoci                  = other.readsLoci;
+            this.readsTotal                 = other.readsTotal;
+            this.mappingsSingleTxLociNoAnn  = other.mappingsSingleTxLociNoAnn;
+            this.lociUnsolved               = other.lociUnsolved;
         } catch (Exception e) {
             Log.error("Cannot read stats from file: " + statsFile.getAbsolutePath());
             status = "KO";
