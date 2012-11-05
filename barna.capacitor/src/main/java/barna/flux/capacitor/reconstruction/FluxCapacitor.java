@@ -221,16 +221,14 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             if(tasks.isEmpty())
                 return;
 
-            if (!tasks.contains(Task.PROFILE)) {
-                mapper = new AnnotationMapper(this.gene);
-                mapper.map(this.mappings, settings);
+            mapper = new AnnotationMapper(this.gene);
+            mapper.map(this.mappings, settings);
 
-                stats.incrReadsLoci(mapper.nrMappingsLocus);
-                stats.incrMappingsMapped(mapper.getNrMappingsMapped());
-                nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
-                stats.incrMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
-                stats.incrPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
-            }
+            stats.incrReadsLoci(mapper.nrMappingsLocus);
+            stats.incrMappingsMapped(mapper.getNrMappingsMapped());
+            nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
+            stats.incrMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
+            stats.incrPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
 
 
             //TODO move this on call()
@@ -242,12 +240,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         break;
                     case COUNT_SJ:
                         outputSJGFF(this.gene, mapper);
-                        break;
-                    case PROFILE:
-                        if (this.gene.getTranscriptCount() == 1) {
-                            ++nrSingleTranscriptLearn;
-                            learn(this.gene.getTranscripts()[0], mappings);
-                        }
                         break;
                     case DECOMPOSE:
                         GraphLPsolver mySolver = null;
@@ -831,7 +823,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
          *
          * @param tx   the Transcript
          * @param mappings the mappings
+         *
          */
+        @Deprecated
         private void learn(Transcript tx, MSIterator<Mapping> mappings) {
 
             if (mappings== null)
@@ -1447,8 +1441,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
         Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
                 settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString());
-        Log.info(FluxCapacitorSettings.PROFILE_FILE.getName(),
-                settings.get(FluxCapacitorSettings.PROFILE_FILE).toString());
+        if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null) {
+            Log.info(FluxCapacitorSettings.PROFILE_FILE.getName(),
+                    settings.get(FluxCapacitorSettings.PROFILE_FILE).toString());
+        }
         // TODO
         //p.println("\t"+CLI_LONG_VERBOSE+"\t"+Constants.VERBOSE_KEYWORDS[Constants.verboseLevel]);
         //if (copyLocal)
@@ -1776,7 +1772,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
-            stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
+//            stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
 
             fileFinish();
 
@@ -2093,7 +2089,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             if (profile == null) {
                 profile = new BiasProfile();
                 try {
-                    explore(FluxCapacitorConstants.MODE_LEARN);
+                    BiasProfiler profiler = new BiasProfiler(settings, stats, strand, pairedEnd, gtfReader, mappingReader);
+                    profile = profiler.call();
+                    stats = profiler.getStats();
                 } catch (Throwable e) {
                     e.printStackTrace();
                     if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP)
@@ -2407,23 +2405,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      */
     public boolean explore(byte mode) {
 
-        /*nrSingleTranscriptLoci = 0;
-        nrReadsLoci = 0;
-        nrReadsMapped = 0;
-        nrReadsWrongLength = 0;
-        nrMappingsWrongStrand = 0;*/
-
-        /*stats.setSingleTxLoci(0);
-        stats.setReadsLoci(0);
-        stats.setMappingsMapped(0);
-        stats.setMappingsWrongStrand(0);*/
-
-        /*if (mode == FluxCapacitorConstants.MODE_LEARN) {
-            nrReadsSingleLoci = 0;
-            nrReadsSingleLociMapped = 0;
-        }*/
-
-        stats.reset();
+        if (!settings.get(FluxCapacitorSettings.STATS_FILE_APPEND))
+            stats.reset();
 
         //System.out.println(System.getProperty("java.library.path"));
         long t0 = System.currentTimeMillis();
@@ -2436,37 +2419,28 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 			mappingReader.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
-                if (mode == FluxCapacitorConstants.MODE_LEARN) {
-                    Log.info("","");
-                    Log.info("PROFILE", "Scanning the input and getting the attributes.");
-                }
-                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
-                    if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
-                        StringBuilder message = new StringBuilder();
-                        message.append("Counting reads to the following elements: ");
-                        if (currentTasks.contains(Task.COUNT_SJ)) {
-                            message.append("splice junctions");
-                            if (currentTasks.contains(Task.COUNT_INTRONS))
-                                message.append(", ");
-                        }
+                if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
+                    StringBuilder message = new StringBuilder();
+                    message.append("Counting reads to the following elements: ");
+                    if (currentTasks.contains(Task.COUNT_SJ)) {
+                        message.append("splice junctions");
                         if (currentTasks.contains(Task.COUNT_INTRONS))
-                            message.append("all-intronic regions");
-                        message.append(".");
-                        Log.info("","");
-                        Log.info("COUNT", message.toString());
+                            message.append(", ");
                     }
-                    if (currentTasks.contains(Task.DECOMPOSE)) {
-                        Log.info("","");
-                        Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
-                    }
+                    if (currentTasks.contains(Task.COUNT_INTRONS))
+                        message.append("all-intronic regions");
+                    message.append(".");
+                    Log.info("","");
+                    Log.info("COUNT", message.toString());
+                }
+                if (currentTasks.contains(Task.DECOMPOSE)) {
+                    Log.info("","");
+                    Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
                 }
             }
             final String profiling = "profiling ", decomposing = "decomposing ";
 
-            if (mode == FluxCapacitorConstants.MODE_LEARN)
-                Log.progressStart(profiling);
-            else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT)
-                Log.progressStart(decomposing);
+            Log.progressStart(decomposing);
 
 
             // BARNA-112 disable keeping original lines
@@ -2498,7 +2472,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                 if ((gene = geneNext) == null)
                     break;
-                if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT && gtfReader.getVLines() != null)
+                if (gtfReader.getVLines() != null)
                     origLines = (Vector<String>) gtfReader.getVLines().clone();    // TODO make array, trim..
 
                 // http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
@@ -2529,10 +2503,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         lastEnd = -1;
                     }
 
-                    if (mode == FluxCapacitorConstants.MODE_LEARN && gene[i].getTranscriptCount() == 1)
+                    /*if (mode == FluxCapacitorConstants.MODE_LEARN && gene[i].getTranscriptCount() == 1)
                         stats.incrSingleTxLoci(1);
                     else if (mode == FluxCapacitorConstants.MODE_LEARN)
-							continue;	// performance for not reading mappings
+							continue;*/	// performance for not reading mappings
 
 						//MSIterator<Mapping> mappings= null;
 
@@ -2557,11 +2531,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                     MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 
-                    if (mode == FluxCapacitorConstants.MODE_LEARN ){//&& mappings != null) {
-                        solve(gene[i], mappings, EnumSet.of(Task.PROFILE));
-                    } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
-                        solve(gene[i], mappings, currentTasks);
-                    }
+                    solve(gene[i], mappings, currentTasks);
 
                     if (mappings != null) {
                         mappings.clear();
