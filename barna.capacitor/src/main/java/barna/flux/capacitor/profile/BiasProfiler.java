@@ -83,8 +83,10 @@ public class BiasProfiler implements Callable<BiasProfile> {
     @Override
     public BiasProfile call() throws Exception {
         profile();
-        writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
-        stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE),settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
+        if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
+            writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
+        if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null)
+            stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE),settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
         return profile;
     }
 
