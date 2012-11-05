@@ -1,0 +1,22 @@
+{
+  "readsTotal": 7893,
+  "mappingsTotal": 8005,
+  "readsSingleTxLoci": 566,
+  "mappingsSingleTxLoci": 283,
+  "mappingPairsSingleTxLoci": 586,
+  "mappingsSingleTxLociNoAnn": 0,
+  "mappingPairs": 0,
+  "mappingsWrongStrand": 0,
+  "pairsWrongOrientation": 192,
+  "singleTxLoci": 1,
+  "readsLoci": 0,
+  "mappingsMapped": 0,
+  "mappingPairsNoTx": 0,
+  "lociExp": 0,
+  "txsExp": 0,
+  "eventsExp": 0,
+  "lociUnsolved": 0,
+  "txs": 0,
+  "loci": 0,
+  "events": 0
+}
