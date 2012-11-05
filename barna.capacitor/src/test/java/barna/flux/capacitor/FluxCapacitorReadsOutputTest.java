@@ -5,7 +5,6 @@ import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
-import com.google.gson.GsonBuilder;
 import org.junit.*;
 
 import java.io.BufferedReader;
@@ -14,8 +13,7 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 public class FluxCapacitorReadsOutputTest {
 
@@ -45,7 +43,8 @@ public class FluxCapacitorReadsOutputTest {
     }
 	@Test
 	public void testStasAreWrittenAndContainValidData() throws Exception {
-        File statsFile = new File(currentTestDirectory, "stats.txt");
+        File statsFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".stats", true, ""));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_SORTED);
@@ -53,22 +52,23 @@ public class FluxCapacitorReadsOutputTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "CASAVA18");
         pars.put("STATS_FILE", statsFile);
+        pars.put("PROFILE_FILE", proFile);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
+        String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
-        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
 
-        MappingStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), MappingStats.class);
         File outFile = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
-        assertTrue(outFile.exists());
-        BufferedReader reader = new BufferedReader(new FileReader(outFile));
+        assertFalse(outFile.exists());
+        assertTrue(proFile.exists());
+        BufferedReader reader = new BufferedReader(new FileReader(proFile));
         String l = null;
         while((l = reader.readLine()) != null ){
-            System.out.println(l);
-            assertTrue(l.contains("reads"));
+            System.err.println(l);
         }
 	}
 }
