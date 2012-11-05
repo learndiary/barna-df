@@ -2647,8 +2647,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile);
         if (!wrapper.isApplicable()) {
-            if (!FileHelper.getExtension(inputFile).toUpperCase().equals("BAM")) {
-                System.exit(-1);
+            if (FileHelper.getExtension(inputFile).toUpperCase().equals("BAM")) {
+                throw new RuntimeException("BAM file has incorrect format");
             }
             File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
             File f;
