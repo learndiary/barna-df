@@ -2077,7 +2077,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         } else {
             if (fileProfile != null && fileProfile.exists()) {
                 profile = BiasProfiler.readProfile(fileProfile, true, stats);
-                if (profile != null) {
+                /*if (profile != null) {
                     System.err.println("\tsmoothing..");
                     for (int i = 0; i < profile.masters.length; i++) {
                         int w = profile.masters[i].sense.length / 5;
@@ -2088,7 +2088,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                                 Kernel.smoothen(Kernel.KERNEL_EPANECHNIKOV,
                                         w, profile.masters[i].asense);
                     }
-                }
+                }*/
             }
             if (profile == null) {
                 profile = new BiasProfile();
@@ -2413,10 +2413,17 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         nrReadsWrongLength = 0;
         nrMappingsWrongStrand = 0;*/
 
+        /*stats.setSingleTxLoci(0);
+        stats.setReadsLoci(0);
+        stats.setMappingsMapped(0);
+        stats.setMappingsWrongStrand(0);*/
+
         /*if (mode == FluxCapacitorConstants.MODE_LEARN) {
             nrReadsSingleLoci = 0;
             nrReadsSingleLociMapped = 0;
         }*/
+
+        stats.reset();
 
         //System.out.println(System.getProperty("java.library.path"));
         long t0 = System.currentTimeMillis();
@@ -2426,7 +2433,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             //this.gtfReader= null;
             //GFFReader gtfReader= getGTFreader();
             gtfReader.reset();
-				mappingReader.reset();
+			mappingReader.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                 if (mode == FluxCapacitorConstants.MODE_LEARN) {
