@@ -56,7 +56,7 @@ public class FluxCapacitorReadsOutputTest {
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
-        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
