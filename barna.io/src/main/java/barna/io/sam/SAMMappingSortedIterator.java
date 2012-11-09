@@ -8,6 +8,7 @@ import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
 import net.sf.samtools.*;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -62,19 +63,15 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
         try {
             final PipedOutputStream pop = new PipedOutputStream(pip);
+            final BufferedOutputStream out = new BufferedOutputStream(pop);
 
             new Thread(
                     new Runnable(){
                         public void run(){
-                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).makeSAMWriter(header, false, pop);
-//                            for(final SAMRecord rec : reader) {
+                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).makeSAMWriter(header, false, out);
                             while(iterator.hasNext()) {
                                 final SAMRecord rec = iterator.next();
                                 writer.addAlignment(rec);
-                                try {
-                                    pop.flush();
-                                } catch (IOException e) {
-                                }
                             }
                             iterator.close();
                             writer.close();
