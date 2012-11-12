@@ -305,9 +305,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 sb.append("\t");
                 sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
                 sb.append("\t");
-                sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
+                sb.append(junction[1].contains("-") ? junction[2].replace("-", "") : junction[1]);
                 sb.append("\t");
-                sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
+                sb.append(junction[2].contains("-")?junction[1].replace("-",""):junction[2]);
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
@@ -315,7 +315,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
-                sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append("gene_id \""+junction[0]+"\";");
                 sb.append(" ");
                 sb.append("locus_id \""+gene.getLocusID()+"\";");
                 sb.append(" ");
@@ -342,9 +342,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 sb.append("\t");
                 sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
                 sb.append("\t");
-                sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
+                sb.append(intron[1].contains("-")?intron[2].replace("-",""):intron[1]);
                 sb.append("\t");
-                sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
+                sb.append(intron[2].contains("-")?intron[1].replace("-",""):intron[2]);
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
@@ -352,9 +352,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
-                sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append("gene_id \"" + intron[0] + "\";");
                 sb.append(" ");
-                sb.append("locus_id \""+gene.getLocusID()+"\";");
+                sb.append("locus_id \"" + gene.getLocusID() + "\";");
                 sb.append(" ");
                 sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS+" "+String.format("%1$f", (float) m.get(s)[0].intValue()) +";");
                 sb.append(" ");

@@ -894,7 +894,44 @@ public class Gene extends DirectedRegion {
 	}
 
     public String getGeneID() {
-        return transcripts[0].getAttribute(GFFObject.GENE_ID_TAG).toString();
+        HashSet<String> geneIDs = new HashSet<String>();
+        for (Transcript t : transcripts) {
+            String id = t.getAttribute(GFFObject.GENE_ID_TAG).toString();
+            if (!geneIDs.contains(id))
+                geneIDs.add(id);
+        }
+        StringBuilder out = new StringBuilder();
+        for (String id : geneIDs) {
+            if (!out.toString().isEmpty())
+                out.append(",");
+            out.append(id);
+        }
+        return out.toString();
+    }
+
+    public String getGeneID(Transcript[] transcripts) {
+        HashSet<String> geneIDs = new HashSet<String>();
+        for (Transcript t : transcripts) {
+            String id = t.getAttribute(GFFObject.GENE_ID_TAG).toString();
+            if (!geneIDs.contains(id))
+                geneIDs.add(id);
+        }
+        StringBuilder out = new StringBuilder();
+        for (String id : geneIDs) {
+            if (!out.toString().isEmpty())
+                out.append(",");
+            out.append(id);
+        }
+        return out.toString();
+    }
+
+    public String getGeneID(String tid) {
+        for (Transcript t : transcripts) {
+            if (t.getAttribute(GFFObject.TRANSCRIPT_ID_TAG).toString().equals(tid)) {
+                return t.getAttribute(GFFObject.GENE_ID_TAG).toString();
+            }
+        }
+        return "";
     }
 	
 	/**

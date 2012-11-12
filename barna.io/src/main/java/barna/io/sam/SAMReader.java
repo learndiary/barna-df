@@ -3,17 +3,23 @@
  */
 package barna.io.sam;
 
+import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
+import barna.commons.utils.Interceptable;
 import barna.io.AbstractFileIOWrapper;
-import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
+import barna.io.Sorter;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.*;
+import net.sf.samtools.SAMFileHeader;
+import net.sf.samtools.SAMFileReader;
+import net.sf.samtools.SAMRecord;
 
 import java.io.*;
+import java.util.concurrent.Future;
 
 /**
  * @author Emilio Palumbo (emiliopalumbo@gmail.com)
@@ -28,7 +34,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private boolean contained;
     private MSIterator iter;
     private boolean sortInRam;
-    private int maxRecords = (int)(Runtime.getRuntime().maxMemory()/1024);
+    private int maxRecords = 500000;
 
     int countAll;
     int countEntire;
@@ -213,65 +219,82 @@ public class SAMReader extends AbstractFileIOWrapper implements
         if (reader == null) {
             reader = new SAMFileReader(this.inputFile);
         }
-        reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);
-        countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
+        //reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);        countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
         String lastReadId = null;
 
-        PipedInputStream pip = new PipedInputStream();
+        BufferedReader buffy = null;
+        BufferedWriter tmpWriter = null;
+        PipedInputStream in = null;
+        PipedOutputStream out = null;
+        Future sorterFuture = null;
+
+        int primaryMappings = 0;
 
         try {
-            final PipedOutputStream pop = new PipedOutputStream(pip);
+            out = new PipedOutputStream();
+            in = new PipedInputStream(out);
+            tmpWriter= new BufferedWriter(new OutputStreamWriter(out));
 
-            new Thread(
-                    new Runnable(){
-                        public void run(){
-                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).setMaxRecordsInRam(maxRecords).makeSAMWriter(reader.getFileHeader(), false, pop);
-                            for(final SAMRecord rec : reader) {
-                                writer.addAlignment(rec);
-                                try {
-                                    pop.flush();
-                                } catch (IOException e) {
-                                }
+            sorterFuture = Sorter.create(in, new DevNullOutputStream(), true, "\t")
+                    .field(0, false)
+                    .addInterceptor(new Interceptable.Interceptor<String>() {
+                        String lastLine = null;
+
+                        public String intercept(String line) {
+                            if (lastLine == null || !line.equals(lastLine)) {
+                                ++countReads;
                             }
-                            writer.close();
+                            lastLine = line;
+                            return line;
                         }
+                    })
+                    .sortInBackground();
+
+            for(final SAMRecord rec : reader) {
+                if (rec.getReadUnmappedFlag()) {
+                    ++countSkippedLines;
+                } else {
+                    String readId = rec.getReadName();
+                    if (rec.getReadPairedFlag()) {
+                        readId += "/"+(rec.getFirstOfPairFlag()?1:2);
                     }
-            ).start();
-        } catch (IOException e) {
-            System.err.println("[SAMWriter THREAD]");
-            e.printStackTrace();
-        }
-
-        SAMFileReader r = new SAMFileReader(pip);
-
-        for(final SAMRecord rec : r) {
-            if (rec.getReadUnmappedFlag()) {
-                ++countSkippedLines;
-            } else {
-                String readId = rec.getReadName();
-                if (rec.getReadPairedFlag()) {
-                    readId += "/"+(rec.getFirstOfPairFlag()?1:2);
-                }
-                if (!readId.equals(lastReadId)) {
-                    ++countReads;
-                    lastReadId=readId;
-                }
-                ++countAll;
-                if (rec.getAlignmentBlocks().size()>1) {
-                    if (rec.getCigarString().contains("N"))
-                        ++countSplit;
+                    if (!rec.getNotPrimaryAlignmentFlag()) {
+                        ++primaryMappings;
+                        tmpWriter.write(readId);
+                        tmpWriter.write(OSChecker.NEW_LINE);
+                    }
+                    ++countAll;
+                    if (rec.getAlignmentBlocks().size()>1) {
+                        if (rec.getCigarString().contains("N"))
+                            ++countSplit;
+                        else
+                            ++countEntire;
+                    }
                     else
                         ++countEntire;
                 }
-                else
-                    ++countEntire;
             }
+
+            tmpWriter.flush();
+            tmpWriter.close();
+            sorterFuture.get();
+
+            Log.progressFinish(Constants.OK, true);
+
+            this.close();
+            this.reset();
+
+        } catch (Exception e) {
+            System.err.println("[Sorter THREAD]");
+            e.printStackTrace();
+        } finally {
+            if(buffy != null)try {buffy.close();} catch (IOException e) {}
+            if(tmpWriter != null)try {tmpWriter.flush();tmpWriter.close();} catch (IOException e) {}
+            if(in != null)try {in.close();} catch (IOException e) {}
+            if(out != null)try {out.close();} catch (IOException e) {}
+            if(sorterFuture != null)sorterFuture.cancel(true);
         }
 
-        Log.progressFinish(Constants.OK, true);
-
-        this.close();
-        this.reset();
 	}
 
 	@Override
