@@ -29,11 +29,9 @@ public class FluxCapacitorTest {
     final File BED_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.bed").getFile());
     final File BED_MM9_SORTED_NO_CHR1 = new File(getClass().getResource("/mm9_chr1_chrX_sorted_no_chr1.bed").getFile());
     final File BED_MM9_PROFILE = new File(getClass().getResource("/mm9_chr1_chrX.profile").getFile());
-    final File BED_MM9_STATS = new File(getClass().getResource("/mm9_chr1_chrX.stats").getFile());
     final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     final File BED_HG_PROFILE = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.profile").getFile());
-    final File BED_HG_STATS = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.stats").getFile());
 
     @BeforeClass
     public static void initExecuter() {
@@ -64,8 +62,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
@@ -85,8 +81,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_UNSORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("KEEP_SORTED", "tmp_sorted");
 
@@ -108,8 +102,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_UNSORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("KEEP_SORTED", "tmp_sorted");
 
@@ -131,8 +123,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -152,8 +142,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("NO_DECOMPOSE", true);
 
@@ -169,8 +157,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("NO_DECOMPOSE", true);
         pars.put("COUNT_ELEMENTS", EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
@@ -187,8 +173,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("NO_DECOMPOSE", true);
         pars.put("COUNT_ELEMENTS", EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
@@ -205,8 +189,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("NO_DECOMPOSE", true);
         pars.put("COUNT_ELEMENTS", EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
@@ -222,8 +204,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("COUNT_ELEMENTS", EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
@@ -238,8 +218,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.STRANDED);
         pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SENSE);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -255,8 +233,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("SORT_IN_RAM", true);
 
@@ -284,6 +260,7 @@ public class FluxCapacitorTest {
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
+        stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
@@ -313,7 +290,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("STDOUT_FILE", firstResults);
@@ -327,8 +303,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("NR_READS_MAPPED", 7893);
 
@@ -377,7 +351,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
 
@@ -401,7 +374,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED_NO_CHR1);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
 
@@ -419,7 +391,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("STATS_FILE", BED_MM9_STATS);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
         pars.put("INSERT_FILE", insFile);
@@ -525,7 +496,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_HG_SORTED);
         pars.put("MAPPING_FILE", BED_HG_SORTED);
         pars.put("PROFILE_FILE", BED_HG_PROFILE);
-        pars.put("STATS_FILE", BED_HG_STATS);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
 

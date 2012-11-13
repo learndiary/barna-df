@@ -37,9 +37,9 @@ import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.matrix.UniversalMatrix;
-import barna.flux.capacitor.profile.BiasProfile;
 import barna.flux.capacitor.profile.BiasProfiler;
 import barna.flux.capacitor.profile.MappingStats;
+import barna.flux.capacitor.profile.Profile;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.genome.lpsolver.LPSolverLoader;
 import barna.io.*;
@@ -1366,7 +1366,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
     /**
      * A profile instance representing bias matrices.
      */
-    BiasProfile profile;
+    Profile profile;
 
     /**
      * Object describing the settings of the run.
@@ -1719,7 +1719,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         //MappingStats stats = new MappingStats();
 
         if (currentTasks.contains(Task.PROFILE)) {
-            BiasProfiler profiler = new BiasProfiler(settings, stats, strand, pairedEnd, gtfReader,mappingReader);
+            BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader,mappingReader);
             profiler.call();
         } else {
             // prepare output files
@@ -1764,15 +1764,17 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
             if (currentTasks.contains(Task.DECOMPOSE)) {
                     fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
-                profile = getProfile(stats);
+                profile = getProfile();
                 if (profile == null) {
                     exit(-1);
                 }
+                stats.add(profile.getStats());
             }
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
-//            stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
+            if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null)
+                stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
 
             fileFinish();
 
@@ -2062,17 +2064,15 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
     /**
      * Merges and smoothens bias profiles.
      *
-     * @param stats statistics object for storing attributes
-     * @return a model for the bias profile
      */
-    BiasProfile getProfile(MappingStats stats) {
+    Profile getProfile() {
         Log.info("PROFILE","Loading profile and stats");
         if (uniform) {
-            profile = new BiasProfile();
+            profile = new Profile();
             profile.fill();
         } else {
             if (fileProfile != null && fileProfile.exists()) {
-                profile = BiasProfiler.readProfile(fileProfile, true, stats);
+                profile = BiasProfiler.readProfile(fileProfile, true);
                 /*if (profile != null) {
                     System.err.println("\tsmoothing..");
                     for (int i = 0; i < profile.masters.length; i++) {
@@ -2087,21 +2087,16 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 }*/
             }
             if (profile == null) {
-                profile = new BiasProfile();
+                profile = new Profile();
                 try {
-                    BiasProfiler profiler = new BiasProfiler(settings, stats, strand, pairedEnd, gtfReader, mappingReader);
+                    BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader, mappingReader);
                     profile = profiler.call();
-                    stats = profiler.getStats();
                 } catch (Throwable e) {
                     e.printStackTrace();
                     if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP)
                         System.err.println("[FATAL] Error occured during scanning\n\t" + e.getMessage());
                 }
                 //writeProfiles(); // TODO
-            }
-
-            if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null) {
-                stats.readStats(settings.get(FluxCapacitorSettings.STATS_FILE));
             }
         }
 

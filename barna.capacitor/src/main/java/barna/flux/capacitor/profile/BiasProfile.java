@@ -78,6 +78,7 @@ public class BiasProfile {
 	FluxCapacitor capacitor;
 	public BiasProfile() {
 		profiles= new Vector<TProfile>();
+        stats = new MappingStats();
 	}
 	
 	public void finish() {
@@ -306,8 +307,8 @@ public class BiasProfile {
 		UniversalMatrix m= getMasters()[lenBin];
 		return m;
 	}
-	
-	public UniversalMatrix[] masters= null;
+
+	private UniversalMatrix[] masters= null;
 	public UniversalMatrix[] getMasters() {
 		if (masters == null) {
 			masters = new UniversalMatrix[BIN_LEN.length+ 1]; // [3]
@@ -324,10 +325,12 @@ public class BiasProfile {
 
 		return masters;
 	}
-	
-	
-	
-	public TProfile[] getProfis() {
+
+    public void setMasters(UniversalMatrix[] masters) {
+        this.masters = masters;
+    }
+
+    public TProfile[] getProfis() {
 		return profis;
 	}
 
@@ -343,5 +346,13 @@ public class BiasProfile {
 		return sum;
 	}
 	
-	
+	private MappingStats stats;
+
+    public MappingStats getStats() {
+        return stats;
+    }
+
+    public void setStats(MappingStats stats) {
+        this.stats = stats;
+    }
 }

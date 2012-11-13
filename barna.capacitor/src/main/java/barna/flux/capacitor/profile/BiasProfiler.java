@@ -31,7 +31,9 @@ import java.util.zip.ZipFile;
  *
  * @author Emilio Palumbo <emiliopalumbo@gmail.com>
  */
-public class BiasProfiler implements Callable<BiasProfile> {
+public class BiasProfiler implements Callable<Profile> {
+
+    private final byte DEFAULT_CONFIDENCE = Transcript.ID_SRC_MOST_INCONFIDENT;
 
     /**
      * Settings
@@ -39,19 +41,19 @@ public class BiasProfiler implements Callable<BiasProfile> {
     private FluxCapacitorSettings settings;
 
     /**
-     * Mappings stats
-     */
-    private MappingStats stats;
-
-    /**
      * The profile
      */
-    private BiasProfile profile;
+    private Profile profile;
 
     /**
      * Coverage
      */
-    Coverage coverage;
+    private Coverage coverage;
+
+    /**
+     * Transcript confidence level
+     */
+    private byte edgeConfidence = -1;
 
     private double checkGTFscanExons;
     private double checkBEDscanMappings;
@@ -65,7 +67,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
     private GTFwrapper gtfReader;
     private MappingReader mappingReader;
 
-    public BiasProfiler(FluxCapacitorSettings settings, MappingStats stats, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
+    public BiasProfiler(FluxCapacitorSettings settings, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
         if (settings == null) {
             throw new NullPointerException("You have to specify settings! NULL not permitted.");
         }
@@ -76,17 +78,14 @@ public class BiasProfiler implements Callable<BiasProfile> {
         this.gtfReader = gtfReader;
         this.mappingReader = mappingReader;
 
-        this.stats = stats;
-        profile = new BiasProfile();
+        profile = new Profile();
     }
 
     @Override
-    public BiasProfile call() throws Exception {
+    public Profile call() throws Exception {
         profile();
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
             writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
-        if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null)
-            stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE),settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
         return profile;
     }
 
@@ -96,7 +95,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
         long t0 = System.currentTimeMillis();
         try {
 
-            Transcript.setEdgeConfidenceLevel(Transcript.ID_SRC_MOST_INCONFIDENT);
+            Transcript.setEdgeConfidenceLevel(edgeConfidence == -1 ? DEFAULT_CONFIDENCE : edgeConfidence);
             gtfReader.reset();
             mappingReader.reset();
 
@@ -168,7 +167,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
                     }
 
                     if (gene[i].getTranscriptCount() == 1) {
-                        stats.incrSingleTxLoci(1);
+                        profile.getStats().incrSingleTxLoci(1);
 
                         // boundaries
                         int start = gene[i].getStart();
@@ -252,6 +251,8 @@ public class BiasProfiler implements Callable<BiasProfile> {
 //					return;	// discards reads
 
         UniversalMatrix m = profile.getMatrix(elen);
+        MappingStats stats = profile.getStats();
+
         if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
             if (coverage == null)
                 coverage = new Coverage(elen);
@@ -392,10 +393,6 @@ public class BiasProfiler implements Callable<BiasProfile> {
         return epos;
     }
 
-    public MappingStats getStats() {
-        return stats;
-    }
-
     /**
      * Writes bias profiles to disk.
      */
@@ -410,7 +407,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
 
             if (json) {
                 Gson gson =  new GsonBuilder().serializeSpecialFloatingPointValues().create();
-                String jstring = gson.toJson(mm);
+                String jstring = gson.toJson(profile);
                 buffy.write(jstring);
             } else {
                 for (int i = 0; i < mm.length; i++) {
@@ -431,17 +428,17 @@ public class BiasProfiler implements Callable<BiasProfile> {
     /**
      * Read bias profiles from disk.
      */
-    public static BiasProfile readProfile(File fileProfile, boolean json, MappingStats stats) {
+    public static Profile readProfile(File fileProfile, boolean json) {
         try {
             final String MSG_WRITING_PROFILES = "reading profiles";
 
             Log.progressStart(MSG_WRITING_PROFILES);
 
             BufferedReader buffy = new BufferedReader(new FileReader(fileProfile));
-            BiasProfile profile = new BiasProfile();
+            Profile profile = new Profile();
             if (json) {
               Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
-              profile.masters = gson.fromJson(buffy,UniversalMatrix[].class);
+              profile = gson.fromJson(buffy,Profile.class);
             } else {
                 UniversalMatrix[] mm = profile.getMasters();
                 for (int i = 0; i < mm.length; i++) {
@@ -527,14 +524,14 @@ public class BiasProfiler implements Callable<BiasProfile> {
             for (int i = 0; i < len.length; i++)
                 len[i] = v.elementAt(i);
             Arrays.sort(len);
-            profile.masters = new UniversalMatrix[w.size()];
+            profile.setMasters(new UniversalMatrix[w.size()]);
             for (int i = 0; i < len.length; i++) {
                 for (int j = 0; j < len.length; j++) {
                     if (len[i] == v.elementAt(j)) {
-                        profile.masters[i] = w.elementAt(j);
+                        profile.getMasters()[i] = w.elementAt(j);
                         // check
-                        for (int n = 0; n < profile.masters[i].getLength(); n++) {
-                            if (profile.masters[i].asense[n] == 0 || profile.masters[i].sense[n] == 0) {
+                        for (int n = 0; n < profile.getMasters()[i].getLength(); n++) {
+                            if (profile.getMasters()[i].asense[n] == 0 || profile.getMasters()[i].sense[n] == 0) {
                                 if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP)
                                     System.err.println("\tprofile with 0-count positions");
                                 return null;
@@ -543,7 +540,7 @@ public class BiasProfiler implements Callable<BiasProfile> {
                     }
                 }
             }
-            System.err.println("\tfound " + profile.masters.length + " profiles.");
+            System.err.println("\tfound " + profile.getMasters().length + " profiles.");
 
             return profile;
 
@@ -551,5 +548,13 @@ public class BiasProfiler implements Callable<BiasProfile> {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public byte getEdgeConfidence() {
+        return edgeConfidence;
+    }
+
+    public void setEdgeConfidence(byte edgeConfidence) {
+        this.edgeConfidence = edgeConfidence;
     }
 }

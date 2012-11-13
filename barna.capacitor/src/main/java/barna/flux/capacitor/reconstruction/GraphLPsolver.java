@@ -32,7 +32,7 @@ import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.matrix.UniversalMatrix;
-import barna.flux.capacitor.profile.BiasProfile;
+import barna.flux.capacitor.profile.Profile;
 import barna.model.SpliceSite;
 import barna.model.Transcript;
 import barna.model.commons.DoubleVector;
@@ -154,7 +154,7 @@ public class GraphLPsolver {
     /**
      * Profile of mapping distribution biases along transcript, from 5' to 3'.
      */
-	BiasProfile profile= null;
+	Profile profile= null;
 
     /**
      * The number of mappings initially observed, for normalization purposes after deconvolution.
@@ -251,7 +251,7 @@ public class GraphLPsolver {
      * Setter method for profile with mapping distribution biases.
      * @param profile profile of the biases
      */
-	public void setProfile(BiasProfile profile) {
+	public void setProfile(Profile profile) {
 		this.profile= profile;
 	}
 
