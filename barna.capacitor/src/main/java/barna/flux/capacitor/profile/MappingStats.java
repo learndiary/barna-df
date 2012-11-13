@@ -69,6 +69,9 @@ public class MappingStats {
     private long mappingsSingleTxLociNoAnn;
     private long mappingPairs;
     private long mappingsWrongStrand;
+    private int readLenMin;
+    private int readLenMax;
+
 
     //Learning & Annotation Mapping
     private long pairsWrongOrientation;
@@ -331,6 +334,22 @@ public class MappingStats {
         this.mappingPairsSingleTxLoci+=value;
     }
 
+    public int getReadLenMin() {
+        return readLenMin;
+    }
+
+    public void setReadLenMin(int readLenMin) {
+        this.readLenMin = readLenMin;
+    }
+
+    public int getReadLenMax() {
+        return readLenMax;
+    }
+
+    public void setReadLenMax(int readLenMax) {
+        this.readLenMax = readLenMax;
+    }
+
     /**
      * Add the numbers from the given stats to this instance.
      *
@@ -355,6 +374,24 @@ public class MappingStats {
         this.mappingsSingleTxLociNoAnn  += other.mappingsSingleTxLociNoAnn;
         this.lociUnsolved               += other.lociUnsolved;
         this.mappingPairsSingleTxLoci   += other.mappingPairsSingleTxLoci;
+    }
+
+    /**
+     * Add the numbers from the given stats referring to a single locus to this instance.
+     *
+     * @param other the other stats
+     */
+    public void addLocus(MappingStats other){
+        if(other == null) return;
+        this.singleTxLoci               += other.singleTxLoci;
+        this.lociExp                    += other.lociExp;
+        this.txsExp                     += other.txsExp;
+        this.eventsExp                  += other.eventsExp;
+        this.mappingsMapped             += other.mappingsMapped;
+        this.mappingPairsNoTx           += other.mappingPairsNoTx;
+        this.pairsWrongOrientation      += other.pairsWrongOrientation;
+        this.readsLoci                  += other.readsLoci;
+        this.lociUnsolved               += other.lociUnsolved;
     }
 
     /**
@@ -435,6 +472,8 @@ public class MappingStats {
             this.mappingsSingleTxLociNoAnn  = other.mappingsSingleTxLociNoAnn;
             this.lociUnsolved               = other.lociUnsolved;
             this.mappingPairsSingleTxLoci   = other.mappingPairsSingleTxLoci;
+            this.readLenMin                 = other.readLenMin;
+            this.readLenMax                 = other.readLenMax;
         } catch (Exception e) {
             Log.error("Cannot read stats from file: " + statsFile.getAbsolutePath());
             status = "KO";

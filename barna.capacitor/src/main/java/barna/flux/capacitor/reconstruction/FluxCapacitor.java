@@ -36,7 +36,6 @@ import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
-import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.flux.capacitor.profile.BiasProfiler;
 import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.profile.Profile;
@@ -63,6 +62,7 @@ import lpsolve.VersionInfo;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 
 /**
@@ -84,6 +84,15 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * Task to be executed in the current run - initialized empty
      */
     private EnumSet<Task> currentTasks = EnumSet.noneOf(Task.class);
+
+    /**
+     * Possible features for the output
+     */
+    private enum OutputFlag {
+        BALANCED, OBSERVATION, PREDICTION, GENE, TRANSCRIPT, EXON, SJ, EVENT, UNKNOWN, LP
+    };
+
+    private EnumSet<OutputFlag> output = EnumSet.of(OutputFlag.BALANCED, OutputFlag.TRANSCRIPT);
 
     /**
      * Stores a reference to the parsed command line arguments
@@ -139,42 +148,57 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * A class that encapsulates all information necessary to carry out the deconvolution
      * of the reads in a locus.
      */
-    class LocusSolver extends Thread { //TODO implement Callable interface and make top level class (or static member class)
+    static class LocusSolver implements Callable<MappingStats> {
 
         /**
          * The locus that is to be solved.
          */
-        Gene gene = null;
+        private Gene gene = null;
 
         /**
          * AStalavista events found in the locus.
          */
-        ASEvent[] events = null;
+        private ASEvent[] events = null;
 
         /**
          * Iterator over mappings.
          */
-		MSIterator mappings = null;
+		private MSIterator mappings = null;
 
         /**
          * EnumSet indicating which task(s) has(have) to be performed in the current run.
          */
-        EnumSet<Task> tasks;
+        private EnumSet<Task> tasks;
+
+        /**
+         * EnumSet indicating which feature(s) has(ve) to be put on the ouput.
+         */
+        private EnumSet<OutputFlag> output;
+
+        /**
+         * Whether reads are paired
+         */
+        private boolean pairedEnd;
+
+        /**
+         * Whether reads are stranded
+         */
+        private boolean stranded;
 
         /**
          * The coverage profile of systematic biases.
          */
-        Coverage coverage = null;
+        private Coverage coverage = null;
 
         /**
          * Used for chaining threads to be executed sequentially.
          */
-        Thread threadBefore = null;
+        private Thread threadBefore = null;
 
         /**
          * The number of annotation-mapped mappings or reads.
          */
-        int nrMappingsReadsOrPairs;
+        private int nrMappingsReadsOrPairs;
 
         /**
          * Variable to store invariant of observed split frequency.
@@ -192,6 +216,31 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         private MappingStats stats = null;
 
         /**
+         * Settings for the current FluxCapacitor run
+         */
+        private FluxCapacitorSettings settings;
+
+        /**
+         * Reads profile
+         */
+        private Profile profile;
+
+        /**
+         * Cost model for deconvolution.
+         */
+        private byte costModel = GraphLPsolver.COSTS_LINEAR;
+
+        /**
+         * Granularity of deconvolution cost function.
+         */
+        private byte costSplit = 1;
+
+        /**
+         * Lower and upper bound of how much of the original observation can be substracted respectively added.
+         */
+        private float[] costBounds = new float[]{0.95f, Float.NaN};
+
+        /**
          * Constructor providing reads and mappings for deconvolution.
          * The mode of the run can be switched between profiling and deconvolution.
          *
@@ -199,12 +248,17 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
          * @param newMappings the mappings that fall in the locus
          * @param tasks     tasks to be preformed
          */
-		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, MappingStats stats) {
+		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile) {
 
             this.gene = newGene;
 			this.mappings = newMappings;
             this.tasks = tasks;
-            this.stats = stats;
+            this.output = output;
+            this.pairedEnd = pairedEnd;
+            this.stranded = stranded;
+            this.settings = settings;
+            this.profile = profile;
+            this.stats = new MappingStats();
 
             nrMappingsReadsOrPairs = 0;
         }
@@ -213,7 +267,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         /**
          * Launches the profiling/deconvolution on the locus
          */
-        @Override
+        /*@Override
         public void run() {
 
             AnnotationMapper mapper = null;
@@ -284,9 +338,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             //System.gc();
 
 //			synchronized(FluxCapacitor.this.threadPool) {
-            FluxCapacitor.this.threadPool.remove(this);
+            //FluxCapacitor.this.threadPool.remove(this);
 //			}
-        }
+        }*/
 
         /**
          * Count reads to splice junction within the current locus and output them in GTF format.
@@ -391,7 +445,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             long nrReads = stats.getReadsTotal();
             double base = (nrReads < 0 ? 1 : nrReads);
             Transcript[] tt = gene.getTranscripts();
-            if (outputBalanced) {
+            if (output.contains(OutputFlag.BALANCED)) {
                 rpkmMap = new HashMap<String, Double>(tt.length, 1f);
                 for (int i = 0; i < tt.length; i++) {
                     Transcript tx = tt[i];
@@ -406,7 +460,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                             val = 0;
                     }
 
-                    if (val > 0 && !(outputObs || outputPred))
+                    if (val > 0 && !(output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)))
                         stats.incrTxsExp(1);
 
                     double rpkm = (float) ((val / (double) tx.getExonicLength()) * (1000000000l / base));
@@ -420,14 +474,14 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
             // reproduce original
             boolean foundExons = true, foundTranscripts = false;
-            if (((GTFwrapper) getWrapperGTF()).isKeepOriginalLines() && origLines != null) {
+            /*if (((GTFwrapper) getWrapperGTF()).isKeepOriginalLines() && origLines != null) {
                 foundTranscripts = outputGFForiginalLines(rpkmMap);
-            }
+            }*/
 
             StringBuilder sb = new StringBuilder();
             // LOCUS TODO genes
-            if (outputGene) {
-                if (outputObs || outputPred) {
+            if (output.contains(OutputFlag.GENE)) {
+                if (output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)) {
                     //getGTF(sb, g.trpts[0].getGene(), g, solver, perM, pv);
                     try {
                         assert (testInvariant(invariantTestObsSplitFreq,
@@ -449,13 +503,13 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     }
                     ;
 
-                } else if (outputBalanced) {
+                } else if (output.contains(OutputFlag.BALANCED)) {
                 }
             }
 
 
             // TRANSCRIPTS
-            if (outputTranscript || outputExon || outputSJunction) {
+            if (output.contains(OutputFlag.TRANSCRIPT) || output.contains(OutputFlag.EXON) || output.contains(OutputFlag.SJ)) {
                 float invariantObsAllTx = 0, invariantPredAllTx = 0,
                         invariantObsAllEx = 0, invariantPredAllEx = 0;
                 for (int i = 0; i < tt.length; i++) {
@@ -464,8 +518,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 //					invariantPredTx= invariantTestPredSplitFreq;
                     String tid = tt[i].getTranscriptID();
                     float invariantObsTx = 0, invariantPredTx = 0;
-                    if (outputTranscript && !foundTranscripts) {
-                        if (outputObs || outputPred) {
+                    if (output.contains(OutputFlag.TRANSCRIPT) && !foundTranscripts) {
+                        if (output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)) {
                             //getGTF(sb, g.trpts[i], solver, g, perM, null, false);	// writer.write
                             invariantObsAllTx += invariantTestObsSplitFreq; //invariantObsTx;
                             invariantPredAllTx += invariantTestPredSplitFreq; // invariantPredTx;
@@ -474,7 +528,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                             if (invariantPredTx > 0)
                                 stats.incrTxsExp(1);
 
-                        } else if (outputBalanced) {
+                        } else if (output.contains(OutputFlag.BALANCED)) {
 
                             GFFObject obj = GFFObject.createGFFObject(tt[i]);
                             sb.append(obj.toString());
@@ -510,7 +564,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     }
                     // EXONS
                     float invariantObsEx = 0, invariantPredEx = 0;
-                    if (outputExon && !foundExons) {
+                    if (output.contains(OutputFlag.EXON) && !foundExons) {
                         Exon[] exons = tt[i].getExons();
                         for (int j = 0; j < exons.length; j++) {
                             //getGTF(sb, exons[j], tt[i], g, solver, unsolvedSystem, perM, null, false);
@@ -520,7 +574,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     }
 
                     // SJ
-                    if (outputSJunction) {
+                    if (output.contains(OutputFlag.SJ)) {
                         Vector<Vector<AbstractEdge>> eeV = new Vector<Vector<AbstractEdge>>(5, 5);
                         eeV.add(new Vector<AbstractEdge>());
                         g.getRPK(tt[i], pairedEnd, SplicingGraph.ETYPE_SJ, eeV);
@@ -534,7 +588,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     invariantObsAllEx += invariantObsEx;
                     invariantPredAllEx += invariantPredEx;
 
-                    if (outputExon && outputSJunction && outputTranscript) {
+                    if (output.contains(OutputFlag.EXON) && output.contains(OutputFlag.SJ) && output.contains(OutputFlag.TRANSCRIPT)) {
                         try {
                             assert (testInvariant(invariantObsEx, invariantObsTx, 0.05));
                         }    // min: 0.02
@@ -554,7 +608,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         ;
                     }
                 }
-                if (outputTranscript) {
+                if (output.contains(OutputFlag.TRANSCRIPT)) {
                     try {
                         assert (testInvariant(invariantObsAllTx,
                                 pairedEnd ? nrMappingsReadsOrPairs * 2 : nrMappingsReadsOrPairs, 0.05));
@@ -573,7 +627,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                                 + "\n\tlocus: " + tt[0].getTranscriptID());
                     }
                 }
-                if (outputExon && outputSJunction) {
+                if (output.contains(OutputFlag.EXON) && output.contains(OutputFlag.SJ)) {
                     try {
                         assert (testInvariant(invariantObsAllEx,
                                 pairedEnd ? nrMappingsReadsOrPairs * 2 : nrMappingsReadsOrPairs, 0.05));
@@ -595,7 +649,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             }
 
             // EVENTS
-            if (outputEvent) {
+            if (output.contains(OutputFlag.EVENT)) {
                 HashMap<Object, Double> tExpMap = null;
                 if (solver != null) {
                     tExpMap = solver.getTrptExprHash();
@@ -608,11 +662,11 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     }
                 }
                 for (int i = 0; events != null && i < events.length; i++) {
-                    if (outputObs || outputPred)
+                    if (output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION))
                         ; //getGTF(sb, events[i], g, solver, unsolvedSystem, perM, pv, tExpMap);
                     else
                         stats.incrEvents(1);
-                    if (outputBalanced) {
+                    if (output.contains(OutputFlag.BALANCED)) {
                         sb.append(events[i].toStringGTF());
                         sb.append(" ");
                         sb.append("\"");
@@ -625,7 +679,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                             sb.append(",");
                             allPos &= (sum > 0);
                         }
-                        if (allPos && !(outputObs || outputPred))
+                        if (allPos && !(output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)))
                             stats.incrEventsExp(1);
                         sb.replace(sb.length() - 1, sb.length(), "\";"+OSChecker.NEW_LINE);
                     }
@@ -667,7 +721,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
          * @return <code>true</code> if <code>transcript</code> features were found in
          *         the input, <code>false</code> otherwise
          */
-        private boolean outputGFForiginalLines(HashMap<String, Double> rpkmMap) {
+        /*private boolean outputGFForiginalLines(HashMap<String, Double> rpkmMap) {
 
             Transcript[] tt = gene.getTranscripts();
             boolean foundTranscripts = false;
@@ -678,7 +732,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 int tx = 0;
                 if ((feat.equals(feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT))
                         || feat.equals(Exon.GFF_FEATURE_EXON))
-                        && (outputObs || outputPred))
+                        && (output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)))
                     for (tx = 0; tx < tt.length; tx++)
                         if (tt[tx].getTranscriptID().equals(tid))
                             break;
@@ -689,7 +743,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     System.err.println();
                 }
 
-                if (feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT) && outputTranscript) {
+                if (feat.equals(Transcript.GFF_FEATURE_TRANSCRIPT) && output.contains(OutputFlag.TRANSCRIPT)) {
                     foundTranscripts = true;
                     StringBuilder sb = new StringBuilder(s);
                     int x = sb.length();    // trim
@@ -700,9 +754,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                     else
                         sb.append(Constants.SPACE);
 
-                    if ((outputObs || outputPred) && tx < tt.length)
+                    if ((output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)) && tx < tt.length)
                         ; //getGTF(sb, tt[tx], solver, g, perM, pv, true);
-                    else if (outputBalanced) {
+                    else if (output.contains(OutputFlag.BALANCED)) {
                         sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
                         sb.append(Constants.SPACE);
                         if (rpkmMap.containsKey(tid))
@@ -714,7 +768,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                     Log.print(sb.toString());
 
-                } else if (feat.equals(Exon.GFF_FEATURE_EXON) && outputExon) {
+                } else if (feat.equals(Exon.GFF_FEATURE_EXON) && output.contains(OutputFlag.EXON)) {
 
                     StringBuilder sb = new StringBuilder(s);
                     int x = sb.length();
@@ -726,7 +780,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         sb.append(' ');
 
 
-                    if ((outputObs || outputPred) && tx < tt.length) {
+                    if ((output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)) && tx < tt.length) {
                         int start = Integer.parseInt(GFFObject.getField(4, s));
                         int end = Integer.parseInt(GFFObject.getField(5, s));
                         int j = 0;
@@ -742,7 +796,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                                 break;
                         }
                         //getGTF(sb, tt[x].getExons()[j], tt[i], g, solver, unsolvedSystem, perM, pv, true);
-                    } else if (outputBalanced) {
+                    } else if (output.contains(OutputFlag.BALANCED)) {
                         sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_RPKM);
                         sb.append(Constants.SPACE);
                         if (rpkmMap.containsKey(tid))
@@ -754,13 +808,13 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
 
                     Log.print(sb.toString());
-                } else if (outputUnknown) {
+                } else if (output.contains(OutputFlag.UNKNOWN)) {
                     Log.print(s + System.getProperty("line.separator"));
                 }
             }
 
             return foundTranscripts;
-        }
+        }*/
 
 
         /**
@@ -802,30 +856,32 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, readLenMin,
-                    pairedEnd ? insertMinMax : null, mappedReads,
-                    strand == FluxCapacitorConstants.STRAND_ENABLED,
+            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getStats().getReadLenMin(),
+                    //pairedEnd ? insertMinMax : null,
+                    null,
+                    mappedReads,
+                    stranded,
                     pairedEnd);
-            if (outputLP)
-                solver.setFileLPdir(getFileLP());
+            /*if (output.contains(OutputFlag.LP))
+                solver.setFileLPdir(getFileLP());*/
             solver.costModel = costModel;    // COSTS_LINEAR
             solver.setCostSplit(costSplit);
             solver.setProfile(profile);
-            solver.setReadLen(readLenMin);
+            solver.setReadLen(profile.getStats().getReadLenMin());
             solver.costBounds = costBounds;
 
             return solver;
         }
 
 
-        /**
+        /*
          * Learns systematic biases along a transcript
          *
          * @param tx   the Transcript
          * @param mappings the mappings
          *
          */
-        @Deprecated
+        /*@Deprecated
         private void learn(Transcript tx, MSIterator<Mapping> mappings) {
 
             if (mappings== null)
@@ -966,39 +1022,112 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         coverage.getChiSquare(true),
                         coverage.getCV(true));
             }
+        }*/
+
+
+        /*
+         * Returns the breakpoint indicated by a mapping within a transcript.
+         *
+         * @param tx  transcript to which a read maps
+         * @param bed genomic mappping
+         * @return transcript coordinate of the breakpoint indicated by the mapping
+         */
+        /*private int getBpoint(Transcript tx, Mapping bed) {
+
+            // TODO add check whether complete read is contained in transcript
+
+            // just depends on genomic position, not on sense/antisense!
+            int gpos = bed.getStrand() >= 0 ? bed.getStart() + 1 : bed.getEnd();
+            int epos = tx.getExonicPosition(gpos);
+
+            // security check, get distance between both exonic coordinates
+            int epos2 = tx.getExonicPosition(bed.getStrand() >= 0 ? bed.getEnd() : bed.getStart() + 1);
+            int len = bed.getLength();
+            if (readLenMin < 0 || len < readLenMin)
+                readLenMin = len;
+            if (len > readLenMax)
+                readLenMax = len;
+
+            if (len != Math.abs(epos - epos2) + 1)
+                return Integer.MIN_VALUE;
+            return epos;
+        }*/ /* End of LocusSolver*/
+
+        @Override
+        public MappingStats call() throws Exception {
+            AnnotationMapper mapper = null;
+
+            if(tasks.isEmpty())
+                return null;
+
+            mapper = new AnnotationMapper(this.gene);
+            mapper.map(this.mappings, settings);
+
+            stats.incrReadsLoci(mapper.nrMappingsLocus);
+            stats.incrMappingsMapped(mapper.getNrMappingsMapped());
+            nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
+            stats.incrMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
+            stats.incrPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
+
+
+            //TODO move this on call()
+            //Execute tasks
+            for (Task t : this.tasks) {
+                switch (t) {
+                    case COUNT_INTRONS:
+                        outputIntronsGFF(this.gene, mapper);
+                        break;
+                    case COUNT_SJ:
+                        outputSJGFF(this.gene, mapper);
+                        break;
+                    case DECOMPOSE:
+                        GraphLPsolver mySolver = null;
+                        if (mapper.nrMappingsMapped > 0 && this.gene.getTranscriptCount() > 1) {    // OPTIMIZE
+                            mySolver = getSolver(mapper, (int) (mapper.nrMappingsMapped * 2)); // not: getMappedReadcount()
+                            mySolver.run();
+                        }
+                        outputGFF(mapper, events, mySolver);
+                        break;
+                }
+            }
+
+//            if (decompose) {
+//
+//                // BUG 110301: do not use mapTrivial, problems with split-maps
+////				if (this.gene.getTranscriptCount()== 1) {
+////					mapTrivial(gene.getTranscripts()[0], beds);
+////					outputGFF(null, null, null);
+////				} else {
+//
+//                GraphLPsolver mySolver = null;
+//                if (mapper.nrMappingsMapped > 0 && this.gene.getTranscriptCount() > 1) {    // OPTIMIZE
+//                    mySolver = getSolver(mapper, (int) (mapper.nrMappingsMapped * 2)); // not: getMappedReadcount()
+//                    mySolver.run();
+//                }
+//                outputGFF(mapper, events, mySolver);
+////					}
+//
+//            } else {
+//                // map all reads
+//                if (this.gene.getTranscriptCount() == 1) {
+//                    ++nrSingleTranscriptLearn;
+//                    learn(this.gene.getTranscripts()[0], beds);
+//                }
+//            }
+            if (mappings != null) {
+                mappings.clear();
+                mappings = null;
+            }
+            gene = null;
+            // makes it terribly slow
+            //System.gc();
+
+//			synchronized(FluxCapacitor.this.threadPool) {
+            //FluxCapacitor.this.threadPool.remove(this);
+//			}
+            return this.stats;  //To change body of implemented methods use File | Settings | File Templates.
         }
-
-
     }
-
-    /**
-     * Returns the breakpoint indicated by a mapping within a transcript.
-     *
-     * @param tx  transcript to which a read maps
-     * @param bed genomic mappping
-     * @return transcript coordinate of the breakpoint indicated by the mapping
-     */
-    private int getBpoint(Transcript tx, Mapping bed) {
-
-        // TODO add check whether complete read is contained in transcript
-
-        // just depends on genomic position, not on sense/antisense!
-        int gpos = bed.getStrand() >= 0 ? bed.getStart() + 1 : bed.getEnd();
-        int epos = tx.getExonicPosition(gpos);
-
-        // security check, get distance between both exonic coordinates
-        int epos2 = tx.getExonicPosition(bed.getStrand() >= 0 ? bed.getEnd() : bed.getStart() + 1);
-        int len = bed.getLength();
-        if (readLenMin < 0 || len < readLenMin)
-            readLenMin = len;
-        if (len > readLenMax)
-            readLenMax = len;
-
-        if (len != Math.abs(epos - epos2) + 1)
-            return Integer.MIN_VALUE;
-        return epos;
-    } /* End of LocusSolver*/
-
 
     /**
      * Workaround for wrapper script, provides first argument as parameter file.
@@ -1161,52 +1290,52 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
     /**
      * Flag whether to ouput the observation (i.e., values before deconvolution).
      */
-    boolean outputObs = false;
+//    boolean outputObs = false;
 
     /**
      * Flag whether to ouput the prediction (i.e., values after deconvolution).
      */
-    boolean outputPred = false;
+//    boolean outputPred = false;
 
     /**
      * Flag whether to output balanced values, i.e., values that should be observed as cast back from deconvoluted values.
      */
-    boolean outputBalanced = true;
+//    boolean outputBalanced = true;
 
     /**
      * Flag whether to output exon features.
      */
-    boolean outputExon = false;
+//    boolean outputExon = false;
 
     /**
      * Flag whether to output unknown features, e.g., reproduced ones from the input annotation.
      */
-    boolean outputUnknown = false;
+//    boolean outputUnknown = false;
 
     /**
      * Flag whether to output splice-junction features.
      */
-    boolean outputSJunction = false;
+//    boolean outputSJunction = false;
 
     /**
      * Flag whether to output gene/loci features.
      */
-    boolean outputGene = false;
+//    boolean outputGene = false;
 
     /**
      * Flag whether to output transcript features.
      */
-    boolean outputTranscript = true;
+//    boolean outputTranscript = true;
 
     /**
      * Flag whether to output AStalavista event features.
      */
-    boolean outputEvent = false;
+//    boolean outputEvent = false;
 
     /**
      * Flag whether to output linear programs.
      */
-    boolean outputLP = false;
+//    boolean outputLP = false;
 
     /**
      * Default compression for output files.
@@ -1219,26 +1348,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
     int eventDim = 2;
 
     /**
-     * Cost model for deconvolution.
-     */
-    byte costModel = GraphLPsolver.COSTS_LINEAR;
-
-    /**
-     * Granularity of deconvolution cost function.
-     */
-    byte costSplit = 1;
-
-    /**
      * Flag indicating whether read biases should be ignored (<code>true</code>),
      * i.e. uniform read distribution is assumed.
      */
     boolean uniform = false;
-
-    /**
-     * Lower and upper bound of how much of the original observation can be substracted respectively added.
-     */
-    float[] costBounds = new float[]{0.95f, Float.NaN};
-
 
     /*
      * Volatile:
@@ -2010,10 +2123,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * @param mappings the mappings in the locus
      * @param tasks     the tasks to be performed
      */
-    private void solve(Gene gene, MSIterator mappings, EnumSet tasks) {
+    /*private void solve(Gene gene, MSIterator mappings, EnumSet tasks) {
 
         // create LP and solve
-        LocusSolver lsolver = new LocusSolver(gene, mappings, tasks, stats);
+        LocusSolver lsolver = new LocusSolver(gene, mappings, tasks, output, pairedEnd, stranded, settings, profile);
         if (maxThreads > 1) {
             //Thread outThread= new Thread(lsolver);
             Thread lastThread = getLastThread();
@@ -2043,7 +2156,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
         } else
             lsolver.run();
-    }
+    }*/
 
     /**
      * Returns the thread last added to the thread pool,
@@ -2353,9 +2466,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                             : "")
                             + ((strand == FluxCapacitorConstants.STRAND_SPECIFIC) ? stats.getMappingsWrongStrand() + " mappings map to annotation in antisense direction\n\t" : "")
                             //+ nrMultiMaps+" mapped multiply.\n\n\t"
-                            + (outputGene ? "\n\t" + stats.getLoci() + " loci, " + stats.getLociExp() + " detected" : "")
-                            + (outputTranscript ? "\n\t" + stats.getTxs() + " transcripts, " + stats.getTxsExp() + " detected" : "")
-                            + (outputEvent ? "\n\t" + stats.getEvents() + " ASevents of dimension " + eventDim + ", " + stats.getEventsExp() + " detected" : "")
+                            + (output.contains(OutputFlag.GENE) ? "\n\t" + stats.getLoci() + " loci, " + stats.getLociExp() + " detected" : "")
+                            + (output.contains(OutputFlag.TRANSCRIPT) ? "\n\t" + stats.getTxs() + " transcripts, " + stats.getTxsExp() + " detected" : "")
+                            + (output.contains(OutputFlag.EVENT) ? "\n\t" + stats.getEvents() + " ASevents of dimension " + eventDim + ", " + stats.getEventsExp() + " detected" : "")
                             + barna.commons.system.OSChecker.NEW_LINE
                             //+ nrUnsolved+" unsolved systems."
                     );
@@ -2467,8 +2580,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                 if ((gene = geneNext) == null)
                     break;
-                if (gtfReader.getVLines() != null)
-                    origLines = (Vector<String>) gtfReader.getVLines().clone();    // TODO make array, trim..
+                /*if (gtfReader.getVLines() != null)
+                    origLines = (Vector<String>) gtfReader.getVLines().clone();    // TODO make array, trim..*/
 
                 // http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
                 if (readerThread == null)
@@ -2526,7 +2639,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                     MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 
-                    solve(gene[i], mappings, currentTasks);
+//                    solve(gene[i], mappings, currentTasks);
+
+                    LocusSolver lsolver = new LocusSolver(gene[i], mappings, currentTasks, this.output, pairedEnd, stranded, settings, profile);
+                    stats.addLocus(lsolver.call());
 
                     if (mappings != null) {
                         mappings.clear();
