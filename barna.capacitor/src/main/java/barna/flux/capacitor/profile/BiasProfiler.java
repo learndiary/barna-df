@@ -61,8 +61,8 @@ public class BiasProfiler implements Callable<Profile> {
     private byte strand;
     private boolean paired;
 
-    private double readLenMin;
-    private double readLenMax;
+    private int readLenMin;
+    private int readLenMax;
 
     private GTFwrapper gtfReader;
     private MappingReader mappingReader;
@@ -84,6 +84,8 @@ public class BiasProfiler implements Callable<Profile> {
     @Override
     public Profile call() throws Exception {
         profile();
+        profile.getStats().setReadLenMin(readLenMin);
+        profile.getStats().setReadLenMax(readLenMax);
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
             writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
         return profile;
