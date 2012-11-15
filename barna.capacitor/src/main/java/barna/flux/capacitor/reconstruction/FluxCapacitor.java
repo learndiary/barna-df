@@ -258,7 +258,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             this.stranded = stranded;
             this.settings = settings;
             this.profile = profile;
-            this.stats = new MappingStats();
+            this.stats = profile.getStats();
 
             nrMappingsReadsOrPairs = 0;
         }
@@ -1063,11 +1063,16 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             mapper = new AnnotationMapper(this.gene);
             mapper.map(this.mappings, settings);
 
-            stats.incrReadsLoci(mapper.nrMappingsLocus);
+            /*stats.incrReadsLoci(mapper.nrMappingsLocus);
             stats.incrMappingsMapped(mapper.getNrMappingsMapped());
             nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
             stats.incrMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
-            stats.incrPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
+            stats.incrPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());*/
+            stats.setReadsLoci(mapper.nrMappingsLocus);
+            stats.setMappingsMapped(mapper.getNrMappingsMapped());
+            nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
+            stats.setMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
+            stats.setPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
 
 
             //TODO move this on call()
@@ -1125,7 +1130,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 //			synchronized(FluxCapacitor.this.threadPool) {
             //FluxCapacitor.this.threadPool.remove(this);
 //			}
-            return this.stats;  //To change body of implemented methods use File | Settings | File Templates.
+            return stats;  //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 
@@ -1881,7 +1886,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 if (profile == null) {
                     exit(-1);
                 }
-                stats.add(profile.getStats());
+                profile.getStats().add(stats);
+                stats=profile.getStats();
             }
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
@@ -2179,7 +2185,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      *
      */
     Profile getProfile() {
-        Log.info("PROFILE","Loading profile and stats");
+        Log.info("PROFILE","Loading profile");
         if (uniform) {
             profile = new Profile();
             profile.fill();
@@ -2513,8 +2519,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      */
     public boolean explore(byte mode) {
 
-        if (!settings.get(FluxCapacitorSettings.STATS_FILE_APPEND))
-            stats.reset();
+        /*if (!settings.get(FluxCapacitorSettings.STATS_FILE_APPEND))
+            stats.reset();*/
 
         //System.out.println(System.getProperty("java.library.path"));
         long t0 = System.currentTimeMillis();
