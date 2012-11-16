@@ -2041,7 +2041,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
         parameters.add(JSAPParameters.flaggedParameter("annotation", 'a').type(File.class).help("Path to the annotation file").valueName("gtf").get());
-        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed").get());
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed|bam").get());
         parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("Path to the output file").valueName("gtf").get());
         parameters.add(JSAPParameters.flaggedParameter("annotation-mapping", 'm').type(String.class).help("Annotation Mapping (default PAIRED)").valueName("mapping").defaultValue("PAIRED").get());
         parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
