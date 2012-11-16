@@ -114,7 +114,8 @@ public class QualityTransitions {
             sum += transitions[position][lastQualityValue][i] / numberOfReadsFromQ0;
             if (sum >= random) return i;
         }
-        return -1;
+        // catch case where there is no such transition
+        return getInitialQuality(random);
     }
 
     private int getInitialQuality(double r) {
@@ -123,6 +124,6 @@ public class QualityTransitions {
             sum += initialDistribution[i] / (double) numReads;
             if (sum >= r) return i;
         }
-        return -1;
+        return 38; // return a rather good quality by default
     }
 }
