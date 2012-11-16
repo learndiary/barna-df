@@ -1596,7 +1596,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         // load parameters
         if (file != null && !file.exists()) {
-            throw new RuntimeException("I have no parameter file and I want to scream!");
+            throw new RuntimeException("Specified parameter file not found: " + file.getAbsolutePath());
         }
 
         if (file != null) {
@@ -2055,20 +2055,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     public boolean validateParameter(JSAPResult args) {
         commandLineArgs = args;
         setPrintParameters(args.userSpecified("printParameters"));
-        setFile(args.getFile("parameter"));
-
         if (isPrintParameters()) {
             FluxCapacitorSettings settings = new FluxCapacitorSettings();
             settings.write(System.out);
             return false;
         }
 
-        if (getFile() == null) {
-            Log.error("");
-            Log.error("No parameter file specified!");
-            Log.error(barna.commons.system.OSChecker.NEW_LINE);
-            return false;
-        }
+        if(args.userSpecified("parameter"))
+            setFile(args.getFile("parameter"));
 
         if (getFile() != null && !getFile().canRead()) {
             Log.error("");
