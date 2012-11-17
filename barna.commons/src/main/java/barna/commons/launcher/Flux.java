@@ -300,6 +300,14 @@ public class Flux {
             System.err.println(errorMessage);
             System.err.println("");
         }
+        System.err.println("-------Documentation & Issue Tracker-------");
+        System.err.println("Flux Wiki (Docs): http://sammeth.net/confluence");
+        System.err.println("Flux JIRA (Bugs): http://sammeth.net/jira");
+        System.err.println("");
+        System.err.println("Please feel free to create an account in the public");
+        System.err.println("JIRA and reports any bugs or feature requests.");
+        System.err.println("-------------------------------------------");
+
         if(tool != null){
             System.err.println("Current tool: " + tool.getName());
             System.err.println("");
