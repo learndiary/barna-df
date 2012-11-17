@@ -102,6 +102,7 @@ public class QualityTransitions {
     public int getQuality(int position, int lastQualityValue, double random) {
         // if start, sample from initial position 0 distribution
         if (position == 0) return getInitialQuality(random);
+        if (position >= transitions.length) return lastQualityValue;
 
         // otherwise sample from transitions
         double sum = 0;
@@ -114,8 +115,10 @@ public class QualityTransitions {
             sum += transitions[position][lastQualityValue][i] / numberOfReadsFromQ0;
             if (sum >= random) return i;
         }
-        // catch case where there is no such transition
-        return getInitialQuality(random);
+        // BARNA-215 - in case teh error mode does not cover the position
+        // and we hit it due to a scaling issue, try to get a value for the next
+        // position.
+        return getQuality(position+1, lastQualityValue, random);
     }
 
     private int getInitialQuality(double r) {
