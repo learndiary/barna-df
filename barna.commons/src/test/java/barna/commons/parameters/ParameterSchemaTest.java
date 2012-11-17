@@ -56,6 +56,33 @@ public class ParameterSchemaTest {
             fail();
         }
     }
+    @Test
+    public void testParseInlineComment(){
+        SimpleParameterSchema schema = new SimpleParameterSchema();
+
+        // parameters
+        java.io.ByteArrayInputStream in = new java.io.ByteArrayInputStream(
+                ("" +
+                        "# Comment"+ OSChecker.NEW_LINE +
+                        "STRING1 B#direct inline"+ OSChecker.NEW_LINE+
+                        "BOOLEAN\tyes"+ OSChecker.NEW_LINE+
+                        "INT\t20\t# tab inline"+ OSChecker.NEW_LINE+
+                        "DOUBLE\t5.8  # inline"+ OSChecker.NEW_LINE+
+                "").getBytes());
+
+        try {
+            schema.parse(in);
+
+            assertEquals("B",schema.get(SimpleParameterSchema.STRING1));
+            assertEquals(20, (int) schema.get(SimpleParameterSchema.INT1)  );
+            assertEquals(5.8d, schema.get(SimpleParameterSchema.DOUBLE1), 0.000001 );
+            assertTrue(schema.get(SimpleParameterSchema.BOOLEAN1));
+
+        } catch (ParameterException e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
 
     @Test
     public void testParseErrorValue(){
