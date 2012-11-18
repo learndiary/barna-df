@@ -2,11 +2,11 @@
 setlocal ENABLEDELAYEDEXPANSION
 ::CONFIGURATION
 IF "%FLUX_MEM%" == "" (
-    if %PROCESSOR_ARCHITECTURE%==amd64 (
+    if "%PROCESSOR_ARCHITECTURE%" == "amd64" (
         ::64 bit machine
         set FLUX_MEM=3G
     ) else (
-        if %PROCESSOR_ARCHITEW6432%==amd64 (
+        if "%PROCESSOR_ARCHITEW6432%" == "amd64" (
             ::32 bit app on 64 bit machine
             set FLUX_MEM=3G
         ) else (
