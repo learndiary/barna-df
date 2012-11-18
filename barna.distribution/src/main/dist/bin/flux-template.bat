@@ -11,7 +11,7 @@ IF "%FLUX_MEM%" == "" (
             set FLUX_MEM=3G
         ) else (
             ::32 bit machine
-            set FLUX_MEM=1G
+            set FLUX_MEM=1400M
         )
     )
 )

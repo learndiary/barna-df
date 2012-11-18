@@ -1592,7 +1592,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         // TODO not here
         if (loadLibraries() < 0)
-            System.exit(-1);
+            throw new RuntimeException("Cannot load libraries");
 
         // load parameters
         if (file != null && !file.exists()) {
