@@ -47,7 +47,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
 
 import static lpsolve.LpSolve.LE;
 
@@ -822,8 +825,8 @@ public class GraphLPsolver {
      */
     String getLPoutFileName() {
 
-        if (lpOutFName== null&& fileLPdir!= null) {
-            String lpOutFName= fileLPdir+ File.separator
+        if (lpOutFName == null && fileLPdir != null) {
+            lpOutFName = fileLPdir + File.separator
                     + aMapper.trpts[0].getGene().getLocusID().replace(":", "_")
                     + SFX_LPOUT;
         }
@@ -933,14 +936,14 @@ public class GraphLPsolver {
         // solve
         int ret= solve(getLPoutFileName());
         if (ret!= 0)
-            debug= true;
+            debug= false;
 
 		// append additional debug info
-		if (debug|| getLPoutFileName()!= null) {
+		if (debug || getLPoutFileName() != null) {
 			getLPsolve().printLp();
 			getLPsolve().printObjective();
 			getLPsolve().printSolution(1);
-			
+
 			// additional stream only afterwards
 			try {
 				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName(), true));
