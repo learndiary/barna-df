@@ -64,11 +64,6 @@ public class FisherDifferentialExpression {
      */
     void init() throws IOException {
         Log.info("Reading input");
-        if(modelFile != null){
-            Log.progressStart("Reading quantification model");
-            model = QuantificationModel.read(modelFile);
-            Log.progressFinish("Done", true);
-        }
         Log.progressStart("Reading source");
         source = Quantification.read(sourceFile);
         Log.progressFinish("Done", true);
@@ -76,11 +71,27 @@ public class FisherDifferentialExpression {
         Log.progressStart("Reading target");
         target = Quantification.read(targetFile);
         Log.progressFinish("Done", true);
+    }
 
+    QuantificationModel getModel() {
+        if(modelFile != null){
+            if(model == null){
+                Log.info("Reading model");
+                Log.progressStart("Reading quantification model");
+                try {
+                    model = QuantificationModel.read(modelFile);
+                } catch (IOException e) {
+                    Log.progressFailed("Error while reading model from " + modelFile.getAbsolutePath() + ": " + e.getMessage());
+                    throw new RuntimeException("Error while reading model from " + modelFile.getAbsolutePath() + ": " + e.getMessage(), e);
+                }
+                Log.progressFinish("Done", true);
+            }
+        }
+        return null;
     }
 
     public static void main(String[] args) throws Exception {
-        String model = "/Users/thasso/data/annotations/gencode_v12.gtf.gz";
+        String model = "/Users/thasso/data/annotations/hg/gencode_v12.gtf";
         String file_1 = "/Users/thasso/data/quantifications/data_1.bam_gencode_v12.gtf.gtf";
         String file_2 = "/Users/thasso/data/quantifications/data_2.bam_gencode_v12.gtf.gtf";
         FisherDifferentialExpression ff = new FisherDifferentialExpression(new File(file_1), new File(file_2), new File(model));
