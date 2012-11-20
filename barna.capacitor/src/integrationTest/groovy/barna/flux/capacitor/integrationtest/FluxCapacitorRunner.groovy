@@ -90,8 +90,8 @@ class FluxCapacitorRunner {
         //check if sorted files should be kept and set up directory
         if (parameters.containsKey("KEEP_SORTED")) {
             String sortedPath = parameters['KEEP_SORTED']
-            if (!sortedPath.startsWith(File.separator)) {
-                File sortDir = new File(cwd, parameters["KEEP_SORTED"]);
+            if (!sortedPath.startsWith(File.separator) && !new File(sortedPath).exists()) {
+                File sortDir = new File(cwd, sortedPath);
                 sortDir.mkdir();
                 parameters.put("KEEP_SORTED", sortDir);
             }

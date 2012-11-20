@@ -22,6 +22,21 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.2
+
+    * [BARNA-215] - Sequencing fails with ArrayIndexOutOfBoundsException
+    * [BARNA-235] - Flux-simulator does not accept SIZE_DISTRIBUTION N(300,30)
+    * [BARNA-236] - Single-end stranded data give 0 RPKM for trancripts with few reads supporting them
+    * [BARNA-239] - Parameter Schema relative path parser extends Windows paths
+    * [BARNA-243] - I used flux-simulator to generate 1,000,000 pair-e...
+    * [BARNA-246] - UnixSorter line interceptor called for each merge step instead of just the final one
+    * [BARNA-249] - I have been trying to generate fastq file for my s...
+    * [BARNA-250] - Simulator command line ignores --print-parameters
+    * [BARNA-251] - Parameter file parser does not undestand # comments after the parameter
+    * [BARNA-90] - Remove reference to Setting from Sequencer. The sequencer should be able to work standalone and all parameters must be set from outside
+    * [BARNA-228] - Specifiy the expression level for each transcript
+    * [BARNA-252] - Flux launcher fails on win32 when trying to allocate more than 1.5G for JVM heap
+
 FluxSimulator 1.1
     * [BARNA-13] - UnixStreamSorter shouldn't close streams
     * [BARNA-22] - Synchronization between Log.setInteractive() and CommandLine.confirm()

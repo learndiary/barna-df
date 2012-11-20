@@ -14,15 +14,15 @@ if(System.properties['nightly']){
  * This is the  global flux suite version used to identify
  * library/jar versions
  */
-version = "1.16"
+version = "1.17"
 
 /**
  * Versions for applications
  */
 ext.appVersions = [
-    "barna.astalavista":"3.0",
-    "barna.simulator":"1.1.1-SNAPSHOT",
-    "barna.capacitor":"1.1.1-SNAPSHOT",
+    "barna.astalavista":"3.1-SNAPSHOT",
+    "barna.simulator":"1.2",
+    "barna.capacitor":"1.2",
     "barna.tools":"1.0-SNAPSHOT"
 ]
 
@@ -55,7 +55,7 @@ allprojects {
 	repositories {
 	    mavenCentral()
 		maven {
-		    url "http://barnaserver.com/artifactory/repo"
+		    url "http://sammeth.net/artifactory/repo"
 		}
 	}
 }
@@ -154,7 +154,7 @@ buildscript {
 //  3) /wrapper which is a directory named by the "jarPath" config which contains other needed files.
 task wrapper(type: Wrapper) {
     // HHH-6106 - this is needed for IntellJ generation until 1.0-milestone-3 is released.
-    gradleVersion = '1.1'
+    gradleVersion = '1.2'
 }
 
 idea{

@@ -340,7 +340,7 @@ public class Sequencer implements Callable<Void> {
             return true;
         } catch (Exception e) {
             Log.error("Error while sequencing : " + e.getMessage(), e);
-            return false;
+            throw new RuntimeException("Error while sequencing : " + e.getMessage(), e);
         } finally {
             index.close();
         }

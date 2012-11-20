@@ -972,10 +972,11 @@ public class AnnotationMapper extends SplicingGraph {
                 }
                 if (donor == -1 || acceptor == -1)
                     continue;
-                if (sjReads.containsKey(donor + "^" + acceptor))
-                    sjReads.put(donor + "^" + acceptor, sjReads.get(donor + "^" + acceptor) + nodesReads.get(edge));
+                String sjID = gene.getGeneID(decodeTset(edge.getTranscripts())) + "^" + donor + "^" + acceptor;
+                if (sjReads.containsKey(sjID))
+                    sjReads.put(sjID, sjReads.get(sjID) + nodesReads.get(edge));
                 else
-                    sjReads.put(donor + "^" + acceptor, nodesReads.get(edge));
+                    sjReads.put(sjID, nodesReads.get(edge));
             }
         }
         return sjReads;
@@ -1010,11 +1011,12 @@ public class AnnotationMapper extends SplicingGraph {
                 for (SimpleEdge e : ev) {
                     if (e.isAllIntronic()) {
                         SimpleEdgeIntronMappings e1 = (SimpleEdgeIntronMappings) e;
+                        String intronID = gene.getGeneID(decodeTset(e1.getTranscripts())) + "^" + e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos();
                         if (paired) {
                             if (e1.getSuperEdges() != null)
-                                nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) countAllIntronicReads(e1.getSuperEdges()), e1.getBinCoverage()});
+                                nodesReads.put(intronID, new Float[]{(float) countAllIntronicReads(e1.getSuperEdges()), e1.getBinCoverage()});
                         } else
-                            nodesReads.put(e1.getTail().getSite().getPos() + "^" + e1.getHead().getSite().getPos(), new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
+                            nodesReads.put(intronID, new Float[]{(float) e1.getMappings().getReadNr() + e1.getMappings().getRevReadNr(), e1.getBinCoverage()});
                     }
                 }
             }

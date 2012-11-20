@@ -412,10 +412,11 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
      * @param files      the files
      * @param output     the output stream
      * @param comparator the comparator
+     * @param finalMerge whether it is the final merge step
      * @throws IOException in case of any errors
      * @return lines number of lines written to file
      */
-    private int mergeFiles(List<SorterFile> files, OutputStream output, LineComparator comparator, boolean status, int current, int total) throws IOException {
+    private int mergeFiles(List<SorterFile> files, OutputStream output, LineComparator comparator, boolean finalMerge, int current, int total) throws IOException {
         // create a queue and add
         PriorityQueue<CachedFileReader> queue = new PriorityQueue<CachedFileReader>();
 
@@ -437,7 +438,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
             CachedFileReader next = queue.poll();
             try {
                 String line = next.pop();
-                if (interceptors != null) {
+                if (finalMerge & interceptors != null) {
                     for (Interceptor<String> interceptor : interceptors) {
                         line = interceptor.intercept(line);
                     }
@@ -445,7 +446,7 @@ public class UnixStreamSorter implements StreamSorter, Interceptable<String> {
                 writer.write(line);
                 writer.write(LINE_SEP);
                 lines++;
-                if(!silent && status){
+                if(!silent && finalMerge){
                     Log.progress(++current, total);
                 }
 

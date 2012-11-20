@@ -45,4 +45,13 @@ public class NormalDistributionTest {
         assertEquals(0.0031, e.getP(0.5), 0.0001);
         assertEquals(0.999, e.getSum(), 0.001);
     }
+
+    @Test
+    public void testConversion(){
+        NormalDistribution n = new NormalDistribution(300, 30);
+        EmpiricalDistribution emp = n.toEmpirical(1000);
+        assertEquals(n.getP(300), emp.getP(300), 0.0001);
+    }
+
+
 }
