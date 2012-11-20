@@ -217,10 +217,12 @@ public class Flux {
             }
             System.exit(-1);
         } catch (Exception e) {
+            Log.error("","\n");
             if(e.getMessage() != null)
                 Log.error(e.getMessage());
             else
                 Log.error(e.getMessage(), e);
+            Log.error("","");
             Log.debug("\n\n");
             Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
             System.exit(-1);

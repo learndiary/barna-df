@@ -99,9 +99,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
 		if (reader==null)
             reader = new SAMFileReader(this.inputFile);
         if (!reader.isBinary())
-            return false;
+            throw new RuntimeException("The input must be a BAM file.");
         if (!reader.hasIndex())
-            return false;
+            throw new RuntimeException("The input BAM file must be sorted and indexed.");
         return true;
 	}
 
@@ -176,7 +176,10 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		return isApplicable();
+		if (descriptor.equals(UniversalReadDescriptor.DESCRIPTORID_PAIRED))
+            return true;
+        else
+            throw new RuntimeException("The read descriptor parameter is not allowed for BAM files.");
 	}
 
     @Override
