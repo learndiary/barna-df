@@ -176,10 +176,10 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		if (descriptor.equals(UniversalReadDescriptor.DESCRIPTORID_PAIRED))
+		if (descriptor.equals(UniversalReadDescriptor.getDefaultDescriptor()))
             return true;
         else
-            throw new RuntimeException("The read descriptor parameter is not allowed for BAM files.");
+            throw new RuntimeException("The read descriptor cannot be specified when using BAM input files.");
 	}
 
     @Override
