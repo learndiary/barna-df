@@ -31,6 +31,7 @@ import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
+import barna.io.FileHelper;
 import barna.model.SpliceSite;
 import barna.model.Transcript;
 import barna.model.commons.DoubleVector;
@@ -43,10 +44,7 @@ import barna.model.splicegraph.SuperEdge;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -826,9 +824,11 @@ public class GraphLPsolver {
     String getLPoutFileName() {
 
         if (lpOutFName == null && fileLPdir != null) {
-            lpOutFName = fileLPdir + File.separator
-                    + aMapper.trpts[0].getGene().getLocusID().replace(":", "_")
-                    + SFX_LPOUT;
+            try {
+                lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"),SFX_LPOUT,fileLPdir).getAbsolutePath();
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage());
+            }
         }
 
         return lpOutFName;
@@ -923,7 +923,6 @@ public class GraphLPsolver {
      */
 	public strictfp void run() {
 
-        debug= false;
         // TODO init time management
 		//long t0= System.currentTimeMillis();
 
@@ -934,22 +933,23 @@ public class GraphLPsolver {
         HashMap<String, Integer> tMap= setConstraints(false, null);
 
         // solve
-        int ret= solve(getLPoutFileName());
-        if (ret!= 0)
-            debug= false;
+        int ret = solve(getLPoutFileName());
 
 		// append additional debug info
-		if (debug || getLPoutFileName() != null) {
-			getLPsolve().printLp();
-			getLPsolve().printObjective();
-			getLPsolve().printSolution(1);
+		if (ret!= 0) {
+            try {
+                getLPsolve().setOutputfile(getLPoutFileName());
 
-			// additional stream only afterwards
-			try {
-				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName(), true));
+                getLPsolve().printLp();
+                getLPsolve().printObjective();
+                getLPsolve().printSolution(1);
+
+			    // additional stream only afterwards
+                PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName(), true));
                 setConstraints(true, p);
+                Log.warn("There was an issue with the linear problem. The linear system has been written to " + getLPoutFileName());
             } catch (Exception e) {
-                Log.error("[FATAL] failed to set lp output to:\n\t"+ getLPoutFileName(), e);
+                Log.error("Failed to set lp output to:\n\t"+ getLPoutFileName(), e);
 			}
 		}
 			
@@ -959,7 +959,7 @@ public class GraphLPsolver {
 		getLPsolve().deleteLp();	// closes file outFName
 		
 		// output debug info
-		if (debug) {
+		if (ret!=0) {
 			Iterator<Object> idIter= trptExprHash.keySet().iterator();
 			while(idIter.hasNext()) {
 				Object o= idIter.next();
