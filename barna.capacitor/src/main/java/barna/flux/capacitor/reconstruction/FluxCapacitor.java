@@ -1651,7 +1651,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     "[CAUTION] I overwrite the output file " +
                             settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
                             ", please confirm:\n\t(Yes,No,Don't know)")) {
-                exit(-1);
+                throw new RuntimeException("Run finished. Cannot overwrite the output file.");
             }
 
             try {

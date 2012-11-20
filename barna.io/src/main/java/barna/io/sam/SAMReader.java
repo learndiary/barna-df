@@ -179,7 +179,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 		if (descriptor.equals(UniversalReadDescriptor.getDefaultDescriptor()))
             return true;
         else
-            throw new RuntimeException("The read descriptor cannot be specified when using BAM input files.");
+            throw new RuntimeException("You cannot specify the read descriptor when using BAM input files.");
 	}
 
     @Override
@@ -219,7 +219,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
             reader = new SAMFileReader(this.inputFile);
         }
         //reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);        countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
-        String lastReadId = null;
+        boolean flagSet = false;
 
         BufferedReader buffy = null;
         BufferedWriter tmpWriter = null;
@@ -227,7 +227,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         PipedOutputStream out = null;
         Future sorterFuture = null;
 
-        int primaryMappings = 0;
+        int primaryAlignments = 0;
 
         try {
             out = new PipedOutputStream();
@@ -257,10 +257,22 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     if (rec.getReadPairedFlag()) {
                         readId += "/"+(rec.getFirstOfPairFlag()?1:2);
                     }
-                    if (!rec.getNotPrimaryAlignmentFlag()) {
-                        ++primaryMappings;
-                        tmpWriter.write(readId);
-                        tmpWriter.write(OSChecker.NEW_LINE);
+                    if (rec.getNotPrimaryAlignmentFlag()) {
+                        if (!flagSet) {
+                            //flags are set correctly
+                            flagSet = true;
+                            sorterFuture.cancel(true);
+                            countReads=primaryAlignments;
+                        }
+                    } else {
+                        if (!flagSet) {
+                            //flags are not set properly
+                            ++primaryAlignments;
+                            tmpWriter.write(readId);
+                            tmpWriter.write(OSChecker.NEW_LINE);
+                        } else {
+                            ++countReads;
+                        }
                     }
                     ++countAll;
                     if (rec.getAlignmentBlocks().size()>1) {
@@ -274,9 +286,16 @@ public class SAMReader extends AbstractFileIOWrapper implements
                 }
             }
 
-            tmpWriter.flush();
-            tmpWriter.close();
-            sorterFuture.get();
+            if (!flagSet) {
+                //sort the read ids to get the number of reads
+                Log.info("","");
+                Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
+                        "of reads without this information.");
+                Log.warn("This process can be long for big files!");
+                tmpWriter.flush();
+                tmpWriter.close();
+                sorterFuture.get();
+            }
 
             Log.progressFinish(Constants.OK, true);
 
