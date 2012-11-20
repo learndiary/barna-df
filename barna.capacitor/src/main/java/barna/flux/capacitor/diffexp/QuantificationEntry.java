@@ -5,8 +5,10 @@ import java.util.Map;
 /**
  * GFF extension that wraps around a transcript entry. The constructor
  * tries to read readCount and rpkm value from the gtf attributes
+ *
+ * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-class Transcript extends GFFEntry{
+class QuantificationEntry {
 
     /**
      * The transcript id
@@ -24,25 +26,14 @@ class Transcript extends GFFEntry{
     private double rpkm;
 
     /**
-     * Create a new Transcript. This assumes an existing "transcript_id" attribute
-     * and throws an Exception if that attribute is not found!
      *
-     * @param chromosome  the chromosome
-     * @param source      the source name
-     * @param start       start position 1-based
-     * @param end         end position 1-based inclusive
-     * @param score       the score (between 0 and 1000)
-     * @param strand      the strand (+/- or . for unknown)
-     * @param codingFrame the coding frame 0,1,2 or . for unknown
-     * @param group       optional group entry, can be null or or empty string
      */
-    public Transcript(final String chromosome, final String source, final String feature, final long start, final long end, final short score, final char strand, final char codingFrame, final String group) {
-        super(chromosome, source, feature, start, end, score, strand, codingFrame, group);
-        this.id = getAttributes().get("transcript_id");
+    public QuantificationEntry(String id_key, GFFEntry gffEntry) {
+        super();
+        this.id = gffEntry.getAttributes().get(id_key);
         if(id == null || id.isEmpty()) throw new IllegalArgumentException("No valid transcript id specified : " + id);
-
-        String reads = getAttributes().get("reads");
-        String rpkm = getAttributes().get("rpkm");
+        String reads = gffEntry.getAttributes().get("reads");
+        String rpkm = gffEntry.getAttributes().get("rpkm");
         if(reads != null){
             this.readCount = Double.parseDouble(reads);
         }

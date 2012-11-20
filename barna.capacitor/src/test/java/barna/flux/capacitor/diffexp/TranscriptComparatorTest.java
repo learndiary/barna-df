@@ -9,12 +9,12 @@ import static junit.framework.Assert.assertTrue;
 public class TranscriptComparatorTest {
     @Test
     public void testBothSpecified() throws Exception {
-        Transcript source = new Transcript("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 756.000000; RPKM 22.246664; transcript_id \"a\"");
-        Transcript target = new Transcript("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 1307.999878; RPKM 32.432495; transcript_id \"a\"");
+        QuantificationEntry source = new QuantificationEntry("transcript_id", new GFFEntry("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 756.000000; RPKM 22.246664; transcript_id \"a\""));
+        QuantificationEntry target = new QuantificationEntry("transcript_id", new GFFEntry("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 1307.999878; RPKM 32.432495; transcript_id \"a\""));
         double sourceReads = 9015174.868426;
         double targetReads = 11320367.100461;
 
-        TranscriptComparator cmp = new TranscriptComparator(source, target, sourceReads, targetReads);
+        QuantificationEntryComparator cmp = new QuantificationEntryComparator(source, target, sourceReads, targetReads);
         DifferentialExpression df = cmp.call();
         assertNotNull(df);
         assertEquals(1.4241909876202e-12, df.getP(), 0.000000001);
@@ -24,12 +24,12 @@ public class TranscriptComparatorTest {
     }
     @Test
     public void testOneNotExpressed() throws Exception {
-        Transcript source = new Transcript("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 756.000000; RPKM 22.246664; transcript_id \"a\"");
-        Transcript target = new Transcript("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 0; RPKM 0; transcript_id \"a\"");
+        QuantificationEntry source = new QuantificationEntry("transcript_id", new GFFEntry("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 756.000000; RPKM 22.246664; transcript_id \"a\""));
+        QuantificationEntry target = new QuantificationEntry("transcript_id", new GFFEntry("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 0; RPKM 0; transcript_id \"a\""));
         double sourceReads = 9015174.868426;
         double targetReads = 11320367.100461;
 
-        TranscriptComparator cmp = new TranscriptComparator(source, target, sourceReads, targetReads);
+        QuantificationEntryComparator cmp = new QuantificationEntryComparator(source, target, sourceReads, targetReads);
         DifferentialExpression df = cmp.call();
         assertNotNull(df);
         assertEquals(8.155749649539851E-268, df.getP(), 0.0000000001);
