@@ -9,7 +9,15 @@ import java.util.Map;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 class QuantificationEntry {
+    /**
+     * Grouping name
+     */
+    private final String name;
 
+    /**
+     * Unique key to identify this entry
+     */
+    private final String key;
     /**
      * The transcript id
      */
@@ -34,6 +42,8 @@ class QuantificationEntry {
         if(id == null || id.isEmpty()) throw new IllegalArgumentException("No valid transcript id specified : " + id);
         String reads = gffEntry.getAttributes().get("reads");
         String rpkm = gffEntry.getAttributes().get("rpkm");
+        this.key = this.id + ":::" + gffEntry.getAttributes().get("locus_id");
+        this.name = gffEntry.getChromosome();
         if(reads != null){
             this.readCount = Double.parseDouble(reads);
         }
@@ -67,5 +77,23 @@ class QuantificationEntry {
      */
     public double getRpkm() {
         return rpkm;
+    }
+
+    /**
+     * Get the key that identifies this entry uniquely
+     *
+     * @return key the key that identifies this entry uniquely
+     */
+    public String getKey() {
+        return key;
+    }
+
+    /**
+     * Get the grouping name
+     *
+     * @return name the grouping name (i.e. the chromosome)
+     */
+    public String getName() {
+        return name;
     }
 }

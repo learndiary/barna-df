@@ -105,13 +105,13 @@ public class FisherDifferentialExpression {
 
         // pump source -> target comparisons
         for (QuantificationEntry sourceTranscript : source.transcripts()) {
-            QuantificationEntry targetTranscript = target.getTranscript(sourceTranscript.getId());
+            QuantificationEntry targetTranscript = target.getTranscript(sourceTranscript.getKey());
             QuantificationEntryComparator job = new QuantificationEntryComparator(sourceTranscript, targetTranscript, sourceReads, targetReads);
             jobs.add(Execute.getExecutor().submit(job));
         }
         // pump target->null jobs (in target but not in source
         for (QuantificationEntry targetTranscript : target.transcripts()) {
-            QuantificationEntry sourceTranscript = source.getTranscript(targetTranscript.getId());
+            QuantificationEntry sourceTranscript = source.getTranscript(targetTranscript.getKey());
             if(sourceTranscript == null){
                 QuantificationEntryComparator job = new QuantificationEntryComparator(sourceTranscript, targetTranscript, sourceReads, targetReads);
                 jobs.add(Execute.getExecutor().submit(job));
@@ -144,22 +144,21 @@ public class FisherDifferentialExpression {
         if(expressions == null) throw new NullPointerException("NULL expression not permitted");
         BufferedWriter b = new BufferedWriter(writer);
         for (DifferentialExpression expression : expressions) {
-            if(expression.getP() < 1.0){
-                StringBuilder s = new StringBuilder();
-                s.append(expression.getSource().getId()).append("\t");
-                s.append(expression.getSource().getReadCount()).append("\t");
-                s.append(expression.getSource().getRpkm()).append("\t");
-                s.append(expression.getTarget().getReadCount()).append("\t");
-                s.append(expression.getTarget().getRpkm()).append("\t");
-                s.append(expression.getDifference()).append("\t");
-                double foldChange = expression.getFoldChange();
-                s.append(foldChange == Double.NEGATIVE_INFINITY ? "-" : foldChange == Double.POSITIVE_INFINITY ? "+": foldChange).append("\t");
-                s.append(expression.getP()).append("\t");
-                s.append(expression.getFdrP()).append("\t");
-                s.append(expression.getBonferroniP()).append("\t");
-                s.append("\n");
-                b.write(s.toString());
-            }
+            StringBuilder s = new StringBuilder();
+            s.append(expression.getSource().getId()).append("\t");
+            s.append(expression.getSource().getName()).append("\t");
+            s.append(expression.getSource().getReadCount()).append("\t");
+            s.append(expression.getSource().getRpkm()).append("\t");
+            s.append(expression.getTarget().getReadCount()).append("\t");
+            s.append(expression.getTarget().getRpkm()).append("\t");
+            s.append(expression.getDifference()).append("\t");
+            double foldChange = expression.getFoldChange();
+            s.append(foldChange == Double.NEGATIVE_INFINITY ? "-" : foldChange == Double.POSITIVE_INFINITY ? "+": foldChange).append("\t");
+            s.append(expression.getP()).append("\t");
+            s.append(expression.getFdrP()).append("\t");
+            s.append(expression.getBonferroniP()).append("\t");
+            s.append("\n");
+            b.write(s.toString());
         }
     }
 
@@ -186,9 +185,11 @@ public class FisherDifferentialExpression {
     }
 
     public static void main(String[] args) throws Exception {
-        String model = "/Users/thasso/data/annotations/gencode_v12.gtf.gz";
-        String file_1 = "/Users/thasso/data/quantifications/data_1.bam_gencode_v12.gtf.gtf";
-        String file_2 = "/Users/thasso/data/quantifications/data_2.bam_gencode_v12.gtf.gtf";
+        String model = "/Users/thasso/data/annotations/hg/gencode_v12.gtf";
+//        String file_1 = "/Users/thasso/data/quantifications/data_1.bam_gencode_v12.gtf.gtf";
+//        String file_2 = "/Users/thasso/data/quantifications/data_2.bam_gencode_v12.gtf.gtf";
+        String file_1 = "/Users/thasso/data/quantifications/data_1.bam_hg19_ref_ucsc120203.gtf.gz.gtf";
+        String file_2 = "/Users/thasso/data/quantifications/data_2.bam_hg19_ref_ucsc120203.gtf.gz.gtf";
         String output = "/Users/thasso/data/quantifications/diff.txt";
         FisherDifferentialExpression ff = new FisherDifferentialExpression(new File(model));
         Execute.initialize(4);
