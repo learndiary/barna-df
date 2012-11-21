@@ -44,6 +44,39 @@ import java.util.List;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 public class DiffExpTool implements FluxTool<Void>{
+    private static final String longDescription = "Calculate differential expression between two quantificatons.\n" +
+            "\n" +
+            "Both quantifications must be done with the capacitor on the same\n" +
+            "annotation.\n" +
+            "A Fisher Exact Test is performed and the tools prints a tab separated\n" +
+            "table with the at least the following entries in order\n" +
+            "\n" +
+            "id           : The transcript id\n" +
+            "               (note that this might not be unique (RefSeq), but\n" +
+            "                you can combine it with the location)\n" +
+            "location     : Location as <chr>:<start>:<end>:<strand>\n" +
+            "S1_reads     : #Reads Sample 1\n" +
+            "S1_rpkm      : RPKM Sample 1\n" +
+            "S2_reads     : #Reads Sample 2\n" +
+            "S2_rpkm      : RPKM Sample 2\n" +
+            "difference   : Absolute RPKM Difference (S2_rpkm - S1_rpkm)\n" +
+            "fold_change  : log_2 fold change\n" +
+            "p-value      : Fisher Exact P-Value\n" +
+            "p-fdr        : P-Value corrected with FDR correction (Benjamini-Hochberg)\n" +
+            "p-bonferroni : P-value corrected with Bonferroni ( 2 Samples by default, see options)\n" +
+            "                The tool works in a pairwise fashion on 2 samples, but if you\n" +
+            "                know already that you have X samples, you can specify --samples 12\n" +
+            "                to compute Bonferroni correction for 12 samples." +
+            "\n" +
+            "In addition, you can specify a model to annotate the entries with further information.\n" +
+            "The model can be either a GTF file (i.e. Gencode annotation) or a tab separated\n" +
+            "table where the first line contains the attribute names, first column is the ID\n" +
+            "and second column is the type (currently only 'transcript' is supported). All additional\n" +
+            "columns can contains arbitrary information that you can pick using the model-attributes\n" +
+            "option.\n" +
+            "\n" +
+            "NOTE: The tools supports multiple threads, activate multi-threading with the --threads option";
+
     private File sample2;
     private File sample1;
     private File model;
@@ -58,38 +91,7 @@ public class DiffExpTool implements FluxTool<Void>{
 
     @Override
     public String getDescription() {
-        return "Calculate differential expression between two quantificatons.\n" +
-                "\n" +
-                "Both quantifications must be done with the capacitor on the same\n" +
-                "annotation.\n" +
-                "A Fisher Exact Test is performed and the tools prints a tab separated\n" +
-                "table with the at least the following entries in order\n" +
-                "\n" +
-                "id           : The transcript id\n" +
-                "               (note that this might not be unique (RefSeq), but\n" +
-                "                you can combine it with the location)\n" +
-                "location     : Location as <chr>:<start>:<end>:<strand>\n" +
-                "S1_reads     : #Reads Sample 1\n" +
-                "S1_rpkm      : RPKM Sample 1\n" +
-                "S2_reads     : #Reads Sample 2\n" +
-                "S2_rpkm      : RPKM Sample 2\n" +
-                "difference   : Absolute RPKM Difference (S2_rpkm - S1_rpkm)\n" +
-                "fold_change  : log_2 fold change\n" +
-                "p-value      : Fisher Exact P-Value\n" +
-                "p-fdr        : P-Value corrected with FDR correction (Benjamini-Hochberg)\n" +
-                "p-bonferroni : P-value corrected with Bonferroni ( 2 Samples by default, see options)\n" +
-                "                The tool works in a pairwise fashion on 2 samples, but if you\n" +
-                "                know already that you have X samples, you can specify --samples 12\n" +
-                "                to compute Bonferroni correction for 12 samples." +
-                "\n" +
-                "In addition, you can specify a model to annotate the entries with further information.\n" +
-                "The model can be either a GTF file (i.e. Gencode annotation) or a tab separated\n" +
-                "table where the first line contains the attribute names, first column is the ID\n" +
-                "and second column is the type (currently only 'transcript' is supported). All additional\n" +
-                "columns can contains arbitrary information that you can pick using the model-attributes\n" +
-                "option.\n" +
-                "\n" +
-                "NOTE: The tools supports multiple threads, activate multi-threading with the --threads option";
+        return "Differential Expression between two samples";
     }
 
     @Override
