@@ -50,6 +50,9 @@ import java.util.*;
  */
 public class AnnotationMapper extends SplicingGraph {
 
+    // Size of the window to search for splicing variants next to existing splice sites
+    static final int VARIANT_WINDOW= 60;
+
     /**
      * The number of mappings in the current locus.
      */
@@ -84,12 +87,18 @@ public class AnnotationMapper extends SplicingGraph {
      * The number of mappings that are mapped multiple times in the locus.
      */
 	public long nrMappingsLocusMultiMaps= 0;
-	
+
+    /**
+     * For counting various stuff
+     */
+    ComplexCounter cc= null;
+
 	public AnnotationMapper(Gene gene) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
+        cc= new ComplexCounter(new byte[] {ComplexCounter.COUNTER_SIMPLE});  // TODO create contructor paramter for count types
 	}
 	
 	public AbstractEdge getEdge(BEDMapping obj) {
@@ -535,18 +544,76 @@ public class AnnotationMapper extends SplicingGraph {
         } else {    // split-maps
 
             // paolo only maps 1 split
-            //assert(bcount== 2);
+            // assert(bcount== 2);
             // yes, Paolo, but the simulator can map more..
+            // now also Paolo can map more than 1 split
 
-//			if (mapping.getName().equals("HWUSI-EAS626_1:5:92:163:105/2"))
-//				System.currentTimeMillis();
+            int[] bstarts= new int[bcount], bsizes= new int[bcount];
+            for (int i = 0; i < bcount; ++i) {
+                bstarts[i]= bstart+ obj.getNextBlockStart();
+                bsizes[i]= obj.getNextBlockSize();
+            }
 
-            Vector<AbstractEdge> v = new Vector<AbstractEdge>(bcount, 1);
+            // count 5'- and 3'-variant split-mappings
+            if (bcount> 1&& false) { // TODO condition for counting
+                int[] su= getSpliceUniverse();
+                for (int i = 0; i < bcount; ++i) {
+
+                    if (i> 0) { // check left flank
+                        boolean valid= false;
+                        int p= Arrays.binarySearch(su, bstarts[i]);
+                        if (p< 0)
+                            p= -(p+ 1);
+                        if (p> 0) { // check distance to next upstream site
+                            if (Math.abs(bstarts[i]- su[p- 1])<= (VARIANT_WINDOW/ 2)) {
+                                valid= checkSpliceSiteType(su[p- 1], SpliceSite.TYPE_ACCEPTOR);
+                            }
+                        }
+                        if ((!valid)&& p< su.length) { // check distance to next downstream site
+                            if (Math.abs(bstarts[i]- su[p])<= (VARIANT_WINDOW/ 2)) {
+                                valid= checkSpliceSiteType(su[p], SpliceSite.TYPE_ACCEPTOR);
+                            }
+                        }
+                        if (valid) {
+                            String id= bstart+ bstarts[i- 1]+ bsizes[i- 1]- 1+ "-"+ bstart+ bstarts[i];
+                            cc.increment(id, ComplexCounter.COUNTER_SIMPLE);
+                        }
+                    }
+                    if (i< bcount) { // check right flank
+                        boolean valid= false;
+                        int p= Arrays.binarySearch(su, bstarts[i]+ bsizes[i]- 1);
+                        if (p< 0)
+                            p= -(p+ 1);
+                        else
+                            continue;
+                        if (p> 0) { // check distance to next upstream site
+                            if (Math.abs(bstarts[i]- su[p- 1])<= (VARIANT_WINDOW/ 2)) {
+                                valid= checkSpliceSiteType(su[p- 1], SpliceSite.TYPE_DONOR);
+                                if (valid)
+                                    break;
+                            }
+                        }
+                        if ((!valid)&& p< su.length) { // check distance to next downstream site
+                            if (Math.abs(bstarts[i]- su[p])<= (VARIANT_WINDOW/ 2))
+                                valid= checkSpliceSiteType(su[p], SpliceSite.TYPE_DONOR);
+                        }
+                        if (valid) {
+                            String id= bstart+ bstarts[i- 1]+ bsizes[i- 1]- 1+ "^"+ bstart+ bstarts[i];
+                            cc.increment(id, ComplexCounter.COUNTER_SIMPLE);
+                        }
+                    }
+
+                } /* end for all blocks */
+
+
+            }
+
+                Vector<AbstractEdge> v = new Vector<AbstractEdge>(bcount, 1);
             long[] inter= null, part= null;
             for (int i = 0; i < bcount; ++i) {
                 // next coordinates
-                int pos= bstart+ obj.getNextBlockStart();
-                int size = obj.getNextBlockSize();
+                int pos= bstarts[i];
+                int size = bsizes[i];
 
                 // try to retrieve exonic segment
                 AbstractEdge e = getEdge2(pos, pos + size - 1);
@@ -560,7 +627,7 @@ public class AnnotationMapper extends SplicingGraph {
 
                 // abort
                 if (isNull(inter)       // no common tx support
-                   || v.contains(e))    // novel splice-junction within a single exonic segment
+                   || v.contains(e))    // novel intron: splice-junction within a single exonic segment
                     return null;
 
                 // check left flank for same coordinate as alignment
@@ -612,6 +679,19 @@ public class AnnotationMapper extends SplicingGraph {
         }
     }
 
+    private boolean checkSpliceSiteType(int position, byte type) {
+
+        Vector<SpliceSite> v= gene.getSpliceSites(position);
+        for (SpliceSite spliceSite : v) {
+            if (spliceSite.isAcceptor()) {
+                return true;
+            }
+
+        }
+        return false;
+    }
+
+
     /**
      * Maps a continous stretch of positions between
      * <code>bstart</code> and <code>end</code to an atomic edge,
@@ -624,9 +704,10 @@ public class AnnotationMapper extends SplicingGraph {
     public AbstractEdge getEdge2(int bstart, int bend) {
 
         Vector<AbstractEdge> v = new Vector<AbstractEdge>();
-        int[] su = getSpliceUniverse();
+        int[] su = getSpliceUniverse(); // copies site positions, TODO comparator for binarySearch() on nodes[]
         Node[] nodes = getNodesInGenomicOrder();
 
+        // get genomic start/end position
         int gstart = bstart, gend = bend;
         byte strand = trpts[0].getStrand();
         if (strand < 0) {    // neg strand
@@ -634,85 +715,85 @@ public class AnnotationMapper extends SplicingGraph {
             gend = -bstart;
         }
 
-//		if (gstart== 26755100&& gend== 26755174)
-//			System.currentTimeMillis();
+        // get the nr of the splice sites (a,b) delimiting the genomic area of the mapping:
+        // a is the closest splice site upstream of gstart
+        // b is the closest splice site downstream of gend
 
-        // must be 2 or more adjacent exon-exon junctions
-        int p = Arrays.binarySearch(su, gstart);    // anchor<= 5'end of read
+        // find closest site upstream of genomic start of mapping
+        int p = Arrays.binarySearch(su, gstart);
         if (p < 0) {
-            p = -(p + 1);    // falls before
-            /*if (nodes[p].getSite().isLeftFlank()
-                    && nodes[p - 1].getSite().isRightFlank()) {    // p!= 0, for src
-
-                boolean found = checkExonicEdge(nodes[p - 1], nodes[p]);
-                if (!found)
-                    return null;    // in intron
-            }*/
-            //else, in both cases
-            --p;    // p> 0, src
-        } else {    // hits exact
+            p = -(p + 1);   // index after the start of mapping..
+            --p;            // ..correct down
+        } else {    // mapping starts exactly at the position of a site
             if (nodes[p].getSite().isRightFlank())    // always
-                --p; // p+= strand>= 0? -1: 1;
+                --p; // correct down for the first site upstream of the mapping
         }
 
-        int q = Arrays.binarySearch(su, gend);    // anchor>= 3'end of read
+        // find closest site downstream of genomic end of mapping
+        int q = Arrays.binarySearch(su, gend);
         if (q < 0) {
-            q = -(q + 1);    // falls before
-            /*if (nodes[q].getSite().isLeftFlank() &&
-                    nodes[q - 1].getSite().isRightFlank()) {
-
-                boolean found = checkExonicEdge(nodes[q - 1], nodes[q]);
-                if (!found)
-                    return null;    // in intron
-            }// else nothing, falls before q marks end */
-        } else {    // hits exact
+            q = -(q + 1);    // index after end of mapping, do not correct down
+        } else {    // mapping ends exactly at the position of a site
             if (nodes[q].getSite().isLeftFlank())
-                ++q;
+                ++q; // correct up for the first site downstream of the mapping
         }
 
+        // genomic start after genomic end (should not occur)
+        // first site upstream corresponds to/is downstream of first site downstream of mapping
         if (p >= q)
             return null;
-        if (p == q - 1 && (!checkExonicEdge(nodes[p], nodes[q]) && !checkAllIntronicEdge(nodes[p], nodes[q])))
+
+        // adjacent sites, exactly one segment between a and b
+        // => check whether this segment is an exon or (all-)intronic
+        if (p == q - 1 && ((!checkExonicEdge(nodes[p], nodes[q])) && !checkAllIntronicEdge(nodes[p], nodes[q])))
             return null;
+
+        // non-adjacent sites, connected by more than one segment: either consecutive exonic segments, or split-map
+        // require that the first segment (p,p+1) and the last segment (q-1,q) are exonic
+        // OBS: mappings to all-intronic regions map to ONE single edge
         else {
             if (p < q - 1 && !(checkExonicEdge(nodes[p], nodes[p + 1]) && checkExonicEdge(nodes[q - 1], nodes[q])))
                 return null;
         }
 
-        // get chain of edges, if exists
+        // get the chain of segments between a and b
         Node head = nodes[p];
         while (head != nodes[q]) {
 
             assert (head.getOutEdges().size() > 0);
             Iterator<SimpleEdge> iter = head.getOutEdges().iterator();
+
+            // iterate out-edges, find the one to continue the segment-chain
             boolean found = false;
             while (iter.hasNext()) {
 
                 SimpleEdge e = iter.next();
-                // ... && ((!e.isExonic())|| (!e.isAllIntronic()))
+                // the backbone of genomic segments is exclusively
+                // composed by exonic and all-intronic edges.
+                // OBS: intersection of transcript support CANNOT be empty
                 if (!e.isExonic() && !e.isAllIntronic()) {
-                    continue;   //single tx intron
+                    continue;
                 }
                 v.add(e);
-                head = e.getHead();
+                head = e.getHead(); // continue building chain with this edge
                 found = true;
-                // only one exonic outedge that leads to next node
+
                 break;
             }
-            if (!found)
-                return null;    // intron in between
-        }
-        if (v.size() == 0)
-            System.currentTimeMillis();
-        if (v.size() == 0)
-            System.currentTimeMillis();
-        assert (v.size() > 0);
 
-        // trivial case
+            // continue only if there is at least 1 exonic or all-intronic
+            if (!found)
+                return null;
+        }
+
+        assert (v.size() > 0);  // at least one edge connecting p with q
+
+        // trivial case, when p= q-1
         if (v.size() == 1)
             return v.elementAt(0);
 
-        // else it is a EEJ
+        // otherwise create a corresponding super-edge, method returns null if
+        // there is no common transcript support
         return getSuperEdge(v, false, null);
 
     }
