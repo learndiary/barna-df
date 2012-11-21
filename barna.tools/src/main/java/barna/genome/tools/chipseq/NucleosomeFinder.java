@@ -785,6 +785,12 @@ public class NucleosomeFinder implements FluxTool<Void> {
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("set input mappings file (BED)").valueName("bed").required().get());

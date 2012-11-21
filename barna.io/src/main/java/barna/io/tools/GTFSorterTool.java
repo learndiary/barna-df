@@ -124,6 +124,12 @@ public class GTFSorterTool implements FluxTool {
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("GTF input file").valueName("gtf").required().get());

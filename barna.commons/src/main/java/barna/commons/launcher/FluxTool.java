@@ -43,4 +43,6 @@ public interface FluxTool<T> extends Callable<T> {
     String getDescription();
     List<Parameter> getParameter();
     boolean validateParameter(JSAPResult args);
+
+    String getLongDescription();
 }

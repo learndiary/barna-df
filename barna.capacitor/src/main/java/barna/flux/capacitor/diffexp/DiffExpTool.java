@@ -66,7 +66,7 @@ public class DiffExpTool implements FluxTool<Void>{
             "p-bonferroni : P-value corrected with Bonferroni ( 2 Samples by default, see options)\n" +
             "                The tool works in a pairwise fashion on 2 samples, but if you\n" +
             "                know already that you have X samples, you can specify --samples 12\n" +
-            "                to compute Bonferroni correction for 12 samples." +
+            "                to compute Bonferroni correction for 12 samples.\n" +
             "\n" +
             "In addition, you can specify a model to annotate the entries with further information.\n" +
             "The model can be either a GTF file (i.e. Gencode annotation) or a tab separated\n" +
@@ -75,7 +75,7 @@ public class DiffExpTool implements FluxTool<Void>{
             "columns can contains arbitrary information that you can pick using the model-attributes\n" +
             "option.\n" +
             "\n" +
-            "NOTE: The tools supports multiple threads, activate multi-threading with the --threads option";
+            "NOTE: The tool supports multiple threads, activate multi-threading with the --threads option";
 
     private File sample2;
     private File sample1;
@@ -92,6 +92,11 @@ public class DiffExpTool implements FluxTool<Void>{
     @Override
     public String getDescription() {
         return "Differential Expression between two samples";
+    }
+
+    @Override
+    public String getLongDescription(){
+        return longDescription;
     }
 
     @Override
