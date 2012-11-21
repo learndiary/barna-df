@@ -548,13 +548,16 @@ public class AnnotationMapper extends SplicingGraph {
             // yes, Paolo, but the simulator can map more..
             // now also Paolo can map more than 1 split
 
-            // count 5'- and 3'-variant split-mappings
             int[] bstarts= new int[bcount], bsizes= new int[bcount];
+            for (int i = 0; i < bcount; ++i) {
+                bstarts[i]= bstart+ obj.getNextBlockStart();
+                bsizes[i]= obj.getNextBlockSize();
+            }
+
+            // count 5'- and 3'-variant split-mappings
             if (bcount> 1&& false) { // TODO condition for counting
                 int[] su= getSpliceUniverse();
                 for (int i = 0; i < bcount; ++i) {
-                    bstarts[i]= bstart+ obj.getNextBlockStart();
-                    bsizes[i]= obj.getNextBlockSize();
 
                     if (i> 0) { // check left flank
                         boolean valid= false;
@@ -703,8 +706,6 @@ public class AnnotationMapper extends SplicingGraph {
         Vector<AbstractEdge> v = new Vector<AbstractEdge>();
         int[] su = getSpliceUniverse(); // copies site positions, TODO comparator for binarySearch() on nodes[]
         Node[] nodes = getNodesInGenomicOrder();
-        assert(su.length== nodes.length);
-        assert(nodes[nodes.length- 1].getSite().equals(su[su.length- 1]));
 
         // get genomic start/end position
         int gstart = bstart, gend = bend;
