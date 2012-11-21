@@ -75,7 +75,7 @@ public class DiffExpTool implements FluxTool<Void>{
             "columns can contains arbitrary information that you can pick using the model-attributes\n" +
             "option.\n" +
             "\n" +
-            "NOTE: The tool supports multiple threads, activate multi-threading with the --threads option";
+            "NOTE: The tool supports multiple threads, activate multi-threading with the --threads option\n";
 
     private File sample2;
     private File sample1;
