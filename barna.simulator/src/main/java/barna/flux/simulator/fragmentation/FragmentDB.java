@@ -220,7 +220,12 @@ public class FragmentDB {
             // add final entry
             numberOfEntries++;
             Entry entry = new Entry(entryStart, entryLength);
-            index.put(currentID.toString(), entry);
+            try {
+                index.put(currentID.toString(), entry);
+            } catch (Exception e) {
+                Log.error("Error while creating Fragment Index: " + e.getMessage());
+                throw new RuntimeException("Error while creating Fragment Index: " + e.getMessage(), e);
+            }
             recman.commit();
 
 

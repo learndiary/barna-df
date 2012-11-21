@@ -129,6 +129,27 @@ public class NormalDistribution extends AbstractDistribution {
         return mean;
     }
 
+    /**
+     * Convert this to an empirical distribution
+     *
+     * @param bins number of bins for the empirical distribution
+     * @return emp the empirical distribution
+     */
+    public EmpiricalDistribution toEmpirical(int bins){
+        double min = 0;
+        double max = 3.0 * getMean();
+        double[] a = new double[bins+2];
+        for(int i = 1; i<a.length-1; i++){
+            double x = (i / (double) (a.length-2)) * max;
+            a[i]  = getP(x);
+        }
+        EmpiricalDistribution empDist = new EmpiricalDistribution(a, min, max, getMean());
+        empDist.sum = 1.0;
+        return empDist;
+
+    }
+
+
     @Override
     public String toString() {
         return "Normal-Distribution mean: " + getMean() + " SD: " + getSd();

@@ -1,0 +1,10 @@
+## File locations
+REF_FILE_NAME   spike_sequences.gtf
+GEN_DIR         genome_Spikes
+
+NB_MOLECULES	10000
+READ_NUMBER 300000
+READ_LENGTH 120
+PAIRED_END NO
+ERR_FILE 76
+FASTA YES

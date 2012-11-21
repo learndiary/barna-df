@@ -672,7 +672,7 @@ public class GFFObject {
 		}
 		obj.addAttribute(TRANSCRIPT_ID_TAG, t.getTranscriptID());
         if (!t.getTranscriptID().equals(t.getGene().getGeneID())) {
-            obj.addAttribute(GENE_ID_TAG, t.getGene().getGeneID());
+            obj.addAttribute(GENE_ID_TAG, t.getGene().getGeneID(t.getTranscriptID()));
         }
         obj.addAttribute(LOCUS_ID_TAG, t.getGene().getLocusID());
 

@@ -97,25 +97,9 @@ public class Flux {
        Check java version
         */
         checkJavaVersion();
+        JSAP jsap = createBaseOptions();
 
 
-        /*
-        Create command line parser and
-        add default Flux parameter
-         */
-        JSAP jsap = new JSAP();
-        try {
-            jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').defaultValue(System.getProperty("flux.tool")).help("Select a tool").get());
-            jsap.registerParameter(JSAPParameters.switchParameter("help").help("Show help").get());
-            jsap.registerParameter(JSAPParameters.switchParameter("list-tools").help("List available tools").get());
-            jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").type(Integer.class).help("Maximum number of threads to use. Default 2").get());
-            jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
-            jsap.registerParameter(JSAPParameters.switchParameter("force").help("Disable interactivity. No questions will be asked").get());
-            jsap.registerParameter(JSAPParameters.switchParameter("version", 'v').help("Show version information").get());
-        } catch (JSAPException e) {
-            Log.error("Unable to create parameters : " + e.getMessage(), e);
-            System.exit(-1);
-        }
         // register tools
         List<FluxTool> tools = findTools();
 
@@ -233,10 +217,12 @@ public class Flux {
             }
             System.exit(-1);
         } catch (Exception e) {
+            Log.error("","\n");
             if(e.getMessage() != null)
                 Log.error(e.getMessage());
             else
                 Log.error(e.getMessage(), e);
+            Log.error("","");
             Log.debug("\n\n");
             Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
             System.exit(-1);
@@ -244,6 +230,31 @@ public class Flux {
             // shutdown the executor
             Execute.shutdown();
         }
+    }
+
+    /**
+     * Create the default flux command options
+     * @return
+     */
+    private static JSAP createBaseOptions() {
+        /*
+       Create command line parser and
+       add default Flux parameter
+        */
+        JSAP jsap = new JSAP();
+        try {
+            jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').defaultValue(System.getProperty("flux.tool")).help("Select a tool").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("help").help("Show help").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("list-tools").help("List available tools").get());
+            jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").type(Integer.class).help("Maximum number of threads to use. Default 2").get());
+            jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("force").help("Disable interactivity. No questions will be asked").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("version", 'v').help("Show version information").get());
+        } catch (JSAPException e) {
+            Log.error("Unable to create parameters : " + e.getMessage(), e);
+            System.exit(-1);
+        }
+        return jsap;
     }
 
     /**
@@ -291,10 +302,19 @@ public class Flux {
             System.err.println(errorMessage);
             System.err.println("");
         }
+        System.err.println("-------Documentation & Issue Tracker-------");
+        System.err.println("Flux Wiki (Docs): http://sammeth.net/confluence");
+        System.err.println("Flux JIRA (Bugs): http://sammeth.net/jira");
+        System.err.println("");
+        System.err.println("Please feel free to create an account in the public");
+        System.err.println("JIRA and reports any bugs or feature requests.");
+        System.err.println("-------------------------------------------");
+
         if(tool != null){
-
-
+            System.err.println("Current tool: " + tool.getName());
+            System.err.println("");
             System.err.println(tool.getDescription());
+            System.err.println("");
             // custom jsap for the tool
             JSAP toolJSAP = new JSAP();
             List<Parameter> parameter = tool.getParameter();
@@ -308,17 +328,22 @@ public class Flux {
                     System.exit(-1);
                 }
             }
-            System.err.println("");
-            System.err.println("Tool specific options");
+
+            System.err.println("Tool specific options:\n");
             System.err.println(toolJSAP.getHelp());
             System.err.println("");
         }
-        System.err.println("Options: " + jsap.getUsage());
+
+        JSAP baseOptions = createBaseOptions();
+        System.err.println("The Flux library comes with a set of tools.\n" +
+                "You can switch tools with the -t option. The general options\n" +
+                "change the behaviour of all the packaged tools.");
         System.err.println("");
-        System.err.println(jsap.getHelp());
+        System.err.println("General Flux Options: \n");
+        System.err.println(baseOptions.getHelp());
         System.err.println("");
+
         printTools(allTools);
-        System.err.println("To get help for a specific tool try -t <tool> --help");
         System.err.flush();
         System.exit(-1);
     }
@@ -329,11 +354,19 @@ public class Flux {
      * @param tools the tools available flux tools
      */
     private static void printTools(List<FluxTool> tools) {
-        System.out.println("Tools available:");
-        for (FluxTool fluxTool : tools) {
-            System.out.println("\t" + fluxTool.getName() + " - " + fluxTool.getDescription());
+        System.err.println("The Flux library consists of a set of tools bundled with the package.");
+        if(System.getProperty("flux.tool", null) != null){
+            System.err.println("Th current bundle uses '" + System.getProperty("flux.tool") + "' as the default tool");
         }
-        System.out.println();
+        System.err.println("You can switch tools with the -t option and get help for a specific\n" +
+                "tool with -t <toolname> --help. This will print the usage and description of the specified tool");
+
+        System.err.println("");
+        System.err.println("List of available tools");
+        for (FluxTool fluxTool : tools) {
+            System.err.println("\t" + fluxTool.getName() + " - " + fluxTool.getDescription());
+        }
+        System.err.println();
     }
 
     /**
