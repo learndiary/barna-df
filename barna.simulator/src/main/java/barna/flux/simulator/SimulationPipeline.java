@@ -68,7 +68,7 @@ public class SimulationPipeline implements FluxTool<Void> {
                     }
                     JSAPResult toolParameter = jsap.parse(args);
                     if (!mySimulator.validateParameter(toolParameter)){
-                        Flux.printUsage(mySimulator, jsap, Flux.findTools(), null);
+                        Flux.printUsage(mySimulator, jsap, Flux.findTools(), null, false);
                     }
                 } catch (Exception e) {
                     Log.error("Parameter error : " + e.getMessage(), e);
