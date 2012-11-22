@@ -120,7 +120,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	  *
 	  */
 	 public static enum AnnotationMapping {
-		 PAIRED, STRANDED, SINGLE, COMBINED	    
+		 AUTO, PAIRED, STRANDED, SINGLE, COMBINED
 	 }
 
     /**
@@ -141,7 +141,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 public static final Parameter<AnnotationMapping> ANNOTATION_MAPPING = Parameters.enumParameter(
 			 "ANNOTATION_MAPPING", 
 			 " Information from the read descriptor that will be used for annotation mapping", 
-			 AnnotationMapping.SINGLE, 
+			 AnnotationMapping.AUTO,
 			 new ParameterValidator() {
 			        @Override
 			        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {

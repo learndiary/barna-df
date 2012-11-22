@@ -39,13 +39,11 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     /**
      * Costruct an instance of the class.
      * @param iterator <code>SAMMappingIterator</code> used for iterating over the file
-     * @param descriptor read descriptor
      * @param header SAM/BAM file header
      * @param maxRecordsInRam max number of records to be loaded in ram
      */
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, UniversalReadDescriptor descriptor, SAMFileHeader header, long maxRecordsInRam) {
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, long maxRecordsInRam) {
         this.wrappedIterator = getSortedIterator(iterator, header);
-        this.descriptor = descriptor;
         this.sortOrder = header.getSortOrder();
         this.maxRecordsInRam = maxRecordsInRam;
         this.currPos = this.markedPos = -1;
@@ -235,16 +233,9 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @return the suffix
      */
     private String getSuffix(SAMRecord record) {
-        if (descriptor.isPaired()) {
-            char sep = descriptor.toString().charAt(descriptor.toString().indexOf("{MATE}")-1);
-            return record.getFirstOfPairFlag()?sep+"1":sep+"2";
-        } else {
-            //to get it working also with paired-end data mapped as single end
-            if (record.getReadPairedFlag())
-                return record.getFirstOfPairFlag()?"/1":"/2";
-            //single-end reads
-            else
-                return "";
+        if (record.getProperPairFlag()) {
+            return record.getFirstOfPairFlag()?"/1":"/2";
         }
+        return "";
     }
 }
