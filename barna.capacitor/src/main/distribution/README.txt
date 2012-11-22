@@ -23,6 +23,9 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.2.1
+    * [BARNA-261] - Capacitor complains about read descriptor for bam files
+
 FluxCapacitor 1.2
     * [BARNA-215] - Sequencing fails with ArrayIndexOutOfBoundsException
     * [BARNA-218] - Replace BEDObject2 with Mapping
