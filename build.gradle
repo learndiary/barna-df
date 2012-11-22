@@ -14,7 +14,7 @@ if(System.properties['nightly']){
  * This is the  global flux suite version used to identify
  * library/jar versions
  */
-version = "1.17"
+version = "1.18"
 
 /**
  * Versions for applications
@@ -22,7 +22,7 @@ version = "1.17"
 ext.appVersions = [
     "barna.astalavista":"3.1-SNAPSHOT",
     "barna.simulator":"1.2",
-    "barna.capacitor":"1.2",
+    "barna.capacitor":"1.2.1",
     "barna.tools":"1.0-SNAPSHOT"
 ]
 
