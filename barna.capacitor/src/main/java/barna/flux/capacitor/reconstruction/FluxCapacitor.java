@@ -1687,6 +1687,28 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         mappingReader = (MappingReader)wrapperMappings;
 
+        if (mappingReader.isPaired() && !settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).isPaired()) {
+            settings.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        }
+
+        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
+            UniversalReadDescriptor descriptor = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
+            if (descriptor.isPaired()) {
+                if (descriptor.isStranded()) {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.COMBINED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED);
+                }
+            }
+            else {
+                if (descriptor.isStranded()) {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.STRANDED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE);
+                }
+            }
+        }
+
         // TODO parameters
         pairedEnd = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
                 || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
@@ -2874,7 +2896,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             case BED:			
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
-                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.SORT_IN_RAM));
+                return new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
 
         }
 
