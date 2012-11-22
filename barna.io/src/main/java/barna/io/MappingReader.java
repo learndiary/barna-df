@@ -95,4 +95,6 @@ public interface MappingReader extends Iterable<Mapping>{
      * @return true if the reader can be reset to the beginning of the chromosome
      */
     public boolean reset(String chr);
+
+    boolean isPaired();
 }
