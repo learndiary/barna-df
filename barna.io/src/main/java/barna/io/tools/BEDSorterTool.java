@@ -103,6 +103,11 @@ public class BEDSorterTool implements FluxTool {
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("BED input file").valueName("bed").required().get());

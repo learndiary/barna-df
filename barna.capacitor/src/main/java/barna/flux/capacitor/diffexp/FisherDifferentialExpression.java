@@ -42,25 +42,6 @@ import java.util.concurrent.Future;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 public class FisherDifferentialExpression {
-    private QuantificationModel model;
-    private File modelFile;
-
-    /**
-     * Create differential expression without a model
-     */
-    public FisherDifferentialExpression() {
-        this(null);
-    }
-
-    /**
-     * Create a differential expression with a gene model. The model
-     * can be used to annotate entries from the quantification.
-     *
-     * @param model the GTF model file
-     */
-    public FisherDifferentialExpression(File model) {
-        this.modelFile = model;
-    }
 
     /**
      * Compute the differential expression that compares source against target
@@ -105,13 +86,13 @@ public class FisherDifferentialExpression {
 
         // pump source -> target comparisons
         for (QuantificationEntry sourceTranscript : source.transcripts()) {
-            QuantificationEntry targetTranscript = target.getTranscript(sourceTranscript.getId());
+            QuantificationEntry targetTranscript = target.getTranscript(sourceTranscript.getKey());
             QuantificationEntryComparator job = new QuantificationEntryComparator(sourceTranscript, targetTranscript, sourceReads, targetReads);
             jobs.add(Execute.getExecutor().submit(job));
         }
         // pump target->null jobs (in target but not in source
         for (QuantificationEntry targetTranscript : target.transcripts()) {
-            QuantificationEntry sourceTranscript = source.getTranscript(targetTranscript.getId());
+            QuantificationEntry sourceTranscript = source.getTranscript(targetTranscript.getKey());
             if(sourceTranscript == null){
                 QuantificationEntryComparator job = new QuantificationEntryComparator(sourceTranscript, targetTranscript, sourceReads, targetReads);
                 jobs.add(Execute.getExecutor().submit(job));
@@ -138,29 +119,53 @@ public class FisherDifferentialExpression {
      *
      * @param writer the target writer
      * @param expressions the expressions
+     * @param modelFile the model file
+     * @param modelAttributes additional attributes added from the model
      */
-    public void write(Writer writer, List<DifferentialExpression> expressions) throws IOException{
+    public void write(Writer writer, List<DifferentialExpression> expressions, File modelFile, String[] modelAttributes) throws IOException{
         if(writer == null) throw new NullPointerException("NULL writer not permitted");
         if(expressions == null) throw new NullPointerException("NULL expression not permitted");
-        BufferedWriter b = new BufferedWriter(writer);
-        for (DifferentialExpression expression : expressions) {
-            if(expression.getP() < 1.0){
-                StringBuilder s = new StringBuilder();
-                s.append(expression.getSource().getId()).append("\t");
-                s.append(expression.getSource().getReadCount()).append("\t");
-                s.append(expression.getSource().getRpkm()).append("\t");
-                s.append(expression.getTarget().getReadCount()).append("\t");
-                s.append(expression.getTarget().getRpkm()).append("\t");
-                s.append(expression.getDifference()).append("\t");
-                double foldChange = expression.getFoldChange();
-                s.append(foldChange == Double.NEGATIVE_INFINITY ? "-" : foldChange == Double.POSITIVE_INFINITY ? "+": foldChange).append("\t");
-                s.append(expression.getP()).append("\t");
-                s.append(expression.getFdrP()).append("\t");
-                s.append(expression.getBonferroniP()).append("\t");
-                s.append("\n");
-                b.write(s.toString());
-            }
+        if(modelFile == null && modelAttributes != null) throw new NullPointerException("NULL model file is not permitted when you specify attributes");
+        Log.info("Creating output");
+        QuantificationModel model = null;
+        if(modelFile != null){
+            model = loadModel(modelFile);
         }
+        Log.progressStart("Writing");
+        BufferedWriter b = new BufferedWriter(writer);
+        long count = 0;
+        for (DifferentialExpression expression : expressions) {
+            Log.progress(count++, expressions.size());
+            StringBuilder s = new StringBuilder();
+            s.append(expression.getSource().getId()).append("\t");
+            s.append(expression.getSource().getName()).append("\t");
+            s.append(expression.getSource().getReadCount()).append("\t");
+            s.append(expression.getSource().getRpkm()).append("\t");
+            s.append(expression.getTarget().getReadCount()).append("\t");
+            s.append(expression.getTarget().getRpkm()).append("\t");
+            s.append(expression.getDifference()).append("\t");
+            double foldChange = expression.getFoldChange();
+            s.append(foldChange == Double.NEGATIVE_INFINITY ? "-" : foldChange == Double.POSITIVE_INFINITY ? "+": foldChange).append("\t");
+            s.append(expression.getP()).append("\t");
+            s.append(expression.getFdrP()).append("\t");
+            s.append(expression.getBonferroniP()).append("\t");
+
+            if(model != null){
+                for (String atr : modelAttributes) {
+                    String value = model.get("transcript", expression.getSource().getId(), atr);
+                    if(value == null){
+                        // check the key
+                        value = model.get("transcript", expression.getSource().getKey(), atr); // this is for refseq, where transcript ids might not be unique
+                    }
+                    if(value == null) value = "";
+                    s.append(value).append("\t");
+                }
+            }
+
+            s.append("\n");
+            b.write(s.toString());
+        }
+        Log.progressFinish("Done", true);
     }
 
     /**
@@ -168,33 +173,32 @@ public class FisherDifferentialExpression {
      *
      * @return model the gene model
      */
-    QuantificationModel getModel() {
-        if(modelFile != null){
-            if(model == null){
-                Log.info("Reading model");
-                Log.progressStart("Reading quantification model");
-                try {
-                    model = QuantificationModel.read(modelFile);
-                } catch (IOException e) {
-                    Log.progressFailed("Error while reading model from " + modelFile.getAbsolutePath() + ": " + e.getMessage());
-                    throw new RuntimeException("Error while reading model from " + modelFile.getAbsolutePath() + ": " + e.getMessage(), e);
-                }
-                Log.progressFinish("Done", true);
-            }
+    QuantificationModel loadModel(File modelFile) {
+        if(modelFile == null) throw new NullPointerException("NULL");
+        Log.progressStart("Reading quantification model");
+        QuantificationModel model;
+        try {
+            model = QuantificationModel.read(modelFile);
+        } catch (IOException e) {
+            Log.progressFailed("Error while reading model from " + modelFile.getAbsolutePath() + ": " + e.getMessage());
+            throw new RuntimeException("Error while reading model from " + modelFile.getAbsolutePath() + ": " + e.getMessage(), e);
         }
-        return null;
+        Log.progressFinish("Done", true);
+        return model;
     }
 
     public static void main(String[] args) throws Exception {
-        String model = "/Users/thasso/data/annotations/gencode_v12.gtf.gz";
+        String model = "/Users/thasso/data/annotations/hg/gencode_v12.gtf";
         String file_1 = "/Users/thasso/data/quantifications/data_1.bam_gencode_v12.gtf.gtf";
         String file_2 = "/Users/thasso/data/quantifications/data_2.bam_gencode_v12.gtf.gtf";
+//        String file_1 = "/Users/thasso/data/quantifications/data_1.bam_hg19_ref_ucsc120203.gtf.gz.gtf";
+//        String file_2 = "/Users/thasso/data/quantifications/data_2.bam_hg19_ref_ucsc120203.gtf.gz.gtf";
         String output = "/Users/thasso/data/quantifications/diff.txt";
-        FisherDifferentialExpression ff = new FisherDifferentialExpression(new File(model));
+        FisherDifferentialExpression ff = new FisherDifferentialExpression();
         Execute.initialize(4);
 
         List<DifferentialExpression> expressions = ff.computeDifferentialExpression(new File(file_1), new File(file_2));
-        ff.write(new FileWriter(output), expressions);
+        ff.write(new FileWriter(output), expressions, new File(model), new String[]{"gene_id", "gene_name"});
 
         Execute.shutdown();
     }

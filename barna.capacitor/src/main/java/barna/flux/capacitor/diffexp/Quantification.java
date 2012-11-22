@@ -74,7 +74,7 @@ class Quantification {
         if(transcripts.containsKey(transcript.getId())){
             throw new RuntimeException("Duplicated transcript id " + transcript.getId());
         }else{
-            transcripts.put(transcript.getId(), transcript);
+            transcripts.put(transcript.getKey(), transcript);
             this.totalReads += transcript.getReadCount();
             this.totalRpkm  += transcript.getRpkm();
         }
