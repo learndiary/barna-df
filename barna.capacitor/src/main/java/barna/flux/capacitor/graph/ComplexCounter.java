@@ -19,9 +19,9 @@ public class ComplexCounter {
 
     int nrBinsIntron;
 
-    Hashtable<String,int[]> map= new Hashtable<String, int[]>();
+    Hashtable<String,int[]> map = new Hashtable<String, int[]>();
     int nrCounter= -1;
-    HashMap<CounterType,Byte> mapType= null;
+    HashMap<CounterType,Byte> mapType = null;
 
     public ComplexCounter(EnumSet<CounterType> counterIDs, int nrBinsIntron) {
         this.nrBinsIntron = nrBinsIntron;
@@ -52,7 +52,7 @@ public class ComplexCounter {
 
     private int[] getBins(String ID) {
         // get counter array
-        int[] ctr= null;
+        int[] ctr = null;
         if (map.contains(ID)) {
             ctr= map.get(ID);
         } else {
@@ -83,6 +83,10 @@ public class ComplexCounter {
 
     public Iterator<String> getIDs() {
         return map.keySet().iterator();
+    }
+
+    public Iterator<CounterType> getTypes() {
+        return mapType.keySet().iterator();
     }
 
 }

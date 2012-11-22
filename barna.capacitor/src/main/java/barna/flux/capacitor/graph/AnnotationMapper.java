@@ -28,6 +28,7 @@
 package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
+import barna.flux.capacitor.graph.ComplexCounter.CounterType;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
@@ -93,12 +94,22 @@ public class AnnotationMapper extends SplicingGraph {
      */
     ComplexCounter cc= null;
 
-	public AnnotationMapper(Gene gene) {
+    /**
+     * Default type(s) for counter
+     */
+    static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
+
+    public AnnotationMapper(Gene gene) {
+        this(gene, DEFAULT_COUNTER_TYPES);
+    }
+
+    public AnnotationMapper(Gene gene, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
-        cc= new ComplexCounter(new byte[] {ComplexCounter.COUNTER_SIMPLE});  // TODO create contructor paramter for count types
+        if (!counterTypes.isEmpty())
+            cc = new ComplexCounter(counterTypes);
 	}
 	
 	public AbstractEdge getEdge(BEDMapping obj) {
@@ -555,7 +566,7 @@ public class AnnotationMapper extends SplicingGraph {
             }
 
             // count 5'- and 3'-variant split-mappings
-            if (bcount> 1&& false) { // TODO condition for counting
+            if (bcount > 1 && cc != null) { // TODO condition for counting
                 int[] su= getSpliceUniverse();
                 for (int i = 0; i < bcount; ++i) {
 
@@ -576,7 +587,7 @@ public class AnnotationMapper extends SplicingGraph {
                         }
                         if (valid) {
                             String id= bstart+ bstarts[i- 1]+ bsizes[i- 1]- 1+ "-"+ bstart+ bstarts[i];
-                            cc.increment(id, ComplexCounter.COUNTER_SIMPLE);
+                            cc.increment(id, CounterType.SIMPLE);
                         }
                     }
                     if (i< bcount) { // check right flank
@@ -599,7 +610,7 @@ public class AnnotationMapper extends SplicingGraph {
                         }
                         if (valid) {
                             String id= bstart+ bstarts[i- 1]+ bsizes[i- 1]- 1+ "^"+ bstart+ bstarts[i];
-                            cc.increment(id, ComplexCounter.COUNTER_SIMPLE);
+                            cc.increment(id, CounterType.SIMPLE);
                         }
                     }
 
