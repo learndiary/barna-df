@@ -15,19 +15,19 @@ public class ComplexCounter {
 
     static enum CounterType {SIMPLE, PAIRED, STRANDED, COMBINED, INTRON};
 
-    static final int DEFAULT_NR_BINS_INTRONS= 10;
+    static final int DEFAULT_NR_BINS_INTRONS = 10;
 
-    int nrBinsIntron= DEFAULT_NR_BINS_INTRONS;
+    int nrBinsIntron;
 
     Hashtable<String,int[]> map= new Hashtable<String, int[]>();
     int nrCounter= -1;
     HashMap<CounterType,Byte> mapType= null;
 
     public ComplexCounter(EnumSet<CounterType> counterIDs, int nrBinsIntron) {
-        this.nrBinsIntron= nrBinsIntron;
-        nrCounter= counterIDs.size();
+        this.nrBinsIntron = nrBinsIntron;
+        nrCounter = counterIDs.size();
         if (counterIDs.contains(CounterType.INTRON))
-            nrCounter+= nrBinsIntron- 1;
+            nrCounter += nrBinsIntron - 1;
 
         mapType= new HashMap<CounterType, Byte>(counterIDs.size());
         byte pos= 0;
@@ -42,11 +42,11 @@ public class ComplexCounter {
     }
 
 
-    public void increment(String ID, byte type) {
+    public void increment(String ID, CounterType type) {
         increment(ID, type, 1, 0);
     }
 
-    public void increment(String ID, byte type, int value) {
+    public void increment(String ID, CounterType type, int value) {
         increment(ID, type, value, 0);
     }
 
@@ -66,19 +66,19 @@ public class ComplexCounter {
         return ctr;
     }
 
-    public void increment(String ID, byte type, int value, int offset) {
+    public void increment(String ID, CounterType type, int value, int offset) {
 
-        int[] ctr= getBins(ID);
+        int[] ctr = getBins(ID);
 
         // get index to increment
-        ctr[mapType.get(type)+ offset]+= value;
+        ctr[mapType.get(type) + offset] += value;
     }
 
 
-    public int get(String ID, byte type, int offset) {
+    public int get(String ID, CounterType type, int offset) {
         int[] ctr= getBins(ID);
 
-        return ctr[mapType.get(type)+ offset];
+        return ctr[mapType.get(type) + offset];
     }
 
     public Iterator<String> getIDs() {
