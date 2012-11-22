@@ -1,5 +1,6 @@
 package barna.flux.capacitor.graph;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -12,11 +13,7 @@ import java.util.Iterator;
  */
 public class ComplexCounter {
 
-    static final byte COUNTER_PAIRED= 0;
-    static final byte COUNTER_SIMPLE= 1;
-    static final byte COUNTER_STRANDED= 2;
-    static final byte COUNTER_COMBINED= 3;
-    static final byte COUNTER_INTRON= 4;
+    static enum CounterType {SIMPLE, PAIRED, STRANDED, COMBINED, INTRON};
 
     static final int DEFAULT_NR_BINS_INTRONS= 10;
 
@@ -24,25 +21,23 @@ public class ComplexCounter {
 
     Hashtable<String,int[]> map= new Hashtable<String, int[]>();
     int nrCounter= -1;
-    HashMap<Byte,Byte> mapType= null;
+    HashMap<CounterType,Byte> mapType= null;
 
-    public ComplexCounter(byte[] counterIDs, int nrBinsIntron) {
+    public ComplexCounter(EnumSet<CounterType> counterIDs, int nrBinsIntron) {
         this.nrBinsIntron= nrBinsIntron;
-        nrCounter= counterIDs.length;
-        for (int i = 0; i < counterIDs.length; i++) {
-            if (counterIDs[i]== COUNTER_INTRON)
-                nrCounter+= nrBinsIntron- 1;
-        }
+        nrCounter= counterIDs.size();
+        if (counterIDs.contains(CounterType.INTRON))
+            nrCounter+= nrBinsIntron- 1;
 
-        mapType= new HashMap<Byte, Byte>(counterIDs.length);
+        mapType= new HashMap<CounterType, Byte>(counterIDs.size());
         byte pos= 0;
-        for (int i = 0; i < counterIDs.length; i++) {
-            mapType.put(counterIDs[i], pos);
-            pos+= (counterIDs[i]== COUNTER_INTRON? nrBinsIntron: 1);
+        for (CounterType counterID : counterIDs) {
+            mapType.put(counterID, pos);
+            pos += (counterID.equals(CounterType.INTRON) ? nrBinsIntron : 1);
         }
     }
 
-    public ComplexCounter(byte[] counterIDs) {
+    public ComplexCounter(EnumSet<CounterType> counterIDs) {
         this(counterIDs, DEFAULT_NR_BINS_INTRONS);
     }
 
