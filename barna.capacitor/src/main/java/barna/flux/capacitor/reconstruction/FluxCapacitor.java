@@ -1792,7 +1792,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 if (writer != null) writer.close();
                 // release the lock
                 try {
-                    lock.release();
+                    if(lock != null)
+                        lock.release();
                 } catch (IOException e) {
                     Log.warn("Unable to release the lock on the stats file.\n" +
                             "That might cause a problem if you have multiple capacitor\n" +
