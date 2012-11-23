@@ -42,7 +42,7 @@ class QuantificationEntry {
         if(id == null || id.isEmpty()) throw new IllegalArgumentException("No valid transcript id specified : " + id);
         String reads = gffEntry.getAttributes().get("reads");
         String rpkm = gffEntry.getAttributes().get("rpkm");
-        this.name = gffEntry.getChromosome()+":"+gffEntry.getStart()+""+gffEntry.getEnd()+":"+gffEntry.getStrand();
+        this.name = gffEntry.getChromosome()+":"+gffEntry.getStart()+":"+gffEntry.getEnd()+":"+gffEntry.getStrand();
         this.key = this.id + ":" + name;
         if(reads != null){
             this.readCount = Double.parseDouble(reads);
