@@ -414,7 +414,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * A <code>boolean</code> value specifying whether locus sorting of reads 
 	     * is carried out in RAM-memory or on disk.
 	     */
-	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", false);
+	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", true);
 	    
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
