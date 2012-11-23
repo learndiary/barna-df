@@ -447,6 +447,11 @@ public class Intersector implements FluxTool<Void> {
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file").valueName("file").required().get());

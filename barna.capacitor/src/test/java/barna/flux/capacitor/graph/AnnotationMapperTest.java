@@ -707,7 +707,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareBEDtoBAM() throws Exception {
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+        SAMReader sam = new SAMReader(hgBamFile, true, true);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),null);
         gtf.setReadAll(true);
         gtf.setNoIDs(null);
@@ -758,7 +758,7 @@ public class AnnotationMapperTest extends TestCase {
     public void testCompareBAMSJReadsSingle() throws Exception {
         initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
-        SAMReader sam = new SAMReader(hgBamFile,true,settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+        SAMReader sam = new SAMReader(hgBamFile,true,true);
         BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
         byte lastStr = 0;
         //gtf = new GTFwrapper((gtf.sort()));
@@ -806,6 +806,46 @@ public class AnnotationMapperTest extends TestCase {
                 count[1] += m1.get(e);
             }
             assertEquals(count[0], count[1]);
+        }
+    }
+
+    @Test
+    public void testComplexCounter() throws Exception {
+        initSettings(UniversalReadDescriptor.DESCRIPTORID_SIMPLE, FluxCapacitorSettings.AnnotationMapping.SINGLE);
+        GTFwrapper gtf = new GTFwrapper(hgGtfFile);
+        SAMReader sam = new SAMReader(hgBamFile,true,true);
+        BEDReader bed = new BEDReader(hgBedFile, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
+        byte lastStr = 0;
+        //gtf = new GTFwrapper((gtf.sort()));
+        gtf.setReadAll(true);
+        gtf.setNoIDs(null);
+        gtf.setReadFeatures(new String[]{"exon", "CDS"});
+        gtf.read();
+        for (Gene g : gtf.getGenes()) {
+            if (lastStr!=0&&lastStr!=g.getStrand()) {
+                bed.reset(g.getChromosome());
+                lastStr = g.getStrand();
+            }
+            if (lastStr == 0)
+                lastStr = g.getStrand();
+            int start = 0, end = 0, tol = 0;
+            start = g.getStart();
+            end = g.getEnd();
+            if (g.getStrand() < 0) {
+                start = -start;
+                end = -end;
+            }
+            tol = 0;
+            start = Math.max(1, start - tol);
+            end = end + tol;
+            MSIterator<Mapping> iter1 = bed.read(g.getChromosome(), start, end);
+            MSIterator<Mapping> iter2 = sam.read(g.getChromosome(), start, end);
+            AnnotationMapper a = new AnnotationMapper(g);
+            AnnotationMapper b = new AnnotationMapper(g);
+            a.map(iter1, settings);
+            b.map(iter2, settings);
+
+            ComplexCounter counter = a.getCc();
         }
     }
 

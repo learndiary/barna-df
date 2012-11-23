@@ -153,7 +153,8 @@ public class Fragmenter implements Callable<Void> {
                 try{
                     AbstractDistribution dist = Distributions.parseDistribution(distribution);
                     if(dist instanceof NormalDistribution){
-                        filterDist = new EmpiricalDistribution((NormalDistribution) dist, GEL_NB_BINS_LENGTH, 4d );
+                        //filterDist = new EmpiricalDistribution((NormalDistribution) dist, GEL_NB_BINS_LENGTH, 4d );
+                        filterDist = ((NormalDistribution) dist).toEmpirical(1000);
                     }else{
                         throw new RuntimeException("Distribution " + filterDist + " can not be converted to empirical distribution!");
                     }

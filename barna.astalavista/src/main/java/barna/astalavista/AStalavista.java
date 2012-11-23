@@ -401,6 +401,12 @@ public class AStalavista implements FluxTool<Void>{
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+
+    @Override
     public List<Parameter> getParameter() {
 
         // converts parameter file parameters to CLI parameters

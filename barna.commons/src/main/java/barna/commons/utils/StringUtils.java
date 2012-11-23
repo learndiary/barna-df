@@ -28,10 +28,7 @@
 package barna.commons.utils;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Enumeration;
+import java.util.*;
 
 /**
  * String constants and utilities
@@ -249,5 +246,31 @@ public class StringUtils {
             ++j;
 
         return line.subSequence(i, j);
+    }
+
+    /**
+     * Join a list of elements by calling toString() on the elements.
+     * Null elements will throw an exception
+     *
+     * @param separator the separator
+     * @param elements the elements
+     * @return joined the joined string
+     *
+     * @since 1.19
+     */
+    public static String join(String separator, Collection<?> elements) {
+        if(separator == null) throw new NullPointerException("NULL separator not permitted");
+        if(elements == null) throw new NullPointerException("NULL element list not permitted");
+        StringBuilder b = null;
+        for (Object element : elements) {
+            if(element == null) throw new NullPointerException("NULL element can not be joined");
+            if(b == null){
+                b = new StringBuilder();
+            }else{
+                b.append(separator);
+            }
+            b.append(element);
+        }
+        return b== null ? "" : b.toString();
     }
 }

@@ -176,6 +176,11 @@ public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("out", 'o').type(File.class).help("Output File").required().valueName("file").get());

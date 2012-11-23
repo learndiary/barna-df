@@ -49,7 +49,7 @@ ext.distSpec = copySpec {
     }
 }
 
-task distDir(type: Copy, dependsOn: ['writeIntegrationTestProperties']){
+task distDir(type: Copy){
     description = "Prepare a directory for distribution"
     into "${distsDir}/${outputName}"
     with distSpec

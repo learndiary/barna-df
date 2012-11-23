@@ -14,15 +14,15 @@ if(System.properties['nightly']){
  * This is the  global flux suite version used to identify
  * library/jar versions
  */
-version = "1.17-SNAPSHOT"
+version = "1.20-SNAPSHOT"
 
 /**
  * Versions for applications
  */
 ext.appVersions = [
     "barna.astalavista":"3.1-SNAPSHOT",
-    "barna.simulator":"1.1.1-SNAPSHOT",
-    "barna.capacitor":"1.1.1-SNAPSHOT",
+    "barna.simulator":"1.2.1-SNAPSHOT",
+    "barna.capacitor":"1.2.3-SNAPSHOT",
     "barna.tools":"1.0-SNAPSHOT"
 ]
 
@@ -55,7 +55,7 @@ allprojects {
 	repositories {
 	    mavenCentral()
 		maven {
-		    url "http://barnaserver.com/artifactory/repo"
+		    url "http://sammeth.net/artifactory/repo"
 		}
 	}
 }

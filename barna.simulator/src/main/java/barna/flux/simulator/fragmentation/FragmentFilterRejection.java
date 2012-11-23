@@ -106,7 +106,11 @@ public class FragmentFilterRejection implements FragmentProcessor {
         double plen = 0d;
         for (int i = 0; i < d.length; i++) {
             double p = (probDistr ? d[i].getP(len) : d[i].getRelFreq(len));
-            plen += d[i].getWeight() * p;
+            if(!Double.isNaN(d[i].getWeight())){
+                plen += d[i].getWeight() * p;
+            }else{
+                plen += p;
+            }
         }
 
         // Bernoulli trial

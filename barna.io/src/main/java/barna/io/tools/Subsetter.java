@@ -183,6 +183,11 @@ public class Subsetter implements FluxTool<Void> {
     public String getDescription() {
         return "Extract a random subset of lines from a file";
     }
+    @Override
+    public String getLongDescription() {
+        return null;
+    }
+
 
     @Override
     public List<Parameter> getParameter() {

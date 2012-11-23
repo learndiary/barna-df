@@ -276,8 +276,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 //                    learn(this.gene.getTranscripts()[0], beds);
 //                }
 //            }
-
-            mappings = null;
+            if (mappings != null) {
+                mappings.clear();
+                mappings = null;
+            }
             gene = null;
             // makes it terribly slow
             //System.gc();
@@ -304,9 +306,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(FluxCapacitorConstants.GFF_FEATURE_JUNCTION);
                 sb.append("\t");
-                sb.append(junction[0].contains("-") ? junction[1].replace("-", "") : junction[0]);
+                sb.append(junction[1].contains("-") ? junction[2].replace("-", "") : junction[1]);
                 sb.append("\t");
-                sb.append(junction[1].contains("-")?junction[0].replace("-",""):junction[1]);
+                sb.append(junction[2].contains("-")?junction[1].replace("-",""):junction[2]);
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
@@ -314,7 +316,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
-                sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append("gene_id \""+junction[0]+"\";");
                 sb.append(" ");
                 sb.append("locus_id \""+gene.getLocusID()+"\";");
                 sb.append(" ");
@@ -341,9 +343,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(FluxCapacitorConstants.GFF_FEATURE_INTRON);
                 sb.append("\t");
-                sb.append(intron[0].contains("-")?intron[1].replace("-",""):intron[0]);
+                sb.append(intron[1].contains("-")?intron[2].replace("-",""):intron[1]);
                 sb.append("\t");
-                sb.append(intron[1].contains("-")?intron[0].replace("-",""):intron[1]);
+                sb.append(intron[2].contains("-")?intron[1].replace("-",""):intron[2]);
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
@@ -351,9 +353,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 sb.append("\t");
                 sb.append(".");
                 sb.append("\t");
-                sb.append("gene_id \""+gene.getGeneID()+"\";");
+                sb.append("gene_id \"" + intron[0] + "\";");
                 sb.append(" ");
-                sb.append("locus_id \""+gene.getLocusID()+"\";");
+                sb.append("locus_id \"" + gene.getLocusID() + "\";");
                 sb.append(" ");
                 sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS+" "+String.format("%1$f", (float) m.get(s)[0].intValue()) +";");
                 sb.append(" ");
@@ -1537,7 +1539,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         gtfReader.close();
 
 
-        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS) && fileTmpCovStats != null && fileTmpCovStats.exists()) {
             if (FileHelper.move(
                     fileTmpCovStats,
                     settings.get(FluxCapacitorSettings.COVERAGE_FILE))) {
@@ -1547,6 +1549,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 Log.warn("Failed to move coverage statistics to " +
                         settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
                         + "\tinformation in " + fileTmpCovStats.getAbsolutePath());
+        }else if(settings.get(FluxCapacitorSettings.COVERAGE_STATS) && (fileTmpCovStats == null || !fileTmpCovStats.exists())){
+            Log.warn("No coverage information found, skip creating coverage file");
         }
 
         // TODO close files for non-/mapped reads, insert sizes, LPs, profiles
@@ -1590,11 +1594,11 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
 
         // TODO not here
         if (loadLibraries() < 0)
-            System.exit(-1);
+            throw new RuntimeException("Cannot load libraries");
 
         // load parameters
         if (file != null && !file.exists()) {
-            throw new RuntimeException("I have no parameter file and I want to scream!");
+            throw new RuntimeException("Specified parameter file not found: " + file.getAbsolutePath());
         }
 
         if (file != null) {
@@ -1640,7 +1644,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         settings.validate();
 
 
-        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR);
+        FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
 
         // prepare output files
         if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
@@ -1649,7 +1653,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     "[CAUTION] I overwrite the output file " +
                             settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
                             ", please confirm:\n\t(Yes,No,Don't know)")) {
-                exit(-1);
+                throw new RuntimeException("Run finished. Cannot overwrite the output file.");
             }
 
             try {
@@ -1684,6 +1688,28 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         }
 
         mappingReader = (MappingReader)wrapperMappings;
+
+        if (mappingReader.isPaired() && !settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).isPaired()) {
+            settings.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        }
+
+        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
+            UniversalReadDescriptor descriptor = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
+            if (descriptor.isPaired()) {
+                if (descriptor.isStranded()) {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.COMBINED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED);
+                }
+            }
+            else {
+                if (descriptor.isStranded()) {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.STRANDED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE);
+                }
+            }
+        }
 
         // TODO parameters
         pairedEnd = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
@@ -1736,7 +1762,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
 //            if(!lockFile.exists()) lockFile.createNewFile();
             FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-            FileLock lock = channel.lock();
+            FileLock lock = null;
+            try {
+                lock = channel.lock();
+            } catch (IOException e) {
+                Log.warn("Unable to acquire a lock on the stats file.\n" +
+                        "That might cause a problem if you have multiple capacitor\n" +
+                        "instances accessing the same stats file, otherwise, don't worry.");
+            }
 
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -1759,9 +1792,12 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 if (writer != null) writer.close();
                 // release the lock
                 try {
-                    lock.release();
+                    if(lock != null)
+                        lock.release();
                 } catch (IOException e) {
-                    Log.error("Unable to release lock");
+                    Log.warn("Unable to release the lock on the stats file.\n" +
+                            "That might cause a problem if you have multiple capacitor\n" +
+                            "instances accessing the same stats file, otherwise, don't worry.");
                 }
                 channel.close();
             }
@@ -2035,11 +2071,16 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
         parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
         parameters.add(JSAPParameters.flaggedParameter("annotation", 'a').type(File.class).help("Path to the annotation file").valueName("gtf").get());
-        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed").get());
+        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed|bam").get());
         parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("Path to the output file").valueName("gtf").get());
         parameters.add(JSAPParameters.flaggedParameter("annotation-mapping", 'm').type(String.class).help("Annotation Mapping (default PAIRED)").valueName("mapping").defaultValue("PAIRED").get());
         parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
@@ -2053,20 +2094,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     public boolean validateParameter(JSAPResult args) {
         commandLineArgs = args;
         setPrintParameters(args.userSpecified("printParameters"));
-        setFile(args.getFile("parameter"));
-
         if (isPrintParameters()) {
             FluxCapacitorSettings settings = new FluxCapacitorSettings();
             settings.write(System.out);
             return false;
         }
 
-        if (getFile() == null) {
-            Log.error("");
-            Log.error("No parameter file specified!");
-            Log.error(barna.commons.system.OSChecker.NEW_LINE);
-            return false;
-        }
+        if(args.userSpecified("parameter"))
+            setFile(args.getFile("parameter"));
 
         if (getFile() != null && !getFile().canRead()) {
             Log.error("");
@@ -2400,7 +2435,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 // TODO calculate insert size distribution parameters
 
                 // close coverage writer
-                if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
+                if (writerTmpCovStats != null && settings.get(FluxCapacitorSettings.COVERAGE_STATS))
                     writerTmpCovStats.close();
                 writerTmpCovStats = null;
 
@@ -2663,8 +2698,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         solve(gene[i], mappings, currentTasks);
                     }
 
-                    if (mappings != null)
+                    if (mappings != null) {
                         mappings.clear();
+                    }
 
                     if (output) {
                         System.out.println(gene[i].getChromosome() + " " +
@@ -2877,7 +2913,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             case BED:			
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
-                return new SAMReader(inputFile, !SAMReader.CONTAINED_DEFAULT, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+                return new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
 
         }
 

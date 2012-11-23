@@ -288,7 +288,7 @@ class FluxCapacitorRunInetegrationTest {
                 "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX.bed'],
                 "ANNOTATION_MAPPING" : AnnotationMapping.PAIRED,
                 "READ_DESCRIPTOR" : "SIMULATOR",
-                "KEEP_SORTED" : new File(System.getProperty("java.io.tmpdir")),
+                "KEEP_SORTED" : new File(System.getProperty("java.io.tmpdir")).getAbsolutePath(),
         ])
 
         String stderr= FluxCapacitorRunner.runCapacitor(currentTestDirectory,parFile);
