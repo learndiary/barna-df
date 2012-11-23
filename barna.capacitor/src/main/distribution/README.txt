@@ -23,6 +23,9 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.2.2
+    * [BARNA-263] - BAM ID parsing error results in NPE
+
 FluxCapacitor 1.2.1
     * [BARNA-261] - Capacitor complains about read descriptor for bam files
 
