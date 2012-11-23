@@ -719,9 +719,9 @@ public class AStalavista implements FluxTool<Void>{
 
         }
         if (args.userSpecified(AStalavistaSettings.EXT_EVENTS.getLongOption()))
-            acceptableIntrons= true;
+            onlyInternal= true;
         else
-            acceptableIntrons= false;
+            onlyInternal= false;
 
 
         // check for necessary components
