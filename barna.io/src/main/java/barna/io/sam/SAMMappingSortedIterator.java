@@ -233,7 +233,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @return the suffix
      */
     private String getSuffix(SAMRecord record) {
-        if (record.getProperPairFlag()) {
+        if (record.getReadPairedFlag()) {
             return record.getFirstOfPairFlag()?"/1":"/2";
         }
         return "";
