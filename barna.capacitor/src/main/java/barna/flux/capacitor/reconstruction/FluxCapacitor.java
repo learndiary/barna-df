@@ -1762,7 +1762,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
 //            if(!lockFile.exists()) lockFile.createNewFile();
             FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-            FileLock lock = channel.lock();
+            FileLock lock = null;
+            try {
+                lock = channel.lock();
+            } catch (IOException e) {
+                Log.warn("Unable to acquire a lock on the stats file.\n" +
+                        "That might cause a problem if you have multiple capacitor\n" +
+                        "instances accessing the same stats file, otherwise, don't worry.");
+            }
 
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -1787,7 +1794,9 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 try {
                     lock.release();
                 } catch (IOException e) {
-                    Log.error("Unable to release lock");
+                    Log.warn("Unable to release the lock on the stats file.\n" +
+                            "That might cause a problem if you have multiple capacitor\n" +
+                            "instances accessing the same stats file, otherwise, don't worry.");
                 }
                 channel.close();
             }
