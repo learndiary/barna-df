@@ -451,6 +451,38 @@ public class FluxCapacitorTest {
     }
 
     @Test
+    public void testCreatingCoverageStats() throws Exception {
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), "_profiles", true, "txt"));
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("PROFILE_FILE", proFile);
+        pars.put("COVERAGE_STATS", "true");
+        pars.put("COVERAGE_FILE", "coverage.file");
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        FluxCapacitorRunner.runCapacitor(parFile);
+
+        BufferedReader b1 = null;
+        try {
+            b1 = new BufferedReader(new FileReader(proFile));
+            String s1;
+            while ((s1 = b1.readLine()) != null) {
+                System.err.println(s1);
+            }
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (b1!=null)
+                b1.close();
+        }
+    }
+
+    @Test
     public void testReadsPerTranscript() throws Exception {
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_HG_SORTED);

@@ -3,6 +3,9 @@ package barna.commons;
 import barna.commons.utils.StringUtils;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static junit.framework.Assert.assertEquals;
 
 /**
@@ -35,5 +38,12 @@ public class StringUtilsTest {
     public void testAppend() throws Exception {
         assertEquals("aAAA", StringUtils.append('A', "a", 4, false));
         assertEquals("AAAa", StringUtils.append('A', "a", 4, true));
+    }
+
+    @Test
+    public void testJoin() throws Exception {
+        assertEquals("aAAA", StringUtils.join("", Arrays.asList("a","A", "A",'A')));
+        assertEquals("a A A A", StringUtils.join(" ", Arrays.asList("a","A", "A",'A')));
+        assertEquals("", StringUtils.join(" ", Collections.EMPTY_LIST));
     }
 }
