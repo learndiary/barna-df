@@ -586,7 +586,7 @@ public class AnnotationMapper extends SplicingGraph {
                             }
                         }
                         if (valid) {
-                            String id= bstart+ bstarts[i- 1]+ bsizes[i- 1]- 1+ "-"+ bstart+ bstarts[i];
+                            String id= bstarts[i- 1]+ bsizes[i- 1]- 1+ "-"+ bstarts[i];
                             cc.increment(id, CounterType.SIMPLE);
                         }
                     }
@@ -609,7 +609,7 @@ public class AnnotationMapper extends SplicingGraph {
                                 valid= checkSpliceSiteType(su[p], SpliceSite.TYPE_DONOR);
                         }
                         if (valid) {
-                            String id= bstart+ bstarts[i- 1]+ bsizes[i- 1]- 1+ "^"+ bstart+ bstarts[i];
+                            String id = bstarts[i] + bsizes[i] - 1 + "^" + bstarts[i + 1];
                             cc.increment(id, CounterType.SIMPLE);
                         }
                     }
@@ -877,6 +877,10 @@ public class AnnotationMapper extends SplicingGraph {
                         add(se.getSuperEdges().elementAt(j), sig, v);
             }
         }
+    }
+
+    public ComplexCounter getCc() {
+        return cc;
     }
 
     public void getRPK(Exon exon, Transcript tx, boolean pend, byte etype, Vector<Vector<AbstractEdge>> v) {
