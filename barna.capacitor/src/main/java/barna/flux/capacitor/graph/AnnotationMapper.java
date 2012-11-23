@@ -590,7 +590,7 @@ public class AnnotationMapper extends SplicingGraph {
                             cc.increment(id, CounterType.SIMPLE);
                         }
                     }
-                    if (i< bcount) { // check right flank
+                    if (i< (bcount - 1)) { // check right flank
                         boolean valid= false;
                         int p= Arrays.binarySearch(su, bstarts[i]+ bsizes[i]- 1);
                         if (p< 0)
