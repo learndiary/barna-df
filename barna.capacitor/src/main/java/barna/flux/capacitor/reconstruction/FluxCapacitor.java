@@ -1539,7 +1539,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         gtfReader.close();
 
 
-        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS) && fileTmpCovStats != null && fileTmpCovStats.exists()) {
             if (FileHelper.move(
                     fileTmpCovStats,
                     settings.get(FluxCapacitorSettings.COVERAGE_FILE))) {
@@ -1549,6 +1549,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 Log.warn("Failed to move coverage statistics to " +
                         settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
                         + "\tinformation in " + fileTmpCovStats.getAbsolutePath());
+        }else if(settings.get(FluxCapacitorSettings.COVERAGE_STATS) && (fileTmpCovStats == null || !fileTmpCovStats.exists())){
+            Log.warn("No coverage information found, skip creating coverage file");
         }
 
         // TODO close files for non-/mapped reads, insert sizes, LPs, profiles
@@ -2423,7 +2425,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                 // TODO calculate insert size distribution parameters
 
                 // close coverage writer
-                if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
+                if (writerTmpCovStats != null && settings.get(FluxCapacitorSettings.COVERAGE_STATS))
                     writerTmpCovStats.close();
                 writerTmpCovStats = null;
 

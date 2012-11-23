@@ -14,9 +14,7 @@ import org.junit.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static junit.framework.Assert.*;
 
@@ -24,6 +22,8 @@ public class FluxCapacitorTest {
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
     final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+    final File ENSEMBLE_SORTED = new File(getClass().getResource("/ensemble.gtf").getFile());
+    final File BED_ENSEMBLE = new File(getClass().getResource("/15000first_lines.bed").getFile());
     final File GTF_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.gtf").getFile());
     final File BED_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
     final File BED_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.bed").getFile());
@@ -451,28 +451,49 @@ public class FluxCapacitorTest {
     }
 
     @Test
-    public void testCreatingCoverageStats() throws Exception {
+    public void testCreatingCoverageFileWhereNoCoverageIsFound() throws Exception {
+        // TEST for BARNA-269
         File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), "_profiles", true, "txt"));
+        File coveragefile = File.createTempFile("coverage", ".test");
+        coveragefile.deleteOnExit();
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", ENSEMBLE_SORTED);
+        pars.put("MAPPING_FILE", BED_ENSEMBLE);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "PAIRED");
+        pars.put("PROFILE_FILE", proFile);
+        pars.put("COVERAGE_STATS", "true");
+        pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        FluxCapacitorRunner.runCapacitor(parFile);
+        assertEquals(0, coveragefile.length());
+
+    }
+    @Test
+    public void testCreatingCoverageFile() throws Exception {
+        // TEST for BARNA-269
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), "_profiles", true, "txt"));
+        File coveragefile = File.createTempFile("coverage", ".test");
+        coveragefile.deleteOnExit();
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
-        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("PROFILE_FILE", proFile);
         pars.put("COVERAGE_STATS", "true");
-        pars.put("COVERAGE_FILE", "coverage.file");
+        pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
-
         FluxCapacitorRunner.runCapacitor(parFile);
-
         BufferedReader b1 = null;
+        List<String> lines = new ArrayList<String>();
         try {
-            b1 = new BufferedReader(new FileReader(proFile));
+            b1 = new BufferedReader(new FileReader(coveragefile));
             String s1;
             while ((s1 = b1.readLine()) != null) {
-                System.err.println(s1);
+                lines.add(s1);
             }
         } catch (Exception e) {
             throw e;
@@ -480,6 +501,9 @@ public class FluxCapacitorTest {
             if (b1!=null)
                 b1.close();
         }
+        assertEquals(1, lines.size());
+        assertEquals("chrX:162960939-163023648C\tNM_019397\tCDS\t2700\t0\t0.0\t0\tNaN", lines.get(0));
+
     }
 
     @Test
