@@ -27,7 +27,8 @@ import java.util.concurrent.Future;
 public class SAMReader extends AbstractFileIOWrapper implements
         MappingReader {
 
-    public static final boolean CONTAINED_DEFAULT = false;
+    public static final boolean DEFAULT_CONTAINED = false;
+    public static final boolean DEFAULT_ALL_READS = false;
 
     private SAMFileReader reader;
     private boolean contained;
@@ -42,6 +43,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private int countSkippedLines;
 
     private boolean paired = false;
+    private boolean allReads;
 
     /**
      * Creates an instance of the reader
@@ -49,7 +51,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      * @param descriptor the descriptor to be used
 	 */
 	public SAMReader(File inputFile, UniversalReadDescriptor descriptor) {
-		this(inputFile, CONTAINED_DEFAULT, false);
+		this(inputFile, DEFAULT_CONTAINED, false, DEFAULT_ALL_READS);
 	}
 
     /**
@@ -57,7 +59,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      * @param absolutePath path to the file the wrapper is based on
      */
     public SAMReader(String absolutePath) {
-        this(new File(absolutePath), CONTAINED_DEFAULT, false);
+        this(new File(absolutePath), DEFAULT_CONTAINED, false, DEFAULT_ALL_READS);
     }
 
     /**
@@ -67,7 +69,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
      *                  contained/overlapping the query region
      */
     public SAMReader(String absolutePath, boolean contained) {
-        this(new File(absolutePath), contained, false);
+        this(new File(absolutePath), contained, false, DEFAULT_ALL_READS);
     }
 
     /**
@@ -77,10 +79,21 @@ public class SAMReader extends AbstractFileIOWrapper implements
      *                  contained/overlapping the query region
      */
     public SAMReader(File inputFile, boolean contained, boolean sortInRam) {
+        this (inputFile,contained,sortInRam,DEFAULT_ALL_READS);
+    }
+
+    /**
+     * Creates an instance of the reader
+     * @param inputFile the file to read
+     * @param contained flag to decide whether return mappings which are
+     *                  contained/overlapping the query region
+     */
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads) {
         super(inputFile);
         reader = new SAMFileReader(this.inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
+        this.allReads = allReads;
     }
 
     @Override
@@ -111,7 +124,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	}
 
     @Override
-    public MSIterator read(String chromosome, int start, int end) {
+    public MSIterator<Mapping> read(String chromosome, int start, int end) {
         if (reader==null) {
             reader = new SAMFileReader(this.inputFile);
             reader.enableIndexCaching(true);
@@ -121,17 +134,17 @@ public class SAMReader extends AbstractFileIOWrapper implements
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
             if (sortInRam) {
                 try {
-                    iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained));
+                    iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), allReads);
                 }
                 catch (OutOfMemoryError error) {
                     SAMFileHeader header =  reader.getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords);
+                    iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords, allReads);
                 }
             } else {
                 SAMFileHeader header =  reader.getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords);
+                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords, allReads);
             }
         }
         else

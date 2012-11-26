@@ -18,13 +18,21 @@ import java.util.List;
  */
 public class SAMMappingIterator implements MSIterator<SAMMapping>{
 
-    SAMRecordIterator wrappedIterator;
-    ArrayList<SAMMapping> mappings;
-    int currPos, markedPos;
+    static final boolean DEFAULT_ALL_READS = false;
+
+    private SAMRecordIterator wrappedIterator;
+    private ArrayList<SAMMapping> mappings;
+    private int currPos, markedPos;
+    private boolean allReads;
 
     public SAMMappingIterator(SAMRecordIterator iterator) {
+        this(iterator, DEFAULT_ALL_READS);
+    }
+
+    public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads) {
         this.wrappedIterator = iterator;
         this.currPos = this.markedPos = -1;
+        this.allReads = allReads;
         init();
     }
 
@@ -36,7 +44,7 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
         while(wrappedIterator.hasNext()) {
             record = wrappedIterator.next();
 
-            if (record.getReadUnmappedFlag())
+            if (!allReads && record.getReadUnmappedFlag())
                 continue;
 
             mapping = new SAMMapping(record, getSuffix(record));
