@@ -7,13 +7,11 @@ import barna.commons.io.DevNullOutputStream;
 import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.commons.utils.Interceptable;
-import barna.io.AbstractFileIOWrapper;
-import barna.io.MSIterator;
-import barna.io.MappingReader;
-import barna.io.Sorter;
+import barna.io.*;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
+import net.sf.samtools.BAMIndexer;
 import net.sf.samtools.SAMFileHeader;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
@@ -35,6 +33,8 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private MSIterator iter;
     private boolean sortInRam;
     private int maxRecords = 500000;
+
+    private File index;
 
     private int countAll;
     private int countEntire;
@@ -110,8 +110,10 @@ public class SAMReader extends AbstractFileIOWrapper implements
             reader = new SAMFileReader(this.inputFile);
         if (!reader.isBinary())
             throw new RuntimeException("The input must be a BAM file.");
-        if (!reader.hasIndex())
-            throw new RuntimeException("The input BAM file must be sorted and indexed.");
+        if (!reader.hasIndex() && index==null) {
+            if (!createIndex())
+                throw new RuntimeException("The input BAM file must be sorted and indexed.");
+        }
         return true;
 	}
 
@@ -123,10 +125,46 @@ public class SAMReader extends AbstractFileIOWrapper implements
         //do nothing for the moment
 	}
 
+    private boolean createIndex() {
+        if (reader == null)
+            return false;
+
+        //File index = new File(inputFile.getAbsolutePath()+".bai");
+        try {
+            index = FileHelper.createTempFile("FluxCapacitor_" + inputFile.getName().replace(".bam",""), "bai");
+            index.deleteOnExit();
+        } catch (IOException e) {
+            Log.error("Cannot create index file!", e);
+        }
+
+        BAMIndexer indexer = new BAMIndexer(index, reader.getFileHeader());
+
+        reader.enableFileSource(true);
+        int totalRecords = 0;
+
+        // create and write the content
+        Log.info("");
+        Log.info("Creating index for " + inputFile.getName());
+        for (SAMRecord rec : reader) {
+            if (Log.getLogLevel().equals(Log.Level.DEBUG)) {
+                if (++totalRecords % 1000000 == 0) {
+                    Log.info(totalRecords + " reads processed ...");
+                }
+            }
+            indexer.processAlignment(rec);
+        }
+        indexer.finish();
+        Log.info("Done.");
+
+        reader = new SAMFileReader(inputFile,index);
+
+        return true;
+    }
+
     @Override
     public MSIterator<Mapping> read(String chromosome, int start, int end) {
         if (reader==null) {
-            reader = new SAMFileReader(this.inputFile);
+            reader = new SAMFileReader(this.inputFile, index);
             reader.enableIndexCaching(true);
             reader.enableIndexMemoryMapping(false);
         }
