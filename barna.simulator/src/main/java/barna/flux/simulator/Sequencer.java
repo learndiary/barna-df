@@ -742,6 +742,7 @@ public class Sequencer implements Callable<Void> {
             this.index = index;
         }
 
+        boolean noAmpWarn= false;
         public void process(Gene gene) {
 
             if (gene == null) {
@@ -770,7 +771,15 @@ public class Sequencer implements Callable<Void> {
                     for (ByteArrayCharSequence cs : entries) {
                         int fstart = cs.getTokenInt(0);
                         int fend = cs.getTokenInt(1);
-                        int dups = cs.getTokenInt(3);
+                        int dups = 0;
+                        try {
+                            dups= cs.getTokenInt(3);
+                        } catch (IllegalArgumentException e) {
+                            if (!noAmpWarn) {
+                                Log.warn("No 3rd field (amplified molecules) found in library, assuming \'0\'.");
+                                noAmpWarn= true;
+                            }
+                        }
                         dups = Math.max(dups, 1);    // file provides nr. of duplicates, not molecules
 
 

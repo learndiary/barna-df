@@ -180,6 +180,7 @@ public class FragmentDB {
             ByteArrayCharSequence nextID = null;
             ByteArrayCharSequence currentID = null;
             String line = null;
+            boolean noAmpWarn= false;
             while ((line = libFileReader.readLine()) != null) {
                 cs.set(line);
                 cs.resetFind();
@@ -212,7 +213,15 @@ public class FragmentDB {
                 if (isPrintStatus()) {
                     Log.progress(currentPosition, totalSize);
                 }
-                int dups = cs.getTokenInt(3);
+                int dups = 0;
+                try {
+                    dups= cs.getTokenInt(3);
+                } catch (IllegalArgumentException e) {
+                    if (!noAmpWarn) {
+                        Log.warn("No 3rd field (amplified molecules) found in library, assuming \'0\'.");
+                        noAmpWarn= true;
+                    }
+                }
                 numberOfFragments += Math.max(1, dups);
 
             }
