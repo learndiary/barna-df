@@ -143,7 +143,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         int totalRecords = 0;
 
         // create and write the content
-        Log.info("");
+        Log.info("","");
         Log.info("Creating index for " + inputFile.getName());
         for (SAMRecord rec : reader) {
             if (Log.getLogLevel().equals(Log.Level.DEBUG)) {
