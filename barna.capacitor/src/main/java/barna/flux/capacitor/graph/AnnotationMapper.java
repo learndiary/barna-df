@@ -322,7 +322,7 @@ public class AnnotationMapper extends SplicingGraph {
             }
 
         // init
-			Mapping mapping, otherMapping;
+		Mapping mapping, otherMapping;
         CharSequence lastName = null;
         UniversalReadDescriptor.Attributes
                 attributes = descriptor.createAttributes(),
