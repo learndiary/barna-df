@@ -175,9 +175,11 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), allReads);
                 }
                 catch (OutOfMemoryError error) {
+                    reader = new SAMFileReader(this.inputFile, index);
+                    reader.enableIndexCaching(true);
+                    reader.enableIndexMemoryMapping(false);
                     SAMFileHeader header =  reader.getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter.clear();
                     iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords, allReads);
                 }
             } else {
