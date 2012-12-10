@@ -962,8 +962,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         tx.getExonicLength(),
                         pairedEnd ? nrReadsSingleLociPairsMapped : nrReadsSingleLociMapped,
                         coverage.getFractionCovered(),
-                        coverage.getChiSquare(true),
-                        coverage.getCV(true));
+                        coverage.getChiSquare(true, false),
+                        coverage.getCV(true, true));
             }
         }
 
