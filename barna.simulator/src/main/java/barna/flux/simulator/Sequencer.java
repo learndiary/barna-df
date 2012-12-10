@@ -851,9 +851,9 @@ public class Sequencer implements Callable<Void> {
                 // covered positions
                 n[1] = new Double(coverage.getFractionCovered());
                 // chi-square, exclude 0-positions
-                n[2] = new Long(coverage.getChiSquare(true));
+                n[2] = new Long(coverage.getChiSquare(true, false));
                 // CV, exclude 0-positions
-                n[3] = new Double(coverage.getCV(true));
+                n[3] = new Double(coverage.getCV(true, true));
 
             }    // end all transcripts
         }

@@ -962,8 +962,10 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         tx.getExonicLength(),
                         pairedEnd ? nrReadsSingleLociPairsMapped : nrReadsSingleLociMapped,
                         coverage.getFractionCovered(),
-                        coverage.getChiSquare(true),
-                        coverage.getCV(true));
+                        coverage.getChiSquare(true, false),
+                        coverage.getChiSquare(true, true),
+                        coverage.getCV(true, false),
+                        coverage.getCV(true, true));
             }
         }
 
@@ -2031,7 +2033,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      */
     private void writeCoverageStats(String geneID, String transcriptID,
                                     boolean cds, int length, int nrReads,
-                                    float fracCov, long chiSquare, double cv) {
+                                    float fracCov, long chiSquare, long chiSquareAnsc, double cv, double cvAnsc) {
 
         try {
             if (fileTmpCovStats == null)
@@ -2042,7 +2044,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     geneID + "\t" + transcriptID + "\t" + (cds ? "CDS" : "NC") + "\t"
                             + Integer.toString(length) + "\t" + Integer.toString(nrReads) + "\t"
                             + Float.toString(fracCov) + "\t" + Long.toString(chiSquare) + "\t"
-                            + Float.toString((float) cv) + barna.commons.system.OSChecker.NEW_LINE
+                            + Long.toString(chiSquareAnsc) + "\t" + Float.toString((float) cv)
+                            + Float.toString((float) cvAnsc) + barna.commons.system.OSChecker.NEW_LINE
             );
 
         } catch (Exception e) {
