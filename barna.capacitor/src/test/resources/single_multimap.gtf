@@ -1,0 +1,16 @@
+chr21	hg19_refGene	exon	34915350	34915475	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	start_codon	34915399	34915401	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34915399	34915475	0.000000	+	0	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34918519	34918685	0.000000	+	1	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	exon	34918519	34918685	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34921782	34927697	0.000000	+	2	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	exon	34921782	34927697	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34929462	34929622	0.000000	+	2	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	exon	34929462	34929622	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34931536	34931682	0.000000	+	0	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	exon	34931536	34931682	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34931893	34932081	0.000000	+	0	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	exon	34931893	34932081	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	CDS	34932183	34932434	0.000000	+	0	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	exon	34932183	34932973	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
+chr21	hg19_refGene	stop_codon	34932435	34932437	0.000000	+	.	gene_id "NM_032195"; transcript_id "NM_032195"; 
