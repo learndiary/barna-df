@@ -917,12 +917,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         // update coverage
                         if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                             if (bpoint1 < bpoint2) {
-                                for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
+                                // prevent double counting in case of overlapping mappings
+                                for (int i = bpoint1; i < Math.min(bpoint1+ bed1.getLength(),bpoint2- bed2.getLength()+ 1); i++)
                                     coverage.increment(i);
                                 for (int i = bpoint2 - bed2.getLength() + 1; i <= bpoint2; i++)
                                     coverage.increment(i);
                             } else {
-                                for (int i = bpoint2; i < bpoint2 + bed2.getLength(); i++)
+                                // prevent double counting in case of overlapping mappings
+                                for (int i = bpoint2; i < Math.min(bpoint2 + bed2.getLength(), bpoint1 - bed1.getLength() + 1); i++)
                                     coverage.increment(i);
                                 for (int i = bpoint1 - bed1.getLength() + 1; i <= bpoint1; i++)
                                     coverage.increment(i);
@@ -963,8 +965,6 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         pairedEnd ? nrReadsSingleLociPairsMapped : nrReadsSingleLociMapped,
                         coverage.getFractionCovered(),
                         coverage.getChiSquare(true, false),
-                        coverage.getChiSquare(true, true),
-                        coverage.getCV(true, false),
                         coverage.getCV(true, true));
             }
         }
@@ -2042,7 +2042,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
      */
     private void writeCoverageStats(String geneID, String transcriptID,
                                     boolean cds, int length, int nrReads,
-                                    float fracCov, long chiSquare, long chiSquareAnsc, double cv, double cvAnsc) {
+                                    float fracCov, long chiSquare, double cv) {
 
         try {
             if (fileTmpCovStats == null)
@@ -2053,8 +2053,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                     geneID + "\t" + transcriptID + "\t" + (cds ? "CDS" : "NC") + "\t"
                             + Integer.toString(length) + "\t" + Integer.toString(nrReads) + "\t"
                             + Float.toString(fracCov) + "\t" + Long.toString(chiSquare) + "\t"
-                            + Long.toString(chiSquareAnsc) + "\t" + Float.toString((float) cv)
-                            + Float.toString((float) cvAnsc) + barna.commons.system.OSChecker.NEW_LINE
+                            + Float.toString((float) cv) + barna.commons.system.OSChecker.NEW_LINE
             );
 
         } catch (Exception e) {
