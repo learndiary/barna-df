@@ -58,13 +58,16 @@ public class EventExtractorTest {
                 {"XXX\tfoo\texon\t10\t15\t.\t+\t.\ttranscript_id=\"aTranscript\";",
                 "XXX\tfoo\texon\t5\t15\t.\t+\t.\ttranscript_id=\"anotherTranscript\";"};
         Gene[] ge= getGene(gtf);
-        EventExtractor extractor= new EventExtractor(ge[0]);
+
+        AStalavistaSettings settings= new AStalavistaSettings();
+        // extractor.onlyInternal= false;
+        settings.set(AStalavistaSettings.EXT_EVENTS, true);
+        // extractor.retrieveVSEvents= true;
+        settings.set(AStalavistaSettings.VS_EVENTS, true);
+        EventExtractor extractor= new EventExtractor(ge[0], settings);
 
         extractor.constructGraph();
         extractor.contractGraph(2);
-        extractor.onlyInternal= false;
-        extractor.retrieveVSEvents= true;
-
         extractor.getEventsByPartitions(2);
         Vector<ASEvent> v= extractor.getEventV();
 
@@ -78,12 +81,15 @@ public class EventExtractorTest {
                 {"XXX\tfoo\texon\t10\t15\t.\t+\t.\ttranscript_id=\"aTranscript\";",
                         "XXX\tfoo\texon\t10\t20\t.\t+\t.\ttranscript_id=\"anotherTranscript\";"};
         Gene[] ge= getGene(gtf);
-        EventExtractor extractor= new EventExtractor(ge[0]);
+        AStalavistaSettings settings= new AStalavistaSettings();
+        // extractor.onlyInternal= false;
+        settings.set(AStalavistaSettings.EXT_EVENTS, true);
+        // extractor.retrieveVSEvents= true;
+        settings.set(AStalavistaSettings.VS_EVENTS, true);
+        EventExtractor extractor= new EventExtractor(ge[0], settings);
 
         extractor.constructGraph();
         extractor.contractGraph(2);
-        extractor.onlyInternal= false;
-        extractor.retrieveVSEvents= true;
 
         extractor.getEventsByPartitions(2);
         Vector<ASEvent> v= extractor.getEventV();

@@ -53,7 +53,16 @@ public class SimpleEdge extends AbstractEdge {
 	 */
 	boolean contracted= false;
 	boolean processed= false;
-	boolean valid= true;
+
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    boolean valid= true;
 	boolean exonic= false;
 	
 	public static String getStringRep(Node v, Node w) {

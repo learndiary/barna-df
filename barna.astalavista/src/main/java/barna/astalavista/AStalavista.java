@@ -31,6 +31,7 @@ import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.FluxTool;
 import barna.commons.log.Log;
+import barna.commons.parameters.ParameterException;
 import barna.geneid.*;
 import barna.io.GeneAheadReaderThread;
 import barna.io.gtf.GTFwrapper;
@@ -51,6 +52,8 @@ import java.util.concurrent.Future;
 
 
 public class AStalavista implements FluxTool<Void>{
+
+    AStalavistaSettings settings= null;
 
     public static void main(String[] args) {
 
@@ -232,7 +235,7 @@ public class AStalavista implements FluxTool<Void>{
 
                 g[i].setSpecies(species);
 
-                EventExtractor extractor= new EventExtractor(g[i]);
+                EventExtractor extractor= new EventExtractor(g[i], settings);
                 Thread extractorThread= new Thread(extractor);
                 extractorThread.start();
                 extractorThread.join();
@@ -691,12 +694,17 @@ public class AStalavista implements FluxTool<Void>{
     @Override
     public boolean validateParameter(JSAPResult args) {
 
+        // TODO move "logic" tests of parameters to the settings ParameterSchema.validateParameters() and call that in the end
+
         // output help
         if (args.userSpecified(AStalavistaSettings.PRINT_PARAMETERS.getName())) {
             AStalavistaSettings settings= new AStalavistaSettings();
             settings.write(System.out);
             return false;
         }
+
+        // create settings
+        settings = new AStalavistaSettings();
 
         // input file
         if (args.userSpecified(AStalavistaSettings.REF_FILE.getLongOption()))
@@ -707,6 +715,17 @@ public class AStalavista implements FluxTool<Void>{
                 Log.error("Cannot find: "+inputFile.getAbsolutePath());
             return false;
         }
+
+        // output options
+        if (args.userSpecified(AStalavistaSettings.OUTPUT_LOCUS.getName()))
+            try {
+                // parses enum string and sets EnumSet correspondingly
+                settings.set(AStalavistaSettings.OUTPUT_LOCUS.getName(), args.getString(AStalavistaSettings.OUTPUT_LOCUS.getName()));
+            } catch (ParameterException e) {
+                Log.error(e.getMessage(), e);
+                return false;
+            }
+
 
         // genome directory
         if (args.userSpecified(AStalavistaSettings.GEN_DIR.getName())||
@@ -743,7 +762,6 @@ public class AStalavista implements FluxTool<Void>{
             System.err.println("Overwriting output file "+ EventExtractor.writerThread.outputFname+".");
         }
 
-        // splice site scoring, requires geneID parameters and genomic sequence
         if (args.userSpecified(AStalavistaSettings.SCORE_SITES.getName())||
                 args.userSpecified(AStalavistaSettings.SCORE_SITES.getLongOption())) {
 

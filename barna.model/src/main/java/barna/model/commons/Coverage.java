@@ -99,14 +99,17 @@ public class Coverage {
      * should be excluded
      * @return the chi-square value of the current profile
      */
-    public long getChiSquare(boolean excludeZero) {
+    public long getChiSquare(boolean excludeZero, boolean anscombe) {
     	
         double avgCov= getMean(excludeZero);
         double x2= 0d;
         for (int i = 0; i < length; i++) { 
         	if (excludeZero&& coverage[i]== 0)
         		continue;
-			x2+= (coverage[i]- avgCov)* (coverage[i]- avgCov);
+            double a = coverage[i];
+            if (anscombe)
+                a= (3d/ 2d)* (Math.pow(coverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
+			x2+= (a - avgCov)* (a - avgCov);
         }
 		x2/= avgCov;
 		
@@ -121,7 +124,7 @@ public class Coverage {
      * should be excluded
      * @return the coefficient of variation computed as described
      */
-    public double getCV(boolean excludeZero) {
+    public double getCV(boolean excludeZero, boolean anscombe) {
     	double avgCov= getMean(excludeZero);
 		double mean= 0, min= Double.MAX_VALUE;
 		int cnt= 0;
@@ -131,7 +134,8 @@ public class Coverage {
 			++cnt;
 			double a= coverage[i];
 			// Anscombe residuals [Hansen et al. 2010]
-			a= (3d/ 2d)* (Math.pow(coverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
+			if (anscombe)
+                a= (3d/ 2d)* (Math.pow(coverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
 			mean+= a;
 			if (a< min)
 				min= a;
@@ -143,7 +147,8 @@ public class Coverage {
 			if (excludeZero&& coverage[i]== 0)
 				continue;
 			double a= coverage[i];
-			a= (3d/ 2d)* (Math.pow(coverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
+			if (anscombe)
+                a= (3d/ 2d)* (Math.pow(coverage[i], 2d/3d)- Math.pow(avgCov, 2d/3d))/ Math.pow(avgCov, 1d/6d);
 			a+= 2* Math.abs(min);
 			cv+= (a- mean)* (a- mean);
 		}

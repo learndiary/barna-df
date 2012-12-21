@@ -917,12 +917,14 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         // update coverage
                         if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                             if (bpoint1 < bpoint2) {
-                                for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
+                                // prevent double counting in case of overlapping mappings
+                                for (int i = bpoint1; i < Math.min(bpoint1+ bed1.getLength(),bpoint2- bed2.getLength()+ 1); i++)
                                     coverage.increment(i);
                                 for (int i = bpoint2 - bed2.getLength() + 1; i <= bpoint2; i++)
                                     coverage.increment(i);
                             } else {
-                                for (int i = bpoint2; i < bpoint2 + bed2.getLength(); i++)
+                                // prevent double counting in case of overlapping mappings
+                                for (int i = bpoint2; i < Math.min(bpoint2 + bed2.getLength(), bpoint1 - bed1.getLength() + 1); i++)
                                     coverage.increment(i);
                                 for (int i = bpoint1 - bed1.getLength() + 1; i <= bpoint1; i++)
                                     coverage.increment(i);
@@ -962,8 +964,8 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
                         tx.getExonicLength(),
                         pairedEnd ? nrReadsSingleLociPairsMapped : nrReadsSingleLociMapped,
                         coverage.getFractionCovered(),
-                        coverage.getChiSquare(true),
-                        coverage.getCV(true));
+                        coverage.getChiSquare(true, false),
+                        coverage.getCV(true, true));
             }
         }
 
@@ -1357,6 +1359,13 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
     }
 
     /**
+     * Intialize the capacitor with settings
+     */
+    public FluxCapacitor(FluxCapacitorSettings settings) {
+        this.settings = settings;
+    }
+
+    /**
      * Check operating system and load the native libraries. Exceptions are catched and logged here.
      * Use the return value to check whether loading was successfull.
      *
@@ -1597,20 +1606,22 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             throw new RuntimeException("Cannot load libraries");
 
         // load parameters
-        if (file != null && !file.exists()) {
+        if (settings == null && (file != null && !file.exists())) {
             throw new RuntimeException("Specified parameter file not found: " + file.getAbsolutePath());
         }
 
-        if (file != null) {
+        if (settings == null && file != null) {
             try {
                 settings = FluxCapacitorSettings.createSettings(file);
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
             }
         } else {
-            // create default settings
-            settings = new FluxCapacitorSettings();
-            FluxCapacitorSettings.relativePathParser.setParentDir(new File(""));
+            if(settings == null){
+                // create default settings
+                settings = new FluxCapacitorSettings();
+                FluxCapacitorSettings.relativePathParser.setParentDir(new File(""));
+            }
         }
 
         // add command line parameter

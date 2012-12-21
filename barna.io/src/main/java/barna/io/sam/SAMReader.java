@@ -143,7 +143,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         int totalRecords = 0;
 
         // create and write the content
-        Log.info("");
+        Log.info("","");
         Log.info("Creating index for " + inputFile.getName());
         for (SAMRecord rec : reader) {
             if (Log.getLogLevel().equals(Log.Level.DEBUG)) {
@@ -175,6 +175,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), allReads);
                 }
                 catch (OutOfMemoryError error) {
+                    reader = new SAMFileReader(this.inputFile, index);
+                    reader.enableIndexCaching(true);
+                    reader.enableIndexMemoryMapping(false);
                     SAMFileHeader header =  reader.getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
                     iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords, allReads);

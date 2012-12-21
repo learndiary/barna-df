@@ -6,10 +6,13 @@ import barna.model.ASEvent;
 import barna.model.Graph;
 import barna.model.Species;
 import barna.model.Transcript;
+import barna.model.gff.GTFschema;
 import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.EnumSet;
+import java.util.Iterator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,7 +21,7 @@ import java.io.OutputStream;
  * Time: 1:14 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AStalavistaSettings extends ParameterSchema {
+public class AStalavistaSettings extends GTFschema {
 
     // TODO {SplicingGraph.class, null, SJextractor.class, AttributeExtractor.class};	// null= LaVista.class
 
@@ -32,7 +35,7 @@ public class AStalavistaSettings extends ParameterSchema {
     /**
      * Path to the GTF reference annotation.
      */
-    public static final Parameter<File> REF_FILE = Parameters.fileParameter("REF_FILE",
+    public static final Parameter<File> REF_FILE = Parameters.fileParameter("INPUT",
             "path to the GTF reference annotation",
             null, new ParameterValidator() {
 /*      if (args[i].equals("-i")|| args[i].equals("--input")) {
@@ -56,22 +59,6 @@ public class AStalavistaSettings extends ParameterSchema {
         }
     }, null).longOption("input").shortOption('i');
 
-    /**
-     * Output splice site sequences.
-     */
-/*  if (args[i].equals("-s")|| args[i].equals("--seqsite")) {
-        SplicingGraph.outputSeq= true;
-        continue;
-    } */
-    public static final Parameter<Boolean> OUTPUT_SITESEQ = Parameters.booleanParameter("OUTPUT_SITESEQ",
-            "output splice site sequences", false, null).longOption("seqsite").shortOption('s');
-
-
-    /**
-     * Score splice site sequences.
-     */
-    public static final Parameter<File> SCORE_SITES = Parameters.fileParameter("SCORE_SITES",
-            "score splice site sequences", null, null, null).longOption("scoresites");
 
     /**
      * File with GeneID parameters / splice site profiles.
@@ -526,4 +513,25 @@ public class AStalavistaSettings extends ParameterSchema {
     } */
 
     }
+
+    /**
+     * Output splice site sequences.
+     * @deprecated replace by OutputEvent.SITESCORES
+     */
+/*  if (args[i].equals("-s")|| args[i].equals("--seqsite")) {
+        SplicingGraph.outputSeq= true;
+        continue;
+    } */
+    public static final Parameter<Boolean> OUTPUT_SITESEQ = Parameters.booleanParameter("OUTPUT_SITESEQ",
+            "output splice site sequences", false, null).longOption("seqsite").shortOption('s');
+
+
+    /**
+     * Score splice site sequences.
+     * @deprecated replace by OutputSite.SITESCORES
+     */
+    public static final Parameter<File> SCORE_SITES = Parameters.fileParameter("SCORE_SITES",
+            "score splice site sequences", null, null, null).longOption("scoresites");
+
+
 }

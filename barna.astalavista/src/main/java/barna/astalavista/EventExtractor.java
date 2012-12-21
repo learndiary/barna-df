@@ -17,16 +17,14 @@ import java.util.*;
 public class EventExtractor extends SplicingGraph implements Runnable {
 
 
-    Gene[] g;
     public static int n = 2;
-    boolean output = false, output2 = true;
+    boolean output = false;
 
     protected Vector<ASEvent> eventV = null;
 
     boolean outputCDS = true;
 
     static long cumulGC = 0l, cumulGF = 0l, cumulGT = 0l, cumulEV = 0l;
-
 
 
     /**
@@ -55,8 +53,13 @@ public class EventExtractor extends SplicingGraph implements Runnable {
         */
     }
 
-    public EventExtractor(Gene g) {
+    AStalavistaSettings settings;
+
+    public EventExtractor(Gene g, AStalavistaSettings settings) {
         super(g);
+        this.settings= settings;
+        this.onlyInternal= !settings.get(AStalavistaSettings.EXT_EVENTS);
+        this.retrieveVSEvents= settings.get(AStalavistaSettings.VS_EVENTS);
     }
 
     @Override
@@ -133,30 +136,6 @@ public class EventExtractor extends SplicingGraph implements Runnable {
                 writerThread.interrupt();
             }
 
-    }
-
-    public boolean isOutput() {
-        return output;
-    }
-
-    public void setOutput(boolean output) {
-        this.output = output;
-    }
-
-    public boolean isOutput2() {
-        return output2;
-    }
-
-    public void setOutput2(boolean output2) {
-        this.output2 = output2;
-    }
-
-    public Gene[] getG() {
-        return g;
-    }
-
-    public void setG(Gene[] g) {
-        this.g = g;
     }
 
     private void outputEvent(final ASEvent event) {
