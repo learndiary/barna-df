@@ -385,7 +385,7 @@ public class Gene extends DirectedRegion {
 		
 		return newGene;
 	}
-	
+
 	/**
 	 * compares arbitrary two instances of String or Gene 
 	 * 
@@ -746,7 +746,7 @@ public class Gene extends DirectedRegion {
 	public String toString() {
 		return getStableID();
 	}
-	
+
 	public String toStringSSPattern() {
 		String s= "";
 		for (int i = 0; getSpliceSites()!= null&& i < getSpliceSites().length; i++) {
@@ -764,20 +764,42 @@ public class Gene extends DirectedRegion {
 			
 		}
 	}
-	
-	/**
-	 * @return
-	 */
+
+    /**
+     * Retrieves a list of exonic regions where overlapping
+     * exons are merged to form one Super-Exon.
+     * @return non-redundant exons of the gene
+     */
+    public Exon[] getSuperExons() {
+
+
+
+        return null;
+    }
+
+        /**
+       * Retrieves a non-redundant set of exons based on their flanking sites.
+       * @return non-redundant exons of the gene
+       */
 	public Exon[] getExons() {
 
-//		Vector v= new Vector();
-//		for (int i = 0; i < transcripts.length; i++) 
-//			v= (Vector) ArrayUtils.addAllUniqueSorted(v, transcripts[i].getExons());
-//			
-//		Exon[] exons= new Exon[v.size()];
-//		for (int i = 0; i < v.size(); i++) 
-//			exons[i]= (Exon) v.elementAt(i);
-//		
+        if (exons== null) {
+
+            // take map, do not change equals() method of exon
+            HashMap<String, Exon> set= new HashMap<String, Exon>();
+
+            // create non-redundant list of exons
+            for (int i = 0; i < getTranscriptCount(); i++) {
+                Exon[] ex= getTranscripts()[i].getExons();
+                for (int j = 0; j < ex.length; j++) {
+                    set.put(ex[j].toString(), ex[j]);
+                }
+            }
+
+            exons= (Exon[]) ArrayUtils.toField(set.values());
+
+        }
+
 		return exons;
 	}
 	
@@ -1702,6 +1724,6 @@ public class Gene extends DirectedRegion {
 	
 			
 	}
-	
+
 }
 
