@@ -385,6 +385,15 @@ public class SAMReader extends AbstractFileIOWrapper implements
         this.validationStringency = v;
     }
 
+    public void setValidationStringency(String v) {
+        try {
+            this.validationStringency = SAMFileReader.ValidationStringency.valueOf(v.trim().toUpperCase());
+        } catch(IllegalArgumentException e) {
+            Log.warn("Cannot parse " + v.trim().toUpperCase() + " as a SAM validation stringency");
+            Log.warn("Using default stringency: " + SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY);
+        }
+    }
+
     @Override
     public MSIterator<Mapping> iterator() {
         return iter;
