@@ -2097,7 +2097,7 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
         parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
         parameters.add(JSAPParameters.switchParameter("sort-in-ram", 'r').help("Sort in RAM").get());
 
-        parameters.add(JSAPParameters.flaggedParameter("stringency", 'v').type(String.class).help("specify SAM validation stringency").valueName("stringency").defaultValue("STRICT").get());
+        parameters.add(JSAPParameters.flaggedParameter("stringency", 'v').type(String.class).help("specify SAM validation stringency").valueName("stringency").defaultValue("STRICT").get()); //temporary TODO remove this and add maybe it as a setting
 
         parameters.add(JSAPParameters.switchParameter("printParameters").help("Print default parameters").get());
         return parameters;
@@ -2922,15 +2922,20 @@ public class FluxCapacitor implements FluxTool<FluxCapacitorStats>, ReadStatCalc
             case GTF:
             case GFF:
                 return getWrapperGTF(inputFile);
-
             case BED:			
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
-                return new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
-
+                SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
+                if (commandLineArgs.userSpecified("stringency")) {
+                    Log.info("SAM","Setting validation stringency to " + commandLineArgs.getString("stringency"));
+                    r.setValidationStringency(commandLineArgs.getString("stringency"));
+                }
+                return r;
+            default:
+                return null;
         }
 
-        return null;    // make compiler happy
+        //return null;    // make compiler happy
     }
 
     /**
