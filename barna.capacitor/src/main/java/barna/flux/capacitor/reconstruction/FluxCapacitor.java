@@ -1888,20 +1888,20 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         // run
         long t0 = System.currentTimeMillis();
 
-        if (currentTasks.contains(Task.DECOMPOSE)) {
-                    fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
-                profile = getProfile();
+        if (!currentTasks.isEmpty()) {
+            fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
+            profile = getProfile();
             if (profile == null) {
-                exit(-1);
+                throw new RuntimeException("Cannot evaluate profile");
             }
-                profile.getStats().add(stats);
-                stats=profile.getStats();
-        }
+            profile.getStats().add(stats);
+            stats=profile.getStats();
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
             if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null)
                 stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
+        }
 
         fileFinish();
 
