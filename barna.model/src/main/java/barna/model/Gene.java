@@ -927,7 +927,7 @@ public class Gene extends DirectedRegion {
 
     public String getGeneID(String tid) {
         for (Transcript t : transcripts) {
-            if (t.getAttribute(GFFObject.TRANSCRIPT_ID_TAG).toString().equals(tid)) {
+            if (t.getTranscriptID().toString().equals(tid)) {
                 return t.getAttribute(GFFObject.GENE_ID_TAG).toString();
             }
         }

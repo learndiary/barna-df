@@ -1,7 +1,20 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 ::CONFIGURATION
-IF "%FLUX_MEM%" == "" set FLUX_MEM=3G
+IF "%FLUX_MEM%" == "" (
+    if "%PROCESSOR_ARCHITECTURE%" == "amd64" (
+        ::64 bit machine
+        set FLUX_MEM=3G
+    ) else (
+        if "%PROCESSOR_ARCHITEW6432%" == "amd64" (
+            ::32 bit app on 64 bit machine
+            set FLUX_MEM=3G
+        ) else (
+            ::32 bit machine
+            set FLUX_MEM=1400M
+        )
+    )
+)
 
 ::add java_home to path if its set
 IF defined JAVA_HOME set PATH=%JAVA_HOME%\bin;%Path%

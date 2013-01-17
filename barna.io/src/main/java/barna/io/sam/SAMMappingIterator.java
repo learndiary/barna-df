@@ -18,15 +18,21 @@ import java.util.List;
  */
 public class SAMMappingIterator implements MSIterator<SAMMapping>{
 
-    SAMRecordIterator wrappedIterator;
-    ArrayList<SAMMapping> mappings;
-    UniversalReadDescriptor descriptor;
-    int currPos, markedPos;
+    static final boolean DEFAULT_ALL_READS = false;
 
-    public SAMMappingIterator(SAMRecordIterator iterator, UniversalReadDescriptor descriptor) {
+    private SAMRecordIterator wrappedIterator;
+    private ArrayList<SAMMapping> mappings;
+    private int currPos, markedPos;
+    private boolean allReads;
+
+    public SAMMappingIterator(SAMRecordIterator iterator) {
+        this(iterator, DEFAULT_ALL_READS);
+    }
+
+    public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads) {
         this.wrappedIterator = iterator;
-        this.descriptor = descriptor;
         this.currPos = this.markedPos = -1;
+        this.allReads = allReads;
         init();
     }
 
@@ -38,7 +44,7 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
         while(wrappedIterator.hasNext()) {
             record = wrappedIterator.next();
 
-            if (record.getReadUnmappedFlag())
+            if (!allReads && record.getReadUnmappedFlag())
                 continue;
 
             mapping = new SAMMapping(record, getSuffix(record));
@@ -144,15 +150,9 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     }
 
     private String getSuffix(SAMRecord record) {
-        if (descriptor.isPaired()) {
-            char sep = descriptor.toString().charAt(descriptor.toString().indexOf("{MATE}")-1);
-            return record.getFirstOfPairFlag()?sep+"1":sep+"2";
-        } else {
-            //to get it working also with paired-end data mapped as single end
-            if (record.getReadPairedFlag())
-                return record.getFirstOfPairFlag()?"/1":"/2";
-            else
-                return "";
+        if (record.getReadPairedFlag()) {
+            return record.getFirstOfPairFlag()?"/1":"/2";
         }
+        return "";
     }
 }

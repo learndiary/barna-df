@@ -253,6 +253,7 @@ public abstract class ParameterSchema {
                 if (line.startsWith("#")) {
                     continue;
                 }
+                line = line.split("#")[0]; // cut away inline comments
 
 
                 Matcher matcher = PROPERTY_PATTERN.matcher(line);

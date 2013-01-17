@@ -1550,8 +1550,12 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			
 		String[] attrTokens = new String[0];
 		if (tokens.length > 8) {
-			String h = line.substring(line.indexOf(tokens[8]),
-					line.length()).trim(); // attributes, comments
+            // BARNA-268 make sure we do not restart a the beginning
+            // so we just joint the rest of the line
+//			String h = line.substring(line.indexOf(tokens[8]),
+//					line.length()).trim(); // attributes, comments
+
+            String h = StringUtils.join(" ", Arrays.asList(tokens).subList(8, tokens.length));
 			attrTokens = h.split(";\\s+");
 			for (int i = 0; i < attrTokens.length; i++) {
 				h = attrTokens[i].trim();

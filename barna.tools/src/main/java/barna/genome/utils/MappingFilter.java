@@ -231,6 +231,11 @@ public class MappingFilter implements FluxTool<Void> {
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 

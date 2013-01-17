@@ -68,7 +68,7 @@ public class SimulationPipeline implements FluxTool<Void> {
                     }
                     JSAPResult toolParameter = jsap.parse(args);
                     if (!mySimulator.validateParameter(toolParameter)){
-                        Flux.printUsage(mySimulator, jsap, Flux.findTools(), null);
+                        Flux.printUsage(mySimulator, jsap, Flux.findTools(), null, false);
                     }
                 } catch (Exception e) {
                     Log.error("Parameter error : " + e.getMessage(), e);
@@ -289,9 +289,15 @@ public class SimulationPipeline implements FluxTool<Void> {
     }
 
     @Override
+    public String getLongDescription() {
+        return null;
+    }
+
+
+    @Override
     public List<Parameter> getParameter() {
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").required().get());
+        parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
         parameters.add(JSAPParameters.switchParameter("express", 'x').help("Simulate Expression").get());
         parameters.add(JSAPParameters.switchParameter("library", 'l').help("Simulate Library Construction").get());
         parameters.add(JSAPParameters.switchParameter("sequence", 's').help("Simulate Sequencing").get());
@@ -311,7 +317,7 @@ public class SimulationPipeline implements FluxTool<Void> {
         if(isPrintParameters()){
             FluxSimulatorSettings settings = new FluxSimulatorSettings();
             settings.write(System.out);
-            return false;
+            return true;
         }
 
         if (getFile() == null) {
@@ -343,6 +349,10 @@ public class SimulationPipeline implements FluxTool<Void> {
      * @throws Exception in case of any configuration errors
      */
     public Void call() throws Exception {
+        if(isPrintParameters()){
+            return null;
+        }
+
         if (file == null || !file.exists()) {
             throw new RuntimeException("I have no parameter file and I want to scream!");
         }

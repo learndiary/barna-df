@@ -418,7 +418,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "of fragmentation and reverse transcription (RT):\n" +
             "for substrate DNA, fragmentation is carried out\n" +
             "after RT, substrate RNA triggers fragmentation\n" +
-            "before RT", Substrate.DNA, null);
+            "before RT", Substrate.RNA, null);
 
 
     /* Fragmentation by Enzymatic Digestikon */

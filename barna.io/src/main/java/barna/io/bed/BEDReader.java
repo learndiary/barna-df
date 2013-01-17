@@ -48,7 +48,9 @@ import java.util.concurrent.Future;
 
 public class BEDReader extends AbstractFileIOWrapper implements MappingReader {
 
-	static void test() {
+    private boolean paired;
+
+    static void test() {
 		System.out.println(((byte) -1)| (byte) 1);
 		System.out.println(((byte) 2)& ((byte) -1));
 		System.out.println(((byte) 2)& ((byte) 1));
@@ -767,6 +769,11 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		return true;
 	}
 
+    @Override
+    public boolean isPaired() {
+        return descriptor.isPaired();
+    }
+
     public void reset(long bytes, int lines) {
 
 		if (readerB!= null)
@@ -1484,7 +1491,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 		BufferedBACSReader buffy= null;
 		try {
 			buffy= new BufferedBACSReader(new FileInputStream(inputFile));
-			ByteArrayCharSequence b= buffy.readLine(null); 
+			ByteArrayCharSequence b= buffy.readLine(null);
 			
 			return descriptor.isApplicable(b);
 			

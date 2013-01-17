@@ -184,6 +184,11 @@ public class MarkovErrorModel implements FluxTool {
     public String getDescription() {
         return "Create an error model";
     }
+    @Override
+    public String getLongDescription() {
+        return null;
+    }
+
 
     @Override
     public List<Parameter> getParameter() {

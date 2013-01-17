@@ -27,6 +27,8 @@
 
 package barna.flux.capacitor.matrix;
 
+import barna.commons.log.Log;
+import barna.commons.system.OSChecker;
 import barna.model.commons.IntVector;
 import barna.model.constants.Constants;
 
@@ -119,7 +121,8 @@ public class UniversalMatrix {
 		// exclusive regions for back-normalization needed
 		// otherwise fracs> transcriptcount for gene (and reads also)
 		if (p1== Integer.MIN_VALUE|| p2== Integer.MIN_VALUE|| p1> tlen|| p2> tlen) {
-			System.err.println("error");
+            Log.warn("Read length is too small or exceed transcript length. " + OSChecker.NEW_LINE + "Lengths: Read 1 - " + p1 +
+                    " Read 2 - " + p2 + " Transcript - " + tlen);
 			return 0;
 		}
 		int rPos1= (int) ((p1/ (float) tlen)* sense.length),

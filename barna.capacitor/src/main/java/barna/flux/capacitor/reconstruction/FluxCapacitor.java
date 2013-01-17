@@ -248,7 +248,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
          * @param newMappings the mappings that fall in the locus
          * @param tasks     tasks to be preformed
          */
-		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile) {
+		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks) {
 
             this.gene = newGene;
 			this.mappings = newMappings;
@@ -275,14 +275,15 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             if(tasks.isEmpty())
                 return;
 
-            mapper = new AnnotationMapper(this.gene);
-            mapper.map(this.mappings, settings);
+                mapper = new AnnotationMapper(this.gene);
+                mapper.map(this.mappings, settings);
 
-            stats.incrReadsLoci(mapper.nrMappingsLocus);
-            stats.incrMappingsMapped(mapper.getNrMappingsMapped());
-            nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
-            stats.incrMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
-            stats.incrPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
+                nrReadsLoci += mapper.nrMappingsLocus;
+                nrReadsMapped += mapper.getNrMappingsMapped();
+                nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
+                nrPairsNoTxEvidence += mapper.getNrMappingsNotMappedAsPair();
+                nrPairsWrongOrientation += mapper.getNrMappingsWrongPairOrientation();
+            }
 
 
             //TODO move this on call()
@@ -680,7 +681,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                             allPos &= (sum > 0);
                         }
                         if (allPos && !(output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)))
-                            stats.incrEventsExp(1);
+                            ++nrEventsExp;
                         sb.replace(sb.length() - 1, sb.length(), "\";"+OSChecker.NEW_LINE);
                     }
 
@@ -1857,50 +1858,50 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 }
             }
 
-            if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
-                for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
-                    switch (e) {
-                        case SPLICE_JUNCTIONS:
-                            currentTasks.add(Task.COUNT_SJ);
-                            break;
-                        case INTRONS:
-                            currentTasks.add(Task.COUNT_INTRONS);
-                            break;
-                    }
+        if (!settings.get(FluxCapacitorSettings.COUNT_ELEMENTS).isEmpty()) {
+            for (FluxCapacitorSettings.CountElements e : settings.get(FluxCapacitorSettings.COUNT_ELEMENTS)) {
+                switch (e) {
+                    case SPLICE_JUNCTIONS:
+                        currentTasks.add(Task.COUNT_SJ);
+                        break;
+                    case INTRONS:
+                        currentTasks.add(Task.COUNT_INTRONS);
+                        break;
                 }
             }
-            //Get from settings the tasks to be executed in the current run
-            if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
-                currentTasks.add(Task.DECOMPOSE);
-            }
+        }
+        //Get from settings the tasks to be executed in the current run
+        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
+            currentTasks.add(Task.DECOMPOSE);
+        }
 
             //print current run settings
             printSettings();
 
-            // run
-            long t0 = System.currentTimeMillis();
+        // run
+        long t0 = System.currentTimeMillis();
 
-            if (currentTasks.contains(Task.DECOMPOSE)) {
+        if (currentTasks.contains(Task.DECOMPOSE)) {
                     fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
                 profile = getProfile();
-                if (profile == null) {
-                    exit(-1);
-                }
+            if (profile == null) {
+                exit(-1);
+            }
                 profile.getStats().add(stats);
                 stats=profile.getStats();
-            }
+        }
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
             if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null)
                 stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
 
-            fileFinish();
+        fileFinish();
 
-            Log.info("\n[TICTAC] I finished flux in "
-                    + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
+        Log.info("\n[TICTAC] I finished flux in "
+                + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
 
-            //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
+        //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
         }
 
         return stats;
@@ -2204,7 +2205,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                                         w, profile.masters[i].asense);
                     }
                 }*/
-            }
+                }
             if (profile == null) {
                 profile = new Profile();
                 try {
@@ -2502,7 +2503,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         stats.setEventsExp(nrEvents);
                     }
                 }*/
-            }
+                }
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -2522,6 +2523,11 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         /*if (!settings.get(FluxCapacitorSettings.STATS_FILE_APPEND))
             stats.reset();*/
 
+        if (mode == FluxCapacitorConstants.MODE_LEARN) {
+            nrReadsSingleLoci = 0;
+            nrReadsSingleLociMapped = 0;
+        }
+
         //System.out.println(System.getProperty("java.library.path"));
         long t0 = System.currentTimeMillis();
         try {
@@ -2530,31 +2536,40 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             //this.gtfReader= null;
             //GFFReader gtfReader= getGTFreader();
             gtfReader.reset();
-			mappingReader.reset();
+				mappingReader.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
-                if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
-                    StringBuilder message = new StringBuilder();
-                    message.append("Counting reads to the following elements: ");
-                    if (currentTasks.contains(Task.COUNT_SJ)) {
-                        message.append("splice junctions");
-                        if (currentTasks.contains(Task.COUNT_INTRONS))
-                            message.append(", ");
-                    }
-                    if (currentTasks.contains(Task.COUNT_INTRONS))
-                        message.append("all-intronic regions");
-                    message.append(".");
+                if (mode == FluxCapacitorConstants.MODE_LEARN) {
                     Log.info("","");
-                    Log.info("COUNT", message.toString());
+                    Log.info("LEARN", "Scanning the input and getting the attributes.");
                 }
-                if (currentTasks.contains(Task.DECOMPOSE)) {
-                    Log.info("","");
-                    Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                    if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
+                        StringBuilder message = new StringBuilder();
+                        message.append("Counting reads to the following elements: ");
+                        if (currentTasks.contains(Task.COUNT_SJ)) {
+                            message.append("splice junctions");
+                            if (currentTasks.contains(Task.COUNT_INTRONS))
+                                message.append(", ");
+                        }
+                        if (currentTasks.contains(Task.COUNT_INTRONS))
+                            message.append("all-intronic regions");
+                        message.append(".");
+                        Log.info("","");
+                        Log.info("COUNT", message.toString());
+                    }
+                    if (currentTasks.contains(Task.DECOMPOSE)) {
+                        Log.info("","");
+                        Log.info("SOLVE", "Deconvolving reads of overlapping transcripts.");
+                    }
                 }
             }
             final String profiling = "profiling ", decomposing = "decomposing ";
 
-            Log.progressStart(decomposing);
+            if (mode == FluxCapacitorConstants.MODE_LEARN)
+                Log.progressStart(profiling);
+            else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT)
+                Log.progressStart(decomposing);
 
 
             // BARNA-112 disable keeping original lines
@@ -2586,8 +2601,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                 if ((gene = geneNext) == null)
                     break;
-                /*if (gtfReader.getVLines() != null)
-                    origLines = (Vector<String>) gtfReader.getVLines().clone();    // TODO make array, trim..*/
+                if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT && gtfReader.getVLines() != null)
+                    origLines = (Vector<String>) gtfReader.getVLines().clone();    // TODO make array, trim..
 
                 // http://forums.sun.com/thread.jspa?threadID=5171135&tstart=1095
                 if (readerThread == null)
@@ -2617,10 +2632,10 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                         lastEnd = -1;
                     }
 
-                    /*if (mode == FluxCapacitorConstants.MODE_LEARN && gene[i].getTranscriptCount() == 1)
-                        stats.incrSingleTxLoci(1);
+                    if (gene[i].getTranscriptCount() == 1)
+                        ++nrSingleTranscriptLoci;
                     else if (mode == FluxCapacitorConstants.MODE_LEARN)
-							continue;*/	// performance for not reading mappings
+							continue;	// performance for not reading mappings
 
 						//MSIterator<Mapping> mappings= null;
 
@@ -2645,10 +2660,11 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
                     MSIterator<Mapping> mappings= mappingReader.read(gene[i].getChromosome(), start, end);
 
-//                    solve(gene[i], mappings, currentTasks);
-
-                    LocusSolver lsolver = new LocusSolver(gene[i], mappings, currentTasks, this.output, pairedEnd, stranded, settings, profile);
-                    stats.addLocus(lsolver.call());
+                    if (mode == FluxCapacitorConstants.MODE_LEARN ){//&& mappings != null) {
+                        solve(gene[i], mappings, EnumSet.of(Task.LEARN));
+                    } else if (mode == FluxCapacitorConstants.MODE_RECONSTRUCT) {
+                        solve(gene[i], mappings, currentTasks);
+                    }
 
                     if (mappings != null) {
                         mappings.clear();
@@ -2734,9 +2750,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile);
         if (!wrapper.isApplicable()) {
-            if (FileHelper.getExtension(inputFile).toUpperCase().equals("BAM")) {
-                throw new RuntimeException("BAM file has incorrect format");
-            }
             File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
             File f;
             if (sortedDir!=null)
@@ -2818,17 +2831,17 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 Log.warn("Skipped " + ((AbstractFileIOWrapper) reader).getNrInvalidLines() + " lines.");
 
             checkBEDscanMappings = reader.getCountMappings();
-            stats.setReadsTotal(reader.getCountReads());
-            stats.setMappingsTotal(reader.getCountMappings());
+            nrBEDreads = reader.getCountReads();
+            nrBEDmappings = reader.getCountMappings();
         } else {
             checkBEDscanMappings = -1;
-            stats.setReadsTotal(settings.get(FluxCapacitorSettings.NR_READS_MAPPED));
-            stats.setMappingsTotal(-1);
+            nrBEDreads = settings.get(FluxCapacitorSettings.NR_READS_MAPPED);
+            nrBEDmappings = -1;
         }
 
-		Log.info("\t"+ stats.getReadsTotal() + " reads"
-                + (stats.getMappingsTotal() > 0 ? ", " + stats.getMappingsTotal() + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
-        if (stats.getMappingsTotal() > 0)
+		Log.info("\t"+ nrBEDreads+ " reads"
+                + (nrBEDmappings > 0 ? ", " + nrBEDmappings + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
+        if (nrBEDmappings > 0)
             Log.info("\t" + reader.getCountContinuousMappings() + " entire, " + reader.getCountSplitMappings()
                     + " split mappings (" + (reader.getCountSplitMappings() * 10f / reader.getCountMappings()) + "%)");
 

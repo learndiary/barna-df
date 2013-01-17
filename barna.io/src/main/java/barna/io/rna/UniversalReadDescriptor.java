@@ -29,6 +29,7 @@ package barna.io.rna;
 
 import barna.model.constants.Constants;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class UniversalReadDescriptor {
@@ -625,4 +626,45 @@ public class UniversalReadDescriptor {
 			}
 		}
 	}
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UniversalReadDescriptor that = (UniversalReadDescriptor) o;
+
+        if (antisense != that.antisense) return false;
+        if (posID != that.posID) return false;
+        if (posPair != that.posPair) return false;
+        if (posStrand != that.posStrand) return false;
+        if (sense != that.sense) return false;
+        if (symbolAsense != that.symbolAsense) return false;
+        if (symbolMate1 != that.symbolMate1) return false;
+        if (symbolMate2 != that.symbolMate2) return false;
+        if (symbolNoSense != that.symbolNoSense) return false;
+        if (symbolSense != that.symbolSense) return false;
+        if (!Arrays.equals(mandatory, that.mandatory)) return false;
+        if (!Arrays.equals(separators, that.separators)) return false;
+        if (!this.toString().equals(that.toString())) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = separators != null ? Arrays.hashCode(separators) : 0;
+        result = 31 * result + (mandatory != null ? Arrays.hashCode(mandatory) : 0);
+        result = 31 * result + posPair;
+        result = 31 * result + posStrand;
+        result = 31 * result + posID;
+        result = 31 * result + (sense ? 1 : 0);
+        result = 31 * result + (antisense ? 1 : 0);
+        result = 31 * result + (int) symbolMate1;
+        result = 31 * result + (int) symbolMate2;
+        result = 31 * result + (int) symbolSense;
+        result = 31 * result + (int) symbolAsense;
+        result = 31 * result + (int) symbolNoSense;
+        return result;
+    }
 }
