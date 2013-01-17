@@ -33,6 +33,7 @@ import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.flux.capacitor.profile.Profile;
+import barna.io.FileHelper;
 import barna.model.SpliceSite;
 import barna.model.Transcript;
 import barna.model.commons.DoubleVector;
@@ -45,10 +46,7 @@ import barna.model.splicegraph.SuperEdge;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -829,7 +827,7 @@ public class GraphLPsolver {
 
         if (lpOutFName== null&& fileLPdir!= null) {
             try {
-                lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"),SFX_LPOUT,fileLPdir).getAbsolutePath();
+                lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"), SFX_LPOUT, fileLPdir).getAbsolutePath();
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage());
         }
