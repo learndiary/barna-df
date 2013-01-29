@@ -849,9 +849,9 @@ public class AStalavista implements FluxTool<Void>{
             settings.set(AStalavistaSettings.GENEID_PARAM, args.getFile(AStalavistaSettings.GENEID_PARAM.getLongOption()));
 
         // output options
-        if (args.userSpecified(AStalavistaSettings.OUTPUT_LOCUS.getName()))
-                // parses enum string and sets EnumSet correspondingly
-                settings.set(AStalavistaSettings.OUTPUT_LOCUS.getName(), args.getString(AStalavistaSettings.OUTPUT_LOCUS.getName()));
+//        if (args.userSpecified(AStalavistaSettings.OUTPUT_LOCUS.getName()))
+//                // parses enum string and sets EnumSet correspondingly
+//                settings.set(AStalavistaSettings.OUTPUT_LOCUS.getName(), args.getString(AStalavistaSettings.OUTPUT_LOCUS.getName()));
 
         return settings;
     }

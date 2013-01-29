@@ -6,7 +6,7 @@ import barna.model.ASEvent;
 import barna.model.Graph;
 import barna.model.Species;
 import barna.model.Transcript;
-import barna.model.gff.GTFschema;
+//import barna.model.gff.GTFschema;
 import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
@@ -21,7 +21,7 @@ import java.util.Iterator;
  * Time: 1:14 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AStalavistaSettings extends GTFschema {
+public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
 
     // TODO {SplicingGraph.class, null, SJextractor.class, AttributeExtractor.class};	// null= LaVista.class
 
