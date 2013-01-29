@@ -410,7 +410,7 @@ public class FluxCapacitorTest {
         assertEquals(8005, stats.getMappingsTotal());
         assertEquals(8184, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
-        assertEquals(192, stats.getPairsWrongOrientation());
+        assertEquals(208, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());
 
         // check
@@ -454,7 +454,7 @@ public class FluxCapacitorTest {
         assertEquals(8005, stats.getMappingsTotal());
         assertEquals(8184, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
-        assertEquals(192, stats.getPairsWrongOrientation());
+        assertEquals(208, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());
 
     }

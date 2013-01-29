@@ -488,6 +488,7 @@ public class MappingStats {
         mappingsMapped = 0;
         mappingPairsNoTx = 0;
         pairsWrongOrientation = 0;
+        singleTxLoci = 0;
 
         //After deconvolution
         loci = 0;

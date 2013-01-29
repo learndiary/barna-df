@@ -647,6 +647,9 @@ public class FileHelper {
      */
     public static boolean move(File from, File to, String msg) {
 
+        if (from==null || to==null)
+            return false;
+
         if(msg != null){
             Log.progressStart(msg);
         }

@@ -258,7 +258,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             this.stranded = stranded;
             this.settings = settings;
             this.profile = profile;
-            this.stats = profile.getStats();
+            this.stats = new MappingStats();
+            this.stats.add(profile.getStats());
+            this.stats.reset();
 
             nrMappingsReadsOrPairs = 0;
         }
