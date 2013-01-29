@@ -694,8 +694,6 @@ public class AStalavista implements FluxTool<Void>{
     @Override
     public boolean validateParameter(JSAPResult args) {
 
-        // TODO move "logic" tests of parameters to the settings ParameterSchema.validateParameters() and call that in the end
-
         // output help
         if (args.userSpecified(AStalavistaSettings.PRINT_PARAMETERS.getName())) {
             AStalavistaSettings settings= new AStalavistaSettings();
@@ -703,89 +701,98 @@ public class AStalavista implements FluxTool<Void>{
             return false;
         }
 
-        // create settings
-        settings = new AStalavistaSettings();
-
-        // input file
-        if (args.userSpecified(AStalavistaSettings.REF_FILE.getLongOption()))
-            inputFile= args.getFile(AStalavistaSettings.REF_FILE.getLongOption());
-        if (inputFile== null|| !inputFile.exists()) {
-            Log.error("Hey, you forgot to specify a valid input file! ");
-            if (inputFile!= null)
-                Log.error("Cannot find: "+inputFile.getAbsolutePath());
+        // create or merge settings
+        try {
+            settings= createSettings(settings, args);
+        } catch (ParameterException e) {
+            Log.error(e.getMessage(), e);
             return false;
         }
 
-        // output options
-        if (args.userSpecified(AStalavistaSettings.OUTPUT_LOCUS.getName()))
-            try {
-                // parses enum string and sets EnumSet correspondingly
-                settings.set(AStalavistaSettings.OUTPUT_LOCUS.getName(), args.getString(AStalavistaSettings.OUTPUT_LOCUS.getName()));
-            } catch (ParameterException e) {
-                Log.error(e.getMessage(), e);
-                return false;
+        // TODO from now on do all checks on the settings stub
+        // TODO move "logic" tests of parameters to the settings ParameterSchema.validateParameters() and call that in the end
+        if (settings.get(AStalavistaSettings.REF_FILE)== null) {
+            Log.error("Hey, you forgot to specify a valid input file! ");
+            return false;
+        } else {
+            inputFile= settings.get(AStalavistaSettings.REF_FILE);
+            EventExtractor.writerThread= new WriterThread();
+            if (EventExtractor.writerThread.outputFname== null&& (!SplicingGraph.writeStdOut)) {
+                EventExtractor.writerThread.outputFname= inputFile.getAbsolutePath()+"_astalavista.gtf.gz";
             }
-
-
-        // genome directory
-        if (args.userSpecified(AStalavistaSettings.GEN_DIR.getName())||
-            args.userSpecified(AStalavistaSettings.GEN_DIR.getLongOption())) {
-            // acceptableIntrons= true;
-            if (args.userSpecified(AStalavistaSettings.GEN_DIR.getName()))
-                Graph.overrideSequenceDirPath= args.getFile(AStalavistaSettings.GEN_DIR.getName()).getAbsolutePath();
-            else
-                Graph.overrideSequenceDirPath= args.getFile(AStalavistaSettings.GEN_DIR.getLongOption()).getAbsolutePath();
-
+            if (EventExtractor.writerThread.outputFname!= null&& new MyFile(EventExtractor.writerThread.outputFname).exists()) {
+                // Confirm o..+"\n by typing \'yes\':"
+                Log.error("Overwriting output file "+ EventExtractor.writerThread.outputFname+".");
+            }
         }
-        if (args.userSpecified(AStalavistaSettings.EXT_EVENTS.getLongOption()))
-            onlyInternal= true;
-        else
-            onlyInternal= false;
+
+        // genome dir
+        if (settings.get(AStalavistaSettings.GEN_DIR)== null) {
+            // TODO acceptableIntrons= true;
+        } else {
+            Graph.overrideSequenceDirPath= settings.get(AStalavistaSettings.GEN_DIR).getAbsolutePath();
+        }
+
+        // init variants
+        if (settings.get(AStalavistaSettings.VARIANTS)!= null) {
+            variants= getVariants(settings.get(AStalavistaSettings.VARIANTS));
+        }
+
+        // events
+        if (!settings.get(AStalavistaSettings.EVENT_TYPES).isEmpty()) {
+            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.ASExt)
+                    || settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.DS)
+                    || settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.VS))
+
+                onlyInternal= false;
+            else
+                onlyInternal= true;
+
+            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.ASExt)
+                    || settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.ASInt))
+                EventExtractor.retrieveASEvents= true;
+            else
+                EventExtractor.retrieveASEvents= false;
+
+            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.DS))
+                EventExtractor.retrieveDSEvents= true;
+            else
+                EventExtractor.retrieveDSEvents= false;
+
+            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.VS))
+                EventExtractor.retrieveVSEvents= true;
+            else
+                EventExtractor.retrieveVSEvents= false;
+        }
+        System.exit(0);
 
 
-        // check for necessary components
-        /* if (args.userSpecified(AStalavistaSettings.REF_FILE.getShortOption()))
-            inputFile= args.getFile(AStalavistaSettings.REF_FILE.getShortOption());
-        else */
-
+        // intron filtering
         if ((SplicingGraph.canonicalSS|| acceptableIntrons)&& Graph.overrideSequenceDirPath== null) {
             Log.error("You want me to check introns for valid/canonical splice sites, but you did not provide a valid sequence directory");
             return false;
         }
 
-        EventExtractor.writerThread= new WriterThread();
-        if (EventExtractor.writerThread.outputFname== null&& (!SplicingGraph.writeStdOut)) {
-            EventExtractor.writerThread.outputFname= inputFile.getAbsolutePath()+"_astalavista.gtf.gz";
-        }
-        if (EventExtractor.writerThread.outputFname!= null&& new MyFile(EventExtractor.writerThread.outputFname).exists()) {
-            // Confirm o..+"\n by typing \'yes\':"
-            System.err.println("Overwriting output file "+ EventExtractor.writerThread.outputFname+".");
-        }
-
-        if (args.userSpecified(AStalavistaSettings.SCORE_SITES.getName())||
-                args.userSpecified(AStalavistaSettings.SCORE_SITES.getLongOption())) {
+        // check splice site scoring stuff
+        if (settings.get(AStalavistaSettings.SCORE_SITES)!= null) {
 
             try {
-                if (args.userSpecified(AStalavistaSettings.SCORE_SITES.getName()))
-                    siteScoreWriter= new BufferedWriter(new FileWriter(args.getFile(AStalavistaSettings.SCORE_SITES.getName())));
-                else
-                    siteScoreWriter= new BufferedWriter(new FileWriter(args.getFile(AStalavistaSettings.SCORE_SITES.getLongOption())));
+                siteScoreWriter= new BufferedWriter(new FileWriter(args.getFile(AStalavistaSettings.SCORE_SITES.getName())));
             } catch (IOException e) {
-                e.printStackTrace();
-                return false;
+                Log.error(e.getMessage(), e);
             }
 
-
-            if(Graph.overrideSequenceDirPath== null) {
+            if(settings.get(AStalavistaSettings.GEN_DIR)== null) {
                 Log.error("Splice site scoring requires the genomic sequence, set parameter \'GEN_DIR\'");
                 return false;
             }
+
             try {
-                if(args.getFile(AStalavistaSettings.GENEID_PARAM.getName())== null) {
+                if(settings.get(AStalavistaSettings.GENEID_PARAM)== null) {
                     Log.warn("No GeneID parameter file for scoring models, using default");
                     geneidParam= Profile.readParam(GeneIDconstants.PARAMETERFILE, new GeneIDsettings())[0];
                 } else
-                    geneidParam= Profile.readParam(args.getFile(AStalavistaSettings.GENEID_PARAM.getName()).getAbsolutePath(),
+                    geneidParam= Profile.readParam(settings.get(AStalavistaSettings.GENEID_PARAM).getAbsolutePath(),
                             new GeneIDsettings())[0];
             } catch (Exception e) {
                 Log.error(e.getMessage(), e);
@@ -793,27 +800,60 @@ public class AStalavista implements FluxTool<Void>{
             }
         }
 
-        // variants
-        if (args.userSpecified(AStalavistaSettings.VARIANTS.getName())||
-                args.userSpecified(AStalavistaSettings.VARIANTS.getLongOption())) {
-            // acceptableIntrons= true;
-            File vcf= null;
-            if (args.userSpecified(AStalavistaSettings.VARIANTS.getName()))
-                vcf= args.getFile(AStalavistaSettings.VARIANTS.getName());
-            else
-                vcf= args.getFile(AStalavistaSettings.VARIANTS.getLongOption());
-
-            if (vcf== null) {
-                Log.error("VCF file not valid");
-                return false;
-            }
-
-            variants= getVariants(vcf);
-        }
-
-        //setFile(args.getFile(""))
 
         return true;
+    }
+
+    /**
+     * Method to convert command line arguments to parameter file stub,
+     * possibly overwriting values set via additional parameter file.
+     *
+     * @param settings pre-defined settings or <code>null</code>
+     * @param args parsed command line arguments
+     * @return newly created or extended settings
+     * @throws ParameterException in case a parameter does not get what
+     * it expects
+     */
+    AStalavistaSettings createSettings(AStalavistaSettings settings, JSAPResult args) throws ParameterException {
+
+        // lazily create
+        if (settings== null)
+            settings = new AStalavistaSettings();
+
+        // input file
+        if (args.userSpecified(AStalavistaSettings.REF_FILE.getLongOption()))
+            settings.set(AStalavistaSettings.REF_FILE, args.getFile(AStalavistaSettings.REF_FILE.getLongOption()));
+
+        // genome directory
+        if (args.userSpecified(AStalavistaSettings.GEN_DIR.getLongOption())) {
+            settings.set(AStalavistaSettings.GEN_DIR, args.getFile(AStalavistaSettings.GEN_DIR.getLongOption()));
+        }
+
+        // variants, VCF file
+        if (args.userSpecified(AStalavistaSettings.VARIANTS.getLongOption())) {
+            settings.set(AStalavistaSettings.VARIANTS, args.getFile(AStalavistaSettings.VARIANTS.getLongOption()));
+        }
+
+        // events
+        if (args.userSpecified(AStalavistaSettings.EVENT_TYPES.getLongOption())) {
+            String s= args.getString(AStalavistaSettings.EVENT_TYPES.getLongOption());
+            settings.set(AStalavistaSettings.EVENT_TYPES.getName(),
+                    args.getString(AStalavistaSettings.EVENT_TYPES.getLongOption()));
+        }
+
+        // splice site scoring stuff
+        if (args.userSpecified(AStalavistaSettings.SCORE_SITES.getLongOption()))
+            settings.set(AStalavistaSettings.SCORE_SITES, args.getFile(AStalavistaSettings.SCORE_SITES.getLongOption()));
+
+        if (args.userSpecified(AStalavistaSettings.GENEID_PARAM.getLongOption()))
+            settings.set(AStalavistaSettings.GENEID_PARAM, args.getFile(AStalavistaSettings.GENEID_PARAM.getLongOption()));
+
+        // output options
+        if (args.userSpecified(AStalavistaSettings.OUTPUT_LOCUS.getName()))
+                // parses enum string and sets EnumSet correspondingly
+                settings.set(AStalavistaSettings.OUTPUT_LOCUS.getName(), args.getString(AStalavistaSettings.OUTPUT_LOCUS.getName()));
+
+        return settings;
     }
 
     /**

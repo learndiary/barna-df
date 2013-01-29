@@ -51,7 +51,7 @@ public class AStalavistaSettings extends GTFschema {
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             File refFile = (File) schema.get(parameter);
             if (refFile == null) {
-                throw new ParameterException("Hey, you forgot to specify a reference annotation!");
+                throw new ParameterException("Reference annotation cannot be null!");
             }
             if (!refFile.exists()) {
                 throw new ParameterException("The reference annotation " + refFile.getAbsolutePath() + " could not be found!");
@@ -73,7 +73,17 @@ public class AStalavistaSettings extends GTFschema {
      */
     public static final Parameter<File> VARIANTS = Parameters.fileParameter("VARIANTS",
             "name and path of a file with the variant information (vcf)",
-            null, null, null).longOption("vcf");
+            null, new ParameterValidator() {
+
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File vcf = (File) schema.get(parameter);
+
+                if (vcf == null || (!vcf.exists())) {
+                    throw new ParameterException("VCF file not valid: "+ vcf== null? "null": vcf.getAbsolutePath());
+                }
+            }
+    }).longOption("vcf");
 
     /**
      * Path to the GTF output annotation.
@@ -286,6 +296,36 @@ public class AStalavistaSettings extends GTFschema {
     public static final Parameter<Boolean> EXT_EVENTS = Parameters.booleanParameter("EXT_EVENTS",
             "do retrieve external events", Boolean.FALSE, null).longOption("ext");
 
+
+    /**
+     * Different types of variation found in exon-intron structures
+     * of transcripts:
+     * <ul><li>AS= alternative splicing when comprising
+     * at least one alternative splice site.
+     * Types of alternative splicing can either be &quot;internal&quot;
+     * and delimited by two common sites, or &quot;external&quot;
+     * comprising at least one alternative splice site in addition
+     * to alternative 5'- or 3' transcript structures.</li>
+     * extending transcript structures by additional (splice) sites
+     * to the 5'- or the 3'-end</li>
+     * <li>VS= variable sites is any other form of sites that differ
+     * between overlapping transcript structures</li>
+     * @see barna.model.ASEvent#getType()
+     * @see <a href="http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147">
+     *     http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147</a><li>DS= additional splicing that are flanked by a common site and
+     */
+    public static enum EventTypes {ASExt,ASInt,DS,VS};
+
+
+    /**
+     * Parameter for counting reads that falls into specific elements
+     */
+    public static final Parameter<EnumSet<EventTypes>> EVENT_TYPES = Parameters.enumSetParameter(
+            "EVENT_TYPES",
+            " Type of events that is considered",
+            EnumSet.of(EventTypes.ASInt),
+            EventTypes.class,
+            null).longOption("events").shortOption('e');
 
     /**
         * Flag to suppress AS event retrieval.
