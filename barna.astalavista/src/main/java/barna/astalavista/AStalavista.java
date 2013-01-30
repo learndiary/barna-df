@@ -157,36 +157,58 @@ public class AStalavista implements FluxTool<Void>{
     @Override
     public Void call() throws Exception {
 
-        // TODO parse arguments
-        //inputFile= new MyFile(parseArguments(SplicingGraph.writerThread, args).getAbsolutePath());
 
-        //
-        // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716.gtf
-        // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_mRNAs_fromUCSC070716.gtf
-        // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_mRNAs_fromUCSC070716_splicedESTs_from_UCSC070716.gtf
-        // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_mRNAs_fromUCSC070716_splicedESTs_from_UCSC070716_chr11.gtf
-        // /home/ug/msammeth/annotations/human_hg18_RefSeqGenes_fromUCSC070716_mRNAs_fromUCSC070716_splicedESTs_from_UCSC070716_chr6.gtf
-        //
-        // /home/ug/msammeth/annotations/mm8_0602_RefSeq_fromUCSC_070807.gtf
-        // /home/ug/msammeth/annotations/mm8_0602_RefSeq_fromUCSC_070807_mRNAs_fromUCSC070919.gtf
-        // /home/ug/msammeth/annotations/mm8_0602_RefSeq_fromUCSC_070807_mRNAs_fromUCSC070919_splicedESTs_fromUCSC070919.gtf
-        boolean output= false, output2= true;
-//		if (rusc)
-//			outputFname= "delme.asta";
-
-        EventExtractor.writerThread.start();
-
-        // init and start threads
+        // INIT
         long t0= System.currentTimeMillis();
-        if (output2) {
-            // writerThread
-            // outputStats(SplicingGraph.writerThread, new OutputStreamWriter(System.err));
-            // TODO write settings
-            //Date ti= new Date(t0);
-            //System.out.println("["+ti+"]  started, k= "+EventExtractor.n+" species "+EventExtractor.species+", input file "+inputFile.getAbsolutePath()+", output file= "+outputFname);
+
+        inputFile= settings.get(AStalavistaSettings.REF_FILE);
+
+        // TODO acceptableIntrons= true;
+
+        // consider canonical sites only
+        SplicingGraph.canonicalSS= settings.get(AStalavistaSettings.CANONICAL);
+
+        // genome dir
+        if (settings.get(AStalavistaSettings.GENOME)!= null) {
+            Graph.overrideSequenceDirPath= settings.get(AStalavistaSettings.GENOME).getAbsolutePath();
         }
-        //GTFChrReader reader= new GTFChrReader(file.getAbsolutePath());
-        //ChromosomeReaderThread readerThread= new ChromosomeReaderThread(reader);
+
+        // events
+        if (settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
+                || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP)
+                || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST))
+
+            SplicingGraph.onlyInternal= false;
+        else
+            SplicingGraph.onlyInternal= true;
+
+        // OUTPUT OPTIONS
+        if (!settings.get(AStalavistaSettings.EVENTS).isEmpty()) {
+            // Events: predict 3'complete transcripts
+            if (settings.get(AStalavistaSettings.OUTOPTIONS).contains(AStalavistaSettings.OutputOptions.CP3))
+                ASEvent.check3Pcomplete= true;
+            // Events: predict NMD
+            if (settings.get(AStalavistaSettings.OUTOPTIONS).contains(AStalavistaSettings.OutputOptions.NMD))
+                ASEvent.checkNMD= true;
+            // Events: output flank type (constitutive/alternative)
+            if (settings.get(AStalavistaSettings.OUTOPTIONS).contains(AStalavistaSettings.OutputOptions.FLT))
+                ASEvent.setOutputFlankMode(true);
+            if (settings.get(AStalavistaSettings.OUTOPTIONS).contains(AStalavistaSettings.OutputOptions.SEQ))
+                ; // TODO SplicingGraph.outputSeq= true;
+        }
+
+        // intron confidence
+        SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStalavistaSettings.INTRON_CONFIDENCE).intValue();
+
+        // edge confidence
+        Transcript.setEdgeConfidenceLevel((byte) settings.get(AStalavistaSettings.EDGE_CONFIDENCE).intValue());
+
+        // init variants
+        if (settings.get(AStalavistaSettings.VARIANTS)!= null) {
+            variants= getVariants(settings.get(AStalavistaSettings.VARIANTS));
+        }
+
+        // init input / reader thread
         GTFwrapper reader= new GTFwrapper(inputFile.getAbsolutePath());
         if (!reader.isApplicable()) {
             inputFile= reader.sort();
@@ -197,10 +219,30 @@ public class AStalavista implements FluxTool<Void>{
         reader.setNoIDs(null);
         //reader.sweepToChromosome("chr17");
         GeneAheadReaderThread readerThread= new GeneAheadReaderThread(reader);
-        readerThread.setOutput(output);
-        readerThread.setOutput2(output2);
+        readerThread.setOutput(false);
+        readerThread.setOutput2(true);
         readerThread.start();
 
+
+        // init output / writer thread
+        EventExtractor.writerThread= new WriterThread();
+        if (EventExtractor.writerThread.outputFname== null&& (!SplicingGraph.writeStdOut)) {
+            if (settings.get(AStalavistaSettings.OUTPUT)!= null)
+                EventExtractor.writerThread.outputFname= settings.get(AStalavistaSettings.OUTPUT).getAbsolutePath();
+            else
+                EventExtractor.writerThread.outputFname= inputFile.getAbsolutePath()+"_astalavista.gtf.gz";
+        }
+        if (EventExtractor.writerThread.outputFname!= null&& new MyFile(EventExtractor.writerThread.outputFname).exists()) {
+            // Confirm o..+"\n by typing \'yes\':"
+            Log.error("Overwriting output file "+ EventExtractor.writerThread.outputFname+".");
+        }
+        EventExtractor.writerThread.start();
+
+        // write settings
+        outputStats();
+
+
+        // MAIN LOOP
         while (true) {
             Gene[] g= readerThread.getGenes();
             if (g== null)
@@ -225,14 +267,6 @@ public class AStalavista implements FluxTool<Void>{
                     g[i] = null;
                     continue;
                 }
-//						if (g[i].getTranscriptCount()> 5000)  {
-//							if (output2) {
-//								Date ti= new Date(System.currentTimeMillis());
-//								System.err.println("["+ti+"] "+chromo+" skipped locus "+g[i].getTranscripts()[0].getTranscriptID());
-//							}
-//							continue;
-//						}
-
                 g[i].setSpecies(species);
 
                 EventExtractor extractor= new EventExtractor(g[i], settings);
@@ -242,34 +276,30 @@ public class AStalavista implements FluxTool<Void>{
 
             }
 
-            System.err.println(chromo);
-
             // prepare for next batch
-            if (output2) {
-                Date ti = new Date(System.currentTimeMillis());
-                int div = (int) (EventExtractor.cumulGC +
-                        EventExtractor.cumulGF +
-                        EventExtractor.cumulEV) / 1000;
-                int frac = 0;
-                if (div > 0)
-                    frac = (EventExtractor.counter - evBefore) / div;
-                else
-                    frac = (EventExtractor.counter - evBefore);
+            Date ti = new Date(System.currentTimeMillis());
+            int div = (int) (EventExtractor.cumulGC +
+                    EventExtractor.cumulGF +
+                    EventExtractor.cumulEV) / 1000;
+            int frac = 0;
+            if (div > 0)
+                frac = (EventExtractor.counter - evBefore) / div;
+            else
+                frac = (EventExtractor.counter - evBefore);
 
-                System.err.println("[" + ti + "] " + chromo +
-                        " graph construct " + (EventExtractor.cumulGC / 1000) +
-                        //" sec, fuzzy flanks "+(cumulGF/1000) +
-                        " sec, contraction " + (EventExtractor.cumulGT / 1000) +
-                        " sec, extract events " + (EventExtractor.cumulEV / 1000) +
-                        " sec, found " + (EventExtractor.counter - evBefore) +
-                        " events, " + frac + " ev/sec.");
-            }
+            Log.debug("[" + ti + "] " + chromo +
+                    " graph construct " + (EventExtractor.cumulGC / 1000) +
+                    //" sec, fuzzy flanks "+(cumulGF/1000) +
+                    " sec, contraction " + (EventExtractor.cumulGT / 1000) +
+                    " sec, extract events " + (EventExtractor.cumulEV / 1000) +
+                    " sec, found " + (EventExtractor.counter - evBefore) +
+                    " events, " + frac + " ev/sec.");
             System.gc();
             EventExtractor.writerThread.interrupt();
 
         }
 
-        System.err.println("took "+((System.currentTimeMillis()- t0)/1000)+" sec.");
+       Log.info("took "+((System.currentTimeMillis()- t0)/1000)+" sec.");
 
         if (siteScoreWriter!= null)
             siteScoreWriter.close();
@@ -279,9 +309,11 @@ public class AStalavista implements FluxTool<Void>{
             EventExtractor.writerThread.interrupt();
             EventExtractor.writerThread.join();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+            ; // :)
         }
-        System.err.println("found "+ EventExtractor.counter+" events.");
+
+        Log.info("found "+ EventExtractor.counter+" events.");
+
         if (acceptableIntrons) {
             DecimalFormat df = new DecimalFormat("#.##");
             System.err.println("discarded " + invalidIntrons + " introns, " +
@@ -695,7 +727,7 @@ public class AStalavista implements FluxTool<Void>{
     public boolean validateParameter(JSAPResult args) {
 
         // output help
-        if (args.userSpecified(AStalavistaSettings.PRINT_PARAMETERS.getName())) {
+        if (args.userSpecified(AStalavistaSettings.HELP.getName())) {
             AStalavistaSettings settings= new AStalavistaSettings();
             settings.write(System.out);
             return false;
@@ -709,81 +741,63 @@ public class AStalavista implements FluxTool<Void>{
             return false;
         }
 
-        // TODO from now on do all checks on the settings stub
-        // TODO move "logic" tests of parameters to the settings ParameterSchema.validateParameters() and call that in the end
         if (settings.get(AStalavistaSettings.REF_FILE)== null) {
             Log.error("Hey, you forgot to specify a valid input file! ");
             return false;
-        } else {
-            inputFile= settings.get(AStalavistaSettings.REF_FILE);
-            EventExtractor.writerThread= new WriterThread();
-            if (EventExtractor.writerThread.outputFname== null&& (!SplicingGraph.writeStdOut)) {
-                EventExtractor.writerThread.outputFname= inputFile.getAbsolutePath()+"_astalavista.gtf.gz";
+        }
+
+        if (settings.requiresGenomicSequence()
+            && settings.get(AStalavistaSettings.GENOME)== null) {
+
+            Log.error("You want me to check introns for valid/canonical splice sites, " +
+                    "but you did not provide a valid sequence directory");
+        }
+
+        if (settings.get(AStalavistaSettings.GENOME)!= null) {
+
+            File f= settings.get(AStalavistaSettings.GENOME);
+            if (f.exists()&& f.isDirectory()) {
+                Graph.overrideSequenceDirPath= f.getAbsolutePath();
+            } else {
+                Log.message("Trying to parse species_version pair");
+                String[] s= f.getName().split("_");
+                if (s.length!= 2) {
+                    Log.error("The genome " + f.getAbsolutePath() + " could not be found!");
+                    return false;
+                }
+                Species spe= new Species(s[0]);
+                spe.setGenomeVersion(s[1]);
+                AStalavista.setSpecies(spe);
+
             }
-            if (EventExtractor.writerThread.outputFname!= null&& new MyFile(EventExtractor.writerThread.outputFname).exists()) {
-                // Confirm o..+"\n by typing \'yes\':"
-                Log.error("Overwriting output file "+ EventExtractor.writerThread.outputFname+".");
+        }
+
+            // output
+        if (settings.get(AStalavistaSettings.OUTPUT)!= null) {
+            // got to check output file here, to allow for keyword 'stdout'
+            File f= settings.get(AStalavistaSettings.OUTPUT);
+            if (f.toString().equals(AStalavistaSettings.STDOUT)) {
+                SplicingGraph.writeStdOut= true;    // TODO refactor
+            } else if (!f.exists()) {
+                Log.error("Cannot find output file "+ f.getAbsolutePath());
+                return false;
             }
         }
 
-        // genome dir
-        if (settings.get(AStalavistaSettings.GEN_DIR)== null) {
-            // TODO acceptableIntrons= true;
-        } else {
-            Graph.overrideSequenceDirPath= settings.get(AStalavistaSettings.GEN_DIR).getAbsolutePath();
-        }
 
-        // init variants
-        if (settings.get(AStalavistaSettings.VARIANTS)!= null) {
-            variants= getVariants(settings.get(AStalavistaSettings.VARIANTS));
-        }
-
-        // events
-        if (!settings.get(AStalavistaSettings.EVENT_TYPES).isEmpty()) {
-            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.ASExt)
-                    || settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.DS)
-                    || settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.VS))
-
-                onlyInternal= false;
-            else
-                onlyInternal= true;
-
-            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.ASExt)
-                    || settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.ASInt))
-                EventExtractor.retrieveASEvents= true;
-            else
-                EventExtractor.retrieveASEvents= false;
-
-            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.DS))
-                EventExtractor.retrieveDSEvents= true;
-            else
-                EventExtractor.retrieveDSEvents= false;
-
-            if (settings.get(AStalavistaSettings.EVENT_TYPES).contains(AStalavistaSettings.EventTypes.VS))
-                EventExtractor.retrieveVSEvents= true;
-            else
-                EventExtractor.retrieveVSEvents= false;
-        }
-        System.exit(0);
-
-
-        // intron filtering
-        if ((SplicingGraph.canonicalSS|| acceptableIntrons)&& Graph.overrideSequenceDirPath== null) {
-            Log.error("You want me to check introns for valid/canonical splice sites, but you did not provide a valid sequence directory");
-            return false;
-        }
 
         // check splice site scoring stuff
         if (settings.get(AStalavistaSettings.SCORE_SITES)!= null) {
 
             try {
+                // TODO refactor
                 siteScoreWriter= new BufferedWriter(new FileWriter(args.getFile(AStalavistaSettings.SCORE_SITES.getName())));
             } catch (IOException e) {
                 Log.error(e.getMessage(), e);
             }
 
-            if(settings.get(AStalavistaSettings.GEN_DIR)== null) {
-                Log.error("Splice site scoring requires the genomic sequence, set parameter \'GEN_DIR\'");
+            if(settings.get(AStalavistaSettings.GENOME)== null) {
+                Log.error("Splice site scoring requires the genomic sequence, set parameter \'GENOME\'");
                 return false;
             }
 
@@ -799,7 +813,6 @@ public class AStalavista implements FluxTool<Void>{
                 return false;
             }
         }
-
 
         return true;
     }
@@ -825,8 +838,8 @@ public class AStalavista implements FluxTool<Void>{
             settings.set(AStalavistaSettings.REF_FILE, args.getFile(AStalavistaSettings.REF_FILE.getLongOption()));
 
         // genome directory
-        if (args.userSpecified(AStalavistaSettings.GEN_DIR.getLongOption())) {
-            settings.set(AStalavistaSettings.GEN_DIR, args.getFile(AStalavistaSettings.GEN_DIR.getLongOption()));
+        if (args.userSpecified(AStalavistaSettings.GENOME.getLongOption())) {
+            settings.set(AStalavistaSettings.GENOME, args.getFile(AStalavistaSettings.GENOME.getLongOption()));
         }
 
         // variants, VCF file
@@ -835,10 +848,10 @@ public class AStalavista implements FluxTool<Void>{
         }
 
         // events
-        if (args.userSpecified(AStalavistaSettings.EVENT_TYPES.getLongOption())) {
-            String s= args.getString(AStalavistaSettings.EVENT_TYPES.getLongOption());
-            settings.set(AStalavistaSettings.EVENT_TYPES.getName(),
-                    args.getString(AStalavistaSettings.EVENT_TYPES.getLongOption()));
+        if (args.userSpecified(AStalavistaSettings.EVENTS.getLongOption())) {
+            String s= args.getString(AStalavistaSettings.EVENTS.getLongOption());
+            settings.set(AStalavistaSettings.EVENTS.getName(),
+                    args.getString(AStalavistaSettings.EVENTS.getLongOption()));
         }
 
         // splice site scoring stuff
@@ -883,56 +896,34 @@ public class AStalavista implements FluxTool<Void>{
         }
     }
 
-     public void outputStats(Writer writer) {
-        BufferedWriter buffy= new BufferedWriter(writer);
-        try {
-            buffy.write("# started\t"+new Date(System.currentTimeMillis())+barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# input\t"+inputFile.getAbsolutePath()+barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# output");
-            if (!SplicingGraph.writeStdOut)
-                buffy.write("\t"+outputFname+barna.commons.system.OSChecker.NEW_LINE);
-            else
-                buffy.write("\tstdout\n");
-            if (barna.model.Graph.overrideSequenceDirPath== null) {
-                if (DEBUG)
-                    buffy.write("# genome\t"+ species+ barna.commons.system.OSChecker.NEW_LINE);
-            } else
-                buffy.write("# genome\t"+ barna.model.Graph.overrideSequenceDirPath+barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# dimension\t"+ EventExtractor.n+barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# internalOnly\t"+ SplicingGraph.onlyInternal +barna.commons.system.OSChecker.NEW_LINE);
-            //buffy.write("# canonicalSS "+canonicalSS+barna.commons.system.OSChecker.NEW_LINE);
-            //buffy.write("# acceptableIntrons "+acceptableIntrons+barna.commons.system.OSChecker.NEW_LINE);
-            if (SplicingGraph.acceptableIntrons)
-                buffy.write("# intronConfidenceLevel "+SplicingGraph.intronConfidenceLevel+barna.commons.system.OSChecker.NEW_LINE);
-            if (!SplicingGraph.onlyInternal)
-                buffy.write("# edgeConfidenceLevel "+ Transcript.getEdgeConfidenceLevel()+barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# as_events\t");
-            if (SplicingGraph.retrieveASEvents)
-                buffy.write("true");
-            else
-                buffy.write("false");
-            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
-            if (SplicingGraph.retrieveDSEvents) {
-                buffy.write("# ds_events\t");
-                if (SplicingGraph.retrieveDSEvents)
-                    buffy.write("true");
-                else
-                    buffy.write("false");
-            }
-            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
-            buffy.write("# vs_events\t");
-            if (SplicingGraph.retrieveVSEvents)
-                buffy.write("true");
-            else
-                buffy.write("false");
-            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
+    /**
+     * Summarizes the settings before the run
+     */
+    protected void outputStats() {
 
-            buffy.write(barna.commons.system.OSChecker.NEW_LINE);
-            buffy.flush();
+        Log.message("# started\t" + new Date(System.currentTimeMillis()));
+        Log.message("# input\t" + inputFile.getAbsolutePath());
+        Log.message("# output");
+        if (!SplicingGraph.writeStdOut)
+            Log.message("\t" + outputFname);
+        else
+            Log.message("\tstdout\n");
+        if (barna.model.Graph.overrideSequenceDirPath== null) {
+            Log.debug("# genome\t" + species);
+        } else
+            Log.message("# genome\t" + barna.model.Graph.overrideSequenceDirPath);
+        Log.message("# dimension\t" + EventExtractor.n);
+        Log.message("# internalOnly\t" + SplicingGraph.onlyInternal);
+        //Log.message("# canonicalSS "+canonicalSS+barna.commons.system.OSChecker.NEW_LINE);
+        //Log.message("# acceptableIntrons "+acceptableIntrons+barna.commons.system.OSChecker.NEW_LINE);
+        if (SplicingGraph.acceptableIntrons)
+            Log.message("# intronConfidenceLevel " + SplicingGraph.intronConfidenceLevel);
+        if (!SplicingGraph.onlyInternal)
+            Log.message("# edgeConfidenceLevel " + Transcript.getEdgeConfidenceLevel());
+        Log.message("# as_events\t"+ (SplicingGraph.retrieveASEvents? "true": "false"));
+        Log.message("# ds_events\t"+ (SplicingGraph.retrieveDSEvents? "true": "false"));
+        Log.message("# vs_events\t"+ (SplicingGraph.retrieveVSEvents? "true": "false"));
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 

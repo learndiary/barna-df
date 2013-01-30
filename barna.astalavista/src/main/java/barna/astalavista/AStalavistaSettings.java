@@ -7,6 +7,7 @@ import barna.model.Graph;
 import barna.model.Species;
 import barna.model.Transcript;
 //import barna.model.gff.GTFschema;
+import barna.model.constants.Constants;
 import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
@@ -29,24 +30,15 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Print parameters and descriptions.
      */
-    public static final Parameter<Boolean> PRINT_PARAMETERS = Parameters.booleanParameter("PRINT_PARAMETERS",
+    public static final Parameter<Boolean> HELP = Parameters.booleanParameter("HELP",
             "print parameters and descriptions", false, null).longOption("printParameters").shortOption('h');
 
     /**
-     * Path to the GTF reference annotation.
+     * Path to the reference annotation.
      */
     public static final Parameter<File> REF_FILE = Parameters.fileParameter("INPUT",
             "path to the GTF reference annotation",
             null, new ParameterValidator() {
-/*      if (args[i].equals("-i")|| args[i].equals("--input")) {
-            if (i+1>= args.length) {
-                System.err.println("Hey, you forgot to specify the input file!");
-                System.exit(-1);
-            }
-            file= new java.io.File(args[++i]);
-            continue;
-        }
-*/
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             File refFile = (File) schema.get(parameter);
@@ -57,7 +49,27 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
                 throw new ParameterException("The reference annotation " + refFile.getAbsolutePath() + " could not be found!");
             }
         }
-    }, null).longOption("input").shortOption('i');
+    }, null).longOption("in").shortOption('i');
+
+    /**
+     * Filters on the input elements
+     */
+    public static enum InputOptions {
+        /* consider canonical splice sites only */
+        CSS,
+        /* acceptable introns */
+        IOK
+    };
+
+    /**
+     * Parameter collecting criteria for elements of the input to be considered
+     */
+    public static final Parameter<EnumSet<OutputOptions>> INOPTIONS = Parameters.enumSetParameter(
+            "INOPTIONS",
+            "Toggle criteria for elements of the input",
+            EnumSet.noneOf(OutputOptions.class),
+            OutputOptions.class,
+            null).longOption("io");
 
 
     /**
@@ -86,19 +98,16 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     }).longOption("vcf");
 
     /**
+     * Keyword to redirect program output to standard out stream.
+     */
+    public static final String STDOUT= "stdout";
+
+    /**
      * Path to the GTF output annotation.
      */
-/*   if (args[i].equals("-o")|| args[i].equals("--output")) {
-        String s= args[++i];
-        if (s.equalsIgnoreCase("stdout"))
-            SplicingGraph.writeStdOut= true;
-        else
-            writerThread.outputFname= s+".gz";
-        continue;
-    } */
-    public static final Parameter<File> OUT_FILE = Parameters.fileParameter("OUT_FILE",
-            "keyword 'stdout' for standard output, or a path to the GTF output file",
-            null, null, null).longOption("output").shortOption('o');
+    public static final Parameter<File> OUTPUT = Parameters.fileParameter("OUTPUT",
+            "keyword '"+STDOUT+"' for standard output, or a path to the GTF output file",
+            null, null, null).longOption("out").shortOption('o');
 
 
     /**
@@ -107,77 +116,41 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * with a file name corresponding to the identifiers of
      * the first column in the GTF annotation.
      */
-    public static final Parameter<File> GEN_DIR = Parameters.fileParameter("GEN_DIR",
+    public static final Parameter<File> GENOME = Parameters.fileParameter("GENOME",
                     "path to the directory with the genomic sequences,\n" +
                     "i.e., one fasta file per chromosome/scaffold/contig\n" +
                     "with a file name corresponding to the identifiers of\n" +
                     "the first column in the GTF annotation", null, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-
-/*          if (args[i].equals("-g")|| args[i].equals("--genome")) {
-                if (i+1>= args.length) {
-                    System.err.println("You forgot to specify the genome!");
-                    System.exit(-1);
-                }
-                MyFile checkFile= new MyFile(args[i+1]);
-                if (checkFile.exists()&& checkFile.isDirectory())
-                    Graph.overrideSequenceDirPath= checkFile.getAbsolutePath();
-                else {
-                    String[] s= args[++i].split("_");
-                    if (s.length!= 2) {
-                        System.err.println("Invalid genome directory: "+args[i+1]);
-                        System.exit(-1);
-                    }
-                    Species spe= new Species(s[0]);
-                    spe.setGenomeVersion(s[1]);
-                    SplicingGraph.EventExtractor.setSpecies(spe);
-                }
-                acceptableIntrons= true;
-                continue;
-            } */
-
             File genomeFile = (File) schema.get(parameter);
-            boolean req= requiresGenomicSequence(schema);
-            if (!req)
-                return;
-
             if (genomeFile == null) {
                 throw new ParameterException("You have to specify a genome directory");
             }
-            if (genomeFile.exists()) {
-                Graph.overrideSequenceDirPath= genomeFile.getAbsolutePath();
-            } else {
-                Log.message("Trying to parse species_version pair");
-                String[] s= genomeFile.getName().split("_");
-                if (s.length!= 2) {
-                    throw new ParameterException("The genome " + genomeFile.getAbsolutePath() + " could not be found!");
-                }
-                Species spe= new Species(s[0]);
-                spe.setGenomeVersion(s[1]);
-                AStalavista.setSpecies(spe);
-
-            }
-
-            // see AStalavista.validateParameter()
-            // acceptableIntrons= true;
-
         }
     }, null).longOption("genome").shortOption('g');
 
     /**
-     * Checks whether a folder with genomic sequences is necessary.
-     * @param schema current parameter schema
-     * @return <code>true</code> if the genomic sequence is required given the
-     * current parameters, <code>false</code> otherwise
+     * The temporary directory.
      */
-    protected static boolean requiresGenomicSequence(ParameterSchema schema) {
-        if (schema.get(OUTPUT_SITESEQ))
-            return true;
-        if (ASEvent.isOutputFlankMode()&& Graph.overrideSequenceDirPath== null)
-            return true;
-        return false;
-    }
+    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR", "The temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            File file = (File) schema.get(parameter);
+            if (file == null) {
+                schema.set(parameter, new File(System.getProperty(Constants.PROPERTY_TMPDIR)));
+            }
+            if (!file.exists()) {
+                throw new ParameterException("The temporary directory " + file.getAbsolutePath()
+                        + " could not be found!");
+            }
+            if (!file.canWrite()) {
+                throw new ParameterException("The temporary directory " + file.getAbsolutePath()
+                        + " is not writable!");
+            }
+
+        }
+    }).longOption("tmp");
+
 
     /**
      * Dimension of the AS events to be extracted,
@@ -190,111 +163,13 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
             2, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-
-/*          if (args[i].equals("-k")|| args[i].equals("--dimension")) {
-                try {
-                    int x= Integer.parseInt(args[++i]);
-                    if (x< -1|| ((x> -1)&& (x< 2)))
-                        System.err.println(args[i]+" is not a valid dimension, ignored");
-                    SplicingGraph.EventExtractor.n= x;
-                } catch (NumberFormatException e) {
-                    System.err.println(args[i]+" is not a valid dimension, ignored"); // :)
-                }
-                continue;
-            } */
-
             int v= (Integer) schema.get(parameter);
             if (v< 2)
                 EventExtractor.n= (-1); // complete events
             else
                 EventExtractor.n= 2;
         }
-    }).longOption("dimension").shortOption('k');
-
-
-    /**
-     * Require 3'-complete transcripts.
-     */
-/*  if (args[i].equalsIgnoreCase("-3pc")) {
-        ASEvent.check3Pcomplete= true;
-        continue;
-    } */
-    public static final Parameter<Boolean> THREE_PRIME_COMPLETE = Parameters.booleanParameter("THREE_PRIME_COMPLETE",
-            "require 3'-complete transcripts", false, null).longOption("3primeComplete");
-
-    /**
-     * Temporary directory
-     */
-    public static final Parameter<File> TMP_DIR = Parameters.fileParameter("TMP_DIR",
-            "Temporary directory", new File(System.getProperty("java.io.tmpdir")), new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-/*          if (args[i].equals("-tmp")) {
-                System.setProperty(Constants.PROPERTY_TMPDIR, args[++i]);
-                continue;
-            } */
-
-            File tmp = parameterSchema.get(TMP_DIR);
-            if(tmp == null){
-                throw new ParameterException("No temp directory specified!");
-            }
-            if(!tmp.canWrite()){
-                throw new ParameterException("The temp-directory " + tmp.getAbsolutePath() + " does not exist or is not writable!");
-            }
-
-        }
-    }).longOption("tmp");
-
-    /**
-     * Switch on DS event retrieval.
-     */
-/*   if (args[i].equals("-ds")) {
-        SplicingGraph.retrieveDSEvents= false;
-     continue;
-        } */
-/*   if (args[i].equals("+ds")) {
-        SplicingGraph.retrieveDSEvents= true;
-        continue;
-    } */
-    public static final Parameter<Boolean> DS_EVENTS = Parameters.booleanParameter("DS_EVENTS",
-            "do retrieve DS events", false, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-            SplicingGraph.retrieveDSEvents= (Boolean) parameterSchema.get(parameter);
-        }
-    }).longOption("ds");
-
-        /**
-         * Switch on VS event retrieval.
-         */
-/*  if (args[i].equals("+vs")) {
-        SplicingGraph.retrieveVSEvents= true;
-        continue;
-    }
-    if (args[i].equals("-vs")) {
-        SplicingGraph.retrieveVSEvents= false;
-        continue; */
-        public static final Parameter<Boolean> VS_EVENTS = Parameters.booleanParameter("VS_EVENTS",
-                "do retrieve VS events", false, new ParameterValidator() {
-            @Override
-            public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-                SplicingGraph.retrieveVSEvents= (Boolean) parameterSchema.get(parameter);
-            }
-        }).longOption("vs");
-
-    /**
-     * Switch on external event retrieval.
-     */
-/*   if (args[i].equals("-ext")) {
-        onlyInternal= true;	// net false
-        continue;
-    }
-    if (args[i].equals("+ext")) {
-        onlyInternal= false;
-        continue;
-    } */
-    public static final Parameter<Boolean> EXT_EVENTS = Parameters.booleanParameter("EXT_EVENTS",
-            "do retrieve external events", Boolean.FALSE, null).longOption("ext");
+    }).longOption("dim").shortOption('k');
 
 
     /**
@@ -314,162 +189,130 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * @see <a href="http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147">
      *     http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147</a><li>DS= additional splicing that are flanked by a common site and
      */
-    public static enum EventTypes {ASExt,ASInt,DS,VS};
+    public static enum EventTypes {
+        /** external AS events */
+        ASE,
+        /** internal AS events */
+        ASI,
+        /** adDitional Splicing events */
+        DSP,
+        /** Variable Site events */
+        VST,
+    };
 
 
     /**
-     * Parameter for counting reads that falls into specific elements
+     * Parameter for the list of event types that is to be considered.
      */
-    public static final Parameter<EnumSet<EventTypes>> EVENT_TYPES = Parameters.enumSetParameter(
-            "EVENT_TYPES",
+    public static final Parameter<EnumSet<EventTypes>> EVENTS = Parameters.enumSetParameter(
+            "EVENTS",
             " Type of events that is considered",
-            EnumSet.of(EventTypes.ASInt),
+            EnumSet.of(EventTypes.ASI),
             EventTypes.class,
             null).longOption("events").shortOption('e');
 
-    /**
-        * Flag to suppress AS event retrieval.
-        */
-/*   if (args[i].equals("-as")) {
-        SplicingGraph.retrieveASEvents= false;
-        continue;
-    } */
-/*  if (args[i].equals("+as")) {
-        SplicingGraph.retrieveASEvents= true;
-        continue;
-    } */
-    public static final Parameter<Boolean> NO_AS_EVENTS = Parameters.booleanParameter("NO_AS_EVENTS",
-            "don't retrieve AS events", true, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-            SplicingGraph.retrieveASEvents= (Boolean) parameterSchema.get(parameter);
-        }
-    }).longOption("noas");
-
 
     /**
-     * Check nonsense-mediated decay conditions.
-     */
-/*  if (args[i].equalsIgnoreCase("-nmd")) {
-        ASEvent.checkNMD= true;
-        continue;
-    } */
-    public static final Parameter<Boolean> NMD = Parameters.booleanParameter("NMD",
-            "check nonsense-mediated decay conditions", false, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-            ASEvent.checkNMD= (Boolean) parameterSchema.get(parameter);
-        }
-    }).longOption("nmd");
-
-    /**
-     * Confidence level of the intron to be retrieved.
+     * Level of intron confidence, below which introns are trusted without checks.
+     * The default is to trust all introns (i.e., ic= 255). Introns are assigned a
+     * confidency class:
+     * <ul>
+     * <li>0 for 'RefSeq' appears in the source field of the annotation</li>
+     * <li>1 for 'mRNA' appears in the source field of the annotation</li>
+     * <li>2 for 'EST' appears in the source field of the annotation</li>
+     * </ul>
+     * All introns in transcripts of confidence level > threshold are discarded.
      */
     public static final Parameter<Integer> INTRON_CONFIDENCE = Parameters.intParameter("INTRON_CONFIDENCE",
-            "Confidence level of the intron to be retrieved",
+            "Confidence level for introns in the annotation",
             Transcript.ID_SRC_MOST_INCONFIDENT, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-
-        /*  if (args[i].equalsIgnoreCase("-ic")|| args[i].equalsIgnoreCase("--intronConfidence")) {
-                if (i+1== args.length)
-                    System.err.println("You did not provide an intron confidence.");
-                try {
-                    SplicingGraph.intronConfidenceLevel= Byte.parseByte(args[i+1]);
-                    ++i;	// ignore if missing
-                    acceptableIntrons= true;
-                } catch (NumberFormatException e) {
-                    System.err.println("Intron confidence must be an integer value, you gave me "+args[i+1]);
-                }
-                continue;
-            } */
             int x= schema.get(INTRON_CONFIDENCE);
             if (x> Byte.MAX_VALUE|| x< 0)
                 throw new IllegalArgumentException("Invalid confidence level "+ x);
-            SplicingGraph.intronConfidenceLevel= (byte) x;
         }
-    }).longOption("intronConfidence");
+    }).longOption("ic");
 
     /**
-     * Confidence level of the intron to be retrieved.
+     * Level of confidence for edges (i.e., annotated transcription starts/poly-adenylation sites).
+     * The default is to trust no annotated edge and to extend overlapping first/last exons of a
+     * transcript to their most extreme position:
+     * <ul>
+     * <li>0 if 'RefSeq' appears in the source field of the annotation</li>
+     * <li>1 if 'mRNA' appears in the source field of the annotation</li>
+     * <li>2 if 'EST' appears in the source field of the annotation</li>
+     * <li>3 if if none of the above applies</li>
+     * </ul>
+     * All transcript edges of confidence level > edgeConfidence will be extended in case the
+     * annotation shows another exon with the same adjacent splice site and an earlier/later
+     * start/end.
      */
     public static final Parameter<Integer> EDGE_CONFIDENCE = Parameters.intParameter("EDGE_CONFIDENCE",
-            "Confidence level of the intron to be retrieved",
+            "Transcript edge confidence level",
             Transcript.ID_SRC_MOST_INCONFIDENT, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
 
-/*  if (args[i].equalsIgnoreCase("-ec")|| args[i].equalsIgnoreCase("--edgeConfidence")) {
-        if (i+1== args.length)
-            System.err.println("You did not provide an edge confidence.");
-        try {
-            Transcript.setEdgeConfidenceLevel(Byte.parseByte(args[i + 1]));
-            ++i;	// ignore if missing
-        } catch (NumberFormatException e) {
-            System.err.println("Exon confidence must be an integer value, you gave me "+args[i+1]);
-        }
-        continue;
-    } */
             int x= schema.get(EDGE_CONFIDENCE);
             if (x> Byte.MAX_VALUE|| x< 0)
                 throw new IllegalArgumentException("Invalid confidence level "+ x);
-            Transcript.setEdgeConfidenceLevel((byte) x);
         }
-    }).longOption("edgeConfidence");
+    }).longOption("ec");
 
     /**
-     * Switch on flank type output.
+     * Consider only canonical splice sites during graph construction.
      */
-/*  if (args[i].equals("--flankType")) {
-        ASEvent.setOutputFlankMode(true);
-        continue;
-    } */
-    public static final Parameter<Boolean> FLANK_TYPE = Parameters.booleanParameter("FLANK_TYPE",
-            "switch on flank type output", false, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema parameterSchema, Parameter parameter) throws ParameterException {
-            ASEvent.setOutputFlankMode((Boolean) parameterSchema.get(parameter));
-        }
-    }).longOption("flankType");
+    public static final Parameter<Boolean> CANONICAL = Parameters.booleanParameter("CANONICAL",
+            "consider only canonical sites", false, null).longOption("css");
+
+    /**
+     * Flags to control output options for events:
+     * <ul>
+     *     <li>CP3: predict 3'-complete</li>
+     *     <li>FLT: output flank type, i.e. 'constitutive' or 'alternative'</li>
+     *     <li>NMD: predict NMD</li>
+     *     <li>SEQ: output sequences of flanking splice sites</li>
+     * </ul>
+     */
+    public static enum OutputOptions {
+        /* predict 3'-complete */
+        CP3,
+        /* output flank type, ie 'constitutive' or 'alternative' */
+        FLT,
+        /* predict NMD */
+        NMD,
+        /* output splice site sequences of event flanks */
+        SEQ
+    };
+
+    /**
+     * Parameter collecting flags for output options
+     */
+    public static final Parameter<EnumSet<OutputOptions>> OUTOPTIONS = Parameters.enumSetParameter(
+            "OUTOPTIONS",
+            "Toggle optional attributes to be output",
+            EnumSet.noneOf(OutputOptions.class),
+            OutputOptions.class,
+            null).longOption("oo");
 
 
 
-/*
-    for (int i = 0; i < args.length; i++) {
+    /**
+     * Checks whether a folder with genomic sequences is necessary in order
+     * to complete all tasks specified with <code>this</code> parameter set.
+     * @return <code>true</code> if the genomic sequence is required given the
+     * current parameters, <code>false</code> otherwise
+     */
+    public boolean requiresGenomicSequence() {
+        if (get(AStalavistaSettings.OUTOPTIONS).contains(OutputOptions.SEQ))
+            return true;
+        if (get(AStalavistaSettings.INOPTIONS).contains(InputOptions.CSS)
+                || get(AStalavistaSettings.INOPTIONS).contains(InputOptions.IOK))
+            return true;
 
-        // -c is now RESERVED for "command" multicaster
-//				if (args[i].equals("-c")|| args[i].equals("--canonical")) {
-//					canonicalSS= true;
-//					continue;
-//				}
-        //			if (args[i].equals("-c")|| args[i].equals("--cluster")) {
-        //				readAheadLimit= Integer.parseInt(args[++i]);
-        //				continue;
-        //			}
-
-
-        }
-
-        // reactivated 20100112
-
-
-
+        return false;
     }
-
-
-
-
-    barna.io.gtf.GTFwrapper checkReader= new GTFwrapper(file.getAbsolutePath());
-    //System.err.println("DEBUG -- temporarily deactivated file check");
-    if (!checkReader.isApplicable()) {
-        System.err.println("sorting input file, temporary directory "+System.getProperty(Constants.PROPERTY_TMPDIR));
-        file= checkReader.sort();  // WAS: GFFreader.createSortedFile();
-        System.err.println("Here is a sorted version of your file: "+file.getAbsolutePath());
-    }
-
-
-    return file;
-*/
 
     @Override
     public void write(OutputStream out) {
@@ -489,81 +332,14 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
                     "There may also be CDS features, but they become only interesting when checking for additional things " +
                     "as NMD probability etc.."+
                     "\n");
-            System.err.println("-o, --output <output file|\'stdout\'>");
-            System.err.println("Optional, the name of the output file (fully qualified path) OR the keyword \'stdout\' for " +
-                    "writing everything to the standard output stream. " +
-                    "If nothing is specified, the output will be written to a file \'<input file>_astalavista.gtf.gz\'. " +
-                    "\n");
-            System.err.println("-g, --genome <path to directory>");
-            System.err.println("Path to the directory containing sequence files corresponding to the <seqname> field " +
-                    "in the input GTF. A genome directory is required if a intron confidence value is specified." +
-                    "\n");
-            System.err.println("-k, --dimension <int value>");
-            System.err.println("Dimension >1 of the events to be extracted. Default is 2 (i.e., \'pairwise events\'). " +
-                    "\n");
-            System.err.println("-tmp");
-            System.err.println("Set temporary directory" +
-                    "\n");
-            System.err.println("-ext, +ext");
-            System.err.println("(De-)activate external events, i.e. events that include the transcript start or the " +
-                    "poly-adenylation site" +
-                    "\n");
-            System.err.println("-ic, --intronConfidence [int value]");
-            System.err.println("Level of intron confidence. The default is to trust all introns. Introns are assigned " +
-                    "a confidency class:\n" +
-                    "\t 0 if 'RefSeq' appears in the source field of the annotation\n" +
-                    "\t 1 if 'mRNA' appears in the source field of the annotation\n" +
-                    "\t 2 if 'EST' appears in the source field of the annotation\n" +
-                    "\t 3 if if none of the above applies\n" +
-                    "all introns of confidency level > intronConfidence will be checked for proper splice sites when extracting events." +
-                    "\n");
-            System.err.println("-as, +as");
-            System.err.println("Deactivate (\'-as\') or activate (\'+as\') the retrieval of Alternative Splicing events. See documentation " +
-                    "for the definition of events that suffice an alternative splicing event." +
-                    "\n");
-            System.err.println("-ds, +ds");
-            System.err.println("Deactivate (\'-ds\') or activate (\'+ds\') the retrieval of aDditional splicing events. See documentation " +
-                    "for the definition of events that suffice an additional splicing event." +
-                    "\n");
-            System.err.println("-s, --seqsite");
-            System.err.println("Output splice site sequences with events. Requires a reference genome."+
-                    "\n");
-            System.err.println("--flankType");
-            System.err.println("Output the type of the event flanks, i.e., \'constitutive\' or \'alternative\'."+
-                    "\n");
 
-            // reactivated on 20100112
-            System.err.println("-ec, --edgeConfidence [int value]");
-            System.err.println("Level of confidence for edges (i.e., annotated transcription starts/poly-adenylation sites). " +
-                    "The default is to trust no annotated edge and to extend overlapping first/last exons of a transcript to " +
-                    "their most extreme position. :\n" +
-                    "\t 0 if 'RefSeq' appears in the source field of the annotation\n" +
-                    "\t 1 if 'mRNA' appears in the source field of the annotation\n" +
-                    "\t 2 if 'EST' appears in the source field of the annotation\n" +
-                    "\t 3 if if none of the above applies\n" +
-                    "all transcript edges of confidency level > edgeConfidence will be extended in case the annotation shows " +
-                    "another exon with the same adjacent splice site and an earlier/later start/end." +
-                    "\n");
+            // ...
+
             System.err.println("AStalavista.");
             System.exit(0);
-        }
-
-
-        return true;
-    } */
-
+*/
     }
 
-    /**
-     * Output splice site sequences.
-     * @deprecated replace by OutputEvent.SITESCORES
-     */
-/*  if (args[i].equals("-s")|| args[i].equals("--seqsite")) {
-        SplicingGraph.outputSeq= true;
-        continue;
-    } */
-    public static final Parameter<Boolean> OUTPUT_SITESEQ = Parameters.booleanParameter("OUTPUT_SITESEQ",
-            "output splice site sequences", false, null).longOption("seqsite").shortOption('s');
 
 
     /**

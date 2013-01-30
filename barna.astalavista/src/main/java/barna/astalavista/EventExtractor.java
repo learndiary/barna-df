@@ -58,8 +58,14 @@ public class EventExtractor extends SplicingGraph implements Runnable {
     public EventExtractor(Gene g, AStalavistaSettings settings) {
         super(g);
         this.settings= settings;
-        this.onlyInternal= !settings.get(AStalavistaSettings.EXT_EVENTS);
-        this.retrieveVSEvents= settings.get(AStalavistaSettings.VS_EVENTS);
+        this.onlyInternal= !(settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
+                            || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP)
+                            || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST));
+        this.retrieveASEvents= (settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
+                                || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASI));
+
+        this.retrieveDSEvents= settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP);
+        this.retrieveVSEvents= settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST);
     }
 
     @Override

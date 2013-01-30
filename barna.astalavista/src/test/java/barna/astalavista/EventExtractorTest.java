@@ -14,6 +14,7 @@ import static org.junit.Assert.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.EnumSet;
 import java.util.Vector;
 
 /**
@@ -60,10 +61,11 @@ public class EventExtractorTest {
         Gene[] ge= getGene(gtf);
 
         AStalavistaSettings settings= new AStalavistaSettings();
-        // extractor.onlyInternal= false;
-        settings.set(AStalavistaSettings.EXT_EVENTS, true);
-        // extractor.retrieveVSEvents= true;
-        settings.set(AStalavistaSettings.VS_EVENTS, true);
+        settings.set(AStalavistaSettings.EVENTS, EnumSet.of(
+                AStalavistaSettings.EventTypes.ASI,
+                AStalavistaSettings.EventTypes.ASE,
+                AStalavistaSettings.EventTypes.VST)
+        );
         EventExtractor extractor= new EventExtractor(ge[0], settings);
 
         extractor.constructGraph();
@@ -82,10 +84,11 @@ public class EventExtractorTest {
                         "XXX\tfoo\texon\t10\t20\t.\t+\t.\ttranscript_id=\"anotherTranscript\";"};
         Gene[] ge= getGene(gtf);
         AStalavistaSettings settings= new AStalavistaSettings();
-        // extractor.onlyInternal= false;
-        settings.set(AStalavistaSettings.EXT_EVENTS, true);
-        // extractor.retrieveVSEvents= true;
-        settings.set(AStalavistaSettings.VS_EVENTS, true);
+        settings.set(AStalavistaSettings.EVENTS, EnumSet.of(
+                AStalavistaSettings.EventTypes.ASI,
+                AStalavistaSettings.EventTypes.ASE,
+                AStalavistaSettings.EventTypes.VST)
+        );
         EventExtractor extractor= new EventExtractor(ge[0], settings);
 
         extractor.constructGraph();
