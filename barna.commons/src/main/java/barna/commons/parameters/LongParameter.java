@@ -67,6 +67,7 @@ class LongParameter extends NumberParameter<Long> {
     @Override
     public Parameter copy() {
         LongParameter longParameter = new LongParameter(getName(), getDescription(), getDefault(), minimumValue, maximumValue, getValidator());
+        longParameter.longOption(getLongOption()).shortOption(getShortOption());
         longParameter.set(get());
         return longParameter;
     }

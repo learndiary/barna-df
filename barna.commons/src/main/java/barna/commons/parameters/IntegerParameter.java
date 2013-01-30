@@ -68,6 +68,7 @@ class IntegerParameter extends NumberParameter<Integer> {
     @Override
     public Parameter copy() {
         IntegerParameter intparameter = new IntegerParameter(getName(), getDescription(), getDefault(), minimumValue, maximumValue, getValidator());
+        intparameter.longOption(getLongOption()).shortOption(getShortOption());
         intparameter.set(get());
         return intparameter;
     }

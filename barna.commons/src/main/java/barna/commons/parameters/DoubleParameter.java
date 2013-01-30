@@ -76,6 +76,7 @@ class DoubleParameter extends NumberParameter<Double> {
     @Override
     public Parameter copy() {
         DoubleParameter doubleParameter = new DoubleParameter(getName(), getDescription(), getDefault(), minimumValue, maximumValue, getValidator());
+        doubleParameter.longOption(getLongOption()).shortOption(getShortOption());
         doubleParameter.set(get());
         return doubleParameter;
     }
