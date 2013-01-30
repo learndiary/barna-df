@@ -506,7 +506,8 @@ public class FluxCapacitorTest {
         pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
-        FluxCapacitorRunner.runCapacitor(parFile, null);
+        String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
+        FluxCapacitorRunner.runCapacitor(parFile, params);
         assertEquals(0, coveragefile.length());
 
     }
@@ -526,7 +527,8 @@ public class FluxCapacitorTest {
         pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
-        FluxCapacitorRunner.runCapacitor(parFile, null);
+        String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
+        FluxCapacitorRunner.runCapacitor(parFile, params);
         BufferedReader b1 = null;
         List<String> lines = new ArrayList<String>();
         try {
