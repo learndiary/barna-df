@@ -47,7 +47,6 @@ import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.sam.SAMReader;
 import barna.model.*;
-import barna.model.commons.Coverage;
 import barna.model.commons.MyFile;
 import barna.model.constants.Constants;
 import barna.model.gff.GFFObject;
@@ -186,11 +185,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         private boolean stranded;
 
         /**
-         * The coverage profile of systematic biases.
-         */
-        private Coverage coverage = null;
-
-        /**
          * Used for chaining threads to be executed sequentially.
          */
         private Thread threadBefore = null;
@@ -259,7 +253,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             this.settings = settings;
             this.profile = profile;
             this.stats = new MappingStats();
-            this.stats.add(profile.getStats());
+            this.stats.add(profile.getMappingStats());
             this.stats.reset();
 
             nrMappingsReadsOrPairs = 0;
@@ -859,7 +853,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getStats().getReadLenMin(),
+            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats().getReadLenMin(),
                     //pairedEnd ? insertMinMax : null,
                     null,
                     mappedReads,
@@ -870,7 +864,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             solver.costModel = costModel;    // COSTS_LINEAR
             solver.setCostSplit(costSplit);
             solver.setProfile(profile);
-            solver.setReadLen(profile.getStats().getReadLenMin());
+            solver.setReadLen(profile.getMappingStats().getReadLenMin());
             solver.costBounds = costBounds;
 
             return solver;
@@ -1266,16 +1260,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
      * The number of mappings read in a second run, invariant check.
      */
     private int checkBEDscanMappings = 0;
-
-    /**
-     * Temporary file for coverage statistics of the 5' to 3' read distribution.
-     */
-    File fileTmpCovStats = null;
-
-    /**
-     * Writer of the coverage statistics of the 5' to 3' read distribution.
-     */
-    private BufferedWriter writerTmpCovStats = null;
 
     /**
      * Vector of threads that are carried out in parallel.
@@ -1699,19 +1683,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 		mappingReader.close();
         gtfReader.close();
 
-
-        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
-            if (FileHelper.move(
-                    fileTmpCovStats,
-                    settings.get(FluxCapacitorSettings.COVERAGE_FILE))) {
-                fileTmpCovStats.delete();
-                Log.info("Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
-            } else
-                Log.warn("Failed to move coverage statistics to " +
-                        settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
-                        + "\tinformation in " + fileTmpCovStats.getAbsolutePath());
-        }
-
         // TODO close files for non-/mapped reads, insert sizes, LPs, profiles
 
         // profiles
@@ -1767,9 +1738,11 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 throw new RuntimeException("Unable to load settings from " + file + "\n\n " + e.getMessage(), e);
             }
         } else {
-            // create default settings
-            settings = new FluxCapacitorSettings();
-            FluxCapacitorSettings.relativePathParser.setParentDir(new File(""));
+            if (settings == null) {
+                // create default settings
+                settings = new FluxCapacitorSettings();
+                FluxCapacitorSettings.relativePathParser.setParentDir(new File(""));
+            }
         }
 
         // add command line parameter
@@ -1885,7 +1858,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         }
 
             //print current run settings
-            printSettings();
+        printSettings();
 
         // run
         long t0 = System.currentTimeMillis();
@@ -1896,8 +1869,8 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             if (profile == null) {
                 throw new RuntimeException("Cannot evaluate profile");
             }
-            profile.getStats().add(stats);
-            stats=profile.getStats();
+            profile.getMappingStats().add(stats);
+            stats=profile.getMappingStats();
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
@@ -2016,39 +1989,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         }
 
         return fileLPdir;
-    }
-
-    /**
-     * Writes coverage statistics of a transcript to disk.
-     *
-     * @param geneID       locus identifier
-     * @param transcriptID transcript identifier
-     * @param cds          flag to indicate whether transcript has an annotated ORF
-     * @param length       (processed) length of the transcript
-     * @param nrReads      number of Mappings
-     * @param fracCov      the fraction covered
-     * @param chiSquare    chi-square value for the coverage profile
-     * @param cv           coefficient of variation for the coverage profile
-     */
-    private void writeCoverageStats(String geneID, String transcriptID,
-                                    boolean cds, int length, long nrReads,
-                                    float fracCov, long chiSquare, double cv) {
-
-        try {
-            if (fileTmpCovStats == null)
-                fileTmpCovStats = FileHelper.createTempFile("tmpCovStats", ".pro");
-            if (writerTmpCovStats == null)
-                writerTmpCovStats = new BufferedWriter(new FileWriter(fileTmpCovStats));
-            writerTmpCovStats.write(
-                    geneID + "\t" + transcriptID + "\t" + (cds ? "CDS" : "NC") + "\t"
-                            + Integer.toString(length) + "\t" + Long.toString(nrReads) + "\t"
-                            + Float.toString(fracCov) + "\t" + Long.toString(chiSquare) + "\t"
-                            + Float.toString((float) cv) + barna.commons.system.OSChecker.NEW_LINE
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -2421,11 +2361,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             if (mode == FluxCapacitorConstants.MODE_LEARN) {
 
                 // TODO calculate insert size distribution parameters
-
-                // close coverage writer
-                if (settings.get(FluxCapacitorSettings.COVERAGE_STATS))
-                    writerTmpCovStats.close();
-                writerTmpCovStats = null;
 
 
                 if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
