@@ -1,7 +1,6 @@
 package barna.astalavista;
 
 import barna.commons.Execute;
-import barna.commons.log.Log;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
 import barna.model.ASEvent;
@@ -61,7 +60,7 @@ public class EventExtractorTest {
         Gene[] ge= getGene(gtf);
 
         AStalavistaSettings settings= new AStalavistaSettings();
-        settings.set(AStalavistaSettings.EVENTS, EnumSet.of(
+        settings.set(AStalavistaSettings.OUT_EVENTS, EnumSet.of(
                 AStalavistaSettings.EventTypes.ASI,
                 AStalavistaSettings.EventTypes.ASE,
                 AStalavistaSettings.EventTypes.VST)
@@ -84,7 +83,7 @@ public class EventExtractorTest {
                         "XXX\tfoo\texon\t10\t20\t.\t+\t.\ttranscript_id=\"anotherTranscript\";"};
         Gene[] ge= getGene(gtf);
         AStalavistaSettings settings= new AStalavistaSettings();
-        settings.set(AStalavistaSettings.EVENTS, EnumSet.of(
+        settings.set(AStalavistaSettings.OUT_EVENTS, EnumSet.of(
                 AStalavistaSettings.EventTypes.ASI,
                 AStalavistaSettings.EventTypes.ASE,
                 AStalavistaSettings.EventTypes.VST)

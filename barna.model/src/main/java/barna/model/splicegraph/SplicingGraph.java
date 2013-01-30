@@ -121,7 +121,6 @@ public class SplicingGraph {
 
     protected HashMap<SpliceSite, SpliceSite> softStartHash = new HashMap<SpliceSite, SpliceSite>(), softEndHash = new HashMap<SpliceSite, SpliceSite>();
     static int readAheadLimit = -1;
-    public static boolean writeStdOut = false;
     public static boolean retrieveASEvents = true;
     public static boolean retrieveDSEvents = false;
     public static boolean retrieveVSEvents = false;

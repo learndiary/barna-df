@@ -1,19 +1,13 @@
 package barna.astalavista;
 
-import barna.commons.log.Log;
 import barna.commons.parameters.*;
-import barna.model.ASEvent;
-import barna.model.Graph;
-import barna.model.Species;
 import barna.model.Transcript;
 //import barna.model.gff.GTFschema;
 import barna.model.constants.Constants;
-import barna.model.splicegraph.SplicingGraph;
 
 import java.io.File;
 import java.io.OutputStream;
 import java.util.EnumSet;
-import java.util.Iterator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,7 +20,6 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
 
     // TODO {SplicingGraph.class, null, SJextractor.class, AttributeExtractor.class};	// null= LaVista.class
 
-
     /**
      * Print parameters and descriptions.
      */
@@ -36,7 +29,7 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Path to the reference annotation.
      */
-    public static final Parameter<File> REF_FILE = Parameters.fileParameter("INPUT",
+    public static final Parameter<File> IN_FILE = Parameters.fileParameter("IN_FILE",
             "path to the GTF reference annotation",
             null, new ParameterValidator() {
         @Override
@@ -51,39 +44,81 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
         }
     }, null).longOption("in").shortOption('i');
 
-    /**
-     * Filters on the input elements
-     */
-    public static enum InputOptions {
-        /* consider canonical splice sites only */
-        CSS,
-        /* acceptable introns */
-        IOK
-    };
 
-    /**
-     * Parameter collecting criteria for elements of the input to be considered
-     */
-    public static final Parameter<EnumSet<OutputOptions>> INOPTIONS = Parameters.enumSetParameter(
-            "INOPTIONS",
+    /*
+     * Parameter specifying a collection of 'source' tags that are read from the input,
+     * possibly other flag for non-/coding transcripts to be considered
+     *
+    public static final Parameter<EnumSet<EventOptions>> IN_OPTIONS = Parameters.enumSetParameter(
+            "IN_OPTIONS",
             "Toggle criteria for elements of the input",
-            EnumSet.noneOf(OutputOptions.class),
-            OutputOptions.class,
+            EnumSet.noneOf(EventOptions.class),
+            EventOptions.class,
             null).longOption("io");
+     */
 
+    /**
+     * Level of intron confidence, below which introns are trusted without checks.
+     * The default is to trust all introns (i.e., ic= 255). Introns are assigned a
+     * confidency class:
+     * <ul>
+     * <li>0 for 'RefSeq' appears in the source field of the annotation</li>
+     * <li>1 for 'mRNA' appears in the source field of the annotation</li>
+     * <li>2 for 'EST' appears in the source field of the annotation</li>
+     * </ul>
+     * All introns in transcripts of confidence level > threshold are discarded.
+     * @deprecated to be refactored to IN_OPTIONS
+     */
+    public static final Parameter<Integer> INTRON_CONFIDENCE = Parameters.intParameter("INTRON_CONFIDENCE",
+            "Confidence level for introns in the annotation",
+            Transcript.ID_SRC_MOST_INCONFIDENT, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            int x = schema.get(INTRON_CONFIDENCE);
+            if (x > Byte.MAX_VALUE || x < 0)
+                throw new IllegalArgumentException("Invalid confidence level " + x);
+        }
+    }).longOption("ic");
+
+    /**
+     * Level of confidence for edges (i.e., annotated transcription starts/poly-adenylation sites).
+     * The default is to trust no annotated edge and to extend overlapping first/last exons of a
+     * transcript to their most extreme position:
+     * <ul>
+     * <li>0 if 'RefSeq' appears in the source field of the annotation</li>
+     * <li>1 if 'mRNA' appears in the source field of the annotation</li>
+     * <li>2 if 'EST' appears in the source field of the annotation</li>
+     * <li>3 if if none of the above applies</li>
+     * </ul>
+     * All transcript edges of confidence level > edgeConfidence will be extended in case the
+     * annotation shows another exon with the same adjacent splice site and an earlier/later
+     * start/end.
+     * @deprecated to be refactored to IN_OPTIONS
+     */
+    public static final Parameter<Integer> EDGE_CONFIDENCE = Parameters.intParameter("EDGE_CONFIDENCE",
+            "Transcript edge confidence level",
+            Transcript.ID_SRC_MOST_INCONFIDENT, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+
+            int x = schema.get(EDGE_CONFIDENCE);
+            if (x > Byte.MAX_VALUE || x < 0)
+                throw new IllegalArgumentException("Invalid confidence level " + x);
+        }
+    }).longOption("ec");
 
     /**
      * File with GeneID parameters / splice site profiles.
      */
-    public static final Parameter<File> GENEID_PARAM = Parameters.fileParameter("GENEID_PARAM",
+    public static final Parameter<File> GENE_ID = Parameters.fileParameter("GENE_ID",
             "name and path of a file with the GeneID models for splice sites",
-            null, null, null).longOption("gparam");
+            null, null, null).longOption("gid");
 
 
     /**
      * File with variant information (vcf format).
      */
-    public static final Parameter<File> VARIANTS = Parameters.fileParameter("VARIANTS",
+    public static final Parameter<File> VARIANT_FILE = Parameters.fileParameter("VARIANT_FILE",
             "name and path of a file with the variant information (vcf)",
             null, new ParameterValidator() {
 
@@ -98,17 +133,34 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     }).longOption("vcf");
 
     /**
-     * Keyword to redirect program output to standard out stream.
+     * Path to the GTF output annotation.
      */
-    public static final String STDOUT= "stdout";
+    public static final Parameter<File> OUT_FILE = Parameters.fileParameter("OUT_FILE",
+            "a path to the GTF output file for events",
+            null, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            File f = (File) schema.get(parameter);
+            if (f == null|| !f.getParentFile().canWrite()) {
+                throw new ParameterException("Invalid output file "+ f.getAbsolutePath());
+            }
+        }
+    }).longOption("out").shortOption('o');
 
     /**
      * Path to the GTF output annotation.
      */
-    public static final Parameter<File> OUTPUT = Parameters.fileParameter("OUTPUT",
-            "keyword '"+STDOUT+"' for standard output, or a path to the GTF output file",
-            null, null, null).longOption("out").shortOption('o');
-
+    public static final Parameter<File> OUT_FILE_SITES = Parameters.fileParameter("OUT_FILE_SITES",
+            "a path to the VCF output file for sites",
+            null, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            File f = (File) schema.get(parameter);
+            if (f == null|| !f.getParentFile().canWrite()) {
+                throw new ParameterException("Invalid output file "+ f.getAbsolutePath());
+            }
+        }
+    }).longOption("ous").shortOption('p');
 
     /**
      * Path to the directory with the genomic sequences,
@@ -116,7 +168,7 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * with a file name corresponding to the identifiers of
      * the first column in the GTF annotation.
      */
-    public static final Parameter<File> GENOME = Parameters.fileParameter("GENOME",
+    public static final Parameter<File> CHR_SEQ = Parameters.fileParameter("CHR_SEQ",
                     "path to the directory with the genomic sequences,\n" +
                     "i.e., one fasta file per chromosome/scaffold/contig\n" +
                     "with a file name corresponding to the identifiers of\n" +
@@ -128,7 +180,7 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
                 throw new ParameterException("You have to specify a genome directory");
             }
         }
-    }, null).longOption("genome").shortOption('g');
+    }, null).longOption("chr").shortOption('c');
 
     /**
      * The temporary directory.
@@ -157,7 +209,7 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * retrieves 'complete' events <TM> for parameter
      * values < 2.
      */
-    public static final Parameter<Integer> DIMENSION = Parameters.intParameter("DIMENSION",
+    public static final Parameter<Integer> EVENT_DIMENSION = Parameters.intParameter("EVENT_DIMENSION",
             "Dimension of the AS events to be extracted, retrieves 'complete' events <TM>\n" +
             "for parameter values < 2",
             2, new ParameterValidator() {
@@ -204,67 +256,13 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Parameter for the list of event types that is to be considered.
      */
-    public static final Parameter<EnumSet<EventTypes>> EVENTS = Parameters.enumSetParameter(
-            "EVENTS",
-            " Type of events that is considered",
+    // THASSO SET BREAKPOINT 1 BELOW
+    public static final Parameter<EnumSet<EventTypes>> OUT_EVENTS = Parameters.enumSetParameter(
+            "OUT_EVENTS",
+            "Type of events that are considered",
             EnumSet.of(EventTypes.ASI),
             EventTypes.class,
-            null).longOption("events").shortOption('e');
-
-
-    /**
-     * Level of intron confidence, below which introns are trusted without checks.
-     * The default is to trust all introns (i.e., ic= 255). Introns are assigned a
-     * confidency class:
-     * <ul>
-     * <li>0 for 'RefSeq' appears in the source field of the annotation</li>
-     * <li>1 for 'mRNA' appears in the source field of the annotation</li>
-     * <li>2 for 'EST' appears in the source field of the annotation</li>
-     * </ul>
-     * All introns in transcripts of confidence level > threshold are discarded.
-     */
-    public static final Parameter<Integer> INTRON_CONFIDENCE = Parameters.intParameter("INTRON_CONFIDENCE",
-            "Confidence level for introns in the annotation",
-            Transcript.ID_SRC_MOST_INCONFIDENT, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-            int x= schema.get(INTRON_CONFIDENCE);
-            if (x> Byte.MAX_VALUE|| x< 0)
-                throw new IllegalArgumentException("Invalid confidence level "+ x);
-        }
-    }).longOption("ic");
-
-    /**
-     * Level of confidence for edges (i.e., annotated transcription starts/poly-adenylation sites).
-     * The default is to trust no annotated edge and to extend overlapping first/last exons of a
-     * transcript to their most extreme position:
-     * <ul>
-     * <li>0 if 'RefSeq' appears in the source field of the annotation</li>
-     * <li>1 if 'mRNA' appears in the source field of the annotation</li>
-     * <li>2 if 'EST' appears in the source field of the annotation</li>
-     * <li>3 if if none of the above applies</li>
-     * </ul>
-     * All transcript edges of confidence level > edgeConfidence will be extended in case the
-     * annotation shows another exon with the same adjacent splice site and an earlier/later
-     * start/end.
-     */
-    public static final Parameter<Integer> EDGE_CONFIDENCE = Parameters.intParameter("EDGE_CONFIDENCE",
-            "Transcript edge confidence level",
-            Transcript.ID_SRC_MOST_INCONFIDENT, new ParameterValidator() {
-        @Override
-        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-
-            int x= schema.get(EDGE_CONFIDENCE);
-            if (x> Byte.MAX_VALUE|| x< 0)
-                throw new IllegalArgumentException("Invalid confidence level "+ x);
-        }
-    }).longOption("ec");
-
-    /**
-     * Consider only canonical splice sites during graph construction.
-     */
-    public static final Parameter<Boolean> CANONICAL = Parameters.booleanParameter("CANONICAL",
-            "consider only canonical sites", false, null).longOption("css");
+            null).longOption("oev");
 
     /**
      * Flags to control output options for events:
@@ -273,30 +271,88 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      *     <li>FLT: output flank type, i.e. 'constitutive' or 'alternative'</li>
      *     <li>NMD: predict NMD</li>
      *     <li>SEQ: output sequences of flanking splice sites</li>
+     *     <li>IOK: consider only events with acceptable introns</li>
      * </ul>
      */
-    public static enum OutputOptions {
+    public static enum EventOptions {
         /* predict 3'-complete */
         CP3,
+        /* consider only introns with canonical splice sites */
+        CSS,
         /* output flank type, ie 'constitutive' or 'alternative' */
         FLT,
+        /* acceptable introns */
+        IOK,
         /* predict NMD */
         NMD,
         /* output splice site sequences of event flanks */
-        SEQ
+        SEQ,
     };
 
     /**
-     * Parameter collecting flags for output options
+     * Parameter collecting flags for event output options
      */
-    public static final Parameter<EnumSet<OutputOptions>> OUTOPTIONS = Parameters.enumSetParameter(
-            "OUTOPTIONS",
+    public static final Parameter<EnumSet<EventOptions>> OUT_EVENTS_OPT = Parameters.enumSetParameter(
+            "OUT_EVENTS_OPT",
             "Toggle optional attributes to be output",
-            EnumSet.noneOf(OutputOptions.class),
-            OutputOptions.class,
-            null).longOption("oo");
+            EnumSet.noneOf(EventOptions.class),
+            EventOptions.class,
+            null).longOption("oeo");
 
 
+
+    /**
+     * Enumeration of the different types for splice sites.
+     */
+    public static enum SiteTypes {
+        /** Splice Site Donor */
+        SSD,
+        /** Splice Site Acceptor */
+        SSA,
+        /** Transcription Start Site */
+        TSS,
+        /** Cleavage Site */
+        CLV,
+        /** Soft Start */
+        SST,
+        /** Soft End */
+        SND,
+        /** Start Codon */
+        AUG,
+        /** Stop Codon */
+        STP,
+    };
+
+    /**
+     * Parameter for the list of site types that is output.
+     */
+    public static final Parameter<EnumSet<SiteTypes>> OUT_SITES = Parameters.enumSetParameter(
+            "OUT_SITES",
+            "Types of sites that are output",
+            EnumSet.noneOf(SiteTypes.class),
+            SiteTypes.class,
+            null).longOption("ost").shortOption('s');
+
+    /**
+     * Flags to control output options for sites:
+     * <ul>
+     *     <li>SSS: compute scores for splice sites</li>
+     * </ul>
+     */
+    public static enum SiteOptions {
+        /** compute splice site score */
+        SSS,
+    };
+
+    /**
+     * Parameter collecting flags for site output options
+     */
+    public static final Parameter<EnumSet<SiteOptions>> OUT_SITES_OPT = Parameters.enumSetParameter(
+            "OUT_SITES_OPT",
+            "Toggle optional site attributes to be output",
+            EnumSet.noneOf(SiteOptions.class),
+            SiteOptions.class,
+            null).longOption("oso");
 
     /**
      * Checks whether a folder with genomic sequences is necessary in order
@@ -305,15 +361,18 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * current parameters, <code>false</code> otherwise
      */
     public boolean requiresGenomicSequence() {
-        if (get(AStalavistaSettings.OUTOPTIONS).contains(OutputOptions.SEQ))
+        if (get(AStalavistaSettings.OUT_EVENTS_OPT).contains(EventOptions.SEQ))
             return true;
-        if (get(AStalavistaSettings.INOPTIONS).contains(InputOptions.CSS)
-                || get(AStalavistaSettings.INOPTIONS).contains(InputOptions.IOK))
+        if (get(AStalavistaSettings.OUT_SITES_OPT).contains(EventOptions.CSS)
+                || get(AStalavistaSettings.OUT_EVENTS_OPT).contains(EventOptions.IOK))
             return true;
 
         return false;
     }
 
+    /*
+     * Nostalgy..
+     */
     @Override
     public void write(OutputStream out) {
         super.write(out);
@@ -339,15 +398,5 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
             System.exit(0);
 */
     }
-
-
-
-    /**
-     * Score splice site sequences.
-     * @deprecated replace by OutputSite.SITESCORES
-     */
-    public static final Parameter<File> SCORE_SITES = Parameters.fileParameter("SCORE_SITES",
-            "score splice site sequences", null, null, null).longOption("scoresites");
-
 
 }

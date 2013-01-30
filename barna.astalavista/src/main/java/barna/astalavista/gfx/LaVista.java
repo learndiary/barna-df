@@ -1033,7 +1033,7 @@ public class LaVista {
                     outDir.getAbsolutePath()+ File.separator+ FNAME_OVERVIEW+"_"+getGroupAttributeTag() +"_"+SFX_HEADER+ SFX_HTML));
             include(writer, "header.ins");
             if (countMap.size()== 0)
-                headline(writer, "NO AS EVENTS FOUND", null);
+                headline(writer, "NO AS OUT_EVENTS FOUND", null);
             else {
                 headline(writer, "Landscape", null);
                 writer.write("<div class=\"userspace\" align=\"center\"><img src=\""+SUBDIR_PICS+File.separator+FNAME_PIE+"\"></div>");
@@ -1428,7 +1428,7 @@ public class LaVista {
         if (vars!= null)
             p.println("<div class=\"title\"><h1>AS Landscape</h1></div><br />");
         else
-            p.println("<div class=\"title\"><h1>NO AS EVENTS FOUND</h1></div><br />");
+            p.println("<div class=\"title\"><h1>NO AS OUT_EVENTS FOUND</h1></div><br />");
 
         p.println("<img src=\"distribution.png\">");
         int sum= 0;
