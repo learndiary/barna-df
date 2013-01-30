@@ -100,8 +100,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			
 			public Parameter copy() {
 				UniversalReadDescriptorParameter clone= 
-					new UniversalReadDescriptorParameter(this);  
-				
+					new UniversalReadDescriptorParameter(this);
+                clone.longOption(getLongOption()).shortOption(getShortOption());
 				return clone;
 			}
 

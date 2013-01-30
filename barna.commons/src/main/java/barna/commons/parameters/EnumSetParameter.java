@@ -86,6 +86,7 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     @Override
     public Parameter copy() {
         EnumSetParameter enumParameter = new EnumSetParameter(getName(), getDescription(), getDefault(),values.getClass().getComponentType(), getValidator());
+        enumParameter.longOption(getLongOption()).shortOption(getShortOption());
         enumParameter.set(get());
         return enumParameter;
     }
