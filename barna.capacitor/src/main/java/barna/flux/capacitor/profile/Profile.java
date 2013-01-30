@@ -45,7 +45,8 @@ public class Profile {
 	public static int[] BIN_LEN= new int[] {500, 1000, 1500, 2000};	// 5 bins, good
 
     public Profile() {
-        stats = new MappingStats();
+        mappingStats = new MappingStats();
+        coverageStats = new CoverageStats();
 	}
 	
 		/**
@@ -114,13 +115,27 @@ public class Profile {
 		return sum;
 	}
 	
-	private MappingStats stats;
+	private MappingStats mappingStats;
 
-    public MappingStats getStats() {
-        return stats;
+    /**
+     * Coverage
+     */
+    private CoverageStats coverageStats;
+
+    public CoverageStats getCoverageStats() {
+        return coverageStats;
     }
 
-    public void setStats(MappingStats stats) {
-        this.stats = stats;
+    public void setCoverageStats(CoverageStats coverageStats) {
+        this.coverageStats = coverageStats;
     }
+
+    public MappingStats getMappingStats() {
+        return mappingStats;
+    }
+
+    public void setMappingStats(MappingStats mappingStats) {
+        this.mappingStats = mappingStats;
+    }
+
 }

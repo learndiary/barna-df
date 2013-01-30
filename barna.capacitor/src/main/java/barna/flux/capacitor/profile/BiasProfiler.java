@@ -4,6 +4,7 @@ import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
+import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.gtf.GTFwrapper;
@@ -12,7 +13,6 @@ import barna.model.DirectedRegion;
 import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.Transcript;
-import barna.model.commons.Coverage;
 import barna.model.constants.Constants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -46,11 +46,6 @@ public class BiasProfiler implements Callable<Profile> {
     private Profile profile;
 
     /**
-     * Coverage
-     */
-    private Coverage coverage;
-
-    /**
      * Transcript confidence level
      */
     private byte edgeConfidence = -1;
@@ -66,6 +61,17 @@ public class BiasProfiler implements Callable<Profile> {
 
     private GTFwrapper gtfReader;
     private MappingReader mappingReader;
+    private BufferedWriter coverageWriter;
+
+    /**
+     * Temporary file for coverage statistics of the 5' to 3' read distribution.
+     */
+    File fileTmpCovStats = null;
+
+    /**
+     * Writer of the coverage statistics of the 5' to 3' read distribution.
+     */
+    private BufferedWriter writerTmpCovStats = null;
 
     public BiasProfiler(FluxCapacitorSettings settings, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
         if (settings == null) {
@@ -84,8 +90,8 @@ public class BiasProfiler implements Callable<Profile> {
     @Override
     public Profile call() throws Exception {
         profile();
-        profile.getStats().setReadLenMin(readLenMin);
-        profile.getStats().setReadLenMax(readLenMax);
+        profile.getMappingStats().setReadLenMin(readLenMin);
+        profile.getMappingStats().setReadLenMax(readLenMax);
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
             writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
         return profile;
@@ -169,7 +175,7 @@ public class BiasProfiler implements Callable<Profile> {
                     }
 
                     if (gene[i].getTranscriptCount() == 1) {
-                        profile.getStats().incrSingleTxLoci(1);
+                        profile.getMappingStats().incrSingleTxLoci(1);
 
                         // boundaries
                         int start = gene[i].getStart();
@@ -216,6 +222,10 @@ public class BiasProfiler implements Callable<Profile> {
             }    // end iterate GTF
 
             //mappingReader.finish(); //TODO check
+            if (coverageWriter !=null) {
+                coverageWriter.close();
+                coverageWriter = null;
+            }
 
             Log.progressFinish(StringUtils.OK, true);
             if (checkGTFscanExons > 0 && checkGTFscanExons != gtfReader.getNrExons())
@@ -253,13 +263,13 @@ public class BiasProfiler implements Callable<Profile> {
 //					return;	// discards reads
 
         UniversalMatrix m = profile.getMatrix(elen);
-        MappingStats stats = profile.getStats();
+        MappingStats stats = profile.getMappingStats();
 
         if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
-            if (coverage == null)
-                coverage = new Coverage(elen);
+            if (profile.getCoverageStats() == null)
+                profile.setCoverageStats(new CoverageStats(elen));
             else
-                coverage.reset(elen);
+                profile.getCoverageStats().getCoverage().reset(elen);
         }
 
         while (mappings.hasNext()) {
@@ -332,14 +342,14 @@ public class BiasProfiler implements Callable<Profile> {
                     if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                         if (bpoint1 < bpoint2) {
                             for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
-                                coverage.increment(i);
+                                profile.getCoverageStats().getCoverage().increment(i);
                             for (int i = bpoint2 - bed2.getLength() + 1; i <= bpoint2; i++)
-                                coverage.increment(i);
+                                profile.getCoverageStats().getCoverage().increment(i);
                         } else {
                             for (int i = bpoint2; i < bpoint2 + bed2.getLength(); i++)
-                                coverage.increment(i);
+                                profile.getCoverageStats().getCoverage().increment(i);
                             for (int i = bpoint1 - bed1.getLength() + 1; i <= bpoint1; i++)
-                                coverage.increment(i);
+                                profile.getCoverageStats().getCoverage().increment(i);
                         }
                     }
                     //addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
@@ -356,15 +366,50 @@ public class BiasProfiler implements Callable<Profile> {
                 if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
                     if (bed1.getStrand() == tx.getStrand()) {
                         for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
-                            coverage.increment(i);
+                            profile.getCoverageStats().getCoverage().increment(i);
                     } else {
                         for (int i = bpoint1 - bed1.getLength() + 1; i <= bpoint1; i++)
-                            coverage.increment(i);
+                            profile.getCoverageStats().getCoverage().increment(i);
                     }
                 }
             }
 
         } // iterate bed objects
+
+        // output coverage stats
+        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+
+
+            if (profile.getCoverageStats().writeCoverageStats(getCoverageWriter(),
+                                                          tx.getGene().getLocusID(),
+                                                          tx.getTranscriptID(),
+                                                          tx.isCoding(),
+                                                          tx.getExonicLength(),
+                                                          paired ? stats.getMappingPairs() : stats.getMappingsMapped()))
+                Log.info("Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
+            else
+                Log.warn("Failed to write coverage statistics to " +
+                    settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
+                    );
+        }
+    }
+
+    private BufferedWriter getCoverageWriter() {
+        if (coverageWriter == null) {
+            File coverageFile = null;
+            try {
+                if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) == null) {
+                    coverageFile = FileHelper.createTempFile("coverage", "pro");
+                    Log.warn("Temporary file for coverage stats created as " + coverageFile);
+                } else {
+                    coverageFile = settings.get(FluxCapacitorSettings.COVERAGE_FILE);
+                }
+                coverageWriter =  new BufferedWriter(new FileWriter(coverageFile));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        return coverageWriter;
     }
 
     /**
@@ -559,4 +604,5 @@ public class BiasProfiler implements Callable<Profile> {
     public void setEdgeConfidence(byte edgeConfidence) {
         this.edgeConfidence = edgeConfidence;
     }
+
 }
