@@ -291,13 +291,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
-                if (file== null)
-                	return;
+                if (file == null)
+                    return;
                 if (!file.getParentFile().exists()) {
-                    throw new ParameterException("Folder for log file " + file.getAbsolutePath() 
-                    		+ " could not be found!");
+                    throw new ParameterException("Folder for log file " + file.getAbsolutePath()
+                            + " could not be found!");
                 }
-   
+
             }
         }, relativePathParser);
 
@@ -306,15 +306,15 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * Flag to output coverage statistic
 	     */
 	    public static final Parameter<Boolean> COVERAGE_STATS = Parameters.booleanParameter("COVERAGE_STATS", "Flag to output coverage statistics", false, new ParameterValidator() {
-	    		 @Override
-	             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-	                 boolean set= (Boolean) schema.get(parameter);
-	                 File file= (File) schema.get(COVERAGE_FILE);
-	                 if (set&& file== null)
-	                	 throw new ParameterException("Parameter "+ COVERAGE_FILE.getName()
-	                			 + " has to be set to output coverage statistics.");
-	             }
-	    });
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                boolean set = (Boolean) schema.get(parameter);
+                File file = (File) schema.get(COVERAGE_FILE);
+                if (set && file == null)
+                    throw new ParameterException("Parameter " + COVERAGE_FILE.getName()
+                            + " has to be set to output coverage statistics.");
+            }
+        });
 
 	    /**
 	     * The file where profiles are stored in.
@@ -339,9 +339,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 // if set for writing, check whether the parent directory is valid
-                if ((file != null)&& (!file.exists())&& ((!file.getParentFile().exists())|| (!file.getParentFile().canWrite()))) {
-                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath() 
-                    		+ " to write stats file "+ file.getName()+ " cannot be found or is write-protected.");
+                if ((file != null) && (!file.exists()) && ((!file.getParentFile().exists()) || (!file.getParentFile().canWrite()))) {
+                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath()
+                            + " to write stats file " + file.getName() + " cannot be found or is write-protected.");
                 }
             }
         }, relativePathParser);
@@ -453,7 +453,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * A <code>boolean</code> value specifying whether locus sorting of reads 
 	     * is carried out in RAM-memory or on disk.
 	     */
-	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", false);
+	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", true);
 	    
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
