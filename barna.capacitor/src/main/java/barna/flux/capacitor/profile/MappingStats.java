@@ -482,6 +482,52 @@ public class MappingStats {
         }
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof MappingStats))
+            return false;
+        MappingStats otherStats = (MappingStats)other;
+        if (this.singleTxLoci != otherStats.singleTxLoci)
+            return false;
+        if (this.eventsExp != otherStats.eventsExp)
+            return false;
+        if (this.readsSingleTxLoci != otherStats.readsSingleTxLoci)
+            return false;
+        if (this.mappingsSingleTxLoci != otherStats.mappingsSingleTxLoci)
+            return false;
+        if (this.mappingPairs != otherStats.mappingPairs)
+            return false;
+        if (this.mappingsTotal != otherStats.mappingsTotal)
+            return false;
+        if (this.txsExp != otherStats.txsExp)
+            return false;
+        if (this.mappingsMapped != otherStats.mappingsMapped)
+            return false;
+        if (this.mappingPairsNoTx != otherStats.mappingPairsNoTx)
+            return false;
+        if (this.pairsWrongOrientation != otherStats.pairsWrongOrientation)
+            return false;
+        if (this.mappingsWrongStrand != otherStats.mappingsWrongStrand)
+            return false;
+        if (this.readsLoci != otherStats.readsLoci)
+            return false;
+        if (this.readsTotal != otherStats.readsTotal)
+            return false;
+        if (this.mappingsSingleTxLociNoAnn != otherStats.mappingsSingleTxLociNoAnn)
+            return false;
+        if (this.lociUnsolved != otherStats.lociUnsolved)
+            return false;
+        if (this.mappingPairsSingleTxLoci != otherStats.mappingPairsSingleTxLoci)
+            return false;
+        if (this.readLenMin != otherStats.readLenMin)
+            return false;
+        if (this.readLenMax != otherStats.readLenMax)
+            return false;
+        if (this.lociExp != otherStats.lociExp)
+            return false;
+        return true;
+    }
+
     public void reset() {
         //Annotation Mapping
         readsLoci = 0;

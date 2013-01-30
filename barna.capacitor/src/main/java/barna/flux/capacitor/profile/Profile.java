@@ -36,6 +36,8 @@ public class Profile {
 	int binMinReads= 10000, binMinTranscripts= 100;
 	float binMaxLengthDistance, binMaxExprDistance; // either abs or factor (when <10)
 
+    private UniversalMatrix[] masters= null;
+
 	public final static int LEN_LO= 1000;
 	public final static int LEN_UP= 5000;
 	public final static int EXP_LO= 10;
@@ -81,8 +83,7 @@ public class Profile {
 		return m;
 	}
 
-	private UniversalMatrix[] masters= null;
-	public UniversalMatrix[] getMasters() {
+    public UniversalMatrix[] getMasters() {
 		if (masters == null) {
 			masters = new UniversalMatrix[BIN_LEN.length+ 1]; // [3]
 			for (int i = 0; i < masters.length; i++) {
@@ -136,6 +137,36 @@ public class Profile {
 
     public void setMappingStats(MappingStats mappingStats) {
         this.mappingStats = mappingStats;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof Profile))
+            return false;
+        Profile otherProfile = (Profile)other;
+        if (this.masters.length != otherProfile.masters.length)
+            return false;
+        for (int i = 0; i < this.masters.length; i++) {
+            if (this.masters[i].getLength() != otherProfile.masters[i].getLength())
+                return false;
+            if (this.masters[i].sense.length != otherProfile.masters[i].sense.length)
+                return false;
+            for (int j = 0; j < this.masters[i].sense.length; j++) {
+                if (this.masters[i].sense[j] != otherProfile.masters[i].sense[j])
+                    return false;
+            }
+            if (this.masters[i].asense.length != otherProfile.masters[i].asense.length)
+                return false;
+            for (int j = 0; j < this.masters[i].asense.length; j++) {
+                if (this.masters[i].asense[j] != otherProfile.masters[i].asense[j])
+                    return false;
+            }
+            if (this.masters[i].suma != otherProfile.masters[i].suma)
+                return false;
+            if (this.masters[i].sums != otherProfile.masters[i].sums)
+                return false;
+        }
+        return true;
     }
 
 }
