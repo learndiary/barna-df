@@ -112,7 +112,7 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      */
     public static final Parameter<File> GENE_ID = Parameters.fileParameter("GENE_ID",
             "name and path of a file with the GeneID models for splice sites",
-            null, null, null).longOption("gid");
+            null, null, null).longOption("gid").shortOption('g');
 
 
     /**
@@ -130,12 +130,12 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
                     throw new ParameterException("VCF file not valid: "+ vcf== null? "null": vcf.getAbsolutePath());
                 }
             }
-    }).longOption("vcf");
+    }).longOption("vcf").shortOption('v');
 
     /**
      * Path to the GTF output annotation.
      */
-    public static final Parameter<File> OUT_FILE = Parameters.fileParameter("OUT_FILE",
+    public static final Parameter<File> EVENTS_FILE = Parameters.fileParameter("EVENTS_FILE",
             "a path to the GTF output file for events",
             null, new ParameterValidator() {
         @Override
@@ -145,12 +145,12 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
                 throw new ParameterException("Invalid output file "+ f.getAbsolutePath());
             }
         }
-    }).longOption("out").shortOption('o');
+    }).longOption("eo").shortOption('o');
 
     /**
      * Path to the GTF output annotation.
      */
-    public static final Parameter<File> OUT_FILE_SITES = Parameters.fileParameter("OUT_FILE_SITES",
+    public static final Parameter<File> SITES_FILE = Parameters.fileParameter("SITES_FILE",
             "a path to the VCF output file for sites",
             null, new ParameterValidator() {
         @Override
@@ -160,7 +160,7 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
                 throw new ParameterException("Invalid output file "+ f.getAbsolutePath());
             }
         }
-    }).longOption("ous").shortOption('p');
+    }).longOption("so").shortOption('f');
 
     /**
      * Path to the directory with the genomic sequences,
@@ -209,19 +209,15 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * retrieves 'complete' events <TM> for parameter
      * values < 2.
      */
-    public static final Parameter<Integer> EVENT_DIMENSION = Parameters.intParameter("EVENT_DIMENSION",
+    public static final Parameter<Integer> EVENTS_DIMENSION = Parameters.intParameter("EVENTS_DIMENSION",
             "Dimension of the AS events to be extracted, retrieves 'complete' events <TM>\n" +
             "for parameter values < 2",
             2, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             int v= (Integer) schema.get(parameter);
-            if (v< 2)
-                EventExtractor.n= (-1); // complete events
-            else
-                EventExtractor.n= 2;
         }
-    }).longOption("dim").shortOption('k');
+    }).longOption("ed").shortOption('d');
 
 
     /**
@@ -257,12 +253,12 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * Parameter for the list of event types that is to be considered.
      */
     // THASSO SET BREAKPOINT 1 BELOW
-    public static final Parameter<EnumSet<EventTypes>> OUT_EVENTS = Parameters.enumSetParameter(
-            "OUT_EVENTS",
+    public static final Parameter<EnumSet<EventTypes>> EVENTS = Parameters.enumSetParameter(
+            "EVENTS",
             "Type of events that are considered",
             EnumSet.of(EventTypes.ASI),
             EventTypes.class,
-            null).longOption("oev");
+            null).longOption("ev").shortOption('e');
 
     /**
      * Flags to control output options for events:
@@ -292,12 +288,12 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Parameter collecting flags for event output options
      */
-    public static final Parameter<EnumSet<EventOptions>> OUT_EVENTS_OPT = Parameters.enumSetParameter(
-            "OUT_EVENTS_OPT",
+    public static final Parameter<EnumSet<EventOptions>> EVENTS_OPT = Parameters.enumSetParameter(
+            "EVENTS_OPT",
             "Toggle optional attributes to be output",
             EnumSet.noneOf(EventOptions.class),
             EventOptions.class,
-            null).longOption("oeo");
+            null).longOption("ep").shortOption('p');
 
 
 
@@ -326,12 +322,12 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Parameter for the list of site types that is output.
      */
-    public static final Parameter<EnumSet<SiteTypes>> OUT_SITES = Parameters.enumSetParameter(
-            "OUT_SITES",
+    public static final Parameter<EnumSet<SiteTypes>> SITES = Parameters.enumSetParameter(
+            "SITES",
             "Types of sites that are output",
             EnumSet.noneOf(SiteTypes.class),
             SiteTypes.class,
-            null).longOption("ost").shortOption('s');
+            null).longOption("ss").shortOption('s');
 
     /**
      * Flags to control output options for sites:
@@ -347,12 +343,12 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Parameter collecting flags for site output options
      */
-    public static final Parameter<EnumSet<SiteOptions>> OUT_SITES_OPT = Parameters.enumSetParameter(
-            "OUT_SITES_OPT",
+    public static final Parameter<EnumSet<SiteOptions>> SITES_OPT = Parameters.enumSetParameter(
+            "SITES_OPT",
             "Toggle optional site attributes to be output",
             EnumSet.noneOf(SiteOptions.class),
             SiteOptions.class,
-            null).longOption("oso");
+            null).longOption("sp").shortOption('t');
 
     /**
      * Checks whether a folder with genomic sequences is necessary in order
@@ -361,10 +357,10 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
      * current parameters, <code>false</code> otherwise
      */
     public boolean requiresGenomicSequence() {
-        if (get(AStalavistaSettings.OUT_EVENTS_OPT).contains(EventOptions.SEQ))
+        if (get(AStalavistaSettings.EVENTS_OPT).contains(EventOptions.SEQ))
             return true;
-        if (get(AStalavistaSettings.OUT_SITES_OPT).contains(EventOptions.CSS)
-                || get(AStalavistaSettings.OUT_EVENTS_OPT).contains(EventOptions.IOK))
+        if (get(AStalavistaSettings.SITES_OPT).contains(EventOptions.CSS)
+                || get(AStalavistaSettings.EVENTS_OPT).contains(EventOptions.IOK))
             return true;
 
         return false;

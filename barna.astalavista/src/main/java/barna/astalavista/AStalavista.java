@@ -161,63 +161,20 @@ public class AStalavista implements FluxTool<Void>{
 
         // INIT
         long t0= System.currentTimeMillis();
+        Log.message("# started\t" + new Date(t0));
 
-        inputFile= settings.get(AStalavistaSettings.IN_FILE);
-
-        acceptableIntrons= settings.get(AStalavistaSettings.OUT_EVENTS_OPT).contains(AStalavistaSettings.EventOptions.IOK);
-
-        // consider canonical sites only
-        SplicingGraph.canonicalSS= settings.get(AStalavistaSettings.OUT_EVENTS_OPT).contains(AStalavistaSettings.EventOptions.CSS);
+        // print parameters
+        ArrayList<barna.commons.parameters.Parameter> pars= new ArrayList<barna.commons.parameters.Parameter>(
+                settings.getParameters().values());
+        Collections.sort(pars, new barna.commons.parameters.Parameter.ParameterByNameComparator());
+        for (barna.commons.parameters.Parameter p : pars) {
+            Log.message("# "+ p.getName()+ "\t"+ settings.get(p));
+        }
 
         // genome dir
         if (settings.get(AStalavistaSettings.CHR_SEQ)!= null) {
             Graph.overrideSequenceDirPath= settings.get(AStalavistaSettings.CHR_SEQ).getAbsolutePath();
         }
-
-        // events
-        if (settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
-                || settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.DSP)
-                || settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.VST))
-
-            SplicingGraph.onlyInternal= false;
-        else
-            SplicingGraph.onlyInternal= true;
-
-        // OUT_FILE OPTIONS
-        if (!settings.get(AStalavistaSettings.OUT_EVENTS).isEmpty()) {
-
-            // Events: predict 3'complete transcripts
-            if (settings.get(AStalavistaSettings.OUT_EVENTS_OPT).contains(AStalavistaSettings.EventOptions.CP3))
-                ASEvent.check3Pcomplete= true;
-            // Events: predict NMD
-            if (settings.get(AStalavistaSettings.OUT_EVENTS_OPT).contains(AStalavistaSettings.EventOptions.NMD))
-                ASEvent.checkNMD= true;
-            // Events: output flank type (constitutive/alternative)
-            if (settings.get(AStalavistaSettings.OUT_EVENTS_OPT).contains(AStalavistaSettings.EventOptions.FLT))
-                ASEvent.setOutputFlankMode(true);
-            if (settings.get(AStalavistaSettings.OUT_EVENTS_OPT).contains(AStalavistaSettings.EventOptions.SEQ))
-                ; // TODO SplicingGraph.outputSeq= true;
-
-            // init output / writer thread
-            EventExtractor.writerThread= new WriterThread();
-            if (settings.get(AStalavistaSettings.OUT_FILE)!= null)
-                EventExtractor.writerThread.outputFname= settings.get(AStalavistaSettings.OUT_FILE).getAbsolutePath();
-            else
-                EventExtractor.writerThread.outputFname= inputFile.getAbsolutePath()+"_astalavista.gtf.gz";
-
-            if (EventExtractor.writerThread.outputFname!= null&& new MyFile(EventExtractor.writerThread.outputFname).exists()) {
-                // Confirm o..+"\n by typing \'yes\':"
-                Log.error("Overwriting output file "+ EventExtractor.writerThread.outputFname+".");
-            }
-            EventExtractor.writerThread.start();
-
-        }
-
-        // intron confidence
-        SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStalavistaSettings.INTRON_CONFIDENCE).intValue();
-
-        // edge confidence
-        Transcript.setEdgeConfidenceLevel((byte) settings.get(AStalavistaSettings.EDGE_CONFIDENCE).intValue());
 
         // init variants
         if (settings.get(AStalavistaSettings.VARIANT_FILE)!= null) {
@@ -225,10 +182,11 @@ public class AStalavista implements FluxTool<Void>{
         }
 
         // init input / reader thread
-        GTFwrapper reader= new GTFwrapper(inputFile.getAbsolutePath());
+        GTFwrapper reader= new GTFwrapper(settings.get(AStalavistaSettings.IN_FILE).getAbsolutePath());
         if (!reader.isApplicable()) {
-            inputFile= reader.sort();
-            reader= new GTFwrapper(inputFile.getAbsolutePath());
+            File f= reader.sort();
+            settings.set(AStalavistaSettings.IN_FILE, f);
+            reader= new GTFwrapper(settings.get(AStalavistaSettings.IN_FILE).getAbsolutePath());
         }
         if (readAheadLimit> 0)
             reader.setReadAheadLimit(readAheadLimit);
@@ -242,27 +200,40 @@ public class AStalavista implements FluxTool<Void>{
 
 
         // init site writer
-        if (!settings.get(AStalavistaSettings.OUT_SITES).isEmpty()) {
+        if (!settings.get(AStalavistaSettings.SITES).isEmpty()) {
             try {
                 File f= null;
-                if (settings.get(AStalavistaSettings.OUT_FILE_SITES)!= null)
-                    f= settings.get(AStalavistaSettings.OUT_FILE_SITES);
+                if (settings.get(AStalavistaSettings.SITES_FILE)!= null)
+                    f= settings.get(AStalavistaSettings.SITES_FILE);
                 else
-                    f= new File(FileHelper.append(inputFile.getAbsolutePath(), "_sites", true, "vcf"));
+                    f= new File(FileHelper.append(settings.get(AStalavistaSettings.IN_FILE).getAbsolutePath(), "_sites", true, "vcf"));
                 siteScoreWriter= new BufferedWriter(new FileWriter(f));
             } catch (IOException e) {
                 Log.error(e.getMessage(), e);
             }
         }
 
+        // init event writer thread
+        EventExtractor.writerThread= new WriterThread();
+        if (settings.get(AStalavistaSettings.EVENTS_FILE)!= null)
+            EventExtractor.writerThread.outputFname= settings.get(AStalavistaSettings.EVENTS_FILE).getAbsolutePath();
+        else
+            EventExtractor.writerThread.outputFname= settings.get(AStalavistaSettings.IN_FILE).getAbsolutePath()+"_astalavista.gtf.gz";
 
-        // write settings
-        printSettings();
+        if (EventExtractor.writerThread.outputFname!= null&& new MyFile(EventExtractor.writerThread.outputFname).exists()) {
+            // Confirm o..+"\n by typing \'yes\':"
+            Log.warn("Overwriting output file " + EventExtractor.writerThread.outputFname + ".");
+        }
+        EventExtractor.writerThread.start();
 
 
         // MAIN LOOP
+        Log.progressStart("Iterating Annotation");
+        long inBytes= settings.get(AStalavistaSettings.IN_FILE).length();
+        Log.progress(0, inBytes);
         while (true) {
             Gene[] g= readerThread.getGenes();
+            Log.progress(readerThread.getBytesRead(),inBytes);
             if (g== null)
                 break;
 
@@ -287,6 +258,7 @@ public class AStalavista implements FluxTool<Void>{
                 }
                 g[i].setSpecies(species);
 
+                // sets types of events to be extracted, k, etc..
                 EventExtractor extractor= new EventExtractor(g[i], settings);
                 Thread extractorThread= new Thread(extractor);
                 extractorThread.start();
@@ -316,7 +288,7 @@ public class AStalavista implements FluxTool<Void>{
             EventExtractor.writerThread.interrupt();
 
         }
-
+       Log.progressFinish("done.", true);
        Log.info("took "+((System.currentTimeMillis()- t0)/1000)+" sec.");
 
         if (siteScoreWriter!= null)
@@ -332,7 +304,7 @@ public class AStalavista implements FluxTool<Void>{
 
         Log.info("found "+ EventExtractor.counter+" events.");
 
-        if (acceptableIntrons) {
+        if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.IOK)) {
             DecimalFormat df = new DecimalFormat("#.##");
             System.err.println("discarded " + invalidIntrons + " introns, " +
                     "found " + (totalIntrons - invalidIntrons) + " valid ones when checking splice sites: " +
@@ -465,15 +437,7 @@ public class AStalavista implements FluxTool<Void>{
         // converts parameter file parameters to CLI parameters
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-        AStalavistaSettings settings= null;
-        Field cc= null;
-        try {
-            cc= AStalavistaSettings.class.getDeclaredField("OUT_EVENTS");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-        // THASSO SET BREAKPOINT 2 BELOW
-        settings= new AStalavistaSettings();
+        AStalavistaSettings settings= new AStalavistaSettings();
         Collection<barna.commons.parameters.Parameter> pars=
                 settings.getParameters().values();
         for (barna.commons.parameters.Parameter parameter : pars) {
@@ -801,7 +765,7 @@ public class AStalavista implements FluxTool<Void>{
         }
 
         // check splice site scoring stuff
-        if (settings.get(AStalavistaSettings.OUT_SITES_OPT).contains(AStalavistaSettings.SiteOptions.SSS)) {
+        if (settings.get(AStalavistaSettings.SITES_OPT).contains(AStalavistaSettings.SiteOptions.SSS)) {
 
             if(settings.get(AStalavistaSettings.CHR_SEQ)== null) {
                 Log.error("Splice site scoring requires the genomic sequence, set parameter \'CHR_SEQ\'");
@@ -838,57 +802,17 @@ public class AStalavista implements FluxTool<Void>{
 
         // lazily create
         if (settings== null) {
-            Class cc= AStalavistaSettings.class;
             settings = new AStalavistaSettings();
         }
 
-        // input file
-        if (args.userSpecified(AStalavistaSettings.IN_FILE.getLongOption()))
-            settings.set(AStalavistaSettings.IN_FILE, args.getFile(AStalavistaSettings.IN_FILE.getLongOption()));
-
-        // genome directory
-        if (args.userSpecified(AStalavistaSettings.CHR_SEQ.getLongOption())) {
-            settings.set(AStalavistaSettings.CHR_SEQ, args.getFile(AStalavistaSettings.CHR_SEQ.getLongOption()));
+        // copy
+        Collection<barna.commons.parameters.Parameter> pars=
+                settings.getParameters().values();
+        for (barna.commons.parameters.Parameter p : pars) {
+            if (args.userSpecified(p.getLongOption())) {
+                p.parse(args.getObject(p.getLongOption()).toString());
+            }
         }
-
-        // variants, VCF file
-        if (args.userSpecified(AStalavistaSettings.VARIANT_FILE.getLongOption())) {
-            settings.set(AStalavistaSettings.VARIANT_FILE, args.getFile(AStalavistaSettings.VARIANT_FILE.getLongOption()));
-        }
-
-        // events
-        if (args.userSpecified(AStalavistaSettings.OUT_EVENTS.getLongOption())) {
-            settings.set(AStalavistaSettings.OUT_EVENTS.getName(), "[VST]");
-                    // args.getString(AStalavistaSettings.OUT_EVENTS.getLongOption()));
-            System.err.println(args.getString(AStalavistaSettings.OUT_EVENTS.getLongOption()));
-            System.err.println("vs "+ settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.VST));
-        }
-
-        // event options
-        if (args.userSpecified(AStalavistaSettings.OUT_EVENTS_OPT.getLongOption())) {
-            settings.set(AStalavistaSettings.OUT_EVENTS_OPT.getName(),
-                    args.getString(AStalavistaSettings.OUT_EVENTS_OPT.getLongOption()));
-        }
-
-        // sites
-        if (args.userSpecified(AStalavistaSettings.OUT_SITES.getLongOption())) {
-            settings.set(AStalavistaSettings.OUT_SITES.getName(),
-                    args.getString(AStalavistaSettings.OUT_SITES.getLongOption()));
-        }
-
-        // site options
-        if (args.userSpecified(AStalavistaSettings.OUT_SITES_OPT.getLongOption())) {
-            settings.set(AStalavistaSettings.OUT_SITES_OPT.getName(),
-                    args.getString(AStalavistaSettings.OUT_SITES_OPT.getLongOption()));
-        }
-
-        if (args.userSpecified(AStalavistaSettings.GENE_ID.getLongOption()))
-            settings.set(AStalavistaSettings.GENE_ID, args.getFile(AStalavistaSettings.GENE_ID.getLongOption()));
-
-        // output options
-//        if (args.userSpecified(AStalavistaSettings.OUTPUT_LOCUS.getName()))
-//                // parses enum string and sets EnumSet correspondingly
-//                settings.set(AStalavistaSettings.OUTPUT_LOCUS.getName(), args.getString(AStalavistaSettings.OUTPUT_LOCUS.getName()));
 
         return settings;
     }
@@ -927,18 +851,17 @@ public class AStalavista implements FluxTool<Void>{
 
         Log.message("# started\t" + new Date(System.currentTimeMillis()));
         Log.message("# INPUT #");
-        Log.message("# annotation\t" + inputFile.getAbsolutePath());
-        if (barna.model.Graph.overrideSequenceDirPath!= null)
-            Log.message("# chromosomes\t"+ barna.model.Graph.overrideSequenceDirPath);
+        Log.message("# annotation\t" + settings.get(AStalavistaSettings.IN_FILE).getAbsolutePath());
+        Log.message("# chromosomes\t"+ barna.model.Graph.overrideSequenceDirPath);
         if (settings.get(AStalavistaSettings.GENE_ID)!= null)
             Log.message("# chromosomes\t"+ settings.get(AStalavistaSettings.GENE_ID));
         if (settings.get(AStalavistaSettings.VARIANT_FILE)!= null)
             Log.message("# variants\t"+ settings.get(AStalavistaSettings.VARIANT_FILE));
 
-        if (!settings.get(AStalavistaSettings.OUT_EVENTS).isEmpty()) {
+        if (!settings.get(AStalavistaSettings.EVENTS).isEmpty()) {
             Log.message("# EVENTS #");
             Log.message("# output\t"+ outputFname);
-            Log.message("# dimension\t" + EventExtractor.n);
+            Log.message("# dimension\t" + settings.get(AStalavistaSettings.EVENTS_DIMENSION));
             Log.message("# as_events\t"+ (SplicingGraph.retrieveASEvents? "true": "false"));
             Log.message("# ds_events\t"+ (SplicingGraph.retrieveDSEvents? "true": "false"));
             Log.message("# vs_events\t"+ (SplicingGraph.retrieveVSEvents? "true": "false"));
@@ -946,16 +869,17 @@ public class AStalavista implements FluxTool<Void>{
             if (!SplicingGraph.onlyInternal)
                 Log.message("# edgeConfidenceLevel " + Transcript.getEdgeConfidenceLevel());
             Log.message("# canonicalSS\t"+ SplicingGraph.canonicalSS);
-            Log.message("# acceptableIntrons\t"+ acceptableIntrons);
+            Log.message("# acceptableIntrons\t"+ settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.IOK));
             if (SplicingGraph.acceptableIntrons)
                 Log.message("# intronConfidenceLevel " + SplicingGraph.intronConfidenceLevel);
         }
 
-        if (!settings.get(AStalavistaSettings.OUT_SITES).isEmpty()) {
+        if (!settings.get(AStalavistaSettings.SITES).isEmpty()) {
             Log.message("# SITES #");
-            Log.message("# scores\t"+ settings.get(AStalavistaSettings.OUT_SITES_OPT).contains(AStalavistaSettings.SiteOptions.SSS));
+            Log.message("# scores\t"+ settings.get(AStalavistaSettings.SITES_OPT).contains(AStalavistaSettings.SiteOptions.SSS));
         }
 
+        System.exit(0);
     }
 
 }

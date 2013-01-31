@@ -1,7 +1,9 @@
 package barna.astalavista;
 
+import barna.commons.log.Log;
 import barna.model.*;
 import barna.model.commons.IntVector;
+import barna.model.commons.MyFile;
 import barna.model.commons.MyTime;
 import barna.model.splicegraph.*;
 
@@ -22,7 +24,7 @@ public class EventExtractor extends SplicingGraph implements Runnable {
 
     protected Vector<ASEvent> eventV = null;
 
-    boolean outputCDS = true;
+    boolean outputCDS = false;
 
     static long cumulGC = 0l, cumulGF = 0l, cumulGT = 0l, cumulEV = 0l;
 
@@ -58,14 +60,50 @@ public class EventExtractor extends SplicingGraph implements Runnable {
     public EventExtractor(Gene g, AStalavistaSettings settings) {
         super(g);
         this.settings= settings;
-        this.onlyInternal= !(settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
-                            || settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.DSP)
-                            || settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.VST));
-        this.retrieveASEvents= (settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
-                                || settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.ASI));
 
-        this.retrieveDSEvents= settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.DSP);
-        this.retrieveVSEvents= settings.get(AStalavistaSettings.OUT_EVENTS).contains(AStalavistaSettings.EventTypes.VST);
+        // EVENTS_FILE OPTIONS
+        if (!settings.get(AStalavistaSettings.EVENTS).isEmpty()) {
+
+            this.onlyInternal= !(settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
+                    || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP)
+                    || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST));
+            this.retrieveASEvents= (settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
+                    || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASI));
+            this.retrieveDSEvents= settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP);
+            this.retrieveVSEvents= settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST);
+
+            // Dimension
+            int v= (Integer) settings.get(AStalavistaSettings.EVENTS_DIMENSION);
+            if (v< 2)
+                n= (-1); // complete events
+            else
+                n= 2;
+
+            acceptableIntrons= settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.IOK);
+            // consider canonical sites only
+            SplicingGraph.canonicalSS= settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.CSS);
+
+            // intron confidence
+            SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStalavistaSettings.INTRON_CONFIDENCE).intValue();
+
+            // edge confidence
+            Transcript.setEdgeConfidenceLevel((byte) settings.get(AStalavistaSettings.EDGE_CONFIDENCE).intValue());
+
+            // Events: predict 3'complete transcripts
+            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.CP3))
+                ASEvent.check3Pcomplete= true;
+            // Events: predict NMD
+            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.NMD))
+                ASEvent.checkNMD= true;
+            // Events: output flank type (constitutive/alternative)
+            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.FLT))
+                ASEvent.setOutputFlankMode(true);
+            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.SEQ))
+                ; // TODO SplicingGraph.outputSeq= true;
+
+        }
+
+
     }
 
     @Override

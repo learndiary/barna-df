@@ -70,7 +70,7 @@ class FileParameter extends Parameter<File> {
         return value == null ? getDefault() : value;
     }
 
-    protected void parse(String value) throws ParameterException {
+    public void parse(String value) throws ParameterException {
         if (nameParser != null) {
             this.value = nameParser.parse(value);
         } else {

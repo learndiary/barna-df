@@ -56,7 +56,7 @@ class DoubleParameter extends NumberParameter<Double> {
     }
 
     @Override
-    protected void parse(String value) throws ParameterException {
+    public void parse(String value) throws ParameterException {
         if (value.equalsIgnoreCase("nan")) {
             this.value = Double.NaN;
             return;
