@@ -252,7 +252,6 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Parameter for the list of event types that is to be considered.
      */
-    // THASSO SET BREAKPOINT 1 BELOW
     public static final Parameter<EnumSet<EventTypes>> EVENTS = Parameters.enumSetParameter(
             "EVENTS",
             "Type of events that are considered",
