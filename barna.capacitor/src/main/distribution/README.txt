@@ -23,6 +23,15 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.2.3
+    * [BARNA-253] - Add Differential-Expression Tool to the Capacitor
+    * [BARNA-264] - Differential Expression result location misses the : between start and end
+    * [BARNA-265] - error index out of bounds fluxcapacitator
+    * [BARNA-266] - Capacitor crashed with BED input file
+    * [BARNA-267] - The stats file writer tries to lock the stats file, but that might fail
+    * [BARNA-268] - Capacitor throw an NPE for Ensmeble annotation
+    * [BARNA-269] - Capacitor throw NPE when trying to ouput coverage stats
+
 FluxCapacitor 1.2.2
     * [BARNA-263] - BAM ID parsing error results in NPE
 
