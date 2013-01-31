@@ -27,9 +27,11 @@
 
 package barna.io.gtf;
 
+import barna.model.Gene;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.TreeSet;
 
 import static junit.framework.Assert.*;
 
@@ -98,5 +100,24 @@ public class GTFwrapperTest {
             fail();
         }catch (Exception error){
         }
+    }
+    @Test
+    public void testEnsemleGeneLoading() throws Exception {
+        File gzippedGtf = new File(getClass().getResource("/BARNA-268-ensemble.gtf").getFile());
+        GTFwrapper wrapperFile = new GTFwrapper(gzippedGtf);
+        wrapperFile.read();
+        Gene[] genes = null;
+        TreeSet<String> ids = new TreeSet<String>();
+        while((genes = wrapperFile.getGenes()) != null){
+            for (Gene gene : genes) {
+                ids.add(gene.getGeneID());
+            }
+            wrapperFile.read();
+        }
+        assertEquals(3, ids.size());
+        assertTrue(ids.contains("ENSG00000223972"));
+        assertTrue(ids.contains("ENSG00000227159"));
+        assertTrue(ids.contains("ENSG00000233614"));
+
     }
 }

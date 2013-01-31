@@ -68,7 +68,11 @@ class QuantificationEntryComparator implements Callable<DifferentialExpression> 
             }else if(target.getRpkm() == 0 && source.getRpkm() > 0){
                 foldChange = Double.NEGATIVE_INFINITY;
             }else {
-                foldChange = Math.log(target.getRpkm() / source.getRpkm()) / Math.log(2); // log2
+                if(target.getRpkm() == 0 && source.getRpkm() == 0){
+                    foldChange = 0;
+                }else{
+                    foldChange = Math.log(target.getRpkm() / source.getRpkm()) / Math.log(2); // log2
+                }
             }
         }else if(source != null){
             difference = -source.getRpkm();
