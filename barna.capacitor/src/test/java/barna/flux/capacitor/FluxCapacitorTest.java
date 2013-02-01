@@ -649,7 +649,8 @@ public class FluxCapacitorTest {
         FluxCapacitorRunner.runCapacitor(parFile,null);
 
         File output = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
-        File refOutput = new File("/data/epalumbo/capacitor/profileTest/ref-rel/bed.output.rel.gtf");
+//        File refOutput = new File("/data/epalumbo/capacitor/profileTest/ref-rel/bed.output.rel.gtf");
+        File refOutput = new File("/data/epalumbo/capacitor/profileTest/t1/output_new.gtf");
 
         BufferedReader runGtf = new BufferedReader(new FileReader(refOutput));
         BufferedReader refGtf = new BufferedReader(new FileReader(output));
