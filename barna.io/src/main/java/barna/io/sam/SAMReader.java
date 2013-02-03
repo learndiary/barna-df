@@ -11,10 +11,7 @@ import barna.io.*;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.BAMIndexer;
-import net.sf.samtools.SAMFileHeader;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
+import net.sf.samtools.*;
 
 import java.io.*;
 import java.util.concurrent.Future;
@@ -99,8 +96,12 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private SAMFileReader getSAMFileReader(boolean createNew) {
         if (reader == null || createNew)
             reader = new SAMFileReader(this.inputFile, index);
-        reader.enableIndexCaching(true);
-        reader.enableIndexMemoryMapping(false);
+        try {
+            reader.getIndex();
+        } catch(SAMException ex) {
+            reader.enableIndexCaching(true);
+            reader.enableIndexMemoryMapping(false);
+        }
         reader.setValidationStringency(getValidationStringency());
         return reader;
     }

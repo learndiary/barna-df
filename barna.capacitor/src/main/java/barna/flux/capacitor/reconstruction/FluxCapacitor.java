@@ -2817,7 +2817,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
                 SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
-                if (commandLineArgs.userSpecified("stringency")) {
+                if (commandLineArgs != null  && commandLineArgs.userSpecified("stringency")) {
                     Log.info("SAM","Setting validation stringency to " + commandLineArgs.getString("stringency"));
                     r.setValidationStringency(commandLineArgs.getString("stringency"));
         }
