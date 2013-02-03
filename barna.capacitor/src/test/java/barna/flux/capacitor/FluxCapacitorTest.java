@@ -633,15 +633,16 @@ public class FluxCapacitorTest {
     }
 
     @Test
-    public void testMouse() throws Exception {
+    public void testGtex() throws Exception {
         File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
 
         Map pars = new HashMap();
-        pars.put("ANNOTATION_FILE", "/users/rg/epalumbo/annotations/mm/mm65.long.and.ia.cuff.wrt.long.exon_sorted.gtf");
-        pars.put("MAPPING_FILE", "/users/rg/sdjebali/ENCODE_AWG/Analyses/Mouse/Flux_on_Bam/Licr/wgEncodeLicrRnaSeqTestisCellPapMAdult8wksC57bl6Rep1_mapping_forflux_ok_sorted.bed.gz");
+        pars.put("ANNOTATION_FILE", "/users/rg/epalumbo/annotations/hg/gencode.v12.annotation.patched_contigs_sorted.gtf");
+        pars.put("MAPPING_FILE", "/users/rg/projects/GTEx/bam/june/GTEX-QV31-0005-SM-2S1Q6.bam");
+        pars.put("COUNT_ELEMENTS", "[SPLICE_JUNCTIONS,INTRONS]");
         pars.put("PROFILE_FILE", proFile);
-        pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.SINGLE);
+        //pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+        //pars.put("ANNOTATION_MAPPING", AnnotationMapping.AUTO);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
@@ -649,8 +650,7 @@ public class FluxCapacitorTest {
         FluxCapacitorRunner.runCapacitor(parFile,null);
 
         File output = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
-//        File refOutput = new File("/data/epalumbo/capacitor/profileTest/ref-rel/bed.output.rel.gtf");
-        File refOutput = new File("/data/epalumbo/capacitor/profileTest/t1/output_new.gtf");
+        File refOutput = new File("/data/epalumbo/gtex/fluxrelease/GTEX-QV31-0005-SM-2S1Q6.gtf");
 
         BufferedReader runGtf = new BufferedReader(new FileReader(refOutput));
         BufferedReader refGtf = new BufferedReader(new FileReader(output));
