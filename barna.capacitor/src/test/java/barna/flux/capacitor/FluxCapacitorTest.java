@@ -247,8 +247,8 @@ public class FluxCapacitorTest {
 
     @Test
     public void testStasAreWrittenAndContainValidData() throws Exception {
-        File statsFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".stats", true, ""));
-        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
+        File statsFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".stats", true, null));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profile", true, null));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
@@ -493,7 +493,7 @@ public class FluxCapacitorTest {
 
     @Test
     public void testOutputProfiles() throws Exception {
-        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, null));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
@@ -596,7 +596,7 @@ public class FluxCapacitorTest {
 
     @Test
     public void testProfileFile() throws Exception {
-        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profile", true, null));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
@@ -618,7 +618,7 @@ public class FluxCapacitorTest {
 
     @Test
     public void testFluxGtf() throws Exception {
-        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profile", true, null));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
