@@ -433,6 +433,36 @@ public class FluxCapacitorTest {
     }
 
     @Test
+    public void testProfile() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
+        pars.put("MAPPING_FILE", BED_MM9_SORTED);
+        pars.put("PROFILE_FILE", BED_MM9_PROFILE);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("READ_DESCRIPTOR", "SIMULATOR");
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(2, stats.getLociExp());
+        assertEquals(4, stats.getTxsExp());
+        assertEquals(0, stats.getEventsExp());
+        assertEquals(566, stats.getReadsSingleTxLoci());
+        assertEquals(283, stats.getMappingsSingleTxLoci());
+        assertEquals(586, stats.getMappingPairsSingleTxLoci());
+        assertEquals(8005, stats.getMappingsTotal());
+        assertEquals(8184, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(208, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
+    @Test
     public void testProfileOldWay() throws Exception {
 
         Map pars = new HashMap();
@@ -565,7 +595,7 @@ public class FluxCapacitorTest {
     }
 
     @Test
-    public void testProfile() throws Exception {
+    public void testProfileFile() throws Exception {
         File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
 
         Map pars = new HashMap();
@@ -593,13 +623,13 @@ public class FluxCapacitorTest {
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
-        //pars.put("PROFILE_FILE", BED_MM9_PROFILE);
+        pars.put("PROFILE_FILE", BED_MM9_PROFILE);
         pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
-        //FluxCapacitorRunner.runCapacitor(parFile, params);
+        FluxCapacitorRunner.runCapacitor(parFile, params);
         FluxCapacitorRunner.runCapacitor(parFile,null);
 
         // check
