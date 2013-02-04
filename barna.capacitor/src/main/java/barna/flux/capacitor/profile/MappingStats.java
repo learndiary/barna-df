@@ -67,7 +67,6 @@ public class MappingStats {
     private long mappingsSingleTxLoci;
     private long mappingPairsSingleTxLoci;
     private long mappingsSingleTxLociNoAnn;
-    private long mappingPairs;
     private long mappingsWrongStrand;
     private int readLenMin;
     private int readLenMax;
@@ -200,18 +199,6 @@ public class MappingStats {
 
     public void incrMappingsSingleTxLoci(long value) {
         this.mappingsSingleTxLoci+=value;
-    }
-
-    public long getMappingPairs() {
-        return mappingPairs;
-    }
-
-    public void setMappingPairs(long mappingPairs) {
-        this.mappingPairs = mappingPairs;
-    }
-
-    public void incrMappingPairs(long value) {
-        this.mappingPairs+=value;
     }
 
     public long getMappingsTotal() {
@@ -363,7 +350,6 @@ public class MappingStats {
         this.eventsExp                  += other.eventsExp;
         this.readsSingleTxLoci          += other.readsSingleTxLoci;
         this.mappingsSingleTxLoci       += other.mappingsSingleTxLoci;
-        this.mappingPairs               += other.mappingPairs;
         this.mappingsTotal              += other.mappingsTotal;
         this.mappingsMapped             += other.mappingsMapped;
         this.mappingPairsNoTx           += other.mappingPairsNoTx;
@@ -461,7 +447,6 @@ public class MappingStats {
             this.eventsExp                  = other.eventsExp;
             this.readsSingleTxLoci          = other.readsSingleTxLoci;
             this.mappingsSingleTxLoci       = other.mappingsSingleTxLoci;
-            this.mappingPairs               = other.mappingPairs;
             this.mappingsTotal              = other.mappingsTotal;
             this.mappingsMapped             = other.mappingsMapped;
             this.mappingPairsNoTx           = other.mappingPairsNoTx;
@@ -494,8 +479,6 @@ public class MappingStats {
         if (this.readsSingleTxLoci != otherStats.readsSingleTxLoci)
             return false;
         if (this.mappingsSingleTxLoci != otherStats.mappingsSingleTxLoci)
-            return false;
-        if (this.mappingPairs != otherStats.mappingPairs)
             return false;
         if (this.mappingsTotal != otherStats.mappingsTotal)
             return false;

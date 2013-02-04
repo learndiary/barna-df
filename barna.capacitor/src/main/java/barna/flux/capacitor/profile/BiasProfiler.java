@@ -385,7 +385,7 @@ public class BiasProfiler implements Callable<Profile> {
                                                           tx.getTranscriptID(),
                                                           tx.isCoding(),
                                                           tx.getExonicLength(),
-                                                          paired ? stats.getMappingPairs() : stats.getMappingsMapped()))
+                                                          paired ? stats.getMappingPairsSingleTxLoci() : stats.getMappingsSingleTxLoci()))
                 Log.info("Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
             else
                 Log.warn("Failed to write coverage statistics to " +

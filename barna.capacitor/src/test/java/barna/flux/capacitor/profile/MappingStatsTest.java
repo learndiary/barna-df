@@ -18,7 +18,7 @@ public class MappingStatsTest {
         other.setPairsWrongOrientation(1);
         other.setReadsSingleTxLoci(1);
         other.setMappingsSingleTxLoci(1);
-        other.setMappingPairs(1);
+//        other.setMappingPairs(1);
         other.setMappingsTotal(1);
         other.setTxsExp(1);
 
@@ -33,7 +33,7 @@ public class MappingStatsTest {
         assertEquals(1, stats.getPairsWrongOrientation());
         assertEquals(1, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(1, stats.getMappingPairs());
+//        assertEquals(1, stats.getMappingPairs());
         assertEquals(1, stats.getMappingsTotal());
         assertEquals(1, stats.getTxsExp());
 
@@ -47,7 +47,7 @@ public class MappingStatsTest {
         assertEquals(2, stats.getPairsWrongOrientation());
         assertEquals(2, stats.getReadsSingleTxLoci());
         assertEquals(2, stats.getMappingsSingleTxLoci());
-        assertEquals(2, stats.getMappingPairs());
+//        assertEquals(2, stats.getMappingPairs());
         assertEquals(2, stats.getMappingsTotal());
         assertEquals(2, stats.getTxsExp());
     }
