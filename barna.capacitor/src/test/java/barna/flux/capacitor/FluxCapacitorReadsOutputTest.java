@@ -7,9 +7,7 @@ import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import org.junit.*;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,8 +41,8 @@ public class FluxCapacitorReadsOutputTest {
     }
 	@Test
 	public void testStasAreWrittenAndContainValidData() throws Exception {
-        File statsFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".stats", true, ""));
-        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, ""));
+        File statsFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".stats", true, null));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, null));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_SORTED);
@@ -58,17 +56,17 @@ public class FluxCapacitorReadsOutputTest {
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
+        stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
 
         File outFile = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
-        assertFalse(outFile.exists());
+        assertTrue(outFile.exists());
         assertTrue(proFile.exists());
-        BufferedReader reader = new BufferedReader(new FileReader(proFile));
-        String l = null;
-        while((l = reader.readLine()) != null ){
-            System.err.println(l);
-        }
+        MappingStats s1 = new MappingStats();
+        s1.readStats(statsFile);
+
+        assertEquals(stats, s1);
 	}
 }
