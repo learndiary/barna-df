@@ -1873,7 +1873,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             }
         }
         //Get from settings the tasks to be executed in the current run
-        if (!settings.get(FluxCapacitorSettings.NO_DECOMPOSE)) {
+        if (settings.get(FluxCapacitorSettings.DECONVOLUTE)) {
             currentTasks.add(Task.DECOMPOSE);
         }
 

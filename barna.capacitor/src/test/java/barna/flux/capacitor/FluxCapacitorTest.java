@@ -145,7 +145,7 @@ public class FluxCapacitorTest {
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
-        pars.put("NO_DECOMPOSE", true);
+        pars.put("DECONVOLUTE", false);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -160,7 +160,7 @@ public class FluxCapacitorTest {
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
         pars.put("READ_DESCRIPTOR", "PAIRED");
-        pars.put("NO_DECOMPOSE", true);
+        pars.put("DECONVOLUTE", false);
         pars.put("COUNT_ELEMENTS", EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -176,7 +176,7 @@ public class FluxCapacitorTest {
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
         pars.put("READ_DESCRIPTOR", "PAIRED");
-        pars.put("NO_DECOMPOSE", true);
+        pars.put("DECONVOLUTE", false);
         pars.put("COUNT_ELEMENTS", EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -192,7 +192,7 @@ public class FluxCapacitorTest {
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
         pars.put("READ_DESCRIPTOR", "PAIRED");
-        pars.put("NO_DECOMPOSE", true);
+        pars.put("DECONVOLUTE", false);
         pars.put("COUNT_ELEMENTS", EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);

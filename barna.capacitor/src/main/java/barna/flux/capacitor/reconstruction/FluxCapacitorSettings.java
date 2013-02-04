@@ -389,10 +389,10 @@ public class FluxCapacitorSettings extends ParameterSchema {
         /**
          * Parameter for skipping deconvolution
          */
-        public static final Parameter<Boolean> NO_DECOMPOSE = Parameters.booleanParameter(
-                "NO_DECOMPOSE",
+        public static final Parameter<Boolean> DECONVOLUTE = Parameters.booleanParameter(
+                "DECONVOLUTE",
                 " Avoid running deconvolution step on the dataset",
-                false,
+                true,
                 null);
 	    
 	    /**
