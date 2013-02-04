@@ -2825,7 +2825,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 + (stats.getMappingsTotal() > 0 ? ", " + stats.getMappingsTotal() + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
         if (stats.getMappingsTotal() > 0)
             Log.info("\t" + reader.getCountContinuousMappings() + " entire, " + reader.getCountSplitMappings()
-                    + " split mappings (" + (reader.getCountSplitMappings() * 10f / reader.getCountMappings()) + "%)");
+                    + " split mappings (" + (reader.getCountSplitMappings() * 100f / reader.getCountMappings()) + "%)");
 
         // (4) check if read descriptor is applicable
         if (reader.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
