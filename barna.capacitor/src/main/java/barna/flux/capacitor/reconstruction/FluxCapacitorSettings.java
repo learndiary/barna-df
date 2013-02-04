@@ -70,7 +70,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				descriptor= value;
 			}
 			
-			protected void parse(String value) throws ParameterException {
+			public void parse(String value) throws ParameterException {
 				
 				descriptor= new UniversalReadDescriptor();
 				

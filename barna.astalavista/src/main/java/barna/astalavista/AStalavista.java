@@ -95,14 +95,6 @@ public class AStalavista implements FluxTool<Void>{
 
     public static Species species = new Species("human");
 
-    static {
-        species.setGenomeVersion("hg18");
-    }
-
-    public static void setSpecies(Species newSpecies) {
-        species = newSpecies;
-    }
-
     private String outputFname= null;
 
 
@@ -256,7 +248,7 @@ public class AStalavista implements FluxTool<Void>{
                     g[i] = null;
                     continue;
                 }
-                g[i].setSpecies(species);
+                //g[i].setSpecies(species);
 
                 // sets types of events to be extracted, k, etc..
                 EventExtractor extractor= new EventExtractor(g[i], settings);
@@ -310,7 +302,7 @@ public class AStalavista implements FluxTool<Void>{
                     "found " + (totalIntrons - invalidIntrons) + " valid ones when checking splice sites: " +
                     "ratio (invalid/total) = " + df.format(((double) invalidIntrons) / totalIntrons));
         }
-
+        Log.message("AStalavista.");
 
         return null;
     }
@@ -417,12 +409,12 @@ public class AStalavista implements FluxTool<Void>{
 
     @Override
     public String getName() {
-        return "astalavista";
+        return "asta";
     }
 
     @Override
     public String getDescription() {
-        return "The AStalavista event retriever";
+        return "The AStalavista retriever";
     }
 
     @Override
@@ -734,7 +726,15 @@ public class AStalavista implements FluxTool<Void>{
         }
 
         if (settings.get(AStalavistaSettings.IN_FILE)== null) {
-            Log.error("Hey, you forgot to specify a valid input file! ");
+            Log.error("Hey, you forgot to specify a valid input file!\n"+
+                    "This is a bit important, I cannot work without an input annotation. I want a GTF file with\n" +
+                    "transcript annotations (exon features, with a mandatory optional attribute named \'transcript_id\'\n) " +
+                    "IN THE SAME COLUMN (i.e., if the transcript identifier of the 1st line is in column #10, it\n" +
+                    "has to be in all lines of the file in column #10. The rest of the file should comply with the\n" +
+                    "standard as specified at http://mblab.wustl.edu/GTF2.html.\n"+
+                    "There may also be CDS features, but they become only interesting when checking for additional things\n" +
+                    "as NMD probability etc.."
+            );
             return false;
         }
 
@@ -754,12 +754,14 @@ public class AStalavista implements FluxTool<Void>{
                 Log.message("Trying to parse species_version pair");
                 String[] s= f.getName().split("_");
                 if (s.length!= 2) {
-                    Log.error("The genome " + f.getAbsolutePath() + " could not be found!");
+                    Log.error(f.getAbsolutePath() + " is not a valid species name");
                     return false;
                 }
-                Species spe= new Species(s[0]);
-                spe.setGenomeVersion(s[1]);
-                AStalavista.setSpecies(spe);
+                Log.error("Systematic species names not supported!");
+//                Species spe= new Species(s[0]);
+//                spe.setGenomeVersion(s[1]);
+//                AStalavista.setSpecies(spe);
+
 
             }
         }

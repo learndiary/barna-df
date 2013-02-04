@@ -365,33 +365,4 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
         return false;
     }
 
-    /*
-     * Nostalgy..
-     */
-    @Override
-    public void write(OutputStream out) {
-        super.write(out);
-/*        if (isPrintParameters()) {
-            FluxSimulatorSettings settings = new FluxSimulatorSettings();
-            settings.write(System.out);
-            return false;
-
-            System.err.println("Here is a list of the options I understand:\n");
-            System.err.println("-i, --input <input file>");
-            System.err.println("This is a bit important, I cannot work without an input annotation. I want a GTF file with " +
-                    "transcript annotations (exon features, with a mandatory optional attribute named \'transcript_id\') " +
-                    "IN THE SAME COLUMN (i.e., if the transcript identifier of the 1st line is in column #10, it has to be in " +
-                    "all lines of the file in column #10. The rest of the file should comply with the standard as specified " +
-                    "at http://mblab.wustl.edu/GTF2.html.\n"+
-                    "There may also be CDS features, but they become only interesting when checking for additional things " +
-                    "as NMD probability etc.."+
-                    "\n");
-
-            // ...
-
-            System.err.println("AStalavista.");
-            System.exit(0);
-*/
-    }
-
 }
