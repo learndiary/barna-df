@@ -1071,8 +1071,6 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             stats.setMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
             stats.setPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
 
-
-            //TODO move this on call()
             //Execute tasks
             for (Task t : this.tasks) {
                 switch (t) {
@@ -1810,6 +1808,28 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
         mappingReader = (MappingReader)wrapperMappings;
         gtfReader = (GTFwrapper)wrapperAnnotation;
+
+        if (mappingReader.isPaired() && !settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).isPaired()) {
+            settings.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        }
+
+        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
+            UniversalReadDescriptor descriptor = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
+            if (descriptor.isPaired()) {
+                if (descriptor.isStranded()) {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.COMBINED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED);
+                }
+            }
+            else {
+                if (descriptor.isStranded()) {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.STRANDED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE);
+                }
+            }
+        }
 
         // TODO parameters
         pairedEnd = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
