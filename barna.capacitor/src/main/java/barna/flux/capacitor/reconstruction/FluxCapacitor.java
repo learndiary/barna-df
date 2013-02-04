@@ -58,6 +58,7 @@ import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import lpsolve.LpSolve;
 import lpsolve.VersionInfo;
+import net.sf.samtools.SAMFileReader;
 
 import java.io.*;
 import java.util.*;
@@ -1758,7 +1759,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 try {
                     settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.valueOf(commandLineArgs.getString("annotation-mapping")));
                 } catch (Exception e) {
-                    throw new RuntimeException("Invalid Annotation Mapping : " + commandLineArgs.getString("annotation-mapping"));
+                    throw new RuntimeException("Invalid Annotation Mapping: " + commandLineArgs.getString("annotation-mapping"));
                 }
             }
             if (commandLineArgs.userSpecified("read-descriptor")) {
@@ -1767,6 +1768,14 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             }
             if (commandLineArgs.userSpecified("sort-in-ram")) {
                 settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
+            }
+
+            if (commandLineArgs.userSpecified("sam-validation-stringency")) {
+                try {
+                    settings.set(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY.getName(), commandLineArgs.getString("sam-validation-stringency"));
+                } catch (Exception e) {
+                    throw new RuntimeException("Invalid sam validation stringency: " + commandLineArgs.getString("sam-validation-stringency"));
+                }
             }
         }
 
@@ -2048,7 +2057,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
         parameters.add(JSAPParameters.switchParameter("sort-in-ram", 'r').help("Sort in RAM").get());
 
-        parameters.add(JSAPParameters.flaggedParameter("stringency").type(String.class).help("specify SAM validation stringency").valueName("stringency").defaultValue("STRICT").get()); //temporary TODO remove this and add maybe it as a setting
+        parameters.add(JSAPParameters.flaggedParameter("sam-validation-stringency").type(String.class).help("specify SAM validation stringency").valueName("stringency").defaultValue("STRICT").get()); //temporary TODO remove this and add maybe it as a setting
 
         parameters.add(JSAPParameters.switchParameter("printParameters").help("Print default parameters").get());
         return parameters;
@@ -2067,10 +2076,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         }
 
         if (args.userSpecified("profile")) {
-            /*String tool = args.getString("tool");
-            if (tool.equals("profile")) {*/
-                currentTasks.add(Task.PROFILE);
-//            }
+            currentTasks.add(Task.PROFILE);
         }
 
         if (getFile() == null) {
@@ -2837,9 +2843,9 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
                 SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
-                if (commandLineArgs != null  && commandLineArgs.userSpecified("stringency")) {
-                    Log.info("SAM","Setting validation stringency to " + commandLineArgs.getString("stringency"));
-                    r.setValidationStringency(commandLineArgs.getString("stringency"));
+                if (!settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY).equals(SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY)) {
+                    Log.info("SAM","Setting validation stringency to " + settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY));
+                    r.setValidationStringency(settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY));
         }
                 return r;
             default:

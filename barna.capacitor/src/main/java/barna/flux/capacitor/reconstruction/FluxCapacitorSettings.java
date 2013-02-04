@@ -32,6 +32,7 @@ import barna.commons.utils.StringUtils;
 import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
+import net.sf.samtools.SAMFileReader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -394,7 +395,16 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 " Avoid running deconvolution step on the dataset",
                 true,
                 null);
-	    
+
+        /**
+         * Parameter for settting SAMtools validation stringency
+         */
+        public static final Parameter<SAMFileReader.ValidationStringency> SAM_VALIDATION_STRINGENCY = Parameters.enumParameter(
+                "SAM_VALIDATION_STRINGENCY",
+                " Set SAMtools validation stringency for validating records",
+                SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
+                null);
+
 	    /**
 	     * Load the setting from a file. NOTE that this does not validate the settings!
 	     *
