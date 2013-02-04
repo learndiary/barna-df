@@ -1,6 +1,7 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
+import barna.commons.system.OSChecker;
 import barna.flux.capacitor.profile.BiasProfiler;
 import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.profile.Profile;
@@ -589,7 +590,7 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         FluxCapacitorRunner.runCapacitor(parFile, null);
     }
@@ -618,6 +619,11 @@ public class FluxCapacitorTest {
 
     @Test
     public void testFluxGtf() throws Exception {
+        //Force en-US locale to use "." as the decimal separator in Windows OS
+        if (OSChecker.isWindows()) {
+            Locale.setDefault(new Locale("en", "US"));
+        }
+
         File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profile", true, null));
 
         Map pars = new HashMap();
