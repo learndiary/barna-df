@@ -56,8 +56,8 @@ public class BiasProfiler implements Callable<Profile> {
     private byte strand;
     private boolean paired;
 
-    private int readLenMin;
-    private int readLenMax;
+    private int readLenMin = Integer.MAX_VALUE;
+    private int readLenMax = -1;
 
     private GTFwrapper gtfReader;
     private MappingReader mappingReader;

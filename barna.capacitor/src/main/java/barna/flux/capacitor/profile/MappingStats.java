@@ -378,6 +378,9 @@ public class MappingStats {
         this.pairsWrongOrientation      += other.pairsWrongOrientation;
         this.readsLoci                  += other.readsLoci;
         this.lociUnsolved               += other.lociUnsolved;
+        this.txs                        += other.txs;
+        this.loci                       += other.loci;
+        this.events                     += other.events;
     }
 
     /**

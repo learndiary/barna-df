@@ -1847,10 +1847,11 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
                 || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
 
         //MappingStats stats = new MappingStats();
-
+        long t0 = System.currentTimeMillis();
         if (currentTasks.contains(Task.PROFILE)) {
             BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader,mappingReader);
-            profiler.call();
+            stats=profiler.call().getMappingStats();
+            printProfile((System.currentTimeMillis() - t0) / 1000);
         } else {
             // prepare output files
             if (settings.get(FluxCapacitorSettings.STDOUT_FILE) != null) {
@@ -1890,7 +1891,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
         printSettings();
 
         // run
-        long t0 = System.currentTimeMillis();
+        //long t0 = System.currentTimeMillis();
 
         if (!currentTasks.isEmpty()) {
             fileProfile = settings.get(FluxCapacitorSettings.PROFILE_FILE);
@@ -1900,6 +1901,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             }
             profile.getMappingStats().add(stats);
             stats=profile.getMappingStats();
+            printProfile((System.currentTimeMillis() - t0) / 1000);
 
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
@@ -1909,15 +1911,33 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
 
         fileFinish();
 
-        Log.info("\n[TICTAC] I finished flux in "
-                + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
-
         //System.err.println("over "+ GraphLPsolver.nrOverPredicted+", under "+GraphLPsolver.nrUnderPredicted);
         }
+
+        Log.info("\n[TICTAC] I finished flux in "
+                + ((System.currentTimeMillis() - t0) / 1000) + " sec.\nCheers!");
 
         return stats;
     }
 
+    private void printProfile(long secs) {
+        System.err.println("\tfirst round finished .. took " + secs + " sec.\n\n\t"
+                + stats.getSingleTxLoci() + " single transcript loci\n\t"
+                + mappingReader.getCountMappings()+ " mappings in file\n\t"  //    removed getNrLines()
+                + stats.getReadsSingleTxLoci() + " mappings fall in single transcript loci\n\t"    // these loci(+/-"+tolerance+"nt)\n\t"
+                // counter un-reliable, /2 read is skipped in paired-end mode
+                + ((strand == FluxCapacitorConstants.STRAND_SPECIFIC) ? stats.getMappingsWrongStrand() + " mappings map to annotation in antisense direction,\n\t" : "")
+                //+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
+                + (pairedEnd ? (stats.getMappingPairsSingleTxLoci()) + " mappings in annotation-mapped pairs\n\t"
+                : stats.getMappingsSingleTxLoci() + " mappings map to annotation\n\t")
+                //+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
+                //+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
+                + stats.getReadLenMin() + "," + stats.getReadLenMax() + " min/max read length\n\t"
+                + (pairedEnd && insertMinMax != null ? insertMinMax[0] + "," + insertMinMax[1] + " min/max insert size\n\t" : ""));
+        //nrUniqueReads= getBedReader().getNrUniqueLinesRead();
+        //System.err.println("\ttotal lines in file "+nrUniqueReads);
+//        System.err.println();
+    }
 
     /**
      * Performs the RPKM normalization, given a number of reads mapping to a transcript of a certain length.
@@ -2801,7 +2821,7 @@ public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator
             stats.setMappingsTotal(-1);
         }
 
-		Log.info("\t"+ stats.getReadsTotal() + " reads"
+		Log.info("\t"+ stats.getReadsTotal() + " mapped reads"
                 + (stats.getMappingsTotal() > 0 ? ", " + stats.getMappingsTotal() + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
         if (stats.getMappingsTotal() > 0)
             Log.info("\t" + reader.getCountContinuousMappings() + " entire, " + reader.getCountSplitMappings()
