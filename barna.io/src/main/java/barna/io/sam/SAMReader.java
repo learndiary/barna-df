@@ -11,10 +11,7 @@ import barna.io.*;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.BAMIndexer;
-import net.sf.samtools.SAMFileHeader;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
+import net.sf.samtools.*;
 
 import java.io.*;
 import java.util.concurrent.Future;
@@ -99,8 +96,12 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private SAMFileReader getSAMFileReader(boolean createNew) {
         if (reader == null || createNew)
             reader = new SAMFileReader(this.inputFile, index);
-        reader.enableIndexCaching(true);
-        reader.enableIndexMemoryMapping(false);
+        try {
+            reader.getIndex();
+        } catch(SAMException ex) {
+            reader.enableIndexCaching(true);
+            reader.enableIndexMemoryMapping(false);
+        }
         reader.setValidationStringency(getValidationStringency());
         return reader;
     }
@@ -221,7 +222,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 		return countSplit;
 	}
 
-    @Override
+	@Override
     public boolean isPaired() {
         return paired;
     }
@@ -323,11 +324,11 @@ public class SAMReader extends AbstractFileIOWrapper implements
                         if (!flagSet) {
                             //flags are not set properly
                             ++primaryAlignments;
-                            tmpWriter.write(readId);
-                            tmpWriter.write(OSChecker.NEW_LINE);
+                        tmpWriter.write(readId);
+                        tmpWriter.write(OSChecker.NEW_LINE);
                         } else {
                             ++countReads;
-                        }
+                    }
                     }
                     ++countAll;
                     if (rec.getAlignmentBlocks().size()>1) {
@@ -347,9 +348,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
                 Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
                         "of reads without this information.");
                 Log.warn("This process can be long for big files!");
-                tmpWriter.flush();
-                tmpWriter.close();
-                sorterFuture.get();
+            tmpWriter.flush();
+            tmpWriter.close();
+            sorterFuture.get();
             }
 
             Log.progressFinish(Constants.OK, true);
@@ -392,7 +393,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
             Log.warn("Cannot parse " + v.trim().toUpperCase() + " as a SAM validation stringency");
             Log.warn("Using default stringency: " + SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY);
         }
-    }
+	}
 
     @Override
     public MSIterator<Mapping> iterator() {

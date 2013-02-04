@@ -3,10 +3,12 @@ package barna.flux.capacitor.utils;
 import barna.commons.Execute;
 import barna.commons.parameters.ParameterException;
 import barna.commons.system.OSChecker;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
-import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
 import barna.io.rna.UniversalReadDescriptor;
+import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.RequiredParameterMissingException;
 
 import java.io.BufferedWriter;
@@ -34,11 +36,19 @@ public class FluxCapacitorRunner {
      * @param parFile the parameter file
      * @return output the output of the capacitor
      */
-    public static FluxCapacitorStats runCapacitor(File parFile) throws Exception {
+    public static MappingStats runCapacitor(File parFile, String[] params) throws Exception {
         FluxCapacitor capacitor= new FluxCapacitor();
-        capacitor.setFile(parFile);
-        Future<FluxCapacitorStats> captain= Execute.getExecutor().submit(capacitor);
-        FluxCapacitorStats stats = captain.get();
+        if (params != null) {
+            JSAP jsap = new JSAP();
+            for (Parameter p : capacitor.getParameter()) {
+                jsap.registerParameter(p);
+            }
+            capacitor.validateParameter(jsap.parse(params));
+        } else {
+            capacitor.setFile(parFile);
+        }
+        Future<MappingStats> captain= Execute.getExecutor().submit(capacitor);
+        MappingStats stats = captain.get();
         return stats;
     }
 
