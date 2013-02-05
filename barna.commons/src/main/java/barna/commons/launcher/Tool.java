@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public interface FluxTool<T> extends Callable<T> {
+public interface Tool<T> extends Callable<T> {
 
     /**
      * Provides an unique name for the tool

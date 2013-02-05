@@ -28,7 +28,7 @@ package barna.genome.utils;/*
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
@@ -55,7 +55,7 @@ import java.util.concurrent.Future;
  *
  */
 
-public class MappingFilter implements FluxTool<Void> {
+public class MappingFilter implements Tool<Void> {
 
 	public static void main(String[] args) {
 		

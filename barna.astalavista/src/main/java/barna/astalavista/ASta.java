@@ -1,6 +1,7 @@
 package barna.astalavista;
 
 import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;
 import barna.model.Gene;
 import barna.model.Transcript;
@@ -66,20 +67,11 @@ public class ASta extends AStalavista {
     public static void main(String[] args) {
 
         Execute.initialize(2);
-        JSAP jsap = new JSAP();
         AStalavista myAsta= new ASta();
 
         // construct to register parameters in JSAP
-        List<Parameter> parameter = myAsta.getParameter();
-        if(parameter != null){
-            for (Parameter p : parameter) {
-                try {
-                    jsap.registerParameter(p);
-                } catch (JSAPException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        List<Parameter> parameter = JSAPParameters.getJSAPParameter(new AStaSettings());
+        JSAP jsap = JSAPParameters.registerParameters(parameter);
 
         // parse
         try{

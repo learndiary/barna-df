@@ -27,32 +27,22 @@
 
 package barna.astalavista;
 
-import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.commons.parameters.ParameterException;
-import barna.geneid.*;
-import barna.io.FileHelper;
+import barna.commons.parameters.ParameterSchema;
 import barna.io.GeneAheadReaderThread;
 import barna.io.gtf.GTFwrapper;
 import barna.model.*;
-import barna.model.commons.MyFile;
-import barna.model.splicegraph.*;
-import com.martiansoftware.jsap.JSAP;
-import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 
-public abstract class AStalavista implements FluxTool<Void>{
+public abstract class AStalavista implements Tool<Void> {
 
     /**
      * Parameters for the AStalavista run
@@ -245,9 +235,9 @@ public abstract class AStalavista implements FluxTool<Void>{
             return false;
         }
 
-        // create or merge settings
         try {
-            settings= createSettings(settings, args);
+            settings= (AStalavistaSettings) ParameterSchema.create(settings,
+                        JSAPParameters.getParameterMap(settings, args));
         } catch (ParameterException e) {
             Log.error(e.getMessage(), e);
             return false;

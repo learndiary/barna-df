@@ -48,7 +48,7 @@ import java.io.FileWriter;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 //@Cli(name = "extractPWM", description = "Extract PWM from GTF annotation and BED file")
-public class PWMExtractor {  //implements FluxTool {
+public class PWMExtractor {  //implements Tool {
 
 	public static void main(String[] args) {
 		

@@ -349,7 +349,7 @@ public abstract class ParameterSchema {
      * @return newly created or extended settings
      * @throws ParameterException in case a parameter does not get what it expects
      */
-    ParameterSchema create(ParameterSchema settings, HashMap<String,String> args) throws ParameterException {
+    public static ParameterSchema create(ParameterSchema settings, HashMap<String,String> args) throws ParameterException {
 
         // lazily create
         if (settings== null) {

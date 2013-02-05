@@ -30,7 +30,7 @@ package barna.genome.tools.chipseq;
 
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.bed.BEDReader;
@@ -61,7 +61,7 @@ import java.util.concurrent.Future;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public class NucleosomeFinder implements FluxTool<Void> {
+public class NucleosomeFinder implements Tool<Void> {
 	
 	public static final byte MODE_MONONUCLEOSOME= 1;
 	public static final byte MODE_DINUCLEOSOME= 2;
@@ -190,7 +190,7 @@ public class NucleosomeFinder implements FluxTool<Void> {
 	}
 	
 	/**
-	 * Empty constructor to comply with FluxTool implementation.
+	 * Empty constructor to comply with Tool implementation.
 	 */
 	public NucleosomeFinder() {
 	}

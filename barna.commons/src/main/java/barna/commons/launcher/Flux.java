@@ -51,7 +51,7 @@ import java.util.*;
 
 /**
  * Flux Simulator starter class. Contains the main method and parses command line arguments. During startup,
- * this checks for any {@link FluxTool} implementations and adds them to the list of available utils.
+ * this checks for any {@link Tool} implementations and adds them to the list of available utils.
  */
 public class Flux {
     /**
@@ -101,7 +101,7 @@ public class Flux {
 
 
         // register tools
-        List<FluxTool> tools = findTools();
+        List<Tool> tools = findTools();
 
         // prepare the fluxInstance
         Flux fluxInstance = new Flux();
@@ -139,8 +139,8 @@ public class Flux {
 
 
         // find the tool to start
-        FluxTool tool = null;
-        for (FluxTool fluxTool : tools) {
+        Tool tool = null;
+        for (Tool fluxTool : tools) {
             if(fluxTool.getName().equals(fluxInstance.getToolName())){
                 tool = fluxTool;
                 break;
@@ -298,7 +298,7 @@ public class Flux {
 		return sm;
 	}
 
-	public static void printUsage(FluxTool tool, JSAP jsap, List<FluxTool> allTools, String errorMessage, boolean userRequestsHelp) {
+	public static void printUsage(Tool tool, JSAP jsap, List<Tool> allTools, String errorMessage, boolean userRequestsHelp) {
         if(errorMessage != null){
             System.err.println(errorMessage);
             System.err.println("");
@@ -363,7 +363,7 @@ public class Flux {
      *
      * @param tools the tools available flux tools
      */
-    private static void printTools(List<FluxTool> tools) {
+    private static void printTools(List<Tool> tools) {
         System.err.println("The Flux library consists of a set of tools bundled with the package.");
         if(System.getProperty("flux.tool", null) != null){
             System.err.println("The current bundle uses '" + System.getProperty("flux.tool") + "' as the default tool.");
@@ -373,7 +373,7 @@ public class Flux {
 
         System.err.println("");
         System.err.println("List of available tools");
-        for (FluxTool fluxTool : tools) {
+        for (Tool fluxTool : tools) {
             System.err.println("\t" + fluxTool.getName() + " - " + fluxTool.getDescription());
         }
         System.err.println();
@@ -384,10 +384,10 @@ public class Flux {
      *
      * @return tools all detected flux tools
      */
-    public static List<FluxTool> findTools() {
+    public static List<Tool> findTools() {
 
         // scan the classpath to find tools
-        List<FluxTool> tools = new ArrayList<FluxTool>();
+        List<Tool> tools = new ArrayList<Tool>();
         List<URL> fbiUrls = null;
         try {
         	fbiUrls= new ArrayList<URL>(ClasspathHelper.forPackage("barna"));
@@ -404,10 +404,10 @@ public class Flux {
         Reflections reflections = new Reflections(config);
 
 
-        Set<Class<? extends FluxTool>> toolClasses = reflections.getSubTypesOf(FluxTool.class);
-        for (Class<? extends FluxTool> toolClass : toolClasses) {
+        Set<Class<? extends Tool>> toolClasses = reflections.getSubTypesOf(Tool.class);
+        for (Class<? extends Tool> toolClass : toolClasses) {
             try {
-                FluxTool fluxTool = toolClass.newInstance();
+                Tool fluxTool = toolClass.newInstance();
                 tools.add(fluxTool);
             } catch (Exception e) {
                 Log.error("Error while creating tool instance for " + toolClass.getName(), e);

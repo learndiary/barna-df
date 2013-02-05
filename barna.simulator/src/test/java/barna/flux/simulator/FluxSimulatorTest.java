@@ -28,7 +28,7 @@
 package barna.flux.simulator;
 
 import barna.commons.launcher.Flux;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -54,7 +54,7 @@ public class FluxSimulatorTest {
 
     @Test
     public void testFindTools(){
-        List<FluxTool> tools = Flux.findTools();
+        List<Tool> tools = Flux.findTools();
         assertNotNull(tools);
         assertTrue(tools.size() > 2);
     }

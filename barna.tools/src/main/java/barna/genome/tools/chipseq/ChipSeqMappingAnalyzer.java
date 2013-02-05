@@ -30,7 +30,7 @@ package barna.genome.tools.chipseq;
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.commons.log.Log.Level;
 import barna.flux.capacitor.reconstruction.Kernel;
@@ -61,7 +61,7 @@ import java.util.concurrent.Future;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
+public class ChipSeqMappingAnalyzer implements Tool<int[]> {
 
 	public static void main(String[] args) {
 		
@@ -115,7 +115,7 @@ public class ChipSeqMappingAnalyzer implements FluxTool<int[]> {
 	int maxInsertSize= 1000;
 	
 	/**
-	 * Empty constructor to comply with FluxTool implementation.
+	 * Empty constructor to comply with Tool implementation.
 	 */
 	public ChipSeqMappingAnalyzer() {		
 	}
