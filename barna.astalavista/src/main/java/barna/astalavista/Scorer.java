@@ -8,14 +8,8 @@ import barna.model.Graph;
 import barna.model.SpliceSite;
 import com.martiansoftware.jsap.JSAPResult;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Vector;
+import java.io.*;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -484,6 +478,33 @@ public class Scorer extends AStalavista {
             outputSitesVCF(spliceSites[i], vvec, seqs, scores, varTuples);
         }
 
+    }
+
+    /**
+     * Reads vcf file and fills a hash with position x snp information.
+     * @param vcf file with the variants in vcf
+     * @return hash representing the information of the provided file
+     */
+    protected HashMap<String, String> getVariants(File vcf) {
+
+        try {
+            HashMap<String, String> map= new HashMap<String, String>((int) (vcf.length()/ 1000));
+            BufferedReader buffy= new BufferedReader(new FileReader(vcf));
+            StringTokenizer t;
+            for (String s= null; (s= buffy.readLine())!= null; ) {
+                t= new StringTokenizer(s, "\t");
+                String loc= t.nextToken()+ "@"+ t.nextToken();  // chrNr + @ + position
+                String snpID= t.nextToken();
+                String ref= t.nextToken();
+                String var= t.nextToken();
+                map.put(loc, snpID+ "@"+ ref+ "@"+ var); // snpID + @ + ref String + @ + var string
+            }
+
+            return map;
+        } catch (Exception e) {
+            Log.error("Error reading VCF file");
+            throw new RuntimeException(e);
+        }
     }
 
 
