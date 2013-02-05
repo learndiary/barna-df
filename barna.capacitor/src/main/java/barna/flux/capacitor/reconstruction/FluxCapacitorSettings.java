@@ -71,7 +71,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				descriptor= value;
 			}
 			
-			protected void parse(String value) throws ParameterException {
+			public void parse(String value) throws ParameterException {
 				
 				descriptor= new UniversalReadDescriptor();
 				
@@ -101,8 +101,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			
 			public Parameter copy() {
 				UniversalReadDescriptorParameter clone= 
-					new UniversalReadDescriptorParameter(this);  
-				
+					new UniversalReadDescriptorParameter(this);
+                clone.longOption(getLongOption()).shortOption(getShortOption());
 				return clone;
 			}
 

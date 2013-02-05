@@ -40,7 +40,7 @@ import java.io.File;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 //@Cli(name = "extract", description = "Splice junction extraction", restrict = false)
-public class SpliceJunctionExtractor { //implements FluxTool<Void> {
+public class SpliceJunctionExtractor { //implements Tool<Void> {
     /**
      * Default 5' flank
      */

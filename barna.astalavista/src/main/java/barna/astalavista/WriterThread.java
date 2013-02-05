@@ -63,8 +63,8 @@ public class WriterThread extends Thread {
 
             //				if (writeHeader) {
             //					//Writer writer= new OutputStreamWriter(zipperStream);
-            //					//outputStats(writer);
-            //					outputStats(globalWriter);
+            //					//printSettings(writer);
+            //					printSettings(globalWriter);
             //					writeHeader= false;
             //					//writer.close();
             //				}

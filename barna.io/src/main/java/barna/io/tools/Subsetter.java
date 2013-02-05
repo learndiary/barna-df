@@ -28,7 +28,7 @@
 package barna.io.tools;
 
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.io.FileHelper;
 import com.martiansoftware.jsap.JSAPResult;
@@ -46,7 +46,7 @@ import java.util.Random;
  *
  */
 
-public class Subsetter implements FluxTool<Void> {
+public class Subsetter implements Tool<Void> {
 
 	/**
 	 * Input file from which is read.

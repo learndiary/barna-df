@@ -339,4 +339,38 @@ public abstract class ParameterSchema {
     private static String cleanDescription(String s) {
         return s.replaceAll(OSChecker.NEW_LINE, OSChecker.NEW_LINE+"# ");
     }
+
+    /**
+     * Method to convert command line arguments to parameter file stub,
+     * possibly overwriting values set via additional parameter file.
+     *
+     * @param settings pre-defined settings or <code>null</code>
+     * @param args hashmap of parsed command line arguments (short+long option x value)
+     * @return newly created or extended settings
+     * @throws ParameterException in case a parameter does not get what it expects
+     */
+    public static ParameterSchema create(ParameterSchema settings, HashMap<String,String> args) throws ParameterException {
+
+        // lazily create
+        if (settings== null) {
+            try {
+                settings = settings.getClass().newInstance();
+            } catch (Exception e) {
+                throw new ParameterException(e);
+            }
+        }
+
+        // copy
+        Collection<barna.commons.parameters.Parameter> pars=
+                settings.getParameters().values();
+        for (barna.commons.parameters.Parameter p : pars) {
+            if (args.containsKey(p.getLongOption())) {
+                p.parse(args.get(p.getLongOption()));
+            }
+        }
+
+        return settings;
+    }
+
+
 }

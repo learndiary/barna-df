@@ -28,7 +28,7 @@
 package barna.flux.simulator.tools;
 
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
@@ -45,7 +45,7 @@ import java.util.List;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 
-public class BreakpointCounter implements FluxTool {
+public class BreakpointCounter implements Tool {
 
     private File bedFile;
     private int bins = 20;

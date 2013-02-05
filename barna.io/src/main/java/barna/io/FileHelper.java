@@ -44,6 +44,24 @@ import java.util.zip.*;
  * File Utilities
  */
 public class FileHelper {
+
+
+    /**
+     * Returns the name of the file or directory denoted by the abstract pathname.
+     * This is just the last name in the pathname's name sequence.
+     * If the pathname's name sequence is empty, then the original string is returned.
+     * @param absolutePath abstract pathname
+     * @return The name of the file or directory denoted by this abstract pathname,
+     * or the original€ string if this pathname's name sequence is empty
+     * @see File#getName()
+     */
+    public static String getFileNameOnly(String absolutePath) {
+        int pos= absolutePath.lastIndexOf(File.separator);
+        if (pos< 0)
+            return absolutePath;
+        return absolutePath.substring(pos+1);
+    }
+
     /**
      * Indicates file compression
      */

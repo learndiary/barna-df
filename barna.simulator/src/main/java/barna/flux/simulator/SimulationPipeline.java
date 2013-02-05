@@ -31,7 +31,7 @@ import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.Flux;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.flux.simulator.fragmentation.Fragmenter;
 import barna.io.FileHelper;
@@ -50,7 +50,7 @@ import java.util.concurrent.Future;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class SimulationPipeline implements FluxTool<Void> {
+public class SimulationPipeline implements Tool<Void> {
 
 	public static void main(String[] args) {
 		Execute.initialize(2);

@@ -38,11 +38,41 @@ import java.util.concurrent.Callable;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public interface FluxTool<T> extends Callable<T> {
+public interface Tool<T> extends Callable<T> {
+
+    /**
+     * Provides an unique name for the tool
+     * @return the unique name of the tool
+     */
     String getName();
+
+    /**
+     * Provides a brief description of the tool's
+     * functionality
+     * @return a brief description of the tool
+     */
     String getDescription();
+
+    /**
+     * Provides a verbose description of the tool's
+     * functionality
+     * @return a verbose description of the tool
+     */
+    String getLongDescription();
+
+    /**
+     * List of parameters for the tool
+     * @return parameter list
+     */
     List<Parameter> getParameter();
+
+    /**
+     * Checks CLI parameters with respect to their validity
+     * @param args result from parsing the command line
+     * @return <code>true</code> if everything is ok with the parameters,
+     * <code>false</code> otherwise
+     */
     boolean validateParameter(JSAPResult args);
 
-    String getLongDescription();
+
 }

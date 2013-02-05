@@ -28,7 +28,7 @@
 package barna.io.tools;
 
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.io.gtf.GTFwrapper;
@@ -44,7 +44,7 @@ import java.util.List;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-public class GTFSorterTool implements FluxTool {
+public class GTFSorterTool implements Tool {
     /**
      * The source file
      */

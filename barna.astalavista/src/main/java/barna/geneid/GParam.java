@@ -12,6 +12,38 @@ public class GParam {
     public static final int MAXENTRY= 97;
     public static final int FRAMES= 3;
 
+    public Profile getU2gcagDonorProfile() {
+        return U2gcagDonorProfile;
+    }
+
+    public Profile getU2gtaDonorProfile() {
+        return U2gtaDonorProfile;
+    }
+
+    public Profile getU2gtgDonorProfile() {
+        return U2gtgDonorProfile;
+    }
+
+    public Profile getU2gtyDonorProfile() {
+        return U2gtyDonorProfile;
+    }
+
+    public Profile getU12gtagAcceptorProfile() {
+        return U12gtagAcceptorProfile;
+    }
+
+    public Profile getU12gtagDonorProfile() {
+        return U12gtagDonorProfile;
+    }
+
+    public Profile getU12atacAcceptorProfile() {
+        return U12atacAcceptorProfile;
+    }
+
+    public Profile getU12atacDonorProfile() {
+        return U12atacDonorProfile;
+    }
+
 
     public static class ParamExons {
         float siteFactor;
@@ -46,15 +78,15 @@ public class GParam {
     }
 
     Profile DonorProfile;
-    Profile U2gcagDonorProfile;
-    Profile U2gtaDonorProfile;
-    Profile U2gtgDonorProfile;
-    Profile U2gtyDonorProfile;
-    Profile U12gtagAcceptorProfile;
+    protected Profile U2gcagDonorProfile;
+    protected Profile U2gtaDonorProfile;
+    protected Profile U2gtgDonorProfile;
+    protected Profile U2gtyDonorProfile;
+    protected Profile U12gtagAcceptorProfile;
     Profile U12BranchPointProfile;
-    Profile U12gtagDonorProfile;
-    Profile U12atacAcceptorProfile;
-    Profile U12atacDonorProfile;
+    protected Profile U12gtagDonorProfile;
+    protected Profile U12atacAcceptorProfile;
+    protected Profile U12atacDonorProfile;
     Profile StopProfile;
 
     float[][] OligoLogsIni= new float[3][];

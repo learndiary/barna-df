@@ -27,6 +27,7 @@
 
 package barna.io;
 
+import barna.commons.log.Log;
 import barna.io.gtf.GTFwrapper;
 import barna.model.Gene;
 import barna.model.splicegraph.SplicingGraph;
@@ -42,6 +43,18 @@ public class GeneAheadReaderThread extends Thread {
     Gene[] g;
     boolean output= false, output2= true, checkIntrons= true;
     private boolean stop;
+
+
+    /**
+     * Retrieve the number of bytes currently read from the underlying reader.
+     * @return
+     */
+    public long getBytesRead() {
+
+        if (reader== null)
+            return 0l;
+        return reader.getBytesRead();
+    }
 
     public GeneAheadReaderThread(GTFwrapper newReader) {
         super();
@@ -64,12 +77,12 @@ public class GeneAheadReaderThread extends Thread {
                 break;
             if (output2) {
                 Date ti= new Date(System.currentTimeMillis());
-                System.err.println("["+ti+"] read: "+((System.currentTimeMillis()- t0)/ 1000)+" sec.");
+                Log.debug("[" + ti + "] read: " + ((System.currentTimeMillis() - t0) / 1000) + " sec.");
             }
             t0= System.currentTimeMillis();
             g= reader.getGenes();
             if (g== null) {
-                System.err.println(" => no genes, stopping.");	// just in case
+                Log.debug(" => no genes, stopping.");	// just in case
                 break;
             }
 

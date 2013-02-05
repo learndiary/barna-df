@@ -28,6 +28,7 @@
 package barna.commons.utils;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -37,6 +38,164 @@ import java.util.*;
  * @author Thasso Griebel (thasso.griebel@googlemail.com)
  */
 public class ArrayUtils {
+
+
+
+    /**
+     * Creates a copy of an integer array.
+     * @param a The array to be cloned
+     * @return The clone of the provided array
+     */
+    public static int[] duplicate(int[] a) {
+        if (a== null)
+            return null;
+        int[] d= new int[a.length];
+        for (int i = 0; i < d.length; i++)
+            d[i]= a[i];
+        return d;
+    }
+
+    /**
+     * Creates a copy of a double array.
+     * @param a The array to be cloned
+     * @return The clone of the provided array
+     */
+    public static double[] duplicate(double[] a) {
+        if (a== null)
+            return null;
+        double[] d= new double[a.length];
+        for (int i = 0; i < d.length; i++)
+            d[i]= a[i];
+        return d;
+    }
+
+    /**
+     * Creates a copy of an Object array.
+     * @param a The array to be cloned
+     * @return The clone of the provided array
+     */
+    public static Object[] duplicate(Object[] a) {
+        if (a== null)
+            return null;
+        if (a.length== 0)
+            return new Object[0];
+        Object[] d= (Object[]) Array.newInstance(a[0].getClass(), a.length);
+        for (int i = 0; i < d.length; i++)
+            d[i]= a[i];
+        return d;
+    }
+
+    /**
+     * Converts arrays of the primitive types <code>int</code> or <code>double</code>
+     * into arrays of the corresponding wrapper classes, <code>Integer</code> respectively
+     * <code>Double</code>.
+     * @param inA the array to be converted
+     * @return The converted array with objects of the respective wrapper class representing
+     * the provided primitive values.
+     */
+    public static Object[] primitiveToWrapperFieldDistinguishable(Object inA) {
+        if (inA instanceof int[]) {
+            int[] in= (int[]) inA;
+            Integer[] out= new Integer[in.length];
+            for (int i = 0; i < out.length; i++)
+                out[i]= new Integer(in[i]);
+            return out;
+        } else if (inA instanceof double[]) {
+            double[] in= (double[]) inA;
+            Double[] out= new Double[in.length];
+            for (int i = 0; i < out.length; i++)
+                out[i]= new Double(in[i]);
+            return out;
+        }
+        return (Object[]) inA;
+    }
+
+    /**
+     * Sort two vectors according to the natural ordering of the first one.
+     * @param primSort primary vector that determines the ordering
+     * @param restSort secondary vector that gets permuted according to the permutations
+     *                 necessary to order the elements of the primary array
+     */
+    public static void synchroneousSort(Object primSort, Vector restSort) {
+        Object[] primO= primitiveToWrapperFieldDistinguishable(primSort);
+        if (primO== null|| primO.length< 2)
+            return;
+
+        HashMap<Object,Integer> refMap= new HashMap<Object,Integer>(primO.length);
+        for (int i = 0; i < primO.length; i++)
+            refMap.put(primO[i], new Integer(i));
+
+        java.util.Arrays.sort(primO);
+
+        // sort others
+        for (int j = 0; j < restSort.size(); j++) {
+            if (restSort.elementAt(j) instanceof int[]) {
+                int[] array= (int[]) restSort.elementAt(j);
+                int[] arrayOld= duplicate(array);
+                for (int i = 0; i < arrayOld.length; i++)
+                    array[i]= arrayOld[refMap.get(primO[i]).intValue()];
+            } else if (restSort.elementAt(j) instanceof double[]) {
+                double[] array= (double[]) restSort.elementAt(j);
+                double[] arrayOld= duplicate(array);
+                for (int i = 0; i < arrayOld.length; i++)
+                    array[i]= arrayOld[refMap.get(primO[i]).intValue()];
+            } else {
+                Object[] array= (Object[]) restSort.elementAt(j);
+                Object[] arrayOld= duplicate(array);
+                for (int i = 0; i < arrayOld.length; i++)
+                    array[i]= arrayOld[refMap.get(primO[i]).intValue()];
+            }
+        }
+
+        // convert prim sort
+        if (primSort instanceof int[]) {
+            try {
+                Method m= primO[0].getClass().getMethod("intValue", null);
+                int[] out= (int[]) primSort;
+                for (int i = 0; i < out.length; i++)
+                    out[i]= ((java.lang.Integer) m.invoke(primO[i], null)).intValue();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (primSort instanceof double[]) {
+            try {
+                Method m= primO[0].getClass().getMethod("doubleValue", null);
+                double[] out= (double[]) primSort;
+                for (int i = 0; i < out.length; i++)
+                    out[i]= ((java.lang.Double) m.invoke(primO[i], null)).doubleValue();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Wrapper to sort two integer arrays according to the natural ordering of the first
+     * one.
+     * @param primSort primary array of integer that determines the ordering
+     * @param restSort secondary array that gets permuted according to the permutations
+     *                 necessary to order the elements of the primary array
+     */
+    public static void synchroneousSort(int[] primSort, int[] restSort) {
+        Vector v= new Vector();
+        v.add(restSort);
+        synchroneousSort(primSort, v);
+    }
+
+
+    /**
+     * Converts values returned by search methods to indices where to insert
+     * a corresponding value.
+     * @param p
+     * @return The index as is, if positive, otherwise the insertion point converted to
+     * a positive index.
+     */
+    public static int convertInsertionPoint(int p) {
+        if (p< 0)
+            p= (p+1)* (-1);
+        return p;
+    }
+
 
     /**
      * Searches the given element in the sorted list. If the element is not found, it is added

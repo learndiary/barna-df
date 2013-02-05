@@ -30,7 +30,7 @@ package barna.genome.tools.overlap;
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.io.BufferedBACSReader;
 import barna.io.FileHelper;
 import barna.model.bed.BEDobject2;
@@ -46,7 +46,7 @@ import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 
 
-public class Intersector implements FluxTool<Void> {
+public class Intersector implements Tool<Void> {
 
 	public static byte MODE_INTERSECT= 1;
 	public static byte MODE_OVERLAP= 2;

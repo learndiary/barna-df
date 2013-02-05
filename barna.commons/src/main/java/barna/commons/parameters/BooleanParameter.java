@@ -65,7 +65,7 @@ class BooleanParameter extends Parameter<Boolean> {
     }
 
     @Override
-    protected void parse(String value) throws ParameterException {
+    public void parse(String value) throws ParameterException {
         String l = value.toLowerCase();
         for (String s : TRUE) {
             if (l.equals(s)) {

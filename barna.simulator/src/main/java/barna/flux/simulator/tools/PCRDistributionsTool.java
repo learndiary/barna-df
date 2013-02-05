@@ -28,7 +28,7 @@
 package barna.flux.simulator.tools;
 
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.flux.simulator.distributions.GCPCRDistribution;
@@ -50,7 +50,7 @@ import java.util.zip.GZIPOutputStream;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 
-public class PCRDistributionsTool implements FluxTool<GCPCRDistribution>{
+public class PCRDistributionsTool implements Tool<GCPCRDistribution> {
     /**
      * The number of bins
      */

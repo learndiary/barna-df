@@ -176,8 +176,18 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	String[] filtChrIDs = null, noIDs = DEFAULT_CHROMOSOME_FILTER, filtGeneIDs = null, filtTrptIDs = null, 
 		readFeatures = new String[] { "exon", "CDS", "start_codon", "stop_codon" }, allowSources= null;
 
-	boolean silent = false, stars= true, outputWarnings= false, chromosomeWise = true, strandWise= true, geneWise = true,
-			clusterGenes = true;
+	boolean silent = false;
+    boolean stars= true;
+    boolean outputWarnings= false;
+    boolean chromosomeWise = true;
+    boolean strandWise= true;
+    boolean geneWise = true;
+
+    /**
+     * Native gene clustering is applied.
+     */
+    boolean clusterGenes = true;
+
 	boolean clustered = false;
 	boolean readGTF = false, readGene = true, printStatistics= true;
 	
@@ -192,7 +202,11 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	
 	Gene[] genes = null;
 
-	GFFObject[] gtfObj;
+    public void setGtfObj(GFFObject[] gtfObj) {
+        this.gtfObj = gtfObj;
+    }
+
+    GFFObject[] gtfObj;
 	
 	boolean keepOriginalLines= false;
 	public boolean isKeepOriginalLines() {
@@ -357,7 +371,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * depends on the order of gtf-objects from the input for creating
 	 * transcripts to create from the outside
 	 * 
-	 * @param encode
 	 * @return
 	 */
 	public static Species assemble(GFFObject[] gtfObs, String speName,
@@ -1753,8 +1766,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
      * Sort data read from an <code>InputStream</code> and 
      * write it to an <code>OutputStream</code>.
      *
-     * @param istream the source stream
-     * @param ostream the target stream
      * @throws Exception in case of any errors
      */
 	private void sort(OutputStream outStr, int[] fieldNrs, Map<byte[], Integer> transcriptPositions) throws Exception {
@@ -2076,7 +2087,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
 	 * <b>Note:</b> does not close the given stream.
 	 * @param inputStream stream from which is read
-	 * @param clusterGenes indicates whether native gene clustering is applied
 	 * @param size total size of data in the stream, if known, otherwise <= 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry

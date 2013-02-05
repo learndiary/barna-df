@@ -30,7 +30,7 @@ package barna.flux.capacitor.reconstruction;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
@@ -71,7 +71,7 @@ import java.util.concurrent.Callable;
  * @author Micha Sammeth (gmicha@gmail.com)
  *
  */
-public class FluxCapacitor implements FluxTool<MappingStats>, ReadStatCalculator {
+public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
     /**
      * Enumerates possible tasks for the FluxCapacitor
