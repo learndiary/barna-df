@@ -309,11 +309,6 @@ public abstract class AStalavista implements FluxTool<Void>{
      */
     AStalavistaSettings createSettings(AStalavistaSettings settings, JSAPResult args) throws ParameterException {
 
-        // lazily create
-        if (settings== null) {
-            settings = new AStalavistaSettings();
-        }
-
         // copy
         Collection<barna.commons.parameters.Parameter> pars=
                 settings.getParameters().values();
