@@ -59,11 +59,11 @@ public class EventExtractorTest {
                 "XXX\tfoo\texon\t5\t15\t.\t+\t.\ttranscript_id=\"anotherTranscript\";"};
         Gene[] ge= getGene(gtf);
 
-        AStalavistaSettings settings= new AStalavistaSettings();
-        settings.set(AStalavistaSettings.EVENTS, EnumSet.of(
-                AStalavistaSettings.EventTypes.ASI,
-                AStalavistaSettings.EventTypes.ASE,
-                AStalavistaSettings.EventTypes.VST)
+        AStaSettings settings= new AStaSettings();
+        settings.set(AStaSettings.EVENTS, EnumSet.of(
+                AStaSettings.EventTypes.ASI,
+                AStaSettings.EventTypes.ASE,
+                AStaSettings.EventTypes.VST)
         );
         EventExtractor extractor= new EventExtractor(ge[0], settings);
 
@@ -82,11 +82,11 @@ public class EventExtractorTest {
                 {"XXX\tfoo\texon\t10\t15\t.\t+\t.\ttranscript_id=\"aTranscript\";",
                         "XXX\tfoo\texon\t10\t20\t.\t+\t.\ttranscript_id=\"anotherTranscript\";"};
         Gene[] ge= getGene(gtf);
-        AStalavistaSettings settings= new AStalavistaSettings();
-        settings.set(AStalavistaSettings.EVENTS, EnumSet.of(
-                AStalavistaSettings.EventTypes.ASI,
-                AStalavistaSettings.EventTypes.ASE,
-                AStalavistaSettings.EventTypes.VST)
+        AStaSettings settings= new AStaSettings();
+        settings.set(AStaSettings.EVENTS, EnumSet.of(
+                AStaSettings.EventTypes.ASI,
+                AStaSettings.EventTypes.ASE,
+                AStaSettings.EventTypes.VST)
         );
         EventExtractor extractor= new EventExtractor(ge[0], settings);
 

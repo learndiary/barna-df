@@ -57,48 +57,48 @@ public class EventExtractor extends SplicingGraph implements Runnable {
 
     AStalavistaSettings settings;
 
-    public EventExtractor(Gene g, AStalavistaSettings settings) {
+    public EventExtractor(Gene g, AStaSettings settings) {
         super(g);
         this.settings= settings;
 
         // EVENTS_FILE OPTIONS
-        if (!settings.get(AStalavistaSettings.EVENTS).isEmpty()) {
+        if (!settings.get(AStaSettings.EVENTS).isEmpty()) {
 
-            this.onlyInternal= !(settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
-                    || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP)
-                    || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST));
-            this.retrieveASEvents= (settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASE)
-                    || settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.ASI));
-            this.retrieveDSEvents= settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.DSP);
-            this.retrieveVSEvents= settings.get(AStalavistaSettings.EVENTS).contains(AStalavistaSettings.EventTypes.VST);
+            this.onlyInternal= !(settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.ASE)
+                    || settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.DSP)
+                    || settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.VST));
+            this.retrieveASEvents= (settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.ASE)
+                    || settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.ASI));
+            this.retrieveDSEvents= settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.DSP);
+            this.retrieveVSEvents= settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.VST);
 
             // Dimension
-            int v= (Integer) settings.get(AStalavistaSettings.EVENTS_DIMENSION);
+            int v= (Integer) settings.get(AStaSettings.EVENTS_DIMENSION);
             if (v< 2)
                 n= (-1); // complete events
             else
                 n= 2;
 
-            acceptableIntrons= settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.IOK);
+            acceptableIntrons= settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.IOK);
             // consider canonical sites only
-            SplicingGraph.canonicalSS= settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.CSS);
+            SplicingGraph.canonicalSS= settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.CSS);
 
             // intron confidence
-            SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStalavistaSettings.INTRON_CONFIDENCE).intValue();
+            SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStaSettings.INTRON_CONFIDENCE).intValue();
 
             // edge confidence
-            Transcript.setEdgeConfidenceLevel((byte) settings.get(AStalavistaSettings.EDGE_CONFIDENCE).intValue());
+            Transcript.setEdgeConfidenceLevel((byte) settings.get(AStaSettings.EDGE_CONFIDENCE).intValue());
 
             // Events: predict 3'complete transcripts
-            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.CP3))
+            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.CP3))
                 ASEvent.check3Pcomplete= true;
             // Events: predict NMD
-            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.NMD))
+            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.NMD))
                 ASEvent.checkNMD= true;
             // Events: output flank type (constitutive/alternative)
-            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.FLT))
+            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.FLT))
                 ASEvent.setOutputFlankMode(true);
-            if (settings.get(AStalavistaSettings.EVENTS_OPT).contains(AStalavistaSettings.EventOptions.SEQ))
+            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.SEQ))
                 ; // TODO SplicingGraph.outputSeq= true;
 
         }
