@@ -25,12 +25,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.profile;
 
+import barna.flux.capacitor.matrix.Matrix;
+import barna.flux.capacitor.matrix.SimpleMatrix;
+import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.model.constants.Constants;
 
 import java.util.Comparator;
 
+/**
+ * @deprecated
+ */
 public class TProfile {
 
 	public static class Tuple {

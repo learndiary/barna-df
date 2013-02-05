@@ -25,9 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.profile;
 
 import barna.commons.utils.ArrayUtils;
+import barna.flux.capacitor.matrix.UniversalMatrix;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,7 +40,7 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class Profile_old {
+public class BiasProfile {
 
 	static class TProfileByLengthComparator implements Comparator<TProfile> {
 		//@Override
@@ -69,13 +71,14 @@ public class Profile_old {
 	public final static int EXP_LO= 10;
 	public final static int EXP_UP= 100;
 	
-	public static int[] BIN_LEN= new int[] {1000, 3000, 10000};
+	// {1000, 5000}; // 
+	public static int[] BIN_LEN= new int[] {500, 1000, 1500, 2000};	// 5 bins, good
 	public static int[] BIN_EXP= new int[] {10, 100, 1000};
 	
 	FluxCapacitor capacitor;
-	public Profile_old(FluxCapacitor cap) {
+	public BiasProfile() {
 		profiles= new Vector<TProfile>();
-		this.capacitor= cap;
+        stats = new MappingStats();
 	}
 	
 	public void finish() {
@@ -273,6 +276,12 @@ public class Profile_old {
 
 	}
 
+	/**
+	 * @deprecated
+	 * @param tlen
+	 * @param rpk
+	 * @return
+	 */
 	public UniversalMatrix getMatrix(int tlen, float rpk) {
 		int lenBin= 0;
 		if (tlen> LEN_LO)
@@ -286,27 +295,27 @@ public class Profile_old {
 		if (rpk> EXP_UP)
 			++expBin;
 		
-		UniversalMatrix m= getMasters()[lenBin];//[expBin];
+		UniversalMatrix m= getMasters()[lenBin]; // [expBin];
 		return m;
 	}
 	
 	public UniversalMatrix getMatrix(int tlen) {
-		int lenBin= 0;
-		if (tlen> LEN_LO)
-			++lenBin;
-		if (tlen> LEN_UP)
-			++lenBin;
+		int lenBin= Arrays.binarySearch(BIN_LEN, tlen);
+		if (lenBin< 0)
+			lenBin= -(lenBin+ 1);
 		
 		UniversalMatrix m= getMasters()[lenBin];
 		return m;
 	}
-	
-	UniversalMatrix[] masters= null;
+
+	private UniversalMatrix[] masters= null;
 	public UniversalMatrix[] getMasters() {
 		if (masters == null) {
-			masters = new UniversalMatrix[3]; // [3]
+			masters = new UniversalMatrix[BIN_LEN.length+ 1]; // [3]
 			for (int i = 0; i < masters.length; i++) {
-				int mlen= i== 0? LEN_LO/ 2: (i== 1? LEN_LO+ ((LEN_UP- LEN_LO)/ 2): LEN_UP);
+				int mlen= i== 0? BIN_LEN[0]/ 2: 
+					i>= BIN_LEN.length? BIN_LEN[BIN_LEN.length- 1]: 
+						BIN_LEN[i- 1]+ ((BIN_LEN[i]- BIN_LEN[i- 1])/ 2);
 				masters[i]= new UniversalMatrix(mlen);
 //				for (int j = 0; j < masters[i].length; j++) 
 //					masters[i][j]= new UniversalMatrix(mlen);
@@ -316,10 +325,12 @@ public class Profile_old {
 
 		return masters;
 	}
-	
-	
-	
-	public TProfile[] getProfis() {
+
+    public void setMasters(UniversalMatrix[] masters) {
+        this.masters = masters;
+    }
+
+    public TProfile[] getProfis() {
 		return profis;
 	}
 
@@ -335,5 +346,13 @@ public class Profile_old {
 		return sum;
 	}
 	
-	
+	private MappingStats stats;
+
+    public MappingStats getStats() {
+        return stats;
+    }
+
+    public void setStats(MappingStats stats) {
+        this.stats = stats;
+    }
 }

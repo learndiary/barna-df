@@ -25,36 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.matrix;
 
 import barna.model.constants.Constants;
 
-public class CopyOfSimpleMatrix implements Matrix {
+public class SimpleMatrix implements Matrix {
 
 	int[][] m;
 	int s;
 	
-	public CopyOfSimpleMatrix(int len, byte dir) {
+	public SimpleMatrix(int len, byte dir) {
 		if (dir== Constants.DIR_BOTH)
 			m= new int[2][];
 		else
 			m= new int[1][];
 		for (int i = 0; i < m.length; i++) {
 			m[i]= new int[len];
-			for (int j = 0; j < m.length; j++) 
+			for (int j = 0; j < m[i].length; j++) 
 				m[i][j]= 0;
 		}
 	}
 	
-	/**
-	 * adds a breakpoint (len ignored)
-	 */
 	public void add(int p, int len, byte dir) {
-		add(p, dir);
-	}	
-	
-	
-	public void add(int p, byte dir) {
+		
 		if (p< 0|| p>= getLength()) {
 			System.err.println("Matrix ArrayIndexOutOfBounds "+ p+" in "+ getLength());
 			if (p< 0)
@@ -84,7 +77,7 @@ public class CopyOfSimpleMatrix implements Matrix {
 	
 	public void merge(Matrix nn, int readLen) {
 		
-		CopyOfSimpleMatrix n= (CopyOfSimpleMatrix) nn;
+		SimpleMatrix n= (SimpleMatrix) nn;
 		
 		double fac= getLength()/ (double) n.getLength();
 		for (int x = 0; x < m.length; x++) {
@@ -176,9 +169,28 @@ public class CopyOfSimpleMatrix implements Matrix {
 		
 		return b;
 	}
-
+	
 	public int project(int[][] b) {
-		// TODO Auto-generated method stub
-		return 0;
+		if (b== null|| b.length!= m.length)
+			return -1;
+		float len= m[0].length, projLen= b.length;
+		int sum= 0;
+		for (int i = 0; i < m.length; i++) {
+			for (int j = 0; j < m[i].length; j++) {
+				int p= (int) Math.round(j* projLen/ len);	// TODO perf
+				int v= m[i][j];
+				b[i][p]+= v;
+				sum+= v;
+			}
+		}
+		assert(s== sum);
+		return sum;
+	}
+
+	/**
+	 * @deprecated stub
+	 */
+	public void add(int p, byte dir) {
+		
 	}
 }

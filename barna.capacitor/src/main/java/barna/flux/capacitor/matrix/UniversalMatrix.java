@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.matrix;
 
 import barna.commons.log.Log;
 import barna.commons.system.OSChecker;

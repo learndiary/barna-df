@@ -11,10 +11,7 @@ import barna.io.*;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
-import net.sf.samtools.BAMIndexer;
-import net.sf.samtools.SAMFileHeader;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
+import net.sf.samtools.*;
 
 import java.io.*;
 import java.util.concurrent.Future;
@@ -33,6 +30,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private MSIterator iter;
     private boolean sortInRam;
     private int maxRecords = 500000;
+    private SAMFileReader.ValidationStringency validationStringency;
 
     private File index;
 
@@ -90,10 +88,22 @@ public class SAMReader extends AbstractFileIOWrapper implements
      */
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads) {
         super(inputFile);
-        reader = new SAMFileReader(this.inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
         this.allReads = allReads;
+    }
+
+    private SAMFileReader getSAMFileReader(boolean createNew) {
+        if (reader == null || createNew)
+            reader = new SAMFileReader(this.inputFile, index);
+        try {
+            reader.getIndex();
+        } catch(SAMException ex) {
+            reader.enableIndexCaching(true);
+            reader.enableIndexMemoryMapping(false);
+        }
+        reader.setValidationStringency(getValidationStringency());
+        return reader;
     }
 
     @Override
@@ -106,11 +116,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public boolean isApplicable() {
-		if (reader==null)
-            reader = new SAMFileReader(this.inputFile);
-        if (!reader.isBinary())
+        if (!getSAMFileReader(false).isBinary())
             throw new RuntimeException("The input must be a BAM file.");
-        if (!reader.hasIndex() && index==null) {
+        if (!getSAMFileReader(false).hasIndex() && index==null) {
             if (!createIndex())
                 throw new RuntimeException("The input BAM file must be sorted and indexed.");
         }
@@ -126,9 +134,6 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	}
 
     private boolean createIndex() {
-        if (reader == null)
-            return false;
-
         //File index = new File(inputFile.getAbsolutePath()+".bai");
         try {
             index = FileHelper.createTempFile("FluxCapacitor_" + inputFile.getName().replace(".bam",""), "bai");
@@ -137,15 +142,15 @@ public class SAMReader extends AbstractFileIOWrapper implements
             Log.error("Cannot create index file!", e);
         }
 
-        BAMIndexer indexer = new BAMIndexer(index, reader.getFileHeader());
+        BAMIndexer indexer = new BAMIndexer(index, getSAMFileReader(false).getFileHeader());
 
-        reader.enableFileSource(true);
+        getSAMFileReader(false).enableFileSource(true); //write source information into each SAMRecord
         int totalRecords = 0;
 
         // create and write the content
         Log.info("","");
         Log.info("Creating index for " + inputFile.getName());
-        for (SAMRecord rec : reader) {
+        for (SAMRecord rec : getSAMFileReader(false)) {
             if (Log.getLogLevel().equals(Log.Level.DEBUG)) {
                 if (++totalRecords % 1000000 == 0) {
                     Log.info(totalRecords + " reads processed ...");
@@ -156,36 +161,28 @@ public class SAMReader extends AbstractFileIOWrapper implements
         indexer.finish();
         Log.info("Done.");
 
-        reader = new SAMFileReader(inputFile,index);
+        getSAMFileReader(true);
 
         return true;
     }
 
     @Override
     public MSIterator<Mapping> read(String chromosome, int start, int end) {
-        if (reader==null) {
-            reader = new SAMFileReader(this.inputFile, index);
-            reader.enableIndexCaching(true);
-            reader.enableIndexMemoryMapping(false);
-        }
         if (isApplicable()) {
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
             if (sortInRam) {
                 try {
-                    iter = new SAMMappingIterator(reader.query(chromosome, start, end, contained), allReads);
+                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads);
                 }
                 catch (OutOfMemoryError error) {
-                    reader = new SAMFileReader(this.inputFile, index);
-                    reader.enableIndexCaching(true);
-                    reader.enableIndexMemoryMapping(false);
-                    SAMFileHeader header =  reader.getFileHeader();
+                    SAMFileHeader header =  getSAMFileReader(true).getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords, allReads);
+                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads);
                 }
             } else {
-                SAMFileHeader header =  reader.getFileHeader();
+                SAMFileHeader header =  getSAMFileReader(false).getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                iter = new SAMMappingSortedIterator(reader.query(chromosome, start, end, contained), header, maxRecords, allReads);
+                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads);
             }
         }
         else
@@ -225,7 +222,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 		return countSplit;
 	}
 
-    @Override
+	@Override
     public boolean isPaired() {
         return paired;
     }
@@ -275,9 +272,6 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
 	@Override
 	public void scanFile() {
-        if (reader == null) {
-            reader = new SAMFileReader(this.inputFile);
-        }
         //reader.getFileHeader().setSortOrder(SAMFileHeader.SortOrder.queryname);        countAll = 0; countEntire = 0; countSplit = 0; countReads = 0; countSkippedLines = 0;
         boolean flagSet = false;
 
@@ -309,7 +303,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     })
                     .sortInBackground();
 
-            for(final SAMRecord rec : reader) {
+            for(final SAMRecord rec : getSAMFileReader(false)) {
                 if (!paired && rec.getReadPairedFlag())
                     paired = true;
                 if (rec.getReadUnmappedFlag()) {
@@ -330,11 +324,11 @@ public class SAMReader extends AbstractFileIOWrapper implements
                         if (!flagSet) {
                             //flags are not set properly
                             ++primaryAlignments;
-                            tmpWriter.write(readId);
-                            tmpWriter.write(OSChecker.NEW_LINE);
+                        tmpWriter.write(readId);
+                        tmpWriter.write(OSChecker.NEW_LINE);
                         } else {
                             ++countReads;
-                        }
+                    }
                     }
                     ++countAll;
                     if (rec.getAlignmentBlocks().size()>1) {
@@ -354,9 +348,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
                 Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
                         "of reads without this information.");
                 Log.warn("This process can be long for big files!");
-                tmpWriter.flush();
-                tmpWriter.close();
-                sorterFuture.get();
+            tmpWriter.flush();
+            tmpWriter.close();
+            sorterFuture.get();
             }
 
             Log.progressFinish(Constants.OK, true);
@@ -380,6 +374,25 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	@Override
 	public int getNrInvalidLines() {
 		return countSkippedLines;
+	}
+
+    public SAMFileReader.ValidationStringency getValidationStringency() {
+        if (validationStringency == null)
+            validationStringency = SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY;
+        return validationStringency;
+    }
+
+    public void setValidationStringency(SAMFileReader.ValidationStringency v) {
+        this.validationStringency = v;
+    }
+
+    public void setValidationStringency(String v) {
+        try {
+            this.validationStringency = SAMFileReader.ValidationStringency.valueOf(v.trim().toUpperCase());
+        } catch(IllegalArgumentException e) {
+            Log.warn("Cannot parse " + v.trim().toUpperCase() + " as a SAM validation stringency");
+            Log.warn("Using default stringency: " + SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY);
+        }
 	}
 
     @Override

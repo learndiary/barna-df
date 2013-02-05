@@ -1,21 +1,17 @@
 package barna.flux.capacitor;
 
 import barna.commons.Execute;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
-import barna.flux.capacitor.reconstruction.FluxCapacitorStats;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
-import com.google.gson.GsonBuilder;
 import org.junit.*;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.*;
 
 public class FluxCapacitorReadsOutputTest {
 
@@ -45,7 +41,8 @@ public class FluxCapacitorReadsOutputTest {
     }
 	@Test
 	public void testStasAreWrittenAndContainValidData() throws Exception {
-        File statsFile = new File(currentTestDirectory, "stats.txt");
+        File statsFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".stats", true, null));
+        File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profiles", true, null));
 
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_SORTED);
@@ -53,22 +50,23 @@ public class FluxCapacitorReadsOutputTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "CASAVA18");
         pars.put("STATS_FILE", statsFile);
+        pars.put("PROFILE_FILE", proFile);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
+        String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
-        FluxCapacitorStats stats = FluxCapacitorRunner.runCapacitor(parFile);
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
+        stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
         assertTrue(statsFile.exists());
 
-        FluxCapacitorStats loaded = new GsonBuilder().create().fromJson(new FileReader(statsFile), FluxCapacitorStats.class);
         File outFile = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
         assertTrue(outFile.exists());
-        BufferedReader reader = new BufferedReader(new FileReader(outFile));
-        String l = null;
-        while((l = reader.readLine()) != null ){
-            System.out.println(l);
-            assertTrue(l.contains("reads"));
-        }
+        assertTrue(proFile.exists());
+        MappingStats s1 = new MappingStats();
+        s1.readStats(statsFile);
+
+        assertEquals(stats, s1);
 	}
 }
