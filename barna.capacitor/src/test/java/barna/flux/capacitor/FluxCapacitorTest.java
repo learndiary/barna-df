@@ -293,8 +293,8 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("STDOUT_FILE", firstResults);
 
 
@@ -307,6 +307,7 @@ public class FluxCapacitorTest {
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
         pars.put("PROFILE_FILE", BED_MM9_PROFILE);
         pars.put("READ_DESCRIPTOR", "SIMULATOR");
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("NR_READS_MAPPED", 7893);
 
         parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -629,9 +630,10 @@ public class FluxCapacitorTest {
         Map pars = new HashMap();
         pars.put("ANNOTATION_FILE", GTF_MM9_SORTED);
         pars.put("MAPPING_FILE", BED_MM9_SORTED);
-        pars.put("PROFILE_FILE", BED_MM9_PROFILE);
+        pars.put("PROFILE_FILE", proFile);
         pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("COUNT_ELEMENTS","[]");
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
