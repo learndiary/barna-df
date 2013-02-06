@@ -162,12 +162,12 @@ public class AStaSettings extends AStalavistaSettings {
     /**
      * Parameter collecting flags for event output options
      */
-    public static final Parameter<EnumSet<EventOptions>> EVENTS_OPT = Parameters.enumSetParameter(
-            "EVENTS_OPT",
+    public static final Parameter<EnumSet<EventOptions>> EVENTS_ATR = Parameters.enumSetParameter(
+            "EVENTS_ATR",
             "Toggle optional attributes to be output",
             EnumSet.noneOf(EventOptions.class),
             EventOptions.class,
-            null).longOption("ep").shortOption('p');
+            null).longOption("ea").shortOption('a');
 
     /**
      * Checks whether a folder with genomic sequences is necessary in order
@@ -177,9 +177,9 @@ public class AStaSettings extends AStalavistaSettings {
      */
     public boolean requiresGenomicSequence() {
         if (super.requiresGenomicSequence()
-            || get(AStaSettings.EVENTS_OPT).contains(EventOptions.CSS)
-            || get(AStaSettings.EVENTS_OPT).contains(EventOptions.SEQ)
-            || get(AStaSettings.EVENTS_OPT).contains(EventOptions.IOK))
+            || get(AStaSettings.EVENTS_ATR).contains(EventOptions.CSS)
+            || get(AStaSettings.EVENTS_ATR).contains(EventOptions.SEQ)
+            || get(AStaSettings.EVENTS_ATR).contains(EventOptions.IOK))
             return true;
         // otherwise
         return false;

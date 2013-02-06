@@ -68,7 +68,7 @@ public abstract class AStalavista implements Tool<Void> {
         }
 
         // init input / reader thread
-        GeneAheadReaderThread readerThread= getGeneAheadReaderThread();
+        readerThread= getGeneAheadReaderThread();
 
     }
 
@@ -240,6 +240,8 @@ public abstract class AStalavista implements Tool<Void> {
      * <code>false</code> otherwise
      */
     public boolean validateParameter(ParameterSchema schema, JSAPResult args) {
+
+        // TODO think about pulling up to interface / abstract class in commons
 
         // non-null settings are to be assumed
         if (schema== null|| !(schema instanceof AStalavistaSettings)) {

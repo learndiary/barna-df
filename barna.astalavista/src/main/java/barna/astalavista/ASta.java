@@ -8,7 +8,6 @@ import barna.model.Transcript;
 import barna.model.commons.MyFile;
 import barna.model.splicegraph.SplicingGraph;
 import com.martiansoftware.jsap.JSAP;
-import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -25,11 +24,6 @@ import java.util.concurrent.Future;
  * Time: 3:01 PM
  */
 public class ASta extends AStalavista {
-
-    /**
-     * Parameters for the AStalavista run
-     */
-    protected AStaSettings settings= null;
 
     /**
      * Counter for introns with invalid lengths/sequence attributes.
@@ -117,7 +111,7 @@ public class ASta extends AStalavista {
             if (!SplicingGraph.onlyInternal)
                 Log.message("# edgeConfidenceLevel " + Transcript.getEdgeConfidenceLevel());
             Log.message("# canonicalSS\t"+ SplicingGraph.canonicalSS);
-            Log.message("# acceptableIntrons\t"+ settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.IOK));
+            Log.message("# acceptableIntrons\t"+ settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.IOK));
             if (SplicingGraph.acceptableIntrons)
                 Log.message("# intronConfidenceLevel " + SplicingGraph.intronConfidenceLevel);
         }
@@ -153,7 +147,7 @@ public class ASta extends AStalavista {
         }
 
         // sets types of events to be extracted, k, etc..
-        EventExtractor extractor= new EventExtractor(g, settings);
+        EventExtractor extractor= new EventExtractor(g, (AStaSettings) settings);
         Thread extractorThread= new Thread(extractor);
         extractorThread.start();
         extractorThread.join();
@@ -171,7 +165,7 @@ public class ASta extends AStalavista {
 
         Log.info("found "+ EventExtractor.counter+" events.");
 
-        if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.IOK)) {
+        if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.IOK)) {
             DecimalFormat df = new DecimalFormat("#.##");
             System.err.println("discarded " + invalidIntrons + " introns, " +
                     "found " + (totalIntrons - invalidIntrons) + " valid ones when checking splice sites: " +
@@ -210,5 +204,11 @@ public class ASta extends AStalavista {
 
     }
 
+    @Override
+    public boolean validateParameter(JSAPResult args) {
+        if (!validateParameter(new AStaSettings(), args))
+            return false;
+        return true;
+    }
 
 }

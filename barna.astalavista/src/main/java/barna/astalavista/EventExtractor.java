@@ -1,9 +1,7 @@
 package barna.astalavista;
 
-import barna.commons.log.Log;
 import barna.model.*;
 import barna.model.commons.IntVector;
-import barna.model.commons.MyFile;
 import barna.model.commons.MyTime;
 import barna.model.splicegraph.*;
 
@@ -79,9 +77,9 @@ public class EventExtractor extends SplicingGraph implements Runnable {
             else
                 n= 2;
 
-            acceptableIntrons= settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.IOK);
+            acceptableIntrons= settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.IOK);
             // consider canonical sites only
-            SplicingGraph.canonicalSS= settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.CSS);
+            SplicingGraph.canonicalSS= settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.CSS);
 
             // intron confidence
             SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStaSettings.INTRON_CONFIDENCE).intValue();
@@ -90,15 +88,15 @@ public class EventExtractor extends SplicingGraph implements Runnable {
             Transcript.setEdgeConfidenceLevel((byte) settings.get(AStaSettings.EDGE_CONFIDENCE).intValue());
 
             // Events: predict 3'complete transcripts
-            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.CP3))
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.CP3))
                 ASEvent.check3Pcomplete= true;
             // Events: predict NMD
-            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.NMD))
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.NMD))
                 ASEvent.checkNMD= true;
             // Events: output flank type (constitutive/alternative)
-            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.FLT))
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.FLT))
                 ASEvent.setOutputFlankMode(true);
-            if (settings.get(AStaSettings.EVENTS_OPT).contains(AStaSettings.EventOptions.SEQ))
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.SEQ))
                 ; // TODO SplicingGraph.outputSeq= true;
 
         }
