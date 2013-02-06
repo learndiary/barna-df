@@ -1818,33 +1818,29 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         mappingReader = (MappingReader)wrapperMappings;
         gtfReader = (GTFwrapper)wrapperAnnotation;
 
-        if (mappingReader.isPaired() && !settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).isPaired()) {
-            settings.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-        }
-
         if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
-            UniversalReadDescriptor descriptor = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
-            if (descriptor.isPaired()) {
-                if (descriptor.isStranded()) {
-                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.COMBINED);
-                } else {
+            FluxCapacitorSettings.ReadStrand readStrand = settings.get(FluxCapacitorSettings.READ_STRAND);
+            if (mappingReader.isPaired()) {
+                if (readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
                     settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED_STRANDED);
                 }
             }
             else {
-                if (descriptor.isStranded()) {
-                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.STRANDED);
-                } else {
+                if (readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
                     settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE);
+                } else {
+                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE_STRANDED);
                 }
             }
         }
 
         // TODO parameters
         pairedEnd = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED)
-                || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
-        stranded = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.STRANDED)
-                || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.COMBINED);
+                || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED_STRANDED);
+        stranded = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.SINGLE_STRANDED)
+                || settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED_STRANDED);
 
         //MappingStats stats = new MappingStats();
         long t0 = System.currentTimeMillis();

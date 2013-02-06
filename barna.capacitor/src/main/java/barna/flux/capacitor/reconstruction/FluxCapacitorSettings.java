@@ -29,6 +29,7 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
+import barna.io.FileHelper;
 import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
@@ -56,9 +57,20 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				super("READ_DESCRIPTOR",
                         " Expression how to parse the read IDs, or one of the shorthand names ("
                                 + StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',') + ")",
-                        UniversalReadDescriptor.getDefaultDescriptor(),
+                        null,
                         UniversalReadDescriptor.class,
-                        null);
+                        new ParameterValidator() {
+                            @Override
+                            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                                File mapping = schema.get(FluxCapacitorSettings.MAPPING_FILE);
+                                if (FileHelper.getExtension(mapping).toUpperCase().equals("BAM") && schema.get(READ_DESCRIPTOR)!=null) {
+                                    throw new ParameterException("You cannot specify a READ_DESCRIPTOR for BAM files");
+                                }
+                                if (FileHelper.getExtension(mapping).toUpperCase().contains("BED") && schema.get(READ_DESCRIPTOR)==null) {
+                                    throw new ParameterException("You must specify a READ_DESCRIPTOR for BED files");
+                                }
+                            }
+                        });
 			}
 			
 			public UniversalReadDescriptorParameter(UniversalReadDescriptorParameter anotherURDP) {
@@ -115,14 +127,25 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 }
 	
 	
-	 /**
-	  * 
-	  * @author Micha Sammeth (gmicha@gmail.com)
-	  *
-	  */
-	 public static enum AnnotationMapping {
-		 AUTO, PAIRED, STRANDED, SINGLE, COMBINED
-	 }
+     /**
+      *
+      * @author Micha Sammeth (gmicha@gmail.com)
+      *
+      */
+
+    /**
+     * Enum for annotation mapping types
+     */
+     public static enum AnnotationMapping {
+         AUTO, SINGLE, PAIRED, SINGLE_STRANDED, PAIRED_STRANDED
+     }
+
+    /**
+     * Enum for strandedness types
+     */
+    public static enum ReadStrand {
+        NONE, SENSE, ASENSE, MATE1_SENSE, MATE2_SENSE
+    }
 
     /**
      * Helper to parse relative filenames
@@ -134,7 +157,12 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	  */
 	 public static final Parameter<UniversalReadDescriptor> READ_DESCRIPTOR =
 		 	new UniversalReadDescriptorParameter();
-		 
+
+    public static final Parameter<ReadStrand> READ_STRAND = Parameters.enumParameter(
+            "READ_STRAND",
+            " Information about read strandedness",
+            ReadStrand.NONE,
+            null);
 
 	 /**
 	  * Information used during annotation mapping
@@ -151,12 +179,12 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			        	AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
 			        	
 			        	// paired read descriptor requires paired-end descriptor, not vice versa
-			        	if ((!d.isPaired())&& (a.equals(AnnotationMapping.PAIRED)|| a.equals(AnnotationMapping.COMBINED)))
+			        	if ((!d.isPaired())&& (a.equals(AnnotationMapping.PAIRED)|| a.equals(AnnotationMapping.PAIRED_STRANDED)))
 			        		throw new ParameterException("Annotation mapping "+a + " requires a paired-end read descriptor!");
 			        	// stranded annotation mapping requires stranded descriptor, not vice versa
-			        	if ((!d.isStranded())&& a.equals(AnnotationMapping.STRANDED))
+			        	if ((!d.isStranded())&& a.equals(AnnotationMapping.SINGLE_STRANDED))
 			        		throw new ParameterException("Annotation mapping "+a + " requires a stranded read descriptor!");
-			        	if (a.equals(AnnotationMapping.COMBINED)&&
+			        	if (a.equals(AnnotationMapping.PAIRED_STRANDED)&&
 			        			(!(d.toString().contains(UniversalReadDescriptor.TAG_MATE1SENSE)
 			        			|| d.toString().contains(UniversalReadDescriptor.TAG_MATE2SENSE)))) {
 			        		
@@ -271,7 +299,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 // check pre-conditions for read pairing
                 UniversalReadDescriptor d = schema.get(READ_DESCRIPTOR);
                 AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
-                if (!(d.isPaired() && (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.COMBINED)))) {
+                if (!(d.isPaired() && (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.PAIRED_STRANDED)))) {
                     throw new ParameterException("Read pairing required for annotating inserts: " +
                             (d.isPaired() ? ANNOTATION_MAPPING.getName() + " " + a.toString() : READ_DESCRIPTOR.getName() + " " + d.toString()));
                 }
