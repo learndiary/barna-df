@@ -236,6 +236,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         private float[] costBounds = new float[]{0.95f, Float.NaN};
 
         /**
+         * Read descriptor to be used
+         */
+        private UniversalReadDescriptor descriptor =null;
+
+        /**
          * Constructor providing reads and mappings for deconvolution.
          * The mode of the run can be switched between profiling and deconvolution.
          *
@@ -243,7 +248,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          * @param newMappings the mappings that fall in the locus
          * @param tasks     tasks to be preformed
          */
-		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile) {
+		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile, UniversalReadDescriptor descriptor) {
 
             this.gene = newGene;
 			this.mappings = newMappings;
@@ -253,6 +258,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             this.stranded = stranded;
             this.settings = settings;
             this.profile = profile;
+            this.descriptor = descriptor;
             this.stats = new MappingStats();
             this.stats.add(profile.getMappingStats());
             this.stats.reset();
@@ -1058,8 +1064,8 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if(tasks.isEmpty())
                 return null;
 
-            mapper = new AnnotationMapper(this.gene);
-            mapper.map(this.mappings, settings);
+            mapper = new AnnotationMapper(this.gene, descriptor);
+            mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
             /*stats.incrReadsLoci(mapper.nrMappingsLocus);
             stats.incrMappingsMapped(mapper.getNrMappingsMapped());
@@ -2641,7 +2647,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
 //                    solve(gene[i], mappings, currentTasks);
 
-                    LocusSolver lsolver = new LocusSolver(gene[i], mappings, currentTasks, this.output, pairedEnd, stranded, settings, profile);
+                    LocusSolver lsolver = new LocusSolver(gene[i], mappings, currentTasks, this.output, pairedEnd, stranded, settings, profile, getReadDescriptor());
                     stats.addLocus(lsolver.call());
 
                     if (mappings != null) {
@@ -2696,6 +2702,20 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
 
         return true;
+    }
+
+    private UniversalReadDescriptor getReadDescriptor() {
+        if (settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)!=null)
+            return settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
+        else {
+            UniversalReadDescriptor d = new UniversalReadDescriptor();
+            if (mappingReader.isPaired()) {
+                d.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+            } else {
+                d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+            }
+            return d;
+        }
     }
 
     /**
