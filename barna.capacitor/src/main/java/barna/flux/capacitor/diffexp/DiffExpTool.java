@@ -28,7 +28,7 @@
 package barna.flux.capacitor.diffexp;
 
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
@@ -43,7 +43,7 @@ import java.util.List;
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-public class DiffExpTool implements FluxTool<Void>{
+public class DiffExpTool implements Tool<Void> {
     private static final String longDescription = "Calculate differential expression between two quantificatons.\n" +
             "\n" +
             "Both quantifications must be done with the capacitor on the same\n" +

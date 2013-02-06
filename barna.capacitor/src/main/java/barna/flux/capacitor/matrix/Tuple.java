@@ -25,19 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.flux.capacitor.reconstruction;
+package barna.flux.capacitor.matrix;
 
-public interface Matrix {
+import java.util.Comparator;
 
-	public void add(int p, int len, byte dir);
-	public void add(int p, byte dir);
-	public int get(int p1, int p2, int readLen, int[] insertMinMax, byte dir);
-	public void add(int p1, int p2, int len);
-	public int get(int p1, int p2, int p3, int p4, int readLen);
-	public int getSum();
-	public int getLength();
-	public void merge(Matrix n, int readLen);
-	public void fill(int[] insertSize, int readLen);
-	public byte[] toByteArray();
-	public int project(int[][] b);
+public class Tuple {
+
+	public static class TupleByXComparator implements Comparator<Tuple> {
+		public int compare(Tuple o1, Tuple o2) {
+			return (o1.x- o2.x);
+		}
+	}
+	
+	public TupleByXComparator defaultTupleByXComparator= new TupleByXComparator();
+	
+	public int x, y;
+	public Tuple(int x, int y) {
+		this.x= x;
+		this.y= y;
+	}
 }

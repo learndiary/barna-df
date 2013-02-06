@@ -1187,7 +1187,9 @@ public class Transcript extends DirectedRegion {
 		
 		updateBoundaries(translations[0]);
 	}
-	
+
+    private static boolean outputExonMerged = false;
+
 	public boolean removeExon(Exon e, boolean removeAcc, boolean removeDon) {
 		
 		int p= Arrays.binarySearch(exons, e, AbstractRegion.getDefaultPositionComparator());	// search for identical exon (HERE necessary)
@@ -1274,16 +1276,30 @@ public class Transcript extends DirectedRegion {
 					// too short introns
 				if (removeGaps) {
 					if ((p-1>= 0)&& (exons[p-1].get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1>= newExon.get5PrimeEdge()))  {
-						Log.warn("merging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p-1].start+","+exons[p-1].end+")"+
-								" in transcript "+ getTranscriptID()+ " because intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt."); 
+						String s= "Merging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p-1].start+","+exons[p-1].end+")"+
+								" in transcript "+ getTranscriptID()+ " because intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt.";
+                        if (outputExonMerged)
+                            Log.debug(s);
+                        else {
+                            Log.warn(s);
+                            Log.warn("Further merged exons are sent at debug verbosity level.");
+                            outputExonMerged = true;
+                        }
 						newExon.set5PrimeEdge(exons[p-1].get5PrimeEdge());
 						removeExon(exons[p-1], false, true);
 						--p;
 						//return false;
 					}
 					if ((p< exons.length)&& (exons[p].get5PrimeEdge()<= newExon.get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1))  {
-						Log.warn("merging exon (" + newExon.start + "," + newExon.end + ") with exon (" + exons[p].start + "," + exons[p].end + ")" +
-                                " in transcript " + getTranscriptID() + " because intervening intron has " + MAX_LENGTH_INTRON_IS_GAP + " or less nt.");
+						String s= "Merging exon (" + newExon.start + "," + newExon.end + ") with exon (" + exons[p].start + "," + exons[p].end + ")" +
+                                " in transcript " + getTranscriptID() + " because intervening intron has " + MAX_LENGTH_INTRON_IS_GAP + " or less nt.";
+                        if (outputExonMerged)
+                            Log.debug(s);
+                        else {
+                            Log.warn(s);
+                            Log.warn(" Further merged exons are sent at debug verbosity level.");
+                            outputExonMerged = true;
+                        }
 						newExon.set3PrimeEdge(exons[p].get3PrimeEdge());
 						removeExon(exons[p], true, false);
 						; // nothing, insertion point is the same
@@ -1819,6 +1835,13 @@ public class Transcript extends DirectedRegion {
 			return Transcript.TYPE_TO_ID[source];
 	}
 
-
+    public boolean containsSS(SpliceSite ss) {
+        for (int i = 0; i < spliceSites.length; i++) {
+            if (ss.getPos()== spliceSites[i].getPos()&&
+                    ss.isDonor()== spliceSites[i].isDonor())
+                return true;
+        }
+        return false;
+    }
 
 }

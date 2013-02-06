@@ -28,7 +28,7 @@
 package barna.flux.simulator.error;
 
 import barna.commons.cli.jsap.JSAPParameters;
-import barna.commons.launcher.FluxTool;
+import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
@@ -54,7 +54,7 @@ import java.util.zip.GZIPOutputStream;
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 
-public class MarkovErrorModel implements FluxTool {
+public class MarkovErrorModel implements Tool {
     /**
      * The mapping file
      */

@@ -28,10 +28,16 @@
 package barna.commons.cli.jsap;
 
 
+import barna.commons.parameters.*;
 import com.martiansoftware.jsap.*;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 public class JSAPParameters {
     private static StringParser FILE_PARSER = new StringParser() {
@@ -234,6 +240,110 @@ public class JSAPParameters {
             return JSAP.STRING_PARSER;
         }
 
+    }
+
+
+    /**
+     * Converts parameter file parameters to JSAP parameters.
+     * @param settings schema with parameter structure
+     * @return JSAP parameters
+     */
+    public static List<Parameter> getJSAPParameter(ParameterSchema settings) {
+
+        // converts parameter file parameters to CLI parameters
+
+        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        Collection<barna.commons.parameters.Parameter> pars=
+                settings.getParameters().values();
+        for (barna.commons.parameters.Parameter parameter : pars) {
+
+            Class c= parameter.getType();
+            Parameter p= null;
+            if (c.toString().toLowerCase().contains("enum"))
+                System.currentTimeMillis();
+            if (c.equals(Boolean.class)) {
+                p= JSAPParameters.switchParameter(
+                        parameter.getLongOption(),
+                        parameter.getShortOption())
+                        .defaultValue(parameter.getDefault().toString())
+                        .type(c)
+                        .help(parameter.getDescription())
+                        .get();
+            } else {
+                p= JSAPParameters.flaggedParameter(
+                        parameter.getLongOption(),
+                        parameter.getShortOption())
+                        .type(c)
+                        .help(parameter.getDescription())
+                        .valueName(parameter.getName())
+                        .get();
+            }
+            // TODO required() not implemented
+            if (parameter.getLongOption()!= null|| parameter.getShortOption()!= 0)
+                parameters.add(p);
+        }
+
+        return parameters;
+    }
+
+    /**
+     * Creates a <code>JSAP</code> instance and initializes it with custom parameter
+     * short and long options.
+     * @param parameter schema with parameters
+     * @return initialized parser
+     */
+    public static JSAP registerParameters(List<Parameter> parameter) {
+        return registerParameters(parameter, null);
+    }
+
+    /**
+     * Initializes CLI parser with custom parameter short and long options.
+     * @param parameter schema with parameters
+     * @param jsap parser, possibly <code>null</code>
+     * @return initialized parser
+     */
+    public static JSAP registerParameters(List<Parameter> parameter, JSAP jsap) {
+
+        if (jsap== null)
+            jsap= new JSAP();
+
+        if(parameter != null){
+            for (Parameter p : parameter) {
+                try {
+                    jsap.registerParameter(p);
+                } catch (JSAPException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return jsap;
+    }
+
+    /**
+     * Converts JSAP parsed CLI parameters into a hash (ID x value).
+     * @param schema specific parameter schema
+     * @param args CLI parameters parsed by JSAP
+     * @return hash (ID x value)
+     */
+    public static HashMap<String, String> getParameterMap(ParameterSchema schema, JSAPResult args) {
+
+        if (schema== null)
+            try {
+                schema= schema.getClass().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        Collection<barna.commons.parameters.Parameter> pars=
+                schema.getParameters().values();
+        HashMap<String, String> map= new HashMap<String, String>(schema.size());
+        for (barna.commons.parameters.Parameter p : pars) {
+            if (args.userSpecified(p.getLongOption())) {
+                map.put(p.getName(), args.getObject(p.getLongOption()).toString());
+            }
+        }
+        return map;
     }
 
 }

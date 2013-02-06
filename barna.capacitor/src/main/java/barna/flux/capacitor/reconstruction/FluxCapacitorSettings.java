@@ -32,6 +32,7 @@ import barna.commons.utils.StringUtils;
 import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
+import net.sf.samtools.SAMFileReader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -70,7 +71,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				descriptor= value;
 			}
 			
-			protected void parse(String value) throws ParameterException {
+			public void parse(String value) throws ParameterException {
 				
 				descriptor= new UniversalReadDescriptor();
 				
@@ -100,8 +101,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			
 			public Parameter copy() {
 				UniversalReadDescriptorParameter clone= 
-					new UniversalReadDescriptorParameter(this);  
-				
+					new UniversalReadDescriptorParameter(this);
+                clone.longOption(getLongOption()).shortOption(getShortOption());
 				return clone;
 			}
 
@@ -202,6 +203,24 @@ public class FluxCapacitorSettings extends ParameterSchema {
         }, relativePathParser);
 
 	    /**
+         * The file containing the read bias profile.
+         */
+        public static final Parameter<File> PROFILE_FILE = Parameters.fileParameter("PROFILE_FILE", "The profile file", null, new ParameterValidator() {
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                File file = (File) schema.get(parameter);
+                /*if (file == null) {
+                    throw new ParameterException("You have to specify a profile file");
+                }
+                if (!file.exists()) {
+                    throw new ParameterException("The profile file " + file.getAbsolutePath()
+                            + " could not be found!");
+                }*/
+
+            }
+        }, relativePathParser);
+
+	    /**
 	     * The file for default output.
 	     */
 	    public static final Parameter<File> STDOUT_FILE = Parameters.fileParameter("STDOUT_FILE", "The file for default output", null, new ParameterValidator() {
@@ -220,7 +239,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    /**
 	     * The file for outputting the learned profiles.
 	     */
-		public static final Parameter<File> PROFILE_FILE= Parameters.fileParameter("PROFILE_FILE", "The file for outputting profiles", null, new ParameterValidator() {
+		public static final Parameter<File> PROFILE_OUTPUT = Parameters.fileParameter("PROFILE_OUTPUT", "The file for outputting profiles", null, new ParameterValidator() {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
@@ -273,13 +292,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
-                if (file== null)
-                	return;
+                if (file == null)
+                    return;
                 if (!file.getParentFile().exists()) {
-                    throw new ParameterException("Folder for log file " + file.getAbsolutePath() 
-                    		+ " could not be found!");
+                    throw new ParameterException("Folder for log file " + file.getAbsolutePath()
+                            + " could not be found!");
                 }
-   
+
             }
         }, relativePathParser);
 
@@ -288,15 +307,15 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * Flag to output coverage statistic
 	     */
 	    public static final Parameter<Boolean> COVERAGE_STATS = Parameters.booleanParameter("COVERAGE_STATS", "Flag to output coverage statistics", false, new ParameterValidator() {
-	    		 @Override
-	             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-	                 boolean set= (Boolean) schema.get(parameter);
-	                 File file= (File) schema.get(COVERAGE_FILE);
-	                 if (set&& file== null)
-	                	 throw new ParameterException("Parameter "+ COVERAGE_FILE.getName()
-	                			 + " has to be set to output coverage statistics.");
-	             }
-	    });
+            @Override
+            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                boolean set = (Boolean) schema.get(parameter);
+                File file = (File) schema.get(COVERAGE_FILE);
+                if (set && file == null)
+                    throw new ParameterException("Parameter " + COVERAGE_FILE.getName()
+                            + " has to be set to output coverage statistics.");
+            }
+        });
 
 	    /**
 	     * The file where profiles are stored in.
@@ -321,9 +340,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
                 // if set for writing, check whether the parent directory is valid
-                if ((file != null)&& (!file.exists())&& ((!file.getParentFile().exists())|| (!file.getParentFile().canWrite()))) {
-                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath() 
-                    		+ " to write stats file "+ file.getName()+ " cannot be found or is write-protected.");
+                if ((file != null) && (!file.exists()) && ((!file.getParentFile().exists()) || (!file.getParentFile().canWrite()))) {
+                    throw new ParameterException("Parent folder " + file.getParentFile().getAbsolutePath()
+                            + " to write stats file " + file.getName() + " cannot be found or is write-protected.");
                 }
             }
         }, relativePathParser);
@@ -371,12 +390,21 @@ public class FluxCapacitorSettings extends ParameterSchema {
         /**
          * Parameter for skipping deconvolution
          */
-        public static final Parameter<Boolean> NO_DECOMPOSE = Parameters.booleanParameter(
-                "NO_DECOMPOSE",
+        public static final Parameter<Boolean> DECONVOLUTE = Parameters.booleanParameter(
+                "DECONVOLUTE",
                 " Avoid running deconvolution step on the dataset",
-                false,
+                true,
                 null);
-	    
+
+        /**
+         * Parameter for settting SAMtools validation stringency
+         */
+        public static final Parameter<SAMFileReader.ValidationStringency> SAM_VALIDATION_STRINGENCY = Parameters.enumParameter(
+                "SAM_VALIDATION_STRINGENCY",
+                " Set SAMtools validation stringency for validating records",
+                SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
+                null);
+
 	    /**
 	     * Load the setting from a file. NOTE that this does not validate the settings!
 	     *
@@ -411,6 +439,27 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    }
 
 	    /**
+	     * A <code>boolean</code> value specifying whether the profiling
+	     * is carried out.
+	     */
+	    /*public static final Parameter<Boolean> PROFILE = Parameters.booleanParameter(
+                "PROFILE",
+                "Get the read bias profile",
+                false,
+                new ParameterValidator() {
+                    @Override
+                    public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                        boolean set = (Boolean)schema.get(parameter);
+                        if (!set) {
+                            File file = schema.get(PROFILE_FILE);
+                            if (file == null) {
+                                throw new ParameterException("You have to specify a profile file");
+                            }
+                        }
+                    }
+                }).longOption("profile").shortOption('p');*/
+
+        /**
 	     * A <code>boolean</code> value specifying whether locus sorting of reads 
 	     * is carried out in RAM-memory or on disk.
 	     */

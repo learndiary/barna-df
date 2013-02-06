@@ -28,6 +28,7 @@
 package barna.model;
 
 import barna.commons.utils.ArrayUtils;
+import barna.model.gff.GFFObject;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -43,6 +44,22 @@ public class DirectedRegion extends DefaultRegion {
 		defaultIDComparator, defaultDirectedPosComparator;
 	
 	static final long serialVersionUID = 4346170163999111167l;
+
+    /**
+     * Creates an instance from a GFF/GTF information
+     * @param obj information parsed from a GTF line
+     */
+    public DirectedRegion(GFFObject obj) {
+        setStrand((byte) obj.getStrand());
+        setStart(obj.getStart());
+        setEnd(obj.getEnd());
+        setChromosome(obj.getChromosome());
+        setID(obj.getFeature());
+
+        // clone?!
+        if (obj.getAttributes()!= null)
+            attributes= obj.getAttributes();
+    }
 
     public void setAttributes(HashMap attributes) {
         this.attributes = attributes;

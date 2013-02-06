@@ -439,7 +439,135 @@ public class Graph implements Serializable {
 		return seq;
 	}
 
-	public static String invertSequence(String seq) {
+    /**
+     * Retrieves the sequence of a genomic region and all sequence variants
+     * in a combinatorically exhautive enumeration.
+     * @param reg genomic region, stranded
+     * @param variants map of sequence variants
+     * @return 2D array of variant IDs x sequences
+     */
+    public static String[][] readSequence(DirectedRegion reg, HashMap<String, String> variants) {
+
+        String seq= readSequence(reg);
+
+        String chr= reg.getChromosome().substring(3);
+        int from= Math.abs(reg.getStart());
+        int to= Math.abs(reg.getEnd());
+        Vector<String> vvec= new Vector<String>();
+        for (int i = Math.min(from, to), j= 0; i <= Math.max(from, to); ++i, ++j) {
+
+            // key: chrNr + @ + position
+            String key= chr+ "@"+ Integer.toString(i);
+            if (!(variants.containsKey(key)))
+                continue;
+
+            // val: snpID + @ + ref string + @ + variant string
+            String val= variants.get(key);
+
+            // VCF already provides strand-specific bases
+            vvec.add(key+ "@"+ val);
+        }
+
+        int nrCombinations= (int) Math.pow(2, vvec== null? 0: vvec.size());
+        String[] seqs= new String[nrCombinations];
+        seqs[0]= seq;
+        String[] varTuples= new String[nrCombinations];
+        varTuples[0]= "ref";
+        if (vvec!= null) {
+
+            int nr= scoreVariants(vvec, "", 0, 0, 0, reg, seq.toLowerCase(), seqs, varTuples);
+            assert((nr+ 1)== nrCombinations);
+        }
+
+
+        return new String[][] {varTuples, seqs};
+    }
+
+    static protected int scoreVariants(Vector<String> vvec, String varID, int rec, int nr, int idx, DirectedRegion reg, String seq,
+                                String[] seqs, String[] varTuples) {
+
+        // break
+        if (idx>= vvec.size())
+            return nr;
+
+        // recursion
+        for (int i = idx; i < vvec.size(); ++i) {
+
+            ++nr;
+
+            // 0:chrNr, 1:position, 2:snpID, 3:ref string, 4:variant string
+            String[] vv= vvec.elementAt(i).split("@");
+            int snPos= Integer.parseInt(vv[1]);
+            boolean deletion= vv[3].length()> vv[4].length();
+            boolean insertion= vv[3].length()< vv[4].length();
+            boolean substitution= vv[3].length()== vv[4].length();
+
+            int del= vv[3].length()- 1;
+            if (reg.getStrand()< 0) {
+                if (vv[4].length()> 1)  // || vv[4].length()> 0)
+                    System.currentTimeMillis();
+                snPos+= del;
+                vv[3]= Graph.reverseSequence(Graph.complementarySequence(vv[3]));
+                vv[4]= Graph.reverseSequence(Graph.complementarySequence(vv[4]));
+            }
+            int j= Math.abs(Math.abs(reg.get5PrimeEdge())- snPos);
+
+            // VCF already provides strand-specific bases
+            String varSeq= null;
+            // check
+            if (rec== 0) {
+                String sub= seq.substring(j, Math.min(j+ del+ 1, seq.length()));
+                if (!(vv[3].substring(0, sub.length()).equalsIgnoreCase(sub)))
+                    System.currentTimeMillis();
+                //assert(vv[3].substring(0, sub.length()).equalsIgnoreCase(sub));
+            }
+
+            if (j+ vv[4].length()- del<= seq.length()) {
+
+                varSeq= seq.substring(0, j)+ vv[4];
+                if (j+ del< seq.length())
+                    varSeq+= seq.substring(j+ del+ 1);
+
+                // trim start
+                int start= 0;
+                if (insertion&& j< 0)
+                    start= vv[4].length()- vv[3].length();
+                // trim end
+                if (varSeq.length()> seq.length())  // dirty
+                    varSeq= varSeq.substring(0, seq.length());
+            } else
+                varSeq= seq.substring(0, j)+ vv[4].substring(0, seq.length()- j);
+            if (varSeq.length()< seq.length()) {
+                int missing= seq.length()- varSeq.length();
+                // fill with upstream seq
+                if (j+ missing< 0) {
+                    DirectedRegion reg2= new DirectedRegion(reg.get5PrimeEdge()- missing, reg.get3PrimeEdge(), reg.getStrand());
+                    reg2.setChromosome(reg.getChromosome());
+                    String s= Graph.readSequence(reg2);
+                    varSeq= s.substring(0, missing).toLowerCase()+ varSeq;
+                } else {    // fill with downstream seq
+                    int skip= j+ del+ 1- seq.length(); // to be skipped ds
+                    DirectedRegion reg2= new DirectedRegion(reg.get5PrimeEdge(), reg.get3PrimeEdge()+ skip+ missing, reg.getStrand());
+                    reg2.setChromosome(reg.getChromosome());
+                    String s= Graph.readSequence(reg2);
+                    varSeq+= s.substring(2+ skip).toLowerCase();
+                }
+            }
+            String vvarID= varID+ (varID.length()> 0? ",": "")+ vv[2];
+            //outputSite(ss, vvarID, varSeq, score);
+            seqs[nr]= varSeq;
+            varTuples[nr]= vvarID;
+
+            // start recursion
+            nr= scoreVariants(vvec, vvarID, rec+ 1, nr, i + 1, reg, varSeq, seqs, varTuples);
+        }
+
+        return nr;
+
+    }
+
+
+    public static String invertSequence(String seq) {
 		
 		seq= reverseSequence(seq);
 		seq= complementarySequence(seq); 
@@ -456,6 +584,9 @@ public class Graph implements Serializable {
 
     public static char complementaryCharacter(char c) {
         boolean wasLow= Character.isLowerCase(c);
+        int p= Character.toUpperCase(c)- 65;
+        if (p< 0)
+            System.currentTimeMillis();
         c= Constants2.NA_COMPL_IUPAC[Character.toUpperCase(c)- 65];
         if (wasLow)
             c= Character.toLowerCase(c);

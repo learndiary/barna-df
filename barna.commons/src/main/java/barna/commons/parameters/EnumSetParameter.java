@@ -47,6 +47,7 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     public EnumSetParameter(String name, String description, EnumSet<E> defaultValue, Class<E> values, ParameterValidator validator) {
         super(name, description, defaultValue, (Class<EnumSet<E>>) defaultValue.getClass(), validator);
         this.values = values.getEnumConstants();
+        this.value = getDefault().clone();
     }
 
 
@@ -59,9 +60,20 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
         return value == null ? getDefault().clone() : value;
     }
 
-    protected void parse(String value) throws ParameterException {
-        if (this.value == null)
-            this.value = getDefault().clone();
+    /**
+     * Parses String representation and sets <code>this.value</code>
+     * @param value String representaion of the value(s)
+     * @throws ParameterException if something went wrong
+     */
+    public void parse(String value) throws ParameterException {
+        // 2013-01-31 Micha was here:
+        // shouldn't it be that the given String representation
+        // *overwrites* the default behaviour?!
+        // I moved the init of default to constructor, and here
+        // I start from scratch
+        //if (this.value == null)
+        //    this.value = getDefault().clone();
+        this.value.removeAll(this.value);
         String[] vals = value.replaceAll("[\\[\\]\\s]", "").split(",");
         try {
             for (String val : vals) {
@@ -86,6 +98,7 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
     @Override
     public Parameter copy() {
         EnumSetParameter enumParameter = new EnumSetParameter(getName(), getDescription(), getDefault(),values.getClass().getComponentType(), getValidator());
+        enumParameter.longOption(getLongOption()).shortOption(getShortOption());
         enumParameter.set(get());
         return enumParameter;
     }

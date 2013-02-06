@@ -31,6 +31,8 @@ import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
+import barna.flux.capacitor.matrix.UniversalMatrix;
+import barna.flux.capacitor.profile.Profile;
 import barna.io.FileHelper;
 import barna.model.SpliceSite;
 import barna.model.Transcript;
@@ -823,12 +825,12 @@ public class GraphLPsolver {
      */
     String getLPoutFileName() {
 
-        if (lpOutFName == null && fileLPdir != null) {
+        if (lpOutFName== null&& fileLPdir!= null) {
             try {
-                lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"),SFX_LPOUT,fileLPdir).getAbsolutePath();
+                lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"), SFX_LPOUT, fileLPdir).getAbsolutePath();
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage());
-            }
+        }
         }
 
         return lpOutFName;
@@ -933,19 +935,19 @@ public class GraphLPsolver {
         HashMap<String, Integer> tMap= setConstraints(false, null);
 
         // solve
-        int ret = solve(getLPoutFileName());
+        int ret= solve(getLPoutFileName());
 
 		// append additional debug info
 		if (ret!= 0) {
             try {
                 getLPsolve().setOutputfile(getLPoutFileName());
 
-                getLPsolve().printLp();
-                getLPsolve().printObjective();
-                getLPsolve().printSolution(1);
-
-			    // additional stream only afterwards
-                PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName(), true));
+			getLPsolve().printLp();
+			getLPsolve().printObjective();
+			getLPsolve().printSolution(1);
+			
+			// additional stream only afterwards
+				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName(), true));
                 setConstraints(true, p);
                 Log.warn("There was an issue with the linear problem. The linear system has been written to " + getLPoutFileName());
             } catch (Exception e) {

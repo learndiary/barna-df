@@ -27,12 +27,25 @@
 
 package barna.commons.parameters;
 
+import java.util.Comparator;
+
 /**
  * Represents a parameter parsed from string values
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
 public abstract class Parameter<T> {
+
+    /**
+     * Compare two parameter instances lexicographically by their name.
+     */
+    public static class ParameterByNameComparator implements Comparator<Parameter> {
+        @Override
+        public int compare(Parameter tParameter, Parameter tParameter2) {
+            return tParameter.getName().compareTo(tParameter2.getName());
+        }
+    }
+
     private String name;
     private String description;
     private T defaultValue;
@@ -122,7 +135,7 @@ public abstract class Parameter<T> {
 
     protected abstract void set(T value);
 
-    protected abstract void parse(String value) throws ParameterException;
+    public abstract void parse(String value) throws ParameterException;
 
     protected void validate(ParameterSchema schema) throws ParameterException {
         if (validator != null) {

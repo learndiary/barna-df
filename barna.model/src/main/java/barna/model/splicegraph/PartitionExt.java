@@ -28,5 +28,13 @@
 package barna.model.splicegraph;
 
 public class PartitionExt extends Partition {
-	int pathLen= 0;
+    public int getPathLen() {
+        return pathLen;
+    }
+
+    public void setPathLen(int pathLen) {
+        this.pathLen = pathLen;
+    }
+
+    int pathLen= 0;
 }

@@ -17,6 +17,14 @@ REQUIREMENTS
 
 * a gene annotation that is to be analyzed
 
+CHANGES
+---------------
+
+AStalavista 3.1
+    * [BARNA-133] - Connect AStalavista tool
+    * [BARNA-270] - AStalavista option to output ALL variations of the exon-intron structure
+    * [BARNA-227] - Implement Site Scoring
+
 GETTING STARTED
 ---------------
 

@@ -17,16 +17,14 @@ import java.util.*;
 public class EventExtractor extends SplicingGraph implements Runnable {
 
 
-    Gene[] g;
     public static int n = 2;
-    boolean output = false, output2 = true;
+    boolean output = false;
 
     protected Vector<ASEvent> eventV = null;
 
-    boolean outputCDS = true;
+    boolean outputCDS = false;
 
     static long cumulGC = 0l, cumulGF = 0l, cumulGT = 0l, cumulEV = 0l;
-
 
 
     /**
@@ -55,8 +53,55 @@ public class EventExtractor extends SplicingGraph implements Runnable {
         */
     }
 
-    public EventExtractor(Gene g) {
+    AStalavistaSettings settings;
+
+    public EventExtractor(Gene g, AStaSettings settings) {
         super(g);
+        this.settings= settings;
+
+        // EVENTS_FILE OPTIONS
+        if (!settings.get(AStaSettings.EVENTS).isEmpty()) {
+
+            this.onlyInternal= !(settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.ASE)
+                    || settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.DSP)
+                    || settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.VST));
+            this.retrieveASEvents= (settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.ASE)
+                    || settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.ASI));
+            this.retrieveDSEvents= settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.DSP);
+            this.retrieveVSEvents= settings.get(AStaSettings.EVENTS).contains(AStaSettings.EventTypes.VST);
+
+            // Dimension
+            int v= (Integer) settings.get(AStaSettings.EVENTS_DIMENSION);
+            if (v< 2)
+                n= (-1); // complete events
+            else
+                n= 2;
+
+            acceptableIntrons= settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.IOK);
+            // consider canonical sites only
+            SplicingGraph.canonicalSS= settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.CSS);
+
+            // intron confidence
+            SplicingGraph.intronConfidenceLevel= (byte) settings.get(AStaSettings.INTRON_CONFIDENCE).intValue();
+
+            // edge confidence
+            Transcript.setEdgeConfidenceLevel((byte) settings.get(AStaSettings.EDGE_CONFIDENCE).intValue());
+
+            // Events: predict 3'complete transcripts
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.CP3))
+                ASEvent.check3Pcomplete= true;
+            // Events: predict NMD
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.NMD))
+                ASEvent.checkNMD= true;
+            // Events: output flank type (constitutive/alternative)
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.FLT))
+                ASEvent.setOutputFlankMode(true);
+            if (settings.get(AStaSettings.EVENTS_ATR).contains(AStaSettings.EventOptions.SEQ))
+                ; // TODO SplicingGraph.outputSeq= true;
+
+        }
+
+
     }
 
     @Override
@@ -133,30 +178,6 @@ public class EventExtractor extends SplicingGraph implements Runnable {
                 writerThread.interrupt();
             }
 
-    }
-
-    public boolean isOutput() {
-        return output;
-    }
-
-    public void setOutput(boolean output) {
-        this.output = output;
-    }
-
-    public boolean isOutput2() {
-        return output2;
-    }
-
-    public void setOutput2(boolean output2) {
-        this.output2 = output2;
-    }
-
-    public Gene[] getG() {
-        return g;
-    }
-
-    public void setG(Gene[] g) {
-        this.g = g;
     }
 
     private void outputEvent(final ASEvent event) {

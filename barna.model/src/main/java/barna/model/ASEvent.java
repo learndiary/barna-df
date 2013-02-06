@@ -36,6 +36,7 @@ package barna.model;
 import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.StringUtils;
 import barna.model.commons.IntVector;
+import barna.model.gff.GFFObject;
 import barna.model.tools.NMDSimulator;
 
 import java.util.*;
@@ -90,14 +91,227 @@ public class ASEvent {
 	};
 
 	public static boolean checkDimension= true, checkNMD= false, checkLocalization= false, check3Pcomplete= false, outputFlankMode= false;
-	
-	
-	byte bubbleDimension= 0;
+
+    public static final String ID_PURE_AD= "(1^ // 2^)";
+    public static final String ID_PURE_AA= "(1= // 2=)";
+    public static final String ID_MUTEX= "1-2^ , 3-4^";
+    public static final String ID_SKIPPED= "1-2^ , 0";
+    public static final String ID_INTRON_RETENTION= "1^2- , 0";
+
+
+    public static final int TYPE_ALL= 0;
+    public static final int TYPE_CDS= 1;
+    public static final int TYPE_UTR= 2;
+    public static final int TYPE_5UTR= 3;
+    public static final int TYPE_3UTR= 4;
+
+    public static class StructureComparator implements Comparator{
+        public int compare(Object o1, Object o2) {
+
+            ASEvent as1= (ASEvent) o1;
+            ASEvent as2= (ASEvent) o2;
+            if (as1.toString().equals(as2.toString()))
+                return 0;
+            if (as1.getDegree()< as2.getDegree())
+                return -1;
+            if (as1.getDegree()> as2.getDegree())
+                return 1;
+            if (as1.getSpliceChain(1).length< as2.getSpliceChain(1).length)
+                return -1;
+            if (as1.getSpliceChain(1).length> as2.getSpliceChain(1).length)
+                return 1;
+            if (as1.getSpliceChain(1)[0].isDonor())
+                return -1;
+            return 1;
+        }
+    }
+
+    public static class IdentityComparator implements Comparator {
+
+        /**
+         * @@return <code>0</code> if both objects are equal, <code>1</code>
+         * otherwise
+         */
+        public int compare_old(Object arg0, Object arg1) {
+
+            ASEvent as1= (ASEvent) arg0;
+            ASEvent as2= (ASEvent) arg1;
+
+            // find analogs
+            SpliceSite[] sc1= null;
+            if (as1.getSpliceChain(1)!= null && as1.getSpliceChain(1).length> 0)
+                sc1= as1.getSpliceChain(1);
+            else
+                sc1= as1.getSpliceChain(2);	// both cannot be empty
+            SpliceSite[] sc2= (sc1== as1.getSpliceChain(1)? as1.getSpliceChain(2): as1.getSpliceChain(1));
+
+            SpliceSite[] sc1analog;
+            if (as2.getSpliceChain(1)!= null&& as2.getSpliceChain(1).length> 0
+                    && as2.getSpliceChain(1)[0]== sc1[0])	// only one sc of as2 can start with the same splice site than sc1 !!
+                sc1analog= as2.getSpliceChain(1);
+            else
+                sc1analog= as2.getSpliceChain(2);
+            SpliceSite[] sc2analog= (sc1analog== as2.getSpliceChain(1)? as2.getSpliceChain(2):as2.getSpliceChain(1));
+
+            // compare analogs
+            Comparator compi= new AbstractSite.PositionComparator();
+            if (sc1.length!= sc1analog.length)
+                return (-1);
+            for (int i = 0; i < sc1.length; i++)	// first pair cannot be empty
+                for (int j = 0; j < sc1analog.length; j++)
+                    if (compi.compare(sc1[i], sc1analog[i])!= 0)
+                        return (-1);
+
+            if ((sc2== null^ sc2analog== null))		// catch nullpointers first..
+                return (-1);
+            if (sc2== null&& sc2analog== null)
+                return 0;
+            if (sc2.length!= sc2analog.length)
+                return (-1);
+            for (int i = 0; i < sc2.length; i++)
+                for (int j = 0; j < sc2analog.length; j++)
+                    if (compi.compare(sc2[i], sc2analog[i])!= 0)
+                        return (-1);
+            return 0;
+        }
+
+        /**
+         * @@return <code>0</code> if both objects are equal, <code>-1</code>
+         * otherwise
+         */
+        public int compare(Object arg0, Object arg1) {
+
+            ASEvent as1= (ASEvent) arg0;
+            ASEvent as2= (ASEvent) arg1;
+
+            Comparator compi= new SpliceChainComparator();
+            SpliceSite[][] s1= new SpliceSite[][] {as1.getSpliceChain(1), as1.getSpliceChain(2)};
+            SpliceSite[][] s2= new SpliceSite[][] {as2.getSpliceChain(1), as2.getSpliceChain(2)};
+            if (((compi.compare(s1[0], s2[0])== 0)&& (compi.compare(s1[1], s2[1])== 0))||
+                    ((compi.compare(s1[1], s2[0])== 0)&& (compi.compare(s1[0], s2[1])== 0)))
+                return 0;
+            return -1;
+
+            // compare splice universees
+            // night of 6.6.06: NO! dbl exon skip/mut exclusive
+            //			SpliceSite[] su1= as1.getSpliceUniverse();
+            //			SpliceSite[] su2= as2.getSpliceUniverse();
+            //			if (su1.length!= su2.length)
+            //				return -1;
+
+            // check also flanking sites (not tss, tes)
+            // night of 6.6.06: no longer check flanking sites
+            //			SpliceSite[] flank= as1.getFlankingSpliceSites();
+            //			if (flank[0]!= null)
+            //				su1= (SpliceSite[]) gphase.tools.Arrays.add(su1, flank[0]);
+            //			if (flank[1]!= null)
+            //				su1= (SpliceSite[]) gphase.tools.Arrays.add(su1, flank[1]);
+            //			Comparator compi= new AbstractSite.PositionComparator();
+            //			Arrays.sort(su1, compi);
+            //			flank= as2.getFlankingSpliceSites();
+            //			if (flank[0]!= null)
+            //				su2= (SpliceSite[]) gphase.tools.Arrays.add(su2, flank[0]);
+            //			if (flank[1]!= null)
+            //				su2= (SpliceSite[]) gphase.tools.Arrays.add(su2, flank[1]);
+            //			Arrays.sort(su2, compi);
+            //			if (su1.length!= su2.length)
+            //				return -1;
+
+            //			for (int i = 0; i < su2.length; i++)
+            //				if (su1[i].getPos()!= su2[i].getPos())
+            //					return -1;
+            //			return 0;
+        }
+    }
+
+
+
+    byte bubbleDimension= 0;
 	HashMap<String, String> attributeMap= null; 
 	float score= -1f;
 	
 	int[] frame3, frame5;
 	boolean[] cdsValid;
+
+    public ASEvent(GFFObject obj) {
+        fromGTFObject(obj);
+    }
+
+    private void fromGTFObject(GFFObject obj) {
+        Gene gene= new Gene(obj.getAttribute(GFFObject.GENE_ID_TAG));
+        gene.setChromosome(obj.getSeqname());
+        gene.setStrand((byte) obj.getStrand());
+
+        // correct type and coordinates, bottom
+        if (gene.getStrand()> 0) {
+            src= new SpliceSite(obj.getStart(), SpliceSite.TYPE_NOT_INITED, gene);
+            snk= new SpliceSite(obj.getEnd(), SpliceSite.TYPE_NOT_INITED, gene);
+        } else {
+            src= new SpliceSite(-Math.abs(obj.getEnd()), SpliceSite.TYPE_NOT_INITED, gene);
+            snk= new SpliceSite(-Math.abs(obj.getStart()), SpliceSite.TYPE_NOT_INITED, gene);
+        }
+
+        String[] tokens= obj.getAttribute(GFFObject.TRANSCRIPT_ID_TAG).split(",");
+        String[] tokenSource= obj.getAttribute(GTF_ATTRIBUTE_TAG_SOURCES).split(",");
+        trpts= new Transcript [tokens.length][];
+        for (int i = 0; i < tokens.length; i++) {
+            String[] tokens2= tokens[i].split("/");
+            trpts[i]= new Transcript[tokens2.length];
+            for (int j = 0; j < tokens2.length; j++) {
+                trpts[i][j]= new Transcript(gene, tokens2[j]);
+                trpts[i][j].setSource(tokenSource[i]);
+            }
+        }
+
+        spliceChains= new SpliceSite[trpts.length][];
+        tokens= obj.getAttribute(GTF_ATTRIBUTE_TAG_SPLICE_CHAIN).split(",");
+        String[] tokStruct= obj.getAttribute(GTF_ATTRIBUTE_TAG_STRUCTURE).split(",");
+        for (int i = 0; i < tokens.length; i++) {
+            if (tokens[i].length()== 0) {
+                spliceChains[i]= new SpliceSite[0];
+            } else {
+                String[] tokens2= tokens[i].split("/");
+                String[] tokStruct2= tokStruct[i].split("\\d");
+                spliceChains[i]= new SpliceSite[tokens2.length];
+                for (int j = 0, ts2Pos= 0; j < tokens2.length; ++j, ++ts2Pos) {
+                    int pos= Integer.parseInt(tokens2[j]);
+                    if (gene.getStrand()< 0)
+                        pos= -pos;
+                    while (tokStruct2[ts2Pos].length()== 0)
+                        ++ts2Pos;
+                    byte type= SpliceSite.getTypeBySymbol(tokStruct2[ts2Pos].charAt(0));
+                    spliceChains[i][j]= new SpliceSite(pos, type, gene);
+                }
+            }
+        }
+        setSpliceChains(spliceChains);	// sort
+
+        Iterator<String> iter= obj.getAttributes().keySet().iterator();
+        while(iter.hasNext()) {
+            String key= iter.next();
+            addAttribute(key, obj.getAttribute(key));
+        }
+
+        // correct for infinity flanks
+        if (src.getPos()== Integer.MAX_VALUE|| src.getPos()== Integer.MIN_VALUE
+                || src.getPos()== -Integer.MIN_VALUE|| src.getPos()== -Integer.MAX_VALUE)
+            src.setPos(getFirstVarSS().getPos());
+        else {
+            if (getFirstVarSS().isDonor())
+                src.setType(SpliceSite.TYPE_ACCEPTOR);
+            else
+                src.setType(SpliceSite.TYPE_DONOR);
+        }
+        if (snk.getPos()== Integer.MAX_VALUE|| snk.getPos()== Integer.MIN_VALUE
+                || snk.getPos()== -Integer.MIN_VALUE|| snk.getPos()== -Integer.MAX_VALUE)
+            snk.setPos(getLastVarSS().getPos());
+        else {
+            if (getLastVarSS().isDonor())
+                snk.setType(SpliceSite.TYPE_ACCEPTOR);
+            else
+                snk.setType(SpliceSite.TYPE_DONOR);
+        }
+    }
 
     public void setType(byte type) {
         this.type = type;
@@ -1913,4 +2127,25 @@ public class ASEvent {
 			
 			return type;
 		}
+
+    public int getSplicePos(SpliceSite ss, SpliceSite[] ssA) {
+        int i;
+        for (i = 0; i < ssA.length; i++)
+            if (ssA[i]== ss)
+                break;
+        return i;
+    }
+
+    public int getSplicePos1(SpliceSite ss) {
+        return getSplicePos(ss, getSpliceChain(1));
+    }
+
+    public int getSplicePos2(SpliceSite ss) {
+        return getSplicePos(ss, getSpliceChain(2));
+    }
+
+    public SpliceSite[] getSpliceChain(int i) {
+        return spliceChains[i];
+    }
+
 }
