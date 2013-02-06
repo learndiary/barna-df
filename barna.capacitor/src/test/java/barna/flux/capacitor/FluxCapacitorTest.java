@@ -633,6 +633,7 @@ public class FluxCapacitorTest {
         pars.put("PROFILE_FILE", proFile);
         pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("COUNT_ELEMENTS","[]");
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
