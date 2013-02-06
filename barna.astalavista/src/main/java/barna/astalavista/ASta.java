@@ -67,7 +67,7 @@ public class ASta extends AStalavista {
     public static void main(String[] args) {
 
         Execute.initialize(2);
-        AStalavista myAsta= new ASta();
+        ASta myAsta= new ASta();
 
         // construct to register parameters in JSAP
         List<Parameter> parameter = JSAPParameters.getJSAPParameter(new AStaSettings());

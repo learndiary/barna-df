@@ -27,6 +27,7 @@
 
 package barna.commons.launcher;
 
+import barna.commons.parameters.ParameterSchema;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -71,8 +72,9 @@ public interface Tool<T> extends Callable<T> {
      * @param args result from parsing the command line
      * @return <code>true</code> if everything is ok with the parameters,
      * <code>false</code> otherwise
+     * @deprecated cannot be used in polymorph context
      */
+    // TODO replace by validateParameter(ParameterSchema settings, JSAPResult args);
     boolean validateParameter(JSAPResult args);
-
 
 }

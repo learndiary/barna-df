@@ -102,7 +102,7 @@ public class ScorerSettings extends AStalavistaSettings {
     public static final Parameter<EnumSet<SiteOptions>> SITES_OPT = Parameters.enumSetParameter(
             "SITES_OPT",
             "Toggle optional site attributes to be output",
-            EnumSet.noneOf(SiteOptions.class),
+            EnumSet.of(SiteOptions.SSS),
             SiteOptions.class,
             null).longOption("sp").shortOption('t');
 

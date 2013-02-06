@@ -1,15 +1,21 @@
 package barna.astalavista;
 
+import barna.commons.Execute;
+import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;
 import barna.geneid.*;
 import barna.io.FileHelper;
 import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.SpliceSite;
+import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPResult;
+import com.martiansoftware.jsap.Parameter;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,6 +39,38 @@ public class Scorer extends AStalavista {
      * Variant hash, maps location to SNP base.
      */
     HashMap<String,String> variants= null;
+
+    public static void main(String[] args) {
+
+        Execute.initialize(2);
+        Scorer myScorer= new Scorer();
+
+        // construct to register parameters in JSAP
+        List<Parameter> parameter = JSAPParameters.getJSAPParameter(new ScorerSettings());
+        JSAP jsap = JSAPParameters.registerParameters(parameter);
+
+        // parse
+        try{
+            JSAPResult toolParameter = jsap.parse(args);
+            if (!myScorer.validateParameter(toolParameter)){
+                System.exit(-1);
+            }
+        } catch (Exception e) {
+            Log.error("Parameter error : " + e.getMessage(), e);
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        Future<Void> captain= Execute.getExecutor().submit(myScorer);
+        try {
+            captain.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (ExecutionException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        Execute.shutdown();
+    }
 
 
     @Override
@@ -70,6 +108,11 @@ public class Scorer extends AStalavista {
         scoreSites(g.getSpliceSites());
     }
 
+    @Override
+    protected void callBegin() throws Exception {
+        super.callBegin();
+        siteScoreWriter= getSiteScoreWriter();
+    }
 
     @Override
     protected void callFinish() throws Exception {
@@ -81,11 +124,17 @@ public class Scorer extends AStalavista {
     @Override
     public boolean validateParameter(JSAPResult args) {
 
+        if (!super.validateParameter(new ScorerSettings(), args))
+            return false;
+
         // check splice site scoring stuff
         if (settings.get(ScorerSettings.SITES_OPT).contains(ScorerSettings.SiteOptions.SSS)) {
 
             if(settings.get(AStalavistaSettings.CHR_SEQ)== null) {
-                Log.error("Splice site scoring requires the genomic sequence, set parameter \'CHR_SEQ\'");
+                Log.error("Splice site scoring requires the genomic sequence, provide a value for parameter \'"+
+                    AStalavistaSettings.CHR_SEQ.getName()+ "\' in the parameter file, or via " +
+                        "the command line flags -"+ (AStalavistaSettings.CHR_SEQ.getShortOption())+
+                        " or --"+ (AStalavistaSettings.CHR_SEQ.getLongOption())+ "!");
                 return false;
             }
 
@@ -122,7 +171,7 @@ public class Scorer extends AStalavista {
         }
     }
 
-    private void getSiteScoreWriter() {
+    private BufferedWriter getSiteScoreWriter() {
         if (siteScoreWriter== null) {
             // init site writer
             try {
@@ -136,6 +185,7 @@ public class Scorer extends AStalavista {
                 Log.error(e.getMessage(), e);
             }
         }
+        return siteScoreWriter;
     }
 
     private void outputSite(SpliceSite ss, String varID, String seq, float score) {
@@ -462,8 +512,10 @@ public class Scorer extends AStalavista {
             // recursion to do all tuple combinations
             if (vvec!= null) {
 
-                if (vvec.size()> 1)
-                    Log.warn("Site "+ spliceSites[i]+ " has "+ vvec.size()+ " variants.");
+
+                // TODO count instances for histogram (x sites with 1,2,3,... variants)f
+//                if (vvec.size()> 1)
+//                    Log.warn("Site "+ spliceSites[i]+ " has "+ vvec.size()+ " variants.");
 
                 // map to last included position, relative to exon boundary (splice site pos)
                 if (spliceSites[i].isAcceptor()) {
@@ -492,6 +544,8 @@ public class Scorer extends AStalavista {
             BufferedReader buffy= new BufferedReader(new FileReader(vcf));
             StringTokenizer t;
             for (String s= null; (s= buffy.readLine())!= null; ) {
+                if (s.startsWith("#"))
+                    continue;
                 t= new StringTokenizer(s, "\t");
                 String loc= t.nextToken()+ "@"+ t.nextToken();  // chrNr + @ + position
                 String snpID= t.nextToken();

@@ -227,12 +227,55 @@ public abstract class AStalavista implements Tool<Void> {
 
     @Override
     public boolean validateParameter(JSAPResult args) {
+        return validateParameter(new AStalavistaSettings(), args);
+    }
+
+    /**
+     * Checks CLI parameters with respect to their validity, fills the
+     * settings instance provided with values from the parameter file
+     * and from the command line.
+     * @param schema a non-<code>null</code>
+     * @param args result from parsing the command line
+     * @return <code>true</code> if everything is ok with the parameters,
+     * <code>false</code> otherwise
+     */
+    public boolean validateParameter(ParameterSchema schema, JSAPResult args) {
+
+        // non-null settings are to be assumed
+        if (schema== null|| !(schema instanceof AStalavistaSettings)) {
+            Log.error("Must provide an instance of AStalavistaSettings!");
+            return false;
+        }
+        settings= (AStalavistaSettings) schema;
 
         // output help
         if (args.userSpecified(AStalavistaSettings.HELP.getName())) {
-            AStalavistaSettings settings= new AStalavistaSettings();
             settings.write(System.out);
             return false;
+        }
+
+        // init values from parameter file, if any
+        if (settings.get(AStalavistaSettings.PAR_FILE)!= null) {
+            InputStream in = null;
+            try {
+                File f= settings.get(AStalavistaSettings.PAR_FILE);
+                f = new File(f.getCanonicalPath());    // kill Win32ShellFolder instances, they fuck up relative path conversion
+                //relativePathParser.setParentDir(f.getParentFile());
+                in = new FileInputStream(f);
+                settings.parse(in);
+                settings.validate();
+            } catch(Exception e) {
+                Log.error(e.getMessage(), e);
+                return false;
+            } finally {
+                if (in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+
         }
 
         try {
@@ -254,13 +297,6 @@ public abstract class AStalavista implements Tool<Void> {
                     "as NMD probability etc.."
             );
             return false;
-        }
-
-        if (settings.requiresGenomicSequence()
-            && settings.get(AStalavistaSettings.CHR_SEQ)== null) {
-
-            Log.error("You want me to check introns for valid/canonical splice sites, " +
-                    "but you did not provide a valid sequence directory");
         }
 
         if (settings.get(AStalavistaSettings.CHR_SEQ)!= null) {

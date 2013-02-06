@@ -27,6 +27,24 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
             "print parameters and descriptions", false, null).longOption("printParameters").shortOption('h');
 
     /**
+     * Path to parameter file.
+     */
+    public static final Parameter<File> PAR_FILE = Parameters.fileParameter("PAR_FILE",
+            "path to the parameter file",
+            null, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            File f = (File) schema.get(parameter);
+            if (f == null) {
+                throw new ParameterException("Parameter file cannot be null!");
+            }
+            if (!f.exists()) {
+                throw new ParameterException("The parameter file " + f.getAbsolutePath() + " could not be found!");
+            }
+        }
+    }, null).longOption("par").shortOption('p');
+
+    /**
      * Path to the reference annotation.
      */
     public static final Parameter<File> IN_FILE = Parameters.fileParameter("IN_FILE",

@@ -584,6 +584,9 @@ public class Graph implements Serializable {
 
     public static char complementaryCharacter(char c) {
         boolean wasLow= Character.isLowerCase(c);
+        int p= Character.toUpperCase(c)- 65;
+        if (p< 0)
+            System.currentTimeMillis();
         c= Constants2.NA_COMPL_IUPAC[Character.toUpperCase(c)- 65];
         if (wasLow)
             c= Character.toLowerCase(c);

@@ -364,8 +364,8 @@ public abstract class ParameterSchema {
         Collection<barna.commons.parameters.Parameter> pars=
                 settings.getParameters().values();
         for (barna.commons.parameters.Parameter p : pars) {
-            if (args.containsKey(p.getLongOption())) {
-                p.parse(args.get(p.getLongOption()));
+            if (args.containsKey(p.getName())) {
+                p.parse(args.get(p.getName()));
             }
         }
 
