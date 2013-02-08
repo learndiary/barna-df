@@ -233,10 +233,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		if (descriptor.equals(UniversalReadDescriptor.getDefaultDescriptor()))
-            return true;
-        else
-            throw new RuntimeException("You cannot specify the read descriptor when using BAM input files.");
+		return (this.isPaired() && descriptor.isPaired());
 	}
 
     @Override
@@ -313,23 +310,23 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     if (rec.getReadPairedFlag()) {
                         readId += "/"+(rec.getFirstOfPairFlag()?1:2);
                     }
-                    if (rec.getNotPrimaryAlignmentFlag()) {
+                    /*if (rec.getNotPrimaryAlignmentFlag()) {
                         if (!flagSet) {
                             //flags are set correctly
                             flagSet = true;
                             sorterFuture.cancel(true);
                             countReads=primaryAlignments;
                         }
-                    } else {
-                        if (!flagSet) {
+                    } else {*/
+                        //if (!flagSet) {
                             //flags are not set properly
                             ++primaryAlignments;
                         tmpWriter.write(readId);
                         tmpWriter.write(OSChecker.NEW_LINE);
-                        } else {
-                            ++countReads;
-                    }
-                    }
+//                        } else {
+//                            ++countReads;
+                    //}
+                    //}
                     ++countAll;
                     if (rec.getAlignmentBlocks().size()>1) {
                         if (rec.getCigarString().contains("N"))

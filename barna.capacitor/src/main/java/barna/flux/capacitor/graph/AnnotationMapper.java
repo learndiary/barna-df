@@ -309,7 +309,7 @@ public class AnnotationMapper extends SplicingGraph {
      * Maps genome-mapped reads into the graph.
      *
      * @param mappings iterator of input lines
-     * @param settings
+     * @param insertFile
      */
 	public void map(MSIterator<Mapping> mappings, File insertFile) {
 

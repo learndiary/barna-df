@@ -137,14 +137,38 @@ public class FluxCapacitorSettings extends ParameterSchema {
      * Enum for annotation mapping types
      */
      public static enum AnnotationMapping {
-         AUTO, SINGLE, PAIRED, SINGLE_STRANDED, PAIRED_STRANDED
+         AUTO, SINGLE, PAIRED, SINGLE_STRANDED, PAIRED_STRANDED;
+
+        public boolean isStranded() {
+            return (this.equals(SINGLE_STRANDED) || this.equals(PAIRED_STRANDED));
+        }
+
+        public boolean isPaired() {
+            return (this.equals(PAIRED) || this.equals(PAIRED_STRANDED));
+        }
+
+        public boolean isSingle() {
+            return (this.equals(SINGLE) || this.equals(SINGLE_STRANDED));
+        }
      }
 
     /**
      * Enum for strandedness types
      */
     public static enum ReadStrand {
-        NONE, SENSE, ASENSE, MATE1_SENSE, MATE2_SENSE
+        NONE, SENSE, ASENSE, MATE1_SENSE, MATE2_SENSE;
+
+        public boolean isNone() {
+            return this.equals(NONE);
+        }
+
+        public boolean isPaired () {
+            return (this.equals(MATE1_SENSE) || this.equals(MATE2_SENSE));
+        }
+
+        public boolean isSingle() {
+            return (this.equals(SENSE) || this.equals(ASENSE));
+        }
     }
 
     /**
@@ -176,21 +200,31 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
 			        	
 			        	UniversalReadDescriptor d= schema.get(READ_DESCRIPTOR);
-			        	AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
-			        	
-			        	// paired read descriptor requires paired-end descriptor, not vice versa
-			        	if ((!d.isPaired())&& (a.equals(AnnotationMapping.PAIRED)|| a.equals(AnnotationMapping.PAIRED_STRANDED)))
-			        		throw new ParameterException("Annotation mapping "+a + " requires a paired-end read descriptor!");
-			        	// stranded annotation mapping requires stranded descriptor, not vice versa
-			        	if ((!d.isStranded())&& a.equals(AnnotationMapping.SINGLE_STRANDED))
-			        		throw new ParameterException("Annotation mapping "+a + " requires a stranded read descriptor!");
-			        	if (a.equals(AnnotationMapping.PAIRED_STRANDED)&&
-			        			(!(d.toString().contains(UniversalReadDescriptor.TAG_MATE1SENSE)
-			        			|| d.toString().contains(UniversalReadDescriptor.TAG_MATE2SENSE)))) {
-			        		
-			        		throw new ParameterException("Annotation mapping "+a + " requires a read descriptor "
-			        				+ UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE+ " or "+ UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE+ "!");
-			        	}
+                        AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
+                        ReadStrand r = schema.get(READ_STRAND);
+			        	if (d != null) {
+                            // paired read descriptor requires paired-end descriptor, not vice versa
+                            if ((!d.isPaired()) && a.isPaired())
+                                throw new ParameterException("Annotation mapping " + a + " requires a paired-end read descriptor!");
+                            // stranded annotation mapping requires stranded descriptor, not vice versa
+                            if ((!d.isStranded()) && a.isStranded()) {
+                                if (r.isNone())
+                                    throw new ParameterException("Annotation mapping " + a + " requires a stranded read descriptor or strand information!");
+                            }
+//                            if (a.equals(AnnotationMapping.PAIRED_STRANDED)&&
+//                                    (!(d.toString().contains(UniversalReadDescriptor.TAG_MATE1SENSE)
+//                                    || d.toString().contains(UniversalReadDescriptor.TAG_MATE2SENSE)))) {
+//
+//                                throw new ParameterException("Annotation mapping " + a + " requires a read descriptor "
+//                                        + UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE+ " or "+ UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE+ "!");
+//                            }
+                        } else {
+                            if (a.isStranded() && r.isNone()) {
+                                    throw new ParameterException("Annotation mapping " + a + " requires strand information.");
+                            }
+                        }
+                        if (a.isPaired() && r.isSingle())
+                            throw new ParameterException("Annotation mapping " + a + " requires paired reads.");
 			        }
 	    	});
 	 
@@ -298,12 +332,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
                 // check pre-conditions for read pairing
                 UniversalReadDescriptor d = schema.get(READ_DESCRIPTOR);
-                AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
-                if (!(d.isPaired() && (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.PAIRED_STRANDED)))) {
-                    throw new ParameterException("Read pairing required for annotating inserts: " +
-                            (d.isPaired() ? ANNOTATION_MAPPING.getName() + " " + a.toString() : READ_DESCRIPTOR.getName() + " " + d.toString()));
+                if (d != null) {
+                    AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
+                    if (!(d.isPaired() && a.isPaired())) {
+                        throw new ParameterException("Read pairing required for annotating inserts: " +
+                                (d.isPaired() ? ANNOTATION_MAPPING.getName() + " " + a.toString() : READ_DESCRIPTOR.getName() + " " + d.toString()));
+                    }
                 }
-
             }
 
         }, relativePathParser);

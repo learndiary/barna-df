@@ -116,6 +116,8 @@ public class SAMMapping implements Mapping{
     @Override
     public int getNextBlockStart() {
         try {
+            if (currentBlock == blocks.size())
+                currentBlock = 0;
             return blocks.get(currentBlock)[0];
         }   catch (Exception e){
             return -1;
@@ -125,6 +127,8 @@ public class SAMMapping implements Mapping{
     @Override
     public int getNextBlockSize() {
         try {
+            if (currentBlock == blocks.size())
+                currentBlock = 0;
             return blocks.get(currentBlock++)[1];
         }   catch (Exception e){
             return -1;

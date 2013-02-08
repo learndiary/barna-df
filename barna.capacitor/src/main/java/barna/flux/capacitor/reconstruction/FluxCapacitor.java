@@ -106,6 +106,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     private MappingStats stats;
 
     /**
+     * The read descriptor to be used for the run
+     */
+    private UniversalReadDescriptor descriptor;
+
+    /**
      * Thread to parallelize annotation reading.
      */
     class GtfReaderThread extends Thread {
@@ -137,10 +142,8 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      */
     private Comparator<? super Mapping> getDescriptorComparator() {
         if (comp == null) {
-            comp = new MappingComparator(
-                    settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            comp = new MappingComparator(getReadDescriptor());
         }
-
         return comp;
     }
 
@@ -1557,7 +1560,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         Log.info(FluxCapacitorSettings.MAPPING_FILE.getName(),
                 settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
         Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
-                settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString());
+                getReadDescriptor().toString());
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null) {
             Log.info(FluxCapacitorSettings.PROFILE_FILE.getName(),
                     settings.get(FluxCapacitorSettings.PROFILE_FILE).toString());
@@ -1802,27 +1805,27 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         //cheatDisableFCheck = true;
         if (cheatDisableFCheck) {
             Log.warn("Development run, file check disabled !!!");
-            wrapperAnnotation = fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
-            wrapperMappings = fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
+            gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
+            mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
         } else {
 
             Log.progressStart("Scanning annotation file");
             wrapperAnnotation =
                     fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
-            fileStats((AnnotationWrapper) wrapperAnnotation);
+            gtfReader = (GTFwrapper)wrapperAnnotation;
+            fileStats((gtfReader));
             Log.progressFinish("OK", true);
 
             Log.progressStart("Scanning mapping file");
             wrapperMappings =
                     fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
-            fileStats((MappingReader)wrapperMappings);
+            mappingReader = (MappingReader)wrapperMappings;
+            fileStats(mappingReader);
             Log.progressFinish("OK", true);
             Log.info("Annotation and mapping input checked");
 
         }
 
-        mappingReader = (MappingReader)wrapperMappings;
-        gtfReader = (GTFwrapper)wrapperAnnotation;
 
         if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
             FluxCapacitorSettings.ReadStrand readStrand = settings.get(FluxCapacitorSettings.READ_STRAND);
@@ -1934,7 +1937,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                 : stats.getMappingsSingleTxLoci() + " mappings map to annotation\n\t")
                 //+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
                 //+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
-                + stats.getReadLenMin() + "," + stats.getReadLenMax() + " min/max read length\n\t"
+                + (stats.getReadLenMin() == Integer.MAX_VALUE ? "NA" : stats.getReadLenMin()) + "," + (stats.getReadLenMax() == -1 ? "NA" : stats.getReadLenMax()) + " min/max read length\n\t"
                 + (pairedEnd && insertMinMax != null ? insertMinMax[0] + "," + insertMinMax[1] + " min/max insert size\n\t" : ""));
         //nrUniqueReads= getBedReader().getNrUniqueLinesRead();
         //System.err.println("\ttotal lines in file "+nrUniqueReads);
@@ -2389,7 +2392,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     private AbstractFileIOWrapper getWrapperBED(File inputFile) {
 		/*mappingReader= new BEDReader(inputFile.getAbsolutePath());
 		return mappingReader;*/  // TODO pull up to MappingReader
-        mappingReader = new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
+        mappingReader = new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),getReadDescriptor(),settings.get(FluxCapacitorSettings.TMP_DIR));
         return null;// removed mappingReader;
     }
 
@@ -2705,17 +2708,31 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     }
 
     private UniversalReadDescriptor getReadDescriptor() {
-        if (settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)!=null)
-            return settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
-        else {
-            UniversalReadDescriptor d = new UniversalReadDescriptor();
-            if (mappingReader.isPaired()) {
-                d.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-            } else {
-                d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+        if (descriptor == null) {
+            FluxCapacitorSettings.ReadStrand readStrand = settings.get(FluxCapacitorSettings.READ_STRAND);
+            if (settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)!=null) {
+                descriptor =  settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
             }
-            return d;
+            else {
+                descriptor = new UniversalReadDescriptor();
+                if (mappingReader.isPaired()) {
+                    descriptor.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+                } else {
+                    descriptor.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+                }
+            }
+            if (!descriptor.isStranded() && !readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
+                if (descriptor.isPaired()) {
+                    descriptor.init(readStrand.equals(FluxCapacitorSettings.ReadStrand.MATE1_SENSE) ? UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE : UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
+                } else {
+                    descriptor.init(readStrand.equals(FluxCapacitorSettings.ReadStrand.SENSE) ? UniversalReadDescriptor.DESCRIPTORID_SENSE : UniversalReadDescriptor.DESCRIPTORID_ANTISENSE);
+                }
+            }
+
+            if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).isPaired() && !descriptor.isPaired())
+                throw new RuntimeException("Annotation mapping " + settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING) +" requires paired reads");
         }
+        return descriptor;
     }
 
     /**
@@ -2844,10 +2861,10 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                     + " split mappings (" + (reader.getCountSplitMappings() * 100f / reader.getCountMappings()) + "%)");
 
         // (4) check if read descriptor is applicable
-        if (reader.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
+        if (reader.isApplicable(getReadDescriptor()))
             Log.info("\tRead descriptor seems OK");
         else {
-            String msg = "Read Descriptor " + settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)
+            String msg = "Read Descriptor " + getReadDescriptor()
                     + " incompatible with read IDs";
             Log.error(msg);
             throw new RuntimeException(msg);
@@ -2876,7 +2893,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             case GFF:
                 return getWrapperGTF(inputFile);
             case BED:
-                return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
+                return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),getReadDescriptor(),settings.get(FluxCapacitorSettings.TMP_DIR));
             case BAM:
                 SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM));
                 if (!settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY).equals(SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY)) {
