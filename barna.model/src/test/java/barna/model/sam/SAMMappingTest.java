@@ -60,7 +60,7 @@ public class SAMMappingTest {
         assertEquals(6,mapping.getNextBlockSize());
         assertEquals(20,mapping.getNextBlockStart());
         assertEquals(5,mapping.getNextBlockSize());
-        assertEquals(-1,mapping.getNextBlockStart());
+        assertEquals(0,mapping.getNextBlockStart());
     }
 
     @Test
