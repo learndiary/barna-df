@@ -9,11 +9,7 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
-import barna.io.MappingReader;
-import barna.io.bed.BEDReader;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.io.sam.SAMReader;
-import barna.model.Mapping;
 import com.google.gson.GsonBuilder;
 import junit.framework.Assert;
 import org.junit.*;
@@ -708,87 +704,5 @@ public class FluxCapacitorTest {
         assertEquals(runLines.size(),2);
         assertEquals("1\tflux\tjunction\t320653\t320881\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 4.000000", runLines.get(0));
         assertEquals("1\tflux\tjunction\t320938\t321032\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 2.000000",runLines.get(1));
-    }
-
-    @Test
-    public void testBAMStranded() throws Exception {
-        Map pars = new HashMap();
-        pars.put("ANNOTATION_FILE", "/data/epalumbo/capacitor/blueprintTest/ENSG00000237094.3.gtf");
-        pars.put("MAPPING_FILE", "/data/epalumbo/capacitor/blueprintTest/ERR180951.merge.sorted.mrkdup.chr1.bam");
-        pars.put("READ_DESCRIPTOR", "PAIRED");
-        pars.put("READ_STRAND", "MATE2_SENSE");
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED_STRANDED);
-        pars.put("TMP_DIR","/data/epalumbo/tmp");
-        pars.put("COUNT_ELEMENTS","[]");
-
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
-        FluxCapacitorRunner.runCapacitor(parFile,null);
-
-        File output = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
-        assertTrue(output.exists());
-        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
-
-        BufferedReader runGtf = new BufferedReader(new FileReader(output));
-        BufferedReader refGtf = new BufferedReader(new FileReader("/data/epalumbo/capacitor/blueprintTest/test_tr.gtf"));
-
-        List<String> runLines = new ArrayList<String>();
-        List<String> refLines = new ArrayList<String>();
-
-        String line;
-        while ((line = runGtf.readLine()) != null) {
-            runLines.add(line);
-        }
-        runGtf.close();
-
-        while ((line = refGtf.readLine()) != null) {
-            refLines.add(line);
-        }
-        refGtf.close();
-
-        assertEquals(refLines.size(),runLines.size());
-
-        for (int i = 0; i < refLines.size(); i++) {
-            assertEquals(refLines.get(i), runLines.get(i));
-        }
-
-    }
-
-
-    @Test
-    public void testBedBAMStranded() throws Exception {
-
-        File bedFile = new File("/data/epalumbo/capacitor/blueprintTest/oneread.bed");
-        File bamFile = new File("/data/epalumbo/capacitor/blueprintTest/oneread.bam");
-
-        File TMP_DIR = new File("/data/epalumbo/tmp");
-
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init("PAIRED");
-        MappingReader bedReader = new BEDReader(bedFile, true, descriptor, TMP_DIR);
-        MappingReader bamReader = new SAMReader(bamFile, true, true);
-
-        ArrayList<Mapping> bedList = new ArrayList<Mapping>();
-        ArrayList<Mapping> bamList = new ArrayList<Mapping>();
-
-        for (Mapping m : bedReader.read("1", 320162, 328453)) {
-            bedList.add(m);
-        }
-
-        for (Mapping m : bamReader.read("1", 320162, 328453)) {
-            bamList.add(m);
-        }
-
-        assertEquals(bedList.size(),bamList.size());
-
-        for (int i = 0; i < bedList.size(); i++) {
-             assertEquals(bedList.get(i).getName(), bamList.get(i).getName());
-             assertEquals(bedList.get(i).getChromosome(), bamList.get(i).getChromosome());
-             assertEquals(bedList.get(i).getStart(), bamList.get(i).getStart());
-             assertEquals(bedList.get(i).getEnd(), bamList.get(i).getEnd());
-             assertEquals(bedList.get(i).getStrand(), bamList.get(i).getStrand());
-             assertEquals(bedList.get(i).getBlockCount(), bamList.get(i).getBlockCount());
-             assertEquals(bedList.get(i).getLength(), bamList.get(i).getLength());
-             assertEquals(bedList.get(i).getScore(), bamList.get(i).getScore());
-        }
     }
 }
