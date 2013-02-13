@@ -356,7 +356,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          * @param mapper mapping graph for the current locus
          */
         private void outputSJGFF(Gene gene, AnnotationMapper mapper) {
-            Map<String, Integer> m = mapper.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+            Map<String, Integer> m = mapper.getSJReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).isPaired() ? true : false);
             StringBuilder sb = new StringBuilder();
             for (String s : m.keySet()) {
                 String[] junction = s.split("\\^");
@@ -393,7 +393,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          * @param mapper mapping graph for the current locus
          */
         private void outputIntronsGFF(Gene gene, AnnotationMapper mapper) {
-            Map<String, Float[]> m = mapper.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.PAIRED) ? true : false);
+            Map<String, Float[]> m = mapper.getAllIntronicReads(settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).isPaired() ? true : false);
             StringBuilder sb = new StringBuilder();
             for (String s : m.keySet()) {
                 String[] intron = s.split("\\^");
