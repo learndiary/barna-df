@@ -71,7 +71,6 @@ public class SAMMapping implements Mapping{
                 if (e.getOperator().equals(CigarOperator.M)||e.getOperator().equals(CigarOperator.D))
                     length+=e.getLength();
             }
-
         }
         return length;
     }
@@ -99,7 +98,7 @@ public class SAMMapping implements Mapping{
         if (blocks.size() == 0) {
             for (CigarElement e : cigar.getCigarElements()) {
                 if (!e.getOperator().equals(CigarOperator.N)) {
-                    if (e.getOperator().equals(CigarOperator.M)) {
+                    if (e.getOperator().equals(CigarOperator.M)||e.getOperator().equals(CigarOperator.D)) {
                         bLength+=e.getLength();
                     }
                 } else {
