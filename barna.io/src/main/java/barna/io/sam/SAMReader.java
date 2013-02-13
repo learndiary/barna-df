@@ -300,7 +300,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     })
                     .sortInBackground();
 
-            for(final SAMRecord rec : getSAMFileReader(false)) {
+            for(final SAMRecord rec : getSAMFileReader(false)) {   //TODO add a parameter to specify whether the flag for
+                                                                   //TODO primary alignments has to be used for counting
+                                                                   //TODO the number of reads
                 if (!paired && rec.getReadPairedFlag())
                     paired = true;
                 if (rec.getReadUnmappedFlag()) {
@@ -342,8 +344,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
             if (!flagSet) {
                 //sort the read ids to get the number of reads
                 Log.info("","");
-                Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
-                        "of reads without this information.");
+                Log.info("The Flux Capacitor is not using the SAM flags for counting the number of reads in the mapping file.");
+//                Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
+//                        "of reads without this information.");
                 Log.warn("This process can be long for big files!");
             tmpWriter.flush();
             tmpWriter.close();
