@@ -40,6 +40,10 @@ public class FluxCapacitorTest {
 
     @BeforeClass
     public static void initExecuter() {
+        //Force en-US locale to use "." as the decimal separator in Windows OS
+        if (OSChecker.isWindows()) {
+            Locale.setDefault(new Locale("en", "US"));
+        }
         Execute.initialize(2);
     }
 
@@ -622,11 +626,6 @@ public class FluxCapacitorTest {
 
     @Test
     public void testFluxGtf() throws Exception {
-        //Force en-US locale to use "." as the decimal separator in Windows OS
-        if (OSChecker.isWindows()) {
-            Locale.setDefault(new Locale("en", "US"));
-        }
-
         File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profile", true, null));
 
         Map pars = new HashMap();
