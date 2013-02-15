@@ -180,7 +180,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	  * Descriptor with parsing info for the read IDs.
 	  */
 	 public static final Parameter<UniversalReadDescriptor> READ_DESCRIPTOR =
-		 	new UniversalReadDescriptorParameter();
+		 	new UniversalReadDescriptorParameter().longOption("read-descriptor").shortOption('d');
 
     public static final Parameter<ReadStrand> READ_STRAND = Parameters.enumParameter(
             "READ_STRAND",
@@ -226,7 +226,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                         if (a.isPaired() && r.isSingle())
                             throw new ParameterException("Annotation mapping " + a + " requires paired reads.");
 			        }
-	    	});
+	    	}).longOption("annotation-mapping").shortOption('m');
 	 
 	 	/**
 	 	 * The file containing the annotation.
@@ -244,7 +244,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        }, relativePathParser);
+        }, relativePathParser).longOption("annotation").shortOption('a');
 
 	    /**
 	     * The file containing the mapped reads.
@@ -262,7 +262,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        }, relativePathParser);
+        }, relativePathParser).longOption("input").shortOption('i');
 
 	    /**
          * The file containing the read bias profile.
@@ -295,7 +295,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        }, relativePathParser);
+        }, relativePathParser).longOption("output").shortOption('o');
 
 
 	    /**
@@ -466,7 +466,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 "SAM_VALIDATION_STRINGENCY",
                 " Set SAMtools validation stringency for validating records",
                 SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
-                null);
+                null).longOption("sam-validation-stringency");
 
 	    /**
 	     * Load the setting from a file. NOTE that this does not validate the settings!
@@ -526,7 +526,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * A <code>boolean</code> value specifying whether locus sorting of reads 
 	     * is carried out in RAM-memory or on disk.
 	     */
-	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", true);
+	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM",
+                                                                                         "Sort reads in RAM memory, not on disk",
+                                                                                        true).longOption("sort-in-ram").shortOption('r');
 	    
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,

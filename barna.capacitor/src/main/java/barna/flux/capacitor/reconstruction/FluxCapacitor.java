@@ -1753,38 +1753,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             }
         }
 
-        // add command line parameter
+        // add command line parameters
         if (commandLineArgs != null) {
-            if (commandLineArgs.userSpecified("annotation")) {
-                settings.set(FluxCapacitorSettings.ANNOTATION_FILE, commandLineArgs.getFile("annotation"));
-            }
-            if (commandLineArgs.userSpecified("input")) {
-                settings.set(FluxCapacitorSettings.MAPPING_FILE, commandLineArgs.getFile("input"));
-            }
-            if (commandLineArgs.userSpecified("output")) {
-                settings.set(FluxCapacitorSettings.STDOUT_FILE, commandLineArgs.getFile("output").getAbsoluteFile());
-            }
-            if (commandLineArgs.userSpecified("annotation-mapping")) {
-                try {
-                    settings.set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.valueOf(commandLineArgs.getString("annotation-mapping")));
-                } catch (Exception e) {
-                    throw new RuntimeException("Invalid Annotation Mapping: " + commandLineArgs.getString("annotation-mapping"));
-                }
-            }
-            if (commandLineArgs.userSpecified("read-descriptor")) {
-                settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor());
-                settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).init(commandLineArgs.getString("read-descriptor"));
-            }
-            if (commandLineArgs.userSpecified("sort-in-ram")) {
-                settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
-            }
-
-            if (commandLineArgs.userSpecified("sam-validation-stringency")) {
-                try {
-                    settings.set(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY.getName(), commandLineArgs.getString("sam-validation-stringency"));
-                } catch (Exception e) {
-                    throw new RuntimeException("Invalid sam validation stringency: " + commandLineArgs.getString("sam-validation-stringency"));
-                }
+            for (barna.commons.parameters.Parameter p : settings.getParameters().values()) {
+                if (p.getLongOption()!=null && commandLineArgs.userSpecified(p.getLongOption()))
+                    settings.set(p,commandLineArgs.getObject(p.getLongOption()));
             }
         }
 
@@ -2072,18 +2045,9 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
     @Override
     public List<Parameter> getParameter() {
-        ArrayList<Parameter> parameters = new ArrayList<Parameter>();
+        List<Parameter> parameters = JSAPParameters.getJSAPParameter(new FluxCapacitorSettings());
         parameters.add(JSAPParameters.switchParameter("profile").type(String.class).help("do the profiling").get());
         parameters.add(JSAPParameters.flaggedParameter("parameter", 'p').type(File.class).help("specify parameter file (PAR file)").valueName("file").get());
-        parameters.add(JSAPParameters.flaggedParameter("annotation", 'a').type(File.class).help("Path to the annotation file").valueName("gtf").get());
-        parameters.add(JSAPParameters.flaggedParameter("input", 'i').type(File.class).help("Path to the mapping file").valueName("bed").get());
-        parameters.add(JSAPParameters.flaggedParameter("output", 'o').type(File.class).help("Path to the output file").valueName("gtf").get());
-        parameters.add(JSAPParameters.flaggedParameter("annotation-mapping", 'm').type(String.class).help("Annotation Mapping (default PAIRED)").valueName("mapping").defaultValue("PAIRED").get());
-        parameters.add(JSAPParameters.flaggedParameter("read-descriptor", 'd').type(String.class).help("Read Descriptor (default PAIRED)").valueName("descriptor").defaultValue("PAIRED").get());
-        parameters.add(JSAPParameters.switchParameter("sort-in-ram", 'r').help("Sort in RAM").get());
-
-        parameters.add(JSAPParameters.flaggedParameter("sam-validation-stringency").type(String.class).help("specify SAM validation stringency").valueName("stringency").defaultValue("STRICT").get()); //temporary TODO remove this and add maybe it as a setting
-
         parameters.add(JSAPParameters.switchParameter("printParameters").help("Print default parameters").get());
         return parameters;
     }
