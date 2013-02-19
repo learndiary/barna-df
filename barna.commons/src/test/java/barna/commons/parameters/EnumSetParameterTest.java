@@ -2,7 +2,6 @@ package barna.commons.parameters;
 
 import org.junit.Test;
 
-import java.lang.reflect.Field;
 import java.util.EnumSet;
 
 import static junit.framework.Assert.assertEquals;

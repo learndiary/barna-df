@@ -65,19 +65,19 @@ class BooleanParameter extends Parameter<Boolean> {
     }
 
     @Override
-    public void parse(String value) throws ParameterException {
+    public Boolean parse(String value) throws ParameterException {
         String l = value.toLowerCase();
         for (String s : TRUE) {
             if (l.equals(s)) {
                 this.value = true;
-                return;
+                return this.value;
             }
         }
 
         for (String s : FALSE) {
             if (l.equals(s)) {
                 this.value = false;
-                return;
+                return this.value;
             }
         }
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value '" + value + "'. Possible values are: [YES,NO]");

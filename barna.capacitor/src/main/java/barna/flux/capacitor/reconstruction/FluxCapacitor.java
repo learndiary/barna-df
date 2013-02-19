@@ -1756,8 +1756,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         // add command line parameters
         if (commandLineArgs != null) {
             for (barna.commons.parameters.Parameter p : settings.getParameters().values()) {
-                if (p.getLongOption()!=null && commandLineArgs.userSpecified(p.getLongOption()))
-                    settings.set(p,commandLineArgs.getObject(p.getLongOption()));
+                if (p.getLongOption()!=null && commandLineArgs.userSpecified(p.getLongOption())) {
+                    String value = commandLineArgs.getObject(p.getLongOption()).toString();
+                    Object parsed = p.parse(value);
+                    settings.set(p, parsed);
+                }
             }
         }
 
@@ -1827,7 +1830,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         //MappingStats stats = new MappingStats();
         long t0 = System.currentTimeMillis();
         if (currentTasks.contains(Task.PROFILE)) {
-            BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader,mappingReader);
+            BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, gtfReader,mappingReader);
             stats=profiler.call().getMappingStats();
             printProfile((System.currentTimeMillis() - t0) / 1000);
         } else {
@@ -2058,6 +2061,16 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         setPrintParameters(args.userSpecified("printParameters"));
         setFile(args.getFile("parameter"));
 
+        Iterator errors = args.getErrorMessageIterator();
+        boolean haserror = false;
+        while(errors.hasNext()){
+            Log.error("Error parsing command line argument : " + errors.next());
+            haserror = true;
+        }
+        if(haserror){
+            return false;
+        }
+
         if (isPrintParameters()) {
             FluxCapacitorSettings settings = new FluxCapacitorSettings();
             settings.write(System.out);
@@ -2066,13 +2079,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
         if (args.userSpecified("profile")) {
             currentTasks.add(Task.PROFILE);
-        }
-
-        if (getFile() == null) {
-            Log.error("");
-            Log.error("No parameter file specified!");
-            Log.error(barna.commons.system.OSChecker.NEW_LINE);
-            return false;
         }
 
         if (getFile() != null && !getFile().canRead()) {
@@ -2151,6 +2157,14 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
     }
 
+    /**
+     * Access the capacitor settings
+     *
+     * @return settings the capacitor settings
+     */
+    public FluxCapacitorSettings getSettings() {
+        return settings;
+    }
 
     /**
      * Merges and smoothens bias profiles.
@@ -2180,7 +2194,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if (profile == null) {
                 profile = new Profile();
                 try {
-                    BiasProfiler profiler = new BiasProfiler(settings, strand, pairedEnd, gtfReader, mappingReader);
+                    BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, gtfReader, mappingReader);
                     profile = profiler.call();
                 } catch (Throwable e) {
                     e.printStackTrace();
@@ -2671,7 +2685,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         return true;
     }
 
-    private UniversalReadDescriptor getReadDescriptor() {
+    public UniversalReadDescriptor getReadDescriptor() {
         if (descriptor == null) {
             FluxCapacitorSettings.ReadStrand readStrand = settings.get(FluxCapacitorSettings.READ_STRAND);
             if (settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)!=null) {

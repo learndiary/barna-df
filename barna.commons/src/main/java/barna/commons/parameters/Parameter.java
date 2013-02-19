@@ -54,20 +54,12 @@ public abstract class Parameter<T> {
     /**
      * Short version of the CLI name
      */
-     private char shortOption;
-
-    public String getLongOption() {
-        return longOption;
-    }
-
-    public char getShortOption() {
-        return shortOption;
-    }
+    private char shortOption;
 
     /**
-      * Long version of the CLI name
-      */
-     private String longOption;
+     * Long version of the CLI name
+     */
+    private String longOption;
 
     protected Parameter(String name, String description, T defaultValue, Class<T> type, ParameterValidator validator) {
         this.name = name;
@@ -78,35 +70,48 @@ public abstract class Parameter<T> {
     }
 
 
-    
     /**
      * Lazy clone constructor by micha.
+     *
      * @param otherParameter
      */
     protected Parameter(Parameter<T> otherParameter) {
-    	this.name= otherParameter.name;
+        this.name = otherParameter.name;
         this.description = otherParameter.description;
         this.defaultValue = otherParameter.defaultValue;
         this.type = otherParameter.type;
         this.validator = otherParameter.validator;
     }
 
+    public String getLongOption() {
+        if(this.longOption == null){
+            this.longOption = getName().toLowerCase().replaceAll("_", "-");
+        }
+        return longOption;
+    }
+
+    public char getShortOption() {
+        return shortOption;
+    }
+
     /**
      * Long version of the CLI name
+     *
      * @param longOption
      * @return <code>this</code>
      */
-    public Parameter<T> longOption(String longOption){
+    public Parameter<T> longOption(String longOption) {
         this.longOption = longOption;
         return this;
     }
 
     /**
      * Short version of the CLI name
+     *
      * @param shortOption
      * @return <code>this</code>
      */
-    public Parameter<T> shortOption(char shortOption){
+    public Parameter<T> shortOption(char shortOption) {
         this.shortOption = shortOption;
         return this;
     }
@@ -135,7 +140,7 @@ public abstract class Parameter<T> {
 
     protected abstract void set(T value);
 
-    public abstract void parse(String value) throws ParameterException;
+    public abstract T parse(String value) throws ParameterException;
 
     protected void validate(ParameterSchema schema) throws ParameterException {
         if (validator != null) {

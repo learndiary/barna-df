@@ -70,12 +70,13 @@ class FileParameter extends Parameter<File> {
         return value == null ? getDefault() : value;
     }
 
-    public void parse(String value) throws ParameterException {
+    public File parse(String value) throws ParameterException {
         if (nameParser != null) {
             this.value = nameParser.parse(value);
         } else {
             this.value = new File(value);
         }
+        return this.value;
     }
 
     @Override

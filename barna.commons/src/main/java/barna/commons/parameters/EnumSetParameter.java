@@ -62,10 +62,11 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
 
     /**
      * Parses String representation and sets <code>this.value</code>
+     *
      * @param value String representaion of the value(s)
      * @throws ParameterException if something went wrong
      */
-    public void parse(String value) throws ParameterException {
+    public EnumSet<E> parse(String value) throws ParameterException {
         // 2013-01-31 Micha was here:
         // shouldn't it be that the given String representation
         // *overwrites* the default behaviour?!
@@ -78,16 +79,23 @@ class EnumSetParameter<E extends Enum<E>> extends Parameter<EnumSet<E>> {
         try {
             for (String val : vals) {
                 if (!val.isEmpty()) {
+                    boolean found = false;
                     for (E e : values) {
                         if (e.name().equalsIgnoreCase(val)) {
                             this.value.add(e);
+                            found = true;
+                            break;
                         }
+                    }
+                    if(!found){
+                        throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + val);
                     }
                 }
             }
         } catch (Exception e) {
             throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);
         }
+        return this.value;
     }
 
     @Override

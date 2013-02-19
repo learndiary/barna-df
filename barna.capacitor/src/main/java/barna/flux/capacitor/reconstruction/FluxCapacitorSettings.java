@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 /**
@@ -83,7 +84,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				descriptor= value;
 			}
 			
-			public void parse(String value) throws ParameterException {
+			public UniversalReadDescriptor parse(String value) throws ParameterException {
 				
 				descriptor= new UniversalReadDescriptor();
 				
@@ -95,7 +96,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 					);
 					throw parseException;
 				}
-				
+                return this.descriptor;
 			}
 			
 			protected void validate(ParameterSchema schema)
@@ -332,7 +333,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
                 // check pre-conditions for read pairing
                 UniversalReadDescriptor d = schema.get(READ_DESCRIPTOR);
-                if (d != null) {
+                File inputFile = schema.get(MAPPING_FILE);
+                if (d != null && (inputFile != null && !inputFile.getName().toLowerCase().endsWith(".bam"))) {
                     AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
                     if (!(d.isPaired() && a.isPaired())) {
                         throw new ParameterException("Read pairing required for annotating inserts: " +
@@ -367,23 +369,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
 
 	    /**
-	     * Flag to output coverage statistic
-	     */
-	    public static final Parameter<Boolean> COVERAGE_STATS = Parameters.booleanParameter("COVERAGE_STATS", "Flag to output coverage statistics", false, new ParameterValidator() {
-            @Override
-            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-                boolean set = (Boolean) schema.get(parameter);
-                File file = (File) schema.get(COVERAGE_FILE);
-                if (set && file == null)
-                    throw new ParameterException("Parameter " + COVERAGE_FILE.getName()
-                            + " has to be set to output coverage statistics.");
-            }
-        });
-
-	    /**
 	     * The file where profiles are stored in.
 	     */
-	    public static final Parameter<File> COVERAGE_FILE = Parameters.fileParameter("COVERAGE_FILE", "The file to which coverage profiles are stored", null, new ParameterValidator() {
+	    public static final Parameter<File> COVERAGE_FILE = Parameters.fileParameter("COVERAGE_FILE", "Calculate coverage profile write it to the specified file", null, new ParameterValidator() {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
@@ -445,7 +433,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
          */
         public static final Parameter<EnumSet<CountElements>> COUNT_ELEMENTS = Parameters.enumSetParameter(
                 "COUNT_ELEMENTS",
-                " Count elements specified in the list",
+                " Count specified elements. Possible elements are : " + Arrays.toString(CountElements.values()),
                 EnumSet.noneOf(CountElements.class),
                 CountElements.class,
                 null);
