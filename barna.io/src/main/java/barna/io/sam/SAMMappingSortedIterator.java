@@ -78,8 +78,9 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
                     new Runnable(){
                         public void run(){
                             SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).makeSAMWriter(header, false, out);
+                            SAMRecord rec = null;
                             while(iterator.hasNext()) {
-                                final SAMRecord rec = iterator.next();
+                                rec = iterator.next();
                                 writer.addAlignment(rec);
                             }
                             iterator.close();
