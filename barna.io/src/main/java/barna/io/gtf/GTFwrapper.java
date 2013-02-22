@@ -927,6 +927,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					+ readGenes + " genes, " + readTranscripts + " transcripts, "
 					+ readExons + " exons.");
 			System.err.println("Skipped:\t" + skippedObjects+ " lines.");
+            if(skippedObject != null){
+                System.err.println("One of the lines skipped:\n" + skippedObject + "\n");
+            }
 			System.err.print("Chromosomes:\t");
 			for (int i = 0; i < skippedChr.size(); i++)
 				System.err.print(skippedChr.elementAt(i) + " ");
@@ -1179,7 +1182,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	}
 	
 	boolean readAll= false;
-	boolean warnFirstSkip= true;
+	boolean skipWarningPrinted = false;
+    Object skippedObject = null;
+
 	public void read() {
 
 		BufferedReader buffy = getBuffy();
@@ -1188,7 +1193,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		
 		if (bytesRead== 0) {
 			skippedObjects= 0;
-			warnFirstSkip= true;
 		}
 		
 		clustered = false;
@@ -1256,9 +1260,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				GFFObject obj= readBuildObject(line);
 				if (!checkObject(obj)) {	// object based criteria
 					++skippedObjects;
-					if (warnFirstSkip) {
-						Log.warn("skipped line "+ obj);
-						warnFirstSkip= false;
+					if (skippedObject != null) {
+						skippedObject = obj;
 					}
 					if (trpt!= null && geneWise
 							&& ((readAheadLimit> 0&& cnt== (readAheadLimit+1))|| (readAheadTranscripts> 0&& cntTrpt>= readAheadTranscripts))) {
@@ -1295,9 +1298,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					if (lastChrID != null) { 						
 						if (!checkChromosome(chrID)) {
 							++skippedObjects;
-							if (warnFirstSkip) {
-								Log.warn("skipped chromosome "+ chrID);
-								warnFirstSkip= false;
+							if (skippedObject != null) {
+                                skippedObject = chrID;
 							}
 							getReadChr().add(lastChrID);
 							ArrayUtils.addUnique(getSkippedChr(), chrID);
