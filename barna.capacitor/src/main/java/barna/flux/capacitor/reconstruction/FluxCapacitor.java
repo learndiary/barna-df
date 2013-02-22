@@ -450,7 +450,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             // pre-build rpkm hash
             HashMap<String, Double> rpkmMap = null;
             long nrReads = stats.getReadsTotal();
-            double base = (nrReads < 0 ? 1 : nrReads);
+            double base = (nrReads <= 0 ? 1 : nrReads);
             Transcript[] tt = gene.getTranscripts();
             if (output.contains(OutputFlag.BALANCED)) {
                 rpkmMap = new HashMap<String, Double>(tt.length, 1f);
