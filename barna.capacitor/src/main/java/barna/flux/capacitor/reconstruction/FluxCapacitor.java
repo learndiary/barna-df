@@ -1887,7 +1887,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             explore(FluxCapacitorConstants.MODE_RECONSTRUCT);
 
             if (settings.get(FluxCapacitorSettings.STATS_FILE)!=null)
-                stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE), settings.get(FluxCapacitorSettings.STATS_FILE_APPEND));
+                stats.writeStats(settings.get(FluxCapacitorSettings.STATS_FILE));
         }
 
         fileFinish();

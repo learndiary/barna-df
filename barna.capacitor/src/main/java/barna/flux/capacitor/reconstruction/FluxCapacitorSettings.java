@@ -397,13 +397,6 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
             }
         }, relativePathParser);
-        /**
-         * If true, and a stats file is specified, the stats are added to the existing stats. This is useful, i.e, if you if you
-         * run the chromosomes in single runs and want to sum up the stats in one file. NOTE that the stats
-         * are actually added and the stats are summed up. You will 'loose' the old stats
-         */
-        public static final Parameter<Boolean> STATS_FILE_APPEND = Parameters.booleanParameter("STATS_FILE_APPEND", "Append to the stats file. \n" +
-                "This adds results from this run to an existing capacitor stats file.", false);
 
 	    /**
 	     * The temporary directory.
