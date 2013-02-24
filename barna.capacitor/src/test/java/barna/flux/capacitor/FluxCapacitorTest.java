@@ -542,7 +542,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("PROFILE_FILE", proFile);
-        pars.put("COVERAGE_STATS", "true");
         pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -563,7 +562,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("PROFILE_FILE", proFile);
-        pars.put("COVERAGE_STATS", "true");
         pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
