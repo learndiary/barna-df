@@ -116,6 +116,9 @@ public class BiasProfiler implements Callable<Profile> {
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                 Log.info("", "");
                 Log.info("PROFILE", "Scanning the input and getting the attributes.");
+                if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null){
+                    Log.info("PROFILE", "Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
+                }
             }
             Log.progressStart("profiling");
 
@@ -386,17 +389,16 @@ public class BiasProfiler implements Callable<Profile> {
         if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
 
 
-            if (profile.getCoverageStats().writeCoverageStats(getCoverageWriter(),
+            if (!profile.getCoverageStats().writeCoverageStats(getCoverageWriter(),
                                                           tx.getGene().getLocusID(),
                                                           tx.getTranscriptID(),
                                                           tx.isCoding(),
                                                           tx.getExonicLength(),
-                                                          paired ? stats.getMappingPairsSingleTxLoci() : stats.getMappingsSingleTxLoci()))
-                Log.info("Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
-            else
+                                                          paired ? stats.getMappingPairsSingleTxLoci() : stats.getMappingsSingleTxLoci())){
                 Log.warn("Failed to write coverage statistics to " +
                     settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
                     );
+            }
         }
     }
 
