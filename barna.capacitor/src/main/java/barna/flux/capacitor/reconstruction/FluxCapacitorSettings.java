@@ -445,7 +445,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
          */
         public static final Parameter<SAMFileReader.ValidationStringency> SAM_VALIDATION_STRINGENCY = Parameters.enumParameter(
                 "SAM_VALIDATION_STRINGENCY",
-                " Set SAMtools validation stringency for validating records",
+                " Set SAMtools validation stringency for validating records. One of STRICT|LENIENT|SILENT",
                 SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
                 null).longOption("sam-validation-stringency");
 
