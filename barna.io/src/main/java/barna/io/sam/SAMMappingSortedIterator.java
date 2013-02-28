@@ -25,7 +25,7 @@ import java.util.Iterator;
  */
 public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
-    static final int DEFAULT_THRESHOLD =5;
+    static final int DEFAULT_THRESHOLD = 5;
     static final boolean DEFAULT_READ_ALL = false;
 
     private SAMRecordIterator wrappedIterator;
@@ -71,13 +71,13 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         PipedInputStream pip = new PipedInputStream();
 
         try {
-            final PipedOutputStream pop = new PipedOutputStream(pip);
+            PipedOutputStream pop = new PipedOutputStream(pip);
             final BufferedOutputStream out = new BufferedOutputStream(pop);
 
             new Thread(
                     new Runnable(){
                         public void run(){
-                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).makeSAMWriter(header, false, out);
+                            SAMFileWriter writer = new SAMFileWriterFactory().setTempDirectory(FileHelper.tempDirectory).setMaxRecordsInRam((int)(maxRecordsInRam/2)).makeSAMWriter(header, false, out);
                             SAMRecord rec = null;
                             while(iterator.hasNext()) {
                                 rec = iterator.next();
@@ -116,7 +116,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
                 mappings.add(mapping);
         }
 
-        while(wrappedIterator.hasNext() && mappings.size() < maxRecordsInRam) {
+        while(wrappedIterator.hasNext() && mappings.size() < maxRecordsInRam/2) {
             record = wrappedIterator.next();
 
             if (!allReads && record.getReadUnmappedFlag())
