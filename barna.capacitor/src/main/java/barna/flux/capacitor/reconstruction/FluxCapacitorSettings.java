@@ -60,18 +60,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                                 + StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',') + ")",
                         null,
                         UniversalReadDescriptor.class,
-                        new ParameterValidator() {
-                            @Override
-                            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-                                File mapping = schema.get(FluxCapacitorSettings.MAPPING_FILE);
-                                if (FileHelper.getExtension(mapping).toUpperCase().equals("BAM") && schema.get(READ_DESCRIPTOR)!=null) {
-                                    throw new ParameterException("You cannot specify a READ_DESCRIPTOR for BAM files");
-                                }
-                                if (FileHelper.getExtension(mapping).toUpperCase().contains("BED") && schema.get(READ_DESCRIPTOR)==null) {
-                                    throw new ParameterException("You must specify a READ_DESCRIPTOR for BED files");
-                                }
-                            }
-                        });
+                        null);
 			}
 			
 			public UniversalReadDescriptorParameter(UniversalReadDescriptorParameter anotherURDP) {
@@ -103,6 +92,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 					throws ParameterException {
 				if (parseException!= null)
 					throw parseException;
+                File mapping = schema.get(FluxCapacitorSettings.MAPPING_FILE);
+                if (FileHelper.getExtension(mapping).toUpperCase().equals("BAM") && schema.get(READ_DESCRIPTOR)!=null) {
+                    throw new ParameterException("You cannot specify a READ_DESCRIPTOR for BAM files");
+                }
+                if (FileHelper.getExtension(mapping).toUpperCase().contains("BED") && schema.get(READ_DESCRIPTOR)==null) {
+                    throw new ParameterException("You must specify a READ_DESCRIPTOR for BED files");
+                }
 			}
 
 			protected UniversalReadDescriptor get() {
