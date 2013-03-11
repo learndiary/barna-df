@@ -68,6 +68,7 @@ public class BEDReader extends AbstractFileIOWrapper implements MappingReader {
     boolean sortInRam = false;
     UniversalReadDescriptor descriptor;
     MSIterator<BEDMapping> currentIter;
+    private int scoreFilter = -1;
 	/**
 	 * Creates an instance using a given file and
 	 * line comparator.
@@ -76,21 +77,30 @@ public class BEDReader extends AbstractFileIOWrapper implements MappingReader {
 	 * sorting 
 	 */
 	public BEDReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
+        this(inputFile, comparator, sortInRam, descriptor, tmpDir, -1);
+	}
+
+	public BEDReader(File inputFile, LineComparator<CharSequence> comparator, boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir, int scoreFilter) {
 		super(inputFile);
 		this.comparator= (comparator== null? COMPARATOR_DEFAULT: comparator);
         this.sortInRam = sortInRam;
         this.descriptor = descriptor;
+        this.scoreFilter = scoreFilter;
 	}
-	
+
 	/**
 	 * Creates an instance using a specific file 
 	 * and the default comparator.
 	 * @param inputFile
 	 */
 	public BEDReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir) {
-		this(inputFile, COMPARATOR_DEFAULT, sortInRam, descriptor, tmpDir);
+		this(inputFile, sortInRam, descriptor, tmpDir, -1);
 	}
-	
+
+	public BEDReader(File inputFile, Boolean sortInRam, UniversalReadDescriptor descriptor, File tmpDir, int scoreFilter) {
+		this(inputFile, COMPARATOR_DEFAULT, sortInRam, descriptor, tmpDir, scoreFilter);
+	}
+
 	/**
 	 * Creates an instance using a specific path to a file 
 	 * and the default line comparator.
@@ -1541,8 +1551,10 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
         public void addResult(BEDMapping bed) {
             if (result == null)
                 result = new ArrayList<BEDMapping>();
-            result.add(bed);
-            count++;
+            if(scoreFilter < 0 || bed.getScore() >= scoreFilter){
+                result.add(bed);
+                count++;
+            }
         }
 
         public ArrayList<BEDMapping> getResults() {

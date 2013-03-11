@@ -35,6 +35,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     private final long maxRecordsInRam;
     private int currPos, markedPos;
     private boolean allReads;
+    private int scoreFilter;
 
     /**
      * Costruct an instance of the class.
@@ -53,11 +54,16 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @param maxRecordsInRam max number of records to be loaded in ram
      */
     public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, long maxRecordsInRam, boolean allReads) {
+        this(iterator, header, maxRecordsInRam, allReads, -1);
+    }
+
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, long maxRecordsInRam, boolean allReads, int scoreFilter) {
         this.wrappedIterator = getSortedIterator(iterator, header);
         this.sortOrder = header.getSortOrder();
         this.maxRecordsInRam = maxRecordsInRam;
         this.currPos = this.markedPos = -1;
         this.allReads = allReads;
+        this.scoreFilter = scoreFilter;
         readChunk();
     }
 
@@ -113,7 +119,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
                 mapping=null;
             }
             mappings.clear();
-            if (mapping!=null)
+            if (mapping!=null && (this.scoreFilter < 0 || mapping.getScore() >= this.scoreFilter ))
                 mappings.add(mapping);
         }
 
@@ -123,13 +129,15 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             if (!allReads && record.getReadUnmappedFlag())
                 continue;
 
+
             mapping = new SAMMapping(record, getSuffix(record));
 
             if (mappings.size()>1 && !mapping.getName().equals(mappings.get(mappings.size()-1).getName()) && (maxRecordsInRam-mappings.size())<= DEFAULT_THRESHOLD) {
                 break;
             }
-
-            mappings.add(mapping);
+            if(this.scoreFilter < 0 || mapping.getScore() >= this.scoreFilter ){
+                mappings.add(mapping);
+            }
         }
         if (!wrappedIterator.hasNext()) {
             wrappedIterator.close();

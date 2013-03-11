@@ -42,6 +42,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     private boolean paired = false;
     private boolean allReads;
+    private int scoreFilter;
 
     /**
      * Creates an instance of the reader
@@ -87,10 +88,19 @@ public class SAMReader extends AbstractFileIOWrapper implements
      *                  contained/overlapping the query region
      */
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads) {
+        this(inputFile, contained, sortInRam, allReads, -1);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter) {
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter) {
         super(inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
         this.allReads = allReads;
+        this.scoreFilter = scoreFilter;
     }
 
     private SAMFileReader getSAMFileReader(boolean createNew) {
@@ -172,17 +182,17 @@ public class SAMReader extends AbstractFileIOWrapper implements
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
             if (sortInRam) {
                 try {
-                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads);
+                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads, scoreFilter);
                 }
                 catch (OutOfMemoryError error) {
                     SAMFileHeader header =  getSAMFileReader(true).getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads);
+                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter);
                 }
             } else {
                 SAMFileHeader header =  getSAMFileReader(false).getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads);
+                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter);
             }
         }
         else

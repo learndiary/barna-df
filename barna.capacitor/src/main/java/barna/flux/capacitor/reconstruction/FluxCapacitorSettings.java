@@ -506,7 +506,14 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM",
                                                                                          "Sort reads in RAM memory, not on disk",
                                                                                         true).longOption("sort-in-ram").shortOption('r');
-	    
+        /**
+	     * An <code>int</code> value specifying the minimum mapping score to use a mapping
+         * for quantification
+	     */
+	    public static final Parameter<Integer> MIN_SCORE = Parameters.intParameter("MIN_SCORE",
+                                                                                         "Minimum mapping score. Mappings with score < min_score are discarded (mapq for BAM, score for BED)",
+                                                                                        -1).longOption("min-score").shortOption('q');
+
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 
