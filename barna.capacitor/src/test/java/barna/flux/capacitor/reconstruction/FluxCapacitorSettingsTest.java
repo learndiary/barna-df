@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 public class FluxCapacitorSettingsTest {
@@ -37,8 +38,9 @@ public class FluxCapacitorSettingsTest {
 
         try {
             setting.validate();
+            fail();
         } catch (ParameterException ex) {
-            fail(ex.getMessage());
+            assertEquals("You must specify a READ_DESCRIPTOR for BED files", ex.getMessage());
         }
     }
 
@@ -82,6 +84,7 @@ public class FluxCapacitorSettingsTest {
 
         setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
         setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),"PAIRED");
         setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "NONE");
 
 
@@ -93,7 +96,7 @@ public class FluxCapacitorSettingsTest {
                 setting.validate();
                 fail("Exception not throw!!!");
             } catch(ParameterException ex) {
-                assertEquals("Annotation mapping " + am + " requires strand information.", ex.getMessage());
+                assertEquals("Annotation mapping " + am + " requires a stranded read descriptor or strand information!", ex.getMessage());
             }
         }
     }
@@ -104,6 +107,7 @@ public class FluxCapacitorSettingsTest {
 
         setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
         setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),"SIMPLE");
         setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "SENSE");
 
 
@@ -115,7 +119,7 @@ public class FluxCapacitorSettingsTest {
                 setting.validate();
                 fail("Exception not throw!!!");
             } catch(ParameterException ex) {
-                assertEquals("Annotation mapping " + am + " requires paired reads.", ex.getMessage());
+                assertEquals("Annotation mapping " + am + " requires a paired-end read descriptor!", ex.getMessage());
             }
         }
     }

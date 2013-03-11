@@ -702,4 +702,5 @@ public class FluxCapacitorTest {
         assertEquals("1\tflux\tjunction\t320653\t320881\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 4.000000", runLines.get(0));
         assertEquals("1\tflux\tjunction\t320938\t321032\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 2.000000",runLines.get(1));
     }
+
 }
