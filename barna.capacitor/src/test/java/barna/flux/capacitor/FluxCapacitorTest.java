@@ -703,20 +703,4 @@ public class FluxCapacitorTest {
         assertEquals("1\tflux\tjunction\t320938\t321032\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 2.000000",runLines.get(1));
     }
 
-    @Test
-    public void testMaxRecordsInRam() throws Exception {
-        String path="/users/rg/epalumbo/projects/BluePrint/mappings3";
-
-        Map pars = new HashMap();
-        pars.put("ANNOTATION_FILE", "/tmp/FluxCapacitor_gencode.v15.annotation_sorted1305045786957078649.gtf");
-        pars.put("MAPPING_FILE", path + "/ERR230581/ERR230581_filtered_cuff.bam");
-        pars.put("READ_DESCRIPTOR", "PAIRED");
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED_STRANDED);
-        pars.put("READ_STRAND", FluxCapacitorSettings.ReadStrand.MATE2_SENSE);
-        pars.put("TMP_DIR", "/data/epalumbo/tmp");
-
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
-
-        FluxCapacitorRunner.runCapacitor(parFile, null);
-    }
 }
