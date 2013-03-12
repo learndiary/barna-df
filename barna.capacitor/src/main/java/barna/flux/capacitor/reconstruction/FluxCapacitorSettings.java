@@ -522,6 +522,14 @@ public class FluxCapacitorSettings extends ParameterSchema {
                                                                                          "Use SAM flags when scanning the BAM mapping file",
                                                                                         true).longOption("use-flags");
 
+      /**
+	     * A <code>boolean</code> value specifying to exclude file checking before the run
+         *
+	     */
+	    public static final Parameter<Boolean> NO_FILE_CHECK = Parameters.booleanParameter("NO_FILE_CHECK",
+                                                                                         "Disable scanning of input files before the run",
+                                                                                        false).longOption("no-file-check");
+
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 

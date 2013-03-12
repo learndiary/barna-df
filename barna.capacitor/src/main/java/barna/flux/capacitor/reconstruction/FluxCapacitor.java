@@ -1778,13 +1778,12 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         if (stats == null)
             stats = new MappingStats();
 
-        cheatDisableFCheck = true;
-        if (cheatDisableFCheck) {
-            Log.warn("Development run, file check disabled !!!");
+        //cheatDisableFCheck = true;
+        if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
+            Log.warn("Scanning of input files disabled");
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
             mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
         } else {
-
             Log.progressStart("Scanning annotation file");
             wrapperAnnotation =
                     fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));

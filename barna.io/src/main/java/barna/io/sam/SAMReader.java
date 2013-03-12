@@ -143,6 +143,16 @@ public class SAMReader extends AbstractFileIOWrapper implements
             if (!createIndex())
                 throw new RuntimeException("The input BAM file must be sorted and indexed.");
         }
+        if (!paired) {
+            for (SAMRecord r : getSAMFileReader(false)) {
+                if(r.getReadPairedFlag()) {
+                    paired=true;
+                    break;
+                }
+            }
+            this.close();
+            this.reset();
+        }
         return true;
 	}
 
@@ -323,7 +333,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
             for(final SAMRecord rec : getSAMFileReader(false)) {
                 if (!paired && rec.getReadPairedFlag())
-                    paired = true;
+                    this.setPaired(true);
                 if (rec.getReadUnmappedFlag()) {
                     ++countSkippedLines;
                 } else {
@@ -331,7 +341,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     if (rec.getReadPairedFlag()) {
                         readId += "/"+(rec.getFirstOfPairFlag()?1:2);
                     }
-                    if (useFlags) {
+                    if (this.isUsingFlags()) {
                         if (rec.getNotPrimaryAlignmentFlag()) {
                             if (!flagSet) {
                                 //flags are set correctly
