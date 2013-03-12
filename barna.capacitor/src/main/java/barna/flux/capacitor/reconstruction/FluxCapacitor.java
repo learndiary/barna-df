@@ -1778,7 +1778,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         if (stats == null)
             stats = new MappingStats();
 
-        //cheatDisableFCheck = true;
+        cheatDisableFCheck = true;
         if (cheatDisableFCheck) {
             Log.warn("Development run, file check disabled !!!");
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
@@ -2873,7 +2873,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             case BED:
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),getReadDescriptor(),settings.get(FluxCapacitorSettings.TMP_DIR), settings.get(FluxCapacitorSettings.MIN_SCORE));
             case BAM:
-                SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM), settings.get(FluxCapacitorSettings.MIN_SCORE));
+                SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM), settings.get(FluxCapacitorSettings.MIN_SCORE), settings.get(FluxCapacitorSettings.USE_FLAGS));
                 if (!settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY).equals(SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY)) {
                     Log.info("SAM","Setting validation stringency to " + settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY));
                     r.setValidationStringency(settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY));

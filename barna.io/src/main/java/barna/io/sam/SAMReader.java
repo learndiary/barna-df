@@ -24,6 +24,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     public static final boolean DEFAULT_CONTAINED = false;
     public static final boolean DEFAULT_ALL_READS = false;
+    public static final boolean DEFAULT_USE_FLAGS = true;
 
     private SAMFileReader reader;
     private boolean contained;
@@ -42,6 +43,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     private boolean paired = false;
     private boolean allReads;
+    private boolean useFlags;
     private int scoreFilter;
 
     /**
@@ -95,12 +97,21 @@ public class SAMReader extends AbstractFileIOWrapper implements
         this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter);
     }
 
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter, boolean useFlags) {
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags);
+    }
+
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter) {
+        this(inputFile, contained, sortInRam, allReads, scoreFilter, DEFAULT_USE_FLAGS);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter, boolean useFlags) {
         super(inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
         this.allReads = allReads;
         this.scoreFilter = scoreFilter;
+        this.useFlags = useFlags;
     }
 
     private SAMFileReader getSAMFileReader(boolean createNew) {
@@ -310,9 +321,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     })
                     .sortInBackground();
 
-            for(final SAMRecord rec : getSAMFileReader(false)) {   //TODO add a parameter to specify whether the flag for
-                                                                   //TODO primary alignments has to be used for counting
-                                                                   //TODO the number of reads
+            for(final SAMRecord rec : getSAMFileReader(false)) {
                 if (!paired && rec.getReadPairedFlag())
                     paired = true;
                 if (rec.getReadUnmappedFlag()) {
@@ -322,23 +331,29 @@ public class SAMReader extends AbstractFileIOWrapper implements
                     if (rec.getReadPairedFlag()) {
                         readId += "/"+(rec.getFirstOfPairFlag()?1:2);
                     }
-                    /*if (rec.getNotPrimaryAlignmentFlag()) {
-                        if (!flagSet) {
-                            //flags are set correctly
-                            flagSet = true;
-                            sorterFuture.cancel(true);
-                            countReads=primaryAlignments;
+                    if (useFlags) {
+                        if (rec.getNotPrimaryAlignmentFlag()) {
+                            if (!flagSet) {
+                                //flags are set correctly
+                                flagSet = true;
+                                sorterFuture.cancel(true);
+                                countReads=primaryAlignments;
+                            }
+                        } else {
+                            if (!flagSet) {
+                                //flags are not set properly
+                                ++primaryAlignments;
+                                tmpWriter.write(readId);
+                                tmpWriter.write(OSChecker.NEW_LINE);
+                            } else {
+                                ++countReads;
+                            }
                         }
-                    } else {*/
-                        //if (!flagSet) {
-                            //flags are not set properly
-                            ++primaryAlignments;
+                    }  else {
+                        ++primaryAlignments;
                         tmpWriter.write(readId);
                         tmpWriter.write(OSChecker.NEW_LINE);
-//                        } else {
-//                            ++countReads;
-                    //}
-                    //}
+                    }
                     ++countAll;
                     if (rec.getAlignmentBlocks().size()>1) {
                         if (rec.getCigarString().contains("N"))
@@ -355,8 +370,6 @@ public class SAMReader extends AbstractFileIOWrapper implements
                 //sort the read ids to get the number of reads
                 Log.info("","");
                 Log.info("The Flux Capacitor is not using the SAM flags for counting the number of reads in the mapping file.");
-//                Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
-//                        "of reads without this information.");
                 Log.warn("This process can be long for big files!");
             tmpWriter.flush();
             tmpWriter.close();
@@ -405,8 +418,17 @@ public class SAMReader extends AbstractFileIOWrapper implements
         }
 	}
 
+    public void setFlagsUsage(boolean useFlags) {
+        this.useFlags = useFlags;
+    }
+
+    public boolean isUsingFlags() {
+        return useFlags;
+    }
+
     @Override
     public MSIterator<Mapping> iterator() {
         return iter;
     }
+
 }

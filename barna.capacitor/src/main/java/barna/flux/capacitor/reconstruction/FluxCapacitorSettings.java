@@ -514,6 +514,14 @@ public class FluxCapacitorSettings extends ParameterSchema {
                                                                                          "Minimum mapping score. Mappings with score < min_score are discarded (mapq for BAM, score for BED)",
                                                                                         -1).longOption("min-score").shortOption('q');
 
+      /**
+	     * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file
+         * for quantification
+	     */
+	    public static final Parameter<Boolean> USE_FLAGS = Parameters.booleanParameter("USE_FLAGS",
+                                                                                         "Use SAM flags when scanning the BAM mapping file",
+                                                                                        true).longOption("use-flags");
+
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 
