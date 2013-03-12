@@ -32,7 +32,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     private SAMMapping mapping;
     private ArrayList<SAMMapping> mappings;
     private SAMFileHeader.SortOrder sortOrder;
-    private final long maxRecordsInRam;
+    private int maxRecordsInRam;
     private int currPos, markedPos;
     private boolean allReads;
     private int scoreFilter;
@@ -43,7 +43,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @param header SAM/BAM file header
      * @param maxRecordsInRam max number of records to be loaded in ram
      */
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, long maxRecordsInRam) {
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam) {
         this(iterator,header, maxRecordsInRam, DEFAULT_READ_ALL);
     }
 
@@ -53,17 +53,17 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @param header SAM/BAM file header
      * @param maxRecordsInRam max number of records to be loaded in ram
      */
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, long maxRecordsInRam, boolean allReads) {
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads) {
         this(iterator, header, maxRecordsInRam, allReads, -1);
     }
 
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, long maxRecordsInRam, boolean allReads, int scoreFilter) {
-        this.wrappedIterator = getSortedIterator(iterator, header);
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads, int scoreFilter) {
         this.sortOrder = header.getSortOrder();
         this.maxRecordsInRam = maxRecordsInRam;
         this.currPos = this.markedPos = -1;
         this.allReads = allReads;
         this.scoreFilter = scoreFilter;
+        this.wrappedIterator = getSortedIterator(iterator, header);
         readChunk();
     }
 
@@ -79,7 +79,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         try {
             PipedOutputStream pop = new PipedOutputStream(pip);
             final BufferedOutputStream out = new BufferedOutputStream(pop);
-            final int mrec = (int) (maxRecordsInRam / 2);
+            final int mrec = maxRecordsInRam / 2;
 
             new Thread(
                     new Runnable(){
@@ -132,7 +132,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
             mapping = new SAMMapping(record, getSuffix(record));
 
-            if (mappings.size()>1 && !mapping.getName().equals(mappings.get(mappings.size()-1).getName()) && (maxRecordsInRam-mappings.size())<= DEFAULT_THRESHOLD) {
+            if (mappings.size()>1 && !mapping.getName().equals(mappings.get(mappings.size()-1).getName()) && ((maxRecordsInRam/2)-mappings.size())<= DEFAULT_THRESHOLD) {
                 break;
             }
             if(this.scoreFilter < 0 || mapping.getScore() >= this.scoreFilter ){
