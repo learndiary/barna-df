@@ -360,7 +360,6 @@ public class SAMReader extends AbstractFileIOWrapper implements
                             }
                         }
                     }  else {
-                        ++primaryAlignments;
                         tmpWriter.write(readId);
                         tmpWriter.write(OSChecker.NEW_LINE);
                     }
@@ -381,9 +380,9 @@ public class SAMReader extends AbstractFileIOWrapper implements
                 Log.info("","");
                 Log.info("The Flux Capacitor is not using the SAM flags for counting the number of reads in the mapping file.");
                 Log.warn("This process can be long for big files!");
-            tmpWriter.flush();
-            tmpWriter.close();
-            sorterFuture.get();
+                tmpWriter.flush();
+                tmpWriter.close();
+                sorterFuture.get();
             }
 
             Log.progressFinish(Constants.OK, true);
