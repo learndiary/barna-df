@@ -334,7 +334,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
             for(final SAMRecord rec : getSAMFileReader(false)) {
                 if (!paired && rec.getReadPairedFlag())
                     this.setPaired(true);
-                if (rec.getReadUnmappedFlag()) {
+                if (rec.getReadUnmappedFlag() || (this.scoreFilter > 0 && rec.getMappingQuality() < this.scoreFilter)) {
                     ++countSkippedLines;
                 } else {
                     String readId = rec.getReadName();
