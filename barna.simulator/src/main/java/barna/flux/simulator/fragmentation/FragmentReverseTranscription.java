@@ -262,6 +262,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 	
 	                int s = Math.min(wAsense.length-1, leftFlank + start);
 	                int e = Math.min(wAsense.length, leftFlank + rightFlank + maxEnd);
+                    // ensure we have something to search / BARNA-303
+                    if(e < s){
+                        s = Math.max(0, e - 1);
+                    }
 	                p = Arrays.binarySearch(wAsense, s, e, rtRndWhere.nextDouble());
 	                p = (p >= 0 ? p : -(p + 1));
 	                ++p; // anti-sense matrix, cut 3' of 0-position
