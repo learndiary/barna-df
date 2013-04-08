@@ -309,7 +309,7 @@ public class Sequencer implements Callable<Void> {
             Log.progressFinish();
 
             if (tmpFasta != null) {
-                Log.message("\n\tCopying qFasta file");
+                Log.message("\n\tCopying Fasta file");
                 File fileFASTA = getFASTAfile();
                 FileHelper.move(tmpFasta, fileFASTA);
                 Log.progressFinish();
