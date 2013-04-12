@@ -51,7 +51,9 @@ public class PrimerDesigner {
 		int minIntronLen= 200; // because of artifacts 
 		
 		try {
-			GTFwrapper reader= new GTFwrapper("/users/rg/projects/encode/scaling_up/whole_genome/mouse/Annotation/ensembl65/Long/Element/mm65.long.exon.gtf");
+            // /users/rg/projects/encode/scaling_up/whole_genome/mouse/Annotation/ensembl65/Long/Element/mm65.long.exon.gtf
+
+			GTFwrapper reader= new GTFwrapper("");
 			reader.setReadGTF(true);
 			
 			Gene[] g;
