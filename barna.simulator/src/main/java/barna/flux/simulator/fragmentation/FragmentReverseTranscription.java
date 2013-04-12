@@ -352,6 +352,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 	                    int from2 = Math.min(leftFlank + from, wSense.length-1);
 	
 	                    r = wSense[from2] + (r * (wSense[to2] - wSense[from2]));
+                        // ensure we have something to search / BARNA-303
+                        if(to2 < from){
+                            from = Math.max(0, to2 - 1);
+                        }
 	                    p = Arrays.binarySearch(wSense, from2, to2, r);
 	                    p = (p >= 0 ? p : -(p + 1));
 	                }
