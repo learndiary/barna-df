@@ -351,6 +351,13 @@ public class Scorer extends AStalavista {
 
     }
 
+    @Override
+    protected AStalavistaSettings getSettings() {
+        if (settings== null)
+            return new ScorerSettings();
+        return settings;
+    }
+
     protected int scoreVariants(Vector<String> vvec, String varID, int rec, int nr, int idx, SpliceSite ss, int flank5, int flank3, String seq,
                                 String[] seqs, float[] scores, String[] varTuples) {
 
