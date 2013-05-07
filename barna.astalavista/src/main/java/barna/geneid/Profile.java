@@ -672,9 +672,9 @@ and U2 branch points and Poly Pyrimidine Tract */
             /* 1. Read RSSMARKOVSCORE for markov score to assign non-exonic recursively spliced elements */
             } else if(header.equalsIgnoreCase(GeneIDconstants.sRSS_ACCEPTOR_SCORE_CUTOFF)) {
                 gp.RSSACC= readLineParseFloat(rootFile, GeneIDconstants.sRSS_ACCEPTOR_SCORE_CUTOFF);
-            /* 1. Read U12_SPLICE_SCORE_THRESH for sum of U12 donor and acceptor splice scores */
+            /* 1. Read u12SpliceScoreThresh for sum of U12 donor and acceptor splice scores */
             } else if(header.equalsIgnoreCase(GeneIDconstants.sU12_SPLICE_SCORE_THRESH)) {
-                gp.U12_SPLICE_SCORE_THRESH= readLineParseFloat(rootFile, GeneIDconstants.sU12_SPLICE_SCORE_THRESH);
+                gp.u12SpliceScoreThresh = readLineParseFloat(rootFile, GeneIDconstants.sU12_SPLICE_SCORE_THRESH);
             /* 1. Read U12_EXON_SCORE_THRESH for sum of U12 donor and acceptor exon scores */
             } else if(header.equalsIgnoreCase(GeneIDconstants.sU12_EXON_SCORE_THRESH)) {
                 gp.U12_EXON_SCORE_THRESH= readLineParseFloat(rootFile, GeneIDconstants.sU12_EXON_SCORE_THRESH);
