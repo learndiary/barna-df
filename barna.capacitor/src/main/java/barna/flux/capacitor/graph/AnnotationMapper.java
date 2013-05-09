@@ -61,7 +61,7 @@ public class AnnotationMapper extends SplicingGraph {
     /**
      * The number of mappings in the current locus that map to the annotation.
      */
-	public long nrMappingsMapped= 0;
+	public double nrMappingsMapped= 0;
 
     /**
      * The number of mappings in the current locus that do not map to the annotation
@@ -432,7 +432,8 @@ public class AnnotationMapper extends SplicingGraph {
                     }
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
                     if (se.isExonic()) {
-                        nrMappingsMapped += 2;
+                        //nrMappingsMapped += 2;
+                        nrMappingsMapped+=1/mapping.getHits()+1/otherMapping.getHits();
                     }
                     if (buffy != null)
 							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
@@ -451,7 +452,8 @@ public class AnnotationMapper extends SplicingGraph {
                             ((MappingsInterface) target).getMappings().incrReadNr();
                         else
                             ((MappingsInterface) target).getMappings().incrRevReadNr();
-                        ++nrMappingsMapped;
+                        //++nrMappingsMapped;
+                        nrMappingsMapped+=1/mapping.getHits();
                 }
             }
         } // end: while(iter.hasNext())
@@ -525,7 +527,7 @@ public class AnnotationMapper extends SplicingGraph {
         }
     }
 
-    public long getNrMappingsMapped() {
+    public double getNrMappingsMapped() {
         return nrMappingsMapped;
     }
 

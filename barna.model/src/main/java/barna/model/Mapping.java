@@ -80,4 +80,10 @@ public interface Mapping {
      * @return the extended Cigar string
      */
     public CharSequence getCigar();
+
+    /**
+     *
+     * @return the total number of hits for the read the mapping refers to
+     */
+    public int getHits();
 }

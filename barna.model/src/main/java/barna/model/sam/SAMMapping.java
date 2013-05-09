@@ -23,6 +23,7 @@ public class SAMMapping implements Mapping{
     private byte strandFlag;
     private byte[] sequence;
     private Cigar cigar;
+    private int hits;
 
     public SAMMapping(SAMRecord r) {
 
@@ -35,6 +36,7 @@ public class SAMMapping implements Mapping{
         strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
+        hits = r.getIntegerAttribute("NH");
         initBlocks();
     }
 
@@ -142,6 +144,11 @@ public class SAMMapping implements Mapping{
     @Override
     public CharSequence getCigar() {
         return cigar.toString();
+    }
+
+    @Override
+    public int getHits() {
+        return hits;
     }
 
     public String getString() {

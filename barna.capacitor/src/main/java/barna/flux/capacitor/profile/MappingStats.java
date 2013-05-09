@@ -78,7 +78,7 @@ public class MappingStats {
     //Annotation Mapping
     private long singleTxLoci;
     private long readsLoci;
-    private long mappingsMapped;
+    private double mappingsMapped;
     private long mappingPairsNoTx;
 
     //Deconvolution
@@ -213,11 +213,11 @@ public class MappingStats {
         this.mappingsTotal+=value;
     }
 
-    public long getMappingsMapped() {
+    public double getMappingsMapped() {
         return mappingsMapped;
     }
 
-    public void setMappingsMapped(long mappingsMapped) {
+    public void setMappingsMapped(double mappingsMapped) {
         this.mappingsMapped = mappingsMapped;
     }
 

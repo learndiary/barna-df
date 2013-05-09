@@ -29,6 +29,7 @@ public class SAMMappingTest {
         r.setReadString("ATAGCTTCAGT");
         r.setCigarString("6M14N5M");
         r.setMappingQuality(30);
+        r.setAttribute("NH", 10);
 
         mapping = new SAMMapping(r);
     }
@@ -85,5 +86,10 @@ public class SAMMappingTest {
     @Test
     public void testCigar() throws Exception {
         assertEquals("6M14N5M", mapping.getCigar());
+    }
+
+    @Test
+    public void testHits() throws Exception {
+        assertEquals(10, mapping.getHits());
     }
 }
