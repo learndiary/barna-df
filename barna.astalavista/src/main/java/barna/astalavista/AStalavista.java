@@ -250,8 +250,10 @@ public abstract class AStalavista implements Tool<Void> {
         }
         settings= (AStalavistaSettings) schema;
 
-        // output help
-        if (args.userSpecified(AStalavistaSettings.HELP.getName())) {
+        // output help\
+        if (args.userSpecified("printParameters")) {
+        // TODO check why the following line does not work
+        // if (settings.get(AStalavistaSettings.HELP)) {
             settings.write(System.out);
             return false;
         }

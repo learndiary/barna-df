@@ -36,7 +36,7 @@ public class ScorerSettings extends AStalavistaSettings {
                 throw new ParameterException("VCF file not valid: "+ vcf== null? "null": vcf.getAbsolutePath());
             }
         }
-    }).longOption("vcf").shortOption('v');
+    }).longOption("vcf"); // .shortOption('v'); // blocked by version
 
     /**
      * Path to the VCF output file.
@@ -104,7 +104,7 @@ public class ScorerSettings extends AStalavistaSettings {
             "Toggle optional site attributes to be output",
             EnumSet.of(SiteOptions.SSS),
             SiteOptions.class,
-            null).longOption("sp").shortOption('t');
+            null).longOption("sp"); // .shortOption('t'); // blocked by tool
 
     /**
      * Checks whether a folder with genomic sequences is necessary in order

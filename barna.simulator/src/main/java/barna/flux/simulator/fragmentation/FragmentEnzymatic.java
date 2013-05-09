@@ -28,6 +28,7 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.RandomFactory;
 import barna.flux.simulator.PWM;
 
 import java.io.File;
@@ -42,9 +43,9 @@ public class FragmentEnzymatic implements FragmentProcessor {
     private Map<CharSequence, double[]> mapWeightAsense = null;
     private PWM pwmSense;
     private PWM pwmAsense;
-    Random rnd1 = new Random();
-    Random rnd2 = new Random();
-    Random rnd3 = new Random();
+    Random rnd1 = RandomFactory.get();
+    Random rnd2 = RandomFactory.get();
+    Random rnd3 = RandomFactory.get();
     private File ezMotif;
     private int leftFlank;
     private int rightFlank;

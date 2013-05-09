@@ -28,6 +28,7 @@
 package barna.flux.simulator;
 
 import barna.commons.Execute;
+import barna.commons.RandomFactory;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.CommandLine;
 import barna.commons.launcher.Flux;
@@ -362,6 +363,11 @@ public class SimulationPipeline implements Tool<Void> {
         if (settings == null) {
             Log.error("No settings available");
             return null;
+        }
+        // BARNA-306 initialize the global seed
+        if(settings.get(FluxSimulatorSettings.SEED) != 0){
+            RandomFactory.SEED = settings.get(FluxSimulatorSettings.SEED);
+            Log.info("Random seed set to : " + RandomFactory.SEED);
         }
 
         // fix issue #60 and transfer the temp file

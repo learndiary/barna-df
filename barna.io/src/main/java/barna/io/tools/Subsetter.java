@@ -27,6 +27,7 @@
 
 package barna.io.tools;
 
+import barna.commons.RandomFactory;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
@@ -146,7 +147,7 @@ public class Subsetter implements Tool<Void> {
 			buffy= new BufferedReader(new FileReader(inputFile));
 			writer= new BufferedWriter(new OutputStreamWriter(ostream));
 			double p= numberLines/ (double) inputLines;
-			Random random= new Random();
+			Random random= RandomFactory.get();
 			for (String s= null; (s= buffy.readLine())!= null;) {
 				double t= random.nextDouble();
 				if (t> p) 
@@ -263,7 +264,7 @@ public class Subsetter implements Tool<Void> {
 			buffy= new BufferedReader(new FileReader(inputFile));
 			writer= new BufferedWriter(new OutputStreamWriter(ostream));
 			double p= numberLines/ (2* (double) inputLines);
-			Random random= new Random();
+			Random random= RandomFactory.get();
 			for (String s= null, last= null; (s= buffy.readLine())!= null;last= s) {
 				double t= random.nextDouble();
 				if (t> p) 
