@@ -392,7 +392,7 @@ public class Scorer extends AStalavista {
         if (types.length> 1)
             sb.append("VAR_TYPES=");
         for (int i = 1; i < scores.length; ++i) {
-            sb.append(types[0]< 0? "UNKNOWN": TYPE_DESCRIPTION[types[0]]);
+            sb.append(types[i]< 0? "UNKNOWN": TYPE_DESCRIPTION[types[i]]);
             sb.append(",");
         }
         if (types.length> 1)
@@ -501,7 +501,7 @@ public class Scorer extends AStalavista {
             if (rec== 0) {
                 String sub= seq.substring(j, Math.min(j+ del+ 1, seq.length()));
                 if (!(vv[3].substring(0, sub.length()).equalsIgnoreCase(sub)))
-                    System.currentTimeMillis();
+                    throw new RuntimeException("Variant annotation error at "+ vv[1]+ " "+ vv[2]+"! Expected reference "+ vv[3]+ " found "+ sub);
                 //assert(vv[3].substring(0, sub.length()).equalsIgnoreCase(sub));
             }
 
