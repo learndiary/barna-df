@@ -562,8 +562,98 @@ public class Scorer extends AStalavista {
 
         seq= seq.toUpperCase();
 
+        Node n= graph.getNode(spliceSite);
         if (spliceSite.isDonor()) {
+
             String nt= seq.substring(maxFlanks[0][0], maxFlanks[0][0]+ 2);
+
+            float sscore= Float.NEGATIVE_INFINITY;
+            int stype= TYPE_UNKNOWN;
+            for (int i = 0; i < n.getOutEdges().size(); i++) {
+
+                if (!n.getOutEdges().elementAt(i).isIntronic())
+                    continue;
+
+                SpliceSite cosite= n.getOutEdges().elementAt(i).getHead().getSite();
+                String seq2= nt+ Graph.readSequence(cosite, 0, 0).toUpperCase();
+
+                if (seq2.equals("GTAG")) {
+                    // decide based on donor only
+                    float scoreU2= scoreDonor(seq, geneidParam.getDonorProfile());
+                    float scoreU12= scoreDonor(seq, geneidParam.getU12gtagDonorProfile());
+                    if (scoreU2< -100|| scoreU12> 5) {
+                        // no, too many U12
+                        //getNormScore(scoreU2, geneidParam.getDonorProfile())< getNormScore(scoreU12, geneidParam.getU12gtagDonorProfile())) {
+                        type[0]= TYPE_U12_GTAG;
+                        return scoreU12;
+                    } else {
+                        type[0]= TYPE_U2_GTAG;
+                        return scoreU2;
+                    }
+                } else if (seq2.equals("GCAG")) {
+                    float score= scoreDonor(seq, geneidParam.getU2gcagDonorProfile());
+                    type[0]= TYPE_U2_GCAG;
+                    return score;
+                } else if (seq2.equals("ATAC")) {
+                    float score= scoreDonor(seq, geneidParam.getU12atacDonorProfile());
+                    type[0]= TYPE_U12_ATAC;
+                    return score;
+                }
+            }
+
+        } else if (spliceSite.isAcceptor()) {
+
+            String nt= seq.substring(maxFlanks[0][0], maxFlanks[0][0]+ 2);
+
+            for (int i = 0; i < n.getInEdges().size(); i++) {
+
+                if (!n.getInEdges().elementAt(i).isIntronic())
+                    continue;
+
+                SpliceSite cosite= n.getInEdges().elementAt(i).getTail().getSite();
+                String coseq= Graph.readSequence(cosite, maxFlanks[0][0], maxFlanks[0][1]).toUpperCase();
+                String seq2= coseq.substring(maxFlanks[0][0], maxFlanks[0][0]+ 2)+ nt;
+
+                if (seq2.equals("GTAG")) {
+                    // decide based on donor only
+                    float scoreU2= scoreDonor(coseq, geneidParam.getDonorProfile());
+                    float scoreU12= scoreDonor(coseq, geneidParam.getU12gtagDonorProfile());
+                    if (scoreU2< -100|| scoreU12> 5) {
+                        //getNormScore(scoreU2, geneidParam.getDonorProfile())< getNormScore(scoreU12, geneidParam.getU12gtagDonorProfile())) {
+                        type[0]= TYPE_U12_GTAG;
+                        float score= scoreAcceptor(seq, geneidParam.getU12gtagAcceptorProfile(), null, null);
+                        return score;
+                    } else {
+                        type[0]= TYPE_U2_GTAG;
+                        float score= scoreAcceptor(seq, geneidParam.getAcceptorProfile(), null, null);
+                        return scoreU2;
+                    }
+                } else if (seq2.equals("GCAG")) {
+                    float score= scoreAcceptor(seq, geneidParam.getAcceptorProfile(), null, null);
+                    type[0]= TYPE_U2_GCAG;
+                    return score;
+                } else if (seq2.equals("ATAC")) {
+                    float score= scoreAcceptor(seq, geneidParam.getU12atacAcceptorProfile(), null, null);
+                    type[0]= TYPE_U12_ATAC;
+                    return score;
+                }
+
+            }
+        }
+
+        type[0]= TYPE_UNKNOWN;
+        return Float.NEGATIVE_INFINITY;
+    }
+
+
+    protected float scoreSiteDELME(SplicingGraph graph, SpliceSite spliceSite, String seq, int[] type) {
+
+        seq= seq.toUpperCase();
+
+        if (spliceSite.isDonor()) {
+
+            String nt= seq.substring(maxFlanks[0][0], maxFlanks[0][0]+ 2);
+
             if (nt.equals("GC")) {
                 type[0]= TYPE_U2_GCAG;
                 float score= scoreDonor(seq, geneidParam.getU2gcagDonorProfile());
@@ -614,6 +704,8 @@ public class Scorer extends AStalavista {
 
             }
         }
+
+        // else
         if (spliceSite.isAcceptor()) {
             String nt= seq.substring(maxFlanks[1][0], maxFlanks[1][0]+ 2);
             // score first u2 with ppt
@@ -635,10 +727,11 @@ public class Scorer extends AStalavista {
 
                     SpliceSite donor= n.getInEdges().elementAt(i).getTail().getSite();
                     String donorSeq= Graph.readSequence(donor, maxFlanks[0][0], maxFlanks[0][1]).toUpperCase();
+                    String donorNt= donorSeq.substring(maxFlanks[0][0], maxFlanks[0][0]+ 2);
                     float donorScore= Float.NEGATIVE_INFINITY;
-                    if (nt.equals("AC"))
+                    if (nt.equals("AC")) {
                         donorScore= scoreDonor(donorSeq, geneidParam.getU12atacDonorProfile());
-                    else
+                    } else
                         donorScore= scoreDonor(donorSeq, geneidParam.getU12gtagDonorProfile());
 
                     if (donorScore+ acceptorScore> scoreU12)
@@ -766,6 +859,85 @@ public class Scorer extends AStalavista {
             seq= baseSeq.substring(0, seq.length()- (maxFlanks[1][1]- GParam.getDonorFlank3(profile)));
         return GeneID.scoreDonor(seq, profile);
     }
+
+    /**
+     * Computes a relative score for the donor
+     * @param score the real score to be normalized
+     * @param profile donor profile for computation
+     * @return score of the site normalized according to model
+     */
+    protected float getNormScore(float score, Profile profile) {
+
+        float min= getLimitScore(profile, true);
+        float max= getLimitScore(profile, false);
+
+        float nval= ((score- min)/ (max- min));
+        return nval;
+    }
+
+    protected HashMap<Profile, Float> mapMin= null, mapMax= null;
+
+    /**
+     * Returns the minimum/maximum sum of a profile, ignoring
+     * artificially low numbers that represent (-Infinity).
+     * @param profile the profile to be assessed
+     * @param min flag to trigger the search for the minimum
+     *            respectively maximum
+     * @return limiting value of the sum
+     */
+    protected float getLimitScore(Profile profile, boolean min) {
+        if (min) {
+            if (mapMin== null)
+                mapMin= new HashMap<Profile, Float>();
+            if (mapMin.containsKey(profile))
+                return mapMin.get(profile);
+            else {
+                float val= calcLimitScore(profile, min);
+                mapMin.put(profile, val);
+                return val;
+            }
+
+        } else {    /* max */
+            if (mapMax== null)
+                mapMax= new HashMap<Profile, Float>();
+            if (mapMax.containsKey(profile))
+                return mapMax.get(profile);
+            else {
+                float val= calcLimitScore(profile, min);
+                mapMax.put(profile, val);
+                return val;
+            }
+
+        }
+    }
+
+    /**
+     * Computes minimum or maximum score of a markov chain,
+     * disregarding constants that express -Inf (-9999).
+     * @param profile the Markov chain
+     * @param min flag to indicate whether the min or max is to be computed
+     * @return the corresponding minimum/maximum sum of the Markov chain
+     */
+    protected float calcLimitScore(Profile profile, boolean min) {
+
+        float[][] t= profile.getTransitionValues();
+        float sum= 0f;
+        for (int i = 0; i < profile.getDimension(); i++) {
+
+            float x= (min? Float.MAX_VALUE: Float.MIN_VALUE);
+            for (int j = 0; j < t[i].length; j++) {
+                if (t[i][j]<= -1000)    // empiric value from parameter file, no constant available
+                    continue;
+                if ((min&& t[i][j]< x)|| ((!min)&& t[i][j]> x))
+                    x= t[i][j];
+            }
+            sum+= x;
+
+        }
+
+        return sum;
+    }
+
 
     /**
      * Adapt sequence for profile and delegate to HMM score computation
