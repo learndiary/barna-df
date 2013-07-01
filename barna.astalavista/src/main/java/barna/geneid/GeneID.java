@@ -514,7 +514,7 @@ public class GeneID {
 
 
         /* Applying part of the profile */
-        for (int j=0; j < p.dimension; j++) {
+        for (int i=p.offset, j=0; i < p.dimension; i++, j++) {
 
             /* i is the position inside the region */
             String tuple= s.substring(j);   // works for GCAG
