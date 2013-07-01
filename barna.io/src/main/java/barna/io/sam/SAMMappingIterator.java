@@ -24,15 +24,24 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     private ArrayList<SAMMapping> mappings;
     private int currPos, markedPos;
     private boolean allReads;
+    /**
+     * Filter reads by their score
+     */
+    private int scoreFilter;
 
     public SAMMappingIterator(SAMRecordIterator iterator) {
         this(iterator, DEFAULT_ALL_READS);
     }
 
     public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads) {
+        this(iterator, allReads, -1);
+    }
+
+    public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads, int scoreFilter) {
         this.wrappedIterator = iterator;
         this.currPos = this.markedPos = -1;
         this.allReads = allReads;
+        this.scoreFilter = scoreFilter;
         init();
     }
 
@@ -51,7 +60,9 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
 
             if (mappings == null)
                 mappings = new ArrayList<SAMMapping>();
-            mappings.add(mapping);
+            if(scoreFilter < 0 || mapping.getScore() >= this.scoreFilter){
+                mappings.add(mapping);
+            }
         }
 
         if (mappings!=null) {

@@ -29,7 +29,6 @@ package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
-import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
@@ -92,22 +91,28 @@ public class AnnotationMapper extends SplicingGraph {
     /**
      * For counting various stuff
      */
-    ComplexCounter cc= null;
+    private ComplexCounter cc= null;
+
+    /**
+     * Read descriptor to be used for mapping
+     */
+    private UniversalReadDescriptor descriptor=null;
 
     /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene) {
-        this(gene, DEFAULT_COUNTER_TYPES);
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor) {
+        this(gene, descriptor, DEFAULT_COUNTER_TYPES);
     }
 
-    public AnnotationMapper(Gene gene, EnumSet<CounterType> counterTypes) {
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
+        this.descriptor = descriptor;
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
@@ -304,15 +309,13 @@ public class AnnotationMapper extends SplicingGraph {
      * Maps genome-mapped reads into the graph.
      *
      * @param mappings iterator of input lines
-     * @param settings
+     * @param insertFile
      */
-	public void map(MSIterator<Mapping> mappings, FluxCapacitorSettings settings) {
+	public void map(MSIterator<Mapping> mappings, File insertFile) {
 
         if (mappings == null)
             return;
 
-        UniversalReadDescriptor descriptor = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
-        File insertFile = settings.get(FluxCapacitorSettings.INSERT_FILE);
         BufferedWriter buffy = null;
         if (insertFile != null)
             try {

@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.security.Permission;
@@ -220,7 +221,7 @@ public class Flux {
         } catch (Exception e) {
             Log.error("","\n");
             if(e.getMessage() != null)
-                Log.error(e.getMessage());
+                Log.error(e.getMessage(), e);   // always provide stacktrace
             else
                 Log.error(e.getMessage(), e);
             Log.error("","");
@@ -407,8 +408,12 @@ public class Flux {
         Set<Class<? extends Tool>> toolClasses = reflections.getSubTypesOf(Tool.class);
         for (Class<? extends Tool> toolClass : toolClasses) {
             try {
-                Tool fluxTool = toolClass.newInstance();
-                tools.add(fluxTool);
+                // BARNA-304 -- added check for interface extensions or
+                // abstract class implementation of Tool
+                if(!toolClass.isInterface() && !Modifier.isAbstract(toolClass.getModifiers())){
+                    Tool fluxTool = toolClass.newInstance();
+                    tools.add(fluxTool);
+                }
             } catch (Exception e) {
                 Log.error("Error while creating tool instance for " + toolClass.getName(), e);
                 Log.error("Make sure the class exists and has a default constructor.");

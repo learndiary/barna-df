@@ -28,6 +28,7 @@
 package barna.flux.simulator;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.RandomFactory;
 import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.commons.utils.StringUtils;
@@ -309,7 +310,7 @@ public class Sequencer implements Callable<Void> {
             Log.progressFinish();
 
             if (tmpFasta != null) {
-                Log.message("\n\tCopying qFasta file");
+                Log.message("\n\tCopying Fasta file");
                 File fileFASTA = getFASTAfile();
                 FileHelper.move(tmpFasta, fileFASTA);
                 Log.progressFinish();
@@ -717,11 +718,11 @@ public class Sequencer implements Callable<Void> {
         /**
          * Random sampler pick reads
          */
-        private Random rnd = new Random();
+        private Random rnd = RandomFactory.get();
         /**
          * sens or anti-sense sampler
          */
-        private Random rndFiftyFifty = new Random();
+        private Random rndFiftyFifty = RandomFactory.get();
         /**
          * Count sens reads written
          */

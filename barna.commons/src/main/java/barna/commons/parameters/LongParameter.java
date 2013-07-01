@@ -55,10 +55,10 @@ class LongParameter extends NumberParameter<Long> {
     }
 
     @Override
-    public void parse(String value) throws ParameterException {
+    public Long parse(String value) throws ParameterException {
         try {
             this.value = new BigDecimal(value).longValue();
-            return;
+            return this.value;
         } catch (Exception e) {
         }
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);

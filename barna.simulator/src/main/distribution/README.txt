@@ -22,6 +22,9 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.2.1
+    * [BARNA-306] - Added a seed parameter and pass it to all Random instances to make results reproducable
+
 FluxSimulator 1.2
 
     * [BARNA-215] - Sequencing fails with ArrayIndexOutOfBoundsException

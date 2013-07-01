@@ -3,6 +3,7 @@ package barna.flux.capacitor.profile;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.matrix.UniversalMatrix;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.FileHelper;
 import barna.io.MSIterator;
@@ -72,12 +73,17 @@ public class BiasProfiler implements Callable<Profile> {
      * Writer of the coverage statistics of the 5' to 3' read distribution.
      */
     private BufferedWriter writerTmpCovStats = null;
+    /**
+     * The capacitor instance
+     */
+    private final FluxCapacitor capacitor;
 
-    public BiasProfiler(FluxCapacitorSettings settings, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
-        if (settings == null) {
+    public BiasProfiler(FluxCapacitor capacitor, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
+        if (capacitor == null) {
             throw new NullPointerException("You have to specify settings! NULL not permitted.");
         }
-        this.settings = settings;
+        this.settings = capacitor.getSettings();
+        this.capacitor = capacitor;
         this.strand = strand;
         this.paired = paired;
 
@@ -110,6 +116,9 @@ public class BiasProfiler implements Callable<Profile> {
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                 Log.info("", "");
                 Log.info("PROFILE", "Scanning the input and getting the attributes.");
+                if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null){
+                    Log.info("PROFILE", "Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
+                }
             }
             Log.progressStart("profiling");
 
@@ -256,8 +265,8 @@ public class BiasProfiler implements Callable<Profile> {
 
         Mapping bed1, bed2;
         UniversalReadDescriptor.Attributes
-                attributes = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes(),
-                attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).createAttributes();
+                attributes = capacitor.getReadDescriptor().createAttributes(),
+                attributes2 = capacitor.getReadDescriptor().createAttributes();
         int elen = tx.getExonicLength();    // this is the "effective" length, modify by extensions
 //				if (elen< readLenMin)
 //					return;	// discards reads
@@ -265,7 +274,7 @@ public class BiasProfiler implements Callable<Profile> {
         UniversalMatrix m = profile.getMatrix(elen);
         MappingStats stats = profile.getMappingStats();
 
-        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+        if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
             if (profile.getCoverageStats() == null)
                 profile.setCoverageStats(new CoverageStats(elen));
             else
@@ -276,7 +285,7 @@ public class BiasProfiler implements Callable<Profile> {
             stats.incrReadsSingleTxLoci(1);
             bed1= mappings.next();
             CharSequence tag = bed1.getName();
-            attributes = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(tag, attributes);
+            attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
             if (paired) {
                 if (attributes.flag < 1)
                     Log.warn("Read ignored, error in readID: " + tag);
@@ -303,7 +312,7 @@ public class BiasProfiler implements Callable<Profile> {
             if (paired) {
 
 //                    mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(bed1,settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+                Iterator<Mapping> mates = mappings.getMates(bed1,capacitor.getReadDescriptor());
                 while(mates.hasNext()) {
                     bed2= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
@@ -339,7 +348,7 @@ public class BiasProfiler implements Callable<Profile> {
 
                     m.add(bpoint1, bpoint2, -1, -1, elen);    // 5TODO rlen currently not used
                     // update coverage
-                    if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+                    if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                         if (bpoint1 < bpoint2) {
                             for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
                                 profile.getCoverageStats().getCoverage().increment(i);
@@ -363,7 +372,7 @@ public class BiasProfiler implements Callable<Profile> {
                 m.add(bpoint1, -1, elen,
                         bed1.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
                 // update coverage
-                if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+                if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                     if (bed1.getStrand() == tx.getStrand()) {
                         for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
                             profile.getCoverageStats().getCoverage().increment(i);
@@ -377,20 +386,19 @@ public class BiasProfiler implements Callable<Profile> {
         } // iterate bed objects
 
         // output coverage stats
-        if (settings.get(FluxCapacitorSettings.COVERAGE_STATS)) {
+        if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
 
 
-            if (profile.getCoverageStats().writeCoverageStats(getCoverageWriter(),
+            if (!profile.getCoverageStats().writeCoverageStats(getCoverageWriter(),
                                                           tx.getGene().getLocusID(),
                                                           tx.getTranscriptID(),
                                                           tx.isCoding(),
                                                           tx.getExonicLength(),
-                                                          paired ? stats.getMappingPairsSingleTxLoci() : stats.getMappingsSingleTxLoci()))
-                Log.info("Coverage statistics in " + settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath());
-            else
+                                                          paired ? stats.getMappingPairsSingleTxLoci() : stats.getMappingsSingleTxLoci())){
                 Log.warn("Failed to write coverage statistics to " +
                     settings.get(FluxCapacitorSettings.COVERAGE_FILE).getAbsolutePath() + barna.commons.system.OSChecker.NEW_LINE
                     );
+            }
         }
     }
 

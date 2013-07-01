@@ -29,6 +29,7 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
+import barna.io.FileHelper;
 import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 /**
@@ -56,7 +58,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				super("READ_DESCRIPTOR",
                         " Expression how to parse the read IDs, or one of the shorthand names ("
                                 + StringUtils.toString(UniversalReadDescriptor.getMapSimpleDescriptors().keySet(), ',') + ")",
-                        UniversalReadDescriptor.getDefaultDescriptor(),
+                        null,
                         UniversalReadDescriptor.class,
                         null);
 			}
@@ -71,7 +73,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 				descriptor= value;
 			}
 			
-			public void parse(String value) throws ParameterException {
+			public UniversalReadDescriptor parse(String value) throws ParameterException {
 				
 				descriptor= new UniversalReadDescriptor();
 				
@@ -83,13 +85,20 @@ public class FluxCapacitorSettings extends ParameterSchema {
 					);
 					throw parseException;
 				}
-				
+                return this.descriptor;
 			}
 			
 			protected void validate(ParameterSchema schema)
 					throws ParameterException {
 				if (parseException!= null)
 					throw parseException;
+                File mapping = schema.get(FluxCapacitorSettings.MAPPING_FILE);
+                if (FileHelper.getExtension(mapping).toUpperCase().equals("BAM") && schema.get(READ_DESCRIPTOR)!=null) {
+                    throw new ParameterException("You cannot specify a READ_DESCRIPTOR for BAM files");
+                }
+                if (FileHelper.getExtension(mapping).toUpperCase().contains("BED") && schema.get(READ_DESCRIPTOR)==null) {
+                    throw new ParameterException("You must specify a READ_DESCRIPTOR for BED files");
+                }
 			}
 
 			protected UniversalReadDescriptor get() {
@@ -115,14 +124,49 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	 }
 	
 	
-	 /**
-	  * 
-	  * @author Micha Sammeth (gmicha@gmail.com)
-	  *
-	  */
-	 public static enum AnnotationMapping {
-		 AUTO, PAIRED, STRANDED, SINGLE, COMBINED
-	 }
+     /**
+      *
+      * @author Micha Sammeth (gmicha@gmail.com)
+      *
+      */
+
+    /**
+     * Enum for annotation mapping types
+     */
+     public static enum AnnotationMapping {
+         AUTO, SINGLE, PAIRED, SINGLE_STRANDED, PAIRED_STRANDED;
+
+        public boolean isStranded() {
+            return (this.equals(SINGLE_STRANDED) || this.equals(PAIRED_STRANDED));
+        }
+
+        public boolean isPaired() {
+            return (this.equals(PAIRED) || this.equals(PAIRED_STRANDED));
+        }
+
+        public boolean isSingle() {
+            return (this.equals(SINGLE) || this.equals(SINGLE_STRANDED));
+        }
+     }
+
+    /**
+     * Enum for strandedness types
+     */
+    public static enum ReadStrand {
+        NONE, SENSE, ASENSE, MATE1_SENSE, MATE2_SENSE;
+
+        public boolean isNone() {
+            return this.equals(NONE);
+        }
+
+        public boolean isPaired () {
+            return (this.equals(MATE1_SENSE) || this.equals(MATE2_SENSE));
+        }
+
+        public boolean isSingle() {
+            return (this.equals(SENSE) || this.equals(ASENSE));
+        }
+    }
 
     /**
      * Helper to parse relative filenames
@@ -133,8 +177,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	  * Descriptor with parsing info for the read IDs.
 	  */
 	 public static final Parameter<UniversalReadDescriptor> READ_DESCRIPTOR =
-		 	new UniversalReadDescriptorParameter();
-		 
+		 	new UniversalReadDescriptorParameter().longOption("read-descriptor").shortOption('d');
+
+    public static final Parameter<ReadStrand> READ_STRAND = Parameters.enumParameter(
+            "READ_STRAND",
+            " Information about read strandedness",
+            ReadStrand.NONE,
+            null);
 
 	 /**
 	  * Information used during annotation mapping
@@ -148,23 +197,33 @@ public class FluxCapacitorSettings extends ParameterSchema {
 			        public void validate(final ParameterSchema schema, final Parameter parameter) throws ParameterException {
 			        	
 			        	UniversalReadDescriptor d= schema.get(READ_DESCRIPTOR);
-			        	AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
-			        	
-			        	// paired read descriptor requires paired-end descriptor, not vice versa
-			        	if ((!d.isPaired())&& (a.equals(AnnotationMapping.PAIRED)|| a.equals(AnnotationMapping.COMBINED)))
-			        		throw new ParameterException("Annotation mapping "+a + " requires a paired-end read descriptor!");
-			        	// stranded annotation mapping requires stranded descriptor, not vice versa
-			        	if ((!d.isStranded())&& a.equals(AnnotationMapping.STRANDED))
-			        		throw new ParameterException("Annotation mapping "+a + " requires a stranded read descriptor!");
-			        	if (a.equals(AnnotationMapping.COMBINED)&&
-			        			(!(d.toString().contains(UniversalReadDescriptor.TAG_MATE1SENSE)
-			        			|| d.toString().contains(UniversalReadDescriptor.TAG_MATE2SENSE)))) {
-			        		
-			        		throw new ParameterException("Annotation mapping "+a + " requires a read descriptor "
-			        				+ UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE+ " or "+ UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE+ "!");
-			        	}
+                        AnnotationMapping a= schema.get(ANNOTATION_MAPPING);
+                        ReadStrand r = schema.get(READ_STRAND);
+			        	if (d != null) {
+                            // paired read descriptor requires paired-end descriptor, not vice versa
+                            if ((!d.isPaired()) && a.isPaired())
+                                throw new ParameterException("Annotation mapping " + a + " requires a paired-end read descriptor!");
+                            // stranded annotation mapping requires stranded descriptor, not vice versa
+                            if ((!d.isStranded()) && a.isStranded()) {
+                                if (r.isNone())
+                                    throw new ParameterException("Annotation mapping " + a + " requires a stranded read descriptor or strand information!");
+                            }
+//                            if (a.equals(AnnotationMapping.PAIRED_STRANDED)&&
+//                                    (!(d.toString().contains(UniversalReadDescriptor.TAG_MATE1SENSE)
+//                                    || d.toString().contains(UniversalReadDescriptor.TAG_MATE2SENSE)))) {
+//
+//                                throw new ParameterException("Annotation mapping " + a + " requires a read descriptor "
+//                                        + UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE+ " or "+ UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE+ "!");
+//                            }
+                        } else {
+                            if (a.isStranded() && r.isNone()) {
+                                    throw new ParameterException("Annotation mapping " + a + " requires strand information.");
+                            }
+                        }
+                        if (a.isPaired() && r.isSingle())
+                            throw new ParameterException("Annotation mapping " + a + " requires paired reads.");
 			        }
-	    	});
+	    	}).longOption("annotation-mapping").shortOption('m');
 	 
 	 	/**
 	 	 * The file containing the annotation.
@@ -182,7 +241,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        }, relativePathParser);
+        }, relativePathParser).longOption("annotation").shortOption('a');
 
 	    /**
 	     * The file containing the mapped reads.
@@ -200,7 +259,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        }, relativePathParser);
+        }, relativePathParser).longOption("input").shortOption('i');
 
 	    /**
          * The file containing the read bias profile.
@@ -233,7 +292,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
 
             }
-        }, relativePathParser);
+        }, relativePathParser).longOption("output").shortOption('o');
 
 
 	    /**
@@ -270,12 +329,14 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
                 // check pre-conditions for read pairing
                 UniversalReadDescriptor d = schema.get(READ_DESCRIPTOR);
-                AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
-                if (!(d.isPaired() && (a.equals(AnnotationMapping.PAIRED) || a.equals(AnnotationMapping.COMBINED)))) {
-                    throw new ParameterException("Read pairing required for annotating inserts: " +
-                            (d.isPaired() ? ANNOTATION_MAPPING.getName() + " " + a.toString() : READ_DESCRIPTOR.getName() + " " + d.toString()));
+                File inputFile = schema.get(MAPPING_FILE);
+                if (d != null && (inputFile != null && !inputFile.getName().toLowerCase().endsWith(".bam"))) {
+                    AnnotationMapping a = schema.get(ANNOTATION_MAPPING);
+                    if (!(d.isPaired() && a.isPaired())) {
+                        throw new ParameterException("Read pairing required for annotating inserts: " +
+                                (d.isPaired() ? ANNOTATION_MAPPING.getName() + " " + a.toString() : READ_DESCRIPTOR.getName() + " " + d.toString()));
+                    }
                 }
-
             }
 
         }, relativePathParser);
@@ -304,23 +365,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
 
 	    /**
-	     * Flag to output coverage statistic
-	     */
-	    public static final Parameter<Boolean> COVERAGE_STATS = Parameters.booleanParameter("COVERAGE_STATS", "Flag to output coverage statistics", false, new ParameterValidator() {
-            @Override
-            public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
-                boolean set = (Boolean) schema.get(parameter);
-                File file = (File) schema.get(COVERAGE_FILE);
-                if (set && file == null)
-                    throw new ParameterException("Parameter " + COVERAGE_FILE.getName()
-                            + " has to be set to output coverage statistics.");
-            }
-        });
-
-	    /**
 	     * The file where profiles are stored in.
 	     */
-	    public static final Parameter<File> COVERAGE_FILE = Parameters.fileParameter("COVERAGE_FILE", "The file to which coverage profiles are stored", null, new ParameterValidator() {
+	    public static final Parameter<File> COVERAGE_FILE = Parameters.fileParameter("COVERAGE_FILE", "Calculate coverage profile write it to the specified file", null, new ParameterValidator() {
             @Override
             public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
                 File file = (File) schema.get(parameter);
@@ -346,13 +393,6 @@ public class FluxCapacitorSettings extends ParameterSchema {
                 }
             }
         }, relativePathParser);
-        /**
-         * If true, and a stats file is specified, the stats are added to the existing stats. This is useful, i.e, if you if you
-         * run the chromosomes in single runs and want to sum up the stats in one file. NOTE that the stats
-         * are actually added and the stats are summed up. You will 'loose' the old stats
-         */
-        public static final Parameter<Boolean> STATS_FILE_APPEND = Parameters.booleanParameter("STATS_FILE_APPEND", "Append to the stats file. \n" +
-                "This adds results from this run to an existing capacitor stats file.", false);
 
 	    /**
 	     * The temporary directory.
@@ -382,7 +422,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
          */
         public static final Parameter<EnumSet<CountElements>> COUNT_ELEMENTS = Parameters.enumSetParameter(
                 "COUNT_ELEMENTS",
-                " Count elements specified in the list",
+                " Count specified elements. Possible elements are : " + Arrays.toString(CountElements.values()),
                 EnumSet.noneOf(CountElements.class),
                 CountElements.class,
                 null);
@@ -401,9 +441,9 @@ public class FluxCapacitorSettings extends ParameterSchema {
          */
         public static final Parameter<SAMFileReader.ValidationStringency> SAM_VALIDATION_STRINGENCY = Parameters.enumParameter(
                 "SAM_VALIDATION_STRINGENCY",
-                " Set SAMtools validation stringency for validating records",
+                " Set SAMtools validation stringency for validating records. One of STRICT|LENIENT|SILENT",
                 SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
-                null);
+                null).longOption("sam-validation-stringency");
 
 	    /**
 	     * Load the setting from a file. NOTE that this does not validate the settings!
@@ -463,8 +503,33 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * A <code>boolean</code> value specifying whether locus sorting of reads 
 	     * is carried out in RAM-memory or on disk.
 	     */
-	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM", "Sort reads in RAM memory, not on disk", true);
-	    
+	    public static final Parameter<Boolean> SORT_IN_RAM = Parameters.booleanParameter("SORT_IN_RAM",
+                                                                                         "Sort reads in RAM memory, not on disk",
+                                                                                        true).longOption("sort-in-ram").shortOption('r');
+        /**
+	     * An <code>int</code> value specifying the minimum mapping score to use a mapping
+         * for quantification
+	     */
+	    public static final Parameter<Integer> MIN_SCORE = Parameters.intParameter("MIN_SCORE",
+                                                                                         "Minimum mapping score. Mappings with score < min_score are discarded (mapq for BAM, score for BED)",
+                                                                                        -1).longOption("min-score").shortOption('q');
+
+      /**
+	     * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file
+         * for quantification
+	     */
+	    public static final Parameter<Boolean> USE_FLAGS = Parameters.booleanParameter("USE_FLAGS",
+                                                                                         "Use SAM flags when scanning the BAM mapping file",
+                                                                                        true).longOption("use-flags");
+
+      /**
+	     * A <code>boolean</code> value specifying to exclude file checking before the run
+         *
+	     */
+	    public static final Parameter<Boolean> NO_FILE_CHECK = Parameters.booleanParameter("NO_FILE_CHECK",
+                                                                                         "Disable scanning of input files before the run",
+                                                                                        false).longOption("no-file-check");
+
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,
 	     * <b>iff</b> they were unsorted. 

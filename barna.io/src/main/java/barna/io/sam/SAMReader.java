@@ -24,6 +24,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     public static final boolean DEFAULT_CONTAINED = false;
     public static final boolean DEFAULT_ALL_READS = false;
+    public static final boolean DEFAULT_USE_FLAGS = true;
 
     private SAMFileReader reader;
     private boolean contained;
@@ -42,6 +43,8 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     private boolean paired = false;
     private boolean allReads;
+    private boolean useFlags;
+    private int scoreFilter;
 
     /**
      * Creates an instance of the reader
@@ -87,10 +90,28 @@ public class SAMReader extends AbstractFileIOWrapper implements
      *                  contained/overlapping the query region
      */
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads) {
+        this(inputFile, contained, sortInRam, allReads, -1);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter) {
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter, boolean useFlags) {
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter) {
+        this(inputFile, contained, sortInRam, allReads, scoreFilter, DEFAULT_USE_FLAGS);
+    }
+
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter, boolean useFlags) {
         super(inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
         this.allReads = allReads;
+        this.scoreFilter = scoreFilter;
+        this.useFlags = useFlags;
     }
 
     private SAMFileReader getSAMFileReader(boolean createNew) {
@@ -121,6 +142,16 @@ public class SAMReader extends AbstractFileIOWrapper implements
         if (!getSAMFileReader(false).hasIndex() && index==null) {
             if (!createIndex())
                 throw new RuntimeException("The input BAM file must be sorted and indexed.");
+        }
+        if (!paired) {
+            for (SAMRecord r : getSAMFileReader(false)) {
+                if(r.getReadPairedFlag()) {
+                    paired=true;
+                }
+                break;
+            }
+            this.close();
+            this.reset();
         }
         return true;
 	}
@@ -172,17 +203,17 @@ public class SAMReader extends AbstractFileIOWrapper implements
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
             if (sortInRam) {
                 try {
-                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads);
+                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads, scoreFilter);
                 }
                 catch (OutOfMemoryError error) {
                     SAMFileHeader header =  getSAMFileReader(true).getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads);
+                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter);
                 }
             } else {
                 SAMFileHeader header =  getSAMFileReader(false).getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads);
+                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter);
             }
         }
         else
@@ -233,10 +264,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		if (descriptor.equals(UniversalReadDescriptor.getDefaultDescriptor()))
-            return true;
-        else
-            throw new RuntimeException("You cannot specify the read descriptor when using BAM input files.");
+		return (this.isPaired() == descriptor.isPaired());
 	}
 
     @Override
@@ -305,30 +333,35 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
             for(final SAMRecord rec : getSAMFileReader(false)) {
                 if (!paired && rec.getReadPairedFlag())
-                    paired = true;
-                if (rec.getReadUnmappedFlag()) {
+                    this.setPaired(true);
+                if (rec.getReadUnmappedFlag() || (this.scoreFilter > 0 && rec.getMappingQuality() < this.scoreFilter)) {
                     ++countSkippedLines;
                 } else {
                     String readId = rec.getReadName();
                     if (rec.getReadPairedFlag()) {
                         readId += "/"+(rec.getFirstOfPairFlag()?1:2);
                     }
-                    if (rec.getNotPrimaryAlignmentFlag()) {
-                        if (!flagSet) {
-                            //flags are set correctly
-                            flagSet = true;
-                            sorterFuture.cancel(true);
-                            countReads=primaryAlignments;
+                    if (this.isUsingFlags()) {
+                        if (rec.getNotPrimaryAlignmentFlag()) {
+                            if (!flagSet) {
+                                //flags are set correctly
+                                flagSet = true;
+                                sorterFuture.cancel(true);
+                                countReads=primaryAlignments;
+                            }
+                        } else {
+                            if (!flagSet) {
+                                //flags are not set properly
+                                ++primaryAlignments;
+                                tmpWriter.write(readId);
+                                tmpWriter.write(OSChecker.NEW_LINE);
+                            } else {
+                                ++countReads;
+                            }
                         }
-                    } else {
-                        if (!flagSet) {
-                            //flags are not set properly
-                            ++primaryAlignments;
+                    }  else {
                         tmpWriter.write(readId);
                         tmpWriter.write(OSChecker.NEW_LINE);
-                        } else {
-                            ++countReads;
-                    }
                     }
                     ++countAll;
                     if (rec.getAlignmentBlocks().size()>1) {
@@ -345,12 +378,11 @@ public class SAMReader extends AbstractFileIOWrapper implements
             if (!flagSet) {
                 //sort the read ids to get the number of reads
                 Log.info("","");
-                Log.info("The flag for secondary alignments is not set on the input BAM file. Counting the number " +
-                        "of reads without this information.");
+                Log.info("The Flux Capacitor is not using the SAM flags for counting the number of reads in the mapping file.");
                 Log.warn("This process can be long for big files!");
-            tmpWriter.flush();
-            tmpWriter.close();
-            sorterFuture.get();
+                tmpWriter.flush();
+                tmpWriter.close();
+                sorterFuture.get();
             }
 
             Log.progressFinish(Constants.OK, true);
@@ -395,8 +427,17 @@ public class SAMReader extends AbstractFileIOWrapper implements
         }
 	}
 
+    public void setFlagsUsage(boolean useFlags) {
+        this.useFlags = useFlags;
+    }
+
+    public boolean isUsingFlags() {
+        return useFlags;
+    }
+
     @Override
     public MSIterator<Mapping> iterator() {
         return iter;
     }
+
 }

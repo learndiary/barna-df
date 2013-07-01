@@ -387,48 +387,22 @@ public class MappingStats {
      * Write the stats to file in JSON format
      *
      * @param statsFile the file to write to
-     * @param append whether append the current stats to an existing file
      * @throws Exception
      */
-    public void writeStats(File statsFile, boolean append) throws Exception {// BARNA-103 : write stats to file
+    public void writeStats(File statsFile) throws Exception {// BARNA-103 : write stats to file
         if (statsFile != null) {
             MappingStats statsToWrite = this;
             BufferedWriter writer = null;
-            BufferedReader reader = null;
-
-
-            File lockFile = new File(statsFile.getAbsolutePath() + ".lock");
-    //            if(!lockFile.exists()) lockFile.createNewFile();
-            FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-            FileLock lock = channel.lock();
-
-
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                if (statsFile.exists() && append) {
-                    // read stats file and append
-                    reader = new BufferedReader(new FileReader(statsFile));
-                    MappingStats existingStats = gson.fromJson(reader, MappingStats.class);
-                    reader.close();
-                    existingStats.add(this);
-                    statsToWrite = existingStats;
-                }
-                Log.info((append ? "Appending stats to " : "Writing stats to ") + statsFile.getAbsolutePath());
+                Log.info("Writing stats to " + statsFile.getAbsolutePath());
                 writer = new BufferedWriter(new FileWriter(statsFile));
                 gson.toJson(statsToWrite, writer);
                 writer.close();
             } catch (Exception e) {
-                Log.error("Unable to " + (append ? "append stats to " : "write stats to ") + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
+                Log.error("Unable to write stats to " + statsFile.getAbsolutePath() + " : " + e.getMessage(), e);
             } finally {
-                if (reader != null) reader.close();
                 if (writer != null) writer.close();
-                // release the lock
-                try {
-                    lock.release();
-                } catch (IOException e) {
-                    Log.error("Unable to release lock");
-                }
-                channel.close();
             }
         }
     }

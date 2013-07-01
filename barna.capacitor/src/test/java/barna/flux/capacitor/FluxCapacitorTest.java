@@ -35,9 +35,15 @@ public class FluxCapacitorTest {
     final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     final File BED_HG_PROFILE = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.profile").getFile());
+    final File BED_HG_JUNCTION = new File(getClass().getResource("/chr1_329653_320881_junction.bed").getFile());
+    final File GTF_HG_JUNCTION = new File(getClass().getResource("/chr1_329653_320881_junction.gtf").getFile());
 
     @BeforeClass
     public static void initExecuter() {
+        //Force en-US locale to use "." as the decimal separator in Windows OS
+        if (OSChecker.isWindows()) {
+            Locale.setDefault(new Locale("en", "US"));
+        }
         Execute.initialize(2);
     }
 
@@ -536,7 +542,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("PROFILE_FILE", proFile);
-        pars.put("COVERAGE_STATS", "true");
         pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -557,7 +562,6 @@ public class FluxCapacitorTest {
         pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
         pars.put("READ_DESCRIPTOR", "PAIRED");
         pars.put("PROFILE_FILE", proFile);
-        pars.put("COVERAGE_STATS", "true");
         pars.put("COVERAGE_FILE", coveragefile.getAbsolutePath());
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -620,11 +624,6 @@ public class FluxCapacitorTest {
 
     @Test
     public void testFluxGtf() throws Exception {
-        //Force en-US locale to use "." as the decimal separator in Windows OS
-        if (OSChecker.isWindows()) {
-            Locale.setDefault(new Locale("en", "US"));
-        }
-
         File proFile = new File(currentTestDirectory, FileHelper.append(FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString(), ".profile", true, null));
 
         Map pars = new HashMap();
@@ -669,4 +668,39 @@ public class FluxCapacitorTest {
             assertEquals(runLines.get(i), refLines.get(i));
         }
     }
+
+    @Test
+    public void testJunctionsStranded() throws Exception {
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_JUNCTION);
+        pars.put("MAPPING_FILE", BED_HG_JUNCTION);
+        pars.put("READ_DESCRIPTOR", UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED_STRANDED);
+        pars.put("DECONVOLUTE", false);
+        pars.put("COUNT_ELEMENTS","[SPLICE_JUNCTIONS]");
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
+        FluxCapacitorRunner.runCapacitor(parFile,null);
+
+        assertTrue(GTF_HG_JUNCTION.exists());
+        assertTrue(BED_HG_JUNCTION.exists());
+        File output = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
+        assertTrue(output.exists());
+        assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
+
+        BufferedReader runGtf = new BufferedReader(new FileReader(output));
+
+        List<String> runLines = new ArrayList<String>();
+
+        String line;
+        while ((line = runGtf.readLine()) != null) {
+            runLines.add(line);
+        }
+        runGtf.close();
+
+        assertEquals(runLines.size(),2);
+        assertEquals("1\tflux\tjunction\t320653\t320881\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 4.000000", runLines.get(0));
+        assertEquals("1\tflux\tjunction\t320938\t321032\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 2.000000",runLines.get(1));
+    }
+
 }

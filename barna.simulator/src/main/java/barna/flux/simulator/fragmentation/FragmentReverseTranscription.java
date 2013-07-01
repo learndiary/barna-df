@@ -28,6 +28,7 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.RandomFactory;
 import barna.commons.log.Log;
 import barna.flux.simulator.FluxSimulatorSettings;
 import barna.flux.simulator.PWM;
@@ -52,10 +53,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
     //private Map<CharSequence, double[]> mapWeightSense = null;
     //private Map<CharSequence, double[]> mapWeightAsense = null;
     private int[] index1;
-    private Random rnd1 = new Random();
-    private Random rnd2 = new Random();
-    private Random rnd3 = new Random();
-    private Random rtRndWhere = new Random();
+    private Random rnd1 = RandomFactory.get();
+    private Random rnd2 = RandomFactory.get();
+    private Random rnd3 = RandomFactory.get();
+    private Random rtRndWhere = RandomFactory.get();
     private Profiler profiler;
     private int rtMin;
     private int rtMax;
@@ -262,6 +263,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 	
 	                int s = Math.min(wAsense.length-1, leftFlank + start);
 	                int e = Math.min(wAsense.length, leftFlank + rightFlank + maxEnd);
+                    // ensure we have something to search / BARNA-303
+                    if(e < s){
+                        s = Math.max(0, e - 1);
+                    }
 	                p = Arrays.binarySearch(wAsense, s, e, rtRndWhere.nextDouble());
 	                p = (p >= 0 ? p : -(p + 1));
 	                ++p; // anti-sense matrix, cut 3' of 0-position
@@ -348,6 +353,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 	                    int from2 = Math.min(leftFlank + from, wSense.length-1);
 	
 	                    r = wSense[from2] + (r * (wSense[to2] - wSense[from2]));
+                        // ensure we have something to search / BARNA-303
+                        if(to2 < from){
+                            from = Math.max(0, to2 - 1);
+                        }
 	                    p = Arrays.binarySearch(wSense, from2, to2, r);
 	                    p = (p >= 0 ? p : -(p + 1));
 	                }

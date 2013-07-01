@@ -56,18 +56,18 @@ class DoubleParameter extends NumberParameter<Double> {
     }
 
     @Override
-    public void parse(String value) throws ParameterException {
+    public Double parse(String value) throws ParameterException {
         if (value.equalsIgnoreCase("nan")) {
             this.value = Double.NaN;
-            return;
+            return this.value;
         }
         if (value.equalsIgnoreCase("inf") || value.equalsIgnoreCase("infinity")) {
             this.value = Double.POSITIVE_INFINITY;
-            return;
+            return this.value;
         }
         try {
             this.value = new BigDecimal(value).doubleValue();
-            return;
+            return this.value;
         } catch (Exception e) {
         }
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);

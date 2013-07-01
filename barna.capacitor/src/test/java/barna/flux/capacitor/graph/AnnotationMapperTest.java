@@ -462,8 +462,8 @@ public class AnnotationMapperTest extends TestCase {
             start = Math.max(1, start - tol);
             end = end + tol;
             MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter, settings.get(FluxCapacitorSettings.INSERT_FILE));
             Map<String, Integer> m = a.getSJReads(false);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
@@ -509,8 +509,8 @@ public class AnnotationMapperTest extends TestCase {
             end = end + tol;
             MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
 //            MSIterator<Mapping> iter = bed.readBedFile(g, start, end, true, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR), null);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter, settings.get(FluxCapacitorSettings.INSERT_FILE));
             Map<String, Integer> m = a.getSJReads(true);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
@@ -596,8 +596,8 @@ public class AnnotationMapperTest extends TestCase {
             start = Math.max(1, start - tol);
             end = end + tol;
             MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter, settings.get(FluxCapacitorSettings.INSERT_FILE));
             Map<String, Integer> m = a.getSJReads(false);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
@@ -642,8 +642,8 @@ public class AnnotationMapperTest extends TestCase {
             start = Math.max(1, start - tol);
             end = end + tol;
             MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter, settings.get(FluxCapacitorSettings.INSERT_FILE));
             Map<String, Float[]> m = a.getAllIntronicReads(false);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
@@ -687,8 +687,8 @@ public class AnnotationMapperTest extends TestCase {
             start = Math.max(1, start - tol);
             end = end + tol;
             MSIterator<Mapping> iter = bed.read(g.getChromosome(), start, end);
-            AnnotationMapper a = new AnnotationMapper(g);
-            a.map(iter, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter, settings.get(FluxCapacitorSettings.INSERT_FILE));
             Map<String, Float[]> m = a.getAllIntronicReads(true);
             int count[] = new int[]{0, 0};
             for (String e : m.keySet()) {
@@ -785,10 +785,10 @@ public class AnnotationMapperTest extends TestCase {
             end = end + tol;
             MSIterator<Mapping> iter1 = bed.read(g.getChromosome(), start, end);
             MSIterator<Mapping> iter2 = sam.read(g.getChromosome(), start, end);
-            AnnotationMapper a = new AnnotationMapper(g);
-            AnnotationMapper b = new AnnotationMapper(g);
-            a.map(iter1, settings);
-            b.map(iter2, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter1, settings.get(FluxCapacitorSettings.INSERT_FILE));
+            AnnotationMapper b = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            b.map(iter2, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
 //            assertEquals(a.nrMappingsLocus,b.nrMappingsLocus);
             assertEquals(a.getNrMappingsMapped(),b.getNrMappingsMapped());
@@ -840,10 +840,11 @@ public class AnnotationMapperTest extends TestCase {
             end = end + tol;
             MSIterator<Mapping> iter1 = bed.read(g.getChromosome(), start, end);
             MSIterator<Mapping> iter2 = sam.read(g.getChromosome(), start, end);
-            AnnotationMapper a = new AnnotationMapper(g);
-            AnnotationMapper b = new AnnotationMapper(g);
-            a.map(iter1, settings);
-            b.map(iter2, settings);
+            AnnotationMapper a = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            a.map(iter1, settings.get(FluxCapacitorSettings.INSERT_FILE));
+            AnnotationMapper b = new AnnotationMapper(g, settings.get(FluxCapacitorSettings.READ_DESCRIPTOR));
+            b.map(iter2, settings.get(FluxCapacitorSettings.INSERT_FILE));
+
 
             ComplexCounter counter = a.getCc();
         }

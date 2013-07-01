@@ -71,7 +71,6 @@ public class SAMMapping implements Mapping{
                 if (e.getOperator().equals(CigarOperator.M)||e.getOperator().equals(CigarOperator.D))
                     length+=e.getLength();
             }
-
         }
         return length;
     }
@@ -99,7 +98,7 @@ public class SAMMapping implements Mapping{
         if (blocks.size() == 0) {
             for (CigarElement e : cigar.getCigarElements()) {
                 if (!e.getOperator().equals(CigarOperator.N)) {
-                    if (e.getOperator().equals(CigarOperator.M)) {
+                    if (e.getOperator().equals(CigarOperator.M)||e.getOperator().equals(CigarOperator.D)) {
                         bLength+=e.getLength();
                     }
                 } else {
@@ -116,6 +115,8 @@ public class SAMMapping implements Mapping{
     @Override
     public int getNextBlockStart() {
         try {
+            if (currentBlock == blocks.size())
+                currentBlock = 0;
             return blocks.get(currentBlock)[0];
         }   catch (Exception e){
             return -1;
@@ -125,6 +126,8 @@ public class SAMMapping implements Mapping{
     @Override
     public int getNextBlockSize() {
         try {
+            if (currentBlock == blocks.size())
+                currentBlock = 0;
             return blocks.get(currentBlock++)[1];
         }   catch (Exception e){
             return -1;

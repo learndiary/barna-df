@@ -1,10 +1,12 @@
 package barna.flux.capacitor.reconstruction;
 
+import barna.commons.parameters.ParameterException;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 public class FluxCapacitorSettingsTest {
@@ -22,6 +24,103 @@ public class FluxCapacitorSettingsTest {
         }catch (Exception err){
             err.printStackTrace();
             fail();
+        }
+    }
+
+    @Test
+    public void testNullReadDescriptor() throws Exception {
+        FluxCapacitorSettings setting = new FluxCapacitorSettings();
+
+        setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
+        setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "NONE");
+        setting.set(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(),"PAIRED");
+
+        try {
+            setting.validate();
+            fail();
+        } catch (ParameterException ex) {
+            assertEquals("You must specify a READ_DESCRIPTOR for BED files", ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testNonNullReadDescriptorStranded() throws Exception {
+        FluxCapacitorSettings setting = new FluxCapacitorSettings();
+
+        setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
+        setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),"MATE2_SENSE");
+        setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "NONE");
+        setting.set(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(),"PAIRED_STRANDED");
+
+        try {
+            setting.validate();
+        } catch (ParameterException ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testNonNullReadDescriptorStrandInfo() throws Exception {
+        FluxCapacitorSettings setting = new FluxCapacitorSettings();
+
+        setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
+        setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),"PAIRED");
+        setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "MATE2_SENSE");
+        setting.set(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(),"PAIRED_STRANDED");
+
+        try {
+            setting.validate();
+        } catch (ParameterException ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testAnnotationMappingStrandedNoStrand() throws Exception {
+        FluxCapacitorSettings setting = new FluxCapacitorSettings();
+
+        setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
+        setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),"PAIRED");
+        setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "NONE");
+
+
+        String[] ams = {"SINGLE_STRANDED", "PAIRED_STRANDED"};
+
+        for (String am : ams) {
+            try {
+                setting.set(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(),am);
+                setting.validate();
+                fail("Exception not throw!!!");
+            } catch(ParameterException ex) {
+                assertEquals("Annotation mapping " + am + " requires a stranded read descriptor or strand information!", ex.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testAnnotationMappingPairedNoPaired() throws Exception {
+        FluxCapacitorSettings setting = new FluxCapacitorSettings();
+
+        setting.set(FluxCapacitorSettings.MAPPING_FILE.getName(),getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
+        setting.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
+        setting.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),"SIMPLE");
+        setting.set(FluxCapacitorSettings.READ_STRAND.getName(), "SENSE");
+
+
+        String[] ams = {"PAIRED", "PAIRED_STRANDED"};
+
+        for (String am : ams) {
+            try {
+                setting.set(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(),am);
+                setting.validate();
+                fail("Exception not throw!!!");
+            } catch(ParameterException ex) {
+                assertEquals("Annotation mapping " + am + " requires a paired-end read descriptor!", ex.getMessage());
+            }
         }
     }
 }

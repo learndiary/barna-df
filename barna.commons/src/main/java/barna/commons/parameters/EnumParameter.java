@@ -63,11 +63,11 @@ class EnumParameter<E extends Enum<E>> extends Parameter<E> {
         return value == null ? getDefault() : value;
     }
 
-    public void parse(String value) throws ParameterException {
+    public E parse(String value) throws ParameterException {
         for (E e : values) {
             if (e.name().equalsIgnoreCase(value)) {
                 this.value = e;
-                return;
+                return this.value;
             }
         }
         throw new ParameterException(this, value, "Unable to parse parameter " + this + " with value " + value);

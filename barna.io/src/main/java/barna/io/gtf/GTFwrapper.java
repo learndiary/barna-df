@@ -157,6 +157,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		DEFAULT_CHROMOSOME_FILTER= compose(CHROMOSOME_FILETER_RANDOM, DEFAULT_CHROMOSOME_FILTER);
 	}
 
+    protected boolean readFeatureCDS= false;
+
+
 	protected InputStream inputStream = null;
 
 	Species species = null;
@@ -927,6 +930,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					+ readGenes + " genes, " + readTranscripts + " transcripts, "
 					+ readExons + " exons.");
 			System.err.println("Skipped:\t" + skippedObjects+ " lines.");
+            if(skippedObject != null){
+                System.err.println("One of the lines skipped:\n" + skippedObject + "\n");
+            }
 			System.err.print("Chromosomes:\t");
 			for (int i = 0; i < skippedChr.size(); i++)
 				System.err.print(skippedChr.elementAt(i) + " ");
@@ -1064,11 +1070,11 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			trpt.addCDS(obj.getStart(), obj.getEnd());
 			Translation trans= trpt.getTranslations()[0];
 			Vector<Transcript> vtx= new Vector<Transcript>(1); // TODO very inefficient 
-			if (obj.getFeature().equals("start_codon")) {
+			if (readFeatureCDS&& obj.getFeature().equals("start_codon")) {
 				SpliceSite ss= new SpliceSite(trans.get5PrimeEdge(), SpliceSite.TYPE_CODON_START, trpt.getGene());
 				trpt.getGene().addSpliceSite(ss, vtx);
 				trans.setCodonStart(ss);
-			} else if (obj.getFeature().equals("stop_codon")) {
+			} else if (readFeatureCDS&& obj.getFeature().equals("stop_codon")) {
 				SpliceSite ss= new SpliceSite(trans.get3PrimeEdge(), SpliceSite.TYPE_CODON_STOP, trpt.getGene());
 				trpt.getGene().addSpliceSite(ss, vtx);
 				trans.setCodonStop(ss);
@@ -1091,8 +1097,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 						trpt.getTranslations()[0].addProteinID(idTokens[j]);
 				}
 			}
-		} else if(obj.getFeature().equals("start_codon")|| obj.getFeature().equals("stop_codon")) {
-			
 		} else {
 			int y;
 			for (y = 0; readFeatures != null && y < readFeatures.length; y++)
@@ -1179,7 +1183,9 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	}
 	
 	boolean readAll= false;
-	boolean warnFirstSkip= true;
+	boolean skipWarningPrinted = false;
+    Object skippedObject = null;
+
 	public void read() {
 
 		BufferedReader buffy = getBuffy();
@@ -1188,7 +1194,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		
 		if (bytesRead== 0) {
 			skippedObjects= 0;
-			warnFirstSkip= true;
 		}
 		
 		clustered = false;
@@ -1256,9 +1261,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				GFFObject obj= readBuildObject(line);
 				if (!checkObject(obj)) {	// object based criteria
 					++skippedObjects;
-					if (warnFirstSkip) {
-						Log.warn("skipped line "+ obj);
-						warnFirstSkip= false;
+					if (skippedObject != null) {
+						skippedObject = obj;
 					}
 					if (trpt!= null && geneWise
 							&& ((readAheadLimit> 0&& cnt== (readAheadLimit+1))|| (readAheadTranscripts> 0&& cntTrpt>= readAheadTranscripts))) {
@@ -1295,9 +1299,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					if (lastChrID != null) { 						
 						if (!checkChromosome(chrID)) {
 							++skippedObjects;
-							if (warnFirstSkip) {
-								Log.warn("skipped chromosome "+ chrID);
-								warnFirstSkip= false;
+							if (skippedObject != null) {
+                                skippedObject = chrID;
 							}
 							getReadChr().add(lastChrID);
 							ArrayUtils.addUnique(getSkippedChr(), chrID);

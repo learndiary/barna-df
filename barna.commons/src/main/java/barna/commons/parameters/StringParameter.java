@@ -79,8 +79,9 @@ class StringParameter extends Parameter<String> {
         return value == null ? getDefault() : value;
     }
 
-    public void parse(String value) throws ParameterException {
+    public String parse(String value) throws ParameterException {
         this.value = value;
+        return this.value;
     }
 
     @Override
