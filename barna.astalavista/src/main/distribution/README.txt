@@ -20,10 +20,15 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+AStalavista 3.2
+    * [BARNA-304] - Astalavista starter gives an error on startup
+    * [BARNA-305] - Scorer specific parameters --vcf and --sp are not recognized
+    * [BARNA-311] - AStalavista always outputs CDS events
+
 AStalavista 3.1
     * [BARNA-133] - Connect AStalavista tool
-    * [BARNA-270] - AStalavista option to output ALL variations of the exon-intron structure
     * [BARNA-227] - Implement Site Scoring
+    * [BARNA-270] - AStalavista option to output ALL variations of the exon-intron structure
 
 GETTING STARTED
 ---------------
