@@ -2,18 +2,22 @@ package barna.io.sam;
 
 import barna.commons.Execute;
 import barna.io.MSIterator;
+import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 
 public class SAMReaderTest {
 	
 	private File testfile = new File(getClass().getResource("/test.bam").getFile());
+    private File testMultiMaps = new File(getClass().getResource("/single_multimap.bam").getFile());
 
 	@BeforeClass
 	public static void setUp() {
@@ -43,5 +47,49 @@ public class SAMReaderTest {
         assertEquals(24034554, mapping.getStart());
         assertEquals(24034629, mapping.getEnd());
 	}
+
+    @Test
+    public void testPrimaryMaps() {
+        SAMReader reader = new SAMReader(testMultiMaps, true, false, true, false);
+        MSIterator iter = reader.read("chr21", 34924516, 34924516+1000);
+        SAMMapping mapping;
+
+        int c = 0;
+        while (iter.hasNext()) {
+            ++c;
+            mapping = (SAMMapping)iter.next();
+            System.out.println(mapping.toString());
+        }
+
+        assertEquals(c, 2);
+    }
+
+    @Test
+    public void testReadMultiMaps() {
+        SAMReader reader = new SAMReader(testMultiMaps, true, false, true, true);
+        MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
+        SAMMapping mapping;
+
+        UniversalReadDescriptor desc = new UniversalReadDescriptor();
+        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+
+        int c = 0;
+        while (iter.hasNext()) {
+            ++c;
+            mapping = (SAMMapping)iter.next();
+            if (mapping.getName().endsWith("1")) {
+                int d = 0;
+                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Mapping m;
+                while (mates.hasNext()) {
+                    m = mates.next();
+                    ++d;
+                }
+                assertEquals(d,1);
+            }
+        }
+
+        assertEquals(c,6);
+    }
 
 }

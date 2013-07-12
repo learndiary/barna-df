@@ -613,6 +613,8 @@ public class AnnotationMapperTest extends TestCase {
         }
     }
 
+
+
     @Test
     public void testCompareIntronReadsSingle() throws Exception {
         GTFwrapper gtf = new GTFwrapper(hgGtfFile);
