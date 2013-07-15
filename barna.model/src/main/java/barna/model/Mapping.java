@@ -80,4 +80,11 @@ public interface Mapping {
      * @return the extended Cigar string
      */
     public CharSequence getCigar();
+
+    /**
+     *
+     * @param weighted whether reporting the count weighted by the number of hits for the read the mapping refers to
+     * @return
+     */
+    public double getCount(boolean weighted);
 }

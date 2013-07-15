@@ -19,6 +19,8 @@ import java.util.List;
 public class SAMMappingIterator implements MSIterator<SAMMapping>{
 
     static final boolean DEFAULT_ALL_READS = false;
+    static final boolean DEFAULT_PRIMARY_ONLY = false;
+    static final boolean DEFAULT_MATES_ONLY = false;
 
     private SAMRecordIterator wrappedIterator;
     private ArrayList<SAMMapping> mappings;
@@ -29,19 +31,35 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
      */
     private int scoreFilter;
 
+    /**
+     * Only keep primary alignments
+     */
+    private boolean primaryOnly;
+
+    /**
+     * Only use pairing information from BAM file
+     */
+    private boolean matesOnly;
+
     public SAMMappingIterator(SAMRecordIterator iterator) {
         this(iterator, DEFAULT_ALL_READS);
     }
 
     public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads) {
-        this(iterator, allReads, -1);
+        this(iterator, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
     }
 
     public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads, int scoreFilter) {
+        this(iterator, allReads, scoreFilter, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
+    }
+
+    public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads, int scoreFilter, boolean primaryOnly, boolean matesOnly) {
         this.wrappedIterator = iterator;
         this.currPos = this.markedPos = -1;
         this.allReads = allReads;
         this.scoreFilter = scoreFilter;
+        this.primaryOnly = primaryOnly;
+        this.matesOnly = primaryOnly ? false : matesOnly;
         init();
     }
 
@@ -55,12 +73,14 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
 
             if (!allReads && record.getReadUnmappedFlag())
                 continue;
+            if (primaryOnly && record.getNotPrimaryAlignmentFlag())
+                continue;
 
             mapping = new SAMMapping(record, getSuffix(record));
 
             if (mappings == null)
                 mappings = new ArrayList<SAMMapping>();
-            if(scoreFilter < 0 || mapping.getScore() >= this.scoreFilter){
+            if((scoreFilter < 0 || mapping.getScore() >= this.scoreFilter)){
                 mappings.add(mapping);
             }
         }
@@ -105,15 +125,21 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
         attr1 = getAttributes(firstMate,descriptor,attr1);
         if (attr1.flag == 2)
             return mappings.iterator();
+        if (!((SAMMapping)firstMate).isProperlyPaired())
+            return mappings.iterator();
         this.mark();
         while (this.hasNext()) {
-            Mapping currentMapping = this.next();
-            attr2 = getAttributes(currentMapping,descriptor,attr2);
-            if (!attr1.id.equals(attr2.id))
-                break;
-            if (attr2 == null || attr2.flag == 1)
+            SAMMapping currentMapping = this.next();
+            if (!currentMapping.isProperlyPaired())
                 continue;
-            mappings.add(currentMapping);
+            if (!this.matesOnly || currentMapping.isMateOf((SAMMapping)firstMate)) {
+                attr2 = getAttributes(currentMapping,descriptor,attr2);
+                if (!attr1.id.equals(attr2.id))
+                    break;
+                if (attr2 == null || attr2.flag == 1)
+                    continue;
+                mappings.add(currentMapping);
+            }
         }
         this.reset();
         return mappings.iterator();

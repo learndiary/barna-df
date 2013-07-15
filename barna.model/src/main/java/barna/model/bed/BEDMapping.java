@@ -406,6 +406,11 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
     }
 
     @Override
+    public double getCount(boolean weighted) {
+        return 1;
+    }
+
+    @Override
 	public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);

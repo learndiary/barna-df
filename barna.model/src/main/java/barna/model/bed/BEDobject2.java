@@ -436,6 +436,11 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
+    public double getCount(boolean weighted) {
+        return -1;
+    }
+
     public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);
