@@ -58,15 +58,14 @@ public class SAMReaderTest {
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            System.out.println(mapping.toString());
         }
 
         assertEquals(c, 2);
     }
 
     @Test
-    public void testReadMultiMaps() {
-        SAMReader reader = new SAMReader(testMultiMaps, true, false, true, true);
+    public void testReadMultiMapsSortedMates() {
+        SAMReader reader = new SAMReader(testMultiMaps, true, false, false, true);
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
@@ -85,11 +84,95 @@ public class SAMReaderTest {
                     m = mates.next();
                     ++d;
                 }
-                assertEquals(d,1);
+                assertEquals(1,d);
             }
         }
 
-        assertEquals(c,6);
+        assertEquals(6,c);
     }
+
+    @Test
+    public void testReadMultiMapsSortedPrimary() {
+        SAMReader reader = new SAMReader(testMultiMaps, true, false, true, false);
+        MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
+        SAMMapping mapping;
+
+        UniversalReadDescriptor desc = new UniversalReadDescriptor();
+        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+
+        int c = 0;
+        while (iter.hasNext()) {
+            ++c;
+            mapping = (SAMMapping)iter.next();
+            if (mapping.getName().endsWith("1")) {
+                int d = 0;
+                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Mapping m;
+                while (mates.hasNext()) {
+                    m = mates.next();
+                    ++d;
+                }
+                assertEquals(1,d);
+            }
+        }
+
+        assertEquals(2,c);
+    }
+
+    @Test
+    public void testReadMultiMapsMates() {
+        SAMReader reader = new SAMReader(testMultiMaps, true, true, false, true);
+        MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
+        SAMMapping mapping;
+
+        UniversalReadDescriptor desc = new UniversalReadDescriptor();
+        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+
+        int c = 0;
+        while (iter.hasNext()) {
+            ++c;
+            mapping = (SAMMapping)iter.next();
+            if (mapping.getName().endsWith("1")) {
+                int d = 0;
+                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Mapping m;
+                while (mates.hasNext()) {
+                    m = mates.next();
+                    ++d;
+                }
+                assertEquals(1,d);
+            }
+        }
+
+        assertEquals(6,c);
+    }
+    @Test
+    public void testReadMultiMapsPrimary() {
+        SAMReader reader = new SAMReader(testMultiMaps, true, true, true, false);
+        MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
+        SAMMapping mapping;
+
+        UniversalReadDescriptor desc = new UniversalReadDescriptor();
+        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+
+        int c = 0;
+        while (iter.hasNext()) {
+            ++c;
+            mapping = (SAMMapping)iter.next();
+            if (mapping.getName().endsWith("1")) {
+                int d = 0;
+                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Mapping m;
+                while (mates.hasNext()) {
+                    m = mates.next();
+                    ++d;
+                }
+                assertEquals(1,d);
+            }
+        }
+
+        assertEquals(2,c);
+    }
+
 
 }

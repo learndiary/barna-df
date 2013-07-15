@@ -200,7 +200,6 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
                     continue;
                 mappings.add(currentMapping);
             }
-            //if (this.matesOnly && mappings.size() == 1) break;
         }
         this.reset();
         return mappings.iterator();
