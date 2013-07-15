@@ -662,10 +662,10 @@ public class FluxCapacitorTest {
         }
         refGtf.close();
 
-        assertEquals(runLines.size(),refLines.size());
+        assertEquals(refLines.size(),runLines.size());
 
         for (int i = 0; i < refLines.size(); i++) {
-            assertEquals(runLines.get(i), refLines.get(i));
+            assertEquals(refLines.get(i),runLines.get(i));
         }
     }
 

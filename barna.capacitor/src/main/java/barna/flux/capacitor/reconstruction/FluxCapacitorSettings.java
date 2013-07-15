@@ -518,9 +518,25 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file
          * for quantification
 	     */
-	    public static final Parameter<Boolean> USE_SAM_FLAGS = Parameters.booleanParameter("USE_SAM_FLAGS",
+	    public static final Parameter<Boolean> IGNORE_SAM_FLAGS = Parameters.booleanParameter("IGNORE_SAM_FLAGS",
                                                                                          "Use SAM flags when scanning the BAM mapping file",
                                                                                         true).longOption("use-flags");
+
+      /**
+	     * A <code>boolean</code> value specifying if only primary alignments should be considered
+         * for quantification
+	     */
+	    public static final Parameter<Boolean> SAM_PRIMARY_ONLY = Parameters.booleanParameter("SAM_PRIMARY_ONLY",
+                                                                                         "Only use primary alignments for quantification",
+                                                                                        false).longOption("sam-primary-only");
+
+      /**
+	     * A <code>boolean</code> value specifying if pairing information from the SAM file should be used
+         * for quantification
+	     */
+	    public static final Parameter<Boolean> SAM_MATES_ONLY = Parameters.booleanParameter("SAM_MATES_ONLY",
+                                                                                         "Use SAM pairing information for quantification",
+                                                                                        false).longOption("sam-mates-only");
 
       /**
 	     * A <code>boolean</code> value specifying to exclude file checking before the run
