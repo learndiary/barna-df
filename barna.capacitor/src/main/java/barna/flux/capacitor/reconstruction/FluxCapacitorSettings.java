@@ -518,7 +518,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file
          * for quantification
 	     */
-	    public static final Parameter<Boolean> USE_FLAGS = Parameters.booleanParameter("USE_FLAGS",
+	    public static final Parameter<Boolean> USE_SAM_FLAGS = Parameters.booleanParameter("USE_SAM_FLAGS",
                                                                                          "Use SAM flags when scanning the BAM mapping file",
                                                                                         true).longOption("use-flags");
 
