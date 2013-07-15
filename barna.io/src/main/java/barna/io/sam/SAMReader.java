@@ -117,11 +117,15 @@ public class SAMReader extends AbstractFileIOWrapper implements
         super(inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
-        this.allReads = allReads;
         this.scoreFilter = scoreFilter;
         this.useFlags = useFlags;
-        this.primaryOnly = primaryOnly;
-        this.matesOnly = matesOnly;
+        if (useFlags) {
+            this.primaryOnly = primaryOnly;
+            this.matesOnly = matesOnly;
+            this.allReads = allReads;
+        } else {
+            Log.warn("Ignoring SAMfilters since SAM flags are not used.");
+        }
     }
 
     private SAMFileReader getSAMFileReader(boolean createNew) {
