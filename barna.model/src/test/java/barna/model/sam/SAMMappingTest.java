@@ -90,7 +90,7 @@ public class SAMMappingTest {
 
     @Test
     public void testCount() throws Exception {
-        assertEquals(1/10, mapping.getCount(true));
-        assertEquals(1, mapping.getCount(false));
+        assertEquals(1.0/10, mapping.getCount(true),0.0);
+        assertEquals(1.0, mapping.getCount(false),0.0);
     }
 }
