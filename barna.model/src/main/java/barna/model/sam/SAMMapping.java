@@ -49,7 +49,7 @@ public class SAMMapping implements Mapping{
         hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
-        properlyPaired = r.getProperPairFlag();
+        properlyPaired = paired ? r.getProperPairFlag() : false;
         initBlocks();
     }
 
@@ -186,8 +186,8 @@ public class SAMMapping implements Mapping{
     }
 
     @Override
-    public int getHits() {
-        return hits;
+    public double getCount(boolean weighted) {
+        return (weighted && this.hits > 0 ? 1.0/(paired ? this.hits/2 : this.hits) : 1.0);
     }
 
     public String getString() {

@@ -406,8 +406,8 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
     }
 
     @Override
-    public int getHits() {
-        return -1;
+    public double getCount(boolean weighted) {
+        return 1;
     }
 
     @Override

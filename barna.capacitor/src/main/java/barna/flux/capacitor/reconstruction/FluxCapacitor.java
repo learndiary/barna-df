@@ -1067,7 +1067,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if(tasks.isEmpty())
                 return null;
 
-            mapper = new AnnotationMapper(this.gene, descriptor);
+            mapper = new AnnotationMapper(this.gene, descriptor, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT));
             mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
             /*stats.incrReadsLoci(mapper.nrMappingsLocus);
@@ -1829,7 +1829,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         //MappingStats stats = new MappingStats();
         long t0 = System.currentTimeMillis();
         if (currentTasks.contains(Task.PROFILE)) {
-            BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, gtfReader,mappingReader);
+            BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), gtfReader,mappingReader);
             stats=profiler.call().getMappingStats();
             printProfile((System.currentTimeMillis() - t0) / 1000);
         } else {
@@ -2193,7 +2193,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if (profile == null) {
                 profile = new Profile();
                 try {
-                    BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, gtfReader, mappingReader);
+                    BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT),gtfReader, mappingReader);
                     profile = profiler.call();
                 } catch (Throwable e) {
                     e.printStackTrace();
@@ -2401,7 +2401,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                             // counter un-reliable, /2 read is skipped in paired-end mode
                             + ((strand == FluxCapacitorConstants.STRAND_SPECIFIC) ? stats.getMappingsWrongStrand() + " mappings map to annotation in antisense direction,\n\t" : "")
                             //+ (pairedEnd?(nrReadsSingleLociPotentialPairs+ " mappings form potential pairs,\n\t"):"")
-                            + (pairedEnd ? (stats.getMappingPairsSingleTxLoci()) + " mappings in annotation-mapped pairs\n\t"
+                            + (pairedEnd ? (stats.getMappingPairsSingleTxLoci()) + " annotation-mapped pairs\n\t"
                             : stats.getMappingsSingleTxLoci() + " mappings map to annotation\n\t")
                             //+ nrReadsSingleLociNoAnnotation+ " mappings do NOT match annotation,\n\t"
                             //+ (uniform?"":func.profiles.size()+" profiles collected\n\t")
@@ -2444,7 +2444,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 							+ mappingReader.getCountMappings()+" mappings read from file\n\t"
                             // no info, reads in redundantly many reads
                             //+ nrReadsLoci+" mappings in annotated loci regions\n\t"
-                            + stats.getMappingsMapped() + " mapping" + (pairedEnd ? " in pairs" : "s") + " map to annotation\n"
+                            + stats.getMappingsMapped() + " mappings" + (pairedEnd ? " in pairs" : "") + " map to annotation\n"
                             + (pairedEnd ?
                             "\t" + stats.getMappingPairsNoTx() + " mappings without tx evidence\n"
                                     + "\t" + stats.getPairsWrongOrientation() + " mappings with wrong orientation\n"

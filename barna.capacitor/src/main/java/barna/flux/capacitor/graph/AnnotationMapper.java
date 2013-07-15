@@ -99,20 +99,30 @@ public class AnnotationMapper extends SplicingGraph {
     private UniversalReadDescriptor descriptor=null;
 
     /**
+     * Whether weighting mapping counts by the number of hits
+     */
+    private boolean weighted=false;
+
+    /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor) {
-        this(gene, descriptor, DEFAULT_COUNTER_TYPES);
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted) {
+        this(gene, descriptor, weighted, DEFAULT_COUNTER_TYPES);
     }
 
     public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, EnumSet<CounterType> counterTypes) {
+        this(gene, descriptor, false, counterTypes);
+    }
+
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
         this.descriptor = descriptor;
+        this.weighted = weighted;
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
@@ -432,8 +442,7 @@ public class AnnotationMapper extends SplicingGraph {
                     }
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
                     if (se.isExonic()) {
-                        //nrMappingsMapped += 2;
-                        nrMappingsMapped+=1/mapping.getHits()+1/otherMapping.getHits();
+                        nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
                     if (buffy != null)
 							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
@@ -453,7 +462,7 @@ public class AnnotationMapper extends SplicingGraph {
                         else
                             ((MappingsInterface) target).getMappings().incrRevReadNr();
                         //++nrMappingsMapped;
-                        nrMappingsMapped+=1/mapping.getHits();
+                        nrMappingsMapped+=mapping.getCount(weighted);
                 }
             }
         } // end: while(iter.hasNext())

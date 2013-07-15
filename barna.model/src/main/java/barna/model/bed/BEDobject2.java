@@ -437,7 +437,7 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
     }
 
     @Override
-    public int getHits() {
+    public double getCount(boolean weighted) {
         return -1;
     }
 

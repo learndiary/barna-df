@@ -83,7 +83,8 @@ public interface Mapping {
 
     /**
      *
-     * @return the total number of hits for the read the mapping refers to
+     * @param weighted whether reporting the count weighted by the number of hits for the read the mapping refers to
+     * @return
      */
-    public int getHits();
+    public double getCount(boolean weighted);
 }

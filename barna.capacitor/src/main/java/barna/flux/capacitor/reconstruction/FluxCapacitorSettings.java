@@ -520,7 +520,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     */
 	    public static final Parameter<Boolean> IGNORE_SAM_FLAGS = Parameters.booleanParameter("IGNORE_SAM_FLAGS",
                                                                                          "Use SAM flags when scanning the BAM mapping file",
-                                                                                        true).longOption("use-flags");
+                                                                                        false).longOption("use-flags");
 
       /**
 	     * A <code>boolean</code> value specifying if only primary alignments should be considered
@@ -536,7 +536,14 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     */
 	    public static final Parameter<Boolean> SAM_MATES_ONLY = Parameters.booleanParameter("SAM_MATES_ONLY",
                                                                                          "Use SAM pairing information for quantification",
-                                                                                        false).longOption("sam-mates-only");
+                                                                                        false, new ParameterValidator() {
+          @Override
+          public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+              boolean sam_primary_only = schema.get(SAM_PRIMARY_ONLY);
+              if (sam_primary_only)
+                  schema.set(parameter, false);
+          }
+      }).longOption("sam-mates-only");
 
       /**
 	     * A <code>boolean</code> value specifying to exclude file checking before the run
@@ -545,6 +552,21 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	    public static final Parameter<Boolean> NO_FILE_CHECK = Parameters.booleanParameter("NO_FILE_CHECK",
                                                                                          "Disable scanning of input files before the run",
                                                                                         false).longOption("no-file-check");
+
+      /**
+	     * A <code>boolean</code> value specifying to weight mapping counts by the number of multi-maps
+         *
+	     */
+	    public static final Parameter<Boolean> WEIGHTED_COUNT = Parameters.booleanParameter("WEIGHTED_COUNT",
+                                                                                         "Enable weighted counts for multi-maps",
+                                                                                        false, new ParameterValidator() {
+          @Override
+          public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+              boolean sam_primary_only = schema.get(SAM_PRIMARY_ONLY);
+              if (sam_primary_only)
+                  schema.set(parameter, false);
+          }
+      }).longOption("weighted-count");
 
 	    /**
 	     * Flag whether sorted input files (annotation, mappings) should be kept,

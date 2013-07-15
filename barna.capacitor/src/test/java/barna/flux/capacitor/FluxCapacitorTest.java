@@ -37,6 +37,8 @@ public class FluxCapacitorTest {
     final File BED_HG_PROFILE = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.profile").getFile());
     final File BED_HG_JUNCTION = new File(getClass().getResource("/chr1_329653_320881_junction.bed").getFile());
     final File GTF_HG_JUNCTION = new File(getClass().getResource("/chr1_329653_320881_junction.gtf").getFile());
+    final File BAM_HG_MULTI = new File(getClass().getResource("/single_multimap.bam").getFile());
+    final File GTF_HG_MULTI = new File(getClass().getResource("/single_multimap.gtf").getFile());
 
     @BeforeClass
     public static void initExecuter() {
@@ -702,5 +704,111 @@ public class FluxCapacitorTest {
         assertEquals("1\tflux\tjunction\t320653\t320881\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 4.000000", runLines.get(0));
         assertEquals("1\tflux\tjunction\t320938\t321032\t.\t+\t.\tgene_id \"ENSG00000237094.3\"; locus_id \"1:320162-328453W\"; reads 2.000000",runLines.get(1));
     }
+
+    @Test
+    public void testMultiMapsPrimaryOnly() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
+        pars.put("MAPPING_FILE", BAM_HG_MULTI);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("SAM_PRIMARY_ONLY", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(2, stats.getReadsSingleTxLoci());
+        assertEquals(1, stats.getMappingsSingleTxLoci());
+        assertEquals(2, stats.getMappingPairsSingleTxLoci());
+        assertEquals(6, stats.getMappingsTotal());
+        assertEquals(2, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(0, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
+    @Test
+    public void testMultiMapsMatesOnly() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
+        pars.put("MAPPING_FILE", BAM_HG_MULTI);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("SAM_MATES_ONLY", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(6, stats.getReadsSingleTxLoci());
+        assertEquals(3, stats.getMappingsSingleTxLoci());
+        assertEquals(6, stats.getMappingPairsSingleTxLoci());
+        assertEquals(6, stats.getMappingsTotal());
+        assertEquals(6, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(0, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
+    @Test
+    public void testMultiMapsWeighted() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
+        pars.put("MAPPING_FILE", BAM_HG_MULTI);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("WEIGHTED_COUNT", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(6, stats.getReadsSingleTxLoci());
+        assertEquals(3, stats.getMappingsSingleTxLoci());
+        assertEquals(6, stats.getMappingPairsSingleTxLoci());
+        assertEquals(6, stats.getMappingsTotal());
+        assertEquals(6, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(0, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
+    @Test
+    public void testMultiMapsMatesOnlyWeighted() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
+        pars.put("MAPPING_FILE", BAM_HG_MULTI);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("SAM_MATES_ONLY", true);
+        pars.put("WEIGHTED_COUNT",true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(6, stats.getReadsSingleTxLoci());
+        assertEquals(3, stats.getMappingsSingleTxLoci());
+        assertEquals(2, stats.getMappingPairsSingleTxLoci());
+        assertEquals(6, stats.getMappingsTotal());
+        assertEquals(2, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(0, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
 
 }
