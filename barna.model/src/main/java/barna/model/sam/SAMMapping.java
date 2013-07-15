@@ -29,6 +29,8 @@ public class SAMMapping implements Mapping{
     private int hits;
     private boolean primary;
     private int insertSize;
+    private boolean paired;
+    private boolean properlyPaired;
 
     public SAMMapping(SAMRecord r) {
 
@@ -46,6 +48,8 @@ public class SAMMapping implements Mapping{
         sequence = r.getReadBases();
         hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
         primary = !r.getNotPrimaryAlignmentFlag();
+        paired = r.getReadPairedFlag();
+        properlyPaired = r.getProperPairFlag();
         initBlocks();
     }
 
@@ -91,6 +95,14 @@ public class SAMMapping implements Mapping{
 
     public int getInsertSize() {
         return insertSize;
+    }
+
+    public boolean isProperlyPaired() {
+        return properlyPaired;
+    }
+
+    public boolean isPaired() {
+        return paired;
     }
 
     @Override
