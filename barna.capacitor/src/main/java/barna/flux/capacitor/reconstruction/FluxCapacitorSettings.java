@@ -545,13 +545,13 @@ public class FluxCapacitorSettings extends ParameterSchema {
             }
         }).longOption("sam-mates-only");
 
-    /**
-     * A <code>boolean</code> value specifying if only unique alignments should be considered
-     * for quantification
-     */
-    public static final Parameter<Boolean> SAM_UNIQUE_ONLY = Parameters.booleanParameter("SAM_UNIQUE_ONLY",
-            "Only use unique alignments for quantification",
-            false).longOption("sam-unique-only");
+        /**
+         * A <code>boolean</code> value specifying if only unique alignments should be considered
+         * for quantification
+         */
+        public static final Parameter<Boolean> SAM_UNIQUE_ONLY = Parameters.booleanParameter("SAM_UNIQUE_ONLY",
+                "Only use unique alignments for quantification",
+                false).longOption("sam-unique-only");
 
       /**
 	     * A <code>boolean</code> value specifying to exclude file checking before the run

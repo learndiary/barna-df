@@ -810,5 +810,57 @@ public class FluxCapacitorTest {
 
     }
 
+    @Test
+    public void testMultiMapsUniqueOnly() throws Exception {
 
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
+        pars.put("MAPPING_FILE", BAM_HG_MULTI);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("SAM_UNIQUE_ONLY", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(2, stats.getReadsSingleTxLoci());
+        assertEquals(1, stats.getMappingsSingleTxLoci());
+        assertEquals(2, stats.getMappingPairsSingleTxLoci());
+        assertEquals(6, stats.getMappingsTotal());
+        assertEquals(2, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(0, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
+    @Test
+    public void testMultiMapsMatesOnlyUniqueOnly() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
+        pars.put("MAPPING_FILE", BAM_HG_MULTI);
+        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
+        pars.put("SAM_MATES_ONLY", true);
+        pars.put("SAM_UNIQUE_ONLY", true);
+        //pars.put("WEIGHTED_COUNT", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+        assertEquals(1, stats.getSingleTxLoci());
+        assertEquals(2, stats.getReadsSingleTxLoci());
+        assertEquals(1, stats.getMappingsSingleTxLoci());
+        assertEquals(0, stats.getMappingPairsSingleTxLoci());
+        assertEquals(6, stats.getMappingsTotal());
+        assertEquals(0, stats.getMappingsMapped());
+        assertEquals(0, stats.getMappingPairsNoTx());
+        assertEquals(0, stats.getPairsWrongOrientation());
+        assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
 }

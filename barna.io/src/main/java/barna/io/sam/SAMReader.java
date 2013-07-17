@@ -111,8 +111,8 @@ public class SAMReader extends AbstractFileIOWrapper implements
         this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
     }
 
-    public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter, boolean useFlags, boolean primaryOnly, boolean matesOnly) {
-        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, primaryOnly, matesOnly,DEFAULT_UNIQUE_ONLY);
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter, boolean useFlags, boolean primaryOnly, boolean matesOnly, boolean uniqueOnly) {
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, primaryOnly, matesOnly, uniqueOnly);
     }
 
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter) {
