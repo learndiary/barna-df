@@ -21,6 +21,7 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
     static final boolean DEFAULT_ALL_READS = false;
     static final boolean DEFAULT_PRIMARY_ONLY = false;
     static final boolean DEFAULT_MATES_ONLY = false;
+    static final boolean DEFAULT_UNIQUE_ONLY = false;
 
     private SAMRecordIterator wrappedIterator;
     private ArrayList<SAMMapping> mappings;
@@ -41,25 +42,31 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
      */
     private boolean matesOnly;
 
+    /**
+     * Only keep unique alignments
+     */
+    private boolean uniqueOnly;
+
     public SAMMappingIterator(SAMRecordIterator iterator) {
         this(iterator, DEFAULT_ALL_READS);
     }
 
     public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads) {
-        this(iterator, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
+        this(iterator, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
     }
 
     public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads, int scoreFilter) {
-        this(iterator, allReads, scoreFilter, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
+        this(iterator, allReads, scoreFilter, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
     }
 
-    public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads, int scoreFilter, boolean primaryOnly, boolean matesOnly) {
+    public SAMMappingIterator(SAMRecordIterator iterator, boolean allReads, int scoreFilter, boolean primaryOnly, boolean matesOnly, boolean uniqueOnly) {
         this.wrappedIterator = iterator;
         this.currPos = this.markedPos = -1;
         this.allReads = allReads;
         this.scoreFilter = scoreFilter;
         this.primaryOnly = primaryOnly;
         this.matesOnly = primaryOnly ? false : matesOnly;
+        this.uniqueOnly = uniqueOnly;
         init();
     }
 
@@ -77,6 +84,9 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
                 continue;
 
             mapping = new SAMMapping(record, getSuffix(record));
+
+            if (uniqueOnly && !mapping.isUnique())
+                continue;
 
             if (mappings == null)
                 mappings = new ArrayList<SAMMapping>();

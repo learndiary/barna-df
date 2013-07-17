@@ -29,6 +29,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     static final boolean DEFAULT_READ_ALL = false;
     static final boolean DEFAULT_PRIMARY_ONLY = false;
     static final boolean DEFAULT_MATES_ONLY = false;
+    static final boolean DEFAULT_UNIQUE_ONLY = false;
 
     private SAMRecordIterator wrappedIterator;
     private SAMMapping mapping;
@@ -40,6 +41,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     private int scoreFilter;
     private boolean primaryOnly;
     private boolean matesOnly;
+    private boolean uniqueOnly;
 
     /**
      * Costruct an instance of the class.
@@ -58,10 +60,10 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @param maxRecordsInRam max number of records to be loaded in ram
      */
     public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads) {
-        this(iterator, header, maxRecordsInRam, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
+        this(iterator, header, maxRecordsInRam, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
     }
 
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads, int scoreFilter, boolean primaryOnly, boolean matesOnly) {
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads, int scoreFilter, boolean primaryOnly, boolean matesOnly, boolean uniqueOnly) {
         this.sortOrder = header.getSortOrder();
         this.maxRecordsInRam = maxRecordsInRam;
         this.currPos = this.markedPos = -1;
@@ -70,6 +72,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         this.wrappedIterator = getSortedIterator(iterator, header);
         this.primaryOnly = primaryOnly;
         this.matesOnly = primaryOnly ? false : matesOnly;
+        this.uniqueOnly = uniqueOnly;
         readChunk();
     }
 
@@ -138,6 +141,9 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
                 continue;
 
             mapping = new SAMMapping(record, getSuffix(record));
+
+            if (uniqueOnly && !mapping.isUnique())
+                continue;
 
             if (mappings.size()>1 && !mapping.getName().equals(mappings.get(mappings.size()-1).getName()) && ((maxRecordsInRam/2)-mappings.size())<= DEFAULT_THRESHOLD) {
                 break;

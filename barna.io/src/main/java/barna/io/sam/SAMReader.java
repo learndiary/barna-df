@@ -27,6 +27,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     public static final boolean DEFAULT_USE_FLAGS = true;
     public static final boolean DEFAULT_PRIMARY_ONLY = false;
     public static final boolean DEFAULT_MATES_ONLY = false;
+    public static final boolean DEFAULT_UNIQUE_ONLY = false;
 
     private SAMFileReader reader;
     private boolean contained;
@@ -47,6 +48,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private boolean allReads;
     private boolean useFlags;
     private boolean primaryOnly;
+    private boolean uniqueOnly;
     private boolean matesOnly;
     private int scoreFilter;
 
@@ -101,23 +103,23 @@ public class SAMReader extends AbstractFileIOWrapper implements
         this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter);
     }
 
-    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean primaryOnly, boolean matesOnly) {
-        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, -1, DEFAULT_USE_FLAGS, primaryOnly, matesOnly);
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean primaryOnly, boolean matesOnly, boolean uniqueOnly) {
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, -1, DEFAULT_USE_FLAGS, primaryOnly, matesOnly, uniqueOnly);
     }
 
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter, boolean useFlags) {
-        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
     }
 
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, int scoreFilter, boolean useFlags, boolean primaryOnly, boolean matesOnly) {
-        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, primaryOnly, matesOnly);
+        this(inputFile, contained, sortInRam, DEFAULT_ALL_READS, scoreFilter, useFlags, primaryOnly, matesOnly,DEFAULT_UNIQUE_ONLY);
     }
 
     public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter) {
-        this(inputFile, contained, sortInRam, allReads, scoreFilter, DEFAULT_USE_FLAGS, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY);
+        this(inputFile, contained, sortInRam, allReads, scoreFilter, DEFAULT_USE_FLAGS, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
     }
 
-    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter, boolean useFlags, boolean primaryOnly, boolean matesOnly) {
+    public SAMReader(File inputFile, boolean contained, boolean sortInRam, boolean allReads, int scoreFilter, boolean useFlags, boolean primaryOnly, boolean matesOnly, boolean uniqueOnly) {
         super(inputFile);
         this.contained = contained;
         this.sortInRam = sortInRam;
@@ -130,6 +132,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
         } else {
             Log.warn("Ignoring SAMfilters since SAM flags are not used.");
         }
+        this.uniqueOnly = uniqueOnly;
     }
 
     private SAMFileReader getSAMFileReader(boolean createNew) {
@@ -221,17 +224,17 @@ public class SAMReader extends AbstractFileIOWrapper implements
 //            iter = new SAMMappingQueryIterator(inputFile, reader.query(chromosome, start, end, contained), start, end, paired);
             if (sortInRam) {
                 try {
-                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads, scoreFilter, primaryOnly, matesOnly);
+                    iter = new SAMMappingIterator(getSAMFileReader(false).query(chromosome, start, end, contained), allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly);
                 }
                 catch (OutOfMemoryError error) {
                     SAMFileHeader header =  getSAMFileReader(true).getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter, primaryOnly, matesOnly);
+                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly);
                 }
             } else {
                 SAMFileHeader header =  getSAMFileReader(false).getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter, primaryOnly, matesOnly);
+                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly);
             }
         }
         else
