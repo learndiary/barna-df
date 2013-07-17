@@ -309,7 +309,7 @@ public class BiasProfiler implements Callable<Profile> {
                 continue;
             }
 
-            stats.incrMappingsSingleTxLoci(1); // the (first) read maps
+            stats.incrMappingsSingleTxLoci(mapping.getCount(weighted)); // the (first) read maps
 
             if (paired) {
 

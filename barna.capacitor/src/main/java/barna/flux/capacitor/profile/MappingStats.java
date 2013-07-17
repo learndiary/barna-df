@@ -62,7 +62,7 @@ public class MappingStats {
 
     //Learning
     private long readsSingleTxLoci;
-    private long mappingsSingleTxLoci;
+    private double mappingsSingleTxLoci;
     private double mappingPairsSingleTxLoci;
     private long mappingsSingleTxLociNoAnn;
     private long mappingsWrongStrand;
@@ -188,14 +188,16 @@ public class MappingStats {
     }
 
     public long getMappingsSingleTxLoci() {
-        return mappingsSingleTxLoci;
+        if (!Double.isInfinite(mappingsSingleTxLoci) && mappingsSingleTxLoci == Math.floor(mappingsSingleTxLoci))
+            return (long)mappingsSingleTxLoci;
+        return Math.round(mappingsSingleTxLoci);
     }
 
     public void setMappingsSingleTxLoci(long mappingsSingleTxLoci) {
         this.mappingsSingleTxLoci = mappingsSingleTxLoci;
     }
 
-    public void incrMappingsSingleTxLoci(long value) {
+    public void incrMappingsSingleTxLoci(double value) {
         this.mappingsSingleTxLoci+=value;
     }
 
