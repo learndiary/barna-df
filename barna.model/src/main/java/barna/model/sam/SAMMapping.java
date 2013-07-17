@@ -31,6 +31,7 @@ public class SAMMapping implements Mapping{
     private int insertSize;
     private boolean paired;
     private boolean properlyPaired;
+    private Character xt;
 
     public SAMMapping(SAMRecord r) {
 
@@ -47,6 +48,7 @@ public class SAMMapping implements Mapping{
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
         hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
+        xt = r.getCharacterAttribute("XT");
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
         properlyPaired = paired ? r.getProperPairFlag() : false;
@@ -103,6 +105,12 @@ public class SAMMapping implements Mapping{
 
     public boolean isPaired() {
         return paired;
+    }
+
+    public boolean isUnique() {
+        if (xt != null)
+            return xt == 'U';
+        return hits == 1;
     }
 
     @Override

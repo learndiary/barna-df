@@ -93,4 +93,18 @@ public class SAMMappingTest {
         assertEquals(1.0/10, mapping.getCount(true),0.0);
         assertEquals(1.0, mapping.getCount(false),0.0);
     }
+
+    @Test
+    public void testUniqueXT() throws Exception {
+        r.setAttribute("XT", 'U');
+        assertEquals(true, new SAMMapping(r).isUnique());
+        assertEquals(false, mapping.isUnique());
+    }
+
+    @Test
+    public void testUniqueNH() throws Exception {
+        r.setAttribute("NH", 1);
+        assertEquals(true, new SAMMapping(r).isUnique());
+        assertEquals(false, mapping.isUnique());
+    }
 }
