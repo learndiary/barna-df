@@ -195,7 +195,7 @@ public class SAMMapping implements Mapping{
 
     @Override
     public double getCount(boolean weighted) {
-        return (weighted && this.hits > 0 ? 1.0/(paired ? this.hits/2 : this.hits) : 1.0);
+        return (weighted && this.hits > 0 ? 1.0/(double)this.hits : 1.0);
     }
 
     public String getString() {
