@@ -50,7 +50,7 @@ public class ProfileTest {
         // suffix_acceptor = offset
         // AcceptorProfile: order= 1, offset= 24, dimension= 27
         // "CTCTCTCTCTCTCTCTCTCTCTAGCGC"
-        float accScore= GeneID.scoreAcceptor("CTCTCTCTCTCTCTCTCTCTCTCAGCGG", isochores[0].AcceptorProfile, null, null);
+        float accScore= GeneID.scoreAcceptor("TCTCTCTCTCTCTCTCTCTCTCAGCGG", isochores[0].AcceptorProfile, null, null);
         System.err.println("score "+ accScore);
 
 //        myGID.buildDonors(
