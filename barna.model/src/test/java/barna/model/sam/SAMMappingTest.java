@@ -29,6 +29,7 @@ public class SAMMappingTest {
         r.setReadString("ATAGCTTCAGT");
         r.setCigarString("6M14N5M");
         r.setMappingQuality(30);
+        r.setAttribute("NH", 10);
 
         mapping = new SAMMapping(r);
     }
@@ -85,5 +86,25 @@ public class SAMMappingTest {
     @Test
     public void testCigar() throws Exception {
         assertEquals("6M14N5M", mapping.getCigar());
+    }
+
+    @Test
+    public void testCount() throws Exception {
+        assertEquals(1.0/10, mapping.getCount(true),0.0);
+        assertEquals(1.0, mapping.getCount(false),0.0);
+    }
+
+    @Test
+    public void testUniqueXT() throws Exception {
+        r.setAttribute("XT", 'U');
+        assertEquals(true, new SAMMapping(r).isUnique());
+        assertEquals(false, mapping.isUnique());
+    }
+
+    @Test
+    public void testUniqueNH() throws Exception {
+        r.setAttribute("NH", 1);
+        assertEquals(true, new SAMMapping(r).isUnique());
+        assertEquals(false, mapping.isUnique());
     }
 }

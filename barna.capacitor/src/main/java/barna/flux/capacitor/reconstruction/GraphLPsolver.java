@@ -742,7 +742,7 @@ public class GraphLPsolver {
 			for (int i = 0; i < aMapper.trpts.length; i++) 
 				lenSum+= aMapper.trpts[i].getExonicLength();
 			float avgLen= lenSum/ aMapper.trpts.length;
-			float rpk= aMapper.getNrMappingsMapped()* 1000f/ avgLen;
+			double rpk= aMapper.getNrMappingsMapped()* 1000f/ avgLen;
 			for (int i = 0; i < aMapper.trpts.length; i++) {
 				int tlen= aMapper.trpts[i].getExonicLength();
 				UniversalMatrix m= profile.getMatrix(tlen, rpk);

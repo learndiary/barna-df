@@ -221,7 +221,7 @@ public class Flux {
         } catch (Exception e) {
             Log.error("","\n");
             if(e.getMessage() != null)
-                Log.error(e.getMessage());
+                Log.error(e.getMessage(), e);   // always provide stacktrace
             else
                 Log.error(e.getMessage(), e);
             Log.error("","");

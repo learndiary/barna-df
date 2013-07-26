@@ -28,6 +28,7 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.RandomFactory;
 import barna.commons.log.Log;
 import barna.flux.simulator.FluxSimulatorSettings;
 import barna.flux.simulator.PWM;
@@ -52,10 +53,10 @@ public class FragmentReverseTranscription implements FragmentProcessor {
     //private Map<CharSequence, double[]> mapWeightSense = null;
     //private Map<CharSequence, double[]> mapWeightAsense = null;
     private int[] index1;
-    private Random rnd1 = new Random();
-    private Random rnd2 = new Random();
-    private Random rnd3 = new Random();
-    private Random rtRndWhere = new Random();
+    private Random rnd1 = RandomFactory.get();
+    private Random rnd2 = RandomFactory.get();
+    private Random rnd3 = RandomFactory.get();
+    private Random rtRndWhere = RandomFactory.get();
     private Profiler profiler;
     private int rtMin;
     private int rtMax;

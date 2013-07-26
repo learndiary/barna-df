@@ -23,6 +23,12 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.2.4
+    * [BARNA-289] - Change NO_DECOMPOSE parameter to DECONVOLUTE
+    * [BARNA-297] - Stats file lock might fail and then no stats are written
+    * [BARNA-298] - Capacitor prints NaN for read count and RPKM
+    * [BARNA-310] - incorrect junction and intron coordinates
+
 FluxCapacitor 1.2.3
     * [BARNA-253] - Add Differential-Expression Tool to the Capacitor
     * [BARNA-264] - Differential Expression result location misses the : between start and end

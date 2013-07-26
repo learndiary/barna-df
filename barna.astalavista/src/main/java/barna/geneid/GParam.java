@@ -9,6 +9,48 @@ package barna.geneid;
  */
 public class GParam {
 
+    /**
+     * Lazily compute the number of nucleotides <b></b>upstream</b> of a <u>donor</u> site
+     * that are required to compute its score according to the profile.
+     * @param profile a donor profile
+     * @return number of nucleotides to be read upstream of the splice site
+     */
+    public static int getDonorFlank5(Profile profile) {
+        //return profile.getOffset()+ profile.getOrder();
+        return profile.getOffset()+ profile.getOrder()+ 1; // 1st order -> di-nucleotides (+1)
+    }
+
+    /**
+     * Lazily compute the number of nucleotides <b></b>downstream</b> of a <u>donor</u> site
+     * that are required to compute its score according to the profile.
+     * @param profile a donor profile
+     * @return number of nucleotides to be read downstream of the splice site
+     */
+    public static int getDonorFlank3(Profile profile) {
+        //return profile.getDimension()- profile.getOffset()- profile.getOrder()- 2;
+        return profile.getDimension()- getDonorFlank5(profile)- 2+ profile.getOrder();  // (-2) donor di-nucleotide
+    }
+
+    /**
+     * Lazily compute the number of nucleotides <b></b>upstream</b> of an <u>acceptor</u> site
+     * that are required to compute its score according to the profile.
+     * @param profile an acceptor profile
+     * @return number of nucleotides to be read upstream of the splice site
+     */
+    public static int getAcceptorFlank5(Profile profile) {
+        return profile.getOffset()- 1;
+    }
+
+    /**
+     * Lazily compute the number of nucleotides <b></b>downstream</b> of an <u>acceptor</u> site
+     * that are required to compute its score according to the profile.
+     * @param profile an acceptor profile
+     * @return number of nucleotides to be read downstream of the splice site
+     */
+    public static int getAcceptorFlank3(Profile profile) {
+        return profile.getDimension()- getAcceptorFlank5(profile)- 2+ profile.getOrder();
+    }
+
     public static final int MAXENTRY= 97;
     public static final int FRAMES= 3;
 
@@ -126,7 +168,12 @@ public class GParam {
     float EvidenceEW = 0;
     float EvidenceFactor = 1;
     float U12EW = 0;
-    float U12_SPLICE_SCORE_THRESH = -1000;
+
+    public float getU12SpliceScoreThresh() {
+        return u12SpliceScoreThresh;
+    }
+
+    float u12SpliceScoreThresh = Float.NaN;
     float U12_EXON_SCORE_THRESH = -1000;
     float EW = GeneIDconstants.NOVALUE;
 
