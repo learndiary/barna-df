@@ -252,10 +252,9 @@ public abstract class AStalavista implements Tool<Void> {
 
         // output help\
         if (args.userSpecified("printParameters")) {
-            // TODO check why the following line does not work
-            //if (settings.get(AStalavistaSettings.HELP)) {
-                settings.write(System.out);
-            //}
+        // TODO check why the following line does not work
+        // if (settings.get(AStalavistaSettings.HELP)) {
+            settings.write(System.out);
             return false;
         }
 

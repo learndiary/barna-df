@@ -28,7 +28,6 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,8 +51,8 @@ public class FragmentNebulization implements FragmentProcessor {
 
     private int[] index1;
 
-    private Random rndBreak = RandomFactory.get();
-    private Random rndBP = RandomFactory.get();
+    private Random rndBreak = new Random();
+    private Random rndBP = new Random();
     //private double thold;
     private double maxLen;
     //private RandomDataImpl randomData;

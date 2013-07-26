@@ -28,7 +28,6 @@
 package barna.flux.simulator;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 import barna.commons.io.ReverseFileReader;
 import barna.commons.log.Log;
 import barna.commons.utils.StringUtils;
@@ -334,7 +333,7 @@ public class Profiler implements Callable<Void> {
                 double expression_x1 = settings.get(FluxSimulatorSettings.EXPRESSION_X1);
                 long nb_molecules = settings.get(FluxSimulatorSettings.NB_MOLECULES);
                 // generate random permutation of ranks
-                Random r = RandomFactory.get();
+                Random r = new Random();
                 for (int i = 0; i < molecules.length; i++) {
                     // BARNA-219 added Math.max to work with single molecules
                     molecules[i] = 1 + r.nextInt(Math.max(1, molecules.length - 1));

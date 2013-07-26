@@ -701,15 +701,6 @@ public class FluxSimulatorSettings extends ParameterSchema {
             "file is produced. Otherwise read sequences are given as .fasta.", false);
 
     /**
-     * Global random seed
-     */
-    public static final Parameter<Long> SEED = Parameters.longParameter("SEED",
-            "Use a global seed for all random number generation. Set this to " +
-            "0 to fall back to the default behaviour where a new seed is " +
-            "generated for each random number generator" +
-            0);
-
-    /**
      * Path to the file with the error model.<br>
      *
      * With the values '35' or '76', default error models are provided

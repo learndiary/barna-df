@@ -27,8 +27,6 @@
 
 package barna.io.rna;
 
-import barna.commons.RandomFactory;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -114,7 +112,7 @@ public class SolexaPairedEndDescriptor implements ReadDescriptor {
 		int x= 0, y= 0;
 		if (relReadNr> 0) {
 			if (rndSplitter== null)
-				rndSplitter= RandomFactory.get();
+				rndSplitter= new Random();
 			x= rndSplitter.nextInt(relReadNr)+ 1;	// [1..relReadNr[
 			y= relReadNr- x;
 		}
@@ -129,7 +127,7 @@ public class SolexaPairedEndDescriptor implements ReadDescriptor {
 	public static final int AVG_NR_READS_PER_LANE= 12345678;
 	private static int getRndReadNrLane() {
 		if (laneRandom== null)
-			laneRandom= RandomFactory.get();
+			laneRandom= new Random();
 		return AVG_NR_READS_PER_LANE+ (int) (0.1f* AVG_NR_READS_PER_LANE* laneRandom.nextGaussian());
 	}
 	public static final String SLXA_PREFIX= "SLXA_";

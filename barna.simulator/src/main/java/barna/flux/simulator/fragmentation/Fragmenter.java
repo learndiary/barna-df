@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2010, Micha Sammeth
  * All rights reserved.
@@ -30,7 +29,6 @@ package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.commons.RandomFactory;
 import barna.commons.io.IOHandler;
 import barna.commons.io.IOHandlerFactory;
 import barna.commons.log.Log;
@@ -171,12 +169,8 @@ public class Fragmenter implements Callable<Void> {
         // initialize random sampler
         // for initial file
         rndTSS = new RandomDataImpl();
-        if(RandomFactory.SEED != null){
-            rndTSS.reSeed(RandomFactory.SEED);
-            rndTSS.reSeedSecure(RandomFactory.SEED);
-        }
-        rndPA = RandomFactory.get();
-        rndPlusMinus = RandomFactory.get();
+        rndPA = new Random();
+        rndPlusMinus = new Random();
         File tmpFile = writeInitialFile();
         String tmpFilePath = tmpFile.getAbsolutePath();
         if (tmpFile == null) {

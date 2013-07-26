@@ -28,7 +28,6 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 import barna.commons.log.Log;
 import barna.flux.simulator.PWM;
 import barna.flux.simulator.distributions.AbstractDistribution;
@@ -91,7 +90,7 @@ public class Amplification implements FragmentProcessor{
      */
     private Random random;
     
-    Random randomDELME= RandomFactory.get();
+    Random randomDELME= new Random();
 	Map<CharSequence, CharSequence> mapTx;
 	private Map<CharSequence, double[]> mapWeightAsense;
 	private Map<CharSequence, double[]> mapWeightSense;

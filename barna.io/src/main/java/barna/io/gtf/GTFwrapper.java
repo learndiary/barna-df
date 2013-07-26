@@ -157,9 +157,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		DEFAULT_CHROMOSOME_FILTER= compose(CHROMOSOME_FILETER_RANDOM, DEFAULT_CHROMOSOME_FILTER);
 	}
 
-    protected boolean readFeatureCDS= false;
-
-
 	protected InputStream inputStream = null;
 
 	Species species = null;
@@ -1070,11 +1067,11 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			trpt.addCDS(obj.getStart(), obj.getEnd());
 			Translation trans= trpt.getTranslations()[0];
 			Vector<Transcript> vtx= new Vector<Transcript>(1); // TODO very inefficient 
-			if (readFeatureCDS&& obj.getFeature().equals("start_codon")) {
+			if (obj.getFeature().equals("start_codon")) {
 				SpliceSite ss= new SpliceSite(trans.get5PrimeEdge(), SpliceSite.TYPE_CODON_START, trpt.getGene());
 				trpt.getGene().addSpliceSite(ss, vtx);
 				trans.setCodonStart(ss);
-			} else if (readFeatureCDS&& obj.getFeature().equals("stop_codon")) {
+			} else if (obj.getFeature().equals("stop_codon")) {
 				SpliceSite ss= new SpliceSite(trans.get3PrimeEdge(), SpliceSite.TYPE_CODON_STOP, trpt.getGene());
 				trpt.getGene().addSpliceSite(ss, vtx);
 				trans.setCodonStop(ss);
@@ -1097,6 +1094,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 						trpt.getTranslations()[0].addProteinID(idTokens[j]);
 				}
 			}
+		} else if(obj.getFeature().equals("start_codon")|| obj.getFeature().equals("stop_codon")) {
+			
 		} else {
 			int y;
 			for (y = 0; readFeatures != null && y < readFeatures.length; y++)

@@ -28,7 +28,6 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 import barna.commons.log.Log;
 import barna.flux.simulator.PWM;
 import barna.flux.simulator.distributions.AbstractDistribution;
@@ -46,8 +45,8 @@ import java.util.Random;
 public class FragmentFilterRejection implements FragmentProcessor {
     private AbstractDistribution[] d;
     private boolean probDistr;
-    private Random rndGel = RandomFactory.get();
-    private Random rndDELME= RandomFactory.get();
+    private Random rndGel = new Random();
+    private Random rndDELME= new Random();
 	private PWM pwmASense;
 	private PWM pwmSense;
 	private Map<CharSequence, double[]> mapWeightAsense;

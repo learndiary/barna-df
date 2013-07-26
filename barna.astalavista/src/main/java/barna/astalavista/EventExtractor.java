@@ -374,7 +374,6 @@ public class EventExtractor extends SplicingGraph implements Runnable {
                             ASEvent ev = new ASEvent(tt, ss);
                             ev.setAnchors(srcSite, snkSite);
                             ev.setDimension(playground.length);
-
 //							if (ev.toStringStructure().equals("1[2^,1[2^5-7^8-9^,1[2^6-7^8-9^,3[7^8-9^,4[7^8-9^"))
 //								System.currentTimeMillis();
 //							if(snkSite.getPos()== 155209868/*&& snkSite.getPos()== 155214653*/)

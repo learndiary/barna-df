@@ -28,7 +28,6 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 import barna.flux.simulator.distributions.AbstractDistribution;
 
 import java.util.Arrays;
@@ -53,7 +52,7 @@ public class FragmentFilterMCMC implements FragmentProcessor {
     /**
      * Random generator
      */
-    private Random rndGel = RandomFactory.get();
+    private Random rndGel = new Random();
     private AbstractDistribution dGenerate;
     private AbstractDistribution[] dProposal;
 

@@ -28,7 +28,6 @@
 package barna.flux.simulator.error;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 import barna.commons.system.OSChecker;
 import barna.model.Qualities;
 
@@ -42,7 +41,7 @@ public class ModelPool {
     /**
      * Random generator fot mutations
      */
-    private Random rndMutator = RandomFactory.get();
+    private Random rndMutator = new Random();
     /**
      * True if a fastq file should be generated
      */

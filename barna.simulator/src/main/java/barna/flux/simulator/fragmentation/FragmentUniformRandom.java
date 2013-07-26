@@ -28,7 +28,6 @@
 package barna.flux.simulator.fragmentation;
 
 import barna.commons.ByteArrayCharSequence;
-import barna.commons.RandomFactory;
 import barna.commons.log.Log;
 import barna.flux.simulator.PWM;
 import org.apache.commons.math.special.Gamma;
@@ -48,7 +47,7 @@ public class FragmentUniformRandom implements FragmentProcessor {
     private double d0;
     private double urDelta;
     private double urEta;
-    private Random rndBreak = RandomFactory.get();
+    private Random rndBreak = new Random();
     private double medMoleculeLength;
     private boolean filtering;
 
@@ -104,7 +103,7 @@ public class FragmentUniformRandom implements FragmentProcessor {
         this.medMoleculeLength = medMoleculeLength;
     }
 
-    Random rndDELME= RandomFactory.get();
+    Random rndDELME= new Random();
     @Override
     public List<Fragment> process(final ByteArrayCharSequence id, final ByteArrayCharSequence cs, final int start, final int end, final int len) {
         assert (d0 >= 1); // problem with integer breakpoints, when fragment size << 1 !
