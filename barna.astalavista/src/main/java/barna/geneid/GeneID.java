@@ -155,7 +155,6 @@ public class GeneID {
         int index = 0;
         int weight = 1;
 
-        // index = 5*TRANS[(int)(*(s + i -1))] + TRANS[(int)(*(s + i))];
         for (int i= ls- 1; i>= 0; --i) {
             index += weight* TRANS[(int) s.charAt(i)];
             weight *= cardinal;
@@ -480,31 +479,28 @@ public class GeneID {
      */
     public static float scoreSite(String s, Profile p) {
         float score= 0f;
-        if (s.length()!= p.dimension+ p.order)
+        if (s.length()!= p.dimension)
             throw new RuntimeException("Site sequence "+ s.length()+ "nt, expected "+ p.dimension+ "nt!");
 
         /* Applying part of the profile */
         //System.err.println(p.offset+",dim="+p.dimension+",slen="+s.length());
-        for (int i= 0; i < p.dimension; i++) {
+        for (int i= 0; i < (p.dimension- p.order- 1); i++) {
 
 
             /* i is the position inside the region */
             int index = OligoToInt(s.substring(i), p.order+ 1, 5);
 
-            float inc= 0;
             if (index >= p.dimensionTrans)
-                inc= -GeneIDconstants.INFI;
+                score = score + -GeneIDconstants.INFI;
             else
-                inc= p.transitionValues[i][index];
-            score+= inc;
+                score = score + p.transitionValues[i+ 1][index];
         }
         score = p.afactor + (p.bfactor * score);
 
         return score;
     }
-    public static float scoreDonor(String s, Profile p) {
 
-        // TODO this is a simplified version of the BuildDonors.c
+    public static float scoreDonor(String s, Profile p) {
 
         float score= 0f;
         // prefix_donor = (offset+ order)
@@ -514,18 +510,15 @@ public class GeneID {
 
 
         /* Applying part of the profile */
-        for (int i=p.offset, j=0; i < p.dimension; i++, j++) {
+        for (int i= p.offset, j=0; i < p.dimension; i++,j++) {
 
             /* i is the position inside the region */
-            String tuple= s.substring(j);   // works for GCAG
-            int index = OligoToInt(tuple, p.order+ 1, 5);
+            int index = OligoToInt(s.substring(j), p.order+ 1, 5);
 
-            float incr= 0;
             if (index >= p.dimensionTrans)
-                incr= -GeneIDconstants.INFI;
+                score = score + -GeneIDconstants.INFI;
             else
-                incr= p.transitionValues[j][index];
-            score+= incr;
+                score = score + p.transitionValues[i][index];
         }
         score = p.afactor + (p.bfactor * score);
 
