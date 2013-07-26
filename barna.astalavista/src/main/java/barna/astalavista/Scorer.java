@@ -373,66 +373,69 @@ public class Scorer extends AStalavista {
             // 0:chrNr, 1:position, 2:snpID, 3:ref string, 4:variant string
             String[] vv= vvec.elementAt(i).split("@");
             int snPos= Integer.parseInt(vv[1]);
-            boolean deletion= vv[3].length()> vv[4].length();
-            boolean insertion= vv[3].length()< vv[4].length();
-            boolean substitution= vv[3].length()== vv[4].length();
 
+            // correct for neg.strand (VCF file is in genomic positions, indels are to be shift)
             int del= vv[3].length()- 1;
             if (ss.getPos()< 0) {
-                if (vv[4].length()> 1)  // || vv[4].length()> 0)
-                    System.currentTimeMillis();
                 snPos+= del;
                 vv[3]= Graph.reverseSequence(Graph.complementarySequence(vv[3]));
-                vv[4]= Graph.reverseSequence(Graph.complementarySequence(vv[4]));
             }
-            int j= Math.abs(Math.abs(ss.getPos()- flank5)- snPos);
+            int p= Math.abs(ss.getPos()- flank5)- snPos;
+            if (p< 0|| p>= seq.length())
+                continue;   // after correction (pe neg.strand) out of site area
 
-            // VCF already provides strand-specific bases
-            String varSeq= null;
-            // check
-            if (rec== 0) {
-                String sub= seq.substring(j, Math.min(j+ del+ 1, seq.length()));
-                if (!(vv[3].substring(0, sub.length()).equalsIgnoreCase(sub)))
-                    System.currentTimeMillis();
-                //assert(vv[3].substring(0, sub.length()).equalsIgnoreCase(sub));
-            }
 
-            if (j+ vv[4].length()- del<= seq.length()) {
+            // BARNA-317 split for multiple substitution possibilities
+            String[] vvv= vv[4].split(",");
+            for (int j = 0; j < vvv.length; j++) {
+                boolean deletion= vv[3].length()> vvv[j].length();
+                boolean insertion= vv[3].length()< vvv[j].length();
+                boolean substitution= vv[3].length()== vvv[j].length();
 
-                varSeq= seq.substring(0, j)+ vv[4];
-                if (j+ del< seq.length())
-                    varSeq+= seq.substring(j+ del+ 1);
-
-                // trim start
-                int start= 0;
-                if (insertion&& j< flank5)
-                    start= vv[4].length()- vv[3].length();
-                // trim end
-                if (varSeq.length()> seq.length())  // dirty
-                    varSeq= varSeq.substring(0, seq.length());
-            } else
-                varSeq= seq.substring(0, j)+ vv[4].substring(0, seq.length()- j);
-            if (varSeq.length()< seq.length()) {
-                int missing= seq.length()- varSeq.length();
-                // fill with upstream seq
-                if (j+ missing< flank5) {
-                    String s= Graph.readSequence(ss, flank5+ missing- (ss.isAcceptor()? 2: 0), 0);
-                    varSeq= s.substring(0, missing).toLowerCase()+ varSeq;
-                } else {    // fill with downstream seq
-                    int skip= j+ del+ 1- seq.length(); // to be skipped ds
-                    String s= Graph.readSequence(ss, 0, flank3+ skip+ missing);
-                    varSeq+= s.substring(2+ flank3+ skip).toLowerCase();
+                if (ss.getPos()< 0) {
+                    vvv[j]= Graph.reverseSequence(Graph.complementarySequence(vvv[j]));
                 }
-            }
-            float score= scoreSite(ss, varSeq);
-            String vvarID= varID+ (varID.length()> 0? ",": "")+ vv[2];
-            //outputSite(ss, vvarID, varSeq, score);
-            seqs[nr]= varSeq;
-            scores[nr]= score;
-            varTuples[nr]= vvarID;
 
-            // start recursion
-            nr= scoreVariants(vvec, vvarID, rec+ 1, nr, i + 1, ss, flank5, flank3, varSeq, seqs, scores, varTuples);
+                // VCF already provides strand-specific bases
+                String varSeq= null;
+                if (p+ vvv[j].length()- del<= seq.length()) {
+
+                    varSeq= seq.substring(0, p)+ vvv[j];
+                    if (p+ del< seq.length())
+                        varSeq+= seq.substring(p+ del+ 1);
+
+                    // trim start
+                    int start= 0;
+                    if (insertion&& p< flank5)
+                        start= vvv[j].length()- vv[3].length();
+                    // trim end
+                    if (varSeq.length()> seq.length())  // dirty
+                        varSeq= varSeq.substring(0, seq.length());
+                } else
+                    varSeq= seq.substring(0, p)+ vvv[j].substring(0, seq.length()- p);
+                if (varSeq.length()< seq.length()) {
+                    int missing= seq.length()- varSeq.length();
+                    // fill with upstream seq
+                    if (p+ missing< flank5) {
+                        String s= Graph.readSequence(ss, flank5+ missing- (ss.isAcceptor()? 2: 0), 0);
+                        varSeq= s.substring(0, missing).toLowerCase()+ varSeq;
+                    } else {    // fill with downstream seq
+                        int skip= p+ del+ 1- seq.length(); // to be skipped ds
+                        String s= Graph.readSequence(ss, 0, flank3+ skip+ missing);
+                        varSeq+= s.substring(2+ flank3+ skip).toLowerCase();
+                    }
+                }
+                float score= scoreSite(ss, varSeq);
+                String vvarID= varID+ (varID.length()> 0? ",": "")+ vv[2];
+                //outputSite(ss, vvarID, varSeq, score);
+                seqs[nr]= varSeq;
+                scores[nr]= score;
+                varTuples[nr]= vvarID;
+
+                // start recursion
+                nr= scoreVariants(vvec, vvarID, rec+ 1, nr, i + 1, ss, flank5, flank3, varSeq, seqs, scores, varTuples);
+            }
+
         }
 
         return nr;
@@ -471,6 +474,7 @@ public class Scorer extends AStalavista {
         String seq= null;
         float score;
         int flank5, flank3;
+
         for (int i = 0; i < spliceSites.length; i++) {
 
             if (spliceSites[i].isDonor()) {
@@ -501,7 +505,16 @@ public class Scorer extends AStalavista {
 
             // get variants, if annotated
             Vector<String> vvec= getVariants(spliceSites[i], flank5, flank3);
-            int nrCombinations= (int) Math.pow(2, vvec== null? 0: vvec.size());
+
+            // int nrCombinations= (int) Math.pow(2, vvec== null? 0: vvec.size());
+            // BARNA-317: unfortunately not that easy, one line may contain multiple ALT values (comma-separated)
+            //
+            int nrCombinations= 1;
+            for(int j=0; (vvec!= null) && j< vvec.size(); ++j) {
+                String[] vv= vvec.elementAt(j).split("@");
+                String[] vvv= vv[4].split(",");
+                nrCombinations*= (vvv.length+ 1); // total nr.= nr. variants + ref
+            }
 
             // arrays to store reference results and
             String[] seqs= new String[nrCombinations];
