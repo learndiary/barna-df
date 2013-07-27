@@ -380,6 +380,8 @@ public class Scorer extends AStalavista {
                 snPos+= del;
                 vv[3]= Graph.reverseSequence(Graph.complementarySequence(vv[3]));
             }
+            if(ss.getPos()< 0)
+                snPos= -snPos;
             int p= snPos- (ss.getPos()- flank5);
             if (p< 0|| p>= seq.length())
                 continue;   // after correction (pe neg.strand) out of site area
