@@ -774,9 +774,9 @@ public class FluxCapacitorTest {
         assertEquals(1, stats.getSingleTxLoci());
         assertEquals(6, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(3, stats.getMappingPairsSingleTxLoci());   // TODO changed from 6 to 3 to make test happy
+        assertEquals(6, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
-        assertEquals(3, stats.getMappingsMapped());             // TODO changed from 6 to 3 to make test happy
+        assertEquals(6, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
         assertEquals(0, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());
@@ -801,9 +801,9 @@ public class FluxCapacitorTest {
         assertEquals(1, stats.getSingleTxLoci());
         assertEquals(6, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(1, stats.getMappingPairsSingleTxLoci());   // TODO changed from 2 to 1 to make test happy
+        assertEquals(2, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
-        assertEquals(1, stats.getMappingsMapped());             // TODO changed from 2 to 1 to make test happy
+        assertEquals(2, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
         assertEquals(0, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());

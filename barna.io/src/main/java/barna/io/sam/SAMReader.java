@@ -168,8 +168,8 @@ public class SAMReader extends AbstractFileIOWrapper implements
             for (SAMRecord r : getSAMFileReader(false)) {
                 if(r.getReadPairedFlag()) {
                     paired=true;
-                    break;
                 }
+                break;
             }
             this.close();
             this.reset();
@@ -285,7 +285,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 
     @Override
 	public boolean isApplicable(UniversalReadDescriptor descriptor) {
-		return (this.isPaired() && descriptor.isPaired());
+		return (this.isPaired() == descriptor.isPaired());
 	}
 
     @Override
