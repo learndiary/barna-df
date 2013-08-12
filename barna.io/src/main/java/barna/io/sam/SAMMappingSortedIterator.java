@@ -198,14 +198,13 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             SAMMapping currentMapping = this.next();
             if (!currentMapping.isProperlyPaired())
                 continue;
-            if (!this.matesOnly || currentMapping.isMateOf((SAMMapping)firstMate)) {
-                attr2 = getAttributes(currentMapping,descriptor,attr2);
-                if (!attr1.id.equals(attr2.id))
-                    break;
-                if (attr2 == null || attr2.flag == 1)
-                    continue;
+            attr2 = getAttributes(currentMapping,descriptor,attr2);
+            if (!attr1.id.equals(attr2.id))
+                break;
+            if (attr2 == null || attr2.flag == 1)
+                continue;
+            if (!this.matesOnly || currentMapping.isMateOf((SAMMapping)firstMate))
                 mappings.add(currentMapping);
-            }
         }
         this.reset();
         return mappings.iterator();
