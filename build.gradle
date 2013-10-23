@@ -107,6 +107,7 @@ task aggregatedJavadoc(type: Javadoc){
     configure(options) {
         windowTitle = 'Barna API Documentation'
         docTitle = "Barna JavaDoc (${project.version})"
+        failOnError = false
         links = [ 'http://download.oracle.com/javase/6/docs/api/',
                   'http://download.oracle.com/javaee/6/api/' ]
     }
