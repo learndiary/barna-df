@@ -490,7 +490,7 @@ public class FluxCapacitorTest {
         assertEquals(2, stats.getLociExp());
         assertEquals(4, stats.getTxsExp());
         assertEquals(0, stats.getEventsExp());
-        assertEquals(566, stats.getReadsSingleTxLoci());
+        //assertEquals(283, stats.getReadsSingleTxLoci());
         assertEquals(283, stats.getMappingsSingleTxLoci());
         assertEquals(586, stats.getMappingPairsSingleTxLoci());
         assertEquals(8005, stats.getMappingsTotal());
@@ -720,7 +720,7 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(2, stats.getReadsSingleTxLoci());
+        //assertEquals(1, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
         assertEquals(2, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
@@ -746,9 +746,9 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(6, stats.getReadsSingleTxLoci());
-        assertEquals(3, stats.getMappingsSingleTxLoci());
-        assertEquals(6, stats.getMappingPairsSingleTxLoci());
+        assertEquals(3, stats.getReadsSingleTxLoci());
+        assertEquals(1, stats.getMappingsSingleTxLoci());
+        assertEquals(2, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
         assertEquals(6, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
@@ -761,10 +761,10 @@ public class FluxCapacitorTest {
     public void testMultiMapsWeighted() throws Exception {
 
         Map pars = new HashMap();
-        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
-        pars.put("MAPPING_FILE", BAM_HG_MULTI);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
-        pars.put("WEIGHTED_COUNT", true);
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_MULTI);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
+        pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(), true);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -772,11 +772,11 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(6, stats.getReadsSingleTxLoci());
-        assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(6, stats.getMappingPairsSingleTxLoci());
+        assertEquals(3, stats.getReadsSingleTxLoci());
+        assertEquals(0, stats.getMappingsSingleTxLoci());
+        assertEquals(1, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
-        assertEquals(6, stats.getMappingsMapped());
+        assertEquals(2, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
         assertEquals(0, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());
@@ -799,9 +799,9 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(6, stats.getReadsSingleTxLoci());
-        assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(2, stats.getMappingPairsSingleTxLoci());
+        assertEquals(3, stats.getReadsSingleTxLoci());
+        assertEquals(0, stats.getMappingsSingleTxLoci());   // 0.3 rounded down
+        assertEquals(1, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
         assertEquals(2, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
@@ -814,10 +814,11 @@ public class FluxCapacitorTest {
     public void testMultiMapsUniqueOnly() throws Exception {
 
         Map pars = new HashMap();
-        pars.put("ANNOTATION_FILE", GTF_HG_MULTI);
-        pars.put("MAPPING_FILE", BAM_HG_MULTI);
-        pars.put("ANNOTATION_MAPPING", AnnotationMapping.PAIRED);
-        pars.put("SAM_UNIQUE_ONLY", true);
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_MULTI);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
+        pars.put(FluxCapacitorSettings.SAM_UNIQUE_ONLY.getName(), true);
+        pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), false);    // 2 unique mappings, but not in a sam pair
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -825,9 +826,9 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(2, stats.getReadsSingleTxLoci());
+        assertEquals(1, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(2, stats.getMappingPairsSingleTxLoci());
+        assertEquals(0, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
         assertEquals(2, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
@@ -853,9 +854,9 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(2, stats.getReadsSingleTxLoci());
+        assertEquals(1, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
-        assertEquals(0, stats.getMappingPairsSingleTxLoci());
+        assertEquals(0, stats.getMappingPairsSingleTxLoci());  // profiling only allows sam-pairing
         assertEquals(6, stats.getMappingsTotal());
         assertEquals(0, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());

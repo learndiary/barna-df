@@ -536,7 +536,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     */
 	    public static final Parameter<Boolean> SAM_MATES_ONLY = Parameters.booleanParameter("SAM_MATES_ONLY",
                                                                                          "Use SAM pairing information for quantification",
-                                                                                        false, new ParameterValidator() {
+                                                                                        true, new ParameterValidator() {
           @Override
           public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
               boolean sam_primary_only = schema.get(SAM_PRIMARY_ONLY);

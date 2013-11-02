@@ -88,7 +88,7 @@ public class SAMReaderTest {
             }
         }
 
-        assertEquals(6,c);
+        assertEquals(3,c);
     }
 
     @Test
@@ -200,7 +200,7 @@ public class SAMReaderTest {
             }
         }
 
-        assertEquals(6,c);
+        assertEquals(3,c);  // 3 pairs when considering sam pairing
     }
 
     @Test

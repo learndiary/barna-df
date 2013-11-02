@@ -185,13 +185,11 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
 
     @Override
     public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
-    //TODO Check for mappings with properPaired flag only
         ArrayList<Mapping> mappings = new ArrayList<Mapping>();
         UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
         attr1 = getAttributes(firstMate,descriptor,attr1);
-        if (attr1.flag == 2)
-            return mappings.iterator();
-        if (!((SAMMapping)firstMate).isProperlyPaired())
+        if ((attr1.flag == 2)
+                || (!((SAMMapping) firstMate).isProperlyPaired()))
             return mappings.iterator();
         this.mark();
         while (this.hasNext()) {
@@ -203,8 +201,13 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
                 break;
             if (attr2 == null || attr2.flag == 1)
                 continue;
-            if (!this.matesOnly || currentMapping.isMateOf((SAMMapping)firstMate))
+            if ((!this.matesOnly) || currentMapping.isMateOf((SAMMapping)firstMate)) {
                 mappings.add(currentMapping);
+                if (this.matesOnly) {
+                    this.mappings.remove(currPos--);
+                    break;
+                }
+            }
         }
         this.reset();
         return mappings.iterator();

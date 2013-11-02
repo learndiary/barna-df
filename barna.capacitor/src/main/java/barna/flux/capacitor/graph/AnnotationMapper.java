@@ -34,6 +34,7 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
+import barna.model.sam.SAMMapping;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -350,17 +351,18 @@ public class AnnotationMapper extends SplicingGraph {
         nrMappingsWrongPairOrientation = 0;
         nrMappingsWrongStrand = 0;
 
+        int multi= 0;
         // map read pairs
         while (mappings.hasNext()) {
 
 				mapping= mappings.next();
             ++nrMappingsLocus;
 				CharSequence name= mapping.getName();
-            if (name.equals(lastName))
+            if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
-            lastName = name;
+            }
 
-				attributes= getAttributes(mapping, descriptor, attributes);
+			attributes= getAttributes(mapping, descriptor, attributes);
             if (paired && attributes.flag == 2)    // don't iterate twice, for counters
                 continue;
 				AbstractEdge target= getEdge2(mapping);
@@ -379,21 +381,22 @@ public class AnnotationMapper extends SplicingGraph {
                 }
             }
 
+            lastName = name.toString();
+
             if (paired) {
 
                 // scan for mates
 //                mappings.mark();
                 Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
-
                 while (mates.hasNext()) {
-						otherMapping= mates.next();
+					otherMapping= mates.next();
 //						attributes2= getAttributes(otherMapping, descriptor, attributes2);
 //                    if (!attributes.id.equals(attributes2.id))
 //                        break;
 //                    if (attributes2 == null || attributes2.flag == 1)
 //                        continue;
 
-						AbstractEdge target2= getEdge2(otherMapping);
+					AbstractEdge target2= getEdge2(otherMapping);
                     if (target2 == null) {
                         ++nrMappingsNotMapped;
                         continue;

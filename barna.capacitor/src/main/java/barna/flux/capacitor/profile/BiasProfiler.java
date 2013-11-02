@@ -15,6 +15,7 @@ import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.Transcript;
 import barna.model.constants.Constants;
+import barna.model.sam.SAMMapping;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -284,14 +285,24 @@ public class BiasProfiler implements Callable<Profile> {
         }
 
         while (mappings.hasNext()) {
-            stats.incrReadsSingleTxLoci(1);
             mapping= mappings.next();
+
             CharSequence tag = mapping.getName();
             attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
             if (paired) {
                 if (attributes.flag < 1)
                     Log.warn("Read ignored, error in readID: " + tag);
                 if (attributes.flag == 2)    // don't iterate second read
+                    continue;
+            }
+            stats.incrReadsSingleTxLoci(1);
+
+            // use reliable info
+            if (mapping instanceof SAMMapping) {
+                SAMMapping smap= (SAMMapping) mapping;
+                if (!smap.isPrimary())
+                    continue;
+                if (paired&& (!smap.isProperlyPaired()))
                     continue;
             }
 
@@ -324,6 +335,13 @@ public class BiasProfiler implements Callable<Profile> {
 //                            break;
 //                        if (attributes2.flag == 1)    // not before break, inefficient
 //                            continue;
+
+                    // use reliable info, independent of Mate_only
+                    if (otherMapping instanceof SAMMapping) {
+                        SAMMapping oMap= (SAMMapping) otherMapping;
+                        if (!oMap.isMateOf((SAMMapping) mapping))
+                            continue;
+                    }
 
                     int bpoint2 = getBpoint(tx, otherMapping);
                     if (bpoint2 < 0 || bpoint2 >= elen) {

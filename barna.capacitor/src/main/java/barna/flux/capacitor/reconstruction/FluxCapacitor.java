@@ -2444,10 +2444,10 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 							+ mappingReader.getCountMappings()+" mappings read from file\n\t"
                             // no info, reads in redundantly many reads
                             //+ nrReadsLoci+" mappings in annotated loci regions\n\t"
-                            + stats.getMappingsMapped() + " mappings" + (pairedEnd ? " in pairs" : "") + " map to annotation\n"
+                            + stats.getMappingsMapped() + " mapping" + (pairedEnd ? " pairs" : "s") + " map to annotation\n"
                             + (pairedEnd ?
-                            "\t" + stats.getMappingPairsNoTx() + " mappings without tx evidence\n"
-                                    + "\t" + stats.getPairsWrongOrientation() + " mappings with wrong orientation\n"
+                            "\t" + stats.getMappingPairsNoTx() + " mapping"+ (pairedEnd ? " pairs" : "s") + " without transcript evidence\n"
+                                    + "\t" + stats.getPairsWrongOrientation() + " mapping"+ (pairedEnd ? " pairs" : "s") + " in wrong orientation\n"
                             //+ "\t"+ nrMappingsForced+ " single mappings forced\n"
                             : "")
                             + ((strand == FluxCapacitorConstants.STRAND_SPECIFIC) ? stats.getMappingsWrongStrand() + " mappings map to annotation in antisense direction\n\t" : "")

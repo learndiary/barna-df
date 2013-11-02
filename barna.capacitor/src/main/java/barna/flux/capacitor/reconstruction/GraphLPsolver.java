@@ -825,7 +825,7 @@ public class GraphLPsolver {
      */
     String getLPoutFileName() {
 
-        //fileLPdir= new File("/Volumes/Raptor/scratch/");
+        fileLPdir= null; //settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
         if (lpOutFName== null&& fileLPdir!= null) {
             try {
                 lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"), SFX_LPOUT, fileLPdir).getAbsolutePath();
@@ -942,6 +942,9 @@ public class GraphLPsolver {
 		if (ret!= 0) {
             try {
                 String fname= getLPoutFileName();
+
+                getLPsolve().writeLp(fname+ "_wlp");
+                getLPsolve().writeMps(fname+ "_mps");
 
                 getLPsolve().setOutputfile(fname+ "_lp");
                 getLPsolve().printLp();
