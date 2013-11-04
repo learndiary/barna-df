@@ -317,15 +317,171 @@ public class AnnotationMapper extends SplicingGraph {
     }   */
 
 
-
-
     /**
      * Maps genome-mapped reads into the graph.
      *
      * @param mappings iterator of input lines
      * @param insertFile
      */
-	public void mapExperiment01(MSIterator<Mapping> mappings, File insertFile) {
+    public void map(MSIterator<Mapping> mappings, File insertFile) {
+
+        if (mappings == null)
+            return;
+
+        BufferedWriter buffy = null;
+        if (insertFile != null)
+            try {
+                buffy = new BufferedWriter(new FileWriter(insertFile, true));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        // init
+        Mapping mapping, otherMapping;
+        CharSequence lastName = null;
+        UniversalReadDescriptor.Attributes
+                attributes = descriptor.createAttributes(),
+                attributes2 = descriptor.createAttributes();
+        boolean paired = descriptor.isPaired();
+        boolean stranded = descriptor.isStranded();
+        nrMappingsLocus = 0;
+        nrMappingsLocusMultiMaps = 0;
+        nrMappingsMapped = 0;
+        nrMappingsNotMapped = 0;
+        nrMappingsNotMappedAsPair = 0;
+        nrMappingsWrongPairOrientation = 0;
+        nrMappingsWrongStrand = 0;
+
+        int multi= 0;
+        // map read pairs
+        while (mappings.hasNext()) {
+
+            mapping= mappings.next();
+            ++nrMappingsLocus;
+            CharSequence name= mapping.getName();
+            if (name.equals(lastName)) {
+                ++nrMappingsLocusMultiMaps;
+            }
+
+            attributes= getAttributes(mapping, descriptor, attributes);
+            if (paired && attributes.flag == 2)    // don't iterate twice, for counters
+                continue;
+            AbstractEdge target= getEdge2(mapping);
+            if (target == null) {
+                ++nrMappingsNotMapped;
+                continue;    // couldn't map
+            }
+
+            byte refStrand = trpts[0].getStrand();    // TODO get from edge
+            if (stranded) {
+                boolean sense= mapping.getStrand()== refStrand;
+                byte dir = attributes.strand;
+                if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                    ++nrMappingsWrongStrand;
+                    continue;
+                }
+            }
+
+            lastName = name.toString();
+
+            if (paired) {
+
+                // scan for mates
+//                mappings.mark();
+                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+                while (mates.hasNext()) {
+                    otherMapping= mates.next();
+//						attributes2= getAttributes(otherMapping, descriptor, attributes2);
+//                    if (!attributes.id.equals(attributes2.id))
+//                        break;
+//                    if (attributes2 == null || attributes2.flag == 1)
+//                        continue;
+
+                    AbstractEdge target2= getEdge2(otherMapping);
+                    if (target2 == null) {
+                        ++nrMappingsNotMapped;
+                        continue;
+                    }
+
+                    // check again strand in case one strand-info had been lost
+                    if (stranded) {
+                        boolean sense= otherMapping.getStrand()== refStrand;
+                        byte dir = attributes2.strand;
+                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                            ++nrMappingsWrongStrand;
+                            continue;
+                        }
+                    }
+
+                    // check directionality (sequencing-by-synthesis)
+                    // 20101222: check also that the leftmost (in genomic direction)
+                    // is sense (in genomic direction)
+                    if (mapping.getStrand()== otherMapping.getStrand()
+                            || (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
+                            || (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
+                        nrMappingsWrongPairOrientation += 2;
+                        continue;
+                    }
+
+                    // find common super-edge
+                    Vector<AbstractEdge> w = new Vector<AbstractEdge>();
+                    if (target.getDelimitingPos(true) < target2.getDelimitingPos(true)) {
+                        w.add(target);
+                        w.add(target2);
+                    } else {
+                        w.add(target2);
+                        w.add(target);
+                    }
+                    SuperEdge se = getSuperEdge(w, true, null);
+                    if (se == null) {
+                        nrMappingsNotMappedAsPair += 2;
+                        continue;
+                    }
+
+                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
+                    }
+                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
+                        ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
+                    }
+                    ((SuperEdgeMappings) se).getMappings().incrReadNr();
+                    if (se.isExonic()) {
+                        nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
+                    }
+                    if (buffy != null)
+                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
+                }
+//                mappings.reset();
+
+            } else {    // single reads, strand already checked
+                boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
+                if (target.isAllIntronic()) {
+                    if (sense)
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
+                    else
+                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
+                } else {
+                    if (sense)
+                        ((MappingsInterface) target).getMappings().incrReadNr();
+                    else
+                        ((MappingsInterface) target).getMappings().incrRevReadNr();
+                    //++nrMappingsMapped;
+                    nrMappingsMapped+=mapping.getCount(weighted);
+                }
+            }
+        } // end: while(iter.hasNext())
+
+        // close insert writer
+        if (buffy != null)
+            try {
+                buffy.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+    }
+
+ 	public void mapExperiment01(MSIterator<Mapping> mappings, File insertFile) {
 
         if (mappings == null)
             return;
