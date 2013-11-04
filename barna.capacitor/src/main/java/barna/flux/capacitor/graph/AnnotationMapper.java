@@ -325,7 +325,7 @@ public class AnnotationMapper extends SplicingGraph {
      * @param mappings iterator of input lines
      * @param insertFile
      */
-	public void map(MSIterator<Mapping> mappings, File insertFile) {
+	public void mapExperiment01(MSIterator<Mapping> mappings, File insertFile) {
 
         if (mappings == null)
             return;
@@ -523,13 +523,14 @@ public class AnnotationMapper extends SplicingGraph {
                 assert(abstractEdge instanceof SuperEdge);
                 SuperEdge se= (SuperEdge) abstractEdge;
 
-                if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
+/*                if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
                     ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
                 }
                 if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
                     ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
                 }
                 ((SuperEdgeMappings) se).getMappings().incrReadNr();
+*/
             }
 
         }
