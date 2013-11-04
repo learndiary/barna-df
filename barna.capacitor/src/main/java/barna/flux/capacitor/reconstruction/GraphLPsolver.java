@@ -87,7 +87,7 @@ public class GraphLPsolver {
      * Flag for debug purposes.
      * @deprecated marked for removal
      */
-	static boolean debug= false;    // TODO replace by JUnit tests
+	static boolean debug= true;    // TODO replace by JUnit tests
 
 	/**
 	 * Splicing graph with mapped reads.
@@ -1409,6 +1409,7 @@ public class GraphLPsolver {
                         System.arraycopy(v.vector, 0, idx, 0, v.length);
                         int c = ++constraintCtr;
                         // plus on not paired edges at 0-cost, it substracts from obs
+                        // TODO should be in OF, if no transloci multimaps exist
                         if (paird || !pairedEnd) {
                             w.add(c);
                             u.add(nr);

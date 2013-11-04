@@ -316,6 +316,9 @@ public class AnnotationMapper extends SplicingGraph {
         return false;
     }   */
 
+
+
+
     /**
      * Maps genome-mapped reads into the graph.
      *
@@ -353,13 +356,20 @@ public class AnnotationMapper extends SplicingGraph {
 
         int multi= 0;
         // map read pairs
+        HashMap<AbstractEdge, Integer> mmapHash= new HashMap<AbstractEdge, Integer>(2, 1f);
+        HashSet<AbstractEdge> mmapRead= new HashSet<AbstractEdge>(2, 1f);
         while (mappings.hasNext()) {
 
-				mapping= mappings.next();
+			mapping= mappings.next();
             ++nrMappingsLocus;
-				CharSequence name= mapping.getName();
+			CharSequence name= mapping.getName();
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
+            } else {
+                //addConstraints(mmapHash, paired);
+                AbstractEdge[] edgeSet= new AbstractEdge[mmapRead.size()];
+
+                mmapRead.clear();
             }
 
 			attributes= getAttributes(mapping, descriptor, attributes);
@@ -373,7 +383,7 @@ public class AnnotationMapper extends SplicingGraph {
 
             byte refStrand = trpts[0].getStrand();    // TODO get from edge
             if (stranded) {
-					boolean sense= mapping.getStrand()== refStrand;
+				boolean sense= mapping.getStrand()== refStrand;
                 byte dir = attributes.strand;
                 if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                     ++nrMappingsWrongStrand;
@@ -415,7 +425,7 @@ public class AnnotationMapper extends SplicingGraph {
                     // check directionality (sequencing-by-synthesis)
                     // 20101222: check also that the leftmost (in genomic direction)
                     // is sense (in genomic direction)
-						if (mapping.getStrand()== otherMapping.getStrand()
+					if (mapping.getStrand()== otherMapping.getStrand()
 								|| (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
 								|| (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
                         nrMappingsWrongPairOrientation += 2;
@@ -437,18 +447,21 @@ public class AnnotationMapper extends SplicingGraph {
                         continue;
                     }
 
-                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
+                    // add to hash
+                    if (!mmapRead.contains(se)) {
+                        if (mmapHash.containsKey(se))
+                            mmapHash.put(se, mmapHash.remove(se)+ 1);
+                        else
+                            mmapHash.put(se, 1);
                     }
-                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
-                        ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
-                    }
-                    ((SuperEdgeMappings) se).getMappings().incrReadNr();
+
+
                     if (se.isExonic()) {
                         nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
                     if (buffy != null)
-							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
+                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
+
                 }
 //                mappings.reset();
 
@@ -477,6 +490,49 @@ public class AnnotationMapper extends SplicingGraph {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
+    }
+
+    private void addConstraints(HashMap<AbstractEdge, Integer> mmapHash, HashSet<AbstractEdge> mmapRead, boolean pend, boolean interLoci) {
+
+        // no mapping
+        if (mmapRead.size()== 0)
+            return;
+
+
+        int sum= 0, partial= 0;
+        // count observations
+        if (pend) {
+            for (AbstractEdge abstractEdge : mmapHash.keySet()) {
+                if (abstractEdge instanceof SuperEdge
+                        && ((SuperEdge) abstractEdge).isPend())
+                    ++sum;
+                else
+                    ++partial;
+            }
+        } else
+            sum= mmapRead.size();
+
+
+
+        double f= 1d/ sum;
+
+        for (AbstractEdge abstractEdge : mmapHash.keySet()) {
+
+            if (pend) {
+                assert(abstractEdge instanceof SuperEdge);
+                SuperEdge se= (SuperEdge) abstractEdge;
+
+                if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
+                    ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
+                }
+                if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
+                    ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
+                }
+                ((SuperEdgeMappings) se).getMappings().incrReadNr();
+            }
+
+        }
 
     }
 

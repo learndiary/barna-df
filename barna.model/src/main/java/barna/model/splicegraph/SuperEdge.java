@@ -81,9 +81,42 @@ public class SuperEdge extends AbstractEdge {
 	 * Flag marking non-contiguous set of edges.
 	 */
 	boolean pairedEnd= false;
-		
 
-	/**
+    /**
+     * The type <code>this</code> edge is representing.
+     */
+    byte type= TYPE_NA;
+
+    /**
+     * Uninitialized type
+     */
+    public final static byte TYPE_NA= -1;
+
+    /**
+     * Simple exon or segment of an exon
+     */
+    public final static byte TYPE_SIMPLE= 0;
+
+    /**
+     * Superedge describign a continuous
+     * sequence of exonic segments
+     */
+    public final static byte TYPE_COMPOSED= 1;
+
+    /**
+     * Superedge describing a tuple of edges
+     * which may be identical
+     */
+    public final static byte TYPE_PAIRED= 2;
+
+    /**
+     * Set of any type of (super-)edges.
+     */
+    public final static byte TYPE_SET= 10;
+
+
+    /**
+     * Constructor to create anything but an edgeset.
 	 * @param edges
 	 * @param supp
 	 * @param pend
@@ -92,37 +125,27 @@ public class SuperEdge extends AbstractEdge {
 
 		setEdges(edges);// this(edges);	// also sets transcript set
 		setTranscripts(supp);
-		setPend(pend);
-//		Transcript[] b4= g.decodeTset(transcripts);
-		
-//		if (!pend) {
-////			
-////		} else {
-//			tail.addOutEdge(this);
-//			head.addInEdge(this);
-//			
-//			Node[] n= g.getNodesInGenomicOrder();
-//			for (int i = 0; i < edges.length-1; i++) {
-//				int p= Arrays.binarySearch(n, edges[i].getHead(), Node.getDefaultPositionTypeComparator());
-//				assert(p>= 0);
-//				
-//				Iterator<Edge> iter= n[p].getOutEdges().iterator();
-//				while (iter.hasNext()) {
-//					Edge e= iter.next();
-//					if (e.isExonic())
-//						continue;
-//					if (e.getHead()== edges[i+1].getTail()) {
-//						transcripts= Graph.intersect(transcripts, e.getTranscripts());
-//						break;
-//					}
-//				}
-//			}
-//		}		
-//		Transcript[] after= g.decodeTset(transcripts);
-		System.currentTimeMillis();
+
+        if(edges.length== 1)
+            this.type= TYPE_SIMPLE;
+        else {
+            if (pend)
+                this.type= TYPE_PAIRED;
+            else
+                this.type= TYPE_COMPOSED;
+        }
 	}
 
-	public AbstractEdge[] getEdges() {
+    /**
+     * Constructor for an edgeset.
+     * @param edges edges that the set comprises
+     */
+    public SuperEdge(AbstractEdge[] edges) {
+        setEdges(edges);
+        this.type= TYPE_SET;
+    }
+
+        public AbstractEdge[] getEdges() {
 		return edges;
 	}
 	
@@ -163,13 +186,22 @@ public class SuperEdge extends AbstractEdge {
         return count;
     }
 
+    public boolean isSet() {
+        return type== TYPE_SET;
+    }
+
     public boolean isSpliceJunction() {
+        if (isSet())
+            return false;
+
         if (this.countEJ() > 0)
             return true && !pairedEnd;
         return false;
     }
 
     public boolean isIntronic() {
+        if (isSet())
+            return false;
         for(AbstractEdge e : edges)
             if(e.isIntronic())
                 return true;
@@ -177,6 +209,10 @@ public class SuperEdge extends AbstractEdge {
 	}
 	
 	public boolean isExonic() {
+
+        if (isSet())
+            return false;
+
 		for (int i = 0; i < edges.length; i++) 
 			if(!edges[i].isExonic())
 				return false;
@@ -184,6 +220,9 @@ public class SuperEdge extends AbstractEdge {
 	}
 
     public boolean isAllIntronic() {
+        if (isSet())
+            return false;
+
         boolean b= true;
         for(AbstractEdge e : edges)
             if(e.isAllIntronic())
@@ -307,13 +346,8 @@ public class SuperEdge extends AbstractEdge {
 	}
 
 	public boolean isPend() {
-		return pairedEnd;
+		return type== TYPE_PAIRED;
 	}
-
-	public void setPend(boolean pend) {
-		this.pairedEnd = pend;
-	}
-	
 
 	public static int[] getPEfrac(Transcript t, int readLen, AbstractEdge[] edges, byte dir) {
 		assert(edges.length== 2);
