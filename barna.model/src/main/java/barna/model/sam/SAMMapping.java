@@ -26,6 +26,11 @@ public class SAMMapping implements Mapping{
     private byte strandFlag;
     private byte[] sequence;
     private Cigar cigar;
+
+    public int getHits() {
+        return hits;
+    }
+
     private int hits;
     private boolean primary;
     private int insertSize;

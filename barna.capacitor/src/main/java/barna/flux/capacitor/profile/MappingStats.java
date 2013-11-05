@@ -231,6 +231,10 @@ public class MappingStats {
         return mappingPairsNoTx;
     }
 
+    /**
+     * @deprecated not supported anymore, see <code>mappingsNotMapped</code>
+     * @param mappingPairsNoTx
+     */
     public void setMappingPairsNoTx(long mappingPairsNoTx) {
         this.mappingPairsNoTx = mappingPairsNoTx;
     }
@@ -243,6 +247,10 @@ public class MappingStats {
         return pairsWrongOrientation;
     }
 
+    /**
+     * @deprecated not supported anymore, see <code>mappingsWrongStrand</code>
+     * @param mappingsPairsWa
+     */
     public void setPairsWrongOrientation(long mappingsPairsWa) {
         this.pairsWrongOrientation = mappingsPairsWa;
     }

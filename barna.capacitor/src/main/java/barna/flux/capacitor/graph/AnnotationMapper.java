@@ -55,39 +55,86 @@ public class AnnotationMapper extends SplicingGraph {
     static final int VARIANT_WINDOW= 60;
 
     /**
-     * The number of mappings in the current locus.
+     * The redundant number of mappings in the locus. For single reads, each mapping of each read is counted once, in
+     * the case of paired-end reads, all combinations that are considered for annotation mapping are counted once.
      */
 	public long nrMappingsLocus= 0;
 
     /**
-     * The number of mappings in the current locus that map to the annotation.
+     * The redundant number of all mappings in the locus that map to the annotation. For paired-end reads only mappings
+     * with both mates mapped to the annotation are counted.
      */
-	public double nrMappingsMapped= 0;
+	public long nrMappingsMapped= 0;
 
     /**
-     * The number of mappings in the current locus that do not map to the annotation
+     * The redundant number of mappings that do not map to the annotation. For paired-end reads, all mapping pairs that
+     * do not map to the annotation as pairs are counted.
      */
 	public long nrMappingsNotMapped= 0;
 
     /**
-     * The number of mappings that mapped to the annotation but no mate was found/mapped.
+     * @deprecated now the counter <code>nrMappingsNotMapped</code> is used instead
      */
 	public long nrMappingsNotMappedAsPair= 0;
 
     /**
-     * The number of mappings that did not match the expected strand.
+     * Redundant number of paired and annotation-mapped reads that did not exhibit the expected orientation. The counter
+     * is only increased for reads without a valid hit. For paired-end reads, an it means that both mates matched the
+     * annotation, but did not have the expected orientation. For single reads, the counter is only employed in stranded
+     * protocols. The counter reports a subset of <code>nrMappingsNotMapped</code>
      */
 	public long nrMappingsWrongStrand= 0;
-
     /**
-     * The number of paired and annotation-mapped reads that did not exhibit the expected orientation.
+     * @deprecated counted as <code>nrMappingsWrongStrand</code> in paired-end mode
      */
 	public long nrMappingsWrongPairOrientation= 0;
 
     /**
-     * The number of mappings that are mapped multiple times in the locus.
+     * The redundant number of multiple mappings for the same reads within the locus, each of them being a valid hit.
+     * For paired-end reads, this means that both mates have a valid annotation mapping in the expected directionality.
+     * The counter reports a subset of <code>nrMappingsMapped</code>.
      */
 	public long nrMappingsLocusMultiMaps= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map to the locus, with at least one valid
+     * mapping. The number contains the count of <code>ctrHitsMultiLocus</code>, but not any other counters as it
+     * focuses on the reads of which we are really sure they stem from this locus. Hits are possibly weighted.
+     */
+    double long ctrHits= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) without any valid mapping within the locus. The
+     * redundant distribution of annotation mapping errors is stored in the corresponding mapping counter.
+     */
+    public long ctrHitsNone= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times only within the locus,
+     * with at least one valid mapping.
+     */
+    public long ctrHitsMultiLocus= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times within the genome but
+     * not within the locus and that have a valid mapping in the locus.
+     */
+    public long ctrHitsMultiGenome= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times within the locus and
+     * also in the genome.
+     */
+    public long ctrHitsMultiLocusAndGenome= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that do not map within the locus, but multiple
+     * times within the genome.
+     */
+    public long ctrHitsNoneMultiGenome= 0;
+
+
+
 
     /**
      * For counting various stuff
@@ -338,123 +385,108 @@ public class AnnotationMapper extends SplicingGraph {
 
         // init
         Mapping mapping, otherMapping;
-        CharSequence lastName = null;
         UniversalReadDescriptor.Attributes
                 attributes = descriptor.createAttributes(),
                 attributes2 = descriptor.createAttributes();
         boolean paired = descriptor.isPaired();
         boolean stranded = descriptor.isStranded();
-        nrMappingsLocus = 0;
-        nrMappingsLocusMultiMaps = 0;
-        nrMappingsMapped = 0;
-        nrMappingsNotMapped = 0;
-        nrMappingsNotMappedAsPair = 0;
-        nrMappingsWrongPairOrientation = 0;
-        nrMappingsWrongStrand = 0;
+        byte refStrand = trpts[0].getStrand();    // TODO get from edge
+        int mate1redGenome= -1, mate2redGenome= -1;
 
-        int multi= 0;
-        // map read pairs
-        while (mappings.hasNext()) {
+        nrMappingsLocus = 0;
+        nrMappingsNotMapped = 0;
+        nrMappingsWrongStrand = 0;
+        nrMappingsMapped = 0;
+        nrMappingsLocusMultiMaps = 0;
+        long[] storeMappings= new long[5];
+        ctrHits= 0;
+        ctrHitsMultiLocus= 0;
+        ctrHitsMultiLocusAndGenome= 0;
+        ctrHitsMultiGenome= 0;
+        ctrHitsNone= 0;
+        ctrHitsNoneMultiGenome= 0;
+
+        for (CharSequence name, lastName= null; mappings.hasNext(); lastName= name.toString()) {
 
             mapping= mappings.next();
-            ++nrMappingsLocus;
-            CharSequence name= mapping.getName();
-            if (name.equals(lastName)) {
-                ++nrMappingsLocusMultiMaps;
-            }
-
+            if (!paired)
+                ++nrMappingsLocus;
             attributes= getAttributes(mapping, descriptor, attributes);
-            if (paired && attributes.flag == 2)    // don't iterate twice, for counters
-                continue;
-            AbstractEdge target= getEdge2(mapping);
-            if (target == null) {
-                ++nrMappingsNotMapped;
-                continue;    // couldn't map
-            }
+            name= mapping.getName();
+            if (!name.equals(lastName)) {   // new read or pair
+                if (lastName!= null) {
+                    boolean redGenome= false;
+                    if ((mate1redGenome> 0 && mate2redGenome> 0 && paired)
+                            || (mate1redGenome> 0 && !paired))
+                        redGenome= true;
 
-            byte refStrand = trpts[0].getStrand();    // TODO get from edge
-            if (stranded) {
-                boolean sense= mapping.getStrand()== refStrand;
-                byte dir = attributes.strand;
-                if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                    ++nrMappingsWrongStrand;
-                    continue;
-                }
-            }
-
-            lastName = name.toString();
-
-            if (paired) {
-
-                // scan for mates
-//                mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
-                while (mates.hasNext()) {
-                    otherMapping= mates.next();
-//						attributes2= getAttributes(otherMapping, descriptor, attributes2);
-//                    if (!attributes.id.equals(attributes2.id))
-//                        break;
-//                    if (attributes2 == null || attributes2.flag == 1)
-//                        continue;
-
-                    AbstractEdge target2= getEdge2(otherMapping);
-                    if (target2 == null) {
-                        ++nrMappingsNotMapped;
-                        continue;
-                    }
-
-                    // check again strand in case one strand-info had been lost
-                    if (stranded) {
-                        boolean sense= otherMapping.getStrand()== refStrand;
-                        byte dir = attributes2.strand;
-                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                            ++nrMappingsWrongStrand;
-                            continue;
+                    if (storeMappings[3]> nrMappingsMapped) {
+                        // assume that other mappings pair 1:1
+                        int mateSum= 1+ (paired? Math.min(mate1redGenome, mate2redGenome): mate1redGenome);
+                        if (mateSum< 1)
+                            mateSum= 1;
+                        ctrHits+= (redGenome&& weighted? 1d/ mateSum: 1d);
+                        if (storeMappings[4]> nrMappingsLocusMultiMaps) {
+                            if (redGenome)
+                                ++ctrHitsMultiLocusAndGenome;
+                            else
+                                ++ctrHitsMultiLocus;
+                        } else if (redGenome) {
+                            ++ctrHitsMultiGenome;
+                        }
+                    } else {
+                        if ((nrMappingsLocus- storeMappings[0])==
+                                ((nrMappingsNotMapped- storeMappings[1])+
+                                        (nrMappingsWrongStrand- storeMappings[2]))) {
+                            if (redGenome)
+                                ++ctrHitsNoneMultiGenome;
+                            else
+                                ++ctrHitsNone;
                         }
                     }
 
-                    // check directionality (sequencing-by-synthesis)
-                    // 20101222: check also that the leftmost (in genomic direction)
-                    // is sense (in genomic direction)
-                    if (mapping.getStrand()== otherMapping.getStrand()
-                            || (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
-                            || (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
-                        nrMappingsWrongPairOrientation += 2;
-                        continue;
-                    }
-
-                    // find common super-edge
-                    Vector<AbstractEdge> w = new Vector<AbstractEdge>();
-                    if (target.getDelimitingPos(true) < target2.getDelimitingPos(true)) {
-                        w.add(target);
-                        w.add(target2);
-                    } else {
-                        w.add(target2);
-                        w.add(target);
-                    }
-                    SuperEdge se = getSuperEdge(w, true, null);
-                    if (se == null) {
-                        nrMappingsNotMappedAsPair += 2;
-                        continue;
-                    }
-
-                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
-                    }
-                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
-                        ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
-                    }
-                    ((SuperEdgeMappings) se).getMappings().incrReadNr();
-                    if (se.isExonic()) {
-                        nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
-                    }
-                    if (buffy != null)
-                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
                 }
-//                mappings.reset();
+                storeMappings[0]= nrMappingsLocus;
+                storeMappings[1]= nrMappingsNotMapped;
+                storeMappings[2]= nrMappingsWrongStrand;
+                storeMappings[3]= nrMappingsMapped;
+                storeMappings[4]= nrMappingsLocusMultiMaps;
+                mate1redGenome= 0;
+                mate2redGenome= -1;
+                if (mapping instanceof SAMMapping) {
+                    mappings.mark();
+                    int c= countMappings(mappings);
+                    mappings.reset();
+                    int d= ((SAMMapping) mapping).getHits();
+                    mate1redGenome= d- c;
+                }
 
-            } else {    // single reads, strand already checked
-                boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
+            }
+
+            if (paired && attributes.flag == 2)    // don't iterate mate /2 twice
+                continue;
+            AbstractEdge target= getEdge2(mapping);
+            if (!paired) {
+
+                if (target == null) {         // couldn't map /1
+                    ++nrMappingsNotMapped;
+                    continue;
+                }
+                if (stranded) {
+                    boolean sense= mapping.getStrand()== refStrand;
+                    byte dir = attributes.strand;
+                    if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                        ++nrMappingsWrongStrand;
+                        continue;
+                    }
+                }
+
+                ++nrMappingsMapped;   // valid mapping /1
+                if (name.equals(lastName)) {
+                    ++nrMappingsLocusMultiMaps;
+                }
+
+                boolean sense= refStrand== mapping.getStrand();
                 if (target.isAllIntronic()) {
                     if (sense)
                         ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
@@ -465,11 +497,105 @@ public class AnnotationMapper extends SplicingGraph {
                         ((MappingsInterface) target).getMappings().incrReadNr();
                     else
                         ((MappingsInterface) target).getMappings().incrRevReadNr();
-                    //++nrMappingsMapped;
                     nrMappingsMapped+=mapping.getCount(weighted);
                 }
+
+            } else {    // paired-end
+
+                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+
+                if (!mates.hasNext()) {
+                    ++nrMappingsNotMapped;  // (1) not mapped because there is no mate /2
+                    continue;
+                }
+
+                while (mates.hasNext()) {
+                    otherMapping= mates.next();
+                    ++nrMappingsLocus;      // new pair considered for annotation mapping
+
+                    // check genomic redundancy
+                    if (!name.equals(lastName)) {
+                        mate2redGenome= 0;
+                        if (otherMapping instanceof SAMMapping) {
+                            int c= countMappings(mates);
+                            mates= mappings.getMates(mapping, descriptor);
+                            int d= ((SAMMapping) otherMapping).getHits();
+                            mate2redGenome= d- c;
+                        }
+                    }
+
+                    AbstractEdge target2= getEdge2(otherMapping);
+                    if (target2 == null) {
+                        ++nrMappingsNotMapped;  // (2) not mapped because /2 does not map to annotation
+                        continue;
+                    }
+
+                    // check orientation first
+                    // 20101222: check also that the leftmost (in genomic direction)
+                    // is sense (in genomic direction)
+                    if (mapping.getStrand()== otherMapping.getStrand()
+                            || (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
+                            || (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
+                        ++nrMappingsWrongStrand;
+                        continue;
+                    }
+                    // then check if also strand expectation matches, allow missing strand info
+                    if (stranded) {
+                        boolean sense= mapping.getStrand()== refStrand;
+                        byte dir = attributes.strand;
+                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                            ++nrMappingsWrongStrand;
+                            continue;
+                        }
+                        // got to re-check both mates for correct strand
+                        sense= otherMapping.getStrand()== refStrand;
+                        dir = attributes2.strand;
+                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                            ++nrMappingsWrongStrand;
+                            continue;
+                        }
+                    }
+
+                    // get common super-edge
+                    Vector<AbstractEdge> w = new Vector<AbstractEdge>();
+                    if (target.getDelimitingPos(true) < target2.getDelimitingPos(true)) {
+                        w.add(target);
+                        w.add(target2);
+                    } else {
+                        w.add(target2);
+                        w.add(target);
+                    }
+                    SuperEdge se = getSuperEdge(w, true, null);
+                    if (se == null) {
+                        ++nrMappingsNotMapped;  // (3) not mapped because of empty intersection
+                        continue;
+                    }
+
+                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
+                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
+                    }
+                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
+                        ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
+                    }
+
+                    if (se.isExonic()) {
+                        ++nrMappingsMapped; // increment obs
+                        if (name.equals(lastName)&& !paired) {  // now both mappings are valid
+                            ++nrMappingsLocusMultiMaps;
+                        }
+
+                        ++nrMappingsMapped;
+                        ((SuperEdgeMappings) se).getMappings().incrReadNr();
+                    } else
+                        ++nrMappingsNotMapped;  // not mapped because intronic
+
+                    if (buffy != null)
+                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
+                }
+
             }
-        } // end: while(iter.hasNext())
+
+        } // for all mate /1s
 
         // close insert writer
         if (buffy != null)
@@ -481,6 +607,17 @@ public class AnnotationMapper extends SplicingGraph {
 
     }
 
+    private int countMappings(Iterator<Mapping> mappings) {
+        int c= 0;
+        for(; mappings.hasNext(); mappings.next(), ++c);
+        return c;
+    }
+
+    /**
+     * @deprecated started to introduce edgeset
+     * @param mappings
+     * @param insertFile
+     */
  	public void mapExperiment01(MSIterator<Mapping> mappings, File insertFile) {
 
         if (mappings == null)
@@ -506,8 +643,8 @@ public class AnnotationMapper extends SplicingGraph {
         nrMappingsLocusMultiMaps = 0;
         nrMappingsMapped = 0;
         nrMappingsNotMapped = 0;
-        nrMappingsNotMappedAsPair = 0;
-        nrMappingsWrongPairOrientation = 0;
+        //nrMappingsNotMappedAsPair = 0;
+        //nrMappingsWrongPairOrientation = 0;
         nrMappingsWrongStrand = 0;
 
         int multi= 0;
@@ -584,7 +721,7 @@ public class AnnotationMapper extends SplicingGraph {
 					if (mapping.getStrand()== otherMapping.getStrand()
 								|| (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
 								|| (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
-                        nrMappingsWrongPairOrientation += 2;
+                        //nrMappingsWrongPairOrientation += 2;
                         continue;
                     }
 
@@ -599,7 +736,7 @@ public class AnnotationMapper extends SplicingGraph {
                     }
                     SuperEdge se = getSuperEdge(w, true, null);
                     if (se == null) {
-                        nrMappingsNotMappedAsPair += 2;
+                        // nrMappingsNotMappedAsPair += 2;
                         continue;
                     }
 
@@ -754,14 +891,6 @@ public class AnnotationMapper extends SplicingGraph {
 
     public double getNrMappingsMapped() {
         return nrMappingsMapped;
-    }
-
-    public long getNrMappingsNotMappedAsPair() {
-        return nrMappingsNotMappedAsPair;
-    }
-
-    public long getNrMappingsWrongPairOrientation() {
-        return nrMappingsWrongPairOrientation;
     }
 
     /**
