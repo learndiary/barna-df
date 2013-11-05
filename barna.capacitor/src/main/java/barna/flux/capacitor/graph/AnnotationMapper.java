@@ -101,7 +101,7 @@ public class AnnotationMapper extends SplicingGraph {
      * mapping. The number contains the count of <code>ctrHitsMultiLocus</code>, but not any other counters as it
      * focuses on the reads of which we are really sure they stem from this locus. Hits are possibly weighted.
      */
-    double long ctrHits= 0;
+    public double ctrHits= 0;
 
     /**
      * The number of reads (single end) or read pairs (paired-end) without any valid mapping within the locus. The
