@@ -528,7 +528,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 	     */
 	    public static final Parameter<Boolean> SAM_PRIMARY_ONLY = Parameters.booleanParameter("SAM_PRIMARY_ONLY",
                                                                                          "Only use primary alignments for quantification",
-                                                                                        false).longOption("sam-primary-only");
+                                                                                        true).longOption("sam-primary-only");
 
       /**
 	     * A <code>boolean</code> value specifying if pairing information from the SAM file should be used
