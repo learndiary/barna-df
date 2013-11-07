@@ -465,6 +465,9 @@ public class MappingStats {
      */
     public void addLocus(MappingStats other){
         if(other == null) return;
+
+        // TODO reflective solution
+
         this.singleTxLoci               += other.singleTxLoci;
         this.lociExp                    += other.lociExp;
         this.txsExp                     += other.txsExp;

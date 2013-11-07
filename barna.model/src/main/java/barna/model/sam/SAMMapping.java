@@ -12,6 +12,9 @@ import java.util.Comparator;
  */
 public class SAMMapping implements Mapping{
 
+    public static String SAM_OPTION_NH= "NH";
+    public static String SAM_OPTION_XT= "XT";
+
     private String readName;
     private String referenceName;
 
@@ -52,8 +55,8 @@ public class SAMMapping implements Mapping{
         strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
-        hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
-        xt = r.getCharacterAttribute("XT");
+        hits = r.getIntegerAttribute(SAM_OPTION_NH)!=null ? r.getIntegerAttribute(SAM_OPTION_NH) : -1;
+        xt = r.getCharacterAttribute(SAM_OPTION_XT);
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
         properlyPaired = paired ? r.getProperPairFlag() : false;

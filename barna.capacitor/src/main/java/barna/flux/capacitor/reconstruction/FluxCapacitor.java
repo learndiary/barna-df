@@ -1081,7 +1081,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             //stats.setMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
             //stats.setPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
             stats.setCtrHits(mapper.ctrHits);
-
+            stats.setCtrHitsMultiGenome(mapper.ctrHitsMultiGenome);
+            stats.setCtrHitsMultiLocus(mapper.ctrHitsMultiLocus);
+            stats.setCtrHitsMultiLocusAndGenome(mapper.ctrHitsMultiLocusAndGenome);
+            stats.setCtrHitsNone(mapper.ctrHitsNone);
+            stats.setCtrHitsNoneMultiGenome(mapper.ctrHitsNoneMultiGenome);
 
             //Execute tasks
             for (Task t : this.tasks) {
