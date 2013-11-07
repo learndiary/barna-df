@@ -1716,6 +1716,8 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      */
     private void fileStats(AnnotationWrapper wrapper) {
 
+        ((GTFwrapper) wrapper).loadAllGenes();
+
         // (3) scan
         ((AbstractFileIOWrapper) wrapper).scanFile();
         if (((AbstractFileIOWrapper) wrapper).getNrInvalidLines() > 0)
@@ -2353,10 +2355,10 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         gtfReader.setNoIDs(null);
         gtfReader.setReadGene(true);
         gtfReader.setReadFeatures(new String[]{"exon", "CDS"});
-        gtfReader.setReadAheadTranscripts(1);    // only one locus a time
+        gtfReader.setReadAheadTranscripts(1000000);    // only one locus a time
 //		gtfReader.setReadAheadTranscripts(-1);
 //		gtfReader.setReadAll(true);
-        gtfReader.setGeneWise(true);
+        gtfReader.setGeneWise(false);
         gtfReader.setPrintStatistics(false);
         gtfReader.setReuse(true);
         Transcript.removeGaps = false;

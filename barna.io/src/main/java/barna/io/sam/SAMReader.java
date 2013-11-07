@@ -36,6 +36,24 @@ public class SAMReader extends AbstractFileIOWrapper implements
     private int maxRecords = 500000;
     private SAMFileReader.ValidationStringency validationStringency;
 
+    /**
+     * Lazily create a factory with the default temp dir.
+     * @return a factory to create writer instances
+     */
+    private SAMFileWriterFactory getFactory() {
+        if (factory== null) {
+            factory= new SAMFileWriterFactory();
+            factory.setTempDirectory(FileHelper.tempDirectory);
+        }
+
+        return factory;
+    }
+
+    /**
+     * Internal factory to create writer instances
+     */
+    private SAMFileWriterFactory factory= null;
+
     private File index;
 
     private int countAll;
@@ -178,12 +196,36 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	}
 
 	/**
+     * Sort <this>inputFile</this> by position.
 	 * @see barna.io.IOWrapper#sort(java.io.OutputStream)
 	 */
 	@Override
 	public void sort(OutputStream outputStream) {
-        //do nothing for the moment
+        SAMFileReader reader= new SAMFileReader(this.inputFile);
+        SAMFileHeader header= reader.getFileHeader();
+        header.setSortOrder(SAMFileHeader.SortOrder.coordinate);
+        SAMFileWriter writer= getFactory().makeSAMWriter(header, false, outputStream);
+        SAMRecordIterator iter= reader.iterator();
+        while (iter.hasNext())
+            writer.addAlignment(iter.next());
+        reader.close();
+        writer.close();
 	}
+
+    /**
+     * Sort <this>inputFile</this> lexicographically by query name (= readID).
+     */
+    public void sortByReadID(OutputStream outputStream) {
+        SAMFileReader reader= new SAMFileReader(this.inputFile);
+        SAMFileHeader header= reader.getFileHeader();
+        header.setSortOrder(SAMFileHeader.SortOrder.queryname);
+        SAMFileWriter writer= getFactory().makeSAMWriter(header, false, outputStream);
+        SAMRecordIterator iter= reader.iterator();
+        while (iter.hasNext())
+            writer.addAlignment(iter.next());
+        reader.close();
+        writer.close();
+    }
 
     private boolean createIndex() {
         //File index = new File(inputFile.getAbsolutePath()+".bai");

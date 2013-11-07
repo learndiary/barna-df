@@ -650,8 +650,51 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         }
 
 	}
-	
-	
+
+    public void loadAllGenes() {
+
+        if(!silent && stars){
+            Log.progressStart("loading");
+        }
+        reset();
+
+        setReadGTF(false);
+        setReadGene(true);
+        setReadAheadLimit(-1);
+        setReadAheadTranscripts(-1); // keep mem low
+        setStrandWise(false);
+        setChromosomeWise(false);
+        setReadAll(true);
+        txPerLocus= new IntVector();
+        txLengths= new IntVector();
+
+        try {
+            read();
+            int chkGeneCnt= 0, chkTxCnt= 0, chkExonCnt= 0;
+            while (getGenes()!= null) {
+                for (int i = 0; i < getGenes().length; i++) {
+                    ++chkGeneCnt;
+                    txPerLocus.add(getGenes()[i].getTranscriptCount());
+                    for (int j = 0; j < getGenes()[i].getTranscripts().length; j++) {
+                        ++chkTxCnt;
+                        chkExonCnt+= getGenes()[i].getTranscripts()[j].getExons().length;
+                        txLengths.add(getGenes()[i].getTranscripts()[j].getExonicLength());
+                    }
+                }
+                read();
+            }
+            //System.err.println("[CHECK] read "+chkGeneCnt+" genes, "+chkTxCnt+" tx, "+chkExonCnt+" exons.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        boolean b= close();
+        if(!silent && stars){
+            Log.progressFinish(StringUtils.OK, true);
+        }
+
+    }
+
 	
 	
 	public void sweepToChromosomeStrand(String chrom, byte strand) {

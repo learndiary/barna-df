@@ -9,14 +9,21 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.*;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SAMReaderTest {
-	
+
+    // file 'test.bam' is sorted by position
 	private File testfile = new File(getClass().getResource("/test.bam").getFile());
+
+    // file 'testID.bam' is sorted by position
+    private File testIDfile = new File(getClass().getResource("/testID.bam").getFile());
+
     private File testMultiMaps = new File(getClass().getResource("/single_multimap.bam").getFile());
 
 	@BeforeClass
@@ -47,6 +54,83 @@ public class SAMReaderTest {
         assertEquals(24034554, mapping.getStart());
         assertEquals(24034629, mapping.getEnd());
 	}
+
+    /**
+     * Sorts a lexicographically presorted file by position, checks reference ID and alignment position
+     * for correct sorting.
+     * @throws Exception
+     */
+    @Test
+    public void testSort() throws Exception {
+        SAMReader reader = new SAMReader(testIDfile, true, true);
+        PipedInputStream pipi= new PipedInputStream();
+        PipedOutputStream pipo= new PipedOutputStream(pipi);
+        final BufferedReader buffy= new BufferedReader(new InputStreamReader(pipi));
+        Thread tt= new Thread() {
+            @Override
+            public void run() {
+                try {
+                    for(String line= null, last= null; (line= buffy.readLine())!= null; ) {
+                        if (line.startsWith("@"))
+                            continue;
+                        if (last!= null) {
+                            String[] s1= last.split("\\s");
+                            String[] s2= line.split("\\s");
+                            assertTrue(s1[2].compareTo(s2[2])<= 0);
+                            assertTrue(Integer.parseInt(s1[3])<= Integer.parseInt(s2[3]));
+                        }
+                        last= line;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    fail();
+                }
+            }
+        };
+
+        tt.start();
+        reader.sort(pipo);
+        tt.join();
+
+    }
+
+    /**
+     * Sorts alphabetically by read IDs a file that has been presorted by position.
+     * Lexicographical ordering of read IDs is checked.
+     * @throws Exception
+     */
+    @Test
+    public void testSortByReadID() throws Exception {
+        SAMReader reader = new SAMReader(testfile, true, true);
+        PipedInputStream pipi= new PipedInputStream();
+        PipedOutputStream pipo= new PipedOutputStream(pipi);
+        final BufferedReader buffy= new BufferedReader(new InputStreamReader(pipi));
+        Thread tt= new Thread() {
+            @Override
+            public void run() {
+                try {
+                    for(String line= null, last= null; (line= buffy.readLine())!= null; ) {
+                        if (line.startsWith("@"))
+                            continue;
+                        if (last!= null) {
+                            String[] s1= last.split("\\s");
+                            String[] s2= line.split("\\s");
+                            assertTrue(s1[0].compareTo(s2[0])<= 0);
+                        }
+                        last= line;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    fail();
+                }
+            }
+        };
+
+        tt.start();
+        reader.sortByReadID(pipo);
+        tt.join();
+
+    }
 
     @Test
     public void testPrimaryMaps() {
