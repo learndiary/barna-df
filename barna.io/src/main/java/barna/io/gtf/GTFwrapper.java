@@ -187,6 +187,27 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
     boolean geneWise = true;
 
     /**
+     * <code>This</code> wrapper is just parsing <code>gene_id</code> and <code>transcript_id</code>.
+     * @return
+     */
+    public boolean isBasic() {
+        return basic;
+    }
+
+    /**
+     * Set <code>this</code> wrapper to just parse <code>gene_id</code> and <code>transcript_id</code>.
+     * @return
+     */
+    public void setBasic(boolean basic) {
+        this.basic = basic;
+    }
+
+    /**
+     * Flag to just parse <code>transcript_id</code> and <code>gene_id</code>.
+     */
+    boolean basic= false;
+
+    /**
      * Native gene clustering is applied.
      */
     boolean clusterGenes = true;
@@ -665,24 +686,23 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         setStrandWise(false);
         setChromosomeWise(false);
         setReadAll(true);
+        setBasic(true);
         txPerLocus= new IntVector();
         txLengths= new IntVector();
 
         try {
             read();
-            int chkGeneCnt= 0, chkTxCnt= 0, chkExonCnt= 0;
+/*            int chkGeneCnt= 0, chkTxCnt= 0, chkExonCnt= 0;
             while (getGenes()!= null) {
                 for (int i = 0; i < getGenes().length; i++) {
                     ++chkGeneCnt;
-                    txPerLocus.add(getGenes()[i].getTranscriptCount());
                     for (int j = 0; j < getGenes()[i].getTranscripts().length; j++) {
                         ++chkTxCnt;
                         chkExonCnt+= getGenes()[i].getTranscripts()[j].getExons().length;
-                        txLengths.add(getGenes()[i].getTranscripts()[j].getExonicLength());
                     }
                 }
-                read();
             }
+            */
             //System.err.println("[CHECK] read "+chkGeneCnt+" genes, "+chkTxCnt+" tx, "+chkExonCnt+" exons.");
         } catch (Exception e) {
             e.printStackTrace();
@@ -1301,7 +1321,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				// check line
 				if (line.startsWith("#"))
 					continue;
-				GFFObject obj= readBuildObject(line);
+				GFFObject obj= (basic? readBuildObjectBasic(line): readBuildObject(line));
 				if (!checkObject(obj)) {	// object based criteria
 					++skippedObjects;
 					if (skippedObject != null) {
@@ -1340,7 +1360,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				if (!chrID.equals(lastChrID)) {		// chromosome
 					//++readChrs;
 					if (lastChrID != null) { 						
-						if (!checkChromosome(chrID)) {
+						if ((!basic)&& !checkChromosome(chrID)) {
 							++skippedObjects;
 							if (skippedObject != null) {
                                 skippedObject = chrID;
@@ -1644,7 +1664,94 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		return obj;
 
 	}
-	
+
+    /**
+     * Reads an GTF object just including the basic attributes, i.e., transcript_id and gene_id.
+     * Avoids regexp API.
+     * @param line the line to be parsed
+     * @return the object that was built
+     */
+    protected GFFObject readBuildObjectBasic(String line) {
+
+        GFFObject obj = new GFFObject();
+
+        StringTokenizer toke= new StringTokenizer(line, "\t ");
+        if (toke.countTokens() < 8) {
+            if (!silent)
+                System.err.println("line " + nrLinesRead
+                        + ": skipped (<8 token)!\n\t" + line);
+            return obj;
+        }
+
+        // init attributes
+        obj.setSeqname(toke.nextToken());
+        obj.setSource(toke.nextToken());
+        obj.setFeature(toke.nextToken());
+
+        String s= toke.nextToken();
+        try {
+            obj.setStart(Integer.parseInt(s));
+        } catch (NumberFormatException e) {
+            if (!silent)
+                System.err.println("Error in line "+nrLinesRead+": invalid start position \'"+s+"\'.");
+        }
+        s= toke.nextToken();
+        try {
+            obj.setEnd(Integer.parseInt(s));
+        } catch (NumberFormatException e) {
+            if (!silent)
+                System.err.println("Error in line "+nrLinesRead+": invalid end position \'"+s+"\'.");
+        }
+
+        s= toke.nextToken();
+        try {
+            obj.setScore(s);
+        } catch (NumberFormatException e) {
+            //if (!silent)
+            System.err.println("Error in line "+nrLinesRead+": invalid score \'"+s+"\'.");
+        }
+
+        s= toke.nextToken().trim();
+        obj.setStrand(GFFObject.parseStrand(s));
+
+        s= toke.nextToken();
+        if (s.charAt(0)!= GFFObject.SYMBOL_NOT_INITED)
+            try {
+                obj.setFrame(Byte.parseByte(s));
+            } catch (NumberFormatException e) {
+                if (!silent)
+                    System.err.println("Error line "+nrLinesRead+": invalid frame assignment \'"+s+"\'.");
+            }
+
+        // attributes
+        int found= 0;
+        for (String id= null, val= null; toke.hasMoreTokens(); ) {
+            id= toke.nextToken();
+            val= toke.nextToken();
+            // just parse gene_id and transcript_id
+            if (!(id.equals(GFFObject.TRANSCRIPT_ID_TAG)|| id.equals(GFFObject.GENE_ID_TAG)))
+                continue;
+            int ofStart= 0, ofEnd= 0;
+            if (val.charAt(0) == '\"')
+                ofStart= 1;
+            if (val.charAt(val.length()- 1) == '\"')
+                ofEnd= 1;
+            if (val.length()>= 2&& val.charAt(val.length()- 2) == '\"')
+                ofEnd= 2;
+            if (val.length()- ofEnd<= ofStart)
+                val= "";	// empty fields
+            else
+                val = val.substring(ofStart, val.length()- ofEnd);
+            obj.addAttribute(id, val);
+            ++found;
+            if (found== 2)
+                break;
+        }
+
+        return obj;
+
+    }
+
 
 	private Gene[] clusterLoci(Gene[] g) {
 		if (g == null)

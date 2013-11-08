@@ -37,6 +37,25 @@ import static junit.framework.Assert.*;
 
 public class GTFwrapperTest {
 
+    //getClass().getResource("/test.bam").getFile()
+    private File gencode12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
+
+
+    /**
+     * Test that loads all genes up to the level of detail necessary to construct splicing graphs.
+     */
+    @Test
+    public void testLoadAll() {
+
+        GTFwrapper wrapper= new GTFwrapper(gencode12);
+        assertTrue(wrapper.isApplicable());
+        long t0= System.currentTimeMillis();
+        wrapper.loadAllGenes();
+        long t1= System.currentTimeMillis();
+        System.err.println((t1- t0)/ 1000+ " sec.");
+
+    }
+
     @Test
     public void testThatTheWrapperWorksWithGzippedFiles() throws Exception {
         File gzippedGtf = new File(getClass().getResource("/gzipped-gtf.gtf.gz").getFile());

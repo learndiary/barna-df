@@ -1716,8 +1716,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      */
     private void fileStats(AnnotationWrapper wrapper) {
 
-        ((GTFwrapper) wrapper).loadAllGenes();
-
         // (3) scan
         ((AbstractFileIOWrapper) wrapper).scanFile();
         if (((AbstractFileIOWrapper) wrapper).getNrInvalidLines() > 0)
