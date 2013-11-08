@@ -1777,12 +1777,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         FileHelper.tempDirectory = settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
 
         // prepare input files
+        if (stats == null)
+            stats = new MappingStats(); //Initialize stats
+
         AbstractFileIOWrapper wrapperAnnotation;
         AbstractFileIOWrapper wrapperMappings;
-
-        //Initialize stats
-        if (stats == null)
-            stats = new MappingStats();
 
         //cheatDisableFCheck = true;
         if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
@@ -1790,18 +1789,24 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
             mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
         } else {
+            // annotation
             Log.progressStart("Scanning annotation file");
             wrapperAnnotation =
                     fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
             gtfReader = (GTFwrapper)wrapperAnnotation;
-            fileStats((gtfReader));
+            gtfReader.setBasic(true);
+            gtfReader.loadAllGenes();
+            //fileStats((gtfReader));
             Log.progressFinish("OK", true);
 
+            // reads
             Log.progressStart("Scanning mapping file");
             wrapperMappings =
                     fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
             mappingReader = (MappingReader)wrapperMappings;
-            fileStats(mappingReader);
+
+            // fileStats(mappingReader);
+
             Log.progressFinish("OK", true);
             Log.info("Annotation and mapping input checked");
 

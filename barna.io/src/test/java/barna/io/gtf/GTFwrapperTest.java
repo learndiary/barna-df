@@ -38,7 +38,8 @@ import static junit.framework.Assert.*;
 public class GTFwrapperTest {
 
     //getClass().getResource("/test.bam").getFile()
-    private File gencode12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
+    // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
+    private File gencode12 = new File("/home/micha/gencode_v12.gtf");
 
 
     /**
