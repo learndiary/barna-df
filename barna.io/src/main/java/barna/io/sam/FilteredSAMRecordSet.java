@@ -131,8 +131,8 @@ public class FilteredSAMRecordSet {
         if (currStrataLength== currStrata.length) {
             // loose the highest stratum
             for (int i = (set.size()- 1); i>= 0; --i) {
-                 if (set.get(i).getIntegerAttribute(SAMConstants.SAM_OPTION_NM)== currStrata[currStrata.length- 1])
-                 set.remove(i);
+                if (set.get(i).getIntegerAttribute(SAMConstants.SAM_OPTION_NM)== currStrata[currStrata.length- 1])
+                    set.remove(i);
             }
         }
         if (q< currStrataLength- 1)
