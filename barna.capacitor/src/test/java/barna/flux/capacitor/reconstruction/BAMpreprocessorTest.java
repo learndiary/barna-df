@@ -27,9 +27,14 @@ public class BAMpreprocessorTest {
 
     //getClass().getResource("/test.bam").getFile()
     // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
-    private File gencode12 = new File("/home/micha/gencode_v12.gtf");
+    // BigMac
+    // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
+    // LNCC
+    // /home/micha/gencode_v12.gtf
+    // /home/micha/ERR030892.rnd24M.filtered.sorted.bam
+    private File gencode12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
     // file presorted by position
-    private File map75PEcolon = new File("/home/micha/ERR030892.rnd24M.filtered.sorted.bam");
+    private File map75PEcolon = new File("");
 
 
 

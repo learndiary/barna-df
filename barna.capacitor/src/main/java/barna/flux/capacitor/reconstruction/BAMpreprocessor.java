@@ -288,9 +288,20 @@ public class BAMpreprocessor {
 
         SAMRecordIterator iter= reader.iterator();
         SAMRecord map= null;
+        int minStratum= -1;
+        String name= null, lastName= null;
         while(iter.hasNext()) {
             map= iter.next();
+            map.getReadName();
+            map.getFirstOfPairFlag();
+            int mm= map.getIntegerAttribute("NM");
 
+            if (!name.equals(lastName)) {
+                if (lastName!= null) {
+                    // process
+                }
+                lastName= name;
+            }
         }
 
         return null;
