@@ -23,7 +23,7 @@ import java.util.Random;
  * Time: 3:24 PM
  * To change this template use File | Settings | File Templates.
  */
-public class BAMpreprocessorTest {
+public class PreprocessorTest {
 
     //getClass().getResource("/test.bam").getFile()
     // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
@@ -33,8 +33,10 @@ public class BAMpreprocessorTest {
     // /home/micha/gencode_v12.gtf
     // /home/micha/ERR030892.rnd24M.filtered.sorted.bam
     private File gencode12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
-    // file presorted by position
-    private File map75PEcolon = new File("");
+    // file with mappings presorted by name
+    private File mappingsPsort = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.bam");
+    // file with mappings presorted by position
+    private File mappingsQsort = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.qsort.bam");
 
 
 
@@ -82,9 +84,9 @@ public class BAMpreprocessorTest {
     @Test
     public void testCollapse() throws Exception {
         Gene[] oGenes= getGencodeGenes();
-        Gene[] cGenes= BAMpreprocessor.collapse(oGenes);
+        Gene[] cGenes= PreProcessor.collapse(oGenes);
         System.err.println(((oGenes.length- cGenes.length)/ 2)+ " antisense loci.");
-        Gene[] dGenes= BAMpreprocessor.collapse(cGenes);
+        Gene[] dGenes= PreProcessor.collapse(cGenes);
         assertTrue(dGenes.length== cGenes.length);
     }
 
@@ -94,9 +96,9 @@ public class BAMpreprocessorTest {
         int readLength= 75;
 
         Gene[] oGenes= getGencodeGenes();
-        Gene[] cGenes= BAMpreprocessor.collapse(oGenes);
+        Gene[] cGenes= PreProcessor.collapse(oGenes);
         HashMap<String,Gene[]> hGenes= new HashMap<String, Gene[]>();
-        BAMpreprocessor.index(cGenes, hGenes);
+        PreProcessor.index(cGenes, hGenes);
 
         Random r= new Random();
         Gene qGene= null;
@@ -108,32 +110,38 @@ public class BAMpreprocessorTest {
             rPos= Math.abs(cGenes[p].getStart())
                     + r.nextInt(gLen);
             // ensure that read is contained at both ends
-            qGene= BAMpreprocessor.getGene(hGenes,
+            qGene= PreProcessor.getGene(hGenes,
                     cGenes[p].getChromosome(),
                     rPos,
-                    Math.min(rPos+ readLength, Math.abs(cGenes[p].getEnd())),
+                    Math.min(rPos + readLength, Math.abs(cGenes[p].getEnd())),
                     true);
             assertEquals(cGenes[p], qGene);
             // check overlap at start
             rPos= Math.abs(cGenes[p].getStart())+ r.nextInt(readLength- 1);
             int min= (p> 0? Math.abs(cGenes[p- 1].getEnd())+ 1: 0);
-            qGene= BAMpreprocessor.getGene(hGenes,
+            qGene= PreProcessor.getGene(hGenes,
                     cGenes[p].getChromosome(),
-                    Math.max(rPos- readLength, min),
+                    Math.max(rPos - readLength, min),
                     Math.min(rPos, Math.abs(cGenes[p].getEnd())),
                     false);
             assertEquals(cGenes[p], qGene);
             // check overlap at end
             rPos= Math.abs(cGenes[p].getEnd())+ r.nextInt(readLength- 1);
             int max= (p< cGenes.length- 1? Math.abs(cGenes[p+ 1].getStart())- 1: Integer.MAX_VALUE);
-            qGene= BAMpreprocessor.getGene(hGenes,
+            qGene= PreProcessor.getGene(hGenes,
                     cGenes[p].getChromosome(),
-                    Math.max(rPos- readLength, Math.abs(cGenes[p].getStart())),
+                    Math.max(rPos - readLength, Math.abs(cGenes[p].getStart())),
                     Math.min(rPos, max),
                     false);
             assertEquals(cGenes[p], qGene);
         }
     }
 
+    @Test
+    public void testProcess() {
+        PreProcessor pp= new PreProcessor(gencode12, mappingsQsort);
+        File result= pp.call();
+        assertTrue(result!= null);
+    }
 
 }

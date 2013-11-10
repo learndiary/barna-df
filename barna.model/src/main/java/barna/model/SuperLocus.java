@@ -1,19 +1,29 @@
 package barna.model;
 
 /**
- * Created with IntelliJ IDEA.
+ * Class to describe a set of genes.
  * User: micha
- * Date: 11/7/13
- * Time: 6:19 PM
- * To change this template use File | Settings | File Templates.
  */
 public class SuperLocus extends Gene {
 
     /**
+     * The genes that are contained in <code>this</code> set.
+     * @return children
+     */
+    public Gene[] getGenes() {
+        return genes;
+    }
+
+    /**
      * Genes joint in this locus
      */
-    Gene[] genes= null;
+    protected Gene[] genes= null;
 
+    /**
+     * Lazily create an instance with a new ID and some children.
+     * @param id unique identifier of the locus
+     * @param genes gene loci that are comprised in <code>this</code> gene set
+     */
     public SuperLocus(String id, Gene[] genes) {
         super(id);
         this.genes= genes;

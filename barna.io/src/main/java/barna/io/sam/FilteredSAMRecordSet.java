@@ -1,18 +1,40 @@
 package barna.io.sam;
 
+import net.sf.samtools.SAMFileWriter;
 import net.sf.samtools.SAMRecord;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * A set of <code>SAMRecord</code> instances that can be dynamically extended. Filter criteria can be applied to
  * determine the records that are kept.
  * User: micha
  */
-public class FilteredSAMRecordSet {
+public class FilteredSAMRecordSet implements Iterable<SAMRecord> {
+
+    /**
+     * Iterating the mappings currently stored in the set.
+     * @return an <code>Iterator</code> to navigate the mappings in the order they are stored in the set
+     */
+    @Override
+    public Iterator<SAMRecord> iterator() {
+        if (set== null)
+            return new ArrayList<SAMRecord>(0).iterator();
+        return set.iterator();
+    }
+
+    /**
+     * Serializes the content of the set and writes it to the given <code>SAMFileWriter</code> instance.
+     * @param writer I/O interface for output
+     */
+    public void output(SAMFileWriter writer) {
+        Iterator<SAMRecord> i2= set.iterator();
+        while (i2.hasNext()) {
+            writer.addAlignment(i2.next());
+        }
+    }
 
     /**
      * Comparator to compare two <code>SAMRecord</code> instances by their number of mismatches
@@ -58,6 +80,13 @@ public class FilteredSAMRecordSet {
     protected byte maxStrata = DEFAULT_MAX_STRATA;
 
     /**
+     * Mapping instances currently stored in the set.
+     */
+    public ArrayList<SAMRecord> getSet() {
+        return set;
+    }
+
+    /**
      * The mapping instances currently stored in the set.
      */
     ArrayList<SAMRecord> set= null;
@@ -97,24 +126,19 @@ public class FilteredSAMRecordSet {
     public FilteredSAMRecordSet(int initialSize, byte maxStrata) {
         set= new ArrayList<SAMRecord>(initialSize);
         this.maxStrata= maxStrata;
-        currStrata= new int[maxStrata];
-        Arrays.fill(currStrata, Integer.MAX_VALUE);
-        currStrataLength= 0;
     }
 
     /**
      * Checks whether a given mapping is added to the set, and in case adapts the distribution of strata currently
      * stored in <code>this</code> set.
      * @param mapping a mapping
-     * @return the change in the strata that is stored: 0= no change (mapping discarded or describes a stratum that is
-     * already stored), 1= mapping added new stratum, (-1)= a previously stored mapping was lost due to the newly
-     * inserted stratum described by the mapping.
+     * @return <code>true</code> if the mapping was successfully added to the set, <code>false</code> otherwise
      */
-    public int add(SAMRecord mapping) {
+    public boolean add(SAMRecord mapping) {
 
         int nm= mapping.getIntegerAttribute(SAMConstants.SAM_OPTION_NM);
         if (currStrataLength== currStrata.length && nm> currStrata[currStrata.length- 1])
-            return 0;   // discard mapping
+            return false;   // discard mapping
 
         // otherwise add mapping
         int p= Collections.binarySearch(set, mapping, getDefaultNMComparator());
@@ -124,8 +148,8 @@ public class FilteredSAMRecordSet {
 
         // check for strata overflows
         int q= Arrays.binarySearch(currStrata, nm);
-        if (q> 0)
-            return 0;   // no change to strata
+        if (q>= 0)
+            return true;   // no change to strata
         q= -(q+ 1);
         assert(q< currStrataLength);    // condition above
         if (currStrataLength== currStrata.length) {
@@ -139,9 +163,20 @@ public class FilteredSAMRecordSet {
             System.arraycopy(currStrata, q, currStrata, q+ 1, currStrataLength- (q+ 1));
         currStrata[q]= nm;
         if (currStrataLength== currStrata.length)
-            return -1;
+            return true;
         ++currStrataLength;
-        return 1;
+        return true;
+    }
+
+    /**
+     * Re-initializes <code>this</code> sets properties according to the parameters.
+     */
+    public void reset() {
+        while(!set.isEmpty())
+            set.remove(0);
+        currStrata= new int[maxStrata];
+        Arrays.fill(currStrata, Integer.MAX_VALUE);
+        currStrataLength= 0;
     }
 
 }
