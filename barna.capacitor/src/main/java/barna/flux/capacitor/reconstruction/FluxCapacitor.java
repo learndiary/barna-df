@@ -2815,20 +2815,14 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      */
 	private void fileStats(MappingReader reader) {
 
-        if (settings.get(FluxCapacitorSettings.NR_READS_MAPPED) <= 0) {
-            // (3) scan
-            ((AbstractFileIOWrapper) reader).scanFile();
-            if (((AbstractFileIOWrapper) reader).getNrInvalidLines() > 0)
-                Log.warn("Skipped " + ((AbstractFileIOWrapper) reader).getNrInvalidLines() + " lines.");
+        // (3) scan
+        ((AbstractFileIOWrapper) reader).scanFile();
+        if (((AbstractFileIOWrapper) reader).getNrInvalidLines() > 0)
+            Log.warn("Skipped " + ((AbstractFileIOWrapper) reader).getNrInvalidLines() + " lines.");
 
-            checkBEDscanMappings = reader.getCountMappings();
-            stats.setReadsTotal(reader.getCountReads());
-            stats.setMappingsTotal(reader.getCountMappings());
-        } else {
-            checkBEDscanMappings = -1;
-            stats.setReadsTotal(settings.get(FluxCapacitorSettings.NR_READS_MAPPED));
-            stats.setMappingsTotal(-1);
-        }
+        checkBEDscanMappings = reader.getCountMappings();
+        stats.setReadsTotal(reader.getCountReads());
+        stats.setMappingsTotal(reader.getCountMappings());
 
 		Log.info("\t"+ stats.getReadsTotal() + " mapped reads"
                 + (stats.getMappingsTotal() > 0 ? ", " + stats.getMappingsTotal() + " mappings: R-factor " + (reader.getCountMappings() / (float) reader.getCountReads()) : ""));
