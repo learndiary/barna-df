@@ -246,7 +246,7 @@ public class Flux {
         JSAP jsap = new JSAP();
         try {
             jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').defaultValue(System.getProperty("flux.tool")).help("Select a tool").get());
-            jsap.registerParameter(JSAPParameters.switchParameter("help").help("Show help").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("help", 'h').help("Show help").get());
             jsap.registerParameter(JSAPParameters.switchParameter("list-tools").help("List available tools").get());
             jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").type(Integer.class).help("Maximum number of threads to use. Default 2").get());
             jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
