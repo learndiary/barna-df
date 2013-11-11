@@ -925,7 +925,7 @@ public class GraphLPsolver {
         File f= new File("/home/micha/DEBUG_TEST.out");
         try {
             BufferedWriter buffy= new BufferedWriter(new FileWriter(f, true));
-            buffy.write(s);
+            buffy.write(s+ "\n");
             buffy.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
