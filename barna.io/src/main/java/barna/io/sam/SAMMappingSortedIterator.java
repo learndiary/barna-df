@@ -42,6 +42,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     private boolean primaryOnly;
     private boolean matesOnly;
     private boolean uniqueOnly;
+    private SAMFileReader.ValidationStringency validationStringency = SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY;
 
     /**
      * Costruct an instance of the class.
@@ -60,10 +61,13 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
      * @param maxRecordsInRam max number of records to be loaded in ram
      */
     public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads) {
-        this(iterator, header, maxRecordsInRam, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY);
+        this(iterator, header, maxRecordsInRam, allReads, -1, DEFAULT_PRIMARY_ONLY, DEFAULT_MATES_ONLY, DEFAULT_UNIQUE_ONLY,
+                SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY);
     }
 
-    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header, int maxRecordsInRam, boolean allReads, int scoreFilter, boolean primaryOnly, boolean matesOnly, boolean uniqueOnly) {
+    public SAMMappingSortedIterator(SAMRecordIterator iterator, SAMFileHeader header,
+                                    int maxRecordsInRam, boolean allReads, int scoreFilter, boolean primaryOnly,
+                                    boolean matesOnly, boolean uniqueOnly, SAMFileReader.ValidationStringency validationStringency) {
         this.sortOrder = header.getSortOrder();
         this.maxRecordsInRam = maxRecordsInRam;
         this.currPos = this.markedPos = -1;
@@ -73,6 +77,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         this.primaryOnly = primaryOnly;
         this.matesOnly = primaryOnly ? false : matesOnly;
         this.uniqueOnly = uniqueOnly;
+        this.validationStringency = validationStringency;
         readChunk();
     }
 
@@ -110,6 +115,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         }
 
         SAMFileReader r = new SAMFileReader(pip);
+        r.setValidationStringency(this.validationStringency);
         return r.iterator();
     }
 
