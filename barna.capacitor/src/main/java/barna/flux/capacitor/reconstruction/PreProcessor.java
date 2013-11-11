@@ -646,7 +646,7 @@ public class PreProcessor implements Callable<File> {
             SAMFileHeader outHeader= inHeader.clone();
             outHeader.setSortOrder(SAMFileHeader.SortOrder.queryname);
             factory.makeSAMWriter(outHeader, false, pipo);
-            sorter= new SAMConstants.SAMSorter(mappings, pipo, true, false);
+            sorter= new SAMConstants.SAMSorter(mappings, pipo, false);
             sorter.setSkippingNotmapped(true);
             captain= Execute.getExecutor().submit(sorter);
         }
@@ -677,7 +677,7 @@ public class PreProcessor implements Callable<File> {
             Log.progressStart("Waiting for mapping pre-sorting");
             double avgLL= sorter.getAvgLineLength();
             long fileSz= mappings.length()* (inReader.isBinary()? 17: 1);   // 17= estimated compression ratio for BAM
-            long n= 0;
+            long n= -1;
             while (!(captain.isDone()|| captain.isCancelled())) {
                 Log.progress((long) (sorter.getInputN()* avgLL), fileSz);
                 try {
