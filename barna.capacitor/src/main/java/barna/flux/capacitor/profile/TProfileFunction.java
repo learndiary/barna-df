@@ -288,7 +288,7 @@ public class TProfileFunction {
 		if (t.getExonicLength()> LEN_UP)
 			++lenBin;
 		
-		float rpkm= capacitor.calcRPKM(reads, len, totalReads);
+		double rpkm= FluxCapacitor.calcRPKM(reads, len, totalReads);
 		int expBin= 0;
 		if (rpkm> EXP_LO)
 			++expBin;
@@ -328,7 +328,7 @@ public class TProfileFunction {
 				if (len> LEN_UP)
 					++lenBin;
 				
-				float rpkm= capacitor.calcRPKM(reads, len, totalReads);
+				double rpkm = FluxCapacitor.calcRPKM(reads, len, totalReads);
 				int expBin= 0;
 				if (rpkm> EXP_LO)
 					++expBin;

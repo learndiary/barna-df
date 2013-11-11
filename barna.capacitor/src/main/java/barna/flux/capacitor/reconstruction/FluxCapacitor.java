@@ -450,7 +450,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             // pre-build rpkm hash
             HashMap<String, Double> rpkmMap = null;
             long nrReads = stats.getReadsTotal();
-            double base = (nrReads <= 0 ? 1 : nrReads);
+            long base = (nrReads <= 0 ? 1 : nrReads);
             Transcript[] tt = gene.getTranscripts();
             if (output.contains(OutputFlag.BALANCED)) {
                 rpkmMap = new HashMap<String, Double>(tt.length, 1f);
@@ -470,7 +470,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                     if (val > 0 && !(output.contains(OutputFlag.OBSERVATION) || output.contains(OutputFlag.PREDICTION)))
                         stats.incrTxsExp(1);
 
-                    double rpkm = (float) ((val / (double) tx.getExonicLength()) * (1000000000l / base));
+                    double rpkm = FluxCapacitor.calcRPKM(val, tx.getExonicLength(), base);
                     if (Double.isNaN(rpkm))
                         Log.warn("NaN RPKM produced: " + val + " / " + base + " = " + rpkm);
 
@@ -1926,9 +1926,8 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      * @param len   the length of the transcript
      * @return the RPKM value
      */
-    public float calcRPKM(float reads, int len, long totalReads) {
-        float rpkm = (float) ((reads / (double) len) * (1000000000l / (double) (totalReads < 0 ? 1 : totalReads)));
-        return rpkm;
+    public static double calcRPKM(double reads, long len, long totalReads) {
+        return ((reads / (double) len) * (1000000000l / (double) (totalReads <= 0 ? 1 : totalReads)));
     }
 
     /**
