@@ -90,8 +90,7 @@ public class Execute {
             shutdown = new ExecutorShutdown();
             Runtime.getRuntime().addShutdownHook(shutdown);
         }else{
-            //throw new RuntimeException("Executor is already initialized!");
-            Log.warn("Executor is already initialized!");
+            Log.debug("Executor is already initialized!");
         }
     }
 

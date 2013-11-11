@@ -67,9 +67,7 @@ public class Flux {
     /**
      * Number of executor threads
      */
-    private int threads = 2;
-
-
+    public static int THREADS = 2;
 
     /**
      * Start the Flux simulator
@@ -114,9 +112,9 @@ public class Flux {
         }catch(Exception e){
             Log.error("Error while parsing arguments : " + e.getMessage());
         }
+        Flux.THREADS = initialFluxArguments.getInt("threads");
 
         fluxInstance.setLogLevel(initialFluxArguments.getString("log"));
-        fluxInstance.setThreads(initialFluxArguments.getInt("threads"));
         fluxInstance.setToolName(initialFluxArguments.getString("tool"));
         fluxInstance.setDetached(initialFluxArguments.userSpecified("force"));
 
@@ -193,7 +191,7 @@ public class Flux {
 
         try {
             // configure the executor
-            Execute.initialize(fluxInstance.getThreads());
+            Execute.initialize(Flux.THREADS);
 
             tool.call();
         }catch (OutOfMemoryError outOfMemoryError){
@@ -475,24 +473,6 @@ public class Flux {
      */
     public boolean isDetached() {
         return !Log.isInteractive();
-    }
-
-    /**
-     * Returns the number of available background threads
-     *
-     * @return threads the number of background threads
-     */
-    public int getThreads() {
-        return threads;
-    }
-
-    /**
-     * Set the number of background threads
-     *
-     * @param threads number of background threads
-     */
-    public void setThreads(final int threads) {
-        this.threads = threads;
     }
 
     /**

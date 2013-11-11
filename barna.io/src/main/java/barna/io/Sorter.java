@@ -27,7 +27,9 @@
 
 package barna.io;
 
+import barna.commons.Execute;
 import barna.commons.io.DevNullOutputStream;
+import barna.commons.launcher.Flux;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
 
@@ -233,14 +235,13 @@ public class Sorter {
         final OutputStream output = out;
         final String sep = separator;
 
-        ExecutorService executor = Executors.newCachedThreadPool();
-        Future<Object> job = executor.submit(new Callable<Object>() {
+        Execute.initialize(Flux.THREADS);
+        Future<Object> job = Execute.getExecutor().submit(new Callable<Object>() {
             public Object call() throws Exception {
                 s.sort(input, output);
                 return null;
             }
         });
-        executor.shutdown();
         return job;
     }
 
