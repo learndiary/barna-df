@@ -30,6 +30,7 @@ package barna.commons.launcher;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;
+import barna.commons.parameters.ParameterException;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
@@ -215,6 +216,13 @@ public class Flux {
             } else {
                 Log.error("Error while executing " + tool.getClass(), ioError);
             }
+            System.exit(-1);
+        }catch (ParameterException e){
+            Log.error("","\n");
+            Log.error(e.getMessage());
+            Log.error("","");
+            Log.debug("\n\n");
+            Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
             System.exit(-1);
         } catch (Exception e) {
             Log.error("","\n");
