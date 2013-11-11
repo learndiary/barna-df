@@ -139,7 +139,10 @@ public class PreprocessorTest {
 
     @Test
     public void testProcess() {
-        PreProcessor pp= new PreProcessor(gencode12, mappingsQsort);
+        FluxCapacitorSettings settings= new FluxCapacitorSettings();
+        settings.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), gencode12);
+        settings.set(FluxCapacitorSettings.MAPPING_FILE.getName(), mappingsQsort);
+        PreProcessor pp= new PreProcessor(settings);
         File result= pp.call();
         assertTrue(result!= null);
     }

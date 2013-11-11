@@ -136,6 +136,9 @@ public class FilteredSAMRecordSet implements Iterable<SAMRecord> {
      */
     public boolean add(SAMRecord mapping) {
 
+        if (mapping.getReadUnmappedFlag())
+            return false;
+
         int nm= mapping.getIntegerAttribute(SAMConstants.SAM_OPTION_NM);
         if (currStrataLength== currStrata.length && nm> currStrata[currStrata.length- 1])
             return false;   // discard mapping

@@ -30,7 +30,7 @@ public class SAMConstants {
         return factory;
     }
 
-    public static class SAMSorter implements Callable<Integer> {
+    public static class SAMSorter implements Callable<Long> {
 
         /**
          * Flag which is <code>true</code> if the output is sorted by position, and <code>false</code> if the output is
@@ -54,6 +54,28 @@ public class SAMConstants {
          * Writer to which is written.
          */
         private SAMFileWriter writer= null;
+
+        /**
+         * Check the handling of unmapped reads during sorting.
+         * @return <code>true</code> if the sorter discards unmapped reads, <code>false</code> otherwise
+         */
+        public boolean isSkippingNotmapped() {
+            return skippingNotmapped;
+        }
+
+        /**
+         * Set handling of unmapped reads during sorting.
+         * @param skippingNotmapped if <code>true</code>, unmapped reads are absent from the sorted output. Otherwise
+         *                          unmapped reads from the source file are reproduced.
+         */
+        public void setSkippingNotmapped(boolean skippingNotmapped) {
+            this.skippingNotmapped = skippingNotmapped;
+        }
+
+        /**
+         * Flag whether sorter discards unmapped reads.
+         */
+        private boolean skippingNotmapped= false;
 
         /**
          * Constructor that initializes the streams and sets the flag according to which the output is sorted.
@@ -172,17 +194,51 @@ public class SAMConstants {
         }
 
         /**
+         * Get the number of lines read from the input.
+         * @return the number of lines currently read from the input
+         */
+        public long getInputN() {
+            return inputN;
+        }
+
+        /**
+         * Number of lines read from the input.
+         */
+        long inputN= 0;
+
+        /**
+         * Get the currently measured average line length.
+         * @return average approximated line length for the number of lines read so far
+         */
+        public double getAvgLineLength() {
+            return avgLineLength;
+        }
+
+        /**
+         * Currently measured average line length.
+         */
+        double avgLineLength= 0d;
+
+        /**
          * Copies bytes from the input to the output.
          * @return the number of lines copied
          * @throws Exception if an I/O Exception occurs
          */
         @Override
-        public Integer call() throws Exception {
+        public Long call() throws Exception {
 
             SAMRecordIterator iter= reader.iterator();
-            int n= 0;
+            long n= 0;
+            inputN= 0;
             while (iter.hasNext()) {
-                writer.addAlignment(iter.next());
+                SAMRecord map= iter.next();
+                if ((inputN+ 1000)% 1000== 0) {
+                    avgLineLength= ((avgLineLength* inputN)+ map.getSAMString().length())/ (double) (inputN+ 1);
+                }
+                ++inputN;
+                if (skippingNotmapped&& map.getReadUnmappedFlag())
+                    continue;
+                writer.addAlignment(map);
                 ++n;
             }
 
