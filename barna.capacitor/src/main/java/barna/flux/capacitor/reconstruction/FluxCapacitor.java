@@ -551,7 +551,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                             sb.append(FluxCapacitorConstants.GTF_ATTRIBUTE_TOKEN_READS);
                             sb.append(" ");
                             sb.append(String.format("%1$f",
-                                    (float) (rpkmMap.get(tid) * tt[i].getExonicLength() * (base / 1000000000l))));
+                                    (float) (rpkmMap.get(tid) * tt[i].getExonicLength() * ((double)base / 1000000000l))));
                             sb.append("; ");
 
                             // spliced length
