@@ -47,10 +47,7 @@ import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
+import java.util.*;
 
 import static lpsolve.LpSolve.LE;
 
@@ -919,6 +916,21 @@ public class GraphLPsolver {
         return res;
     }
 
+    /**
+     * @deprecated remove ASAP and replace by something more christian
+     */
+    public static boolean DEBUG= true;
+
+    private void writeDEBUG(String s) {
+        File f= new File("/home/micha/DEBUG_TEST.out");
+        try {
+            BufferedWriter buffy= new BufferedWriter(new FileWriter(f, true));
+            buffy.write(s);
+            buffy.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Algorithm to set up system of linear equations
@@ -970,7 +982,7 @@ public class GraphLPsolver {
 		getLPsolve().deleteLp();	// closes file outFName
 		
 		// output debug info
-		if (ret!=0) {
+		if ( ret!=0) {
 			Iterator<Object> idIter= trptExprHash.keySet().iterator();
 			while(idIter.hasNext()) {
 				Object o= idIter.next();
@@ -1076,7 +1088,7 @@ public class GraphLPsolver {
             assert (!Double.isNaN(x));
             trptExprHash.put(trpt.getTranscriptID(), x);
         }
-		
+
 		// normalizaton factor
 		double nfac= nrMappingsObs/ sum;
         for (Transcript trpt : trpts) {
@@ -1096,6 +1108,25 @@ public class GraphLPsolver {
             assert (!Double.isNaN(x));
             trptExprHash.put(trpt.getTranscriptID(), x);
         }
+
+        if (DEBUG) {
+            Iterator<Integer> i2 = mapDeltaPlus.iterator();
+            long dP= 0, dM= 0;
+            while (i2.hasNext()) {
+                dP+= result[restrNr + i2.next()];
+            }
+            i2 = mapDeltaMinus.iterator();
+            while (i2.hasNext()) {
+                dM+= result[restrNr + i2.next()];
+            }
+            writeDEBUG(aMapper.trpts[0].getGene().getLocusID()+ " "+
+                    constraintCtr+ " "+ restrNr+ " "+
+                    nrMappingsObs+ " "+ sum+ " "+ nFactor+ " "+
+                    this.rhs+ " "+ dP+ " "+ dM+ " "+ valObjFunc
+            );
+        }
+
+
 
         // apppend edge solutions
 //        Object[] keys= constraintHash.keySet().toArray();
@@ -1285,6 +1316,8 @@ public class GraphLPsolver {
 	
 	HashMap<String, Double> mapCCheck= null;
 
+    HashSet<Integer> mapDeltaPlus, mapDeltaMinus;
+    long rhs= 0;
 	/**
      * Iterates the constraints for all edges and, counts them (<code>count</code> is <code>true</code>) or adds them to
      * the system of linear equations (<code>count</code> is <code>false</code>). Also the cost weights in the
@@ -1297,7 +1330,18 @@ public class GraphLPsolver {
      * @return hash that maps transcript IDs to the contraint indices corresponding to their expression levels
 	 */
 	public HashMap<String, Integer> setConstraints(boolean count, PrintStream p) {
-		
+
+        if (DEBUG&& !count) {
+            if (mapDeltaPlus== null) {
+                mapDeltaPlus= new HashSet<Integer>();
+                mapDeltaMinus= new HashSet<Integer>();
+            } else {
+                mapDeltaMinus.clear();
+                mapDeltaPlus.clear();
+            }
+            rhs= 0;
+        }
+
 		// transcript constraint variables
 		Transcript[] trpts= aMapper.trpts;
 		IntVector v= null, w= null, u= null;
@@ -1401,6 +1445,8 @@ public class GraphLPsolver {
 
                     int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
                             : ((MappingsInterface) f).getMappings().getRevReadNr());
+                    if (DEBUG&& !count)
+                        rhs+= nr;
                     v = mapE.remove(f);
                     if (count)
                         constraintCtr += 2;
@@ -1413,6 +1459,8 @@ public class GraphLPsolver {
                         if (paird || !pairedEnd) {
                             w.add(c);
                             u.add(nr);
+                            if (DEBUG&& !count)
+                                mapDeltaMinus.add(c);
                         }
                         idx[idx.length - 2] = c;
                         // plus has to be limited, it substracts
@@ -1427,6 +1475,8 @@ public class GraphLPsolver {
                         // do not limit adding, even with f= 100 unsolvable systems
                         // adding reads always costs, also on single edges
                         w.add(c);
+                        if (DEBUG&& !count)
+                            mapDeltaPlus.add(c);
                         u.add(nr);
                         idx[idx.length - 1] = c;
                         double[] val = new double[idx.length];
