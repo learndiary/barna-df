@@ -32,8 +32,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 
 /**
  * Capacitor stats wrapper
@@ -64,8 +62,8 @@ public class MappingStats {
 
     //Learning
     private long readsSingleTxLoci;
-    private long mappingsSingleTxLoci;
-    private long mappingPairsSingleTxLoci;
+    private double mappingsSingleTxLoci;
+    private double mappingPairsSingleTxLoci;
     private long mappingsSingleTxLociNoAnn;
     private long mappingsWrongStrand;
     private int readLenMin;
@@ -78,7 +76,7 @@ public class MappingStats {
     //Annotation Mapping
     private long singleTxLoci;
     private long readsLoci;
-    private long mappingsMapped;
+    private double mappingsMapped;
     private long mappingPairsNoTx;
 
     //Deconvolution
@@ -190,14 +188,16 @@ public class MappingStats {
     }
 
     public long getMappingsSingleTxLoci() {
-        return mappingsSingleTxLoci;
+        if (!Double.isInfinite(mappingsSingleTxLoci) && mappingsSingleTxLoci == Math.floor(mappingsSingleTxLoci))
+            return (long)mappingsSingleTxLoci;
+        return Math.round(mappingsSingleTxLoci);
     }
 
     public void setMappingsSingleTxLoci(long mappingsSingleTxLoci) {
         this.mappingsSingleTxLoci = mappingsSingleTxLoci;
     }
 
-    public void incrMappingsSingleTxLoci(long value) {
+    public void incrMappingsSingleTxLoci(double value) {
         this.mappingsSingleTxLoci+=value;
     }
 
@@ -214,10 +214,12 @@ public class MappingStats {
     }
 
     public long getMappingsMapped() {
-        return mappingsMapped;
+        if (!Double.isInfinite(mappingsMapped) && mappingsMapped == Math.floor(mappingsMapped))
+            return (long)mappingsMapped;
+        return Math.round(mappingsMapped);
     }
 
-    public void setMappingsMapped(long mappingsMapped) {
+    public void setMappingsMapped(double mappingsMapped) {
         this.mappingsMapped = mappingsMapped;
     }
 
@@ -310,14 +312,12 @@ public class MappingStats {
     }
 
     public long getMappingPairsSingleTxLoci() {
-        return mappingPairsSingleTxLoci;
+        if (!Double.isInfinite(mappingPairsSingleTxLoci) && mappingPairsSingleTxLoci == Math.floor(mappingPairsSingleTxLoci))
+            return (long)mappingPairsSingleTxLoci;
+        return Math.round(mappingPairsSingleTxLoci);
     }
 
-    public void setMappingPairsSingleTxLoci(long mappingPairsSingleTxLoci) {
-        this.mappingPairsSingleTxLoci = mappingPairsSingleTxLoci;
-    }
-
-    public void incrMappingPairsSingleTxLoci(long value) {
+    public void incrMappingPairsSingleTxLoci(double value) {
         this.mappingPairsSingleTxLoci+=value;
     }
 

@@ -34,6 +34,7 @@ import barna.io.rna.UniversalReadDescriptor;
 import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
+import barna.model.sam.SAMMapping;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -61,7 +62,7 @@ public class AnnotationMapper extends SplicingGraph {
     /**
      * The number of mappings in the current locus that map to the annotation.
      */
-	public long nrMappingsMapped= 0;
+	public double nrMappingsMapped= 0;
 
     /**
      * The number of mappings in the current locus that do not map to the annotation
@@ -99,20 +100,30 @@ public class AnnotationMapper extends SplicingGraph {
     private UniversalReadDescriptor descriptor=null;
 
     /**
+     * Whether weighting mapping counts by the number of hits
+     */
+    private boolean weighted=false;
+
+    /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor) {
-        this(gene, descriptor, DEFAULT_COUNTER_TYPES);
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted) {
+        this(gene, descriptor, weighted, DEFAULT_COUNTER_TYPES);
     }
 
     public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, EnumSet<CounterType> counterTypes) {
+        this(gene, descriptor, false, counterTypes);
+    }
+
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
         this.descriptor = descriptor;
+        this.weighted = weighted;
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
@@ -340,17 +351,18 @@ public class AnnotationMapper extends SplicingGraph {
         nrMappingsWrongPairOrientation = 0;
         nrMappingsWrongStrand = 0;
 
+        int multi= 0;
         // map read pairs
         while (mappings.hasNext()) {
 
 				mapping= mappings.next();
             ++nrMappingsLocus;
 				CharSequence name= mapping.getName();
-            if (name.equals(lastName))
+            if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
-            lastName = name;
+            }
 
-				attributes= getAttributes(mapping, descriptor, attributes);
+			attributes= getAttributes(mapping, descriptor, attributes);
             if (paired && attributes.flag == 2)    // don't iterate twice, for counters
                 continue;
 				AbstractEdge target= getEdge2(mapping);
@@ -369,21 +381,22 @@ public class AnnotationMapper extends SplicingGraph {
                 }
             }
 
+            lastName = name.toString();
+
             if (paired) {
 
                 // scan for mates
 //                mappings.mark();
                 Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
-
                 while (mates.hasNext()) {
-						otherMapping= mates.next();
+					otherMapping= mates.next();
 //						attributes2= getAttributes(otherMapping, descriptor, attributes2);
 //                    if (!attributes.id.equals(attributes2.id))
 //                        break;
 //                    if (attributes2 == null || attributes2.flag == 1)
 //                        continue;
 
-						AbstractEdge target2= getEdge2(otherMapping);
+					AbstractEdge target2= getEdge2(otherMapping);
                     if (target2 == null) {
                         ++nrMappingsNotMapped;
                         continue;
@@ -432,7 +445,7 @@ public class AnnotationMapper extends SplicingGraph {
                     }
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
                     if (se.isExonic()) {
-                        nrMappingsMapped += 2;
+                        nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
                     if (buffy != null)
 							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
@@ -451,7 +464,8 @@ public class AnnotationMapper extends SplicingGraph {
                             ((MappingsInterface) target).getMappings().incrReadNr();
                         else
                             ((MappingsInterface) target).getMappings().incrRevReadNr();
-                        ++nrMappingsMapped;
+                        //++nrMappingsMapped;
+                        nrMappingsMapped+=mapping.getCount(weighted);
                 }
             }
         } // end: while(iter.hasNext())
@@ -525,7 +539,7 @@ public class AnnotationMapper extends SplicingGraph {
         }
     }
 
-    public long getNrMappingsMapped() {
+    public double getNrMappingsMapped() {
         return nrMappingsMapped;
     }
 

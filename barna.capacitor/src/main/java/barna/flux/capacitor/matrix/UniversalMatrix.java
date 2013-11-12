@@ -74,12 +74,12 @@ public class UniversalMatrix {
 		return v;
 	}
 	
-	public int[] sense, asense;
-	public int sums, suma;
+	public long[] sense, asense;
+	public long sums, suma;
 	
 	public UniversalMatrix(int length) {
-		sense= new int[length];
-		asense= new int[length];
+		sense= new long[length];
+		asense= new long[length];
 		for (int i = 0; i < sense.length; i++) {
 			sense[i]= 0;
 			asense[i]= 0;
@@ -116,7 +116,7 @@ public class UniversalMatrix {
 		add(p2, readLen2, tlen, Constants.DIR_BACKWARD);
 	}
 
-	public int get(int p1, int p2, int tlen, byte dir) {
+	public long get(int p1, int p2, int tlen, byte dir) {
 		// 090820 <p2 
 		// exclusive regions for back-normalization needed
 		// otherwise fracs> transcriptcount for gene (and reads also)
@@ -127,7 +127,7 @@ public class UniversalMatrix {
 		}
 		int rPos1= (int) ((p1/ (float) tlen)* sense.length),
 			rPos2= (int) ((p2/ (float) tlen)* sense.length);
-		int sum= 0;
+		long sum= 0;
 		if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH) {
 			for (int i = rPos1; i <= rPos2; ++i) 
 				sum+= sense[i];
@@ -141,15 +141,15 @@ public class UniversalMatrix {
 	}
 	
 	public double getFrac(int p1, int p2, int tlen, byte dir) {
-		int sum= get(p1, p2, tlen, dir);
+		double sum= get(p1, p2, tlen, dir);
 		
-		double v= 0;
+		long v= 0;
 		if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH)
 			v+= sums;
 		if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH)
 			v+= suma;
-		v= sum/ v;
-		return v;
+		double frac= sum/ v;
+        return frac;
 	}
 
 	public int getLength() {
@@ -157,7 +157,7 @@ public class UniversalMatrix {
 		return sense.length;
 	}
 
-	public int getSum(byte dir) {
+	public long getSum(byte dir) {
 		if (dir== Constants.DIR_FORWARD)
 			return sums;
 		else if (dir== Constants.DIR_BACKWARD)
@@ -179,7 +179,7 @@ public class UniversalMatrix {
 		
 		// sense
 		for (int i = 0; i < sense.length; i++) {
-			sb.append(Integer.toString(sense[i]));
+			sb.append(Long.toString(sense[i]));
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
@@ -187,7 +187,7 @@ public class UniversalMatrix {
 
 		// anti-sense
 		for (int i = 0; i < asense.length; i++) {
-			sb.append(Integer.toString(asense[i]));
+			sb.append(Long.toString(asense[i]));
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
@@ -195,7 +195,7 @@ public class UniversalMatrix {
 
 		// sum
 		for (int i = 0; i < sense.length; i++) {
-			sb.append(Integer.toString(sense[i]+ asense[i]));
+			sb.append(Long.toString(sense[i]+ asense[i]));
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
@@ -308,13 +308,13 @@ public class UniversalMatrix {
 			
 			// convergence
 			int cnt= 0;
-			int[] maxis= new int[sense.length/ 2];
+			long[] maxis= new long[sense.length/ 2];
 			for (int i = 0; i < maxis.length; i++) 
 				maxis[i]= 0;
 			
 			double avg= 0;
 			for (int i = 0; i < sense.length; i++) {
-				int val= sense[i]+ asense[i];
+				long val= sense[i]+ asense[i];
 //				max= Math.max(max, sense[i]);
 //				max= Math.max(max, asense[i]);
 				avg+= val;
@@ -330,7 +330,7 @@ public class UniversalMatrix {
 			int midIdx= -1;
 			cnt= Math.min(cnt, maxis.length);
 			for (int i = 1; i < cnt; i++) {
-				int delta= Math.abs(maxis[i]- maxis[i-1]);
+				long delta= Math.abs(maxis[i]- maxis[i-1]);
 				float frac= delta/ (float) Math.max(maxis[i], maxis[i- 1]);
 				if (frac< convFactor) {
 					midIdx= i;

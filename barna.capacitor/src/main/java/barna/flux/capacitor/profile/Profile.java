@@ -57,7 +57,7 @@ public class Profile {
 	 * @param rpk
 	 * @return
 	 */
-	public UniversalMatrix getMatrix(int tlen, float rpk) {
+	public UniversalMatrix getMatrix(int tlen, double rpk) {
 		int lenBin= 0;
 		if (tlen> LEN_LO)
 			++lenBin;

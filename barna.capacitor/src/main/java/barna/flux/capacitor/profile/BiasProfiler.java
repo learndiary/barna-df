@@ -15,6 +15,7 @@ import barna.model.Gene;
 import barna.model.Mapping;
 import barna.model.Transcript;
 import barna.model.constants.Constants;
+import barna.model.sam.SAMMapping;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -56,6 +57,7 @@ public class BiasProfiler implements Callable<Profile> {
 
     private byte strand;
     private boolean paired;
+    private boolean weighted;
 
     private int readLenMin = Integer.MAX_VALUE;
     private int readLenMax = -1;
@@ -78,7 +80,7 @@ public class BiasProfiler implements Callable<Profile> {
      */
     private final FluxCapacitor capacitor;
 
-    public BiasProfiler(FluxCapacitor capacitor, byte strand, boolean paired, GTFwrapper gtfReader, MappingReader mappingReader) {
+    public BiasProfiler(FluxCapacitor capacitor, byte strand, boolean paired, boolean weighted, GTFwrapper gtfReader, MappingReader mappingReader) {
         if (capacitor == null) {
             throw new NullPointerException("You have to specify settings! NULL not permitted.");
         }
@@ -86,6 +88,7 @@ public class BiasProfiler implements Callable<Profile> {
         this.capacitor = capacitor;
         this.strand = strand;
         this.paired = paired;
+        this.weighted = weighted;
 
         this.gtfReader = gtfReader;
         this.mappingReader = mappingReader;
@@ -263,7 +266,7 @@ public class BiasProfiler implements Callable<Profile> {
         if (!mappings.hasNext())
             return;
 
-        Mapping bed1, bed2;
+        Mapping mapping, otherMapping;
         UniversalReadDescriptor.Attributes
                 attributes = capacitor.getReadDescriptor().createAttributes(),
                 attributes2 = capacitor.getReadDescriptor().createAttributes();
@@ -282,9 +285,9 @@ public class BiasProfiler implements Callable<Profile> {
         }
 
         while (mappings.hasNext()) {
-            stats.incrReadsSingleTxLoci(1);
-            bed1= mappings.next();
-            CharSequence tag = bed1.getName();
+            mapping= mappings.next();
+
+            CharSequence tag = mapping.getName();
             attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
             if (paired) {
                 if (attributes.flag < 1)
@@ -292,29 +295,39 @@ public class BiasProfiler implements Callable<Profile> {
                 if (attributes.flag == 2)    // don't iterate second read
                     continue;
             }
+            stats.incrReadsSingleTxLoci(1);
+
+            // use reliable info
+            if (mapping instanceof SAMMapping) {
+                SAMMapping smap= (SAMMapping) mapping;
+                if (!smap.isPrimary())
+                    continue;
+                if (paired&& (!smap.isProperlyPaired()))
+                    continue;
+            }
 
             if (strand == 1) {
-                if ((tx.getStrand() == bed1.getStrand() && attributes.strand == 2)
-                        || (tx.getStrand() != bed1.getStrand() && attributes.strand == 1)) {
+                if ((tx.getStrand() == mapping.getStrand() && attributes.strand == 2)
+                        || (tx.getStrand() != mapping.getStrand() && attributes.strand == 1)) {
                     stats.incrMappingsWrongStrand(1);
                     continue;
                 }
             }
 
-            int bpoint1 = getBpoint(tx, bed1);
+            int bpoint1 = getBpoint(tx, mapping);
             if (bpoint1 < 0 || bpoint1 >= elen) {    // outside tx area, or intron (Int.MIN_VALUE)
                 stats.incrMappingsSingleTxLociNoAnn(1);
                 continue;
             }
 
-            stats.incrMappingsSingleTxLoci(1); // the (first) read maps
+            stats.incrMappingsSingleTxLoci(mapping.getCount(weighted)); // the (first) read maps
 
             if (paired) {
 
 //                    mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(bed1,capacitor.getReadDescriptor());
+                Iterator<Mapping> mates = mappings.getMates(mapping,capacitor.getReadDescriptor());
                 while(mates.hasNext()) {
-                    bed2= mates.next();
+                    otherMapping= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
 //                        if (attributes2 == null)
 //                            continue;
@@ -323,7 +336,14 @@ public class BiasProfiler implements Callable<Profile> {
 //                        if (attributes2.flag == 1)    // not before break, inefficient
 //                            continue;
 
-                    int bpoint2 = getBpoint(tx, bed2);
+                    // use reliable info, independent of Mate_only
+                    if (otherMapping instanceof SAMMapping) {
+                        SAMMapping oMap= (SAMMapping) otherMapping;
+                        if (!oMap.isMateOf((SAMMapping) mapping))
+                            continue;
+                    }
+
+                    int bpoint2 = getBpoint(tx, otherMapping);
                     if (bpoint2 < 0 || bpoint2 >= elen) {
                         stats.incrMappingsSingleTxLociNoAnn(1);
                         continue;
@@ -331,17 +351,17 @@ public class BiasProfiler implements Callable<Profile> {
 
                     // check again strand in case one strand-info had been lost
                     if (strand == 1) {
-                        if ((tx.getStrand() == bed2.getStrand() && attributes2.strand == 2)
-                                || (tx.getStrand() != bed2.getStrand() && attributes2.strand == 1)) {
+                        if ((tx.getStrand() == otherMapping.getStrand() && attributes2.strand == 2)
+                                || (tx.getStrand() != otherMapping.getStrand() && attributes2.strand == 1)) {
                             stats.incrMappingsWrongStrand(1);
                             continue;
                         }
                     }
 
                     // check directionality (sequencing-by-synthesis)
-                    if ((bed1.getStrand() == bed2.getStrand())
-                            || ((bed1.getStart() < bed2.getStart()) && (bed1.getStrand() != DirectedRegion.STRAND_POS))
-                            || ((bed2.getStart() < bed1.getStart()) && (bed2.getStrand() != DirectedRegion.STRAND_POS))) {
+                    if ((mapping.getStrand() == otherMapping.getStrand())
+                            || ((mapping.getStart() < otherMapping.getStart()) && (mapping.getStrand() != DirectedRegion.STRAND_POS))
+                            || ((otherMapping.getStart() < mapping.getStart()) && (otherMapping.getStrand() != DirectedRegion.STRAND_POS))) {
                         stats.incrPairsWrongOrientation(2);
                         continue;
                     }
@@ -350,34 +370,34 @@ public class BiasProfiler implements Callable<Profile> {
                     // update coverage
                     if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                         if (bpoint1 < bpoint2) {
-                            for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
+                            for (int i = bpoint1; i < bpoint1 + mapping.getLength(); i++)
                                 profile.getCoverageStats().getCoverage().increment(i);
-                            for (int i = bpoint2 - bed2.getLength() + 1; i <= bpoint2; i++)
+                            for (int i = bpoint2 - otherMapping.getLength() + 1; i <= bpoint2; i++)
                                 profile.getCoverageStats().getCoverage().increment(i);
                         } else {
-                            for (int i = bpoint2; i < bpoint2 + bed2.getLength(); i++)
+                            for (int i = bpoint2; i < bpoint2 + otherMapping.getLength(); i++)
                                 profile.getCoverageStats().getCoverage().increment(i);
-                            for (int i = bpoint1 - bed1.getLength() + 1; i <= bpoint1; i++)
+                            for (int i = bpoint1 - mapping.getLength() + 1; i <= bpoint1; i++)
                                 profile.getCoverageStats().getCoverage().increment(i);
                         }
                     }
                     //addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
 
                     //nrReadsSingleLociPairsMapped += 2;
-                    stats.incrMappingPairsSingleTxLoci(2);
+                    stats.incrMappingPairsSingleTxLoci(mapping.getCount(weighted)+mapping.getCount(weighted));
                 }
 //                    mappings.reset();
 
             } else {    // single reads
                 m.add(bpoint1, -1, elen,
-                        bed1.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+                        mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
                 // update coverage
                 if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
-                    if (bed1.getStrand() == tx.getStrand()) {
-                        for (int i = bpoint1; i < bpoint1 + bed1.getLength(); i++)
+                    if (mapping.getStrand() == tx.getStrand()) {
+                        for (int i = bpoint1; i < bpoint1 + mapping.getLength(); i++)
                             profile.getCoverageStats().getCoverage().increment(i);
                     } else {
-                        for (int i = bpoint1 - bed1.getLength() + 1; i <= bpoint1; i++)
+                        for (int i = bpoint1 - mapping.getLength() + 1; i <= bpoint1; i++)
                             profile.getCoverageStats().getCoverage().increment(i);
                     }
                 }

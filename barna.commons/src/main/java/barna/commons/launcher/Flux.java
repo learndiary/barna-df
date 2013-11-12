@@ -30,6 +30,7 @@ package barna.commons.launcher;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;
+import barna.commons.parameters.ParameterException;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
@@ -67,9 +68,7 @@ public class Flux {
     /**
      * Number of executor threads
      */
-    private int threads = 2;
-
-
+    public static int THREADS = 2;
 
     /**
      * Start the Flux simulator
@@ -114,9 +113,9 @@ public class Flux {
         }catch(Exception e){
             Log.error("Error while parsing arguments : " + e.getMessage());
         }
+        Flux.THREADS = initialFluxArguments.getInt("threads");
 
         fluxInstance.setLogLevel(initialFluxArguments.getString("log"));
-        fluxInstance.setThreads(initialFluxArguments.getInt("threads"));
         fluxInstance.setToolName(initialFluxArguments.getString("tool"));
         fluxInstance.setDetached(initialFluxArguments.userSpecified("force"));
 
@@ -193,7 +192,7 @@ public class Flux {
 
         try {
             // configure the executor
-            Execute.initialize(fluxInstance.getThreads());
+            Execute.initialize(Flux.THREADS);
 
             tool.call();
         }catch (OutOfMemoryError outOfMemoryError){
@@ -217,6 +216,13 @@ public class Flux {
             } else {
                 Log.error("Error while executing " + tool.getClass(), ioError);
             }
+            System.exit(-1);
+        }catch (ParameterException e){
+            Log.error("","\n");
+            Log.error(e.getMessage());
+            Log.error("","");
+            Log.debug("\n\n");
+            Log.debug("Error while executing " + tool.getClass() + " : " + e.getMessage(), e);
             System.exit(-1);
         } catch (Exception e) {
             Log.error("","\n");
@@ -246,7 +252,7 @@ public class Flux {
         JSAP jsap = new JSAP();
         try {
             jsap.registerParameter(JSAPParameters.flaggedParameter("tool", 't').defaultValue(System.getProperty("flux.tool")).help("Select a tool").get());
-            jsap.registerParameter(JSAPParameters.switchParameter("help").help("Show help").get());
+            jsap.registerParameter(JSAPParameters.switchParameter("help", 'h').help("Show help").get());
             jsap.registerParameter(JSAPParameters.switchParameter("list-tools").help("List available tools").get());
             jsap.registerParameter(JSAPParameters.flaggedParameter("threads").defaultValue("2").type(Integer.class).help("Maximum number of threads to use. Default 2").get());
             jsap.registerParameter(JSAPParameters.flaggedParameter("log").defaultValue("INFO").help("Log level (NONE|INFO|ERROR|DEBUG)").valueName("level").get());
@@ -475,24 +481,6 @@ public class Flux {
      */
     public boolean isDetached() {
         return !Log.isInteractive();
-    }
-
-    /**
-     * Returns the number of available background threads
-     *
-     * @return threads the number of background threads
-     */
-    public int getThreads() {
-        return threads;
-    }
-
-    /**
-     * Set the number of background threads
-     *
-     * @param threads number of background threads
-     */
-    public void setThreads(final int threads) {
-        this.threads = threads;
     }
 
     /**

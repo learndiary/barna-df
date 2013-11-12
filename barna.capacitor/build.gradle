@@ -160,6 +160,7 @@ task aggregatedJavadoc(type: Javadoc){
     configure(options) {
         windowTitle = 'Flux-Capacitor API Documentation'
         docTitle = "Flux-Capacitor JavaDoc (${project(':barna.capacitor').version})"
+        failOnError = false
         links = [ 'http://download.oracle.com/javase/6/docs/api/',
                 'http://download.oracle.com/javaee/6/api/' ]
     }

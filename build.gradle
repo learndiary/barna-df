@@ -14,15 +14,15 @@ if(System.properties['nightly']){
  * This is the  global flux suite version used to identify
  * library/jar versions
  */
-version = "1.22"
+version = "1.23"
 
 /**
  * Versions for applications
  */
 ext.appVersions = [
-    "barna.astalavista":"3.2",
-    "barna.simulator":"1.2.1",
-    "barna.capacitor":"1.2.4",
+    "barna.astalavista":"3.2.1-SNAPSHOT",
+    "barna.simulator":"1.2.2-SNAPSHOT",
+    "barna.capacitor":"1.3",
     "barna.tools":"1.0-SNAPSHOT"
 ]
 
@@ -107,6 +107,7 @@ task aggregatedJavadoc(type: Javadoc){
     configure(options) {
         windowTitle = 'Barna API Documentation'
         docTitle = "Barna JavaDoc (${project.version})"
+        failOnError = false
         links = [ 'http://download.oracle.com/javase/6/docs/api/',
                   'http://download.oracle.com/javaee/6/api/' ]
     }

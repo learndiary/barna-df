@@ -479,8 +479,8 @@ public class GraphLPsolver {
                 int tlen = aTt.getExonicLength();
                 UniversalMatrix m = getMatrixMap().get(aTt.getTranscriptID());
                 int[] area = e.getFrac(aTt, getReadLen(), dir);
-                int reads = m.get(area[0], area[1], tlen, dir);
-                int sum = m.getSum(dir);
+                long reads = m.get(area[0], area[1], tlen, dir);
+                long sum = m.getSum(dir);
                 double val = reads / (double) sum;
                 totVal += val;
                 if (val < 0 || Double.isNaN(val) || Double.isInfinite(val)) {
@@ -742,7 +742,7 @@ public class GraphLPsolver {
 			for (int i = 0; i < aMapper.trpts.length; i++) 
 				lenSum+= aMapper.trpts[i].getExonicLength();
 			float avgLen= lenSum/ aMapper.trpts.length;
-			float rpk= aMapper.getNrMappingsMapped()* 1000f/ avgLen;
+			double rpk= aMapper.getNrMappingsMapped()* 1000f/ avgLen;
 			for (int i = 0; i < aMapper.trpts.length; i++) {
 				int tlen= aMapper.trpts[i].getExonicLength();
 				UniversalMatrix m= profile.getMatrix(tlen, rpk);
@@ -825,6 +825,7 @@ public class GraphLPsolver {
      */
     String getLPoutFileName() {
 
+        fileLPdir= null; //settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
         if (lpOutFName== null&& fileLPdir!= null) {
             try {
                 lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"), SFX_LPOUT, fileLPdir).getAbsolutePath();
@@ -940,14 +941,22 @@ public class GraphLPsolver {
 		// append additional debug info
 		if (ret!= 0) {
             try {
-                getLPsolve().setOutputfile(getLPoutFileName());
+                String fname= getLPoutFileName();
 
-			getLPsolve().printLp();
-			getLPsolve().printObjective();
-			getLPsolve().printSolution(1);
+                getLPsolve().writeLp(fname+ "_wlp");
+                getLPsolve().writeMps(fname+ "_mps");
+
+                getLPsolve().setOutputfile(fname+ "_lp");
+                getLPsolve().printLp();
+
+                getLPsolve().setOutputfile(fname+ "_of");
+                getLPsolve().printObjective();
+
+                getLPsolve().setOutputfile(fname+ "_solv");
+                getLPsolve().printSolution(1);
 			
 			// additional stream only afterwards
-				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName(), true));
+				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName()+"_const", true));
                 setConstraints(true, p);
                 Log.warn("There was an issue with the linear problem. The linear system has been written to " + getLPoutFileName());
             } catch (Exception e) {
