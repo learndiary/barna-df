@@ -1348,6 +1348,13 @@ public class AnnotationMapper extends SplicingGraph {
         if (v.size() == 1)
             return v.elementAt(0);
 
+        // BARNA-329, prohibit super-edges that are mixed exonic/intronic
+        // (no PE created at this point)
+        for (int i = 0; i < v.size(); i++) {
+            if (!v.elementAt(i).isExonic())
+                return null;
+        }
+
         // otherwise create a corresponding super-edge, method returns null if
         // there is no common transcript support
         return getSuperEdge(v, false, null);

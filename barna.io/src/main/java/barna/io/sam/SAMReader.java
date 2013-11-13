@@ -271,12 +271,14 @@ public class SAMReader extends AbstractFileIOWrapper implements
                 catch (OutOfMemoryError error) {
                     SAMFileHeader header =  getSAMFileReader(true).getFileHeader();
                     header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly);
+                    iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header,
+                            maxRecords, allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly, this.getValidationStringency());
                 }
             } else {
                 SAMFileHeader header =  getSAMFileReader(false).getFileHeader();
                 header.setSortOrder(SAMFileHeader.SortOrder.queryname);
-                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header, maxRecords, allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly);
+                iter = new SAMMappingSortedIterator(getSAMFileReader(false).query(chromosome, start, end, contained), header,
+                        maxRecords, allReads, scoreFilter, primaryOnly, matesOnly, uniqueOnly, this.getValidationStringency());
             }
         }
         else

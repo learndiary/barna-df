@@ -23,6 +23,21 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.3
+    * [BARNA-28] - Exit with error 1 in case of error
+    * [BARNA-273] - Implement stranded annotation mapping for BAM input files
+    * [BARNA-296] - OutOfMemoryError for some loci while getting the sorted iterator for BAM files
+    * [BARNA-301] - NullPointerException while iterating loci in BAM files
+    * [BARNA-308] - Capacitor does not start with single end data
+    * [BARNA-309] - Capacitor creates lots of threads when running on BAM files
+    * [BARNA-314] - flux capacitor error:java.io.IOException: Pipe closed
+    * [BARNA-321] - NullPointer when trying to set LP output
+    * [BARNA-323] - Add SAM validation stringency parameter to SAMMappingSortediterator
+    * [BARNA-315] - Parameters for Mapping Filtering
+    * [BARNA-325] - Make sort-in-ram default
+    * [BARNA-326] - Remove the no longer needed NR_READS_MAPPED parameter
+    * [BARNA-327] - Catch ParameterException in main method to hide stack trace
+
 FluxCapacitor 1.2.4
     * [BARNA-289] - Change NO_DECOMPOSE parameter to DECONVOLUTE
     * [BARNA-297] - Stats file lock might fail and then no stats are written

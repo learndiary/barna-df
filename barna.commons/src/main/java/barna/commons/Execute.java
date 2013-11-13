@@ -86,12 +86,21 @@ public class Execute {
     public static void initialize(int maxThreads){
         if(maxThreads <= 0) throw new IllegalArgumentException("Max threads must be >= 1");
         if(executor == null){
-            executor = Executors.newFixedThreadPool(maxThreads);
+            // NOTE: we have to make sure we have at least 3 threads in the pool. This is
+            // because for BARNA-309 we ensured everything goes through the fixed thread pool.
+            // In sorter operations for example in the flux, this can lock with < 3 threads, because
+            // there will threads dropped into the pool in this order:
+            //
+            //  - one thread for main (capacitor call())
+            //  - one thread for the background sorter
+            //  - n threads submitted from the background sorter (per merge chunk)
+            //
+            // With this, we need the ability to run at least 3 jobs in parallel without blocking.
+            executor = Executors.newFixedThreadPool(Math.max(maxThreads, 3));
             shutdown = new ExecutorShutdown();
             Runtime.getRuntime().addShutdownHook(shutdown);
         }else{
-            //throw new RuntimeException("Executor is already initialized!");
-            Log.warn("Executor is already initialized!");
+            Log.debug("Executor is already initialized!");
         }
     }
 
