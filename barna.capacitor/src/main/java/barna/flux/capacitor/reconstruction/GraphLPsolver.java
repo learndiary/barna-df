@@ -43,6 +43,7 @@ import barna.model.splicegraph.AbstractEdge;
 import barna.model.splicegraph.SimpleEdge;
 import barna.model.splicegraph.SplicingGraph;
 import barna.model.splicegraph.SuperEdge;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
@@ -139,6 +140,9 @@ public class GraphLPsolver {
      * Array with the primal solution.
      */
 	double[] result= null;
+
+    double[] resultR= null;
+    double[] resultC= null;
 
     /**
      * Hash that maps transcripts to their
@@ -942,10 +946,9 @@ public class GraphLPsolver {
 		//long t0= System.currentTimeMillis();
 
 		// initialize LP program
-        setConstraints(true, null);
+        setConstraints((byte) 0, null);
         getLPsolve();
-        constraintCtr= 0;
-        HashMap<String, Integer> tMap= setConstraints(false, null);
+        HashMap<String, Integer> tMap= setConstraints((byte) 1, null);
 
         // solve
         int ret= solve(getLPoutFileName());
@@ -969,7 +972,7 @@ public class GraphLPsolver {
 			
 			// additional stream only afterwards
 				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName()+"_const", true));
-                setConstraints(true, p);
+                setConstraints((byte) 0, p);
                 Log.warn("There was an issue with the linear problem. The linear system has been written to " + getLPoutFileName());
             } catch (Exception e) {
                 Log.error("Failed to set lp output to:\n\t"+ getLPoutFileName(), e);
@@ -978,7 +981,10 @@ public class GraphLPsolver {
 			
 		// get transcription expression levels		
 		trptExprHash= getResult(tMap);
-		//normalizeBack2LocusExpr(trptExprHash);
+        // output
+        setConstraints((byte) 2, null);
+
+        //normalizeBack2LocusExpr(trptExprHash);
 		getLPsolve().deleteLp();	// closes file outFName
 		
 		// output debug info
@@ -1065,12 +1071,17 @@ public class GraphLPsolver {
 
         // get info about solution
 		result= new double[1+ restrNr+ constraintCtr];
+
 		try {
 			getLPsolve().getPrimalSolution(result);
 		} catch (LpSolveException e1) {
 			e1.printStackTrace();
 		}
-		valObjFunc= result[0];	
+		valObjFunc= result[0];
+        resultR= new double[restrNr];
+        System.arraycopy(result, 1, resultR, 0, restrNr);
+        resultC= new double[constraintCtr];
+        System.arraycopy(result, restrNr+ 1, resultC, 0, constraintCtr);
 		trptExprHash= new HashMap<Object,Double>();
 		
 		// transcripts
@@ -1110,12 +1121,12 @@ public class GraphLPsolver {
         }
 
         if (DEBUG) {
-            Iterator<Integer> i2 = mapDeltaPlus.iterator();
+            Iterator<Integer> i2 = mapDeltaPlusSense.iterator();
             long dP= 0, dM= 0;
             while (i2.hasNext()) {
                 dP+= result[restrNr + i2.next()];
             }
-            i2 = mapDeltaMinus.iterator();
+            i2 = mapDeltaMinusSense.iterator();
             while (i2.hasNext()) {
                 dM+= result[restrNr + i2.next()];
             }
@@ -1238,20 +1249,20 @@ public class GraphLPsolver {
      * @param p stream to output additional reporting information for introspection
      */
 	private void getConstraints(AbstractEdge e, long[] sig, IntVector v,
-			HashMap<AbstractEdge, IntVector> mapE, boolean sense, boolean count, PrintStream p) {
+			HashMap<AbstractEdge, IntVector> mapE, boolean sense, byte count, PrintStream p) {
 
 		// for the edge itself
 		IntVector w= mapE.get(e);
-		if (count) 
+		if (count== 0)
 			++constraintCtr;
-		else {
+		else if (count== 1|| count== 2) {
 			v.add(++constraintCtr);	// for transcript fraction
 			if (w== null)
 				w= new IntVector();
 			w.add(constraintCtr);	// edge consistency
 		}
 		mapE.put(e, w);
-		if (count&& p!= null)
+		if (count== 0&& p!= null)
 			p.println(constraintCtr);
 
 		// iterate super-edges
@@ -1265,7 +1276,7 @@ public class GraphLPsolver {
 			// sense/anti-sense.. e must be first/last in super-edge
 			if ((sense&& se.getEdges()[0]!= e)|| ((!sense)&& se.getEdges()[se.getEdges().length- 1]!= e))
 				continue;
-			if (count) {
+			if (count== 0) {
 				++constraintCtr;
 				if (p!= null)
 					p.println(se+"\t"+(sense?"sense":"asense")+"\t"+constraintCtr);
@@ -1273,7 +1284,7 @@ public class GraphLPsolver {
 				v.add(++constraintCtr);	// for transcript fraction
 			}
 			w= mapE.get(se);
-			if (!count) {
+			if (count== 1|| count== 2) {
 				if (w== null)
 					w= new IntVector();
 				w.add(constraintCtr); // for edge consistency
@@ -1293,7 +1304,7 @@ public class GraphLPsolver {
 				// sense/anti-sense.. e must be first/last in super-edge
 				if ((sense&& se2.getEdges()[0]!= se)|| ((!sense)&& se2.getEdges()[se2.getEdges().length- 1]!= se))
 					continue;
-				if (count) {
+				if (count== 0) {
 					++constraintCtr;
 					if (p!= null)
 						p.println(se2+"\t"+(sense?"sense":"asense")+"\t"+constraintCtr);
@@ -1301,7 +1312,7 @@ public class GraphLPsolver {
 					v.add(++constraintCtr);	// tx
 				}
 				w= mapE.get(se2);
-				if (!count) {
+				if (count== 1|| count== 2) {
 					if (w== null)
 						w= new IntVector();
 					w.add(constraintCtr); // for edge consistency
@@ -1316,7 +1327,7 @@ public class GraphLPsolver {
 	
 	HashMap<String, Double> mapCCheck= null;
 
-    HashSet<Integer> mapDeltaPlus, mapDeltaMinus;
+    HashSet<Integer> mapDeltaPlusSense, mapDeltaPlusAnti, mapDeltaMinusSense, mapDeltaMinusAnti;
     long rhs= 0;
 	/**
      * Iterates the constraints for all edges and, counts them (<code>count</code> is <code>true</code>) or adds them to
@@ -1324,20 +1335,35 @@ public class GraphLPsolver {
      * objective function are set. Finally, a hash that maps transcript IDs to their corresponding expression value
      * constraint indices is provided.
      *
-     * @param count flag, if <code>count</code> is <code>0</code> only counting of indices is performed. Otherwise,
-     *              restrictions on the respective contraints are added to the linear program
+     * @param count flag, if <code>count</code> is <code>0</code> only counting of indices is performed.
+     *              For value <code>1</code>, restrictions on the respective contraints are added to the linear program.
+     *              For value <code>2</code>, output is performed.
      * @param p stream to output additional debug info for LP reports
      * @return hash that maps transcript IDs to the contraint indices corresponding to their expression levels
 	 */
-	public HashMap<String, Integer> setConstraints(boolean count, PrintStream p) {
+	public HashMap<String, Integer> setConstraints(byte count, PrintStream p) {
 
-        if (DEBUG&& !count) {
-            if (mapDeltaPlus== null) {
-                mapDeltaPlus= new HashSet<Integer>();
-                mapDeltaMinus= new HashSet<Integer>();
+        // DEBUG stuff
+        int segmentCounter= 0;
+        // DEBUG: maps edges to their segment number
+        HashMap<SimpleEdge, Integer> segmentHash= null;
+        HashMap<Integer, Integer> hashCxTx= null;
+        HashMap<Transcript, Integer> hashTxNr= null;
+
+        constraintCtr= 0;
+        restrNr= 0;
+
+        if (DEBUG&& count== 1) {
+            if (mapDeltaPlusSense== null) {
+                mapDeltaPlusSense= new HashSet<Integer>();
+                mapDeltaPlusAnti= new HashSet<Integer>();
+                mapDeltaMinusSense= new HashSet<Integer>();
+                mapDeltaMinusAnti= new HashSet<Integer>();
             } else {
-                mapDeltaMinus.clear();
-                mapDeltaPlus.clear();
+                mapDeltaMinusSense.clear();
+                mapDeltaMinusAnti.clear();
+                mapDeltaPlusSense.clear();
+                mapDeltaPlusAnti.clear();
             }
             rhs= 0;
         }
@@ -1346,7 +1372,7 @@ public class GraphLPsolver {
 		Transcript[] trpts= aMapper.trpts;
 		IntVector v= null, w= null, u= null;
 		HashMap<String, Integer> tMap= null;
-		if (count)
+		if (count== 0)
 			constraintCtr+= trpts.length;
 		else { 
 			try {
@@ -1367,10 +1393,37 @@ public class GraphLPsolver {
 		
 		// iterate edges
 		AbstractEdge[] edges= aMapper.getExonicEdgesInGenomicOrder();
-		if (!count) {
+        HashMap<Transcript, StringBuilder> txSegments= null, txEdges= null;
+		if (count== 1) {
 			mapCCheck= new HashMap<String, Double>();
             for (Transcript trpt : trpts) mapCCheck.put(trpt.getTranscriptID(), 0d);
-		}
+		} else if (count== 2) {
+            hashCxTx= new HashMap<Integer, Integer>();
+            hashTxNr= new HashMap<Transcript, Integer>();
+            txSegments= new HashMap<Transcript, StringBuilder>();
+            txEdges= new HashMap<Transcript, StringBuilder>();
+            segmentHash= new HashMap<SimpleEdge, Integer>();
+            int i= 0;
+            for(Transcript tx: trpts) {
+                int c = tMap.get(tx.getTranscriptID());
+                txSegments.put(tx, new StringBuilder(tx.getGene().getLocusID()+ "\t"
+                        + tx.getTranscriptID()+ "\t"
+                        + "TX="+ (i+ 1)
+                        + ";TEXP="+ Math.round(resultC[c- 1]* 100.00)/ 100.00
+                        + ";TNOR="+ Math.round(getTrptExprHash().get(tx.getTranscriptID())* 100.00)/ 100.00
+                ));
+                txEdges.put(tx,new StringBuilder());
+                hashTxNr.put(tx, i);
+                ++i;
+            }
+            for (AbstractEdge e : edges) {
+                if ((!e.isExonic())|| (!(e instanceof  SimpleEdge)))
+                    continue;
+                segmentHash.put((SimpleEdge) e, ++segmentCounter);   // DEBUG output
+            }
+        }
+
+        // iterates only exonic segments
         for (AbstractEdge e : edges) {
             if (!e.isExonic())
                 continue;
@@ -1382,17 +1435,30 @@ public class GraphLPsolver {
 
                 HashMap<AbstractEdge, IntVector> mapE = new HashMap<AbstractEdge, IntVector>();    // BUG?
 
+                int tctr= 0;
                 for (Transcript aTt : tt) {
-                    if (!count) {
+                    if (count== 1|| count== 2) {
                         v.removeAll();
                     } else if (p != null)
                         p.print(e + "\t" + (sa == 0 ? "sense" : "asense") + "\t" + aTt + "\t");
+                    StringBuilder segDEBUG= null;
+                    if (count== 2) {
+                        segDEBUG= txSegments.get(aTt);
+                        segDEBUG.append("\tSEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
+
+                    }
+
 
                     long[] sig = aMapper.encodeTset(aTt);
+                    int saveCCtr= constraintCtr;
                     getConstraints(e, sig, v, mapE, sa == 0, count, p);
+                    if (count== 2) {
+                        for (int i = saveCCtr+ 1; i <= constraintCtr; i++)
+                            hashCxTx.put(i, hashTxNr.get(aTt));
+                    }
 
                     // add transcript constraint
-                    if (!count) {
+                    if (count== 1|| count== 2) {
                         int[] idx = new int[v.length + 1]; // obs parts+ tx frac
                         System.arraycopy(v.vector, 0, idx, 0, v.length);
                         idx[idx.length - 1] = tMap.get(aTt.getTranscriptID());
@@ -1405,12 +1471,18 @@ public class GraphLPsolver {
                                 aTt.getExonicPosition(e.getDelimitingPos(false)),
                                 tlen,
                                 sa == 0 ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
-
+                        if (count== 2) {
+                            segDEBUG.append(";TEX="+  Math.round(f * 10000.0) / 100.0);
+                            double sum= 0d;
+                            for (int i = 0; i < idx.length- 1; i++)
+                                sum+= resultC[idx[i]- 1];
+                            segDEBUG.append(";DEC="+ Math.round(sum* 100.00)/ 100.0);
+                        }
                         assert (!(Double.isInfinite(f) || Double.isNaN(f)));
                         mapCCheck.put(aTt.getTranscriptID(),
                                 mapCCheck.get(aTt.getTranscriptID()) + f);
                         val[val.length - 1] = -f;
-                        if (debug && !count) {
+                        if (debug && count== 1) {
                             StringBuilder sb = new StringBuilder(e.toString());
                             sb.append(": ");
                             for (int k = 0; k < idx.length; k++) {
@@ -1422,9 +1494,12 @@ public class GraphLPsolver {
                             sb.append("= 0");
                             Log.debug(sb.toString());
                         }
-                        addConstraintToLp(idx, val, LpSolve.EQ, 0);
+                        if (count== 1)
+                            addConstraintToLp(idx, val, LpSolve.EQ, 0);
                         ++restrNr;
+
                     }
+                    ++tctr;
                 } // iterate transcripts
 
                 // add edge constraints
@@ -1440,17 +1515,24 @@ public class GraphLPsolver {
 					sumObs+= nr;
 				}
 */
+
+                double sumObs= 0, sumPlus= 0, sumMinus= 0;
+                double[] sumTx= null;
+                if (count== 2) {
+                    sumTx= new double[trpts.length];
+                    Arrays.fill(sumTx, 0d);
+                }
                 for (AbstractEdge f : ee) {
                     boolean paird = (f instanceof SuperEdge) && ((SuperEdge) f).isPend();
 
                     int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
                             : ((MappingsInterface) f).getMappings().getRevReadNr());
-                    if (DEBUG&& !count)
+                    if (DEBUG&& count== 1)
                         rhs+= nr;
                     v = mapE.remove(f);
-                    if (count)
+                    if (count== 0)
                         constraintCtr += 2;
-                    else {
+                    else if (count== 1|| count== 2) {
                         int[] idx = new int[v.length + 2];    // +/-
                         System.arraycopy(v.vector, 0, idx, 0, v.length);
                         int c = ++constraintCtr;
@@ -1459,30 +1541,73 @@ public class GraphLPsolver {
                         if (paird || !pairedEnd) {
                             w.add(c);
                             u.add(nr);
-                            if (DEBUG&& !count)
-                                mapDeltaMinus.add(c);
+                            if (DEBUG&& count== 1) {
+                                if (sa== 0)
+                                    mapDeltaMinusSense.add(c);
+                                else
+                                    mapDeltaMinusAnti.add(c);
+                            }
                         }
                         idx[idx.length - 2] = c;
                         // plus has to be limited, it substracts
                         int lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
-                        try {
-                            getLPsolve().setUpbo(constraintCtr, lim);
-                        } catch (LpSolveException e1) {
-                            e1.printStackTrace();
+                        if (count== 1)
+                            try {
+                                getLPsolve().setUpbo(constraintCtr, lim);
+                            } catch (LpSolveException e1) {
+                                e1.printStackTrace();
+                            }
+
+                        if (count== 2) {
+                            for (Transcript tx: tt) {
+                                StringBuilder sb= txEdges.get(tx);
+                                String eid= getEID(f, segmentHash);
+                                sb.append("\tEID=E"+ eid);
+                                sb.append(";SEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
+
+                                sb.append(";OBS="+ nr);
+                                sb.append(";SUB="+ Math.round(resultC[constraintCtr- 1]* 100.00)/ 100.00);
+                                sb.append(";ADD="+ Math.round(resultC[constraintCtr]* 100.00)/ 100.00); // +1 -1
+
+                                for (int i = 0; i < idx.length- 2; i++) {
+                                    int tc= hashCxTx.get(idx[i]);
+                                    sb.append(";TX"+ (tc+ 1)+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
+                                    if (tc!= hashTxNr.get(tx))
+                                        continue;
+                                    //else
+                                    StringBuilder segb= txSegments.get(tx);
+                                    segb.append(";E"+ eid+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
+                                }
+
+                            }
+                            sumObs+= nr;
+                            sumMinus+= resultC[constraintCtr- 1];
+                            sumPlus+= resultC[constraintCtr];
+                            // add edges and transcript contributions
+                            for (int i = 0; i < idx.length- 2; i++) {
+                                int tc= hashCxTx.get(idx[i]);
+                                sumTx[tc]+= resultC[idx[i]- 1];
+                            }
+
+
                         }
 
                         c = ++constraintCtr;
                         // do not limit adding, even with f= 100 unsolvable systems
                         // adding reads always costs, also on single edges
                         w.add(c);
-                        if (DEBUG&& !count)
-                            mapDeltaPlus.add(c);
+                        if (DEBUG&& count== 1) {
+                            if (sa== 0)
+                                mapDeltaPlusSense.add(c);
+                            else
+                                mapDeltaPlusAnti.add(c);
+                        }
                         u.add(nr);
                         idx[idx.length - 1] = c;
                         double[] val = new double[idx.length];
                         Arrays.fill(val, 1d);
                         val[val.length - 1] = -1d;
-                        if (debug && !count) {
+                        if (debug && count== 1) {
                             StringBuilder sb = new StringBuilder(f.toString());
                             sb.append(": ");
                             for (int k = 0; k < idx.length; k++) {
@@ -1492,16 +1617,65 @@ public class GraphLPsolver {
                             sb.append("= ").append(nr);
                             Log.debug(sb.toString());
                         }
-                        addConstraintToLp(idx, val, LpSolve.EQ, nr);
+                        if (count== 1)
+                            addConstraintToLp(idx, val, LpSolve.EQ, nr);
                         ++restrNr;
+                    }   // count > 0
+
+                } // all edges in segment
+
+                //close segment
+                if (count== 2) {
+                    Iterator<Transcript> i2= txSegments.keySet().iterator();
+                    while (i2.hasNext()) {
+                        Transcript tx= i2.next();
+                        if (!SplicingGraph.intersects(aMapper.encodeTset(tx), e.getTranscripts()))
+                            continue;
+                        StringBuilder sb= txSegments.get(tx);
+                        StringBuilder sb2= new StringBuilder(sb.length());
+                        String[] ss= sb.toString().split("\t");
+                        for (int i = 0; i < ss.length- 1; i++) {
+                            sb2.append(ss[i]+ "\t");
+                        }
+                        StringTokenizer st= new StringTokenizer(ss[ss.length- 1], ";");
+                        sb2.append(st.nextToken());
+                        for (int i = 1; i < 4; i++)
+                           sb2.append(";"+ st.nextToken());
+                        // TODO can use as a check
+                        //sb2.append(";DEC2="+ Math.round(sumTx[hashTxNr.get(tx)]* 100.00)/ 100.00);
+                        sb2.append(";OBS="+ sumObs+ ";SUB="+ (Math.round(sumMinus* 100.00)/ 100.00)
+                                + ";ADD="+ Math.round(sumPlus* 100.00)/ 100.00);
+                        while (st.hasMoreElements())
+                            sb2.append(";"+ st.nextToken());
+                        txSegments.put(tx, sb2);
                     }
+
                 }
-            }
+
+            }   // anti/sense
         } // end all edges
 		
-		if (count)
+		if (count== 0)
 			return null;
-		
+
+        if (count== 2) {
+            Iterator<Transcript> i2= txSegments.keySet().iterator();
+            while (i2.hasNext()) {
+                Transcript tx= i2.next();
+                StringBuilder sb= txSegments.get(tx);
+                sb.append(txEdges.get(tx));
+                try {
+                    BufferedWriter buffy= new BufferedWriter(
+                            new FileWriter("/home/micha/reads/sim_01_norm/hg19_gencode_paired_sorted_tx_dbug.txt", true));
+                    buffy.write(sb.toString()+ "\n");
+                    buffy.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
 		// set objective function/costs
         //double[] a= createArray(w.toIntArray());	// linear costs
 		//double min= Math.exp(-nrMappingsObs);
@@ -1531,7 +1705,7 @@ public class GraphLPsolver {
 		} catch (LpSolveException e) {
 			e.printStackTrace();
 		}
-		
+
 		// consistency check
 		Object[] oo= mapCCheck.keySet().toArray();
         for (Object anOo : oo) {
@@ -1542,5 +1716,22 @@ public class GraphLPsolver {
 
 		return tMap;
 	}
-	
+
+    private String getEID(AbstractEdge f, HashMap<SimpleEdge, Integer> segmentHash) {
+
+        if (f instanceof SimpleEdge)
+            return segmentHash.get(f).toString();
+        SuperEdge se= (SuperEdge) f;
+        if (se.isPend())
+            return getEID(se.getEdges()[0], segmentHash)+ ","+ getEID(se.getEdges()[1], segmentHash);
+
+        // else
+        StringBuilder sb= new StringBuilder(getEID(se.getEdges()[0], segmentHash));
+        for (int i = 1; i < se.getEdges().length; i++) {
+            String sep= (se.getEdges()[i- 1].getHead()== se.getEdges()[i].getTail()? ".": ":");
+            sb.append(sep+ getEID(se.getEdges()[i], segmentHash));
+        }
+        return sb.toString();
+    }
+
 }
