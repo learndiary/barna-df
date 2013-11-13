@@ -1719,8 +1719,11 @@ public class GraphLPsolver {
 
     private String getEID(AbstractEdge f, HashMap<SimpleEdge, Integer> segmentHash) {
 
-        if (f instanceof SimpleEdge)
+        if (f instanceof SimpleEdge) {
+            if (segmentHash.get(f)== null)
+                System.currentTimeMillis();
             return segmentHash.get(f).toString();
+        }
         SuperEdge se= (SuperEdge) f;
         if (se.isPend())
             return getEID(se.getEdges()[0], segmentHash)+ ","+ getEID(se.getEdges()[1], segmentHash);
