@@ -167,18 +167,15 @@ public abstract class AbstractEdge {
 
 		if (tail) {
 			int pos= getTail().getSite().getPos();
-			if (getTail().getSite().isRightFlank()&&
-                    ((isExonic()&& getHead().getSite().isRightFlank())          // AD
-                        || (isIntronic()&& getHead().getSite().isLeftFlank()))) // intron
+            // AD, (retained) intron
+			if (getTail().getSite().isRightFlank())
 				++pos;
 			return pos;
 		} else {
 			int pos= getHead().getSite().getPos();
-			if (getHead().getSite().isLeftFlank()&&
-                    ((isExonic()&& getTail().getSite().isLeftFlank())               // AA
-                        || (isIntronic()&& getTail().getSite().isRightFlank()))) {  // intron
+            // AA, (retained) intron
+			if (getHead().getSite().isLeftFlank())
 				--pos;
-            }
 			return pos;
 		}
 	}

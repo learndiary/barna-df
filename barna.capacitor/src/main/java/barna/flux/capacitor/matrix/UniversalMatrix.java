@@ -125,8 +125,22 @@ public class UniversalMatrix {
                     " Read 2 - " + p2 + " Transcript - " + tlen);
 			return 0;
 		}
+
+        // acceptor site= donor site+ 1
+        // example: chr9:139685807-139735639W (pos: 139,702,191-2)
+        if (p1> p2)
+            return 0;
+
+        // p1 and p2 are included
+        // transform to:
+        // included p1 -> 0..(tlen-1)
+        // excluded p2 -> 1..tlen
 		double  rPos1= ((p1/ (double) (tlen- 1))* (sense.length- 1)),
-			    rPos2= ((p2/ (double) (tlen- 1))* (sense.length- 1));   // rpos is 0-based
+                rPos2= (((p2+ 1)/ (double) (tlen- 1))* (sense.length- 1));  // allow last cell shared in "down-casting"
+
+        // prevent overflow, happens during "up-casting" (tx shorter than profile)
+        if (rPos2>= sense.length)
+            rPos2= sense.length;
 
         // shared matrix entries
         int iPos1= (int) rPos1, iPos2= (int) rPos2;
@@ -146,16 +160,17 @@ public class UniversalMatrix {
                     sum+= f* sense[iPos1];
                 if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH)
                     sum+= f* asense[iPos1];
-                ++iPos1;
+                ++iPos1;    // only increment if there is a float rest
             }
             if (iPos2< rPos2) {
                 f=  (rPos2- iPos2);
                 if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH)
-                    sum+= f* sense[iPos2+ 1];
+                    sum+= f* sense[iPos2];
                 if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH)
-                    sum+= f* asense[iPos2+ 1];
-                // NOT --iPos2;
+                    sum+= f* asense[iPos2];
             }
+
+            --iPos2;    // decrement always, as the position will be included in the next edge
         }
 
         // intermediate complete matrix entries
