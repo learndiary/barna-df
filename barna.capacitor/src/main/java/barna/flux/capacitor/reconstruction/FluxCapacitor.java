@@ -1783,7 +1783,9 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         AbstractFileIOWrapper wrapperAnnotation;
         AbstractFileIOWrapper wrapperMappings;
 
-        //cheatDisableFCheck = true;
+        // TODO DEBUG
+        settings.set(FluxCapacitorSettings.NO_FILE_CHECK.getName(), Boolean.TRUE);
+
         if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             Log.warn("Scanning of input files disabled");
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
@@ -1804,8 +1806,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             wrapperMappings =
                     fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
             mappingReader = (MappingReader)wrapperMappings;
-
-            // fileStats(mappingReader);
+            fileStats(mappingReader);   // dont deactivate, rpkm will be 0
 
             Log.progressFinish("OK", true);
             Log.info("Annotation and mapping input checked");

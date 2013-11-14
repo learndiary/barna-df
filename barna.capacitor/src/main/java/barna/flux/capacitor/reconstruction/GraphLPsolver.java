@@ -480,7 +480,7 @@ public class GraphLPsolver {
                 int tlen = aTt.getExonicLength();
                 UniversalMatrix m = getMatrixMap().get(aTt.getTranscriptID());
                 int[] area = e.getFrac(aTt, getReadLen(), dir);
-                long reads = m.get(area[0], area[1], tlen, dir);
+                long reads = (long) m.get(area[0], area[1], tlen, dir);
                 long sum = m.getSum(dir);
                 double val = reads / (double) sum;
                 totVal += val;
@@ -1466,6 +1466,21 @@ public class GraphLPsolver {
                         Arrays.fill(val, 1d);
                         int tlen = aTt.getExonicLength();
                         UniversalMatrix m = profile.getMatrix(tlen);
+                        /*
+                        Fraction inconsistency ENST00000335514.5	1.7716180693555759
+[WARN] Fraction inconsistency ENST00000373562.3	1.7555169762325475
+[WARN] Fraction inconsistency ENST00000531983.1	1.796280144375141
+[WARN] Fraction inconsistency ENST00000409337.1	1.767665856049769
+[WARN] Fraction inconsistency ENST00000481753.1	1.7817803394134664
+[WARN] Fraction inconsistency ENST00000410048.1	1.7813875812083526
+
+                          ENST00000531312.1	2.3838184312151878
+[WARN] Fraction inconsistency ENST00000335514.5	2.226466119558677
+[WARN] Fraction inconsistency ENST00000409337.1	2.215541756923056
+[WARN] Fraction inconsistency ENST00000410048.1	2.218887432228299
+[WARN] Fraction inconsistency ENST00000434068.1	2.4725309719455217
+[WARN] Fraction inconsistency ENST00000427336.1	2.4540586044566743
+                         */
                         double f = m.getFrac(
                                 aTt.getExonicPosition(e.getDelimitingPos(true)),
                                 aTt.getExonicPosition(e.getDelimitingPos(false)),

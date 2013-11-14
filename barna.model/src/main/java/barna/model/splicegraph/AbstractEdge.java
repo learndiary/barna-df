@@ -133,7 +133,7 @@ public abstract class AbstractEdge {
 
 	/**
 	 * Sets the downstream site delimiting the edge.
-	 * @param tail the downstream site delimiting the edge
+	 * @param head the downstream site delimiting the edge
 	 */
 	public void setHead(Node head) {
 		this.head = head;
@@ -164,15 +164,21 @@ public abstract class AbstractEdge {
 	 * flank position
 	 */
 	public int getDelimitingPos(boolean tail) {
+
 		if (tail) {
 			int pos= getTail().getSite().getPos();
-			if (getTail().getSite().isRightFlank())
+			if (getTail().getSite().isRightFlank()&&
+                    ((isExonic()&& getHead().getSite().isRightFlank())          // AD
+                        || (isIntronic()&& getHead().getSite().isLeftFlank()))) // intron
 				++pos;
 			return pos;
 		} else {
 			int pos= getHead().getSite().getPos();
-			if (getHead().getSite().isLeftFlank())
+			if (getHead().getSite().isLeftFlank()&&
+                    ((isExonic()&& getTail().getSite().isLeftFlank())               // AA
+                        || (isIntronic()&& getTail().getSite().isRightFlank()))) {  // intron
 				--pos;
+            }
 			return pos;
 		}
 	}
@@ -270,7 +276,7 @@ public abstract class AbstractEdge {
 	/**
 	 * Returns the genomic position.
 	 * @param sense directionality
-	 * @param epos	exonic position
+	 * @param start	exonic position
 	 * @param minMapLen minimum length of mappings
 	 * @param maxMapLen maximum length of mappings
 	 * @return the corresponding genomic position

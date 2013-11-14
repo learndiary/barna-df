@@ -116,7 +116,7 @@ public class UniversalMatrix {
 		add(p2, readLen2, tlen, Constants.DIR_BACKWARD);
 	}
 
-	public long get(int p1, int p2, int tlen, byte dir) {
+	public double get(int p1, int p2, int tlen, byte dir) {
 		// 090820 <p2 
 		// exclusive regions for back-normalization needed
 		// otherwise fracs> transcriptcount for gene (and reads also)
@@ -125,15 +125,46 @@ public class UniversalMatrix {
                     " Read 2 - " + p2 + " Transcript - " + tlen);
 			return 0;
 		}
-		int rPos1= (int) ((p1/ (float) tlen)* sense.length),
-			rPos2= (int) ((p2/ (float) tlen)* sense.length);
-		long sum= 0;
+		double  rPos1= ((p1/ (double) (tlen- 1))* (sense.length- 1)),
+			    rPos2= ((p2/ (double) (tlen- 1))* (sense.length- 1));   // rpos is 0-based
+
+        // shared matrix entries
+        int iPos1= (int) rPos1, iPos2= (int) rPos2;
+        double sum= 0, f= 1;
+        if (iPos1== iPos2) {
+            f= (rPos2- rPos1);
+            if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH)
+                sum+= f* sense[iPos1];  // dont return here, e.g. rPos1== rPos2== 0
+            if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH)
+                sum+= f* asense[iPos1];
+            if (f!= 0)
+                return sum;
+        } else {
+            if (iPos1< rPos1) {
+                f=  (1d- (rPos1- iPos1));
+                if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH)
+                    sum+= f* sense[iPos1];
+                if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH)
+                    sum+= f* asense[iPos1];
+                ++iPos1;
+            }
+            if (iPos2< rPos2) {
+                f=  (rPos2- iPos2);
+                if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH)
+                    sum+= f* sense[iPos2+ 1];
+                if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH)
+                    sum+= f* asense[iPos2+ 1];
+                // NOT --iPos2;
+            }
+        }
+
+        // intermediate complete matrix entries
 		if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH) {
-			for (int i = rPos1; i <= rPos2; ++i) 
+			for (int i = iPos1; i <= iPos2; ++i)
 				sum+= sense[i];
 		}
 		if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH) {
-			for (int i = rPos1; i <= rPos2; ++i) 
+			for (int i = iPos1; i <= iPos2; ++i)
 				sum+= asense[i];
 		}
 		
