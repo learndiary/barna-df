@@ -163,19 +163,22 @@ public abstract class AbstractEdge {
 	 * @return genomic position of the last included 
 	 * flank position
 	 */
-	public int getDelimitingPos(boolean tail) {
-		if (tail) {
-			int pos= getTail().getSite().getPos();
-			if (getTail().getSite().isRightFlank())
-				++pos;
-			return pos;
-		} else {
-			int pos= getHead().getSite().getPos();
-			if (getHead().getSite().isLeftFlank())
-				--pos;
-			return pos;
-		}
-	}
+    public int getDelimitingPos(boolean tail) {
+
+        if (tail) {
+            int pos= getTail().getSite().getPos();
+            // AD, (retained) intron
+            if (getTail().getSite().isRightFlank())
+                ++pos;
+            return pos;
+        } else {
+            int pos= getHead().getSite().getPos();
+            // AA, (retained) intron
+            if (getHead().getSite().isLeftFlank())
+                --pos;
+            return pos;
+        }
+    }
 
 	/**
 	 * Returns leftmost and rightmost transcript coordinate covered 

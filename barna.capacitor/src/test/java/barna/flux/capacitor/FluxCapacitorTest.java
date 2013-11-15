@@ -584,8 +584,8 @@ public class FluxCapacitorTest {
         assertTrue(output.exists());
         assertTrue(new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_PARAMETER_FILE.toString()).exists());
 
-        BufferedReader runGtf = new BufferedReader(new FileReader(getClass().getResource("/mm9_chr1_chrX_flux.gtf").getFile()));
-        BufferedReader refGtf = new BufferedReader(new FileReader(output));
+        BufferedReader refGtf = new BufferedReader(new FileReader(getClass().getResource("/mm9_chr1_chrX_flux.gtf").getFile()));
+        BufferedReader runGtf = new BufferedReader(new FileReader(output));
 
         List<String> runLines = new ArrayList<String>();
         List<String> refLines = new ArrayList<String>();

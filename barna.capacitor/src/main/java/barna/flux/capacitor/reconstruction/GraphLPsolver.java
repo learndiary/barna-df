@@ -479,7 +479,7 @@ public class GraphLPsolver {
                 int tlen = aTt.getExonicLength();
                 UniversalMatrix m = getMatrixMap().get(aTt.getTranscriptID());
                 int[] area = e.getFrac(aTt, getReadLen(), dir);
-                long reads = m.get(area[0], area[1], tlen, dir);
+                double reads = m.get(area[0], area[1], tlen, dir);
                 long sum = m.getSum(dir);
                 double val = reads / (double) sum;
                 totVal += val;
