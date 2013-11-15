@@ -135,7 +135,7 @@ public class UniversalMatrix {
         // transform to:
         // included p1 -> 0..(tlen-1)
         // excluded p2 -> 1..tlen
-		double  rPos1= ((p1/ (double) (tlen- 1))* (sense.length- 1)),
+        double  rPos1= ((p1/ (double) (tlen- 1))* (sense.length- 1)),
                 rPos2= (((p2+ 1)/ (double) (tlen- 1))* (sense.length- 1));  // allow last cell shared in "down-casting"
 
         // prevent overflow, happens during "up-casting" (tx shorter than profile)
@@ -174,16 +174,16 @@ public class UniversalMatrix {
         }
 
         // intermediate complete matrix entries
-		if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH) {
-			for (int i = iPos1; i <= iPos2; ++i)
-				sum+= sense[i];
-		}
-		if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH) {
-			for (int i = iPos1; i <= iPos2; ++i)
-				sum+= asense[i];
-		}
-		
-		return sum;
+        if (dir== Constants.DIR_FORWARD|| dir== Constants.DIR_BOTH) {
+            for (int i = iPos1; i <= iPos2; ++i)
+                sum+= sense[i];
+        }
+        if (dir== Constants.DIR_BACKWARD|| dir== Constants.DIR_BOTH) {
+            for (int i = iPos1; i <= iPos2; ++i)
+                sum+= asense[i];
+        }
+
+        return sum;
 	}
 	
 	public double getFrac(int p1, int p2, int tlen, byte dir) {
