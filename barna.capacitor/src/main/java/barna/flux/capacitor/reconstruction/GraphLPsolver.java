@@ -43,7 +43,6 @@ import barna.model.splicegraph.AbstractEdge;
 import barna.model.splicegraph.SimpleEdge;
 import barna.model.splicegraph.SplicingGraph;
 import barna.model.splicegraph.SuperEdge;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
 
