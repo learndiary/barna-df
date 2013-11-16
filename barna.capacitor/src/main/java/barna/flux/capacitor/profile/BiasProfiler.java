@@ -268,8 +268,8 @@ public class BiasProfiler implements Callable<Profile> {
 
         Mapping mapping, otherMapping;
         UniversalReadDescriptor.Attributes
-                attributes = capacitor.getReadDescriptor().createAttributes(),
-                attributes2 = capacitor.getReadDescriptor().createAttributes();
+                attributes = settings.getReadDescriptor().createAttributes(),
+                attributes2 = settings.getReadDescriptor().createAttributes();
         int elen = tx.getExonicLength();    // this is the "effective" length, modify by extensions
 //				if (elen< readLenMin)
 //					return;	// discards reads
@@ -288,7 +288,7 @@ public class BiasProfiler implements Callable<Profile> {
             mapping= mappings.next();
 
             CharSequence tag = mapping.getName();
-            attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
+            attributes = settings.getReadDescriptor().getAttributes(tag, attributes);
             if (paired) {
                 if (attributes.flag < 1)
                     Log.warn("Read ignored, error in readID: " + tag);
@@ -325,7 +325,7 @@ public class BiasProfiler implements Callable<Profile> {
             if (paired) {
 
 //                    mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping,capacitor.getReadDescriptor());
+                Iterator<Mapping> mates = mappings.getMates(mapping,settings.getReadDescriptor());
                 while(mates.hasNext()) {
                     otherMapping= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);

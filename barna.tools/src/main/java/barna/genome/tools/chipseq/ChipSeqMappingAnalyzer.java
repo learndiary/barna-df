@@ -140,12 +140,7 @@ public class ChipSeqMappingAnalyzer implements Tool<int[]> {
 			if (fileInput== null)
 				fileInput= parameters.get(ChipSeqSettings.FILE_INPUT);
 			if (descriptor== null) {
-				descriptor= new UniversalReadDescriptor();
-				try {
-					descriptor.init(parameters.get(ChipSeqSettings.READ_DESCRIPTOR));
-				} catch (Exception e) {
-					descriptor= null;
-				}
+				descriptor= new UniversalReadDescriptor(parameters.get(ChipSeqSettings.READ_DESCRIPTOR));
 			}
 			if (fileOutput== null){
 				fileOutput= parameters.get(ChipSeqSettings.FILE_OUTPUT);
@@ -155,8 +150,7 @@ public class ChipSeqMappingAnalyzer implements Tool<int[]> {
             }
 		}
 		if (descriptor== null) {
-			descriptor= new UniversalReadDescriptor();
-			descriptor.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+			descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
 		}
 			
 		
@@ -495,7 +489,7 @@ public class ChipSeqMappingAnalyzer implements Tool<int[]> {
 			fileInput= parameters.get(ChipSeqSettings.FILE_INPUT);
 		
 		if (parameters.get(ChipSeqSettings.READ_DESCRIPTOR)!= null) {
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			try {
 				descriptor.init(parameters.get(ChipSeqSettings.READ_DESCRIPTOR));
 			} catch (RuntimeException e) {

@@ -153,8 +153,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -181,8 +180,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -208,8 +206,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -236,8 +233,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -265,8 +261,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -293,8 +288,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -321,8 +315,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {
@@ -349,8 +342,7 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        UniversalReadDescriptor desc = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 
         int c = 0;
         while (iter.hasNext()) {

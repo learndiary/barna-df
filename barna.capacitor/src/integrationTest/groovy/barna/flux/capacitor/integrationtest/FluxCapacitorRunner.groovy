@@ -83,8 +83,7 @@ class FluxCapacitorRunner {
 
         //get instance for the read descriptor
         if (parameters.containsKey("READ_DESCRIPTOR")) {
-            UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-            descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+            UniversalReadDescriptor descriptor = new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         }
 
         //check if sorted files should be kept and set up directory

@@ -12,6 +12,8 @@ import java.io.File;
  */
 public class WriteSamTests {
 
+    static {FluxCapacitor.DEBUG= false;}
+
     @Test
     public void testWritingPairedEndSam() throws Exception {
         FluxCapacitorSettings settings = new FluxCapacitorSettings();
@@ -20,7 +22,7 @@ public class WriteSamTests {
         settings.set(FluxCapacitorSettings.MAPPING_FILE, new File(getClass().getResource("/single_multimap.bam").getFile()));
         //settings.set(FluxCapacitorSettings.MAPPING_FILE, new File(getClass().getResource("/single_multimap.bed").getFile()));
         settings.set(FluxCapacitorSettings.SORT_IN_RAM, true);
-        //settings.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), "PAIRED");
+        settings.set(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), "PAIRED");
         //settings.set(FluxCapacitorSettings.WEIGHTED_COUNT, true);
         settings.set(FluxCapacitorSettings.SAM_PRIMARY_ONLY, true);
         //settings.set(FluxCapacitorSettings.SAM_MATES_ONLY, true);

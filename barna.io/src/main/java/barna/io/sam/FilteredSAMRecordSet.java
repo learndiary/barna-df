@@ -94,9 +94,9 @@ public class FilteredSAMRecordSet implements Iterable<SAMRecord> {
     /**
      * Strata of the mappings currently stored in the set.
      */
-    int[] currStrata= null;
+    int[] currStrata= new int[0];
 
-    int currStrataLength= -1;
+    int currStrataLength= 0;
 
     /**
      * Generates a singleton of the <code>NMComparator</code>.
@@ -126,6 +126,7 @@ public class FilteredSAMRecordSet implements Iterable<SAMRecord> {
     public FilteredSAMRecordSet(int initialSize, byte maxStrata) {
         set= new ArrayList<SAMRecord>(initialSize);
         this.maxStrata= maxStrata;
+        reset();
     }
 
     /**
@@ -140,7 +141,7 @@ public class FilteredSAMRecordSet implements Iterable<SAMRecord> {
             return false;
 
         int nm= mapping.getIntegerAttribute(SAMConstants.SAM_OPTION_NM);
-        if (currStrataLength== currStrata.length && nm> currStrata[currStrata.length- 1])
+        if (currStrataLength> 0&& currStrataLength== currStrata.length && nm> currStrata[currStrata.length- 1])
             return false;   // discard mapping
 
         // otherwise add mapping
@@ -155,7 +156,7 @@ public class FilteredSAMRecordSet implements Iterable<SAMRecord> {
             return true;   // no change to strata
         q= -(q+ 1);
         assert(q< currStrataLength);    // condition above
-        if (currStrataLength== currStrata.length) {
+        if (currStrataLength> 0&& currStrataLength== currStrata.length) {
             // loose the highest stratum
             for (int i = (set.size()- 1); i>= 0; --i) {
                 if (set.get(i).getIntegerAttribute(SAMConstants.SAM_OPTION_NM)== currStrata[currStrata.length- 1])

@@ -74,7 +74,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
         public UniversalReadDescriptor parse(String value) throws ParameterException {
 
-            descriptor = new UniversalReadDescriptor();
+            descriptor = UniversalReadDescriptor.createTestDescriptor();
 
             try {
                 descriptor.init(value);
@@ -146,6 +146,24 @@ public class FluxCapacitorSettings extends ParameterSchema {
         public boolean isSingle() {
             return (this.equals(SINGLE) || this.equals(SINGLE_STRANDED));
         }
+    }
+
+    /**
+     * Lazy wrapper method
+     * @return <code>true</code> if the annotation mapping is paired,
+     * <code>false</code> otherwise
+     */
+    public boolean isPaired() {
+        return get(ANNOTATION_MAPPING).isPaired();
+    }
+
+    /**
+     * Lazy wrapper method
+     * @return <code>true</code> if the annotation mapping is stranded,
+     * <code>false</code> otherwise
+     */
+    public boolean isStranded() {
+        return get(ANNOTATION_MAPPING).isStranded();
     }
 
     /**
@@ -622,4 +640,46 @@ public class FluxCapacitorSettings extends ParameterSchema {
             this.set(FluxCapacitorSettings.SORT_IN_RAM, false);
         }
     }
+
+
+    /**
+     * Instance describing the attributes of reads and the readID encoding.
+     */
+    UniversalReadDescriptor descriptor;
+
+    /**
+     * Provides a non-null descriptor of the read attributes, constructs a new instance if not already initialized.
+     * @return descriptor encapsulating the attributes of reads
+     */
+    public UniversalReadDescriptor getReadDescriptor() {
+
+        if (descriptor== null) {
+
+            // create a basic descriptor
+            if (get(FluxCapacitorSettings.READ_DESCRIPTOR)== null)
+                descriptor= new UniversalReadDescriptor((isPaired()? UniversalReadDescriptor.DESCRIPTORID_PAIRED:
+                                                                    UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
+            else
+                descriptor=  get(FluxCapacitorSettings.READ_DESCRIPTOR);
+
+            // re-init for stranded protocols
+            FluxCapacitorSettings.ReadStrand readStrand = get(FluxCapacitorSettings.READ_STRAND);
+            if (!descriptor.isStranded() && !readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
+                if (descriptor.isPaired()) {
+                    descriptor.init(readStrand.equals(FluxCapacitorSettings.ReadStrand.MATE1_SENSE) ?
+                            UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE :
+                            UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
+                } else {
+                    descriptor.init(readStrand.equals(FluxCapacitorSettings.ReadStrand.SENSE) ?
+                            UniversalReadDescriptor.DESCRIPTORID_SENSE :
+                            UniversalReadDescriptor.DESCRIPTORID_ANTISENSE);
+                }
+            }
+
+        }
+
+        return descriptor;
+    }
+
+
 }

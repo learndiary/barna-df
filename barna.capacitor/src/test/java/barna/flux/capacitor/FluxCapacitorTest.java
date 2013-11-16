@@ -5,6 +5,7 @@ import barna.commons.system.OSChecker;
 import barna.flux.capacitor.profile.BiasProfiler;
 import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.profile.Profile;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
@@ -22,6 +23,8 @@ import java.util.*;
 import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
+
+    static {FluxCapacitor.DEBUG= false;}
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
     final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
@@ -271,6 +274,8 @@ public class FluxCapacitorTest {
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
+        File f= (File) pars.get(FluxCapacitorSettings.STDOUT_FILE.getName());
+        f.delete(); // to avoid confirmation check
         stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
@@ -575,6 +580,8 @@ public class FluxCapacitorTest {
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
         FluxCapacitorRunner.runCapacitor(parFile, params);
+        File f= (File) pars.get(FluxCapacitorSettings.STDOUT_FILE.getName());
+        f.delete(); // to avoid confirmation check
         FluxCapacitorRunner.runCapacitor(parFile,null);
 
         // check

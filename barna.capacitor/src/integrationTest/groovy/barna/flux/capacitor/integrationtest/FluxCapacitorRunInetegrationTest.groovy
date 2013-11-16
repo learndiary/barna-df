@@ -332,8 +332,7 @@ class FluxCapacitorRunInetegrationTest {
 
 	@Test
 	public void testTmpDir() {
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+        UniversalReadDescriptor descriptor = new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, [
                 "ANNOTATION_FILE" : FluxCapacitorRunner.testData['gtf/mm9_chr1_chrX_sorted.gtf'],
                 "MAPPING_FILE" : FluxCapacitorRunner.testData['bed/mm9_chr1_chrX_sorted.bed'],

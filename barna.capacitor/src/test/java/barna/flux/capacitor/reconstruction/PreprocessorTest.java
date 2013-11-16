@@ -25,6 +25,8 @@ import java.util.Random;
  */
 public class PreprocessorTest {
 
+    static {FluxCapacitor.DEBUG= false;}
+
     //getClass().getResource("/test.bam").getFile()
     // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
     // BigMac
@@ -124,6 +126,20 @@ public class PreprocessorTest {
                     Math.max(rPos - readLength, min),
                     Math.min(rPos, Math.abs(cGenes[p].getEnd())),
                     false);
+            // TODO sometimes this test fails
+            if (!cGenes[p].equals(qGene)) {
+                System.err.println("Gene "+ cGenes[p].getChromosome()+ ":"
+                        + cGenes[p].getStart()+ "-"
+                        + cGenes[p].getEnd()
+                );
+                System.err.println("Queried "+ cGenes[p].getChromosome()+ ":"
+                        + Math.max(rPos - readLength, min) + "-"
+                        + Math.min(rPos, Math.abs(cGenes[p].getEnd())));
+                System.err.println("Found "+ qGene.getChromosome()+ ":"
+                        + qGene.getStart()+ "-"
+                        + qGene.getEnd()
+                );
+            }
             assertEquals(cGenes[p], qGene);
             // check overlap at end
             rPos= Math.abs(cGenes[p].getEnd())+ r.nextInt(readLength- 1);
@@ -133,15 +149,30 @@ public class PreprocessorTest {
                     Math.max(rPos - readLength, Math.abs(cGenes[p].getStart())),
                     Math.min(rPos, max),
                     false);
+            // TODO sometimes this test fails ?
+            if (!cGenes[p].equals(qGene)) {
+                System.err.println("Gene "+ cGenes[p].getChromosome()+ ":"
+                        + cGenes[p].getStart()+ "-"
+                        + cGenes[p].getEnd()
+                );
+                System.err.println("Queried "+ cGenes[p].getChromosome()+ ":"
+                        + Math.max(rPos - readLength, min) + "-"
+                        + Math.min(rPos, Math.abs(cGenes[p].getEnd())));
+                System.err.println("Found "+ qGene.getChromosome()+ ":"
+                        + qGene.getStart()+ "-"
+                        + qGene.getEnd()
+                );
+            }
             assertEquals(cGenes[p], qGene);
         }
     }
 
     @Test
-    public void testProcess() {
+    public void testProcess() throws Exception {
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), gencode12);
-        settings.set(FluxCapacitorSettings.MAPPING_FILE.getName(), mappingsPsort);
+        //getClass().getResource("/single_multimap.bam").getFile()
+        settings.set(FluxCapacitorSettings.MAPPING_FILE.getName(), mappingsQsort);
         PreProcessor pp= new PreProcessor(settings);
         File result= pp.call();
         assertTrue(result!= null);

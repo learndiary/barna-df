@@ -10,6 +10,9 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 public class FluxCapacitorSettingsTest {
+
+    static {FluxCapacitor.DEBUG= false;}
+
     @Test
     public void testThatSpacesAreAcceptedInReadDescriptor() throws Exception {
         FluxCapacitorSettings settings = new FluxCapacitorSettings();

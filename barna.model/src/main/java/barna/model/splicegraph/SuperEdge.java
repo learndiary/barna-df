@@ -195,7 +195,7 @@ public class SuperEdge extends AbstractEdge {
             return false;
 
         if (this.countEJ() > 0)
-            return true && !pairedEnd;
+            return (this.type== TYPE_PAIRED? false: true);
         return false;
     }
 
@@ -398,7 +398,7 @@ public class SuperEdge extends AbstractEdge {
 		assert(edges.length>= 2);
 		
 		// paired-end
-		if (pairedEnd) {
+		if (this.type== TYPE_PAIRED) {
 			if (sense)
 				return edges[0].getGpos(sense, start, minMapLen, maxMapLen);
 			else

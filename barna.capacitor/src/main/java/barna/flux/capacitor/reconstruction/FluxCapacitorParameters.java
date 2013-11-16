@@ -222,7 +222,7 @@ public class FluxCapacitorParameters {
 						return null;
 					}
 				} else if (ll[0].equalsIgnoreCase(PAR_READ_DESCRIPTOR)) {
-					pars.descriptor= new UniversalReadDescriptor();
+					pars.descriptor= UniversalReadDescriptor.createTestDescriptor();
 					try {
 						pars.descriptor.init(ll[1]);
 					} catch (Exception e) {

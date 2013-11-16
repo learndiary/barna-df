@@ -2,6 +2,8 @@ package barna.flux.capacitor;
 
 import barna.commons.Execute;
 import barna.flux.capacitor.profile.MappingStats;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
@@ -15,7 +17,10 @@ import static junit.framework.Assert.*;
 
 public class FluxCapacitorReadsOutputTest {
 
-	final File GTF_SORTED= new File(getClass().getResource("/hg_havana_chr7_small_sorted.gtf").getFile());
+    static {
+        FluxCapacitor.DEBUG= false;}
+
+    final File GTF_SORTED= new File(getClass().getResource("/hg_havana_chr7_small_sorted.gtf").getFile());
 	final File BED_SORTED= new File(getClass().getResource("/hg_chr7_small_sorted.bed").getFile());
 
 	@BeforeClass
@@ -55,7 +60,12 @@ public class FluxCapacitorReadsOutputTest {
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
+        // profiler run
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
+
+        // load profile run
+        File f= (File) pars.get(FluxCapacitorSettings.STDOUT_FILE.getName());
+        f.delete(); // to avoid confirmation check
         stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);

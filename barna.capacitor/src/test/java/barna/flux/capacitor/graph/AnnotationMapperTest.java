@@ -1,5 +1,6 @@
 package barna.flux.capacitor.graph;
 
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.io.bed.BEDReader;
@@ -19,6 +20,9 @@ import java.util.*;
  */
 public class AnnotationMapperTest extends TestCase {
 
+    static {
+        FluxCapacitor.DEBUG= false;}
+
     private final File hgGtfFile = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     private final File hgBedFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
     private final File hgBamFile = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bam").getFile());
@@ -34,8 +38,7 @@ public class AnnotationMapperTest extends TestCase {
     }
 
     private void initSettings(String descriptorStr, FluxCapacitorSettings.AnnotationMapping mapping) {
-        UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor(descriptorStr));
+        UniversalReadDescriptor descriptor = new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor(descriptorStr));
         settings = new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE,
                 new File(hgGtfFile.getAbsolutePath()));
@@ -133,8 +136,7 @@ public class AnnotationMapperTest extends TestCase {
         Map<String, Integer> reads = new TreeMap<String, Integer>();
         HashMap<String, ArrayList<String[]>> p1hash = new HashMap<String, ArrayList<String[]>>();
         HashMap<String, ArrayList<String[]>> p2hash = new HashMap<String, ArrayList<String[]>>();
-        UniversalReadDescriptor rd = new UniversalReadDescriptor();
-        rd.init(UniversalReadDescriptor.DESCRIPTORID_CASAVA18);
+        UniversalReadDescriptor rd = new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_CASAVA18);
         int nr = 0;
         int start = 0, end = 0, tol = 0;
         start = g.getStart();

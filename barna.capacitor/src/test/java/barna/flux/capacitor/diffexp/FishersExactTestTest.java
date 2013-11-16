@@ -1,11 +1,15 @@
 package barna.flux.capacitor.diffexp;
 
 import barna.flux.capacitor.diffexp.math.FishersExactTest;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 
 public class FishersExactTestTest {
+
+    static {
+        FluxCapacitor.DEBUG= false;}
 
     @Test
     public void testFisherRComparison() throws Exception {

@@ -6,8 +6,10 @@ import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.flux.capacitor.profile.CoverageStats;
 import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.profile.Profile;
+import barna.io.AbstractFileIOWrapper;
 import barna.io.FileHelper;
 import barna.io.MSIterator;
+import barna.io.MappingReader;
 import barna.io.gtf.GTFwrapper;
 import barna.io.rna.UniversalReadDescriptor;
 import barna.io.sam.FilteredSAMRecordSet;
@@ -443,7 +445,7 @@ public class PreProcessor implements Callable<File> {
      */
     protected HashMap<Gene, Gene> createSL(ArrayList<Gene> gList, HashMap<Gene,Gene> superHash, HashSet<Gene> hashSet, HashSet<Gene> hashSet2) {
 
-        if (gList.size()== 0)
+        if (gList== null|| gList.size()== 0)
             return superHash;
 
         if (gList.size()== 1) {
@@ -614,6 +616,43 @@ public class PreProcessor implements Callable<File> {
     }
 
     /**
+     * File handle with the pre-processed annotation (if necessary).
+     */
+    protected File annotation= null;
+
+    /**
+     * Obtains the file handle for the current mapping file, which may be different from the one provided in the
+     * <code>FluxCapacitorSettings</code> after pre-processing has been carried out.
+     * @return file handle for the pre-processed mapping file
+     */
+    public File getMappingFile() {
+        if (mappings== null ) {
+            return settings.get(FluxCapacitorSettings.MAPPING_FILE.getName());
+        }
+        return mappings;
+    }
+
+    /**
+     * Obtains the file handle for the current annotation file. The method is a bit obsolete because currently the
+     * pre-processed annotation is loaded into gene models.
+     * @return file handle to the pre-processed annotation file, which only differs from the one provided if re-sorting
+     * has been required to build up the gene models
+     */
+    public File getAnnotationFile() {
+        if (annotation== null ) {
+            return settings.get(FluxCapacitorSettings.ANNOTATION_FILE.getName());
+        }
+        return annotation;
+    }
+
+    /**
+     * File handle for the pre-processed mapping file. The returned file is likely different than to the one specified
+     * in the <code>FluxCapacitorSettings</code> instance provided.
+     */
+    protected File mappings= null;
+
+
+    /**
      * Performs the tasks: (1) sort mappings by query name (if not already), (2) load annotation, (3) cluster genes.
      * Writes a file with mappings sorted by genomic positions and indexed.
      * @return file handle of the preprocessed mappings which is already indexed
@@ -621,8 +660,8 @@ public class PreProcessor implements Callable<File> {
     @Override
     public File call() {
 
-        File annotation= settings.get(FluxCapacitorSettings.ANNOTATION_FILE.getName());
-        File mappings= settings.get(FluxCapacitorSettings.MAPPING_FILE.getName());
+        annotation= settings.get(FluxCapacitorSettings.ANNOTATION_FILE.getName());
+        mappings= settings.get(FluxCapacitorSettings.MAPPING_FILE.getName());
 
         SAMFileReader inReader= new SAMFileReader(mappings);    // do NOT use eager decoding
         SAMFileHeader inHeader= inReader.getFileHeader();
@@ -646,7 +685,7 @@ public class PreProcessor implements Callable<File> {
             SAMFileHeader outHeader= inHeader.clone();
             outHeader.setSortOrder(SAMFileHeader.SortOrder.queryname);
             factory.makeSAMWriter(outHeader, false, pipo);
-            sorter= new SAMConstants.SAMSorter(mappings, pipo, false);
+            sorter= new SAMConstants.SAMSorter(mappings, pipo, true, false);
             sorter.setSkippingNotmapped(true);
             captain= Execute.getExecutor().submit(sorter);
         }
@@ -670,34 +709,6 @@ public class PreProcessor implements Callable<File> {
         Log.info("Collapsed "+ n1+ " atomary loci to "+ genes.length+ " loci joined by anti-sense transcription.");
         hashGenes= index(genes, getHashGenes());
 
-        // process annotation+ mappings
-
-        // wait for input (if necessary)
-        if (captain!= null) {
-            Log.progressStart("Waiting for mapping pre-sorting");
-            double avgLL= sorter.getAvgLineLength();
-            long fileSz= mappings.length()* (inReader.isBinary()? 17: 1);   // 17= estimated compression ratio for BAM
-            long n= -1;
-            while (!(captain.isDone()|| captain.isCancelled())) {
-                Log.progress((long) (sorter.getInputN()* avgLL), fileSz);
-                try {
-                    n= captain.get(5000, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    ; // :)
-                } catch (TimeoutException e) {
-                    ; // :)
-                } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                } catch (CancellationException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            Log.progressFinish("Sorted SAM/BAM by query name, read "+ sorter.getInputN()+ " lines, wrote "+ n+ " lines",
-                    true);
-            inReader= new SAMFileReader(pipi);
-            inHeader= inReader.getFileHeader();
-        }
-
         // prepare output
         SAMFileHeader outHeader= inHeader.clone();
         outHeader.setSortOrder(SAMFileHeader.SortOrder.coordinate);
@@ -712,8 +723,13 @@ public class PreProcessor implements Callable<File> {
         // factory.setUseAsyncIo(true); // not sure whether this is a good idea
         SAMFileWriter writer= factory.makeBAMWriter(outHeader, false, outFile);
 
-        // process
+        // process annotation+ mappings
         int n= genes.length;
+        if (captain!= null) {
+            // don't wait for captain, output has to be read by this thread otherwise piped-output blocks
+            inReader= new SAMFileReader(pipi);
+            inHeader= inReader.getFileHeader();
+        }
         genes= bind(genes, inReader, writer);
         Log.info("Clustered "+ n+" genes into "+genes.length +" sets.");
 

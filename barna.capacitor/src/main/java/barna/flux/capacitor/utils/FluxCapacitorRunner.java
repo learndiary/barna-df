@@ -70,8 +70,7 @@ public class FluxCapacitorRunner {
 
         //get instance for the read descriptor
         if (parameters.containsKey("READ_DESCRIPTOR")) {
-            UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-            descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+            UniversalReadDescriptor descriptor = new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         }
 
         //check if sorted files should be kept and set up directory
@@ -87,11 +86,14 @@ public class FluxCapacitorRunner {
         //set up the output file
         File outDir = new File(cwd, "output");
         outDir.mkdir();
-        if (!parameters.containsKey("STDOUT_FILE")) {
-            File outFile = new File(cwd, DEFAULT_OUTPUT_FILE);
-            parameters.put("STDOUT_FILE", outFile);
-            outFile.delete();
+        File outFile= null;
+        if (parameters.containsKey(FluxCapacitorSettings.STDOUT_FILE.getName())) {
+            outFile= (File) parameters.get(FluxCapacitorSettings.MAPPING_FILE);
+        } else {
+            outFile = new File(cwd, DEFAULT_OUTPUT_FILE);
+            parameters.put(FluxCapacitorSettings.STDOUT_FILE.getName(), outFile);
         }
+        outFile.delete();   // start clean
 
         //write the parameter file
         File parFile= new File(cwd,DEFAULT_PARAMETER_FILE);

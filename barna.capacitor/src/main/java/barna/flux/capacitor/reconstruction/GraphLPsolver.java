@@ -981,7 +981,8 @@ public class GraphLPsolver {
 		// get transcription expression levels		
 		trptExprHash= getResult(tMap);
         // output
-        setConstraints((byte) 2, null);
+        if (FluxCapacitor.DEBUG&& DEBUG)
+            setConstraints((byte) 2, null);
 
         //normalizeBack2LocusExpr(trptExprHash);
 		getLPsolve().deleteLp();	// closes file outFName
@@ -1119,7 +1120,7 @@ public class GraphLPsolver {
             trptExprHash.put(trpt.getTranscriptID(), x);
         }
 
-        if (DEBUG) {
+        if (FluxCapacitor.DEBUG&& DEBUG) {
             Iterator<Integer> i2 = mapDeltaPlusSense.iterator();
             long dP= 0, dM= 0;
             while (i2.hasNext()) {
@@ -1352,7 +1353,7 @@ public class GraphLPsolver {
         constraintCtr= 0;
         restrNr= 0;
 
-        if (DEBUG&& count== 1) {
+        if (FluxCapacitor.DEBUG&& DEBUG&& count== 1) {
             if (mapDeltaPlusSense== null) {
                 mapDeltaPlusSense= new HashSet<Integer>();
                 mapDeltaPlusAnti= new HashSet<Integer>();
@@ -1541,7 +1542,7 @@ public class GraphLPsolver {
 
                     int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
                             : ((MappingsInterface) f).getMappings().getRevReadNr());
-                    if (DEBUG&& count== 1)
+                    if (FluxCapacitor.DEBUG&& DEBUG&& count== 1)
                         rhs+= nr;
                     v = mapE.remove(f);
                     if (count== 0)
@@ -1555,7 +1556,7 @@ public class GraphLPsolver {
                         if (paird || !pairedEnd) {
                             w.add(c);
                             u.add(nr);
-                            if (DEBUG&& count== 1) {
+                            if (FluxCapacitor.DEBUG&& DEBUG&& count== 1) {
                                 if (sa== 0)
                                     mapDeltaMinusSense.add(c);
                                 else
@@ -1610,7 +1611,7 @@ public class GraphLPsolver {
                         // do not limit adding, even with f= 100 unsolvable systems
                         // adding reads always costs, also on single edges
                         w.add(c);
-                        if (DEBUG&& count== 1) {
+                        if (FluxCapacitor.DEBUG&& DEBUG&& count== 1) {
                             if (sa== 0)
                                 mapDeltaPlusSense.add(c);
                             else
