@@ -674,6 +674,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
     public void loadAllGenes() {
 
+        // TODO allow random sorting, init hash chr#Gene[] sorted by start position
+
         if(!silent && stars){
             Log.progressStart("loading");
         }
@@ -2211,6 +2213,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
      * @throws RuntimeException in case the file is not valid
      */
 	public boolean isApplicable() {
+
 		reset();
 		long lines= isApplicable(getInputFile(), clusterGenes);
 		if (lines< 0)
@@ -2245,7 +2248,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * entry
 	 */
 	protected long isApplicable(InputStream inputStream, long size) {
-		
+
 		long bytesRead = 0l;
 		BufferedReader buffy = new BufferedReader(new InputStreamReader(inputStream));
 

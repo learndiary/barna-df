@@ -34,11 +34,11 @@ public class PreprocessorTest {
     // LNCC
     // /home/micha/gencode_v12.gtf
     // /home/micha/ERR030892.rnd24M.filtered.sorted.bam
-    private File gencode12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
+    public static final File GENCODE_12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
     // file with mappings presorted by name
-    private File mappingsPsort = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.bam");
+    public static final File MAPPINGS_PSORT = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.bam");
     // file with mappings presorted by position
-    private File mappingsQsort = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.qsort.bam");
+    public static final File MAPPINGS_QSORT = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.qsort.bam");
 
 
 
@@ -76,7 +76,7 @@ public class PreprocessorTest {
 
     private Gene[] getGencodeGenes() {
         if (gencodeGenes== null) {
-            GTFwrapper wrapper= new GTFwrapper(gencode12);
+            GTFwrapper wrapper= new GTFwrapper(GENCODE_12);
             wrapper.loadAllGenes();
             gencodeGenes= wrapper.getGenes();
         }
@@ -170,9 +170,9 @@ public class PreprocessorTest {
     @Test
     public void testProcess() throws Exception {
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
-        settings.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), gencode12);
+        settings.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GENCODE_12);
         //getClass().getResource("/single_multimap.bam").getFile()
-        settings.set(FluxCapacitorSettings.MAPPING_FILE.getName(), mappingsQsort);
+        settings.set(FluxCapacitorSettings.MAPPING_FILE.getName(), MAPPINGS_QSORT);
         PreProcessor pp= new PreProcessor(settings);
         File result= pp.call();
         assertTrue(result!= null);

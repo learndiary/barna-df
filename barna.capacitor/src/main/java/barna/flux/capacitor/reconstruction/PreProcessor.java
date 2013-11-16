@@ -192,11 +192,10 @@ public class PreProcessor implements Callable<File> {
     }
 
     /**
-     * Creates a hash with the start and another with the end positions of gene loci per
-     * reference sequence.
+     * Creates a hash with the start of gene loci per reference sequence.
      * @param genes gene loci to be indexed
      * @param hashGenes build up hash with start values per reference sequence
-     * @return the minimum number of genes found on one of the reference sequences
+     * @return hash with gene arrays sorted by their start positions along the chromosome
      */
     public static HashMap<String,Gene[]> index(Gene[] genes, HashMap<String,Gene[]> hashGenes) {
 

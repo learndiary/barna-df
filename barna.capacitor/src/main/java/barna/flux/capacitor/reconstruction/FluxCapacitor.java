@@ -1739,23 +1739,19 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         printSettings();         // print current run settings
 
         // pre-processing
-        settings.set(FluxCapacitorSettings.NO_FILE_CHECK.getName(), DEBUG&& Boolean.TRUE);  // TODO this is for DEBUG only
-        if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
-            Log.warn("Scanning of input files disabled");
-            gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
-            mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
-        } else {
-            //PreProcessor pp= new PreProcessor(settings);
-            //gtfReader= createAnnotationReader(pp.getAnnotationFile(), settings);
-            //mappingReader= createMappingReader(pp.getMappingFile(), settings);
-            gtfReader= createAnnotationReader(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
-            mappingReader= createMappingReader(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
+        gtfReader= createAnnotationReader(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
+        mappingReader= createMappingReader(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
+        if (!settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             if (stats == null)
                 stats = new MappingStats(); //Initialize stats
             fileStats(mappingReader);   // dont deactivate, rpkm will be 0
             Log.info("Annotation and mapping input checked");
         }
-
+        Gene[] oGenes= gtfReader.getGenes();
+        Gene[] genes= PreProcessor.collapse(oGenes);
+        Log.info("Collapsed "+ oGenes.length+ " genes into "+ genes.length+ " loci.");
+        oGenes= null;
+        System.gc();
 
         // process tasks
         long t0 = System.currentTimeMillis();
@@ -2753,73 +2749,78 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile, settings);
-        if (!wrapper.isApplicable()) {
-            File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
-            File f;
-            if (sortedDir!=null)
-                f = FileHelper.getSortedFile(new File(sortedDir, inputFile.getName()));
-            else
-                f = FileHelper.getSortedFile(inputFile);
-            File lock = FileHelper.getLockFile(f);
+        if ((!settings.get(FluxCapacitorSettings.NO_FILE_CHECK))&& wrapper.isApplicable()) {
+            if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK))
+                Log.warn("Scanning of input files disabled");
+            return wrapper;
+        }
 
-            if (f.exists() && !lock.exists()) {
+        // else.. the long way
+        File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
+        File f;
+        if (sortedDir!=null)
+            f = FileHelper.getSortedFile(new File(sortedDir, inputFile.getName()));
+        else
+            f = FileHelper.getSortedFile(inputFile);
+        File lock = FileHelper.getLockFile(f);
 
-                Log.warn("Assuming file " + f.getName() + " is a sorted version of " + inputFile.getName());
+        if (f.exists() && !lock.exists()) {
 
-            } else {    // we have to sort
+            Log.warn("Assuming file " + f.getName() + " is a sorted version of " + inputFile.getName());
 
-                boolean lockCreated = false;
-                if (sortedDir!=null) {//settings.get(FluxCapacitorSettings.KEEP_SORTED)) {    // try to store in original
+        } else {    // we have to sort
 
-                    if (lock.exists()) {    // switch to sorting to temp
-                        Log.warn("Seems that another process is just sorting file " + inputFile +
-                                "\nremove lock file " + lock.getName() + " if dead leftover." +
-                                "\nContinuing with sorting to temporary file " +
-                                (f = createTempFile(f,     // access to non-Temp
-                                        settings.get(FluxCapacitorSettings.TMP_DIR),
-                                        FileHelper.getFileNameWithoutExtension(f),
-                                        FileHelper.getExtension(f),
-                                        false)).getAbsolutePath());
+            boolean lockCreated = false;
+            if (sortedDir!=null) {//settings.get(FluxCapacitorSettings.KEEP_SORTED)) {    // try to store in original
 
-                    } else if (!f.getParentFile().canWrite()) {    // sort to temp, but do not delete (parameter)
-                        Log.warn("Cannot write sorted file to " + f.getAbsolutePath() +
-                                "\nContinuing with sorting to temporary file " +
-                                (f = createTempFile(f, // access to non-Temp
-                                        settings.get(FluxCapacitorSettings.TMP_DIR),
-                                        FileHelper.getFileNameWithoutExtension(f),
-                                        FileHelper.getExtension(f),
-                                        false)).getAbsolutePath());
+                if (lock.exists()) {    // switch to sorting to temp
+                    Log.warn("Seems that another process is just sorting file " + inputFile +
+                            "\nremove lock file " + lock.getName() + " if dead leftover." +
+                            "\nContinuing with sorting to temporary file " +
+                            (f = createTempFile(f,     // access to non-Temp
+                                    settings.get(FluxCapacitorSettings.TMP_DIR),
+                                    FileHelper.getFileNameWithoutExtension(f),
+                                    FileHelper.getExtension(f),
+                                    false)).getAbsolutePath());
 
-                    } else {    // sort to default sorted file
-                        try {
-                            lock.createNewFile();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        lockCreated = true;
+                } else if (!f.getParentFile().canWrite()) {    // sort to temp, but do not delete (parameter)
+                    Log.warn("Cannot write sorted file to " + f.getAbsolutePath() +
+                            "\nContinuing with sorting to temporary file " +
+                            (f = createTempFile(f, // access to non-Temp
+                                    settings.get(FluxCapacitorSettings.TMP_DIR),
+                                    FileHelper.getFileNameWithoutExtension(f),
+                                    FileHelper.getExtension(f),
+                                    false)).getAbsolutePath());
+
+                } else {    // sort to default sorted file
+                    try {
+                        lock.createNewFile();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-
-                } else {    // do not keep sorted files, sort to temp and delete on exit
-                    f = createTempFile(null,
-                            settings.get(FluxCapacitorSettings.TMP_DIR),
-                            FileHelper.getFileNameWithoutExtension(f),
-                            FileHelper.getExtension(f),
-                            true);
+                    lockCreated = true;
                 }
 
-                // doit
-                if (wrapper.getInputFile() != null)
-                    Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
-                wrapper.sort(f);
-
-                // if locked
-                if (lockCreated)
-                    lock.delete();
-
+            } else {    // do not keep sorted files, sort to temp and delete on exit
+                f = createTempFile(null,
+                        settings.get(FluxCapacitorSettings.TMP_DIR),
+                        FileHelper.getFileNameWithoutExtension(f),
+                        FileHelper.getExtension(f),
+                        true);
             }
-            inputFile = f;
-            wrapper = getWrapper(inputFile, settings);
+
+            // doit
+            if (wrapper.getInputFile() != null)
+                Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
+            wrapper.sort(f);
+
+            // if locked
+            if (lockCreated)
+                lock.delete();
+
         }
+        inputFile = f;
+        wrapper = getWrapper(inputFile, settings);
 
         return wrapper;
     }
@@ -2855,6 +2856,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             Log.error(msg);
             throw new RuntimeException(msg);
         }
+
     }
 
     /**
