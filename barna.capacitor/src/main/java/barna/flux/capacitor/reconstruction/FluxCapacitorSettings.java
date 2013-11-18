@@ -149,6 +149,32 @@ public class FluxCapacitorSettings extends ParameterSchema {
     }
 
     /**
+     * Sets annotation mapping according to the (non-)paired mapping reader and the read strandedness of the settings.
+     * @param readerPaired <code>true</code> if read pairing was detected in the mapping file,
+     *                     <code>false</code> otherwise
+     * @return automatically detected annotation mapping value
+     */
+    public AnnotationMapping setAnnotationMappingAuto(boolean readerPaired) {
+        FluxCapacitorSettings.ReadStrand readStrand = get(FluxCapacitorSettings.READ_STRAND);
+        if (readerPaired) {
+            if (readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
+                set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED_STRANDED);
+            } else {
+                set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.PAIRED);
+            }
+        }
+        else {
+            if (readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
+                set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE);
+            } else {
+                set(FluxCapacitorSettings.ANNOTATION_MAPPING, AnnotationMapping.SINGLE_STRANDED);
+            }
+        }
+
+        return get(FluxCapacitorSettings.ANNOTATION_MAPPING);
+    }
+
+    /**
      * Lazy wrapper method
      * @return <code>true</code> if the annotation mapping is paired,
      * <code>false</code> otherwise

@@ -30,17 +30,114 @@ package barna.io.gtf;
 import barna.model.Gene;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.TreeSet;
 
 import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
 
 public class GTFwrapperTest {
 
     //getClass().getResource("/test.bam").getFile()
     // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
-    private File gencode12 = new File("/home/micha/gencode_v12.gtf");
+    // /home/micha/gencode_v12.gtf
+    private File gencode12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
 
+    @Test
+    public void testIteratorAll() {
+        GTFwrapper wrapper= new GTFwrapper(gencode12);
+        wrapper.setLoadAllGenes();
+        assertTrue(wrapper.isApplicable());
+
+        GTFwrapper.GeneIterator iter= wrapper.new GeneIterator();
+        int n= 0;
+        while (iter.hasNext()) {
+            iter.next();
+            ++n;
+        }
+
+        assertEquals(45013, n);
+    }
+
+
+    @Test
+    public void testIteratorProgressive() {
+        GTFwrapper wrapper= new GTFwrapper(gencode12);
+        assertTrue(wrapper.isApplicable());
+        wrapper.reset();
+
+        GTFwrapper.GeneIterator iter= wrapper.new GeneIterator();
+        int n= 0;
+        while (iter.hasNext()) {
+            iter.next();
+            ++n;
+        }
+
+        assertEquals(45013, n);
+    }
+
+
+    @Test
+    public void testLoaderProgressive() {
+        GTFwrapper wrapper= new GTFwrapper(gencode12);
+        assertTrue(wrapper.isApplicable());
+
+        GTFwrapper.GeneLoader loader= wrapper.new GeneLoader();
+        loader.start();
+
+        int nrGenes= 0;
+        while(true) {
+            Gene[] g= loader.fetch();
+            if (g== null)
+                break;
+            // else
+            nrGenes+= g.length;
+            /*for (int i = 0; i < g.length; i++) {
+                try {
+                    BufferedWriter buffy= new BufferedWriter(new FileWriter("/Volumes/Raptor/scratch/progress.txt", true));
+                    buffy.write(g[i].getChromosome()+ "\t"+ g[i].getStart()+ "\t"+ g[i].getEnd()+ "\n");
+                    buffy.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }*/
+        }
+        System.err.println("Genes "+ nrGenes);
+        assertEquals(45013, nrGenes);
+    }
+
+    @Test
+    public void testLoaderAll() {
+        GTFwrapper wrapper= new GTFwrapper(gencode12);
+        wrapper.setLoadAllGenes();
+        assertTrue(wrapper.isApplicable());
+
+        GTFwrapper.GeneLoader loader= wrapper.new GeneLoader();
+        loader.start();
+
+        int nrGenes= 0;
+        while(true) {
+            Gene[] g= loader.fetch();
+            if (g== null)
+                break;
+            // else
+            nrGenes+= g.length;
+            /*for (int i = 0; i < g.length; i++) {
+                try {
+                    BufferedWriter buffy= new BufferedWriter(new FileWriter("/Volumes/Raptor/scratch/loadall.txt", true));
+                    buffy.write(g[i].getChromosome()+ "\t"+ g[i].getStart()+ "\t"+ g[i].getEnd()+ "\n");
+                    buffy.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+            }*/
+        }
+        System.err.println("Genes "+ nrGenes);
+        assertEquals(45013, nrGenes);
+    }
 
     /**
      * Test that loads all genes up to the level of detail necessary to construct splicing graphs.

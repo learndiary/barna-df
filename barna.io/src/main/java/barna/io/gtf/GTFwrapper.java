@@ -28,6 +28,7 @@
 package barna.io.gtf;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.Execute;
 import barna.commons.io.IOHandler;
 import barna.commons.io.IOHandlerFactory;
 import barna.commons.log.Log;
@@ -46,6 +47,8 @@ import barna.model.gff.GFFObject;
 import java.io.*;
 import java.text.Collator;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,6 +71,177 @@ import java.util.regex.Pattern;
  */
 public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapper {
 
+    public class GeneIterator implements Iterator<Gene> {
+
+        /**
+         * Wrapped loader thread.
+         */
+        GeneLoader loaderThread= null;
+
+        /**
+         * The last gene batch fetched from the underlying reader.
+         */
+        Gene[] genesFetched= null;
+
+        /**
+         * Position in the current gene batch.
+         */
+        int p= -1;
+
+        /**
+         * Instantiates and runs a loader thread given the current configuration of the wrapped reader.
+         */
+        public GeneIterator() {
+            loaderThread= new GeneLoader();
+            loaderThread.start();
+        }
+
+        /**
+         * Called internally to fetch the next batch of genes
+         */
+        protected void getNextBatch() {
+            while (genesFetched== null&& !loaderThread.finished) {
+                loaderThread.interrupt();
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    ; // :)
+                }
+                genesFetched= loaderThread.fetch();
+                p= 0;
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+
+            if (genesFetched!= null&& p>= genesFetched.length) {
+                genesFetched= null;
+                p= -1;
+            }
+            if (genesFetched== null)
+               getNextBatch();
+
+            if (genesFetched == null)
+                return false;
+            if (p< genesFetched.length)
+                return true;
+           return false;
+        }
+
+        @Override
+        public Gene next() {
+            if (p>= genesFetched.length) {
+                genesFetched= null;
+                p= -1;
+            }
+            if (genesFetched== null)
+                getNextBatch();
+            if (genesFetched == null)
+                return null;
+            if (p< genesFetched.length)
+                return genesFetched[p++];
+            return null;
+        }
+
+        @Override
+        public void remove() {
+            next();
+        }
+    }
+
+    /**
+     * Loads genes in an own thread, progressively or all-in-one.
+     */
+    public class GeneLoader extends Thread {
+
+        /**
+         * Constructor wraps thread around the configured reader
+         */
+        public GeneLoader() {
+            super(GTFwrapper.this.getClass().getSimpleName());
+        }
+
+        /**
+         * Getter method for current gene buffer.
+         * @return gene batch or <code>null</code> if no further genes are available
+         */
+        Gene[] getGeneBuffer() {
+            return geneBuffer;
+        }
+
+        /**
+         * Current gene buffer.
+         */
+        Gene[] geneBuffer= null;
+
+        /**
+         * Thread exited.
+         */
+        boolean finished= false;
+
+        /**
+         * Obtain the next batch of genes, the method will block until more genes have been read or the end of the
+         * data has been reached.
+         * @return the next batch of genes or <code>null</code> if there are no further genes.
+         */
+        public Gene[] fetch() {
+            while (!finished&& geneBuffer== null)
+                interrupt();
+            Gene[] geneT= geneBuffer;
+            geneBuffer= null;
+            return geneT;
+        }
+
+        /**
+         * Sleeps until the last batch of genes has been fetched, then tries to obtain the next one.
+         */
+        @Override
+        public void run() {
+
+            reset();
+            if (genes== null)
+                read();
+
+            Gene[] tmpGenes= getGenes();
+            nrGenes+= (tmpGenes== null? 0: tmpGenes.length);
+            geneBuffer= tmpGenes;
+
+            while (!finished) {
+
+                while (geneBuffer!= null) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        ; // (:
+                    }
+                }
+
+                if (finished&& geneBuffer== null)
+                    break;
+
+                // else..
+                if (geneBuffer== null) {
+
+                    try {
+                        read();
+                        // IOException wrapped into RuntimeException marks end of stream
+                    } catch (Exception e) {
+                        geneBuffer= null;
+                        finished= true;
+                        break;
+                    }
+                    tmpGenes= getGenes();
+                    nrGenes+= (tmpGenes== null? 0: tmpGenes.length);
+                    geneBuffer= tmpGenes;
+                    finished= GTFwrapper.this.finished;
+                }
+            }
+
+        }
+    }
+
+
     /**
      * Line splitter pattern
      */
@@ -76,6 +250,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
      * Pattern to findTranscriptID the transcript ID
      */
     static final Pattern TRANSCRIPTID_PATTERN = Pattern.compile(GFFObject.TRANSCRIPT_ID_TAG);
+
 
     /**
      * Helper to compare entries based on their global position
@@ -176,7 +351,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	HashMap<String,Integer> filtSomeIDs = null;
 	boolean[] filtSomeIDSuccess = null;
 	DirectedRegion[] filtRegs = null;
-	String[] filtChrIDs = null, noIDs = DEFAULT_CHROMOSOME_FILTER, filtGeneIDs = null, filtTrptIDs = null, 
+	String[] filtChrIDs = null, noIDs = new String[0], filtGeneIDs = null, filtTrptIDs = null,
 		readFeatures = new String[] { "exon", "CDS", "start_codon", "stop_codon" }, allowSources= null;
 
 	boolean silent = false;
@@ -547,6 +722,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		skippedTranscripts = new Vector();
 		skippedTranscripts = new Vector();
 		buffy= null;	// has to be inited
+        finished= false;
 		// TODO: region and ID-filtering?? or do it method-level..
 	}
 
@@ -672,14 +848,12 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	}
 
-    public void loadAllGenes() {
+    /**
+     * Sets the reader to load all genes with the next batch.
+     */
+    public void setLoadAllGenes() {
 
         // TODO allow random sorting, init hash chr#Gene[] sorted by start position
-
-        if(!silent && stars){
-            Log.progressStart("loading");
-        }
-        reset();
 
         setReadGTF(false);
         setReadGene(true);
@@ -691,21 +865,24 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         setBasic(true);
         txPerLocus= new IntVector();
         txLengths= new IntVector();
+    }
+
+    /**
+     * Loads all genes from the underlying wrapper.
+     */
+    public void loadAllGenes() {
+
+        // TODO allow random sorting, init hash chr#Gene[] sorted by start position
+
+        if(!silent && stars){
+            Log.progressStart("loading");
+        }
+        reset();
+
+        setLoadAllGenes();
 
         try {
             read();
-/*            int chkGeneCnt= 0, chkTxCnt= 0, chkExonCnt= 0;
-            while (getGenes()!= null) {
-                for (int i = 0; i < getGenes().length; i++) {
-                    ++chkGeneCnt;
-                    for (int j = 0; j < getGenes()[i].getTranscripts().length; j++) {
-                        ++chkTxCnt;
-                        chkExonCnt+= getGenes()[i].getTranscripts()[j].getExons().length;
-                    }
-                }
-            }
-            */
-            //System.err.println("[CHECK] read "+chkGeneCnt+" genes, "+chkTxCnt+" tx, "+chkExonCnt+" exons.");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1251,12 +1428,17 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	boolean skipWarningPrinted = false;
     Object skippedObject = null;
 
+    boolean finished= false;
+
 	public void read() {
 
 		BufferedReader buffy = getBuffy();
-		if (buffy== null)
-			return;
-		
+		if (buffy== null|| finished) {
+            genes= null;
+            gtfObj= null;
+            return;
+        }
+
 		if (bytesRead== 0) {
 			skippedObjects= 0;
 		}
@@ -1300,6 +1482,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					inited= false;
 				else {
 					line= buffy.readLine();
+                    lastLine= line;
 					if (line == null) {
 						if (trpt!= null) {	// necessary
 							if (readGene&& (geneV.size()== 0|| geneV.lastElement()!= trpt.getGene()))
@@ -1308,6 +1491,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 						
 						if (!silent)
 							printReadStatistics();
+                        finished= true;
 						break;
 					} else {
 						if (vLines!= null)
@@ -1537,6 +1721,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			}
 			
 		} catch (Exception e) {
+            finished= true;
 			throw new RuntimeException(e);
 		}
 		
