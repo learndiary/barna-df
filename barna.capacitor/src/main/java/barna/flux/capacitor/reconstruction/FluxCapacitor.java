@@ -862,9 +862,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats().getReadLenMin(),
-                    //pairedEnd ? insertMinMax : null,
-                    null,
+            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats(),
                     mappedReads,
                     stranded,
                     pairedEnd);
@@ -873,7 +871,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             solver.costModel = costModel;    // COSTS_LINEAR
             solver.setCostSplit(costSplit);
             solver.setProfile(profile);
-            solver.setReadLen(profile.getMappingStats().getReadLenMin());
+            solver.setMappingStats(profile.getMappingStats());
             solver.costBounds = costBounds;
 
             return solver;
@@ -1740,16 +1738,18 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         // pre-processing
         gtfReader= createAnnotationReader(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
         mappingReader= createMappingReader(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
+        // TODO DEBUG
+        //oksettings.set(FluxCapacitorSettings.NO_FILE_CHECK, Boolean.TRUE);
         if (!settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             if (stats == null)
                 stats = new MappingStats(); //Initialize stats
             fileStats(mappingReader);   // dont deactivate, rpkm will be 0
             Log.info("Annotation and mapping input checked");
         }
-        Gene[] oGenes= gtfReader.getGenes();
-        Gene[] genes= PreProcessor.collapse(oGenes);
-        Log.info("Collapsed "+ oGenes.length+ " genes into "+ genes.length+ " loci.");
-        oGenes= null;
+        //Gene[] oGenes= gtfReader.getGenes();
+        Gene[] genes= null; //PreProcessor.collapse(oGenes);
+        //Log.info("Collapsed "+ oGenes.length+ " genes into "+ genes.length+ " loci.");
+        //oGenes= null;
         System.gc();
 
         // process tasks
@@ -1853,7 +1853,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         Log.progressStart("Scanning annotation file");
         GTFwrapper gtfReader = (GTFwrapper) fileInit(annotationFile, settings);
         gtfReader.setBasic(true);
-        gtfReader.loadAllGenes();
+        //gtfReader.loadAllGenes();
         //fileStats((gtfReader));
         Log.progressFinish("OK", true);
         return gtfReader;

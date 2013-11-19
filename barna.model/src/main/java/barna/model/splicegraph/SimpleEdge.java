@@ -233,18 +233,18 @@ public class SimpleEdge extends AbstractEdge {
 	 * @param maxMapLength
 	 * @return
 	 */
-	public int getMapLength(Transcript tx, int maxMapLength) {
+	public int getMapLength(int maxMapLength) {
 		return Math.min(length(), maxMapLength);
 	}
 	
 	/**
 	 * Number of different locations with length mapLen.
 	 * @param dir
-	 * @param mapLenMax
+	 * @param maxMapLength maximum mapping length
 	 * @return
 	 */
-	public int getEffLength(Transcript tx, byte dir, int mapLenMax) {
+	public int getEffLength(byte dir, int maxMapLength) {
 		
-		return (length()- getMapLength(tx, mapLenMax));
+		return (length()- getMapLength(maxMapLength));
 	}
 }

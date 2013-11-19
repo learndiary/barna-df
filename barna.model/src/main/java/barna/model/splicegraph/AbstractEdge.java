@@ -133,7 +133,7 @@ public abstract class AbstractEdge {
 
 	/**
 	 * Sets the downstream site delimiting the edge.
-	 * @param tail the downstream site delimiting the edge
+	 * @param head the downstream site delimiting the edge
 	 */
 	public void setHead(Node head) {
 		this.head = head;
@@ -263,17 +263,16 @@ public abstract class AbstractEdge {
 
 	/**
 	 * Compute effective length of edge
-	 * @param t a base transcript
 	 * @param dir directionality
-	 * @param mapLenMax maximum length of mappings
+	 * @param maxMapLen maximum length of mappings
 	 * @return the effective length of the edge
 	 */
-	public abstract int getEffLength(Transcript t, byte dir, int mapLenMax);
+	public abstract int getEffLength(byte dir, int maxMapLen);
 	
 	/**
 	 * Returns the genomic position.
 	 * @param sense directionality
-	 * @param epos	exonic position
+	 * @param start	exonic position
 	 * @param minMapLen minimum length of mappings
 	 * @param maxMapLen maximum length of mappings
 	 * @return the corresponding genomic position

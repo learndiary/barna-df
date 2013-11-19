@@ -32,6 +32,7 @@ import barna.commons.system.OSChecker;
 import barna.flux.capacitor.graph.AnnotationMapper;
 import barna.flux.capacitor.graph.MappingsInterface;
 import barna.flux.capacitor.matrix.UniversalMatrix;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.profile.Profile;
 import barna.io.FileHelper;
 import barna.model.SpliceSite;
@@ -115,6 +116,11 @@ public class GraphLPsolver {
      * The (minimal) length of mapped reads.
      */
 	int readLen= 0;
+
+    /**
+     * Statistics from annotation mapping.
+     */
+    MappingStats mappingStats= null;
 
     /**
      * Value of the objective function after solving the linear system (i.e., deconvolution).
@@ -219,30 +225,29 @@ public class GraphLPsolver {
      * Basic constructor, providing a graph with mappings, the minimum read length, and the total number of reads
      * observed in the locus.
      * @param aMapper splicing graph with annotation mapped reads
-     * @param readLen minimum length of a read
+     * @param mapStats mapping statistics
      * @param realReads number of reads observed after annotation mapping
      */
-	private GraphLPsolver(AnnotationMapper aMapper, int readLen, int realReads) {
+	private GraphLPsolver(AnnotationMapper aMapper, MappingStats mapStats, int realReads) {
 		this.aMapper= aMapper;
-		this.readLen= readLen;
+		this.mappingStats= mapStats;
 		this.nrMappingsObs= realReads;
 	}
 
     /**
      * Extended constructor, with read and insert size attributes.
      * @param aMapper splicing graph with annotation mapped reads
-     * @param readLen minimum length of a read
-     * @param insertMinMax set of {minimum,maximum} of the observed insert size
+     * @param mapStats mapping statistics
      * @param realReads number of reads observed after annotation mapping
      * @param considerBothStrands flag for consideration of reads mapping in anti-/sense
      * @param pairedEnd flag for paired-end reads
      */
-	public GraphLPsolver(AnnotationMapper aMapper, int readLen, int[] insertMinMax, int realReads, 
+	public GraphLPsolver(AnnotationMapper aMapper, MappingStats mapStats, int realReads,
 			boolean considerBothStrands, boolean pairedEnd) {
-		this(aMapper, readLen, realReads);
+		this(aMapper, mapStats, realReads);
 		this.costSplitWC= considerBothStrands;
 		this.pairedEnd= pairedEnd;
-		this.insertMinMax= insertMinMax;
+		// TODO this.insertMinMax= insertMinMax;
 	}
 
     /**
@@ -478,7 +483,7 @@ public class GraphLPsolver {
             for (Transcript aTt : tt) {
                 int tlen = aTt.getExonicLength();
                 UniversalMatrix m = getMatrixMap().get(aTt.getTranscriptID());
-                int[] area = e.getFrac(aTt, getReadLen(), dir);
+                int[] area = e.getFrac(aTt, mappingStats.getReadLenMin(), dir);
                 long reads = (long) m.get(area[0], area[1], tlen, dir);
                 long sum = m.getSum(dir);
                 double val = reads / (double) sum;
@@ -653,17 +658,17 @@ public class GraphLPsolver {
 	}
 
     /**
-     * Returns the (minimal) length of read mappings.
+     * Returns the mapping statistics.
      */
-    public int getReadLen() {
-		return readLen;
+    public MappingStats getMappingStats() {
+		return mappingStats;
 	}
 
     /**
-     * Overwrites the (minimal) length of read mappings.
+     * Sets statistics collected during annotation mapping.
      */
-    public void setReadLen(int readLen) {
-		this.readLen = readLen;
+    public void setMappingStats(MappingStats mappingStats) {
+		this.mappingStats= mappingStats;
 	}
 
     /**
@@ -925,7 +930,7 @@ public class GraphLPsolver {
     public static boolean DEBUG= true;
 
     private void writeDEBUG(String s) {
-        File f= new File("/home/micha/DEBUG_TEST.out");
+        File f= new File("/home/micha/DEBUG_TEST_flux.out");
         try {
             BufferedWriter buffy= new BufferedWriter(new FileWriter(f, true));
             buffy.write(s+ "\n");
@@ -956,6 +961,7 @@ public class GraphLPsolver {
 		if (ret!= 0) {
             try {
                 String fname= getLPoutFileName();
+                fname= "/home/micha/scratch/"+ aMapper.trpts[0].getGene().getLocusID().replace(":", "_");
 
                 getLPsolve().writeLp(fname+ "_wlp");
                 getLPsolve().writeMps(fname+ "_mps");
@@ -972,7 +978,7 @@ public class GraphLPsolver {
 			// additional stream only afterwards
 				PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName()+"_const", true));
                 setConstraints((byte) 0, p);
-                Log.warn("There was an issue with the linear problem. The linear system has been written to " + getLPoutFileName());
+                Log.warn("There was an issue with the linear problem. The linear system has been written to " + fname);
             } catch (Exception e) {
                 Log.error("Failed to set lp output to:\n\t"+ getLPoutFileName(), e);
 			}
@@ -1182,7 +1188,7 @@ public class GraphLPsolver {
                 if (!edge.isExonic())
                     continue;
                 // add the edge itself
-                if ((!pairedEnd) && edge.length() >= getReadLen()) {
+                if ((!pairedEnd) && edge.length() >= mappingStats.getReadLenMin()) {
 
                     constraintHash.put(edge, getConstraintIDs());
                 }
@@ -1323,8 +1329,13 @@ public class GraphLPsolver {
 		
 		
 	}
-	
-	
+
+    /**
+     * <code>true</code> to optimize flux,
+     * <code>false</code> to optimize flow
+     */
+	boolean flux= true;
+
 	HashMap<String, Double> mapCCheck= null;
 
     HashSet<Integer> mapDeltaPlusSense, mapDeltaPlusAnti, mapDeltaMinusSense, mapDeltaMinusAnti;
@@ -1435,7 +1446,6 @@ public class GraphLPsolver {
 
                 HashMap<AbstractEdge, IntVector> mapE = new HashMap<AbstractEdge, IntVector>();    // BUG?
 
-                int tctr= 0;
                 for (Transcript aTt : tt) {
                     if (count== 1|| count== 2) {
                         v.removeAll();
@@ -1466,21 +1476,7 @@ public class GraphLPsolver {
                         Arrays.fill(val, 1d);
                         int tlen = aTt.getExonicLength();
                         UniversalMatrix m = profile.getMatrix(tlen);
-                        /*
-                        Fraction inconsistency ENST00000335514.5	1.7716180693555759
-[WARN] Fraction inconsistency ENST00000373562.3	1.7555169762325475
-[WARN] Fraction inconsistency ENST00000531983.1	1.796280144375141
-[WARN] Fraction inconsistency ENST00000409337.1	1.767665856049769
-[WARN] Fraction inconsistency ENST00000481753.1	1.7817803394134664
-[WARN] Fraction inconsistency ENST00000410048.1	1.7813875812083526
 
-                          ENST00000531312.1	2.3838184312151878
-[WARN] Fraction inconsistency ENST00000335514.5	2.226466119558677
-[WARN] Fraction inconsistency ENST00000409337.1	2.215541756923056
-[WARN] Fraction inconsistency ENST00000410048.1	2.218887432228299
-[WARN] Fraction inconsistency ENST00000434068.1	2.4725309719455217
-[WARN] Fraction inconsistency ENST00000427336.1	2.4540586044566743
-                         */
                         double f = m.getFrac(
                                 aTt.getExonicPosition(e.getDelimitingPos(true)),
                                 aTt.getExonicPosition(e.getDelimitingPos(false)),
@@ -1514,7 +1510,6 @@ public class GraphLPsolver {
                         ++restrNr;
 
                     }
-                    ++tctr;
                 } // iterate transcripts
 
                 // add edge constraints
@@ -1565,7 +1560,21 @@ public class GraphLPsolver {
                         }
                         idx[idx.length - 2] = c;
                         // plus has to be limited, it substracts
-                        int lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
+                        double lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
+                        int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
+                        if (effLen< 0|| (effLen== 0&& nr> 0)) {
+                            f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
+                        }
+                        effLen= (effLen== 0? 1: effLen);
+
+                        if (flux)
+                            lim/= effLen;
+                        if (lim< 0|| Double.isInfinite(lim)|| Double.isNaN(lim))  {
+                            System.err.println(">>> lim= "+ lim+ " for "+ f.toString());
+                            f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD),mappingStats.getReadLenMax());
+                        }
+
+
                         if (count== 1)
                             try {
                                 getLPsolve().setUpbo(constraintCtr, lim);
@@ -1619,9 +1628,18 @@ public class GraphLPsolver {
                         }
                         u.add(nr);
                         idx[idx.length - 1] = c;
+
+                        // contribution weights
                         double[] val = new double[idx.length];
-                        Arrays.fill(val, 1d);
+                        double x= (flux? 1d/ effLen: 1d);
+                        if (x<= 0|| Double.isInfinite(x)|| Double.isNaN(x))  {
+                            System.err.println(">>> x= "+ x+ " for "+ f.toString());
+                            f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD),mappingStats.getReadLenMax());
+                        }
+                        Arrays.fill(val, x);
+                        val[val.length - 2] = 1d;
                         val[val.length - 1] = -1d;
+
                         if (debug && count== 1) {
                             StringBuilder sb = new StringBuilder(f.toString());
                             sb.append(": ");
