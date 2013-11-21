@@ -1739,7 +1739,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         gtfReader= createAnnotationReader(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
         mappingReader= createMappingReader(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
         // TODO DEBUG
-        //oksettings.set(FluxCapacitorSettings.NO_FILE_CHECK, Boolean.TRUE);
+        //settings.set(FluxCapacitorSettings.NO_FILE_CHECK, Boolean.TRUE);
         if (!settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             if (stats == null)
                 stats = new MappingStats(); //Initialize stats
@@ -2370,7 +2370,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         gtfReader.setReadAheadTranscripts(1000000);    // only one locus a time
 //		gtfReader.setReadAheadTranscripts(-1);
 //		gtfReader.setReadAll(true);
-        gtfReader.setGeneWise(false);
+        gtfReader.setGeneWise(true);    // when setting false, clusterLoci sorts genes in another ordering
         gtfReader.setPrintStatistics(false);
         gtfReader.setReuse(true);
         Transcript.removeGaps = false;
@@ -2473,7 +2473,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      *
      * @param genes genes to be iterated
      */
-    public boolean explore(Gene[] genes) {
+    public boolean explore(Gene[] genePreclustered) {
 
         /*if (!settings.get(FluxCapacitorSettings.STATS_FILE_APPEND))
             stats.reset();*/
@@ -2514,7 +2514,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             // TODO BARNA-112 disable keeping original lines
 
             gtfReader.read();
-            Gene[] gene = null, geneNext = gtfReader.getGenes();
+            Gene[] genes = gtfReader.getGenes();
 
             long tlast = System.currentTimeMillis();
             boolean output = false;
@@ -2523,18 +2523,15 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             byte lastStr = 0;
             int lastEnd = -1;
 
-            if (geneNext != null) {
-                lastChr = geneNext[0].getChromosome();
-                lastStr = geneNext[0].getStrand();
+            if (genes != null) {
+                lastChr = genes[0].getChromosome();
+                lastStr = genes[0].getStrand();
             }
 
             Thread readerThread = null;
             int readObjects = 0;
-            while (lastChr != null) {    // MAIN LOOP
+            for (;lastChr != null&& genes!= null;genes = gtfReader.getGenes()) {    // MAIN LOOP
 
-
-                if ((gene = geneNext) == null)
-                    break;
                 /*if (gtfReader.getVLines() != null)
                     origLines = (Vector<String>) gtfReader.getVLines().clone();    // TODO make array, trim..*/
 
@@ -2543,48 +2540,46 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                     readerThread = new GtfReaderThread();
                 //readerThread.start();
                 readerThread.run();
-                geneNext = gtfReader.getGenes();
 
-                for (int i = 0; (gene != null) && i < gene.length; i++) {
+                for (int i = 0; (genes != null) && i < genes.length; i++) {
 
 
                     // flop strand
-                    if (lastChr.equals(gene[i].getChromosome())) {
-                        if (lastStr != gene[i].getStrand()) {
+                    if (lastChr.equals(genes[i].getChromosome())) {
+                        if (lastStr != genes[i].getStrand()) {
                             //System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
                             readObjects = 0;
                             // jump back
-								mappingReader.reset(gene[i].getChromosome());
-                            lastStr = gene[i].getStrand();
+								mappingReader.reset(genes[i].getChromosome());
+                            lastStr = genes[i].getStrand();
                             lastEnd = -1;
                         }
                     } else {                        // flop chr
                         //System.err.println(lastChr+" "+lastStr+ " "+ readObjects+ " wrote "+ dbgCntWriteMap +" not "+ dbgCntWriteNonmap);
                         readObjects = 0;
-                        lastChr = gene[i].getChromosome();
-                        lastStr = gene[i].getStrand();
+                        lastChr = genes[i].getChromosome();
+                        lastStr = genes[i].getStrand();
                         lastEnd = -1;
                     }
-                    assert (geneNext == null || geneNext.length == 1);
 
                     // do it..
-                    quantify(gene[i], mappingReader, currentTasks);
+                    quantify(genes[i], mappingReader, currentTasks);
 
                     if (output) {
-                        System.out.println(gene[i].getChromosome() + " " +
-                                gene[i].getStrand() +
-                                " cluster " + gene[i].getLocusID());
+                        System.out.println(genes[i].getChromosome() + " " +
+                                genes[i].getStrand() +
+                                " cluster " + genes[i].getLocusID());
                         // TODO beds.size() no longer available
                         //", "+beds.size()+" reads.");
-                        if ((lastStr != gene[i].getStrand()
-                                || !(lastChr.equals(gene[i].getChromosome())))) {
+                        if ((lastStr != genes[i].getStrand()
+                                || !(lastChr.equals(genes[i].getChromosome())))) {
                             long t = System.currentTimeMillis();
                             if (lastStr != 0 && (!lastChr.equals("")))
                                 System.out.println(lastChr + " " + lastStr +
                                         " " + ((t - tlast) / 1000) + " sec.");
                             tlast = t;
-                            lastStr = gene[i].getStrand();
-                            lastChr = gene[i].getChromosome();
+                            lastStr = genes[i].getStrand();
+                            lastChr = genes[i].getChromosome();
                         }
                     }
 

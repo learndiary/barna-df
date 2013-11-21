@@ -1442,10 +1442,16 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		if (bytesRead== 0) {
 			skippedObjects= 0;
 		}
-		
-		clustered = false;
-		
-		Vector gtfV = null;
+
+        // TODO set correct
+        if (geneWise)
+		    clustered = true;
+        else
+           // if (chromosomeWise)
+           clustered = false;
+
+
+        Vector gtfV = null;
 		if (readGTF)
 			gtfV = new Vector();
 		Vector<Gene> geneV= null;
@@ -1747,8 +1753,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			}
 //			www.flush();
 //			www.close();
-			if (chromosomeWise)
-				clustered = false;
 		}
 		if (readGTF)
 			this.gtfObj = (GFFObject[]) ArrayUtils.toField(gtfV);

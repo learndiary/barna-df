@@ -1136,11 +1136,12 @@ public class GraphLPsolver {
             while (i2.hasNext()) {
                 dM+= result[restrNr + i2.next()];
             }
-            writeDEBUG(aMapper.trpts[0].getGene().getLocusID()+ " "+
-                    constraintCtr+ " "+ restrNr+ " "+
-                    nrMappingsObs+ " "+ sum+ " "+ nFactor+ " "+
-                    this.rhs+ " "+ dP+ " "+ dM+ " "+ valObjFunc
-            );
+            if (1== 2)
+                writeDEBUG(aMapper.trpts[0].getGene().getLocusID()+ " "+
+                        constraintCtr+ " "+ restrNr+ " "+
+                        nrMappingsObs+ " "+ sum+ " "+ nFactor+ " "+
+                        this.rhs+ " "+ dP+ " "+ dM+ " "+ valObjFunc
+                );
         }
 
 
@@ -1381,6 +1382,7 @@ public class GraphLPsolver {
 
 		// transcript constraint variables
 		Transcript[] trpts= aMapper.trpts;
+        // v reused vector for transcript contributions, w cost vector, u not used?
 		IntVector v= null, w= null, u= null;
 		HashMap<String, Integer> tMap= null;
 		if (count== 0)
@@ -1563,15 +1565,15 @@ public class GraphLPsolver {
                         double lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
                         int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
                         if (effLen< 0|| (effLen== 0&& nr> 0)) {
-                            f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
+                            ; // f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
                         }
-                        effLen= (effLen== 0? 1: effLen);
+                        effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
 
                         if (flux)
                             lim/= effLen;
                         if (lim< 0|| Double.isInfinite(lim)|| Double.isNaN(lim))  {
                             System.err.println(">>> lim= "+ lim+ " for "+ f.toString());
-                            f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD),mappingStats.getReadLenMax());
+                            //f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD),mappingStats.getReadLenMax());
                         }
 
 
@@ -1650,8 +1652,10 @@ public class GraphLPsolver {
                             sb.append("= ").append(nr);
                             Log.debug(sb.toString());
                         }
-                        if (count== 1)
-                            addConstraintToLp(idx, val, LpSolve.EQ, nr);
+                        if (count== 1) {
+                            double obs= (flux? (nr/ (double) effLen): nr);
+                            addConstraintToLp(idx, val, LpSolve.EQ, obs);
+                        }
                         ++restrNr;
                     }   // count > 0
 
