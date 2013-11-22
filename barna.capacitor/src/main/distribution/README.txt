@@ -23,6 +23,10 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.4
+    * [BARNA-329] - AnnotationMapper maps genomic mappings spanning all-intronic edges
+    * [BARNA-330] - Fraction Inconsistency
+
 FluxCapacitor 1.3
     * [BARNA-28] - Exit with error 1 in case of error
     * [BARNA-273] - Implement stranded annotation mapping for BAM input files
