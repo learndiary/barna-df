@@ -1339,8 +1339,8 @@ public class GraphLPsolver {
 
 		// transcript constraint variables
 		Transcript[] trpts= aMapper.trpts;
-        // v reused vector for transcript contributions, w cost vector
-		IntVector v= null, w= null;
+        // w cost vector
+		IntVector w= null;
 		HashMap<String, Integer> tMap= null;
 		if (count== 0)
 			constraintCtr+= trpts.length;
@@ -1356,7 +1356,6 @@ public class GraphLPsolver {
                 if (p != null)
                     p.println(trpt.getTranscriptID() + "\t" + constraintCtr);
             }
-			v= new IntVector();	// indices for transcript/part 
 			w= new IntVector();	// indices for cost function
 		}
 		
@@ -1416,7 +1415,7 @@ public class GraphLPsolver {
                 AbstractEdge[] ee = new AbstractEdge[mapE.size()];
                 mapE.keySet().toArray(ee);
                 for (AbstractEdge f : ee) {
-                    setConstraints(e, f, sa, count, sumSEG, tt, v, w,
+                    setConstraints(e, f, sa, count, sumSEG, tt, w,
                             mapE, txSegments, txEdges, segmentHash, hashTxNr, hashCxTx, txError);
                 } // all edges in segment
 
@@ -1634,7 +1633,6 @@ public class GraphLPsolver {
     protected void setConstraints(AbstractEdge e, AbstractEdge f, int sa, byte count,
                    double[] sumSEG,
                    Transcript[] tt,
-                   IntVector v,
                    IntVector w,
                    HashMap<AbstractEdge, IntVector> mapE,
                    HashMap<Transcript, StringBuilder> txSegments,
@@ -1649,14 +1647,14 @@ public class GraphLPsolver {
         int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
                 : ((MappingsInterface) f).getMappings().getRevReadNr());
 
-        v = mapE.remove(f);
+        IntVector v = mapE.remove(f);
         if (count== 0)
             constraintCtr += 2;
         else if (count== 1|| count== 2) {
 
             int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
+            effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
             double obs= (flux? (nr/ (double) effLen): nr);
-
 
             int[] idx = new int[v.length + 2];    // +/-
             System.arraycopy(v.vector, 0, idx, 0, v.length);
@@ -1671,7 +1669,6 @@ public class GraphLPsolver {
             // prevent from substracting complete observation
             double lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
             //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
-            effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
             if (flux)
                 lim/= effLen;
             assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
@@ -1734,8 +1731,8 @@ public class GraphLPsolver {
             double[] val = new double[idx.length];
             double x= (flux? 1d/ effLen: 1d);
             assert(x> 0&& (!Double.isInfinite(x))&& (!Double.isNaN(x)));
-            Arrays.fill(val, x);
 
+            Arrays.fill(val, x);
             val[val.length - 2] = 1d;
             val[val.length - 1] = -1d;
             if (count== 1) {

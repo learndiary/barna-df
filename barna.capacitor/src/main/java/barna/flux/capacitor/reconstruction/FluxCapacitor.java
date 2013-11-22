@@ -1739,7 +1739,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         gtfReader= createAnnotationReader(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
         mappingReader= createMappingReader(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
         // TODO DEBUG
-        //settings.set(FluxCapacitorSettings.NO_FILE_CHECK, Boolean.TRUE);
+        settings.set(FluxCapacitorSettings.NO_FILE_CHECK, Boolean.TRUE);
         if (!settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             if (stats == null)
                 stats = new MappingStats(); //Initialize stats
