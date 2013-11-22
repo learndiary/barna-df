@@ -1447,8 +1447,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         if (geneWise)
 		    clustered = true;
         else
-           // if (chromosomeWise)
-           clustered = false;
+            // if (chromosomeWise)
+            clustered = false;
 
 
         Vector gtfV = null;

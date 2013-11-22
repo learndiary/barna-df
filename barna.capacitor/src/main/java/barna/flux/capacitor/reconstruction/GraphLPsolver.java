@@ -1126,26 +1126,6 @@ public class GraphLPsolver {
             trptExprHash.put(trpt.getTranscriptID(), x);
         }
 
-        if (FluxCapacitor.DEBUG&& DEBUG) {
-            Iterator<Integer> i2 = mapDeltaPlusSense.iterator();
-            long dP= 0, dM= 0;
-            while (i2.hasNext()) {
-                dP+= result[restrNr + i2.next()];
-            }
-            i2 = mapDeltaMinusSense.iterator();
-            while (i2.hasNext()) {
-                dM+= result[restrNr + i2.next()];
-            }
-            if (1== 2)
-                writeDEBUG(aMapper.trpts[0].getGene().getLocusID()+ " "+
-                        constraintCtr+ " "+ restrNr+ " "+
-                        nrMappingsObs+ " "+ sum+ " "+ nFactor+ " "+
-                        this.rhs+ " "+ dP+ " "+ dM+ " "+ valObjFunc
-                );
-        }
-
-
-
         // apppend edge solutions
 //        Object[] keys= constraintHash.keySet().toArray();
 //        for (int i = 0; i < keys.length; i++) {
@@ -1253,10 +1233,9 @@ public class GraphLPsolver {
      *             super-edges are extended within the method
      * @param sense flag to distinguish between anti-/sense deconvolution along that edge
      * @param count flag to indicate whether only counting of constraint indices is performed
-     * @param p stream to output additional reporting information for introspection
      */
 	private void getConstraints(AbstractEdge e, long[] sig, IntVector v,
-			HashMap<AbstractEdge, IntVector> mapE, boolean sense, byte count, PrintStream p) {
+			HashMap<AbstractEdge, IntVector> mapE, boolean sense, byte count) {
 
 		// for the edge itself
 		IntVector w= mapE.get(e);
@@ -1269,8 +1248,6 @@ public class GraphLPsolver {
 			w.add(constraintCtr);	// edge consistency
 		}
 		mapE.put(e, w);
-		if (count== 0&& p!= null)
-			p.println(constraintCtr);
 
 		// iterate super-edges
 		for (int j = 0; e.getSuperEdges()!= null&& j < e.getSuperEdges().size(); j++) {
@@ -1285,8 +1262,6 @@ public class GraphLPsolver {
 				continue;
 			if (count== 0) {
 				++constraintCtr;
-				if (p!= null)
-					p.println(se+"\t"+(sense?"sense":"asense")+"\t"+constraintCtr);
 			} else {
 				v.add(++constraintCtr);	// for transcript fraction
 			}
@@ -1313,8 +1288,6 @@ public class GraphLPsolver {
 					continue;
 				if (count== 0) {
 					++constraintCtr;
-					if (p!= null)
-						p.println(se2+"\t"+(sense?"sense":"asense")+"\t"+constraintCtr);
 				} else {
 					v.add(++constraintCtr);	// tx
 				}
@@ -1339,8 +1312,6 @@ public class GraphLPsolver {
 
 	HashMap<String, Double> mapCCheck= null;
 
-    HashSet<Integer> mapDeltaPlusSense, mapDeltaPlusAnti, mapDeltaMinusSense, mapDeltaMinusAnti;
-    long rhs= 0;
 	/**
      * Iterates the constraints for all edges and, counts them (<code>count</code> is <code>true</code>) or adds them to
      * the system of linear equations (<code>count</code> is <code>false</code>). Also the cost weights in the
@@ -1361,29 +1332,15 @@ public class GraphLPsolver {
         HashMap<SimpleEdge, Integer> segmentHash= null;
         HashMap<Integer, Integer> hashCxTx= null;
         HashMap<Transcript, Integer> hashTxNr= null;
+        HashMap<Integer, double[]> txError= null;
 
         constraintCtr= 0;
         restrNr= 0;
 
-        if (FluxCapacitor.DEBUG&& DEBUG&& count== 1) {
-            if (mapDeltaPlusSense== null) {
-                mapDeltaPlusSense= new HashSet<Integer>();
-                mapDeltaPlusAnti= new HashSet<Integer>();
-                mapDeltaMinusSense= new HashSet<Integer>();
-                mapDeltaMinusAnti= new HashSet<Integer>();
-            } else {
-                mapDeltaMinusSense.clear();
-                mapDeltaMinusAnti.clear();
-                mapDeltaPlusSense.clear();
-                mapDeltaPlusAnti.clear();
-            }
-            rhs= 0;
-        }
-
 		// transcript constraint variables
 		Transcript[] trpts= aMapper.trpts;
-        // v reused vector for transcript contributions, w cost vector, u not used?
-		IntVector v= null, w= null, u= null;
+        // v reused vector for transcript contributions, w cost vector
+		IntVector v= null, w= null;
 		HashMap<String, Integer> tMap= null;
 		if (count== 0)
 			constraintCtr+= trpts.length;
@@ -1401,7 +1358,6 @@ public class GraphLPsolver {
             }
 			v= new IntVector();	// indices for transcript/part 
 			w= new IntVector();	// indices for cost function
-			u= new IntVector();	// observation, bases for cost function
 		}
 		
 		// iterate edges
@@ -1416,17 +1372,13 @@ public class GraphLPsolver {
             txSegments= new HashMap<Transcript, StringBuilder>();
             txEdges= new HashMap<Transcript, StringBuilder>();
             segmentHash= new HashMap<SimpleEdge, Integer>();
+            txError= new HashMap<Integer, double[]>();
             int i= 0;
             for(Transcript tx: trpts) {
-                int c = tMap.get(tx.getTranscriptID());
-                txSegments.put(tx, new StringBuilder(tx.getGene().getLocusID()+ "\t"
-                        + tx.getTranscriptID()+ "\t"
-                        + "TX="+ (i+ 1)
-                        + ";TEXP="+ Math.round(resultC[c- 1]* 100.00)/ 100.00
-                        + ";TNOR="+ Math.round(getTrptExprHash().get(tx.getTranscriptID())* 100.00)/ 100.00
-                ));
+                txSegments.put(tx, new StringBuilder());
                 txEdges.put(tx,new StringBuilder());
                 hashTxNr.put(tx, i);
+                txError.put(i, new double[6]); // (sense,asense) x (OBS,SUB,ADD)
                 ++i;
             }
             for (AbstractEdge e : edges) {
@@ -1446,219 +1398,26 @@ public class GraphLPsolver {
             // sense/anti
             for (int sa = 0; sa < 2; ++sa) {
 
-                HashMap<AbstractEdge, IntVector> mapE = new HashMap<AbstractEdge, IntVector>();    // BUG?
+                HashMap<AbstractEdge, IntVector> mapE = new HashMap<AbstractEdge, IntVector>();
+
+                /* === Transcript Contributions === */
 
                 for (Transcript aTt : tt) {
-                    if (count== 1|| count== 2) {
-                        v.removeAll();
-                    } else if (p != null)
-                        p.print(e + "\t" + (sa == 0 ? "sense" : "asense") + "\t" + aTt + "\t");
-                    StringBuilder segDEBUG= null;
-                    if (count== 2) {
-                        segDEBUG= txSegments.get(aTt);
-                        segDEBUG.append("\tSEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
-
-                    }
-
-
-                    long[] sig = aMapper.encodeTset(aTt);
-                    int saveCCtr= constraintCtr;
-                    getConstraints(e, sig, v, mapE, sa == 0, count, p);
-                    if (count== 2) {
-                        for (int i = saveCCtr+ 1; i <= constraintCtr; i++)
-                            hashCxTx.put(i, hashTxNr.get(aTt));
-                    }
-
-                    // add transcript constraint
-                    if (count== 1|| count== 2) {
-                        int[] idx = new int[v.length + 1]; // obs parts+ tx frac
-                        System.arraycopy(v.vector, 0, idx, 0, v.length);
-                        idx[idx.length - 1] = tMap.get(aTt.getTranscriptID());
-                        double[] val = new double[idx.length];
-                        Arrays.fill(val, 1d);
-                        int tlen = aTt.getExonicLength();
-                        UniversalMatrix m = profile.getMatrix(tlen);
-
-                        double f = m.getFrac(
-                                aTt.getExonicPosition(e.getDelimitingPos(true)),
-                                aTt.getExonicPosition(e.getDelimitingPos(false)),
-                                tlen,
-                                sa == 0 ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
-                        if (count== 2) {
-                            segDEBUG.append(";TEX="+  Math.round(f * 10000.0) / 100.0);
-                            double sum= 0d;
-                            for (int i = 0; i < idx.length- 1; i++)
-                                sum+= resultC[idx[i]- 1];
-                            segDEBUG.append(";DEC="+ Math.round(sum* 100.00)/ 100.0);
-                        }
-                        assert (!(Double.isInfinite(f) || Double.isNaN(f)));
-                        mapCCheck.put(aTt.getTranscriptID(),
-                                mapCCheck.get(aTt.getTranscriptID()) + f);
-                        val[val.length - 1] = -f;
-                        if (debug && count== 1) {
-                            StringBuilder sb = new StringBuilder(e.toString());
-                            sb.append(": ");
-                            for (int k = 0; k < idx.length; k++) {
-                                sb.append(val[k] > 0 ? "+" : "");
-                                sb.append(val[k] % 1 == 0 ? ((int) val[k]) : val[k]);
-                                sb.append("C");
-                                sb.append(idx[k]).append(" ");
-                            }
-                            sb.append("= 0");
-                            Log.debug(sb.toString());
-                        }
-                        if (count== 1)
-                            addConstraintToLp(idx, val, LpSolve.EQ, 0);
-                        ++restrNr;
-
-                    }
+                    setConstraints(e, aTt, sa, count, tMap, mapE, txSegments, segmentHash, hashTxNr, hashCxTx);
                 } // iterate transcripts
 
-                // add edge constraints
+
+                /* === Edge Deconvolution === */
+                double[] sumSEG= null;   // call-by-return: [0] sumObs, [1] sumPlus, [2] sumMinus
+                if (count== 2) {
+                    sumSEG= new double[3];
+                    Arrays.fill(sumSEG, 0d);
+                }
                 AbstractEdge[] ee = new AbstractEdge[mapE.size()];
                 mapE.keySet().toArray(ee);
-
-                // total obs
-/*				int sumObs= 0;
-				for (int j = 0; j < ee.length; j++) {
-					Edge f= ee[j];
-					boolean paird= (f instanceof SuperEdge)&& ((SuperEdge) f).isPend();
-					int nr= ((paird|| sa== 0)? f.getReadNr(): f.getRevReadNr());
-					sumObs+= nr;
-				}
-*/
-
-                double sumObs= 0, sumPlus= 0, sumMinus= 0;
-                double[] sumTx= null;
-                if (count== 2) {
-                    sumTx= new double[trpts.length];
-                    Arrays.fill(sumTx, 0d);
-                }
                 for (AbstractEdge f : ee) {
-                    boolean paird = (f instanceof SuperEdge) && ((SuperEdge) f).isPend();
-
-                    int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
-                            : ((MappingsInterface) f).getMappings().getRevReadNr());
-                    if (FluxCapacitor.DEBUG&& DEBUG&& count== 1)
-                        rhs+= nr;
-                    v = mapE.remove(f);
-                    if (count== 0)
-                        constraintCtr += 2;
-                    else if (count== 1|| count== 2) {
-                        int[] idx = new int[v.length + 2];    // +/-
-                        System.arraycopy(v.vector, 0, idx, 0, v.length);
-                        int c = ++constraintCtr;
-                        // plus on not paired edges at 0-cost, it substracts from obs
-                        // TODO should be in OF, if no transloci multimaps exist
-                        if (paird || !pairedEnd) {
-                            w.add(c);
-                            u.add(nr);
-                            if (FluxCapacitor.DEBUG&& DEBUG&& count== 1) {
-                                if (sa== 0)
-                                    mapDeltaMinusSense.add(c);
-                                else
-                                    mapDeltaMinusAnti.add(c);
-                            }
-                        }
-                        idx[idx.length - 2] = c;
-                        // plus has to be limited, it substracts
-                        double lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
-                        int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
-                        if (effLen< 0|| (effLen== 0&& nr> 0)) {
-                            ; // f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
-                        }
-                        effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
-
-                        if (flux)
-                            lim/= effLen;
-                        if (lim< 0|| Double.isInfinite(lim)|| Double.isNaN(lim))  {
-                            System.err.println(">>> lim= "+ lim+ " for "+ f.toString());
-                            //f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD),mappingStats.getReadLenMax());
-                        }
-
-
-                        if (count== 1)
-                            try {
-                                getLPsolve().setUpbo(constraintCtr, lim);
-                            } catch (LpSolveException e1) {
-                                e1.printStackTrace();
-                            }
-
-                        if (count== 2) {
-                            for (Transcript tx: tt) {
-                                StringBuilder sb= txEdges.get(tx);
-                                String eid= getEID(f, segmentHash);
-                                sb.append("\tEID=E"+ eid);
-                                sb.append(";SEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
-
-                                sb.append(";OBS="+ nr);
-                                sb.append(";SUB="+ Math.round(resultC[constraintCtr- 1]* 100.00)/ 100.00);
-                                sb.append(";ADD="+ Math.round(resultC[constraintCtr]* 100.00)/ 100.00); // +1 -1
-
-                                for (int i = 0; i < idx.length- 2; i++) {
-                                    int tc= hashCxTx.get(idx[i]);
-                                    sb.append(";TX"+ (tc+ 1)+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
-                                    if (tc!= hashTxNr.get(tx))
-                                        continue;
-                                    //else
-                                    StringBuilder segb= txSegments.get(tx);
-                                    segb.append(";E"+ eid+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
-                                }
-
-                            }
-                            sumObs+= nr;
-                            sumMinus+= resultC[constraintCtr- 1];
-                            sumPlus+= resultC[constraintCtr];
-                            // add edges and transcript contributions
-                            for (int i = 0; i < idx.length- 2; i++) {
-                                int tc= hashCxTx.get(idx[i]);
-                                sumTx[tc]+= resultC[idx[i]- 1];
-                            }
-
-
-                        }
-
-                        c = ++constraintCtr;
-                        // do not limit adding, even with f= 100 unsolvable systems
-                        // adding reads always costs, also on single edges
-                        w.add(c);
-                        if (FluxCapacitor.DEBUG&& DEBUG&& count== 1) {
-                            if (sa== 0)
-                                mapDeltaPlusSense.add(c);
-                            else
-                                mapDeltaPlusAnti.add(c);
-                        }
-                        u.add(nr);
-                        idx[idx.length - 1] = c;
-
-                        // contribution weights
-                        double[] val = new double[idx.length];
-                        double x= (flux? 1d/ effLen: 1d);
-                        if (x<= 0|| Double.isInfinite(x)|| Double.isNaN(x))  {
-                            System.err.println(">>> x= "+ x+ " for "+ f.toString());
-                            f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD),mappingStats.getReadLenMax());
-                        }
-                        Arrays.fill(val, x);
-                        val[val.length - 2] = 1d;
-                        val[val.length - 1] = -1d;
-
-                        if (debug && count== 1) {
-                            StringBuilder sb = new StringBuilder(f.toString());
-                            sb.append(": ");
-                            for (int k = 0; k < idx.length; k++) {
-                                sb.append(val[k] == 1 ? "+C" : "-C");
-                                sb.append(idx[k] + " ");
-                            }
-                            sb.append("= ").append(nr);
-                            Log.debug(sb.toString());
-                        }
-                        if (count== 1) {
-                            double obs= (flux? (nr/ (double) effLen): nr);
-                            addConstraintToLp(idx, val, LpSolve.EQ, obs);
-                        }
-                        ++restrNr;
-                    }   // count > 0
-
+                    setConstraints(e, f, sa, count, sumSEG, tt, v, w,
+                            mapE, txSegments, txEdges, segmentHash, hashTxNr, hashCxTx, txError);
                 } // all edges in segment
 
                 //close segment
@@ -1680,8 +1439,9 @@ public class GraphLPsolver {
                            sb2.append(";"+ st.nextToken());
                         // TODO can use as a check
                         //sb2.append(";DEC2="+ Math.round(sumTx[hashTxNr.get(tx)]* 100.00)/ 100.00);
-                        sb2.append(";OBS="+ sumObs+ ";SUB="+ (Math.round(sumMinus* 100.00)/ 100.00)
-                                + ";ADD="+ Math.round(sumPlus* 100.00)/ 100.00);
+                        sb2.append(";OBS="+ (Math.round(sumSEG[0]* 100.00)/ 100.00)
+                                + ";SUB="+ (Math.round(sumSEG[1]* 100.00)/ 100.00)
+                                + ";ADD="+ Math.round(sumSEG[2]* 100.00)/ 100.00);
                         while (st.hasMoreElements())
                             sb2.append(";"+ st.nextToken());
                         txSegments.put(tx, sb2);
@@ -1696,11 +1456,58 @@ public class GraphLPsolver {
 			return null;
 
         if (count== 2) {
+            double[] locusErr= new double[6];
+            Arrays.fill(locusErr, 0d);
+            Iterator<double[]> ii= txError.values().iterator();
+            while(ii.hasNext()) {
+                double[] tmp= ii.next();
+                for (int i = 0; i < tmp.length; i++)
+                    locusErr[i]+= tmp[i];
+            }
+            double locusTotSense= locusErr[0]- locusErr[1]+ locusErr[2],
+                    locusTotAsense= locusErr[3]- locusErr[4]+ locusErr[5],
+                    locusTot= locusTotSense+ locusTotAsense;
+            double locusTotNor= 0d;
+            for (int i = 0; i < trpts.length; i++)
+                locusTotNor+= getTrptExprHash().get(trpts[i].getTranscriptID());
+            String locusPfx= trpts[0].getGene().getLocusID()+ "\t"
+                    + "LNOR="+ locusTotNor
+                    + ";LEXP="+ Math.round(locusTot* 100.00)/ 100.00
+                    + ";OBS="+ Math.round((locusErr[0]+ locusErr[3])* 100.00)/ 100.00
+                    + ";SUB="+ Math.round((locusErr[1]+ locusErr[4])* 100.00)/ 100.00
+                    + ";ADD="+ Math.round((locusErr[2]+ locusErr[5])* 100.00)/ 100.00
+                    + ";OSN="+ Math.round(locusErr[0]* 100.00)/ 100.00
+                    + ";SSN="+ Math.round(locusErr[1]* 100.00)/ 100.00
+                    + ";ASN="+ Math.round(locusErr[2]* 100.00)/ 100.00
+                    + ";OAS="+ Math.round(locusErr[3]* 100.00)/ 100.00
+                    + ";SAS="+ Math.round(locusErr[4]* 100.00)/ 100.00
+                    + ";AAS="+ Math.round(locusErr[5]* 100.00)/ 100.00
+                    + "\t";
+
             Iterator<Transcript> i2= txSegments.keySet().iterator();
             while (i2.hasNext()) {
                 Transcript tx= i2.next();
                 StringBuilder sb= txSegments.get(tx);
                 sb.append(txEdges.get(tx));
+
+                int c = tMap.get(tx.getTranscriptID());
+                int i = hashTxNr.get(tx);
+                double[] err= txError.get(i);
+                sb.insert(0, locusPfx+ tx.getTranscriptID()+ "\t"
+                        + "TX="+ (i+ 1)
+                        + ";TNOR="+ Math.round(getTrptExprHash().get(tx.getTranscriptID())* 100.00)/ 100.00
+                        + ";TEXP="+ Math.round(resultC[c- 1]* 200.00)/ 100.00   // *2 to get to read-base
+                        + ";OBS="+ Math.round((err[0]+ err[3])* 100.00)/ 100.00
+                        + ";SUB="+ Math.round((err[1]+ err[4])* 100.00)/ 100.00
+                        + ";ADD="+ Math.round((err[2]+ err[5])* 100.00)/ 100.00
+                        + ";OSN="+ Math.round(err[0]* 100.00)/ 100.00
+                        + ";SSN="+ Math.round(err[1]* 100.00)/ 100.00
+                        + ";ASN="+ Math.round(err[2]* 100.00)/ 100.00
+                        + ";OAS="+ Math.round(err[3]* 100.00)/ 100.00
+                        + ";SAS="+ Math.round(err[4]* 100.00)/ 100.00
+                        + ";AAS="+ Math.round(err[5]* 100.00)/ 100.00
+                );
+
                 try {
                     BufferedWriter buffy= new BufferedWriter(
                             new FileWriter("/home/micha/reads/sim_01_norm/hg19_gencode_paired_sorted_tx_dbug.txt", true));
@@ -1753,6 +1560,192 @@ public class GraphLPsolver {
 
 		return tMap;
 	}
+
+    protected void setConstraints(AbstractEdge e, Transcript aTt, int sa, byte count,
+                                  HashMap<String, Integer> tMap,
+                                  HashMap<AbstractEdge, IntVector> mapE,
+                                  HashMap<Transcript, StringBuilder> txSegments,
+                                  HashMap<SimpleEdge, Integer> segmentHash,
+                                  HashMap<Transcript, Integer> hashTxNr,
+                                  HashMap<Integer, Integer> hashCxTx) {
+
+        IntVector v= new IntVector(); // re-use to avoid GC?
+        StringBuilder txSegmentBuilder= null;
+        if (count== 2) {
+            txSegmentBuilder= txSegments.get(aTt);
+            txSegmentBuilder.append("\tSEG=" + segmentHash.get(e) + ";DIR=" + (sa == 0 ? "sense" : "anti"));
+        }
+
+
+        long[] sig = aMapper.encodeTset(aTt);
+        int saveCCtr= constraintCtr;
+        getConstraints(e, sig, v, mapE, sa == 0, count);
+        if (count== 2) {
+            for (int i = saveCCtr+ 1; i <= constraintCtr; i++)
+                hashCxTx.put(i, hashTxNr.get(aTt));
+        }
+
+
+        if (count== 1|| count== 2) {
+            int[] idx = new int[v.length + 1]; // obs parts+ tx frac
+            System.arraycopy(v.vector, 0, idx, 0, v.length);
+            idx[idx.length - 1] = tMap.get(aTt.getTranscriptID());
+            double[] val = new double[idx.length];
+            Arrays.fill(val, 1d);
+            int tlen = aTt.getExonicLength();
+            UniversalMatrix m = profile.getMatrix(tlen);
+
+            double f = m.getFrac(
+                    aTt.getExonicPosition(e.getDelimitingPos(true)),
+                    aTt.getExonicPosition(e.getDelimitingPos(false)),
+                    tlen,
+                    sa == 0 ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+            if (count== 2) {
+                txSegmentBuilder.append(";TEX=" + Math.round(f * 10000.0) / 100.0);
+                double sum= 0d;
+                for (int i = 0; i < idx.length- 1; i++)
+                    sum+= resultC[idx[i]- 1];
+                txSegmentBuilder.append(";DEC=" + Math.round(sum * 100.00) / 100.0);
+            }
+            assert (!(Double.isInfinite(f) || Double.isNaN(f)));
+            mapCCheck.put(aTt.getTranscriptID(),
+                    mapCCheck.get(aTt.getTranscriptID()) + f);
+            val[val.length - 1] = -f;
+            if (debug && count== 1) {
+                StringBuilder sb = new StringBuilder(e.toString());
+                sb.append(": ");
+                for (int k = 0; k < idx.length; k++) {
+                    sb.append(val[k] > 0 ? "+" : "");
+                    sb.append(val[k] % 1 == 0 ? ((int) val[k]) : val[k]);
+                    sb.append("C");
+                    sb.append(idx[k]).append(" ");
+                }
+                sb.append("= 0");
+                Log.debug(sb.toString());
+            }
+            if (count== 1)
+                addConstraintToLp(idx, val, LpSolve.EQ, 0);
+            ++restrNr;
+
+        }
+
+    }
+
+    protected void setConstraints(AbstractEdge e, AbstractEdge f, int sa, byte count,
+                   double[] sumSEG,
+                   Transcript[] tt,
+                   IntVector v,
+                   IntVector w,
+                   HashMap<AbstractEdge, IntVector> mapE,
+                   HashMap<Transcript, StringBuilder> txSegments,
+                   HashMap<Transcript, StringBuilder> txEdges,
+                   HashMap<SimpleEdge, Integer> segmentHash,
+                   HashMap<Transcript, Integer> hashTxNr,
+                   HashMap<Integer, Integer> hashCxTx,
+                   HashMap<Integer, double[]> txError) {
+
+        boolean paird = (f instanceof SuperEdge) && ((SuperEdge) f).isPend();
+
+        int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
+                : ((MappingsInterface) f).getMappings().getRevReadNr());
+
+        v = mapE.remove(f);
+        if (count== 0)
+            constraintCtr += 2;
+        else if (count== 1|| count== 2) {
+
+            int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
+            double obs= (flux? (nr/ (double) effLen): nr);
+
+
+            int[] idx = new int[v.length + 2];    // +/-
+            System.arraycopy(v.vector, 0, idx, 0, v.length);
+            int c = ++constraintCtr;
+
+            // plus, substracts from obs
+            if (paird || !pairedEnd) {
+                w.add(c);
+            }
+            idx[idx.length - 2] = c;
+
+            // prevent from substracting complete observation
+            double lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
+            //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
+            effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
+            if (flux)
+                lim/= effLen;
+            assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
+            if (count== 1)
+                try {
+                    getLPsolve().setUpbo(constraintCtr, lim);
+                } catch (LpSolveException e1) {
+                    e1.printStackTrace();
+                }
+
+            // minus, adds reads
+            // do not limit adding, might cause unsolvable systems
+            c = ++constraintCtr;
+            w.add(c);
+            idx[idx.length - 1] = c;
+
+            // output
+            if (count== 2) {
+                for (Transcript tx: tt) {
+                    double  sub= resultC[constraintCtr- 2],
+                            add= resultC[constraintCtr- 1];  // resultC is 0-based
+
+                    StringBuilder sb= txEdges.get(tx);
+                    String eid= getEID(f, segmentHash);
+                    sb.append("\tEID=E"+ eid);
+                    sb.append(";SEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
+
+                    sb.append(";OBS="+ Math.round(obs* 100.00)/ 100.00);
+                    sb.append(";SUB="+ Math.round(sub* 100.00)/ 100.00);
+                    sb.append(";ADD="+ Math.round(add* 100.00)/ 100.00); // +1 -1
+
+                    double tot= obs+ add- sub;
+                    for (int i = 0; i < idx.length- 2; i++) {
+                        int tc= hashCxTx.get(idx[i]);
+
+                        double dec= resultC[idx[i]- 1],
+                               frac= (tot==0? 0d: (dec/ tot));
+                        sb.append(";TX"+ (tc+ 1)+ "="+ Math.round(dec* 100.00)/ 100.00);
+
+                        if (tc!= hashTxNr.get(tx))
+                            continue;   // only this transcript
+
+                        double[] err= txError.get(tc);
+                        err[sa* 3+ 0]+= obs* frac;
+                        err[sa* 3+ 1]+= sub* frac;
+                        err[sa* 3+ 2]+= add* frac;
+
+                        //else
+                        StringBuilder segb= txSegments.get(tx);
+                        segb.append(";E"+ eid+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
+                    }
+
+                }
+                sumSEG[0]+= obs;
+                sumSEG[1]+= resultC[constraintCtr- 2];
+                sumSEG[2]+= resultC[constraintCtr- 1];  // resultC is 0-based
+            }
+
+            // contribution weights
+            double[] val = new double[idx.length];
+            double x= (flux? 1d/ effLen: 1d);
+            assert(x> 0&& (!Double.isInfinite(x))&& (!Double.isNaN(x)));
+            Arrays.fill(val, x);
+
+            val[val.length - 2] = 1d;
+            val[val.length - 1] = -1d;
+            if (count== 1) {
+                addConstraintToLp(idx, val, LpSolve.EQ, obs);
+            }
+            ++restrNr;
+        }   // count > 0
+
+
+    }
 
     private String getEID(AbstractEdge f, HashMap<SimpleEdge, Integer> segmentHash) {
 
