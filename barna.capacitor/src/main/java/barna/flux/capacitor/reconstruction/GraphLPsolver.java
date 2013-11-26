@@ -1509,7 +1509,7 @@ public class GraphLPsolver {
 
                 try {
                     BufferedWriter buffy= new BufferedWriter(
-                            new FileWriter("/home/micha/reads/sim_01_norm/hg19_gencode_paired_sorted_tx_dbug.txt", true));
+                            new FileWriter("/Volumes/Raptor/scratch/simulations/hg19_gencode_paired_sorted_tx_dbug.txt", true));
                     buffy.write(sb.toString()+ "\n");
                     buffy.close();
                 } catch (IOException e) {
@@ -1667,17 +1667,19 @@ public class GraphLPsolver {
             idx[idx.length - 2] = c;
 
             // prevent from substracting complete observation
-            double lim = (paird || !pairedEnd) ? Math.max(nr - 1, 0) : nr;
+            double lim = (paird || !pairedEnd) ? Math.max(nr - (1d/ 10), 0) : nr;
             //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
             if (flux)
                 lim/= effLen;
             assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
+            // TODO
             if (count== 1)
                 try {
                     getLPsolve().setUpbo(constraintCtr, lim);
                 } catch (LpSolveException e1) {
                     e1.printStackTrace();
                 }
+
 
             // minus, adds reads
             // do not limit adding, might cause unsolvable systems

@@ -1745,7 +1745,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                 stats = new MappingStats(); //Initialize stats
             fileStats(mappingReader);   // dont deactivate, rpkm will be 0
             Log.info("Annotation and mapping input checked");
+        } else {
+            stats= new MappingStats();
+            stats.setReadsTotal(100007838);
         }
+
         //Gene[] oGenes= gtfReader.getGenes();
         Gene[] genes= null; //PreProcessor.collapse(oGenes);
         //Log.info("Collapsed "+ oGenes.length+ " genes into "+ genes.length+ " loci.");
@@ -2471,7 +2475,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     /**
      * A complete iteration cycle over all mappings, either for profiling or for deconvolution.
      *
-     * @param genes genes to be iterated
      */
     public boolean explore(Gene[] genePreclustered) {
 
