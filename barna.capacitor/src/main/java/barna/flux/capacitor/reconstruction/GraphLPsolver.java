@@ -1672,12 +1672,13 @@ public class GraphLPsolver {
             if (flux)
                 lim/= effLen;
             assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
+            // TODO last man standing
             if (count== 1)
-                try {
+                ;/*try {
                     getLPsolve().setUpbo(constraintCtr, lim);
                 } catch (LpSolveException e1) {
                     e1.printStackTrace();
-                }
+                }*/
 
             // minus, adds reads
             // do not limit adding, might cause unsolvable systems
