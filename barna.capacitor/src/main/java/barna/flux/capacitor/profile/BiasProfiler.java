@@ -198,7 +198,7 @@ public class BiasProfiler implements Callable<Profile> {
                             start = -start;
                             end = -end;
                         }
-                        tol = 0;
+                        tol = 200;  // TODO max mapping length
                         start = Math.max(1, start - tol);
                         end = end + tol;
 
@@ -326,6 +326,7 @@ public class BiasProfiler implements Callable<Profile> {
 
 //                    mappings.mark();
                 Iterator<Mapping> mates = mappings.getMates(mapping,settings.getReadDescriptor());
+                int matesFound= 0;
                 while(mates.hasNext()) {
                     otherMapping= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
@@ -367,6 +368,8 @@ public class BiasProfiler implements Callable<Profile> {
                     }
 
                     m.add(bpoint1, bpoint2, -1, -1, elen);    // 5TODO rlen currently not used
+                    ++matesFound;
+
                     // update coverage
                     if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                         if (bpoint1 < bpoint2) {
@@ -386,11 +389,23 @@ public class BiasProfiler implements Callable<Profile> {
                     //nrReadsSingleLociPairsMapped += 2;
                     stats.incrMappingPairsSingleTxLoci(mapping.getCount(weighted)+mapping.getCount(weighted));
                 }
+
+                // add at last this read
+                if (matesFound== 0&& mapping.getStrand()== tx.getStrand()) {
+                    m.add(bpoint1, Math.min(bpoint1+ mapping.getLength(), elen), -1, -1, elen);
+                    if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
+                        for (int i = bpoint1; i < Math.min(bpoint1 + mapping.getLength(), elen); i++)
+                            profile.getCoverageStats().getCoverage().increment(i);
+                    }
+                }
 //                    mappings.reset();
 
             } else {    // single reads
-                m.add(bpoint1, -1, elen,
-                        mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+
+                for (int i = 0; i < mapping.getLength(); i++) {
+                    m.add(bpoint1+ i, -1, elen,
+                            mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+                }
                 // update coverage
                 if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                     if (mapping.getStrand() == tx.getStrand()) {
