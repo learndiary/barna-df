@@ -32,6 +32,7 @@ import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import barna.io.RelativePathParser;
 import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Transcript;
 import barna.model.constants.Constants;
 import net.sf.samtools.SAMFileReader;
 
@@ -519,6 +520,24 @@ public class FluxCapacitorSettings extends ParameterSchema {
     public static final Parameter<Integer> MIN_SCORE = Parameters.intParameter("MIN_SCORE",
             "Minimum mapping score. Mappings with score < min_score are discarded (mapq for BAM, score for BED)",
             -1).longOption("min-score").shortOption('q');
+
+    /**
+     * Maximum length of &quot;introns&quot in the annotation that are considered to be gaps.
+     * Neighboring exons in the same transcript with a distance <= max_gap are joined.
+     */
+    public static final Parameter<Integer> MIN_ILEN = Parameters.intParameter("MAX_GAP",
+            "Maximum length up to which \"introns\" from the annotation are assumed to be indels/gaps? " +
+                    "introns with a length <= MAX_GAP are removed by joining the flanking exons",
+            25, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            int val = (Integer) schema.get(parameter);
+            if (val< 0|| val> 255) {
+                throw new ParameterException(parameter.getName()+ " has to be positive and <= 255");
+            }
+            Transcript.maxLengthIntronIsGap= (byte) val;
+        }
+    }).longOption("maxgap");
 
     /**
      * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file

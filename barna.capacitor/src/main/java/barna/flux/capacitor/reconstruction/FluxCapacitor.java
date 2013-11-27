@@ -1550,8 +1550,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      */
     private void printSettings() {
         Log.info("HEHO", "We are set, so let's go!");
-        // TODO
-        // settings.write(Log.logStream);
+
         StringBuilder sb;
 
         // INPUT
@@ -1561,23 +1560,19 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                 settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
         Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
                 getReadDescriptor().toString());
+        Log.info("\tminimum intron length "+ Transcript.maxLengthIntronIsGap);
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null) {
             Log.info(FluxCapacitorSettings.PROFILE_FILE.getName(),
                     settings.get(FluxCapacitorSettings.PROFILE_FILE).toString());
         }
-        // TODO
-        //p.println("\t"+CLI_LONG_VERBOSE+"\t"+Constants.VERBOSE_KEYWORDS[Constants.verboseLevel]);
-        //if (copyLocal)
-        //	p.println("\t"+FluxCapacitorParameters.PAR_COPY_INPUT);
+
         Log.info(settings.SORT_IN_RAM.getName(),
                 Boolean.toString(settings.get(FluxCapacitorSettings.SORT_IN_RAM)));
 
         // OUTPUT
         Log.info(FluxCapacitorSettings.TMP_DIR.getName(),
                 settings.get(FluxCapacitorSettings.TMP_DIR).getAbsolutePath());
-        // TODO
-        //if (Constants.globalPfx!= null)
-        //p.println("\t"+FluxCapacitorConstants.CLI_LONG_TPX+"\t"+ Constants.globalPfx);
+
         sb = new StringBuilder();
         if (settings.get(FluxCapacitorSettings.STDOUT_FILE) == null)
             sb.append("stdout");
@@ -1587,72 +1582,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                 sb.append("\t" + FluxCapacitorConstants.CLI_LONG_COMPRESSION + "\t" + FileHelper.COMPRESSION_KEYWORDS[compressionOut]);
         }
         Log.info(settings.STDOUT_FILE.getName(), sb.toString());
-/*			p.print("\tfeatures:\t");
-			if (outputExon)
-				p.print("Exons ");
-			if (outputSJunction)
-				p.print("splice-Junctions ");
-			if (outputTranscript)
-				p.print("Transcripts ");
-			if (outputGene)
-				p.print("Genes ");
-			if (outputEvent)
-				p.print("eVents ");
-			p.println();
-*/
-/*			p.print("\tbases:\t");
-			if (outputObs)
-				p.print("Observed ");
-			if (outputPred)
-				p.print("preDicted ");
-			if (outputBalanced)
-				p.print("Balanced ");
-			p.println();
-*/
-/*			p.print("\tscopes:\t");
-			if (outputAll)
-				p.print("All ");
-			if (outputSplit)
-				p.print("Split ");
-			if (outputUnique)
-				p.print("Unique ");
-			p.println();
-*/
-/*			p.print("\tmeasure:\t");
-			if (outputFreq)
-				p.print("Freq ");
-			if (outputSplit)
-				p.print("Split ");
-			if (outputUnique)
-				p.print("Unique ");
-			p.println();
-*/
-/*			if (outputMapped|| outputNotmapped|| outputProfiles|| outputLP) {
-				p.print("\tsave:\t");
-				if (outputMapped)
-					p.print("Mapped-alignments ");
-				if (outputNotmapped)
-					p.print("Notmapped-alignments ");
-				if (outputProfiles)
-					p.print("Profiles ");
-				if (outputLP)
-					p.print("Linear-programs ");
-				p.println();
-			}
-*/
-        // ALGORITHM
-        //p.println("\t"+ CLI_LONG_THREAD+" "+ maxThreads);
-//		sb= new StringBuilder("Read Distribution\t");
-//		if (uniform)
-//			sb.append("uniform");
-//		else if (fileProfile!= null&& fileProfile.exists())
-//			sb.append("from profiles in "+ fileProfile.getAbsolutePath());
-//		else {
-//			sb.append("profiling is carried out");
-//			if (fileProfile!= null)
-//				sb.append(" and stored in "+ fileProfile.getAbsolutePath());
-//		}
-//		Log.info(sb.toString());
 
         if (stranded)
             Log.info("\tstrand information considered.");
@@ -1660,19 +1589,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             Log.info("\tmate pairing information considered");
 
 
-/*			p.print("\t"+ CLI_LONG_COST_MODEL+" "+GraphLPsolver.COSTS_NAMES[costModel]);
-			if (!Double.isNaN(costModelPar))
-				p.print(" "+Double.toString(costModelPar));
-			p.println();
-			p.println("\t"+ CLI_LONG_COST_SPLIT+ " "+costSplit);
-			p.print("\t"+ CLI_LONG_COST_BOUNDS+ " ");
-			if (costBounds== null)
-				p.println(" none.");
-			else
-				p.println(costBounds[0]+","+costBounds[1]);
-			//p.println("\tread length " + readLen);
-			p.println("\t"+ CLI_LONG_STRAND+" "+ strandSpecific);
-*/
         if (settings.get(FluxCapacitorSettings.INSERT_FILE) != null) {
             Log.info("\twriting insert sizes to " + settings.get(FluxCapacitorSettings.INSERT_FILE).getAbsolutePath());
         }

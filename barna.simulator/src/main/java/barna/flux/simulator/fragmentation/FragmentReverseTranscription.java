@@ -199,9 +199,6 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 		@Override
 	    public List<Fragment> process(final ByteArrayCharSequence id, final ByteArrayCharSequence cs, final int start, final int end, final int len) {
 
-            if (id.toString().contains("YDR104C"))
-                System.currentTimeMillis();
-
             if (index1 == null) {
 	            index1 = new int[getRTeventNr(profiler.getMaxMoleculeLength())];
 	        }
