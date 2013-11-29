@@ -570,8 +570,8 @@ public class FluxCapacitorSettings extends ParameterSchema {
      * Neighboring exons in the same transcript with a distance < min_ilen are joined.
      */
     public static final Parameter<Integer> MIN_ILEN = Parameters.intParameter("MIN_ILEN",
-            "Maximum length up to which \"introns\" from the annotation are assumed to be indels/gaps " +
-                    "introns with a length < MIN_ILEN are removed by joining the flanking exons",
+            "Minimum length of introns of the annotation that are considered real and not indels/gaps, " +
+                    "\"introns\" with a length < MIN_ILEN are removed by joining the flanking exons",
             25, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
