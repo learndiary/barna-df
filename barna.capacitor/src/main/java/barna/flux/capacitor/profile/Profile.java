@@ -78,7 +78,10 @@ public class Profile {
 		int lenBin= Arrays.binarySearch(BIN_LEN, tlen);
 		if (lenBin< 0)
 			lenBin= -(lenBin+ 1);
-		
+
+        if (lenBin> 0&& lenBin< BIN_LEN.length&& Math.abs(tlen- BIN_LEN[lenBin- 1])< Math.abs(tlen- BIN_LEN[lenBin]))
+            --lenBin;
+
 		UniversalMatrix m= getMasters()[lenBin];
 		return m;
 	}

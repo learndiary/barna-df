@@ -1667,7 +1667,7 @@ public class GraphLPsolver {
             idx[idx.length - 2] = c;
 
             // prevent from substracting complete observation
-            double lim = (paird || !pairedEnd) ? Math.max(nr - (1d/ 10), 0) : nr;
+            double lim = (paird || !pairedEnd) ? Math.max(nr - (1d), 0) : nr;
             //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
             if (flux)
                 lim/= effLen;

@@ -90,6 +90,8 @@ public class UniversalMatrix {
 	
 	public void add(int p, int readLen, int tlen, byte dir) {
 		int rPos= (int) (p* (sense.length/ (float) tlen));
+        if (rPos< 0|| rPos>= sense.length)
+            return; // catch under/overflows
 		if (dir== Constants.DIR_FORWARD) {
 			++sense[rPos];
 			++sums;

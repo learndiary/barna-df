@@ -2172,7 +2172,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
         // prepare output file
         File f = settings.get(FluxCapacitorSettings.STDOUT_FILE);
-        if (f.exists() && !CommandLine.confirm(
+        if (f!= null&& f.exists() && !CommandLine.confirm(
                 "[CAUTION] I overwrite the output file " +
                         settings.get(FluxCapacitorSettings.STDOUT_FILE).getName() +
                         ", please confirm:\n\t(Yes,No,Don't know)")) {
