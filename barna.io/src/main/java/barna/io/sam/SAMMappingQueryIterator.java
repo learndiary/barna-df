@@ -1,6 +1,5 @@
 package barna.io.sam;
 
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
 import net.sf.samtools.SAMFileReader;
@@ -18,13 +17,11 @@ public class SAMMappingQueryIterator implements Iterator<SAMMapping> {
 
     private SAMRecordIterator wrappedIterator;
     private File mappingFile;
-    private final UniversalReadDescriptor descriptor;
     private SAMRecord lastRecord;
 
-    public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator, UniversalReadDescriptor descriptor) {
+    public SAMMappingQueryIterator(File inputFile, SAMRecordIterator wrappedIterator) {
         this.mappingFile = inputFile;
         this.wrappedIterator = wrappedIterator;
-        this.descriptor = descriptor;
         getNext();
     }
 
@@ -46,7 +43,7 @@ public class SAMMappingQueryIterator implements Iterator<SAMMapping> {
     }
 
     //very slow because always access to disk
-    public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
+    public Iterator<Mapping> getMates(Mapping firstMate) {
         ArrayList<Mapping> mates = new ArrayList<Mapping>();
         SAMFileReader reader = new SAMFileReader(mappingFile);
         SAMRecord mate = reader.queryMate(lastRecord);
