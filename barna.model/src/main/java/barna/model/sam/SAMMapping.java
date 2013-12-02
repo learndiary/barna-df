@@ -12,6 +12,17 @@ import java.util.Comparator;
  */
 public class SAMMapping implements Mapping{
 
+    // Mate flag
+    static final byte FIRST_MATE = 1;
+    static final byte SECOND_MATE = 2;
+
+    // Strand flag
+    static final byte FORWARD = 1;
+    static final byte REVERSE = -1;
+
+    // Mate separator
+    private final String sep = "/";
+
     private String readName;
     private String referenceName;
 
@@ -24,6 +35,7 @@ public class SAMMapping implements Mapping{
     private int length;
     private int mappingQuality;
     private byte strandFlag;
+    private byte mateFlag;
     private byte[] sequence;
     private Cigar cigar;
     private int hits;
@@ -44,7 +56,7 @@ public class SAMMapping implements Mapping{
         insertSize = r.getInferredInsertSize();
         length = 0;
         mappingQuality = r.getMappingQuality();
-        strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
+        strandFlag = r.getReadNegativeStrandFlag() ? REVERSE : FORWARD;
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
         hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
@@ -52,18 +64,16 @@ public class SAMMapping implements Mapping{
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
         properlyPaired = paired ? r.getProperPairFlag() : false;
+        mateFlag = paired ? r.getFirstOfPairFlag() ? FIRST_MATE : SECOND_MATE : FIRST_MATE;
         initBlocks();
-    }
-
-    public SAMMapping(SAMRecord r, String suffix) {
-
-        this(r);
-        this.readName+=suffix;
     }
 
     @Override
     public String getName() {
-        return readName;
+        String ret = readName;
+        if (mateFlag > 0)
+            ret+=sep+mateFlag;
+        return ret;
     }
 
     @Override
