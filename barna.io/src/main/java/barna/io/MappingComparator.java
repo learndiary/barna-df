@@ -44,8 +44,8 @@ public class MappingComparator implements Comparator<Mapping> {
 
 	@Override
 	public int compare(Mapping o1, Mapping o2) {
-		CharSequence ss1= o1.getName(),
-				ss2= o2.getName();
+		CharSequence ss1= o1.getName(true),
+				ss2= o2.getName(true);
 		if (ss1== null|| ss2== null)
 			throw new RuntimeException("failed to get mapping name: "+
 					(ss1== null? o1: "")+

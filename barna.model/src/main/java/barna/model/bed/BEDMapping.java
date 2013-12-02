@@ -48,8 +48,9 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		super(capacity);
 	}
 	
-	public BEDMapping(ByteArrayCharSequence cs) {
+	public BEDMapping(ByteArrayCharSequence cs, UniversalReadDescriptor descriptor) {
 		super(cs);
+        this.descriptor = descriptor;
 	}
 
     public void setDescriptor(UniversalReadDescriptor descriptor) {
@@ -447,8 +448,9 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 
     @Override
     public byte getMateFlag() {
-        Attributes attr = null;
-        attr = descriptor.getAttributes(this,attr);
+        Attributes attr = getAttribute();
+        if(attr == null)
+            return 0;
         return attr.flag;
     }
 
@@ -461,7 +463,7 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
         if (appendMateNumber)
 		    return subSequence(nameP1, nameP2);
         else {
-            Attributes attr = descriptor.getAttributes(subSequence(nameP1, nameP2), null);
+            Attributes attr = getAttribute();
             if(attr == null) {
                 return subSequence(nameP1, nameP2);
             } else {
@@ -524,6 +526,10 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
         return b;
 	}
+
+    public Attributes getAttribute() {
+        return descriptor.getAttributes(subSequence(nameP1, nameP2), null);
+    }
 	
 	public int getNameP2() {
 		if (nameP2< 0) {

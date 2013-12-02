@@ -383,7 +383,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 			return null;
 		try {
 			reader= getReader(-1);
-			cs= new BEDMapping(reader.readLine(cs));
+			cs= new BEDMapping(reader.readLine(cs), descriptor);
 			// BEDMapping clones byte[]
 			return cs;
 		} catch (Exception e) {
@@ -523,7 +523,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
                 break;
             if (attr2 == null || attr2.flag == 1)
                 continue;
-            mappings.add(new BEDMapping(currentMapping));
+            mappings.add(new BEDMapping(currentMapping, descriptor));
         }
         this.reset();
         return mappings.iterator();

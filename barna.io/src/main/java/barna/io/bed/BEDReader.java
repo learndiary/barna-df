@@ -1340,7 +1340,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 						
 						// create object
 						if (os== null) {
-							BEDMapping bed= new BEDMapping(cs);
+							BEDMapping bed= new BEDMapping(cs, descriptor);
 //							/*((Vector<Mapping>)*/ state.result.add(bed);      //using generic
 //							++state.count;
                             state.addResult(bed);

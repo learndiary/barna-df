@@ -287,7 +287,7 @@ public class BiasProfiler implements Callable<Profile> {
         while (mappings.hasNext()) {
             mapping= mappings.next();
 
-            CharSequence tag = mapping.getName();
+            CharSequence tag = mapping.getName(true);
             attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
             if (paired) {
                 if (attributes.flag < 1)
@@ -325,7 +325,7 @@ public class BiasProfiler implements Callable<Profile> {
             if (paired) {
 
 //                    mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping,capacitor.getReadDescriptor());
+                Iterator<Mapping> mates = mappings.getMates(mapping);
                 while(mates.hasNext()) {
                     otherMapping= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
