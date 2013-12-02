@@ -91,6 +91,10 @@ public class SAMMapping implements Mapping{
         return alignmentEnd;
     }
 
+    public byte getMateFlag() {
+        return mateFlag;
+    }
+
     public int getMateStart() {
         return mateAlignmentStart;
     }
