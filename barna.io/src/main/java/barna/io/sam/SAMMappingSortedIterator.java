@@ -2,8 +2,8 @@ package barna.io.sam;
 
 import barna.io.FileHelper;
 import barna.io.MSIterator;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
 import barna.model.sam.SAMMapping;
 import net.sf.samtools.*;
 

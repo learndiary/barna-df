@@ -27,8 +27,8 @@
 
 package barna.io;
 
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
 
 
 public interface MappingReader extends Iterable<Mapping>{

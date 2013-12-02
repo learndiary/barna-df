@@ -9,9 +9,8 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
-import barna.io.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
-import junit.framework.Assert;
 import org.junit.*;
 
 import java.io.BufferedReader;

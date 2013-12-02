@@ -36,11 +36,11 @@ import barna.commons.utils.ArrayUtils;
 import barna.commons.utils.Interceptable;
 import barna.commons.utils.LineComparator;
 import barna.io.*;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 import barna.model.bed.BEDobject;
 import barna.model.constants.Constants;
+import barna.model.rna.UniversalReadDescriptor;
 
 import java.io.*;
 import java.util.*;
@@ -997,7 +997,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
             return null;
         ArrayList<BEDMapping> beds= /*(BEDMapping[])*/ state.result;//TODO move to Mapping
         Collections.sort(beds, getDescriptorComparator());
-        currentIter= new BEDMappingIterator(beds);
+        currentIter= new BEDMappingIterator(beds, this.descriptor);
 
         return currentIter;
 
@@ -1024,7 +1024,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
             PipedOutputStream pout= new PipedOutputStream(pin);
             Comparator<CharSequence> c= new BEDDescriptorComparator(this.descriptor);
             File tmpFile= createTempFile(null, chromosome+ ":"+ from+ "-"+ to+ ".", "bed", true);
-            BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, c);
+            BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, c, this.descriptor);
             biter.init();
             currentIter= biter;
             MappingReaderState state= readState(pout, chromosome, from, to);

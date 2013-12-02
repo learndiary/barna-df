@@ -34,11 +34,10 @@ import barna.commons.launcher.Tool;
 import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.bed.BEDReader;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
-//import barna.io.state.MappingReaderState;
 import barna.model.Mapping;
 import barna.model.bed.BEDobject2;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -52,6 +51,8 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+//import barna.io.state.MappingReaderState;
 
 /**
  * Takes a set of reads mapped to the genome and 

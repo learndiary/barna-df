@@ -27,12 +27,11 @@
 
 package barna.flux.capacitor.graph;
 
-import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
 import barna.io.MSIterator;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
+import barna.model.rna.UniversalReadDescriptor;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -259,24 +258,24 @@ public class AnnotationMapper extends SplicingGraph {
 
     }
 
-	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
-
-		CharSequence tag= mapping.getName();
-		attributes= desc.getAttributes(tag, attributes);
-        if (attributes == null) {
-            Log.warn("Error in read ID: could not parse read identifier " + tag);
-            return null;
-        }
-		if (desc.isPaired()&& attributes.flag<= 0) {
-            Log.warn("Error in read ID: could not find mate in " + tag);
-            return null;
-        }
-		if (desc.isStranded()&& attributes.strand< 0) {
-            Log.warn("Error in read ID: could not find strand in " + tag);
-            return null;
-        }
-        return attributes;
-    }
+//	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
+//
+//		CharSequence tag= mapping.getName();
+//		attributes= desc.getAttributes(tag, attributes);
+//        if (attributes == null) {
+//            Log.warn("Error in read ID: could not parse read identifier " + tag);
+//            return null;
+//        }
+//		if (desc.isPaired()&& attributes.flag<= 0) {
+//            Log.warn("Error in read ID: could not find mate in " + tag);
+//            return null;
+//        }
+//		if (desc.isStranded()&& attributes.strand< 0) {
+//            Log.warn("Error in read ID: could not find strand in " + tag);
+//            return null;
+//        }
+//        return attributes;
+//    }
 
     /*@Override
     protected int createKeyElements(Document doc, Element graph) {
@@ -352,12 +351,11 @@ public class AnnotationMapper extends SplicingGraph {
 
 				mapping= mappings.next();
             ++nrMappingsLocus;
-				CharSequence name= mapping.getName();
+				CharSequence name= mapping.getName(true);
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
             }
 
-			attributes= getAttributes(mapping, descriptor, attributes);
             if (paired && mapping.getMateFlag() == 2)    // don't iterate twice, for counters
                 continue;
 				AbstractEdge target= getEdge2(mapping);
@@ -369,7 +367,7 @@ public class AnnotationMapper extends SplicingGraph {
             byte refStrand = trpts[0].getStrand();    // TODO get from edge
             if (stranded) {
 					boolean sense= mapping.getStrand()== refStrand;
-                byte dir = attributes.strand;
+                byte dir = mapping.getStrand();
                 if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                     ++nrMappingsWrongStrand;
                     continue;
@@ -382,7 +380,7 @@ public class AnnotationMapper extends SplicingGraph {
 
                 // scan for mates
 //                mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+                Iterator<Mapping> mates = mappings.getMates(mapping);
                 while (mates.hasNext()) {
 					otherMapping= mates.next();
 //						attributes2= getAttributes(otherMapping, descriptor, attributes2);
@@ -400,7 +398,7 @@ public class AnnotationMapper extends SplicingGraph {
                     // check again strand in case one strand-info had been lost
                     if (stranded) {
 							boolean sense= otherMapping.getStrand()== refStrand;
-                        byte dir = attributes2.strand;
+                        byte dir = otherMapping.getStrand();
                         if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                             ++nrMappingsWrongStrand;
                             continue;
@@ -443,7 +441,7 @@ public class AnnotationMapper extends SplicingGraph {
                         nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
                     if (buffy != null)
-							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
+							writeInsert(buffy, se, mapping, otherMapping, otherMapping.getName(false));
                 }
 //                mappings.reset();
 

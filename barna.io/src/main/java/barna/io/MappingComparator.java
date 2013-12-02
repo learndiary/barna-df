@@ -3,12 +3,12 @@
  */
 package barna.io;
 
-import java.util.Comparator;
-
 import barna.commons.CharsequenceComparator;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
+
+import java.util.Comparator;
 
 /**
  * @author Emilio

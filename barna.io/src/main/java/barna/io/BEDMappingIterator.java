@@ -28,9 +28,9 @@
 package barna.io;
 
 import barna.commons.log.Log;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
+import barna.model.rna.UniversalReadDescriptor;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -63,15 +63,21 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 	 * @see #reset()
 	 */
 	int markedIndex;
+
+    /**
+     * The read descriptor
+     */
+    private UniversalReadDescriptor descriptor;
 	
 	/**
 	 * Creates an instance iterating the elements 
 	 * provided starting with the first one.
 	 * @param elements array of BED lines
 	 */
-	public BEDMappingIterator(ArrayList<BEDMapping> elements) {
+	public BEDMappingIterator(ArrayList<BEDMapping> elements, UniversalReadDescriptor descriptor) {
 		this.elements= elements;
 		currentIndex= 0;
+        this.descriptor = descriptor;
 	}
 
 	/**
@@ -131,7 +137,7 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 	}
 
     @Override
-    public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
+    public Iterator<Mapping> getMates(Mapping firstMate) {
         ArrayList<Mapping> mappings = new ArrayList<Mapping>();
         UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
         attr1 = getAttributes(firstMate,descriptor,attr1);
@@ -153,7 +159,7 @@ public class BEDMappingIterator implements MSIterator<BEDMapping>{
 
     private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
 
-        CharSequence tag= mapping.getName();
+        CharSequence tag= mapping.getName(true);
         attributes= desc.getAttributes(tag, attributes);
         if (attributes == null) {
             Log.warn("Error in read ID: could not parse read identifier " + tag);

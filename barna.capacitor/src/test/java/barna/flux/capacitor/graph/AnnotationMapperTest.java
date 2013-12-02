@@ -4,10 +4,10 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.io.sam.SAMReader;
 import barna.model.Gene;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
 import junit.framework.TestCase;
 import org.junit.Test;
 

@@ -8,9 +8,9 @@ import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
 import barna.commons.utils.Interceptable;
 import barna.io.*;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.constants.Constants;
+import barna.model.rna.UniversalReadDescriptor;
 import net.sf.samtools.*;
 
 import java.io.*;
