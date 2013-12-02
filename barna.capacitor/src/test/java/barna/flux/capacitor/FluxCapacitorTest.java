@@ -39,6 +39,7 @@ public class FluxCapacitorTest {
     final File GTF_HG_JUNCTION = new File(getClass().getResource("/chr1_329653_320881_junction.gtf").getFile());
     final File BAM_HG_MULTI = new File(getClass().getResource("/single_multimap.bam").getFile());
     final File GTF_HG_MULTI = new File(getClass().getResource("/single_multimap.gtf").getFile());
+    final File BAM_HG_MIXED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363_mixed.bam").getFile());
 
     @BeforeClass
     public static void initExecuter() {
@@ -802,6 +803,23 @@ public class FluxCapacitorTest {
         assertEquals(0, stats.getMappingPairsNoTx());
         assertEquals(0, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());
+
+    }
+
+    @Test
+    public void testMixedSE_PE_Bam() throws Exception {
+
+        Map pars = new HashMap();
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_SORTED);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MIXED);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
+        //pars.put("WEIGHTED_COUNT", true);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
 
     }
 }
