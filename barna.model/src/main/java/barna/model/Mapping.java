@@ -50,6 +50,12 @@ public interface Mapping {
 	 * @return mapping strand direction
 	 */
 	public byte getStrand(); // TODO maybe something like boolean isReverseStrand()?
+
+    /**
+     *
+     * @return mapping mate number
+     */
+    public byte getMateFlag();
 	
 	/**
 	 * 

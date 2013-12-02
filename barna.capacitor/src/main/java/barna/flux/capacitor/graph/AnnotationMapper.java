@@ -31,10 +31,8 @@ import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
 import barna.io.MSIterator;
 import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
-import barna.model.sam.SAMMapping;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -338,9 +336,6 @@ public class AnnotationMapper extends SplicingGraph {
         // init
 		Mapping mapping, otherMapping;
         CharSequence lastName = null;
-        UniversalReadDescriptor.Attributes
-                attributes = descriptor.createAttributes(),
-                attributes2 = descriptor.createAttributes();
         boolean paired = descriptor.isPaired();
         boolean stranded = descriptor.isStranded();
         nrMappingsLocus = 0;
@@ -363,7 +358,7 @@ public class AnnotationMapper extends SplicingGraph {
             }
 
 			attributes= getAttributes(mapping, descriptor, attributes);
-            if (paired && attributes.flag == 2)    // don't iterate twice, for counters
+            if (paired && mapping.getMateFlag() == 2)    // don't iterate twice, for counters
                 continue;
 				AbstractEdge target= getEdge2(mapping);
             if (target == null) {
