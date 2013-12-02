@@ -83,7 +83,7 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
             if (primaryOnly && record.getNotPrimaryAlignmentFlag())
                 continue;
 
-            mapping = new SAMMapping(record, getSuffix(record));
+            mapping = new SAMMapping(record);
 
             if (uniqueOnly && !mapping.isUnique())
                 continue;
@@ -200,10 +200,4 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
         wrappedIterator.remove();
     }
 
-    private String getSuffix(SAMRecord record) {
-        if (record.getReadPairedFlag()) {
-            return record.getFirstOfPairFlag()?"/1":"/2";
-        }
-        return "";
-    }
 }

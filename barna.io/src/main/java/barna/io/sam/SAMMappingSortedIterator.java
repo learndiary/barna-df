@@ -146,7 +146,7 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             if (this.primaryOnly && record.getNotPrimaryAlignmentFlag())
                 continue;
 
-            mapping = new SAMMapping(record, getSuffix(record));
+            mapping = new SAMMapping(record);
 
             if (uniqueOnly && !mapping.isUnique())
                 continue;
@@ -275,16 +275,4 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         wrappedIterator.remove();
     }
 
-    /**
-     * Returns a suffix for the SAM record read name for paired end read. I returns "/1"
-     * for the first mate and "/2" for the second.
-     * @param record the SAM record
-     * @return the suffix
-     */
-    private String getSuffix(SAMRecord record) {
-        if (record.getReadPairedFlag()) {
-            return record.getFirstOfPairFlag()?"/1":"/2";
-        }
-        return "";
-    }
 }
