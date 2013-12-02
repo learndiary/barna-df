@@ -8,12 +8,12 @@ package barna.model;
  *
  */
 public interface Mapping {
-	
+
 	/**
 	 * 
 	 * @return the name of the mapping
 	 */
-	public CharSequence getName();
+	public CharSequence getName(Boolean appendMateNumber);
 
 	/**
 	 * 

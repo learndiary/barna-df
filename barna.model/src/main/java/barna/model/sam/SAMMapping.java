@@ -69,9 +69,9 @@ public class SAMMapping implements Mapping{
     }
 
     @Override
-    public String getName() {
+    public String getName(Boolean appendMateNumber) {
         String ret = readName;
-        if (mateFlag > 0)
+        if (appendMateNumber)
             ret+=sep+mateFlag;
         return ret;
     }
@@ -256,7 +256,7 @@ public class SAMMapping implements Mapping{
 
     public static class SAMIdComparator implements Comparator<SAMMapping> {
         public int compare(SAMMapping o1, SAMMapping o2) {
-            return o1.getName().compareTo(o2.getName());
+            return o1.getName(true).compareTo(o2.getName(true));
         }
     }
 }
