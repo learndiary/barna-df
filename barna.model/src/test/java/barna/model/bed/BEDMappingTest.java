@@ -58,9 +58,9 @@ public class BEDMappingTest {
                 "\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+
                 blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
         ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
-        //UniversalReadDescriptor d = new UniversalReadDescriptor();
-        //d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
-        bed= new BEDMapping(bacs);
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+        bed = new BEDMapping(bacs, d);
     }
 
     @Test
