@@ -58,9 +58,9 @@ public class BEDMappingTest {
                 "\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+
                 blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
         ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
-        UniversalReadDescriptor d = new UniversalReadDescriptor();
-        d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
-        bed= new BEDMapping(bacs, d);
+        //UniversalReadDescriptor d = new UniversalReadDescriptor();
+        //d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+        bed= new BEDMapping(bacs);
     }
 
     @Test
@@ -85,6 +85,7 @@ public class BEDMappingTest {
         assertEquals("test1", bed.getName(true).toString());
         assertEquals("test1", bed.getName(false).toString());
         bed.setName("test1/1");
+        bed.init();
         assertEquals("test1/1", bed.getName(true).toString());
         assertEquals("test1", bed.getName(false).toString());
     }
