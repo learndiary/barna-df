@@ -72,7 +72,7 @@ public class SAMMapping implements Mapping{
     @Override
     public String getName(Boolean appendMateNumber) {
         String ret = readName;
-        if (appendMateNumber)
+        if (paired && appendMateNumber)
             ret+=sep+mateFlag;
         return ret;
     }

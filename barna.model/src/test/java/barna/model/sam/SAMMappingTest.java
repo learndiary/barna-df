@@ -37,7 +37,7 @@ public class SAMMappingTest {
     @Test
     public void testName() throws Exception {
         assertEquals("r005",mapping.getName(false));
-        assertEquals("r005/1",mapping.getName(true));
+        assertEquals("r005",mapping.getName(true));
     }
 
     @Test
