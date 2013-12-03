@@ -368,7 +368,7 @@ public class AnnotationMapper extends SplicingGraph {
             if (stranded) {
 					boolean sense= mapping.getStrand()== refStrand;
                 byte dir = mapping.getStrand();
-                if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                if ((dir == -1 && sense) || (dir == 1 && !sense)) {
                     ++nrMappingsWrongStrand;
                     continue;
                 }
@@ -399,7 +399,7 @@ public class AnnotationMapper extends SplicingGraph {
                     if (stranded) {
 							boolean sense= otherMapping.getStrand()== refStrand;
                         byte dir = otherMapping.getStrand();
-                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
+                        if ((dir == -1 && sense) || (dir == 1 && !sense)) {
                             ++nrMappingsWrongStrand;
                             continue;
                         }
