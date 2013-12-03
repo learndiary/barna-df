@@ -364,6 +364,7 @@ public class AnnotationMapper extends SplicingGraph {
                 ++nrMappingsLocusMultiMaps;
             }
 
+            // Check if input file contains mixed paired-end/single-end reads
             if (paired && mapping.getMateFlag() ==  0)
                 Log.warn("Input file contains mixed reads. Skipped single-end read: " + mapping.getName(false) + ".");
 
