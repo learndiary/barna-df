@@ -32,7 +32,6 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
-import barna.model.rna.UniversalReadDescriptor;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -93,14 +92,15 @@ public class AnnotationMapper extends SplicingGraph {
     private ComplexCounter cc= null;
 
     /**
-     * Read descriptor to be used for mapping
-     */
-    private UniversalReadDescriptor descriptor=null;
-
-    /**
      * Whether weighting mapping counts by the number of hits
      */
     private boolean weighted=false;
+
+    /**
+     * Pairedness and strandedness of the mapping
+     */
+    boolean paired = false;
+    boolean stranded = false;
 
     /**
      * Read strandedness
@@ -112,20 +112,21 @@ public class AnnotationMapper extends SplicingGraph {
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand) {
-        this(gene, descriptor, weighted, readStrand, DEFAULT_COUNTER_TYPES);
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand) {
+        this(gene, paired, stranded, weighted, readStrand, DEFAULT_COUNTER_TYPES);
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
-        this(gene, descriptor, false, readStrand, counterTypes);
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
+        this(gene, paired, stranded, false, readStrand, counterTypes);
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
-        this.descriptor = descriptor;
+        this.paired = paired;
+        this.stranded = stranded;
         this.weighted = weighted;
         this.readStrand = readStrand;
         if (!counterTypes.isEmpty())
@@ -342,8 +343,7 @@ public class AnnotationMapper extends SplicingGraph {
         // init
 		Mapping mapping, otherMapping;
         CharSequence lastName = null;
-        boolean paired = descriptor.isPaired();
-        boolean stranded = descriptor.isStranded();
+
         nrMappingsLocus = 0;
         nrMappingsLocusMultiMaps = 0;
         nrMappingsMapped = 0;

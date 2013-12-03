@@ -1067,7 +1067,9 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if(tasks.isEmpty())
                 return null;
 
-            mapper = new AnnotationMapper(this.gene, descriptor, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), settings.get(FluxCapacitorSettings.READ_STRAND));
+            AnnotationMapping am = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING);
+
+            mapper = new AnnotationMapper(this.gene, am.isPaired(), am.isStranded(), settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), settings.get(FluxCapacitorSettings.READ_STRAND));
             mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
             /*stats.incrReadsLoci(mapper.nrMappingsLocus);
