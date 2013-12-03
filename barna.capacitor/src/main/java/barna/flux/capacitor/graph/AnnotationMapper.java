@@ -27,6 +27,7 @@
 
 package barna.flux.capacitor.graph;
 
+import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
@@ -362,6 +363,9 @@ public class AnnotationMapper extends SplicingGraph {
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
             }
+
+            if (paired && mapping.getMateFlag() ==  0)
+                Log.warn("Input file contains mixed reads. Skipped single-end read: " + mapping.getName(false) + ".");
 
             if (paired && mapping.getMateFlag() == 2)    // don't iterate twice, for counters
                 continue;
