@@ -13,6 +13,7 @@ import java.util.Comparator;
 public class SAMMapping implements Mapping{
 
     // Mate flag
+    static final byte SINGLE_END = 0;
     static final byte FIRST_MATE = 1;
     static final byte SECOND_MATE = 2;
 
@@ -64,7 +65,7 @@ public class SAMMapping implements Mapping{
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
         properlyPaired = paired ? r.getProperPairFlag() : false;
-        mateFlag = paired ? r.getFirstOfPairFlag() ? FIRST_MATE : SECOND_MATE : FIRST_MATE;
+        mateFlag = paired ? r.getFirstOfPairFlag() ? FIRST_MATE : SECOND_MATE : SINGLE_END;
         initBlocks();
     }
 

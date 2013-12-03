@@ -116,7 +116,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
         pars.put(FluxCapacitorSettings.KEEP_SORTED.getName(), "tmp_sorted");
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         FluxCapacitorRunner.runCapacitor(parFile, null);
 
@@ -388,7 +388,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
@@ -677,7 +677,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), true);
         pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
@@ -809,6 +809,7 @@ public class FluxCapacitorTest {
     public void testMixedSE_PE_Bam() throws Exception {
 
         Map pars = new HashMap();
+        File TEST_BAM = new File(getClass().getResource("/test.bam").getFile());
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_SORTED);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MIXED);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
