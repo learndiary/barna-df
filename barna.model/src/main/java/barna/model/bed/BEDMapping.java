@@ -448,6 +448,8 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 
     @Override
     public byte getMateFlag() {
+        if (!isInited())
+            init();
         Attributes attr = getAttribute();
         if(attr == null)
             return 0;
@@ -528,6 +530,8 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	}
 
     public Attributes getAttribute() {
+        if (!isInited())
+            init();
         return descriptor.getAttributes(subSequence(nameP1, nameP2), null);
     }
 	
