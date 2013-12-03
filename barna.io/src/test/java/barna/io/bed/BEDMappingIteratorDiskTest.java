@@ -30,7 +30,6 @@ package barna.io.bed;
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.system.OSChecker;
-import barna.io.BEDMappingIteratorDisk;
 import barna.model.bed.BEDMapping;
 import barna.model.rna.UniversalReadDescriptor;
 import org.junit.AfterClass;

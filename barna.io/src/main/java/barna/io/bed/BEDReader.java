@@ -862,7 +862,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
 	/**
      * Comparator for comparing read identifiers according to the provided descriptor.
      */
-    MappingComparator comp= null;
+    BEDMappingComparator comp= null;
 
     /**
      * Returns an instance for comparing read identifiers according to the provided descriptor.
@@ -870,7 +870,7 @@ private BEDMapping[] toObjects(Vector<BEDMapping> objV) {
      */
     private Comparator<? super Mapping> getDescriptorComparator() {
         if (comp == null) {
-            comp = new MappingComparator(
+            comp = new BEDMappingComparator(
                     this.descriptor);
         }
 
