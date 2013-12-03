@@ -30,6 +30,7 @@ public class FluxCapacitorTest {
     final File BED_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.bed").getFile());
     final File BED_MM9_UNSORTED = new File(getClass().getResource("/mm9_chr1_chrX.bed").getFile());
     final File BED_MM9_SORTED_NO_CHR1 = new File(getClass().getResource("/mm9_chr1_chrX_sorted_no_chr1.bed").getFile());
+    final File BED_MM9_SORTED_GZ = new File(getClass().getResource("/mm9_chr1_chrX_sorted.bed.gz").getFile());
     final File BED_MM9_PROFILE = new File(getClass().getResource("/mm9_chr1_chrX.profile").getFile());
     final File GTF_HG_SORTED = new File(getClass().getResource("/gencode_v12_hg_chr22_24030323-24041363.gtf").getFile());
     final File BED_HG_SORTED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363.bed").getFile());
@@ -294,10 +295,30 @@ public class FluxCapacitorTest {
     }
 
     @Test
-    public void testWrongReadDescriptor() throws Exception {
+    public void testWrongBedReadDescriptor() throws Exception {
         Map pars = new HashMap();
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_MM9_SORTED);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED);
+        pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
+        pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        String msg = "";
+        try {
+            FluxCapacitorRunner.runCapacitor(parFile, null);
+        } catch (Exception e) {
+            msg = e.getMessage();
+        }
+        assertTrue(msg.contains("incompatible with read IDs"));
+    }
+
+    @Test
+    public void testWrongBedGzReadDescriptor() throws Exception {
+        Map pars = new HashMap();
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_MM9_SORTED);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED_GZ);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
@@ -809,7 +830,6 @@ public class FluxCapacitorTest {
     public void testMixedSE_PE_Bam() throws Exception {
 
         Map pars = new HashMap();
-        File TEST_BAM = new File(getClass().getResource("/test.bam").getFile());
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_SORTED);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MIXED);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
