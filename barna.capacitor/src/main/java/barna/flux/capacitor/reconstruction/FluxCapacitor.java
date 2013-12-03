@@ -44,7 +44,6 @@ import barna.genome.lpsolver.LPSolverLoader;
 import barna.io.*;
 import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.io.sam.SAMReader;
 import barna.model.*;
 import barna.model.commons.MyFile;
@@ -106,11 +105,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     private MappingStats stats;
 
     /**
-     * The read descriptor to be used for the run
-     */
-    private UniversalReadDescriptor descriptor;
-
-    /**
      * Thread to parallelize annotation reading.
      */
     class GtfReaderThread extends Thread {
@@ -129,23 +123,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
     }
 
-
-    /**
-     * Comparator for comparing read identifiers according to the provided descriptor.
-     */
-    MappingComparator comp = null;
-
-    /**
-     * Returns an instance for comparing read identifiers according to the provided descriptor.
-     *
-     * @return instance for comparing read identifiers according to the provided descriptor
-     */
-    private Comparator<? super Mapping> getDescriptorComparator() {
-        if (comp == null) {
-            comp = new MappingComparator(getReadDescriptor());
-        }
-        return comp;
-    }
 
     /**
      * A class that encapsulates all information necessary to carry out the deconvolution
@@ -239,11 +216,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         private float[] costBounds = new float[]{0.95f, Float.NaN};
 
         /**
-         * Read descriptor to be used
-         */
-        private UniversalReadDescriptor descriptor =null;
-
-        /**
          * Constructor providing reads and mappings for deconvolution.
          * The mode of the run can be switched between profiling and deconvolution.
          *
@@ -251,7 +223,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          * @param newMappings the mappings that fall in the locus
          * @param tasks     tasks to be preformed
          */
-		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile, UniversalReadDescriptor descriptor) {
+		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile) {
 
             this.gene = newGene;
 			this.mappings = newMappings;
@@ -261,7 +233,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             this.stranded = stranded;
             this.settings = settings;
             this.profile = profile;
-            this.descriptor = descriptor;
             this.stats = new MappingStats();
             this.stats.add(profile.getMappingStats());
             this.stats.reset();
@@ -1067,7 +1038,9 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if(tasks.isEmpty())
                 return null;
 
-            mapper = new AnnotationMapper(this.gene, descriptor, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT));
+            AnnotationMapping am = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING);
+
+            mapper = new AnnotationMapper(this.gene, am.isPaired(), am.isStranded(), settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), settings.get(FluxCapacitorSettings.READ_STRAND));
             mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
             /*stats.incrReadsLoci(mapper.nrMappingsLocus);
@@ -1558,8 +1531,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                 settings.get(FluxCapacitorSettings.ANNOTATION_FILE).getAbsolutePath());
         Log.info(FluxCapacitorSettings.MAPPING_FILE.getName(),
                 settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
-        Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
-                getReadDescriptor().toString());
+        String ext = FileHelper.getExtension(settings.get(FluxCapacitorSettings.MAPPING_FILE)).toUpperCase();
+        if(ext.equals("BED") || ext.equals("GZ")) {
+            Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
+                    settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString());
+        }
         Log.info("\tminimum intron length "+ Transcript.maxLengthIntronIsGap);
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null) {
             Log.info(FluxCapacitorSettings.PROFILE_FILE.getName(),
@@ -2284,7 +2260,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     private AbstractFileIOWrapper getWrapperBED(File inputFile) {
 		/*mappingReader= new BEDReader(inputFile.getAbsolutePath());
 		return mappingReader;*/  // TODO pull up to MappingReader
-        mappingReader = new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),getReadDescriptor(),settings.get(FluxCapacitorSettings.TMP_DIR));
+        mappingReader = new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR));
         return null;// removed mappingReader;
     }
 
@@ -2542,7 +2518,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
 //                    solve(gene[i], mappings, currentTasks);
 
-                    LocusSolver lsolver = new LocusSolver(gene[i], mappings, currentTasks, this.output, pairedEnd, stranded, settings, profile, getReadDescriptor());
+                    LocusSolver lsolver = new LocusSolver(gene[i], mappings, currentTasks, this.output, pairedEnd, stranded, settings, profile);
                     stats.addLocus(lsolver.call());
 
                     if (mappings != null) {
@@ -2597,34 +2573,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
 
         return true;
-    }
-
-    public UniversalReadDescriptor getReadDescriptor() {
-        if (descriptor == null) {
-            FluxCapacitorSettings.ReadStrand readStrand = settings.get(FluxCapacitorSettings.READ_STRAND);
-            if (settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)!=null) {
-                descriptor =  settings.get(FluxCapacitorSettings.READ_DESCRIPTOR);
-            }
-            else {
-                descriptor = new UniversalReadDescriptor();
-                if (mappingReader.isPaired()) {
-                    descriptor.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-                } else {
-                    descriptor.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
-                }
-            }
-            if (!descriptor.isStranded() && !readStrand.equals(FluxCapacitorSettings.ReadStrand.NONE)) {
-                if (descriptor.isPaired()) {
-                    descriptor.init(readStrand.equals(FluxCapacitorSettings.ReadStrand.MATE1_SENSE) ? UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE : UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
-                } else {
-                    descriptor.init(readStrand.equals(FluxCapacitorSettings.ReadStrand.SENSE) ? UniversalReadDescriptor.DESCRIPTORID_SENSE : UniversalReadDescriptor.DESCRIPTORID_ANTISENSE);
-                }
-            }
-
-            if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).isPaired() && !descriptor.isPaired())
-                throw new RuntimeException("Annotation mapping " + settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING) +" requires paired reads");
-        }
-        return descriptor;
     }
 
     /**
@@ -2747,13 +2695,16 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                     + " split mappings (" + (reader.getCountSplitMappings() * 100f / reader.getCountMappings()) + "%)");
 
         // (4) check if read descriptor is applicable
-        if (reader.isApplicable(getReadDescriptor()))
-            Log.info("\tRead descriptor seems OK");
-        else {
-            String msg = "Read Descriptor " + getReadDescriptor()
-                    + " incompatible with read IDs";
-            Log.error(msg);
-            throw new RuntimeException(msg);
+        String ext = FileHelper.getExtension(settings.get(FluxCapacitorSettings.MAPPING_FILE)).toUpperCase();
+        if(ext.equals("BED") || ext.equals("GZ")) {
+            if (reader.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
+                Log.info("\tRead descriptor seems OK");
+            else {
+                String msg = "Read Descriptor " + settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)
+                        + " incompatible with read IDs";
+                Log.error(msg);
+                throw new RuntimeException(msg);
+            }
         }
     }
 
@@ -2779,7 +2730,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             case GFF:
                 return getWrapperGTF(inputFile);
             case BED:
-                return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),getReadDescriptor(),settings.get(FluxCapacitorSettings.TMP_DIR), settings.get(FluxCapacitorSettings.MIN_SCORE));
+                return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR), settings.get(FluxCapacitorSettings.MIN_SCORE));
             case BAM:
                 SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM), settings.get(FluxCapacitorSettings.MIN_SCORE), !settings.get(FluxCapacitorSettings.IGNORE_SAM_FLAGS), settings.get(FluxCapacitorSettings.SAM_PRIMARY_ONLY), settings.get(FluxCapacitorSettings.SAM_MATES_ONLY), settings.get(FluxCapacitorSettings.SAM_UNIQUE_ONLY));
                 if (!settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY).equals(SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY)) {

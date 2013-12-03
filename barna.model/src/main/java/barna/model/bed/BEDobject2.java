@@ -441,6 +441,11 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
         return -1;
     }
 
+    @Override
+    public byte getReadStrand(String readStrand) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);
@@ -465,8 +470,13 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 			init();
 		return strand;
 	}
-	
-	public ByteArrayCharSequence getName() {
+
+    @Override
+    public byte getMateFlag() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public ByteArrayCharSequence getName() {
 		if (!isInited())
 			init();
 		if (nameP1< 0|| nameP2< 0)
@@ -569,6 +579,11 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
 		this.next = next;
 	}
 
+
+    @Override
+    public CharSequence getName(Boolean appendMateNumber) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
     @Override
     public CharSequence getChromosome() {

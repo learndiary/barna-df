@@ -34,11 +34,10 @@ import barna.commons.launcher.Tool;
 import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.bed.BEDReader;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
-//import barna.io.state.MappingReaderState;
 import barna.model.Mapping;
 import barna.model.bed.BEDobject2;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -52,6 +51,8 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+//import barna.io.state.MappingReaderState;
 
 /**
  * Takes a set of reads mapped to the genome and 
@@ -251,8 +252,8 @@ public class NucleosomeFinder implements Tool<Void> {
 			List<? extends Mapping> beds= state.getResults();
 			state.resetResults();
 			if (v.size()> 0) {
-				if (descriptor.getAttributes(beds.get(0).getName(), a).id.equals(
-                        descriptor.getAttributes(v.get(0).getName(), a))) {
+				if (descriptor.getAttributes(beds.get(0).getName(true), a).id.equals(
+                        descriptor.getAttributes(v.get(0).getName(true), a))) {
 					List<Mapping> b= new ArrayList<Mapping>(v.size()+ beds.size());
 					for (int i = 0; i < v.size(); i++) 
 						b.set(i, v.get(i));
@@ -268,14 +269,14 @@ public class NucleosomeFinder implements Tool<Void> {
 			
 			// save bucket with last read ID			
 			if (chr.equals(state.getNextChromosome())) {
-				CharSequence id= descriptor.getAttributes(beds.get(beds.size()- 1).getName(), a).id;
+				CharSequence id= descriptor.getAttributes(beds.get(beds.size()- 1).getName(true), a).id;
 				int x= beds.size()- 2;
-				while (x> 0&& descriptor.getAttributes(beds.get(x--).getName(), a).id.equals(id));
+				while (x> 0&& descriptor.getAttributes(beds.get(x--).getName(true), a).id.equals(id));
 				if (x> 0)
 					x+= 2;
 				else {
 					if (v.size()> 0&& 
-							!descriptor.getAttributes(v.get(v.size()- 1).getName(), a).id.equals(id))
+							!descriptor.getAttributes(v.get(v.size()- 1).getName(true), a).id.equals(id))
 						v.clear();
 				}
 				for (int i = x; i < beds.size(); i++)
@@ -662,13 +663,13 @@ public class NucleosomeFinder implements Tool<Void> {
 			
 			// for pairing
 			if (pairedEnd) {				
-				at1= descriptor.getAttributes(beds.get(i).getName(), at1);
+				at1= descriptor.getAttributes(beds.get(i).getName(true), at1);
 				if (at1.flag!= 1)
 					continue;
 				for (int j = i+1; j < beds.size(); j++) {
 					if (i< x&& j< x)
 						continue;	// skip left-over
-					at2= descriptor.getAttributes(beds.get(j).getName(), at2);
+					at2= descriptor.getAttributes(beds.get(j).getName(true), at2);
 					if (!at1.id.equals(at2.id))
 						break;
 					if (at2.flag!= 2)

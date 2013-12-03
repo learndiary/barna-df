@@ -29,12 +29,10 @@ package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
-import barna.model.sam.SAMMapping;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -95,35 +93,43 @@ public class AnnotationMapper extends SplicingGraph {
     private ComplexCounter cc= null;
 
     /**
-     * Read descriptor to be used for mapping
-     */
-    private UniversalReadDescriptor descriptor=null;
-
-    /**
      * Whether weighting mapping counts by the number of hits
      */
     private boolean weighted=false;
+
+    /**
+     * Pairedness and strandedness of the mapping
+     */
+    boolean paired = false;
+    boolean stranded = false;
+
+    /**
+     * Read strandedness
+     */
+    private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
 
     /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted) {
-        this(gene, descriptor, weighted, DEFAULT_COUNTER_TYPES);
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand) {
+        this(gene, paired, stranded, weighted, readStrand, DEFAULT_COUNTER_TYPES);
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, EnumSet<CounterType> counterTypes) {
-        this(gene, descriptor, false, counterTypes);
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
+        this(gene, paired, stranded, false, readStrand, counterTypes);
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, EnumSet<CounterType> counterTypes) {
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
-        this.descriptor = descriptor;
+        this.paired = paired;
+        this.stranded = stranded;
         this.weighted = weighted;
+        this.readStrand = readStrand;
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
@@ -261,24 +267,24 @@ public class AnnotationMapper extends SplicingGraph {
 
     }
 
-	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
-
-		CharSequence tag= mapping.getName();
-		attributes= desc.getAttributes(tag, attributes);
-        if (attributes == null) {
-            Log.warn("Error in read ID: could not parse read identifier " + tag);
-            return null;
-        }
-		if (desc.isPaired()&& attributes.flag<= 0) {
-            Log.warn("Error in read ID: could not find mate in " + tag);
-            return null;
-        }
-		if (desc.isStranded()&& attributes.strand< 0) {
-            Log.warn("Error in read ID: could not find strand in " + tag);
-            return null;
-        }
-        return attributes;
-    }
+//	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
+//
+//		CharSequence tag= mapping.getName();
+//		attributes= desc.getAttributes(tag, attributes);
+//        if (attributes == null) {
+//            Log.warn("Error in read ID: could not parse read identifier " + tag);
+//            return null;
+//        }
+//		if (desc.isPaired()&& attributes.flag<= 0) {
+//            Log.warn("Error in read ID: could not find mate in " + tag);
+//            return null;
+//        }
+//		if (desc.isStranded()&& attributes.strand< 0) {
+//            Log.warn("Error in read ID: could not find strand in " + tag);
+//            return null;
+//        }
+//        return attributes;
+//    }
 
     /*@Override
     protected int createKeyElements(Document doc, Element graph) {
@@ -338,11 +344,7 @@ public class AnnotationMapper extends SplicingGraph {
         // init
 		Mapping mapping, otherMapping;
         CharSequence lastName = null;
-        UniversalReadDescriptor.Attributes
-                attributes = descriptor.createAttributes(),
-                attributes2 = descriptor.createAttributes();
-        boolean paired = descriptor.isPaired();
-        boolean stranded = descriptor.isStranded();
+
         nrMappingsLocus = 0;
         nrMappingsLocusMultiMaps = 0;
         nrMappingsMapped = 0;
@@ -357,13 +359,15 @@ public class AnnotationMapper extends SplicingGraph {
 
 				mapping= mappings.next();
             ++nrMappingsLocus;
-				CharSequence name= mapping.getName();
+				CharSequence name= mapping.getName(true);
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
             }
 
-			attributes= getAttributes(mapping, descriptor, attributes);
-            if (paired && attributes.flag == 2)    // don't iterate twice, for counters
+            if (paired && mapping.getMateFlag() ==  0)
+                Log.warn("Input file contains mixed reads. Skipped single-end read: " + mapping.getName(false) + ".");
+
+            if (paired && mapping.getMateFlag() == 2)    // don't iterate twice, for counters
                 continue;
 				AbstractEdge target= getEdge2(mapping);
             if (target == null) {
@@ -374,7 +378,7 @@ public class AnnotationMapper extends SplicingGraph {
             byte refStrand = trpts[0].getStrand();    // TODO get from edge
             if (stranded) {
 					boolean sense= mapping.getStrand()== refStrand;
-                byte dir = attributes.strand;
+                byte dir = mapping.getReadStrand(this.readStrand.toString());
                 if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                     ++nrMappingsWrongStrand;
                     continue;
@@ -387,7 +391,7 @@ public class AnnotationMapper extends SplicingGraph {
 
                 // scan for mates
 //                mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+                Iterator<Mapping> mates = mappings.getMates(mapping);
                 while (mates.hasNext()) {
 					otherMapping= mates.next();
 //						attributes2= getAttributes(otherMapping, descriptor, attributes2);
@@ -405,7 +409,7 @@ public class AnnotationMapper extends SplicingGraph {
                     // check again strand in case one strand-info had been lost
                     if (stranded) {
 							boolean sense= otherMapping.getStrand()== refStrand;
-                        byte dir = attributes2.strand;
+                        byte dir = otherMapping.getReadStrand(this.readStrand.toString());
                         if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                             ++nrMappingsWrongStrand;
                             continue;
@@ -448,7 +452,7 @@ public class AnnotationMapper extends SplicingGraph {
                         nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
                     if (buffy != null)
-							writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
+							writeInsert(buffy, se, mapping, otherMapping, otherMapping.getName(false));
                 }
 //                mappings.reset();
 

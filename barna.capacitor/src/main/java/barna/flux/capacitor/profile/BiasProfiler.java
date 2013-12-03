@@ -9,7 +9,6 @@ import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.DirectedRegion;
 import barna.model.Gene;
 import barna.model.Mapping;
@@ -267,9 +266,6 @@ public class BiasProfiler implements Callable<Profile> {
             return;
 
         Mapping mapping, otherMapping;
-        UniversalReadDescriptor.Attributes
-                attributes = capacitor.getReadDescriptor().createAttributes(),
-                attributes2 = capacitor.getReadDescriptor().createAttributes();
         int elen = tx.getExonicLength();    // this is the "effective" length, modify by extensions
 //				if (elen< readLenMin)
 //					return;	// discards reads
@@ -287,12 +283,10 @@ public class BiasProfiler implements Callable<Profile> {
         while (mappings.hasNext()) {
             mapping= mappings.next();
 
-            CharSequence tag = mapping.getName();
-            attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
             if (paired) {
-                if (attributes.flag < 1)
-                    Log.warn("Read ignored, error in readID: " + tag);
-                if (attributes.flag == 2)    // don't iterate second read
+                if (mapping.getMateFlag() < 1)
+                    Log.warn("Read ignored, error in readID: " + mapping.getName(true));
+                if (mapping.getMateFlag() == 2)    // don't iterate second read
                     continue;
             }
             stats.incrReadsSingleTxLoci(1);
@@ -307,8 +301,8 @@ public class BiasProfiler implements Callable<Profile> {
             }
 
             if (strand == 1) {
-                if ((tx.getStrand() == mapping.getStrand() && attributes.strand == 2)
-                        || (tx.getStrand() != mapping.getStrand() && attributes.strand == 1)) {
+                if ((tx.getStrand() == mapping.getStrand() && mapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 2)
+                        || (tx.getStrand() != mapping.getStrand() && mapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 1)) {
                     stats.incrMappingsWrongStrand(1);
                     continue;
                 }
@@ -325,7 +319,7 @@ public class BiasProfiler implements Callable<Profile> {
             if (paired) {
 
 //                    mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping,capacitor.getReadDescriptor());
+                Iterator<Mapping> mates = mappings.getMates(mapping);
                 while(mates.hasNext()) {
                     otherMapping= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
@@ -351,8 +345,8 @@ public class BiasProfiler implements Callable<Profile> {
 
                     // check again strand in case one strand-info had been lost
                     if (strand == 1) {
-                        if ((tx.getStrand() == otherMapping.getStrand() && attributes2.strand == 2)
-                                || (tx.getStrand() != otherMapping.getStrand() && attributes2.strand == 1)) {
+                        if ((tx.getStrand() == otherMapping.getStrand() && otherMapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 2)
+                                || (tx.getStrand() != otherMapping.getStrand() && otherMapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 1)) {
                             stats.incrMappingsWrongStrand(1);
                             continue;
                         }

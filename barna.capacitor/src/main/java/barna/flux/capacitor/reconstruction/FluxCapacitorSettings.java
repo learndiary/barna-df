@@ -31,9 +31,9 @@ import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import barna.io.RelativePathParser;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Transcript;
 import barna.model.constants.Constants;
+import barna.model.rna.UniversalReadDescriptor;
 import net.sf.samtools.SAMFileReader;
 
 import java.io.File;

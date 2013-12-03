@@ -2,7 +2,6 @@ package barna.io.sam;
 
 import barna.commons.Execute;
 import barna.io.MSIterator;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
 import barna.model.sam.SAMMapping;
 import org.junit.AfterClass;
@@ -69,16 +68,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -97,16 +93,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -124,16 +117,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -152,16 +142,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -181,16 +168,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -209,16 +193,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -237,16 +218,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();
@@ -265,16 +243,13 @@ public class SAMReaderTest {
         MSIterator<Mapping> iter = reader.read("chr21", 34924516, 34924516+1000);
         SAMMapping mapping;
 
-        UniversalReadDescriptor desc = new UniversalReadDescriptor();
-        desc.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-
         int c = 0;
         while (iter.hasNext()) {
             ++c;
             mapping = (SAMMapping)iter.next();
-            if (mapping.getName().endsWith("1")) {
+            if (mapping.getName(true).endsWith("1")) {
                 int d = 0;
-                Iterator<Mapping> mates = iter.getMates(mapping, desc);
+                Iterator<Mapping> mates = iter.getMates(mapping);
                 Mapping m;
                 while (mates.hasNext()) {
                     m = mates.next();

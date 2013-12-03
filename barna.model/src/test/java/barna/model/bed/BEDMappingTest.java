@@ -28,6 +28,7 @@
 package barna.model.bed;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.model.rna.UniversalReadDescriptor;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -57,7 +58,9 @@ public class BEDMappingTest {
                 "\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+
                 blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
         ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
-        bed= new BEDMapping(bacs);
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
+        bed = new BEDMapping(bacs, d);
     }
 
     @Test
@@ -74,6 +77,19 @@ public class BEDMappingTest {
 		assertEquals(111, bed.getNextBlockStart());
 	}
 
+    @Test
+    public void testName() throws Exception {
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        bed.descriptor = d;
+        assertEquals("test1", bed.getName(true).toString());
+        assertEquals("test1", bed.getName(false).toString());
+        bed.setName("test1/1");
+        bed.init();
+        assertEquals("test1/1", bed.getName(true).toString());
+        assertEquals("test1", bed.getName(false).toString());
+    }
+
     @Test (expected=UnsupportedOperationException.class)
     public void testSequence() throws Exception {
         bed.getSequence();
@@ -82,5 +98,22 @@ public class BEDMappingTest {
     @Test (expected=UnsupportedOperationException.class)
     public void testCigar() throws Exception {
         bed.getCigar();
+    }
+
+    @Test
+    public void testMateFlag() throws Exception {
+        bed.setDescriptor(UniversalReadDescriptor.getDefaultDescriptor());
+        assertEquals(bed.getMateFlag(),0);
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
+        ByteArrayCharSequence oldName = bed.getName(true);
+        // test mate 1
+        bed.setDescriptor(d);
+        bed.setName(oldName+"/1");
+        assertEquals(bed.getMateFlag(),1);
+        // test mate 2
+        bed.setName(oldName+"/2");
+        assertEquals(bed.getMateFlag(),2);
+        bed.setName(oldName);
     }
 }

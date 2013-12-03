@@ -8,12 +8,12 @@ package barna.model;
  *
  */
 public interface Mapping {
-	
+
 	/**
 	 * 
 	 * @return the name of the mapping
 	 */
-	public CharSequence getName();
+	public CharSequence getName(Boolean appendMateNumber);
 
 	/**
 	 * 
@@ -50,6 +50,12 @@ public interface Mapping {
 	 * @return mapping strand direction
 	 */
 	public byte getStrand(); // TODO maybe something like boolean isReverseStrand()?
+
+    /**
+     *
+     * @return mapping mate number
+     */
+    public byte getMateFlag();
 	
 	/**
 	 * 
@@ -87,4 +93,9 @@ public interface Mapping {
      * @return
      */
     public double getCount(boolean weighted);
+
+    /**
+     * @param readStrand the directionality of the reads
+     */
+    public byte getReadStrand(String readStrand);
 }
