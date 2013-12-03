@@ -93,4 +93,9 @@ public interface Mapping {
      * @return
      */
     public double getCount(boolean weighted);
+
+    /**
+     * @param readStrand the directionality of the reads
+     */
+    public byte getReadStrand(String readStrand);
 }

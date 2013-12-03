@@ -28,6 +28,7 @@
 package barna.flux.capacitor.graph;
 
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
@@ -102,25 +103,31 @@ public class AnnotationMapper extends SplicingGraph {
     private boolean weighted=false;
 
     /**
+     * Read strandedness
+     */
+    private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
+
+    /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted) {
-        this(gene, descriptor, weighted, DEFAULT_COUNTER_TYPES);
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand) {
+        this(gene, descriptor, weighted, readStrand, DEFAULT_COUNTER_TYPES);
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, EnumSet<CounterType> counterTypes) {
-        this(gene, descriptor, false, counterTypes);
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
+        this(gene, descriptor, false, readStrand, counterTypes);
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, EnumSet<CounterType> counterTypes) {
+    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
 		super(gene);
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
         this.descriptor = descriptor;
         this.weighted = weighted;
+        this.readStrand = readStrand;
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
@@ -367,8 +374,8 @@ public class AnnotationMapper extends SplicingGraph {
             byte refStrand = trpts[0].getStrand();    // TODO get from edge
             if (stranded) {
 					boolean sense= mapping.getStrand()== refStrand;
-                byte dir = mapping.getStrand();
-                if ((dir == -1 && sense) || (dir == 1 && !sense)) {
+                byte dir = mapping.getReadStrand(this.readStrand.toString());
+                if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                     ++nrMappingsWrongStrand;
                     continue;
                 }
@@ -398,8 +405,8 @@ public class AnnotationMapper extends SplicingGraph {
                     // check again strand in case one strand-info had been lost
                     if (stranded) {
 							boolean sense= otherMapping.getStrand()== refStrand;
-                        byte dir = otherMapping.getStrand();
-                        if ((dir == -1 && sense) || (dir == 1 && !sense)) {
+                        byte dir = otherMapping.getReadStrand(this.readStrand.toString());
+                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                             ++nrMappingsWrongStrand;
                             continue;
                         }

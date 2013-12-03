@@ -339,7 +339,7 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	 * @param fn
 	 */
 	void extend2field(int fn) {
-		ensureLength(end, (fn- cnt)); 	// -1 +1
+		ensureLength(end, (fn - cnt)); 	// -1 +1
 		for (; cnt < fn; ++cnt) {
 			//p1= end;
 			//a[end++]= DEFAULT_VALUE[cnt];
@@ -445,6 +445,15 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 			init();
 		return strand;
 	}
+
+    public byte getReadStrand(String readStrand) {
+        if (!isInited())
+            init();
+        Attributes attr = getAttribute();
+        if(attr == null)
+            return 0;
+        return attr.strand;
+    }
 
     @Override
     public byte getMateFlag() {

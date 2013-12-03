@@ -441,6 +441,11 @@ public class BEDobject2 extends ByteArrayCharSequence implements Mapping{
         return -1;
     }
 
+    @Override
+    public byte getReadStrand(String readStrand) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public int getNextBlockStart() {
 		if (blockSizeP1< 0|| blockSizeP2< 0) {
 			find(FN_BLOCK_SIZES);

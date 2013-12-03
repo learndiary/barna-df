@@ -212,6 +212,23 @@ public class SAMMapping implements Mapping{
         return (weighted && this.hits > 0 ? 1.0/(double)this.hits : 1.0);
     }
 
+    @Override
+    public byte getReadStrand(String readStrand) {
+        if(readStrand.equals("NONE"))
+            return 0;
+        if(!isPaired()) {
+            if(readStrand.equals("MATE1_SENSE") && getMateFlag() == 1)
+                return 1;
+            if(readStrand.equals("MATE2_SENSE") && getMateFlag() == 2)
+                return 1;
+            return 2;
+        } else {
+            if(readStrand.equals("SENSE"))
+                return 1;
+            return 2;
+        }
+    }
+
     public String getString() {
         return this.getChromosome()+","+(this.getStrand()>0?"+":"-")+(this.getStart()+1)+","+this.cigar.toString();
     }
