@@ -1,7 +1,7 @@
 /**
  * 
  */
-package barna.io;
+package barna.io.bed;
 
 import barna.commons.CharsequenceComparator;
 import barna.model.Mapping;
@@ -14,7 +14,7 @@ import java.util.Comparator;
  * @author Emilio
  *
  */
-public class MappingComparator implements Comparator<Mapping> {
+public class BEDMappingComparator implements Comparator<Mapping> {
 	
 	/**
 	 * Wrapped comparator to compare general objects implementing 
@@ -37,7 +37,7 @@ public class MappingComparator implements Comparator<Mapping> {
 	/**
 	 * 
 	 */
-	public MappingComparator(UniversalReadDescriptor descriptor) {
+	public BEDMappingComparator(UniversalReadDescriptor descriptor) {
 		this.descriptor= descriptor;
 		this.comp= new CharsequenceComparator();
 	}

@@ -25,9 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io;
+package barna.io.bed;
 
 import barna.commons.log.Log;
+import barna.io.MSIterator;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 import barna.model.rna.UniversalReadDescriptor;
@@ -42,7 +43,7 @@ import java.util.Iterator;
  * @author Micha Sammeth (gmicha@gmail.com)
  * @see BEDMappingIteratorDisk
  */
-public class BEDMappingIterator implements MSIterator<BEDMapping>{
+public class BEDMappingIterator implements MSIterator<BEDMapping> {
 	
 	/**
 	 * Array of BED lines that are iterated

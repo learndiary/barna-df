@@ -25,10 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io;
+package barna.io.bed;
 
 import barna.commons.Execute;
 import barna.commons.log.Log;
+import barna.io.*;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
 import barna.model.rna.UniversalReadDescriptor;
