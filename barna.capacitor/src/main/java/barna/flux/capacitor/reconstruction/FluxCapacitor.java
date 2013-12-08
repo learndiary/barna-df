@@ -834,9 +834,8 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats().getReadLenMin(),
+            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats(),
                     //pairedEnd ? insertMinMax : null,
-                    null,
                     mappedReads,
                     stranded,
                     pairedEnd);
@@ -845,7 +844,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             solver.costModel = costModel;    // COSTS_LINEAR
             solver.setCostSplit(costSplit);
             solver.setProfile(profile);
-            solver.setReadLen(profile.getMappingStats().getReadLenMin());
             solver.costBounds = costBounds;
 
             return solver;
