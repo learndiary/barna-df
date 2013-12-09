@@ -217,7 +217,7 @@ public class SAMMapping implements Mapping{
     public byte getReadStrand(String readStrand) {
         if(readStrand.equals("NONE"))
             return 0;
-        if(!isPaired()) {
+        if(isPaired()) {
             if(readStrand.equals("MATE1_SENSE") && getMateFlag() == 1)
                 return 1;
             if(readStrand.equals("MATE2_SENSE") && getMateFlag() == 2)

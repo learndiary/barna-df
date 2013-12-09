@@ -983,7 +983,11 @@ public class Transcript extends DirectedRegion {
 	
 	Gene gene= null;
 
-	String transcriptID= null;
+    public void setTranscriptID(String transcriptID) {
+        this.transcriptID = transcriptID;
+    }
+
+    String transcriptID= null;
 	Exon[] exons= new Exon[0];	// sorted !!
 	public Transcript(Gene newGene, String stableTranscriptID) {
 

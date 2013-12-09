@@ -29,9 +29,11 @@ package barna.flux.capacitor.matrix;
 
 import barna.commons.log.Log;
 import barna.commons.system.OSChecker;
+import barna.flux.capacitor.reconstruction.Kernel;
 import barna.model.commons.IntVector;
 import barna.model.constants.Constants;
 
+import java.util.Arrays;
 import java.util.Vector;
 
 public class UniversalMatrix {
@@ -80,22 +82,28 @@ public class UniversalMatrix {
 	public UniversalMatrix(int length) {
 		sense= new long[length];
 		asense= new long[length];
-		for (int i = 0; i < sense.length; i++) {
-			sense[i]= 0;
-			asense[i]= 0;
-		}
-		sums= 0;
-		suma= 0;
+        Arrays.fill(sense, 1);
+        Arrays.fill(asense, 1);
+		sums= sense.length;
+		suma= asense.length;
 	}
 	
 	public void add(int p, int readLen, int tlen, byte dir) {
 		int rPos= (int) (p* (sense.length/ (float) tlen));
 		if (dir== Constants.DIR_FORWARD) {
-			++sense[rPos];
-			++sums;
+            int rPos2= (int) ((p+ readLen)* (sense.length/ (float) tlen));
+            rPos2= Math.min(sense.length, rPos2);
+            for (int i = rPos; i <= rPos2; i++) {
+                ++sense[i];
+            }
+            sums+= rPos2- rPos+ 1;
 		} else if (dir== Constants.DIR_BACKWARD) {
-			++asense[rPos];
-			++suma;
+            int rPos2= (int) ((p- readLen)* (sense.length/ (float) tlen));
+            rPos2= Math.max(0, rPos2);
+            for (int i = rPos2; i <= rPos; i++) {
+                ++asense[i];
+            }
+			suma+= rPos- rPos2+ 1;
 		} else
 			System.err.println("[ASSERT] direction error "+ dir);
 	}
@@ -114,7 +122,8 @@ public class UniversalMatrix {
 		}
 		add(p1, readLen1, tlen, Constants.DIR_FORWARD);
 		add(p2, readLen2, tlen, Constants.DIR_BACKWARD);
-	}
+
+    }
 
 	public double get(int p1, int p2, int tlen, byte dir) {
 		// 090820 <p2 
@@ -185,7 +194,12 @@ public class UniversalMatrix {
 
         return sum;
 	}
-	
+
+    public void smooth(int window) {
+        sums= Kernel.smoothen(Kernel.KERNEL_EPANECHNIKOV, window, sense);
+        suma= Kernel.smoothen(Kernel.KERNEL_EPANECHNIKOV, window, asense);
+    }
+
 	public double getFrac(int p1, int p2, int tlen, byte dir) {
 		double sum= get(p1, p2, tlen, dir);
 		

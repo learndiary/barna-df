@@ -5,6 +5,7 @@ import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
+import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
@@ -100,6 +101,14 @@ public class BiasProfiler implements Callable<Profile> {
         profile();
         profile.getMappingStats().setReadLenMin(readLenMin);
         profile.getMappingStats().setReadLenMax(readLenMax);
+
+        // smoothen kernels
+        for (int i = 0; i < profile.getMasters().length; i++) {
+            UniversalMatrix m= profile.getMasters()[i];
+            int w= Math.min(readLenMax, (m.getLength()/ 10));
+            m.smooth(w);
+        }
+
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
             writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
         return profile;
@@ -360,7 +369,7 @@ public class BiasProfiler implements Callable<Profile> {
                         continue;
                     }
 
-                    m.add(bpoint1, bpoint2, -1, -1, elen);    // 5TODO rlen currently not used
+                    m.add(bpoint1, bpoint2, mapping.getLength(), otherMapping.getLength(), elen);    // 5TODO rlen currently not used
                     // update coverage
                     if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                         if (bpoint1 < bpoint2) {
@@ -383,7 +392,7 @@ public class BiasProfiler implements Callable<Profile> {
 //                    mappings.reset();
 
             } else {    // single reads
-                m.add(bpoint1, -1, elen,
+                m.add(bpoint1, mapping.getLength(), elen,
                         mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
                 // update coverage
                 if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {

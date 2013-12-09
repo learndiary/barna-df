@@ -917,6 +917,8 @@ public class GraphLPsolver {
                 getLPsolve().setVerbose(LpSolve.CRITICAL);
             else
                 getLPsolve().setOutputfile(outFName);
+            //getLPsolve().setPresolve(LpSolve.PRESOLVE_ROWS, 10);
+            getLPsolve().setScaling(LpSolve.SCALE_DYNUPDATE);
             res= getLPsolve().solve();
         } catch (LpSolveException e) {
             throw new RuntimeException(e);
@@ -958,10 +960,9 @@ public class GraphLPsolver {
         int ret= solve(getLPoutFileName());
 
         // append additional debug info
-        if (ret!= 0) {
+        if (DEBUG&& ret!= 0) {
             try {
                 String fname= getLPoutFileName();
-                fname= "/home/micha/scratch/"+ aMapper.trpts[0].getGene().getLocusID().replace(":", "_");
 
                 getLPsolve().writeLp(fname+ "_wlp");
                 getLPsolve().writeMps(fname+ "_mps");
@@ -1116,15 +1117,15 @@ public class GraphLPsolver {
         }
 
         // locus normalization
-        for (Transcript trpt : trpts) {
-            int tlen = trpt.getExonicLength();
-            UniversalMatrix m = profile.getMatrix(tlen);
-            double f = m.getNfactor(0.2d);
-            double x = trptExprHash.get(trpt.getTranscriptID());
-            x *= f;
-            assert (!Double.isNaN(x));
-            trptExprHash.put(trpt.getTranscriptID(), x);
-        }
+//        for (Transcript trpt : trpts) {
+//            int tlen = trpt.getExonicLength();
+//            UniversalMatrix m = profile.getMatrix(tlen);
+//            double f = m.getNfactor(0.2d);
+//            double x = trptExprHash.get(trpt.getTranscriptID());
+//            x *= f;
+//            assert (!Double.isNaN(x));
+//            trptExprHash.put(trpt.getTranscriptID(), x);
+//        }
 
         // apppend edge solutions
 //        Object[] keys= constraintHash.keySet().toArray();
@@ -1594,11 +1595,10 @@ public class GraphLPsolver {
             int tlen = aTt.getExonicLength();
             UniversalMatrix m = profile.getMatrix(tlen);
 
-            double f = m.getFrac(
-                    aTt.getExonicPosition(e.getDelimitingPos(true)),
-                    aTt.getExonicPosition(e.getDelimitingPos(false)),
-                    tlen,
-                    sa == 0 ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+            int e1= aTt.getExonicPosition(e.getDelimitingPos(true));
+            int e2= aTt.getExonicPosition(e.getDelimitingPos(false));
+            byte dir= sa == 0 ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD;
+            double f = m.getFrac(e1, e2, tlen, dir);
             if (count== 2) {
                 txSegmentBuilder.append(";TEX=" + Math.round(f * 10000.0) / 100.0);
                 double sum= 0d;
@@ -1652,8 +1652,7 @@ public class GraphLPsolver {
             constraintCtr += 2;
         else if (count== 1|| count== 2) {
 
-            //int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
-            int effLen= 0;
+            int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
             effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
             double obs= (flux? (nr/ (double) effLen): nr);
 

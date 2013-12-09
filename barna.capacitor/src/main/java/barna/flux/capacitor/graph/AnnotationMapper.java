@@ -123,6 +123,7 @@ public class AnnotationMapper extends SplicingGraph {
 
     public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
 		super(gene);
+        collapseRedundantTranscripts();
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
@@ -133,7 +134,58 @@ public class AnnotationMapper extends SplicingGraph {
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
-	
+
+    boolean outputCollapsed= false;
+
+    /**
+     * Reduces transcripts with the same intron-exon structure to only one merged construct.
+     * @return the number of transcripts that have been collapsed
+     */
+    protected int collapseRedundantTranscripts() {
+
+        Transcript[] tt= gene.getTranscripts();
+        int ctr= 0;
+        for (int i = 0; i < tt.length; i++) {
+            for (int j = i+ 1; j < tt.length; j++) {
+
+                if (tt[i].getStrand()!= tt[j].getStrand())
+                    continue;
+                Exon[] e1= tt[i].getExons();
+                Exon[] e2= tt[j].getExons();
+                if (e1.length!= e2.length)
+                    continue;
+
+                int k = 0;
+                for (; k < e1.length; k++) {
+                    if (e1[k].getStart()!= e2[k].getStart()|| e1[k].getEnd()!= e2[k].getEnd())
+                        break;
+                }
+
+                // equal, collapse
+                if (k== e1.length) {
+                    String s= "Removing "+ tt[j].getTranscriptID()+ " because it is identical to "+ tt[i].getTranscriptID();
+                    if (outputCollapsed)
+                        Log.debug(s);
+                    else {
+                        Log.warn(s);
+                        Log.warn(" Further collapsed transcripts are sent at debug verbosity level.");
+                        outputCollapsed = true;
+                    }
+                    tt[i].setTranscriptID(tt[i].getTranscriptID()+ "_"+ tt[j].getTranscriptID());
+                    gene.removeTranscript(tt[j]);
+                    tt= gene.getTranscripts();
+                    ++ctr;
+                    --j;
+                }
+            }
+        }
+
+        // update
+        trpts = gene.getTranscripts();
+
+        return ctr;
+    }
+
 	public AbstractEdge getEdge(BEDMapping obj) {
 			
 		Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
