@@ -1,0 +1,6 @@
+1	protein_coding	exon	1735	2449	.	+	.	 gene_id "ENSGALG00000009771"; transcript_id "ENSGALT00000015891"; exon_number "1"; gene_biotype "protein_coding"; exon_id "ENSGALE00000301221";
+1	protein_coding	exon	9272	9489	.	+	.	 gene_id "ENSGALG00000009771"; transcript_id "ENSGALT00000015891"; exon_number "2"; gene_biotype "protein_coding"; exon_id "ENSGALE00000267520";
+1	protein_coding	exon	14698	14799	.	+	.	 gene_id "ENSGALG00000009771"; transcript_id "ENSGALT00000015891"; exon_number "3"; gene_biotype "protein_coding"; exon_id "ENSGALE00000130957";
+1	protein_coding	exon	15008	15189	.	+	.	 gene_id "ENSGALG00000009771"; transcript_id "ENSGALT00000015891"; exon_number "4"; gene_biotype "protein_coding"; exon_id "ENSGALE00000105729";
+1	protein_coding	exon	15392	15498	.	+	.	 gene_id "ENSGALG00000009771"; transcript_id "ENSGALT00000015891"; exon_number "5"; gene_biotype "protein_coding"; exon_id "ENSGALE00000105730";
+1	protein_coding	exon	15588	16308	.	+	.	 gene_id "ENSGALG00000009771"; transcript_id "ENSGALT00000015891"; exon_number "6"; gene_biotype "protein_coding"; exon_id "ENSGALE00000105728";
