@@ -259,7 +259,9 @@ public class SuperEdge extends AbstractEdge {
                     edges[edges.length- 1].getEffLength(dir, mapLenMax);
 
         } else {	// ej / sj
-            int interNt= 1;
+            if (mapLenMax< 2)
+                throw new IllegalArgumentException("Read length has to be at least 2 to overlap a junction!");
+            int interNt= 0;
             for (int i = 1; i < edges.length- 1; i++)
                 interNt+= edges[i].length();
             // delimit possible read positions (slots)

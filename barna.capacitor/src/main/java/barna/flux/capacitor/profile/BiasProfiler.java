@@ -106,7 +106,8 @@ public class BiasProfiler implements Callable<Profile> {
         for (int i = 0; i < profile.getMasters().length; i++) {
             UniversalMatrix m= profile.getMasters()[i];
             int w= Math.min(readLenMax, (m.getLength()/ 10));
-            m.smooth(w);
+            if (w> 0)   // prevent tests to run into that
+                m.smooth(w);
         }
 
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
@@ -292,13 +293,15 @@ public class BiasProfiler implements Callable<Profile> {
         while (mappings.hasNext()) {
             mapping= mappings.next();
 
+            // TODO should compare readIDs
+            stats.incrReadsSingleTxLoci(1); // increment before mate checking, count all reads
+
             if (paired) {
                 if (mapping.getMateFlag() < 1)
                     Log.warn("Read ignored, error in readID: " + mapping.getName(true));
                 if (mapping.getMateFlag() == 2)    // don't iterate second read
                     continue;
             }
-            stats.incrReadsSingleTxLoci(1);
 
             // use reliable info
             if (mapping instanceof SAMMapping) {
@@ -386,8 +389,9 @@ public class BiasProfiler implements Callable<Profile> {
                     }
                     //addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
 
-                    //nrReadsSingleLociPairsMapped += 2;
-                    stats.incrMappingPairsSingleTxLoci(mapping.getCount(weighted)+mapping.getCount(weighted));
+                    // TODO should weight over combinations
+                    stats.incrMappingPairsSingleTxLoci(
+                            mapping.getCount(weighted) + otherMapping.getCount(weighted));
                 }
 //                    mappings.reset();
 

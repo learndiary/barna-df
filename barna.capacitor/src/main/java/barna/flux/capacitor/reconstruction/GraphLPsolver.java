@@ -1655,6 +1655,7 @@ public class GraphLPsolver {
             int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
             effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
             double obs= (flux? (nr/ (double) effLen): nr);
+            assert((!Double.isInfinite(obs))&& (!Double.isNaN(obs)));
 
             int[] idx = new int[v.length + 2];    // +/-
             System.arraycopy(v.vector, 0, idx, 0, v.length);

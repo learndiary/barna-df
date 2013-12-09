@@ -144,10 +144,11 @@ public class SAMMappingIterator implements MSIterator<SAMMapping>{
                 continue;
             if (!this.matesOnly || currentMapping.isMateOf((SAMMapping)firstMate)) {
                 mappings.add(currentMapping);
-                if (this.matesOnly) {
-                    this.mappings.remove(currPos--);
-                    break;
-                }
+                // TODO counters are to be adapted
+//                if (this.matesOnly) {
+//                    this.mappings.remove(currPos--);
+//                    break;
+//                }
             }
         }
         this.reset();

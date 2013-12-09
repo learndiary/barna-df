@@ -1,4 +1,4 @@
-chr1	mm9_refGene	transcript	4847775	4887990	.	+	.	transcript_id "NM_001159750"; locus_id "chr1:4847775-4887990W"; gene_id "NM_001159750"; reads 5145.263184; length 2668; RPKM 244331.625000
-chr1	mm9_refGene	transcript	4848409	4887990	.	+	.	transcript_id "NM_001159751"; locus_id "chr1:4847775-4887990W"; gene_id "NM_001159751"; reads 729.579895; length 2564; RPKM 36050.617188
-chr1	mm9_refGene	transcript	4847775	4887990	.	+	.	transcript_id "NM_011541"; locus_id "chr1:4847775-4887990W"; gene_id "NM_011541"; reads 1723.156860; length 2671; RPKM 81735.140625
+chr1	mm9_refGene	transcript	4847775	4887990	.	+	.	transcript_id "NM_001159750"; locus_id "chr1:4847775-4887990W"; gene_id "NM_001159750"; reads 11434.504883; length 2668; RPKM 542987.000000
+chr1	mm9_refGene	transcript	4848409	4887990	.	+	.	transcript_id "NM_001159751"; locus_id "chr1:4847775-4887990W"; gene_id "NM_001159751"; reads 1350.175171; length 2564; RPKM 66716.000000
+chr1	mm9_refGene	transcript	4847775	4887990	.	+	.	transcript_id "NM_011541"; locus_id "chr1:4847775-4887990W"; gene_id "NM_011541"; reads 2411.319580; length 2671; RPKM 114377.015625
 chrX	mm9_refGene	transcript	162960939	163023648	.	-	.	transcript_id "NM_019397"; locus_id "chrX:162960939-163023648C"; reads 586.000000; length 2700; RPKM 27497.408203

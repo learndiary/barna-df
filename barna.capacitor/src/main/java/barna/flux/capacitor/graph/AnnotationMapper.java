@@ -29,6 +29,7 @@ package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
+import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.model.*;
@@ -112,6 +113,19 @@ public class AnnotationMapper extends SplicingGraph {
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
+
+    public MappingStats getStats() {
+        return stats;
+    }
+
+    public void setStats(MappingStats stats) {
+        this.stats = stats;
+    }
+
+    /**
+     * Mapping statistics
+     */
+    MappingStats stats= null;
 
     public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand) {
         this(gene, paired, stranded, weighted, readStrand, DEFAULT_COUNTER_TYPES);
@@ -409,11 +423,21 @@ public class AnnotationMapper extends SplicingGraph {
         // map read pairs
         while (mappings.hasNext()) {
 
-				mapping= mappings.next();
+            mapping= mappings.next();
             ++nrMappingsLocus;
-				CharSequence name= mapping.getName(true);
+            CharSequence name= mapping.getName(true);
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
+            }
+
+            // updates stats, if any
+            if (stats!= null) {
+                int x= mapping.getLength();
+                // 2 needed for junction mappings
+                if (stats.getReadLenMax()< 2|| x> stats.getReadLenMax())
+                    stats.setReadLenMax(x);
+                if (stats.getReadLenMin()< 2|| x< stats.getReadLenMin())
+                    stats.setReadLenMin(x);
             }
 
             // Check if input file contains mixed paired-end/single-end reads

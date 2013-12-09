@@ -704,7 +704,7 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(3, stats.getReadsSingleTxLoci());
+        assertEquals(6, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
         assertEquals(2, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
@@ -731,7 +731,7 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(3, stats.getReadsSingleTxLoci());
+        assertEquals(6, stats.getReadsSingleTxLoci());
         assertEquals(0, stats.getMappingsSingleTxLoci());
         assertEquals(1, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
@@ -759,7 +759,7 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(3, stats.getReadsSingleTxLoci());
+        assertEquals(6, stats.getReadsSingleTxLoci());
         assertEquals(0, stats.getMappingsSingleTxLoci());   // 0.3 rounded down
         assertEquals(1, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
@@ -787,7 +787,7 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(1, stats.getReadsSingleTxLoci());
+        assertEquals(2, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
         assertEquals(0, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
@@ -840,6 +840,6 @@ public class FluxCapacitorTest {
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
-
+        // TODO test
     }
 }

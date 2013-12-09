@@ -184,7 +184,7 @@ public class SAMReaderTest {
             }
         }
 
-        assertEquals(3,c);  // 3 pairs when considering sam pairing
+        assertEquals(6,c);  // 3 pairs when considering sam pairing, but mates iterated redundantly
     }
 
     @Test

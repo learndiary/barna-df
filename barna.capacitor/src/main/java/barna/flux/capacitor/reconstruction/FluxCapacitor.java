@@ -1039,6 +1039,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             AnnotationMapping am = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING);
 
             mapper = new AnnotationMapper(this.gene, am.isPaired(), am.isStranded(), settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), settings.get(FluxCapacitorSettings.READ_STRAND));
+            mapper.setStats(stats);
             mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
             /*stats.incrReadsLoci(mapper.nrMappingsLocus);
@@ -1051,6 +1052,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             nrMappingsReadsOrPairs += mapper.getNrMappingsMapped() / 2;
             stats.setMappingPairsNoTx(mapper.getNrMappingsNotMappedAsPair());
             stats.setPairsWrongOrientation(mapper.getNrMappingsWrongPairOrientation());
+            // complete profile, if necessary
+            if (profile.getMappingStats().getReadLenMin()< 2)
+                profile.getMappingStats().setReadLenMin(stats.getReadLenMin());
+            if (profile.getMappingStats().getReadLenMax()< 2)
+                profile.getMappingStats().setReadLenMax(stats.getReadLenMax());
 
             //Execute tasks
             for (Task t : this.tasks) {
