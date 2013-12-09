@@ -1,5 +1,6 @@
 package barna.model.sam;
 
+import barna.commons.log.Log;
 import barna.model.Mapping;
 import net.sf.samtools.*;
 
@@ -61,7 +62,13 @@ public class SAMMapping implements Mapping{
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
         hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
+        try {
         xt = r.getCharacterAttribute("XT");
+        } catch (SAMException e) {
+            Log.warn("","");
+            Log.warn("Ignoring XT tag values. The XT tag is supported only when it specifies uniqueness of " +
+                    "GEM mappings");
+        }
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
         properlyPaired = paired ? r.getProperPairFlag() : false;
