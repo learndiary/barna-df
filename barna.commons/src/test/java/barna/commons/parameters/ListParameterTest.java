@@ -48,6 +48,23 @@ public class ListParameterTest {
             assertTrue(test.get().size() == 1);
             assertTrue(test.get().get(0) == "VALUE");
         }catch (Exception e){fail();}
+
+        try{
+            test.parse("A,B");
+            test.validate(null);
+            assertTrue(test.get().size() == 2);
+            assertTrue(test.get().get(0).equals("A"));
+            assertTrue(test.get().get(1).equals("B"));
+        }catch (Exception e){fail();}
+
+        try{
+            test.parse("[A,B]");
+            test.validate(null);
+            assertTrue(test.get().size() == 2);
+            assertTrue(test.get().get(0).equals("A"));
+            assertTrue(test.get().get(1).equals("B"));
+        }catch (Exception e){fail();}
+
         try{
             test.parse("");
             test.validate(null);

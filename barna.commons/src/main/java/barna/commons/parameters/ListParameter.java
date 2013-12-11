@@ -36,9 +36,9 @@ import java.util.List;
  *
  * @author Thasso Griebel (Thasso.Griebel@googlemail.com)
  */
-class ListParameter extends Parameter<List> {
+class ListParameter extends Parameter<List<String>> {
 
-    private List<List> values;
+    private List<List<String>> values;
     private List<String> value;
 
     public ListParameter(String name) {
@@ -46,43 +46,42 @@ class ListParameter extends Parameter<List> {
     }
 
     public ListParameter(String name, String description) {
-        this(name, description, new ArrayList(), null);
+        this(name, description, new ArrayList<String>(), null);
     }
 
-    public ListParameter(String name, String description, List defaultValue) {
+    public ListParameter(String name, String description, List<String> defaultValue) {
         this(name, description, defaultValue, null);
     }
 
-    public ListParameter(String name, String description, List defaultValue, List<List> values) {
+    public ListParameter(String name, String description, List<String> defaultValue, List<List<String>> values) {
         this(name, description, defaultValue, values, null);
     }
 
-    public ListParameter(String name, String description, List defaultValue, List<List> values, ParameterValidator validator) {
-        super(name, description, defaultValue, List.class, validator);
+    public ListParameter(String name, String description, List<String> defaultValue, List<List<String>> values, ParameterValidator validator) {
+        super(name, description, defaultValue, (Class)List.class, validator);
         this.value = defaultValue;
         this.values = values;
     }
 
 
-    public List<List> getValues() {
+    public List<List<String>> getValues() {
         return Collections.unmodifiableList(values);
     }
 
     @Override
-    protected void set(List value) {
+    protected void set(List<String> value) {
         this.value = value;
     }
 
-    protected List get() {
+    protected List<String> get() {
         return value == null ? getDefault() : value;
     }
 
-    public List parse(String value) throws ParameterException {
+    public List<String> parse(String value) throws ParameterException {
         this.value = new ArrayList<String>();
         if (value != null){
-            for(String v : value.split(",")){
-                this.value.add(v);
-            }
+            value = value.replaceAll("[\\[\\]\\s]", "");
+            Collections.addAll(this.value, value.split(","));
         }
         return this.value;
     }

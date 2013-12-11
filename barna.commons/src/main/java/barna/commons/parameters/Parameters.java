@@ -28,10 +28,7 @@
 package barna.commons.parameters;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Helper class to create parameters
@@ -188,23 +185,15 @@ public class Parameters {
         return new EnumSetParameter<E>(name, description, defaultValue, values, validator);
     }
 
-    public static Parameter<List> listParameter(String name) {
+    public static Parameter<List<String>> listParameter(String name) {
         return listParameter(name, "");
     }
 
-    public static Parameter<List> listParameter(String name, String description) {
-        return listParameter(name, description, null, null, (String[]) null);
+    public static Parameter<List<String>> listParameter(String name, String description) {
+        return listParameter(name, description, null, null);
     }
 
-    public static Parameter<List> listParameter(String name, String description, List defaultValue, ParameterValidator validator) {
-        return listParameter(name, description, defaultValue, validator, (String[]) null);
-    }
-
-    public static Parameter<List> listParameter(String name, String description, List defaultValue, String... values) {
-        return listParameter(name, description, defaultValue, null, values);
-    }
-
-    public static Parameter<List> listParameter(String name, String description, List defaultValue, ParameterValidator validator, String... values) {
-        return new ListParameter(name, description, defaultValue, values == null ? Collections.EMPTY_LIST : Arrays.asList(values), validator);
+    public static Parameter<List<String>> listParameter(String name, String description, List<String> defaultValue, ParameterValidator validator) {
+        return new ListParameter(name, description, defaultValue, null, validator);
     }
 }
