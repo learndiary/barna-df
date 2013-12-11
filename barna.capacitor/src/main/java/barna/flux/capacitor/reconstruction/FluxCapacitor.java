@@ -2248,6 +2248,19 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         gtfReader.setGeneWise(true);
         gtfReader.setPrintStatistics(false);
         gtfReader.setReuse(true);
+
+        if (settings.get(FluxCapacitorSettings.PROFILE_INCLUDE)!= null
+                && settings.get(FluxCapacitorSettings.PROFILE_INCLUDE).size()> 0)
+            gtfReader.setSourceInclude(
+                    settings.get(FluxCapacitorSettings.PROFILE_INCLUDE).toArray(new String[0])
+            );
+        if (settings.get(FluxCapacitorSettings.PROFILE_EXCLUDE)!= null
+                && settings.get(FluxCapacitorSettings.PROFILE_EXCLUDE).size()> 0)
+            gtfReader.setSourceExclude(
+                    settings.get(FluxCapacitorSettings.PROFILE_EXCLUDE).toArray(new String[0])
+            );
+
+        //gtfReader.setSourceExclude();
         Transcript.removeGaps = false;
 
         return gtfReader;
@@ -2405,7 +2418,9 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             //this.gtfReader= null;
             //GFFReader gtfReader= getGTFreader();
             gtfReader.reset();
-				mappingReader.reset();
+            gtfReader.setSourceInclude(null);
+            gtfReader.setSourceExclude(null);
+			mappingReader.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                     if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {

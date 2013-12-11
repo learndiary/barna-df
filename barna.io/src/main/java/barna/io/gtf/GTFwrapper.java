@@ -176,10 +176,35 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	HashMap<String,Integer> filtSomeIDs = null;
 	boolean[] filtSomeIDSuccess = null;
 	DirectedRegion[] filtRegs = null;
-	String[] filtChrIDs = null, noIDs = DEFAULT_CHROMOSOME_FILTER, filtGeneIDs = null, filtTrptIDs = null, 
-		readFeatures = new String[] { "exon", "CDS", "start_codon", "stop_codon" }, allowSources= null;
+	String[] filtChrIDs = null;
+    String[] noIDs = DEFAULT_CHROMOSOME_FILTER;
+    String[] filtGeneIDs = null;
+    String[] filtTrptIDs = null;
+    String[] readFeatures = new String[] { "exon", "CDS", "start_codon", "stop_codon" };
 
-	boolean silent = false;
+    /**
+     * Permitted source field values read from the input.
+     */
+    String[] sourceInclude = null;
+
+    public String[] getSourceExclude() {
+        return sourceExclude;
+    }
+
+    /**
+     * Source field values that are prevented to be read from file
+     * @param sourceExclude source field values that are not considered
+     */
+    public void setSourceExclude(String[] sourceExclude) {
+        this.sourceExclude = sourceExclude;
+    }
+
+    /**
+     * Source field values that are to be disregarded from the input.
+     */
+    String[] sourceExclude = null;
+
+    boolean silent = false;
     boolean stars= true;
     boolean outputWarnings= false;
     boolean chromosomeWise = true;
@@ -961,12 +986,20 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	boolean checkSource(String source) {
 		int x; // skip mRNA, gene...
-		for (x = 0; allowSources != null && x < allowSources.length; x++) {
-			if (allowSources[x].equalsIgnoreCase(source))
+		for (x = 0; sourceInclude != null && x < sourceInclude.length; x++) {
+			if (sourceInclude[x].equalsIgnoreCase(source))
 				break;
 		}
-		if (allowSources != null && x == allowSources.length) 
-			return false;		
+		if (sourceInclude != null && x == sourceInclude.length)
+			return false;
+
+        for (x = 0; sourceExclude != null && x < sourceExclude.length; x++) {
+            if (sourceExclude[x].equalsIgnoreCase(source))
+                break;
+        }
+        if (sourceExclude != null && x != sourceExclude.length)
+            return false;
+
 		return true;
 	}
 
@@ -2489,12 +2522,12 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		this.strandWise = strandWise;
 	}
 
-	public String[] getAllowSources() {
-		return allowSources;
+	public String[] getSourceInclude() {
+		return sourceInclude;
 	}
 
-	public void setAllowSources(String[] allowSources) {
-		this.allowSources = allowSources;
+	public void setSourceInclude(String[] sourceInclude) {
+		this.sourceInclude = sourceInclude;
 	}
 
 	public int getReadAheadTranscripts() {
