@@ -484,9 +484,9 @@ public class GraphLPsolver {
                 int tlen = aTt.getExonicLength();
                 UniversalMatrix m = getMatrixMap().get(aTt.getTranscriptID());
                 int[] area = e.getFrac(aTt, mappingStats.getReadLenMin(), dir);
-                long reads = (long) m.get(area[0], area[1], tlen, dir);
-                long sum = m.getSum(dir);
-                double val = reads / (double) sum;
+                double reads = m.get(area[0], area[1], tlen, dir);
+                double sum = m.getSum(dir);
+                double val = reads / sum;
                 totVal += val;
                 if (val < 0 || Double.isNaN(val) || Double.isInfinite(val)) {
                     System.err.println("invalid val " + Double.toString(val) + " " + aMapper.trpts[0] + " " + e);
