@@ -5,11 +5,11 @@ import barna.commons.utils.StringUtils;
 import barna.flux.capacitor.matrix.UniversalMatrix;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
+import barna.flux.capacitor.reconstruction.Kernel;
 import barna.io.FileHelper;
 import barna.io.MSIterator;
 import barna.io.MappingReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.DirectedRegion;
 import barna.model.Gene;
 import barna.model.Mapping;
@@ -101,6 +101,15 @@ public class BiasProfiler implements Callable<Profile> {
         profile();
         profile.getMappingStats().setReadLenMin(readLenMin);
         profile.getMappingStats().setReadLenMax(readLenMax);
+
+        // smoothen kernels
+        for (int i = 0; i < profile.getMasters().length; i++) {
+            UniversalMatrix m= profile.getMasters()[i];
+            int w= Math.min(readLenMax, (m.getLength()/ 10));
+            if (w> 0)   // prevent tests to run into that
+                m.smooth(w);
+        }
+
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE)!=null)
             writeProfiles(settings.get(FluxCapacitorSettings.PROFILE_FILE),true);
         return profile;
@@ -267,9 +276,6 @@ public class BiasProfiler implements Callable<Profile> {
             return;
 
         Mapping mapping, otherMapping;
-        UniversalReadDescriptor.Attributes
-                attributes = capacitor.getReadDescriptor().createAttributes(),
-                attributes2 = capacitor.getReadDescriptor().createAttributes();
         int elen = tx.getExonicLength();    // this is the "effective" length, modify by extensions
 //				if (elen< readLenMin)
 //					return;	// discards reads
@@ -287,15 +293,15 @@ public class BiasProfiler implements Callable<Profile> {
         while (mappings.hasNext()) {
             mapping= mappings.next();
 
-            CharSequence tag = mapping.getName();
-            attributes = capacitor.getReadDescriptor().getAttributes(tag, attributes);
+            // TODO should compare readIDs
+            stats.incrReadsSingleTxLoci(1); // increment before mate checking, count all reads
+
             if (paired) {
-                if (attributes.flag < 1)
-                    Log.warn("Read ignored, error in readID: " + tag);
-                if (attributes.flag == 2)    // don't iterate second read
+                if (mapping.getMateFlag() < 1)
+                    Log.warn("Read ignored, error in readID: " + mapping.getName(true));
+                if (mapping.getMateFlag() == 2)    // don't iterate second read
                     continue;
             }
-            stats.incrReadsSingleTxLoci(1);
 
             // use reliable info
             if (mapping instanceof SAMMapping) {
@@ -307,8 +313,8 @@ public class BiasProfiler implements Callable<Profile> {
             }
 
             if (strand == 1) {
-                if ((tx.getStrand() == mapping.getStrand() && attributes.strand == 2)
-                        || (tx.getStrand() != mapping.getStrand() && attributes.strand == 1)) {
+                if ((tx.getStrand() == mapping.getStrand() && mapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 2)
+                        || (tx.getStrand() != mapping.getStrand() && mapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 1)) {
                     stats.incrMappingsWrongStrand(1);
                     continue;
                 }
@@ -325,7 +331,7 @@ public class BiasProfiler implements Callable<Profile> {
             if (paired) {
 
 //                    mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping,capacitor.getReadDescriptor());
+                Iterator<Mapping> mates = mappings.getMates(mapping);
                 while(mates.hasNext()) {
                     otherMapping= mates.next();
 //                        attributes2 = settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).getAttributes(bed2.getName(), attributes2);
@@ -351,8 +357,8 @@ public class BiasProfiler implements Callable<Profile> {
 
                     // check again strand in case one strand-info had been lost
                     if (strand == 1) {
-                        if ((tx.getStrand() == otherMapping.getStrand() && attributes2.strand == 2)
-                                || (tx.getStrand() != otherMapping.getStrand() && attributes2.strand == 1)) {
+                        if ((tx.getStrand() == otherMapping.getStrand() && otherMapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 2)
+                                || (tx.getStrand() != otherMapping.getStrand() && otherMapping.getReadStrand(settings.get(FluxCapacitorSettings.READ_STRAND).toString()) == 1)) {
                             stats.incrMappingsWrongStrand(1);
                             continue;
                         }
@@ -366,7 +372,7 @@ public class BiasProfiler implements Callable<Profile> {
                         continue;
                     }
 
-                    m.add(bpoint1, bpoint2, -1, -1, elen);    // 5TODO rlen currently not used
+                    m.add(bpoint1, bpoint2, mapping.getLength(), otherMapping.getLength(), elen);    // 5TODO rlen currently not used
                     // update coverage
                     if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                         if (bpoint1 < bpoint2) {
@@ -383,13 +389,14 @@ public class BiasProfiler implements Callable<Profile> {
                     }
                     //addInsertSize(Math.abs(bpoint2- bpoint1)+ 1);	// TODO write out insert size distribution
 
-                    //nrReadsSingleLociPairsMapped += 2;
-                    stats.incrMappingPairsSingleTxLoci(mapping.getCount(weighted)+mapping.getCount(weighted));
+                    // TODO should weight over combinations
+                    stats.incrMappingPairsSingleTxLoci(
+                            mapping.getCount(weighted) + otherMapping.getCount(weighted));
                 }
 //                    mappings.reset();
 
             } else {    // single reads
-                m.add(bpoint1, -1, elen,
+                m.add(bpoint1, mapping.getLength(), elen,
                         mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
                 // update coverage
                 if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {

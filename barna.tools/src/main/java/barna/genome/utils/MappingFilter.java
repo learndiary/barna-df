@@ -30,12 +30,12 @@ import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.launcher.Tool;
 import barna.commons.log.Log;
-import barna.io.BEDMappingIteratorDisk;
 import barna.io.FileHelper;
+import barna.io.bed.BEDMappingIteratorDisk;
 import barna.io.bed.BEDReader;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.bed.BEDobject2;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 

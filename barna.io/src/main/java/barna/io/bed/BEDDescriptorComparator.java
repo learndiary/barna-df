@@ -29,8 +29,8 @@ package barna.io.bed;
 
 import barna.commons.CharsequenceComparator;
 import barna.commons.utils.StringUtils;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
 
 import java.util.Comparator;
 

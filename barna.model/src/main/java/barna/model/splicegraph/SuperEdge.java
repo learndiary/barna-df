@@ -247,27 +247,29 @@ public class SuperEdge extends AbstractEdge {
 		}
 	}
 	
-	public int getEffLength(Transcript tx, byte dir, int mapLenMax) {
+	public int getEffLength(byte dir, int mapLenMax) {
 
-		System.err.println("check effLen");
-		assert(dir== Constants.DIR_FORWARD^ dir== Constants.DIR_BACKWARD);
-		int effLen= -1;
-		if (isPend()) {	
-			
-			effLen= dir== Constants.DIR_FORWARD? 
-					edges[0].getEffLength(null, dir, mapLenMax):
-					edges[edges.length- 1].getEffLength(null, dir, mapLenMax);
-		
-		} else {	// ej / sj
-			int interNt= 1;
-			for (int i = 1; i < edges.length- 1; i++) 
-				interNt+= edges[i].length();
-			effLen= Math.min(mapLenMax, 
-					dir== Constants.DIR_FORWARD? edges[0].length(): edges[edges.length- 1].length())
-					- interNt;
-		}
-		
-		return effLen;
+        //System.err.println("check effLen");
+        assert(dir== Constants.DIR_FORWARD^ dir== Constants.DIR_BACKWARD);
+        int effLen= -1;
+        if (isPend()) {
+
+            effLen= dir== Constants.DIR_FORWARD?
+                    edges[0].getEffLength(dir, mapLenMax):
+                    edges[edges.length- 1].getEffLength(dir, mapLenMax);
+
+        } else {	// ej / sj
+            if (mapLenMax< 2)
+                throw new IllegalArgumentException("Read length has to be at least 2 to overlap a junction!");
+            int interNt= 0;
+            for (int i = 1; i < edges.length- 1; i++)
+                interNt+= edges[i].length();
+            // delimit possible read positions (slots)
+            effLen= Math.min(mapLenMax- interNt- 1, // max slots with read overlapping at least 1nt of first/last edge
+                    Math.min(edges[0].length(), edges[edges.length- 1].length()));  // or the size of first/last edge
+        }
+
+        return effLen;
 	}
 	
 	@Override

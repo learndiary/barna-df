@@ -74,7 +74,7 @@ public class SimpleEdgeMappings extends SimpleEdge implements MappingsInterface 
 		
 		assert(dir== Constants.DIR_FORWARD^ dir== Constants.DIR_BACKWARD);
 		double cov= dir== Constants.DIR_FORWARD? mappings.getReadNr(): mappings.getRevReadNr();
-		cov/= getEffLength(tx, dir, mapLenMax);
+		cov/= getEffLength(dir, mapLenMax);
 		return cov;
 	}
 

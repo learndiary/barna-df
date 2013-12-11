@@ -97,12 +97,12 @@ public class SuperEdgeMappings extends SuperEdge implements MappingsInterface {
 			double cov= mappings.getReadNr();
 			if (dir== Constants.DIR_BOTH) {
 				cov*= 2;
-				cov/= getEffLength(tx, Constants.DIR_FORWARD, mapLenMax)+ 
-						getEffLength(tx, Constants.DIR_BACKWARD, mapLenMax); 
+				cov/= getEffLength(Constants.DIR_FORWARD, mapLenMax)+
+						getEffLength(Constants.DIR_BACKWARD, mapLenMax);
 			} else if (dir== Constants.DIR_FORWARD)
-				cov/= getEffLength(tx, Constants.DIR_FORWARD, mapLenMax);
+				cov/= getEffLength(Constants.DIR_FORWARD, mapLenMax);
 			else if (dir== Constants.DIR_BACKWARD)
-				cov/= getEffLength(tx, Constants.DIR_FORWARD, mapLenMax);
+				cov/= getEffLength(Constants.DIR_FORWARD, mapLenMax);
 			else 
 				assert(false);
 			return cov;

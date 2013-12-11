@@ -30,7 +30,7 @@ package barna.genome.tools.chipseq;
 import barna.commons.Execute;
 import barna.commons.launcher.Flux;
 import barna.io.FileHelper;
-import barna.io.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;

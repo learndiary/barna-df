@@ -27,8 +27,7 @@ package barna.genome.utils;/*
 
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
-import barna.io.BEDMappingIteratorDisk;
-import barna.io.BEDMappingIteratorDisk;
+import barna.io.bed.BEDMappingIteratorDisk;
 
 import java.io.*;
 

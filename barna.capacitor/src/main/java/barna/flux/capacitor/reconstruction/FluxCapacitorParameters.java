@@ -29,8 +29,8 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.log.Log;
 import barna.io.FileHelper;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.constants.Constants;
+import barna.model.rna.UniversalReadDescriptor;
 
 import java.io.BufferedReader;
 import java.io.File;

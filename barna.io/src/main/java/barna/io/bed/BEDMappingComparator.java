@@ -1,20 +1,20 @@
 /**
  * 
  */
-package barna.io;
-
-import java.util.Comparator;
+package barna.io.bed;
 
 import barna.commons.CharsequenceComparator;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
+
+import java.util.Comparator;
 
 /**
  * @author Emilio
  *
  */
-public class MappingComparator implements Comparator<Mapping> {
+public class BEDMappingComparator implements Comparator<Mapping> {
 	
 	/**
 	 * Wrapped comparator to compare general objects implementing 
@@ -37,15 +37,15 @@ public class MappingComparator implements Comparator<Mapping> {
 	/**
 	 * 
 	 */
-	public MappingComparator(UniversalReadDescriptor descriptor) {
+	public BEDMappingComparator(UniversalReadDescriptor descriptor) {
 		this.descriptor= descriptor;
 		this.comp= new CharsequenceComparator();
 	}
 
 	@Override
 	public int compare(Mapping o1, Mapping o2) {
-		CharSequence ss1= o1.getName(),
-				ss2= o2.getName();
+		CharSequence ss1= o1.getName(true),
+				ss2= o2.getName(true);
 		if (ss1== null|| ss2== null)
 			throw new RuntimeException("failed to get mapping name: "+
 					(ss1== null? o1: "")+

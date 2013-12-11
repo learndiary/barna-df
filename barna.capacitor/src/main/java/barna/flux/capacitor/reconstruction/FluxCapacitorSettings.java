@@ -31,8 +31,9 @@ import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import barna.io.RelativePathParser;
-import barna.io.rna.UniversalReadDescriptor;
+import barna.model.Transcript;
 import barna.model.constants.Constants;
+import barna.model.rna.UniversalReadDescriptor;
 import net.sf.samtools.SAMFileReader;
 
 import java.io.File;
@@ -438,7 +439,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
     public static final Parameter<SAMFileReader.ValidationStringency> SAM_VALIDATION_STRINGENCY = Parameters.enumParameter(
             "SAM_VALIDATION_STRINGENCY",
             " Set SAMtools validation stringency for validating records. One of STRICT|LENIENT|SILENT",
-            SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
+            SAMFileReader.ValidationStringency.SILENT,
             null).longOption("sam-validation-stringency");
 
     /**
@@ -519,6 +520,24 @@ public class FluxCapacitorSettings extends ParameterSchema {
     public static final Parameter<Integer> MIN_SCORE = Parameters.intParameter("MIN_SCORE",
             "Minimum mapping score. Mappings with score < min_score are discarded (mapq for BAM, score for BED)",
             -1).longOption("min-score").shortOption('q');
+
+    /**
+     * Minimum length of introns that are considered to be functional and not gaps/indels in genomic alignments of cDNA.
+     * Neighboring exons in the same transcript with a distance < min_ilen are joined.
+     */
+    public static final Parameter<Integer> MIN_ILEN = Parameters.intParameter("MIN_ILEN",
+            "Minimum length of introns of the annotation that are considered real and not indels/gaps, " +
+                    "\"introns\" with a length < MIN_ILEN are removed by joining the flanking exons",
+            25, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            int val = (Integer) schema.get(parameter);
+            if (val<= 0|| val> 255) {
+                throw new ParameterException(parameter.getName()+ " has to be positive and <= 255");
+            }
+            Transcript.maxLengthIntronIsGap= (byte) (val- 1);
+        }
+    }).longOption("minilen");
 
     /**
      * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file

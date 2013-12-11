@@ -1,10 +1,9 @@
 package barna.io.sam;
 
-import barna.commons.log.Log;
 import barna.io.FileHelper;
 import barna.io.MSIterator;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
 import barna.model.sam.SAMMapping;
 import net.sf.samtools.*;
 
@@ -146,12 +145,12 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             if (this.primaryOnly && record.getNotPrimaryAlignmentFlag())
                 continue;
 
-            mapping = new SAMMapping(record, getSuffix(record));
+            mapping = new SAMMapping(record);
 
             if (uniqueOnly && !mapping.isUnique())
                 continue;
 
-            if (mappings.size()>1 && !mapping.getName().equals(mappings.get(mappings.size()-1).getName()) && ((maxRecordsInRam/2)-mappings.size())<= DEFAULT_THRESHOLD) {
+            if (mappings.size()>1 && !mapping.getName(true).equals(mappings.get(mappings.size()-1).getName(true)) && ((maxRecordsInRam/2)-mappings.size())<= DEFAULT_THRESHOLD) {
                 break;
             }
             if ((this.scoreFilter < 0 || mapping.getScore() >= this.scoreFilter)) {
@@ -190,11 +189,10 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
     }
 
     @Override
-    public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
+    public Iterator<Mapping> getMates(Mapping firstMate) {
         ArrayList<Mapping> mappings = new ArrayList<Mapping>();
         UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
-        attr1 = getAttributes(firstMate,descriptor,attr1);
-        if ((attr1.flag == 2)
+        if ((firstMate.getMateFlag() == 2)
                 || (!((SAMMapping) firstMate).isProperlyPaired()))
             return mappings.iterator();
         this.mark();
@@ -202,10 +200,9 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
             SAMMapping currentMapping = this.next();
             if (!currentMapping.isProperlyPaired())
                 continue;
-            attr2 = getAttributes(currentMapping,descriptor,attr2);
-            if (!attr1.id.equals(attr2.id))
+            if (!firstMate.getName(false).equals(currentMapping.getName(false)))
                 break;
-            if (attr2 == null || attr2.flag == 1)
+            if (currentMapping.getMateFlag() == 1)
                 continue;
             if ((!this.matesOnly) || currentMapping.isMateOf((SAMMapping)firstMate)) {
                 mappings.add(currentMapping);
@@ -217,32 +214,6 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         }
         this.reset();
         return mappings.iterator();
-    }
-
-    /**
-     * Returns the attributes of a mapping given a read descriptor.
-     * @param mapping the mapping
-     * @param desc the read descriptor for the mapping
-     * @param attributes an optional <code>Attributes</code> instance for object re-use
-     * @return the instance of <code>Attributes</code>
-     */
-    private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
-
-        CharSequence tag= mapping.getName();
-        attributes= desc.getAttributes(tag, attributes);
-        if (attributes == null) {
-            Log.warn("Error in read ID: could not parse read identifier " + tag);
-            return null;
-        }
-        if (desc.isPaired()&& attributes.flag<= 0) {
-            Log.warn("Error in read ID: could not find mate in " + tag);
-            return null;
-        }
-        if (desc.isStranded()&& attributes.strand< 0) {
-            Log.warn("Error in read ID: could not find strand in " + tag);
-            return null;
-        }
-        return attributes;
     }
 
     @Override
@@ -275,16 +246,4 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         wrappedIterator.remove();
     }
 
-    /**
-     * Returns a suffix for the SAM record read name for paired end read. I returns "/1"
-     * for the first mate and "/2" for the second.
-     * @param record the SAM record
-     * @return the suffix
-     */
-    private String getSuffix(SAMRecord record) {
-        if (record.getReadPairedFlag()) {
-            return record.getFirstOfPairFlag()?"/1":"/2";
-        }
-        return "";
-    }
 }

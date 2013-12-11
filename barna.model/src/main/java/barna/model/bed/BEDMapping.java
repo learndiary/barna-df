@@ -3,6 +3,8 @@ package barna.model.bed;
 import barna.commons.ByteArrayCharSequence;
 import barna.model.Graph;
 import barna.model.Mapping;
+import barna.model.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
 
 import java.util.Comparator;
 
@@ -29,10 +31,12 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	int blockSizeP1= -1, blockSizeP2= -1,
 		lastBsize= -1, lastBstart= -1;	// can exceed byte
 	BEDMapping next= null;
+
+    UniversalReadDescriptor descriptor = null;
 	
 	public static class BedIDComparator implements Comparator<BEDMapping> {
 		public int compare(BEDMapping o1, BEDMapping o2) {			
-			return o1.getName().compareTo(o2.getName());
+			return o1.getName(true).compareTo(o2.getName(true));
 		}
 	}
 	
@@ -44,9 +48,14 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		super(capacity);
 	}
 	
-	public BEDMapping(ByteArrayCharSequence cs) {
+	public BEDMapping(ByteArrayCharSequence cs, UniversalReadDescriptor descriptor) {
 		super(cs);
+        this.descriptor = descriptor;
 	}
+
+    public void setDescriptor(UniversalReadDescriptor descriptor) {
+        this.descriptor = descriptor;
+    }
 	
 	public void clear() {
 		resetFind();		// p1= p2= cnt= 
@@ -330,7 +339,7 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 	 * @param fn
 	 */
 	void extend2field(int fn) {
-		ensureLength(end, (fn- cnt)); 	// -1 +1
+		ensureLength(end, (fn - cnt)); 	// -1 +1
 		for (; cnt < fn; ++cnt) {
 			//p1= end;
 			//a[end++]= DEFAULT_VALUE[cnt];
@@ -436,14 +445,43 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 			init();
 		return strand;
 	}
-	
-	@Override
-	public ByteArrayCharSequence getName() {
+
+    public byte getReadStrand(String readStrand) {
+        if (!isInited())
+            init();
+        Attributes attr = getAttribute();
+        if(attr == null)
+            return 0;
+        return attr.strand;
+    }
+
+    @Override
+    public byte getMateFlag() {
+        if (!isInited())
+            init();
+        Attributes attr = getAttribute();
+        if(attr == null)
+            return 0;
+        return attr.flag;
+    }
+
+    @Override
+	public ByteArrayCharSequence getName(Boolean appendMateNumber) {
 		if (!isInited())
 			init();
 		if (nameP1< 0|| nameP2< 0)
 			return null;
-		return subSequence(nameP1, nameP2);
+        if (appendMateNumber)
+		    return subSequence(nameP1, nameP2);
+        else {
+            Attributes attr = getAttribute();
+            if(attr == null) {
+                return subSequence(nameP1, nameP2);
+            } else {
+                return (ByteArrayCharSequence)attr.id;
+            }
+        }
+
 	}
 	
 	@Override
@@ -499,6 +537,12 @@ public static final byte BYTE_PLUS= 43, BYTE_COMMA= 44, BYTE_MINUS= 45, BYTE_DOT
 		}
         return b;
 	}
+
+    public Attributes getAttribute() {
+        if (!isInited())
+            init();
+        return descriptor.getAttributes(subSequence(nameP1, nameP2), null);
+    }
 	
 	public int getNameP2() {
 		if (nameP2< 0) {

@@ -63,7 +63,7 @@ public class Transcript extends DirectedRegion {
 	
 	public static boolean removeGaps= true;
 	
-	public static byte MAX_LENGTH_INTRON_IS_GAP= 4;
+	public static byte maxLengthIntronIsGap = 4;
 	public static final String ID_TAG= "id_tag";
 	public static final String[] POLY_A_SITES= new String[] {
 		"AATAAA","ATTAAA", 	// canonical 
@@ -983,7 +983,11 @@ public class Transcript extends DirectedRegion {
 	
 	Gene gene= null;
 
-	String transcriptID= null;
+    public void setTranscriptID(String transcriptID) {
+        this.transcriptID = transcriptID;
+    }
+
+    String transcriptID= null;
 	Exon[] exons= new Exon[0];	// sorted !!
 	public Transcript(Gene newGene, String stableTranscriptID) {
 
@@ -1275,9 +1279,9 @@ public class Transcript extends DirectedRegion {
 			
 					// too short introns
 				if (removeGaps) {
-					if ((p-1>= 0)&& (exons[p-1].get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1>= newExon.get5PrimeEdge()))  {
+					if ((p-1>= 0)&& (exons[p-1].get3PrimeEdge()+ maxLengthIntronIsGap + 1>= newExon.get5PrimeEdge()))  {
 						String s= "Merging exon ("+newExon.start+","+newExon.end+") with exon ("+ exons[p-1].start+","+exons[p-1].end+")"+
-								" in transcript "+ getTranscriptID()+ " because intervening intron has "+MAX_LENGTH_INTRON_IS_GAP+" or less nt.";
+								" in transcript "+ getTranscriptID()+ " because intervening intron has "+ maxLengthIntronIsGap +" or less nt.";
                         if (outputExonMerged)
                             Log.debug(s);
                         else {
@@ -1290,9 +1294,9 @@ public class Transcript extends DirectedRegion {
 						--p;
 						//return false;
 					}
-					if ((p< exons.length)&& (exons[p].get5PrimeEdge()<= newExon.get3PrimeEdge()+MAX_LENGTH_INTRON_IS_GAP+ 1))  {
+					if ((p< exons.length)&& (exons[p].get5PrimeEdge()<= newExon.get3PrimeEdge()+ maxLengthIntronIsGap + 1))  {
 						String s= "Merging exon (" + newExon.start + "," + newExon.end + ") with exon (" + exons[p].start + "," + exons[p].end + ")" +
-                                " in transcript " + getTranscriptID() + " because intervening intron has " + MAX_LENGTH_INTRON_IS_GAP + " or less nt.";
+                                " in transcript " + getTranscriptID() + " because intervening intron has " + maxLengthIntronIsGap + " or less nt.";
                         if (outputExonMerged)
                             Log.debug(s);
                         else {
