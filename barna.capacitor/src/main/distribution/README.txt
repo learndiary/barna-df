@@ -23,6 +23,9 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.5.1
+    * [BARNA-339] - Array overflow in profiling
+
 FluxCapacitor 1.5
     * [BARNA-334] - Replace Attributes with Mapping properties
     * [BARNA-336] - SAMException - Value for tag XT is not a Character
