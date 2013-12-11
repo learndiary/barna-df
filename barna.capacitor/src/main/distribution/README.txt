@@ -23,6 +23,12 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.5
+    * [BARNA-334] - Replace Attributes with Mapping properties
+    * [BARNA-336] - SAMException - Value for tag XT is not a Character
+    * [BARNA-337] - Improve profiles stability
+    * [BARNA-338] - Collapse transcripts that are exactly identical in terms of genomic coordinates of their exons
+
 FluxCapacitor 1.4
     * [BARNA-329] - AnnotationMapper maps genomic mappings spanning all-intronic edges
     * [BARNA-330] - Fraction Inconsistency
