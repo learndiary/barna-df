@@ -92,7 +92,7 @@ public class UniversalMatrix {
 		int rPos= (int) (p* (sense.length/ (float) tlen));
 		if (dir== Constants.DIR_FORWARD) {
             int rPos2= (int) ((p+ readLen)* (sense.length/ (float) tlen));
-            rPos2= Math.min(sense.length, rPos2);
+            rPos2= Math.min(sense.length- 1, rPos2);
             for (int i = rPos; i <= rPos2; i++) {
                 ++sense[i];
             }
