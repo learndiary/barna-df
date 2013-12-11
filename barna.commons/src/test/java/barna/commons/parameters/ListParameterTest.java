@@ -77,4 +77,10 @@ public class ListParameterTest {
             assertEquals(test.get().size(), 0);
         }catch (Exception e){e.printStackTrace();fail();}
     }
+
+    @Test
+    public void testCopy(){
+        ListParameter test = new ListParameter("TEST");
+        assertNotNull(test.copy());
+    }
 }

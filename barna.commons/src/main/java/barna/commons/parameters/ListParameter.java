@@ -65,6 +65,9 @@ class ListParameter extends Parameter<List<String>> {
 
 
     public List<List<String>> getValues() {
+        if(value == null){
+            return (List<List<String>>) Collections.unmodifiableList(Collections.EMPTY_LIST);
+        }
         return Collections.unmodifiableList(values);
     }
 
@@ -96,7 +99,10 @@ class ListParameter extends Parameter<List<String>> {
 
     @Override
     public Parameter copy() {
-        ListParameter stringParameter = new ListParameter(getName(), getDescription(), getDefault(), getValues(), getValidator());
+        List<List<String>> vs = new ArrayList<List<String>>();
+        vs.addAll(getValues());
+
+        ListParameter stringParameter = new ListParameter(getName(), getDescription(), getDefault(),vs , getValidator());
         stringParameter.longOption(getLongOption()).shortOption(getShortOption());
         stringParameter.set(get());
         return stringParameter;
