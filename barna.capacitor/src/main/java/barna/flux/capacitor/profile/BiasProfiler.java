@@ -20,10 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -105,7 +102,8 @@ public class BiasProfiler implements Callable<Profile> {
         // smoothen kernels
         for (int i = 0; i < profile.getMasters().length; i++) {
             UniversalMatrix m= profile.getMasters()[i];
-            int w= Math.min(readLenMax, (m.getLength()/ 10));
+            int w= (m.getLength()/ 10);
+            //Math.min(readLenMax, (m.getLength()/ 10));
             if (w> 0)   // prevent tests to run into that
                 m.smooth(w);
         }
@@ -262,6 +260,22 @@ public class BiasProfiler implements Callable<Profile> {
         }
     }
 
+    private HashMap<Integer, double[]> tmpArrayMapA= new HashMap<Integer, double[]>();
+    private HashMap<Integer, double[]> tmpArrayMapB= new HashMap<Integer, double[]>();
+
+    protected double[] getTmp(boolean sense, int profileLength) {
+
+        HashMap<Integer, double[]> map= sense? tmpArrayMapA:tmpArrayMapB;
+
+        if (map.containsKey(profileLength)) {
+            return map.get(profileLength);
+        } else {
+            double[] a= new double[profileLength];
+            map.put(profileLength, a);
+            return a;
+        }
+    }
+
     /**
      * Learns systematic biases along a transcript
      *
@@ -281,6 +295,11 @@ public class BiasProfiler implements Callable<Profile> {
 //					return;	// discards reads
 
         UniversalMatrix m = profile.getMatrix(elen);
+        double[] a= getTmp(true, m.getLength());
+        double[] b= getTmp(false, m.getLength());
+        Arrays.fill(a, 0d);
+        Arrays.fill(b, 0d);
+
         MappingStats stats = profile.getMappingStats();
 
         if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
@@ -372,7 +391,9 @@ public class BiasProfiler implements Callable<Profile> {
                         continue;
                     }
 
-                    m.add(bpoint1, bpoint2, mapping.getLength(), otherMapping.getLength(), elen);    // 5TODO rlen currently not used
+                    //m.add(bpoint1, bpoint2, mapping.getLength(), otherMapping.getLength(), elen);
+                    add(a, b, bpoint1, bpoint2, mapping.getLength(), otherMapping.getLength(), elen);
+
                     // update coverage
                     if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                         if (bpoint1 < bpoint2) {
@@ -396,8 +417,12 @@ public class BiasProfiler implements Callable<Profile> {
 //                    mappings.reset();
 
             } else {    // single reads
-                m.add(bpoint1, mapping.getLength(), elen,
-                        mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+//                m.add(bpoint1, mapping.getLength(), elen,
+//                        mapping.getStrand() == tx.getStrand() ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+                boolean sense= mapping.getStrand() == tx.getStrand();
+                add(sense?a:b, bpoint1, mapping.getLength(), elen,
+                         sense ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD);
+
                 // update coverage
                 if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
                     if (mapping.getStrand() == tx.getStrand()) {
@@ -411,6 +436,22 @@ public class BiasProfiler implements Callable<Profile> {
             }
 
         } // iterate bed objects
+
+        // normalize and add profile to matrix
+        double fa= 0d, fb= 0d;
+        for (int i = 0; i < a.length; i++) {
+            fa+= a[i];
+            fb+= b[i];
+        }
+        fa= fa> 0? elen/ fa: fa;
+        fb= fb> 0? elen/ fb: fb;
+        for (int i = 0; fa> 0&& i < a.length; i++)
+            a[i]= (fa> 0? a[i]* fa: a[i]);
+        for (int i = 0; fb> 0&& i < b.length; i++)
+            b[i]= (fa> 0? b[i]* fb: b[i]);
+
+        m.add(a, Constants.DIR_FORWARD);
+        m.add(b, Constants.DIR_BACKWARD);
 
         // output coverage stats
         if (settings.get(FluxCapacitorSettings.COVERAGE_FILE) != null) {
@@ -427,6 +468,41 @@ public class BiasProfiler implements Callable<Profile> {
                     );
             }
         }
+    }
+
+    /**
+     * adds a read pair p1 bis p2
+     */
+    static protected void add(double[] a, double[] b, int p1, int p2, int readLen1, int readLen2, int tlen) {
+        if (p1> p2) {
+            int h= p1;
+            p1= p2;
+            p2= h;
+            h= readLen1;
+            readLen1= readLen2;
+            readLen2= h;
+        }
+        add(a, p1, readLen1, tlen, Constants.DIR_FORWARD);
+        add(b, p2, readLen2, tlen, Constants.DIR_BACKWARD);
+
+    }
+
+    static protected void add(double[] a, int p, int readLen, int tlen, byte dir) {
+        int rPos= (int) (p* (a.length/ (float) tlen));
+        if (dir== Constants.DIR_FORWARD) {
+            int rPos2= (int) ((p+ readLen)* (a.length/ (float) tlen));
+            rPos2= Math.min(a.length- 1, rPos2);
+            for (int i = rPos; i <= rPos2; i++) {
+                ++a[i];
+            }
+        } else if (dir== Constants.DIR_BACKWARD) {
+            int rPos2= (int) ((p- readLen)* (a.length/ (float) tlen));
+            rPos2= Math.max(0, rPos2);
+            for (int i = rPos2; i <= rPos; i++) {
+                ++a[i];
+            }
+        } else
+            System.err.println("[ASSERT] direction error "+ dir);
     }
 
     private BufferedWriter getCoverageWriter() {

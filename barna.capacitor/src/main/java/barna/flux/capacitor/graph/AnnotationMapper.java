@@ -149,7 +149,7 @@ public class AnnotationMapper extends SplicingGraph {
             cc = new ComplexCounter(counterTypes);
 	}
 
-    boolean outputCollapsed= false;
+    static boolean outputCollapsed= false;
 
     /**
      * Reduces transcripts with the same intron-exon structure to only one merged construct.

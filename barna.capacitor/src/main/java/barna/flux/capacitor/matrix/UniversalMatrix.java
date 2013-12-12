@@ -76,12 +76,12 @@ public class UniversalMatrix {
 		return v;
 	}
 	
-	public long[] sense, asense;
-	public long sums, suma;
+	public double[] sense, asense;
+	public double sums, suma;
 	
 	public UniversalMatrix(int length) {
-		sense= new long[length];
-		asense= new long[length];
+		sense= new double[length];
+		asense= new double[length];
         Arrays.fill(sense, 1);
         Arrays.fill(asense, 1);
 		sums= sense.length;
@@ -108,7 +108,28 @@ public class UniversalMatrix {
 			System.err.println("[ASSERT] direction error "+ dir);
 	}
 
-	/**
+    public void add(double[] a, byte dir) {
+
+        if (a== null)
+            throw new IllegalArgumentException("Array to be added cannot be null!");
+        if (a.length!= sense.length)
+            throw new IllegalArgumentException("Array to be added does not correspond to profile length: "
+                    + a.length+ "<>"+ sense.length
+            );
+
+        for (int i = 0; i < a.length; i++) {
+            if (dir== Constants.DIR_FORWARD) {
+                sense[i]+= a[i];
+                sums+= a[i];
+            } else {
+                asense[i]+= a[i];
+                suma+= a[i];
+            }
+        }
+    }
+
+
+    /**
 	 * adds a read pair p1 bis p2
 	 */
 	public void add(int p1, int p2, int readLen1, int readLen2, int tlen) {
@@ -217,7 +238,7 @@ public class UniversalMatrix {
 		return sense.length;
 	}
 
-	public long getSum(byte dir) {
+	public double getSum(byte dir) {
 		if (dir== Constants.DIR_FORWARD)
 			return sums;
 		else if (dir== Constants.DIR_BACKWARD)
@@ -239,7 +260,7 @@ public class UniversalMatrix {
 		
 		// sense
 		for (int i = 0; i < sense.length; i++) {
-			sb.append(Long.toString(sense[i]));
+			sb.append(Double.toString(sense[i]));
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
@@ -247,7 +268,7 @@ public class UniversalMatrix {
 
 		// anti-sense
 		for (int i = 0; i < asense.length; i++) {
-			sb.append(Long.toString(asense[i]));
+			sb.append(Double.toString(asense[i]));
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
@@ -255,7 +276,7 @@ public class UniversalMatrix {
 
 		// sum
 		for (int i = 0; i < sense.length; i++) {
-			sb.append(Long.toString(sense[i]+ asense[i]));
+			sb.append(Double.toString(sense[i]+ asense[i]));
 			sb.append(",");
 		}
 		sb.deleteCharAt(sb.length()- 1);
@@ -368,13 +389,13 @@ public class UniversalMatrix {
 			
 			// convergence
 			int cnt= 0;
-			long[] maxis= new long[sense.length/ 2];
+			double[] maxis= new double[sense.length/ 2];
 			for (int i = 0; i < maxis.length; i++) 
 				maxis[i]= 0;
 			
 			double avg= 0;
 			for (int i = 0; i < sense.length; i++) {
-				long val= sense[i]+ asense[i];
+				double val= sense[i]+ asense[i];
 //				max= Math.max(max, sense[i]);
 //				max= Math.max(max, asense[i]);
 				avg+= val;
@@ -390,8 +411,8 @@ public class UniversalMatrix {
 			int midIdx= -1;
 			cnt= Math.min(cnt, maxis.length);
 			for (int i = 1; i < cnt; i++) {
-				long delta= Math.abs(maxis[i]- maxis[i-1]);
-				float frac= delta/ (float) Math.max(maxis[i], maxis[i- 1]);
+				double delta= Math.abs(maxis[i]- maxis[i-1]);
+				double frac= delta/ Math.max(maxis[i], maxis[i- 1]);
 				if (frac< convFactor) {
 					midIdx= i;
 					break;
@@ -466,5 +487,6 @@ public class UniversalMatrix {
 				return true;
 		return false;
 	}
+
 }
 		

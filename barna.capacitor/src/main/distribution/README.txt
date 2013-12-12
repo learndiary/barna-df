@@ -23,6 +23,10 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.5.2
+    * [BARNA-340] - implement parameters for annotation sources to be included or excluded in profiling
+    * [BARNA-341] - stabilize profiling in the presence of highly abundant transcripts added to the transcriptome annotation
+
 FluxCapacitor 1.5.1
     * [BARNA-339] - Array overflow in profiling
 

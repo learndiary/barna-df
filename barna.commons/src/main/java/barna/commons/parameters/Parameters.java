@@ -28,9 +28,7 @@
 package barna.commons.parameters;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
+import java.util.*;
 
 /**
  * Helper class to create parameters
@@ -187,4 +185,15 @@ public class Parameters {
         return new EnumSetParameter<E>(name, description, defaultValue, values, validator);
     }
 
+    public static Parameter<List<String>> listParameter(String name) {
+        return listParameter(name, "");
+    }
+
+    public static Parameter<List<String>> listParameter(String name, String description) {
+        return listParameter(name, description, null, null);
+    }
+
+    public static Parameter<List<String>> listParameter(String name, String description, List<String> defaultValue, ParameterValidator validator) {
+        return new ListParameter(name, description, defaultValue, null, validator);
+    }
 }
