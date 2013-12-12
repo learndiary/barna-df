@@ -117,7 +117,7 @@ public class Kernel {
 		
 		double sum= 0;
 		for (int i = 0; i < a.length; i++) {
-			//b[i]= Math.round(a[i]);
+			b[i]= a[i];
 			sum+= a[i];
 		}
 		

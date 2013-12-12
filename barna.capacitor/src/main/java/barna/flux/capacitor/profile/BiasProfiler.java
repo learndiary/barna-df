@@ -443,12 +443,13 @@ public class BiasProfiler implements Callable<Profile> {
             fa+= a[i];
             fb+= b[i];
         }
-        fa= fa> 0? a.length/ fa: fa;
-        fb= fb> 0? b.length/ fb: fb;
+        fa= fa> 0? elen/ fa: fa;
+        fb= fb> 0? elen/ fb: fb;
         for (int i = 0; fa> 0&& i < a.length; i++)
             a[i]= (fa> 0? a[i]* fa: a[i]);
         for (int i = 0; fb> 0&& i < b.length; i++)
             b[i]= (fa> 0? b[i]* fb: b[i]);
+
         m.add(a, Constants.DIR_FORWARD);
         m.add(b, Constants.DIR_BACKWARD);
 
