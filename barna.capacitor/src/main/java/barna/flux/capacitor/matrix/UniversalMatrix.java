@@ -77,37 +77,30 @@ public class UniversalMatrix {
 	}
 	
 	public double[] sense, asense;
-	public double sums, suma;
-	
+	public double sums;
+    public double suma;
+    int nrTranscripts;
+
+    /**
+     * Constructor initializes values
+     * @param length the size of the profile
+     */
 	public UniversalMatrix(int length) {
 		sense= new double[length];
 		asense= new double[length];
+        // prevent from empty slots
         Arrays.fill(sense, 1);
         Arrays.fill(asense, 1);
 		sums= sense.length;
 		suma= asense.length;
-	}
-	
-	public void add(int p, int readLen, int tlen, byte dir) {
-		int rPos= (int) (p* (sense.length/ (float) tlen));
-		if (dir== Constants.DIR_FORWARD) {
-            int rPos2= (int) ((p+ readLen)* (sense.length/ (float) tlen));
-            rPos2= Math.min(sense.length- 1, rPos2);
-            for (int i = rPos; i <= rPos2; i++) {
-                ++sense[i];
-            }
-            sums+= rPos2- rPos+ 1;
-		} else if (dir== Constants.DIR_BACKWARD) {
-            int rPos2= (int) ((p- readLen)* (sense.length/ (float) tlen));
-            rPos2= Math.max(0, rPos2);
-            for (int i = rPos2; i <= rPos; i++) {
-                ++asense[i];
-            }
-			suma+= rPos- rPos2+ 1;
-		} else
-			System.err.println("[ASSERT] direction error "+ dir);
+        nrTranscripts= 0;
 	}
 
+    /**
+     * Adds a transcript observation to the profile.
+     * @param a expression normalized observation, sum(a[i])= 1
+     * @param dir directionality
+     */
     public void add(double[] a, byte dir) {
 
         if (a== null)
@@ -128,23 +121,6 @@ public class UniversalMatrix {
         }
     }
 
-
-    /**
-	 * adds a read pair p1 bis p2
-	 */
-	public void add(int p1, int p2, int readLen1, int readLen2, int tlen) {
-		if (p1> p2) {
-			int h= p1;
-			p1= p2;
-			p2= h;
-			h= readLen1;
-			readLen1= readLen2;
-			readLen2= h;
-		}
-		add(p1, readLen1, tlen, Constants.DIR_FORWARD);
-		add(p2, readLen2, tlen, Constants.DIR_BACKWARD);
-
-    }
 
 	public double get(int p1, int p2, int tlen, byte dir) {
 		// 090820 <p2 

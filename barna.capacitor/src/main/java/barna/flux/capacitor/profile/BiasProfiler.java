@@ -443,8 +443,8 @@ public class BiasProfiler implements Callable<Profile> {
             fa+= a[i];
             fb+= b[i];
         }
-        fa= fa> 0? elen/ fa: fa;
-        fb= fb> 0? elen/ fb: fb;
+        fa= fa> 0? 1d/ fa: fa;  // do not length normalize (elen/ fa)
+        fb= fb> 0? 1d/ fb: fb;
         for (int i = 0; fa> 0&& i < a.length; i++)
             a[i]= (fa> 0? a[i]* fa: a[i]);
         for (int i = 0; fb> 0&& i < b.length; i++)

@@ -834,7 +834,10 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats(),
+            GraphLPsolver solver = new GraphLPsolver(
+                    settings,
+                    mapper,
+                    profile.getMappingStats(),
                     //pairedEnd ? insertMinMax : null,
                     mappedReads,
                     stranded,
@@ -1675,7 +1678,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             stats = new MappingStats();
 
         //cheatDisableFCheck = true;
-        if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
+        if (true|| settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             Log.warn("Scanning of input files disabled");
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
             mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
@@ -2623,7 +2626,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile);
-        if (!wrapper.isApplicable()) {
+        if (false&& !wrapper.isApplicable()) {
             File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
             File f;
             if (sortedDir!=null)

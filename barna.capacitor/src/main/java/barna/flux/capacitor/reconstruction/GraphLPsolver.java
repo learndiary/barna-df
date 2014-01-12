@@ -62,6 +62,11 @@ import static lpsolve.LpSolve.LE;
 public class GraphLPsolver {
 
     /**
+     * Settings for creating debug output files.
+     */
+    FluxCapacitorSettings settings;
+
+    /**
      * Set of in-equation symbols.
      */
     static final String[] COND_SYMBOLS= new String[] {"", " <= ", " >= ", " = "};
@@ -228,7 +233,8 @@ public class GraphLPsolver {
      * @param mapStats mapping statistics
      * @param realReads number of reads observed after annotation mapping
      */
-    private GraphLPsolver(AnnotationMapper aMapper, MappingStats mapStats, int realReads) {
+    private GraphLPsolver(FluxCapacitorSettings settings, AnnotationMapper aMapper, MappingStats mapStats, int realReads) {
+        this.settings= settings;
         this.aMapper= aMapper;
         this.mappingStats= mapStats;
         this.nrMappingsObs= realReads;
@@ -242,9 +248,9 @@ public class GraphLPsolver {
      * @param considerBothStrands flag for consideration of reads mapping in anti-/sense
      * @param pairedEnd flag for paired-end reads
      */
-    public GraphLPsolver(AnnotationMapper aMapper, MappingStats mapStats, int realReads,
+    public GraphLPsolver(FluxCapacitorSettings settings,AnnotationMapper aMapper, MappingStats mapStats, int realReads,
                          boolean considerBothStrands, boolean pairedEnd) {
-        this(aMapper, mapStats, realReads);
+        this(settings, aMapper, mapStats, realReads);
         this.costSplitWC= considerBothStrands;
         this.pairedEnd= pairedEnd;
         // TODO this.insertMinMax= insertMinMax;
@@ -399,7 +405,7 @@ public class GraphLPsolver {
      */
     int[] getConstraintIDs() {
 
-        int size= 2; // plus minus
+        int size= 2; // sense, antisense
         if (costUseMultimap)	//
             ++size;		// only substract at 0-cost
 
@@ -828,9 +834,10 @@ public class GraphLPsolver {
      * has been specified
      * @see #getLPWriter()
      */
-    String getLPoutFileName() {
+    String getDebugLPtempFile() {
 
         fileLPdir= null; //settings.get(FluxCapacitorSettings.TMP_DIR).getAbsoluteFile();
+        lpOutFName= null;
         if (lpOutFName== null&& fileLPdir!= null) {
             try {
                 lpOutFName = FileHelper.createTempFile(aMapper.trpts[0].getGene().getLocusID().replace(":", "_"), SFX_LPOUT, fileLPdir).getAbsolutePath();
@@ -840,6 +847,12 @@ public class GraphLPsolver {
         }
 
         return lpOutFName;
+    }
+
+    String getDebugOutFile() {
+        String f= settings.get(FluxCapacitorSettings.STDOUT_FILE).getAbsolutePath();
+        f= FileHelper.append(f, "_dbug", true, ".txt");
+        return f;
     }
 
     /**
@@ -929,18 +942,7 @@ public class GraphLPsolver {
     /**
      * @deprecated remove ASAP and replace by something more christian
      */
-    public static boolean DEBUG= false;
-
-    private void writeDEBUG(String s) {
-        File f= new File("/home/micha/DEBUG_TEST_flux.out");
-        try {
-            BufferedWriter buffy= new BufferedWriter(new FileWriter(f, true));
-            buffy.write(s+ "\n");
-            buffy.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public static boolean DEBUG= true;
 
     /**
      * Algorithm to set up system of linear equations
@@ -957,12 +959,12 @@ public class GraphLPsolver {
         HashMap<String, Integer> tMap= setConstraints((byte) 1, null);
 
         // solve
-        int ret= solve(getLPoutFileName());
+        int ret= solve(getDebugLPtempFile());
 
         // append additional debug info
         if (DEBUG&& ret!= 0) { //DEBUG&&
             try {
-                String fname= getLPoutFileName();
+                String fname= getDebugLPtempFile();
 
                 getLPsolve().writeLp(fname+ "_wlp");
                 getLPsolve().writeMps(fname+ "_mps");
@@ -977,12 +979,12 @@ public class GraphLPsolver {
                 getLPsolve().printSolution(1);
 
                 // additional stream only afterwards
-                PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName()+"_const", true));
+                PrintStream p= new PrintStream(new FileOutputStream(getDebugLPtempFile()+"_const", true));
                 // TODO resets restrNr to 0
                 //setConstraints((byte) 0, p);
                 Log.warn("There was an issue with the linear problem. The linear system has been written to " + fname);
             } catch (Exception e) {
-                Log.error("Failed to set lp output to:\n\t"+ getLPoutFileName(), e);
+                Log.error("Failed to set lp output to:\n\t"+ getDebugLPtempFile(), e);
             }
         }
 
@@ -1217,7 +1219,7 @@ public class GraphLPsolver {
     /**
      * Specifies the folder to store LP debug information files in, one per locus.
      * @param dir the folder to store LP files
-     * @see #getLPoutFileName()
+     * @see #getDebugLPtempFile()
      */
     public void setFileLPdir(File dir) {
         this.fileLPdir = dir;
@@ -1429,23 +1431,7 @@ public class GraphLPsolver {
                         if (!SplicingGraph.intersects(aMapper.encodeTset(tx), e.getTranscripts()))
                             continue;
                         StringBuilder sb= txSegments.get(tx);
-                        StringBuilder sb2= new StringBuilder(sb.length());
-                        String[] ss= sb.toString().split("\t");
-                        for (int i = 0; i < ss.length- 1; i++) {
-                            sb2.append(ss[i]+ "\t");
-                        }
-                        StringTokenizer st= new StringTokenizer(ss[ss.length- 1], ";");
-                        sb2.append(st.nextToken());
-                        for (int i = 1; i < 4; i++)
-                            sb2.append(";"+ st.nextToken());
-                        // TODO can use as a check
-                        //sb2.append(";DEC2="+ Math.round(sumTx[hashTxNr.get(tx)]* 100.00)/ 100.00);
-                        sb2.append(";OBS="+ (Math.round(sumSEG[0]* 100.00)/ 100.00)
-                                + ";SUB="+ (Math.round(sumSEG[1]* 100.00)/ 100.00)
-                                + ";ADD="+ Math.round(sumSEG[2]* 100.00)/ 100.00);
-                        while (st.hasMoreElements())
-                            sb2.append(";"+ st.nextToken());
-                        txSegments.put(tx, sb2);
+                        sb.append(";OBS="+ (Math.round(sumSEG[0]* 100.00)/ 100.00));
                     }
 
                 }
@@ -1511,7 +1497,7 @@ public class GraphLPsolver {
 
                 try {
                     BufferedWriter buffy= new BufferedWriter(
-                            new FileWriter("/Volumes/Raptor/scratch/simulations/hg19_gencode_paired_sorted_tx_dbug.txt", true));
+                            new FileWriter(getDebugOutFile(), true));
                     buffy.write(sb.toString()+ "\n");
                     buffy.close();
                 } catch (IOException e) {
@@ -1638,10 +1624,15 @@ public class GraphLPsolver {
             if (count== 2) {
                 txSegmentBuilder.append(";TEX=" + Math.round(f * 10000.0) / 100.0);
                 double sum= 0d;
-                for (int i = 0; i < idx.length- 1; i++)
+                for (int i = 0; i < idx.length- 3; i++)
                     sum+= resultC[idx[i]- 1];
+                double add= resultC[idx[idx.length- 2]- 1];
+                double sub= resultC[idx[idx.length- 1]- 1];
+                txSegmentBuilder.append(";ADD="+ Math.round(add* 100.00)/ 100.00);
+                txSegmentBuilder.append(";SUB="+ Math.round(sub* 100.00)/ 100.00);
                 txSegmentBuilder.append(";DEC=" + Math.round(sum * 100.00) / 100.0);
             }
+
             assert (!(Double.isInfinite(f) || Double.isNaN(f)));
             mapCCheck.put(aTt.getTranscriptID(),
                     mapCCheck.get(aTt.getTranscriptID()) + f);
@@ -1700,8 +1691,6 @@ public class GraphLPsolver {
             // output
             if (count== 2) {
                 for (Transcript tx: tt) {
-                    double  sub= resultC[constraintCtr- 2],
-                            add= resultC[constraintCtr- 1];  // resultC is 0-based
 
                     StringBuilder sb= txEdges.get(tx);
                     String eid= getEID(f, segmentHash);
@@ -1709,34 +1698,8 @@ public class GraphLPsolver {
                     sb.append(";SEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
 
                     sb.append(";OBS="+ Math.round(obs* 100.00)/ 100.00);
-                    sb.append(";SUB="+ Math.round(sub* 100.00)/ 100.00);
-                    sb.append(";ADD="+ Math.round(add* 100.00)/ 100.00); // +1 -1
-
-                    double tot= obs+ add- sub;
-                    for (int i = 0; i < idx.length- 2; i++) {
-                        int tc= hashCxTx.get(idx[i]);
-
-                        double dec= resultC[idx[i]- 1],
-                                frac= (tot==0? 0d: (dec/ tot));
-                        sb.append(";TX"+ (tc+ 1)+ "="+ Math.round(dec* 100.00)/ 100.00);
-
-                        if (tc!= hashTxNr.get(tx))
-                            continue;   // only this transcript
-
-                        double[] err= txError.get(tc);
-                        err[sa* 3+ 0]+= obs* frac;
-                        err[sa* 3+ 1]+= sub* frac;
-                        err[sa* 3+ 2]+= add* frac;
-
-                        //else
-                        StringBuilder segb= txSegments.get(tx);
-                        segb.append(";E"+ eid+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
-                    }
-
                 }
-                sumSEG[0]+= obs;
-                sumSEG[1]+= resultC[constraintCtr- 2];
-                sumSEG[2]+= resultC[constraintCtr- 1];  // resultC is 0-based
+                sumSEG[0]+= nr;
             }
 
             // contribution weights
