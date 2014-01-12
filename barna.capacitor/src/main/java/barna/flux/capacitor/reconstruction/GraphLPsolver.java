@@ -960,7 +960,7 @@ public class GraphLPsolver {
         int ret= solve(getLPoutFileName());
 
         // append additional debug info
-        if (DEBUG&& ret!= 0) {
+        if (DEBUG&& ret!= 0) { //DEBUG&&
             try {
                 String fname= getLPoutFileName();
 
@@ -978,7 +978,8 @@ public class GraphLPsolver {
 
                 // additional stream only afterwards
                 PrintStream p= new PrintStream(new FileOutputStream(getLPoutFileName()+"_const", true));
-                setConstraints((byte) 0, p);
+                // TODO resets restrNr to 0
+                //setConstraints((byte) 0, p);
                 Log.warn("There was an issue with the linear problem. The linear system has been written to " + fname);
             } catch (Exception e) {
                 Log.error("Failed to set lp output to:\n\t"+ getLPoutFileName(), e);
@@ -995,7 +996,7 @@ public class GraphLPsolver {
         getLPsolve().deleteLp();	// closes file outFName
 
         // output debug info
-        if ( ret!=0) {
+        if (ret!=0) {
             Iterator<Object> idIter= trptExprHash.keySet().iterator();
             while(idIter.hasNext()) {
                 Object o= idIter.next();
@@ -1108,7 +1109,7 @@ public class GraphLPsolver {
         }
 
         // normalizaton factor
-        double nfac= nrMappingsObs/ sum;
+        double nfac= (sum== 0? 1: nrMappingsObs/ sum);
         for (Transcript trpt : trpts) {
             double x = trptExprHash.get(trpt.getTranscriptID());
             x *= nfac;
@@ -1403,7 +1404,7 @@ public class GraphLPsolver {
                 /* === Transcript Contributions === */
 
                 for (Transcript aTt : tt) {
-                    setConstraints(e, aTt, sa, count, tMap, mapE, txSegments, segmentHash, hashTxNr, hashCxTx);
+                    setConstraints(e, aTt, sa, count, w, tMap, mapE, txSegments, segmentHash, hashTxNr, hashCxTx);
                 } // iterate transcripts
 
 
@@ -1416,7 +1417,7 @@ public class GraphLPsolver {
                 AbstractEdge[] ee = new AbstractEdge[mapE.size()];
                 mapE.keySet().toArray(ee);
                 for (AbstractEdge f : ee) {
-                    setConstraints(e, f, sa, count, sumSEG, tt, w,
+                    setConstraints(e, f, sa, count, sumSEG, tt,
                             mapE, txSegments, txEdges, segmentHash, hashTxNr, hashCxTx, txError);
                 } // all edges in segment
 
@@ -1550,6 +1551,15 @@ public class GraphLPsolver {
             e.printStackTrace();
         }
 
+        for(Transcript aTt: trpts) {
+            int c= tMap.get(aTt.getTranscriptID());
+            try {
+                getLPsolve().setLowbo(c, 0d);
+            } catch (LpSolveException e1) {
+                e1.printStackTrace();
+            }
+        }
+
         // consistency check
         Object[] oo= mapCCheck.keySet().toArray();
         for (Object anOo : oo) {
@@ -1562,6 +1572,7 @@ public class GraphLPsolver {
     }
 
     protected void setConstraints(AbstractEdge e, Transcript aTt, int sa, byte count,
+                                  IntVector w,
                                   HashMap<String, Integer> tMap,
                                   HashMap<AbstractEdge, IntVector> mapE,
                                   HashMap<Transcript, StringBuilder> txSegments,
@@ -1585,16 +1596,41 @@ public class GraphLPsolver {
                 hashCxTx.put(i, hashTxNr.get(aTt));
         }
 
+        if (count== 0)
+            constraintCtr+= 2;
+        else if (count== 1|| count== 2) {
 
-        if (count== 1|| count== 2) {
-            int[] idx = new int[v.length + 1]; // obs parts+ tx frac
+            // obs parts+ tx frac+ delta pm
+            int[] idx = new int[v.length + 3];
             System.arraycopy(v.vector, 0, idx, 0, v.length);
-            idx[idx.length - 1] = tMap.get(aTt.getTranscriptID());
+            idx[idx.length - 3] = tMap.get(aTt.getTranscriptID());  // transcript fraction
+            int c = ++constraintCtr;
+            //if (paird || !pairedEnd)
+            idx[idx.length- 2]= c;  // plus, adds obs now
+            w.add(c);
+            c = ++constraintCtr;
+            idx[idx.length- 1]= c;  // minus, substracts obs
+            w.add(c);
+            // prevent from substracting complete observation
+            //double lim = (paird || !pairedEnd) ? Math.max(nr - (1d), 0) : nr;
+            //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
+            //if (flux)
+            //    lim/= effLen;
+            //assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
+            // TODO
+            //if (count== 1)
+            //    try {
+            //        getLPsolve().setUpbo(constraintCtr, lim);
+            //    } catch (LpSolveException e1) {
+            //        e1.printStackTrace();
+            //    }
+
             double[] val = new double[idx.length];
             Arrays.fill(val, 1d);
+            val[val.length- 1]= -1d;
+
             int tlen = aTt.getExonicLength();
             UniversalMatrix m = profile.getMatrix(tlen);
-
             int e1= aTt.getExonicPosition(e.getDelimitingPos(true));
             int e2= aTt.getExonicPosition(e.getDelimitingPos(false));
             byte dir= sa == 0 ? Constants.DIR_FORWARD : Constants.DIR_BACKWARD;
@@ -1609,7 +1645,7 @@ public class GraphLPsolver {
             assert (!(Double.isInfinite(f) || Double.isNaN(f)));
             mapCCheck.put(aTt.getTranscriptID(),
                     mapCCheck.get(aTt.getTranscriptID()) + f);
-            val[val.length - 1] = -f;
+            val[val.length - 3] = -f;       // expectation
             if (debug && count== 1) {
                 StringBuilder sb = new StringBuilder(e.toString());
                 sb.append(": ");
@@ -1622,6 +1658,8 @@ public class GraphLPsolver {
                 sb.append("= 0");
                 Log.debug(sb.toString());
             }
+
+            // add to LP, costs, etc..
             if (count== 1)
                 addConstraintToLp(idx, val, LpSolve.EQ, 0);
             ++restrNr;
@@ -1633,7 +1671,6 @@ public class GraphLPsolver {
     protected void setConstraints(AbstractEdge e, AbstractEdge f, int sa, byte count,
                                   double[] sumSEG,
                                   Transcript[] tt,
-                                  IntVector w,
                                   HashMap<AbstractEdge, IntVector> mapE,
                                   HashMap<Transcript, StringBuilder> txSegments,
                                   HashMap<Transcript, StringBuilder> txEdges,
@@ -1648,45 +1685,17 @@ public class GraphLPsolver {
                 : ((MappingsInterface) f).getMappings().getRevReadNr());
 
         IntVector v = mapE.remove(f);
-        if (count== 0)
-            constraintCtr += 2;
-        else if (count== 1|| count== 2) {
+        if (count== 1|| count== 2) {
 
             int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
             effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
             double obs= (flux? (nr/ (double) effLen): nr);
             assert((!Double.isInfinite(obs))&& (!Double.isNaN(obs)));
-
-            int[] idx = new int[v.length + 2];    // +/-
-            System.arraycopy(v.vector, 0, idx, 0, v.length);
-            int c = ++constraintCtr;
-
-            // plus, substracts from obs
-            if (paird || !pairedEnd) {
-                w.add(c);
-            }
-            idx[idx.length - 2] = c;
-
-            // prevent from substracting complete observation
-            double lim = (paird || !pairedEnd) ? Math.max(nr - (1d), 0) : nr;
+            // TODO SuperEdge.getEffLength() is based on MAX readlength
             //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
-            if (flux)
-                lim/= effLen;
-            assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
-            // TODO
-            if (count== 1)
-                try {
-                    getLPsolve().setUpbo(constraintCtr, lim);
-                } catch (LpSolveException e1) {
-                    e1.printStackTrace();
-                }
 
-
-            // minus, adds reads
-            // do not limit adding, might cause unsolvable systems
-            c = ++constraintCtr;
-            w.add(c);
-            idx[idx.length - 1] = c;
+            int[] idx = new int[v.length];
+            System.arraycopy(v.vector, 0, idx, 0, v.length);
 
             // output
             if (count== 2) {
@@ -1736,8 +1745,6 @@ public class GraphLPsolver {
             assert(x> 0&& (!Double.isInfinite(x))&& (!Double.isNaN(x)));
 
             Arrays.fill(val, x);
-            val[val.length - 2] = 1d;
-            val[val.length - 1] = -1d;
             if (count== 1) {
                 addConstraintToLp(idx, val, LpSolve.EQ, obs);
             }
