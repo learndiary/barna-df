@@ -962,7 +962,7 @@ public class GraphLPsolver {
         int ret= solve(getDebugLPtempFile());
 
         // append additional debug info
-        if (DEBUG&& ret!= 0) { //DEBUG&&
+        if (DEBUG|| ret!= 0) { //DEBUG&&
             try {
                 String fname= getDebugLPtempFile();
 
@@ -1264,6 +1264,9 @@ public class GraphLPsolver {
             // sense/anti-sense.. e must be first/last in super-edge
             if ((sense&& se.getEdges()[0]!= e)|| ((!sense)&& se.getEdges()[se.getEdges().length- 1]!= e))
                 continue;
+            // keep paired-end constraints from sense
+            if ((!sense)&& se.isPend())
+                continue;
             if (count== 0) {
                 ++constraintCtr;
             } else {
@@ -1277,8 +1280,8 @@ public class GraphLPsolver {
             }
             mapE.put(se, w);
 
-            if (se.isPend())
-                continue;	// no super-edges
+            if (se.isPend()|| !(sense))
+                continue;	// no more super-edges, or anti-sense to keep sense Cx
 
             for (int k = 0; se.getSuperEdges()!= null&& k < se.getSuperEdges().size(); k++) {
                 SuperEdge se2= se.getSuperEdges().elementAt(k);
@@ -1398,10 +1401,22 @@ public class GraphLPsolver {
 
             // the base edge
             Transcript[] tt = aMapper.decodeTset(e.getTranscripts());
+
+            HashMap<AbstractEdge, IntVector> mapE= null;
+
             // sense/anti
             for (int sa = 0; sa < 2; ++sa) {
 
-                HashMap<AbstractEdge, IntVector> mapE = new HashMap<AbstractEdge, IntVector>();
+                // init mapE (Edge x TxContributionCx), keep paired-end if already there
+                if (mapE== null)
+                    mapE = new HashMap<AbstractEdge, IntVector>();
+                else {
+                    AbstractEdge[] mapee= mapE.keySet().toArray(new AbstractEdge[mapE.size()]);
+                    for (AbstractEdge ee: mapee) {
+                        if (!(ee instanceof SuperEdge && ((SuperEdge) ee).isPend()))
+                            mapE.remove(ee);
+                    }
+                }
 
                 /* === Transcript Contributions === */
 
@@ -1681,7 +1696,7 @@ public class GraphLPsolver {
         int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
                 : ((MappingsInterface) f).getMappings().getRevReadNr());
 
-        IntVector v = mapE.remove(f);
+        IntVector v = mapE.get(f);
         if (count== 1|| count== 2) {
 
             int effLen= f.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
@@ -1715,7 +1730,7 @@ public class GraphLPsolver {
                         StringBuilder segb= txSegments.get(tx);
                         segb.append(";E"+ eid+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
                     }
-                    sb.append(";OBS="+ Math.round(obs* 100.00)/ 100.00);
+                    sb.append(";OBS="+ Math.round(nr* 100.00)/ 100.00);
                 }
                 sumSEG[0]+= nr;
             }
