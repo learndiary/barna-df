@@ -1678,7 +1678,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             stats = new MappingStats();
 
         //cheatDisableFCheck = true;
-        if (true|| settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
+        if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             Log.warn("Scanning of input files disabled");
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
             mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
@@ -2626,7 +2626,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile);
-        if (false&& !wrapper.isApplicable()) {
+        if (!wrapper.isApplicable()) {
             File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
             File f;
             if (sortedDir!=null)

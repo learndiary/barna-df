@@ -942,7 +942,7 @@ public class GraphLPsolver {
     /**
      * @deprecated remove ASAP and replace by something more christian
      */
-    public static boolean DEBUG= true;
+    public static boolean DEBUG= false;
 
     /**
      * Algorithm to set up system of linear equations
@@ -1406,7 +1406,7 @@ public class GraphLPsolver {
                 /* === Transcript Contributions === */
 
                 for (Transcript aTt : tt) {
-                    setConstraints(e, aTt, sa, count, w, tMap, mapE, txSegments, segmentHash, hashTxNr, hashCxTx);
+                    setConstraints(e, aTt, sa, count, w, tMap, mapE, txSegments, segmentHash, hashTxNr, hashCxTx, txError);
                 } // iterate transcripts
 
 
@@ -1420,7 +1420,7 @@ public class GraphLPsolver {
                 mapE.keySet().toArray(ee);
                 for (AbstractEdge f : ee) {
                     setConstraints(e, f, sa, count, sumSEG, tt,
-                            mapE, txSegments, txEdges, segmentHash, hashTxNr, hashCxTx, txError);
+                            mapE, txSegments, txEdges, segmentHash, hashTxNr, hashCxTx);
                 } // all edges in segment
 
                 //close segment
@@ -1564,7 +1564,8 @@ public class GraphLPsolver {
                                   HashMap<Transcript, StringBuilder> txSegments,
                                   HashMap<SimpleEdge, Integer> segmentHash,
                                   HashMap<Transcript, Integer> hashTxNr,
-                                  HashMap<Integer, Integer> hashCxTx) {
+                                  HashMap<Integer, Integer> hashCxTx,
+                                  HashMap<Integer, double[]> txError) {
 
         IntVector v= new IntVector(); // re-use to avoid GC?
         StringBuilder txSegmentBuilder= null;
@@ -1631,6 +1632,12 @@ public class GraphLPsolver {
                 txSegmentBuilder.append(";ADD="+ Math.round(add* 100.00)/ 100.00);
                 txSegmentBuilder.append(";SUB="+ Math.round(sub* 100.00)/ 100.00);
                 txSegmentBuilder.append(";DEC=" + Math.round(sum * 100.00) / 100.0);
+
+                int tc= hashCxTx.get(idx[0]);
+                double[] err= txError.get(tc);
+                err[sa* 3+ 0]+= sum;
+                err[sa* 3+ 1]+= sub;
+                err[sa* 3+ 2]+= add;
             }
 
             assert (!(Double.isInfinite(f) || Double.isNaN(f)));
@@ -1667,8 +1674,7 @@ public class GraphLPsolver {
                                   HashMap<Transcript, StringBuilder> txEdges,
                                   HashMap<SimpleEdge, Integer> segmentHash,
                                   HashMap<Transcript, Integer> hashTxNr,
-                                  HashMap<Integer, Integer> hashCxTx,
-                                  HashMap<Integer, double[]> txError) {
+                                  HashMap<Integer, Integer> hashCxTx) {
 
         boolean paird = (f instanceof SuperEdge) && ((SuperEdge) f).isPend();
 
@@ -1696,7 +1702,19 @@ public class GraphLPsolver {
                     String eid= getEID(f, segmentHash);
                     sb.append("\tEID=E"+ eid);
                     sb.append(";SEG="+ segmentHash.get(e)+ ";DIR="+ (sa == 0 ? "sense" : "anti"));
+                    for (int i = 0; i < idx.length; i++) {
+                        int tc= hashCxTx.get(idx[i]);
 
+                        double dec= resultC[idx[i]- 1];
+                        sb.append(";TX"+ (tc+ 1)+ "="+ Math.round(dec* 100.00)/ 100.00);
+
+                        if (tc!= hashTxNr.get(tx))
+                            continue;   // only this transcript
+
+                        //else
+                        StringBuilder segb= txSegments.get(tx);
+                        segb.append(";E"+ eid+ "="+ Math.round(resultC[idx[i]- 1]* 100.00)/ 100.00);
+                    }
                     sb.append(";OBS="+ Math.round(obs* 100.00)/ 100.00);
                 }
                 sumSEG[0]+= nr;
