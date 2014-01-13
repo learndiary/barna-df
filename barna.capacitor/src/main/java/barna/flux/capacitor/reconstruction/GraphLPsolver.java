@@ -962,7 +962,7 @@ public class GraphLPsolver {
         int ret= solve(getDebugLPtempFile());
 
         // append additional debug info
-        if (DEBUG|| ret!= 0) { //DEBUG&&
+        if (DEBUG&& ret!= 0) { //DEBUG&&
             try {
                 String fname= getDebugLPtempFile();
 
@@ -1080,6 +1080,10 @@ public class GraphLPsolver {
     protected HashMap<Object, Double> getResult(HashMap<String, Integer> tMap) {
 
         // get info about solution
+        int xx= getLPsolve().getNrows();
+        assert(xx== restrNr);
+        int yy= getLPsolve().getNcolumns();
+        assert(yy== constraintCtr);
         result= new double[1+ restrNr+ constraintCtr];
 
         try {
@@ -1238,20 +1242,24 @@ public class GraphLPsolver {
      * @param sense flag to distinguish between anti-/sense deconvolution along that edge
      * @param count flag to indicate whether only counting of constraint indices is performed
      */
-    private void getConstraints(AbstractEdge e, long[] sig, IntVector v,
-                                HashMap<AbstractEdge, IntVector> mapE, boolean sense, byte count) {
+    private void getConstraints(AbstractEdge e, long[] sig, IntVector v, HashMap<AbstractEdge, IntVector> mapE,
+                                HashMap<AbstractEdge, IntVector> mapES, boolean sense, byte count) {
 
         // for the edge itself
         IntVector w= mapE.get(e);
-        if (count== 0)
-            ++constraintCtr;
-        else if (count== 1|| count== 2) {
-            v.add(++constraintCtr);	// for transcript fraction
-            if (w== null)
-                w= new IntVector();
-            w.add(constraintCtr);	// edge consistency
+        int nr = (sense ? ((MappingsInterface) e).getMappings().getReadNr()
+                : ((MappingsInterface) e).getMappings().getRevReadNr());
+        if (nr> 0) {    // only non-0 observations get deconvolved
+            if (count== 0)
+                ++constraintCtr;
+            else if (count== 1|| count== 2) {
+                v.add(++constraintCtr);	// for transcript fraction
+                if (w== null)
+                    w= new IntVector();
+                w.add(constraintCtr);	// edge consistency
+            }
+            mapE.put(e, w);
         }
-        mapE.put(e, w);
 
         // iterate super-edges
         for (int j = 0; e.getSuperEdges()!= null&& j < e.getSuperEdges().size(); j++) {
@@ -1264,24 +1272,46 @@ public class GraphLPsolver {
             // sense/anti-sense.. e must be first/last in super-edge
             if ((sense&& se.getEdges()[0]!= e)|| ((!sense)&& se.getEdges()[se.getEdges().length- 1]!= e))
                 continue;
-            // keep paired-end constraints from sense
-            if ((!sense)&& se.isPend())
-                continue;
-            if (count== 0) {
-                ++constraintCtr;
-            } else {
-                v.add(++constraintCtr);	// for transcript fraction
-            }
-            w= mapE.get(se);
-            if (count== 1|| count== 2) {
-                if (w== null)
-                    w= new IntVector();
-                w.add(constraintCtr); // for edge consistency
-            }
-            mapE.put(se, w);
 
-            if (se.isPend()|| !(sense))
-                continue;	// no more super-edges, or anti-sense to keep sense Cx
+            nr = ((sense|| se.isPend()) ? ((MappingsInterface) se).getMappings().getReadNr()
+                    : ((MappingsInterface) se).getMappings().getRevReadNr());
+            if (nr> 0) {    // only non-0 observations get deconvolved
+                if (count== 0) {
+                    if (!((!sense)&& se.isPend()))
+                        ++constraintCtr;
+                } else {
+                    // keep paired-end constraints from sense
+                    if ((!sense)&& se.isPend()) {
+                        IntVector ww= mapES.get(se);
+                        int h= ww.get(0);
+                        for (int i = 0; i < (ww.size()- 1); i++)
+                            ww.set(i, ww.get(i+1)); // round robin
+                        ww.set(ww.size()- 1, h);
+                        v.add(h);
+                        w= mapE.get(se);
+                        if (count== 1|| count== 2) {
+                            if (w== null)
+                                w= new IntVector();
+                            w.add(h); // for edge consistency
+                        }
+                        mapE.put(se, w);
+                    } else {
+                        v.add(++constraintCtr);	// for transcript fraction
+                        w= mapE.get(se);
+                        if (count== 1|| count== 2) {
+                            if (w== null)
+                                w= new IntVector();
+                            w.add(constraintCtr); // for edge consistency
+                        }
+                        mapE.put(se, w);
+                        if (se.isPend())
+                            mapES.put(se, w);
+                    }
+                }
+            }
+
+            if (se.isPend())
+                continue;	// no more super-edges
 
             for (int k = 0; se.getSuperEdges()!= null&& k < se.getSuperEdges().size(); k++) {
                 SuperEdge se2= se.getSuperEdges().elementAt(k);
@@ -1293,18 +1323,44 @@ public class GraphLPsolver {
                 // sense/anti-sense.. e must be first/last in super-edge
                 if ((sense&& se2.getEdges()[0]!= se)|| ((!sense)&& se2.getEdges()[se2.getEdges().length- 1]!= se))
                     continue;
-                if (count== 0) {
-                    ++constraintCtr;
-                } else {
-                    v.add(++constraintCtr);	// tx
+
+                nr = ((sense|| se.isPend()) ? ((MappingsInterface) se2).getMappings().getReadNr()
+                        : ((MappingsInterface) se2).getMappings().getRevReadNr());
+                if (nr> 0) {    // only non-0 observations get deconvolved
+                    if (count== 0) {
+                        if (!((!sense)&& se2.isPend()))
+                            ++constraintCtr;
+                    } else {
+                        // keep paired-end constraints from sense
+                        if ((!sense)&& se.isPend()) {
+                            IntVector ww= mapES.get(se2);
+                            int h= ww.get(0);
+                            for (int i = 0; i < (ww.size()- 1); i++)
+                                ww.set(i, ww.get(i+1)); // round robin
+                            ww.set(ww.size()- 1, h);
+                            v.add(h);
+                            w= mapE.get(se2);
+                            if (count== 1|| count== 2) {
+                                if (w== null)
+                                    w= new IntVector();
+                                w.add(h); // for edge consistency
+                            }
+                            mapE.put(se2, w);
+                        } else {
+                            v.add(++constraintCtr);	// tx
+                            w= mapE.get(se2);
+                            if (count== 1|| count== 2) {
+                                if (w== null)
+                                    w= new IntVector();
+                                w.add(constraintCtr); // for edge consistency
+                            }
+                            mapE.put(se2, w);
+                            if (se2.isPend())
+                                mapES.put(se2, w);
+                        }
+                    }
                 }
-                w= mapE.get(se2);
-                if (count== 1|| count== 2) {
-                    if (w== null)
-                        w= new IntVector();
-                    w.add(constraintCtr); // for edge consistency
-                }
-                mapE.put(se2, w);
+
             }
         }
 
@@ -1394,6 +1450,9 @@ public class GraphLPsolver {
             }
         }
 
+        // hash for super-edges that have sense constraints
+        HashMap<AbstractEdge, IntVector> mapES= new HashMap<AbstractEdge, IntVector>();
+
         // iterates only exonic segments
         for (AbstractEdge e : edges) {
             if (!e.isExonic())
@@ -1402,26 +1461,15 @@ public class GraphLPsolver {
             // the base edge
             Transcript[] tt = aMapper.decodeTset(e.getTranscripts());
 
-            HashMap<AbstractEdge, IntVector> mapE= null;
-
             // sense/anti
             for (int sa = 0; sa < 2; ++sa) {
 
-                // init mapE (Edge x TxContributionCx), keep paired-end if already there
-                if (mapE== null)
-                    mapE = new HashMap<AbstractEdge, IntVector>();
-                else {
-                    AbstractEdge[] mapee= mapE.keySet().toArray(new AbstractEdge[mapE.size()]);
-                    for (AbstractEdge ee: mapee) {
-                        if (!(ee instanceof SuperEdge && ((SuperEdge) ee).isPend()))
-                            mapE.remove(ee);
-                    }
-                }
+                HashMap<AbstractEdge, IntVector> mapE= new HashMap<AbstractEdge, IntVector>();
 
                 /* === Transcript Contributions === */
 
                 for (Transcript aTt : tt) {
-                    setConstraints(e, aTt, sa, count, w, tMap, mapE, txSegments, segmentHash, hashTxNr, hashCxTx, txError);
+                    setConstraints(e, aTt, sa, count, w, tMap, mapE, mapES, txSegments, segmentHash, hashTxNr, hashCxTx, txError);
                 } // iterate transcripts
 
 
@@ -1576,6 +1624,7 @@ public class GraphLPsolver {
                                   IntVector w,
                                   HashMap<String, Integer> tMap,
                                   HashMap<AbstractEdge, IntVector> mapE,
+                                  HashMap<AbstractEdge, IntVector> mapES,
                                   HashMap<Transcript, StringBuilder> txSegments,
                                   HashMap<SimpleEdge, Integer> segmentHash,
                                   HashMap<Transcript, Integer> hashTxNr,
@@ -1592,7 +1641,7 @@ public class GraphLPsolver {
 
         long[] sig = aMapper.encodeTset(aTt);
         int saveCCtr= constraintCtr;
-        getConstraints(e, sig, v, mapE, sa == 0, count);
+        getConstraints(e, sig, v, mapE, mapES, sa == 0, count);
         if (count== 2) {
             for (int i = saveCCtr+ 1; i <= constraintCtr; i++)
                 hashCxTx.put(i, hashTxNr.get(aTt));
@@ -1648,7 +1697,7 @@ public class GraphLPsolver {
                 txSegmentBuilder.append(";SUB="+ Math.round(sub* 100.00)/ 100.00);
                 txSegmentBuilder.append(";DEC=" + Math.round(sum * 100.00) / 100.0);
 
-                int tc= hashCxTx.get(idx[0]);
+                int tc= hashTxNr.get(aTt);
                 double[] err= txError.get(tc);
                 err[sa* 3+ 0]+= sum;
                 err[sa* 3+ 1]+= sub;
@@ -1695,6 +1744,9 @@ public class GraphLPsolver {
 
         int nr = ((paird || sa == 0) ? ((MappingsInterface) f).getMappings().getReadNr()
                 : ((MappingsInterface) f).getMappings().getRevReadNr());
+
+        if (nr== 0)
+            return;
 
         IntVector v = mapE.get(f);
         if (count== 1|| count== 2) {
