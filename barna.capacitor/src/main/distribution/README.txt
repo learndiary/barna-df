@@ -23,6 +23,11 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.6
+    * [BARNA-328] - When writing to stdout, the flux prints its version information which ends up in the GTF output
+    * [BARNA-366] - Joint deconvolution of paired-end reads
+    * [BARNA-367] - Simplification of delta values
+
 FluxCapacitor 1.5.2
     * [BARNA-340] - implement parameters for annotation sources to be included or excluded in profiling
     * [BARNA-341] - stabilize profiling in the presence of highly abundant transcripts added to the transcriptome annotation
