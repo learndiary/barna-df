@@ -834,7 +834,10 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats(),
+            GraphLPsolver solver = new GraphLPsolver(
+                    settings,
+                    mapper,
+                    profile.getMappingStats(),
                     //pairedEnd ? insertMinMax : null,
                     mappedReads,
                     stranded,

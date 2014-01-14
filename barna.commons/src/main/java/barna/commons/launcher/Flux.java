@@ -89,7 +89,7 @@ public class Flux {
         FluxVersionInfo versionInfo = null;
         if(System.getProperty("flux.app") != null){
             versionInfo = new FluxVersionInfo("/" + System.getProperty("flux.app")+"-build.properties");
-            Log.println(versionInfo.toShortString());
+            Log.info(versionInfo.toShortString());
         }
 
 
