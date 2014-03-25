@@ -838,13 +838,14 @@ public class Fragmenter implements Callable<Void> {
         if (!Double.isNaN(tssMean)) {
             start = origLen;
             while (start >= Math.min(startOffset, origLen)) {
-                if (origLen <= 0) {
-                    throw new RuntimeException("Transcript length <= 0?");
+                int txVar= Math.max(origLen/ 4, 1); // to get an estimate for the variance of tss
+                if (txVar <= 0) {
+                    throw new RuntimeException("Transcript length <= 3?");
                 }
                 if (tssMean <= 0) {
                     throw new RuntimeException("TSS mean <= 0");
                 }
-                start = (int) Math.round(rndTSS.nextExponential(Math.min(tssMean, origLen / 4)));    // exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
+                start = (int) Math.round(rndTSS.nextExponential(Math.min(tssMean, txVar)));    // exp mean= 25: exceeds bounds, nextGaussian(1,100))-100;
             }
             double r = rndPlusMinus.nextDouble();
             if (r < 0.5) {
