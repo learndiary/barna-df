@@ -45,7 +45,7 @@ import barna.genome.lpsolver.LPSolverLoader;
 import barna.io.*;
 import barna.io.bed.BEDReader;
 import barna.io.gtf.GTFwrapper;
-import barna.io.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor;
 import barna.io.sam.SAMReader;
 import barna.model.*;
 import barna.model.commons.MyFile;
@@ -128,23 +128,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
     }
 
-
-    /**
-     * Comparator for comparing read identifiers according to the provided descriptor.
-     */
-    MappingComparator comp = null;
-
-    /**
-     * Returns an instance for comparing read identifiers according to the provided descriptor.
-     *
-     * @return instance for comparing read identifiers according to the provided descriptor
-     */
-    private Comparator<? super Mapping> getDescriptorComparator() {
-        if (comp == null) {
-            comp = new MappingComparator(settings.getReadDescriptor());
-        }
-        return comp;
-    }
 
     /**
      * A class that encapsulates all information necessary to carry out the deconvolution
@@ -238,11 +221,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         private float[] costBounds = new float[]{0.95f, Float.NaN};
 
         /**
-         * Read descriptor to be used
-         */
-        private UniversalReadDescriptor descriptor =null;
-
-        /**
          * Constructor providing reads and mappings for deconvolution.
          * The mode of the run can be switched between profiling and deconvolution.
          *
@@ -250,7 +228,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          * @param newMappings the mappings that fall in the locus
          * @param tasks     tasks to be preformed
          */
-		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile, UniversalReadDescriptor descriptor) {
+		public LocusSolver(Gene newGene, MSIterator newMappings, EnumSet tasks, EnumSet<OutputFlag> output, boolean pairedEnd, boolean stranded, FluxCapacitorSettings settings, Profile profile) {
 
             this.gene = newGene;
 			this.mappings = newMappings;
@@ -260,7 +238,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             this.stranded = stranded;
             this.settings = settings;
             this.profile = profile;
-            this.descriptor = descriptor;
             this.stats = new MappingStats();
             this.stats.add(profile.getMappingStats());
             this.stats.reset();
@@ -862,7 +839,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
          */
         private GraphLPsolver getSolver(AnnotationMapper mapper, int mappedReads) {
 
-            GraphLPsolver solver = new GraphLPsolver(mapper, profile.getMappingStats(),
+            GraphLPsolver solver = new GraphLPsolver(
+                    settings,
+                    mapper,
+                    profile.getMappingStats(),
+                    //pairedEnd ? insertMinMax : null,
                     mappedReads,
                     stranded,
                     pairedEnd);
@@ -1064,7 +1045,10 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if(tasks.isEmpty())
                 return null;
 
-            mapper = new AnnotationMapper(this.gene, descriptor, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT));
+            AnnotationMapping am = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING);
+
+            mapper = new AnnotationMapper(this.gene, am.isPaired(), am.isStranded(), settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), settings.get(FluxCapacitorSettings.READ_STRAND));
+            mapper.setStats(stats);
             mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
             /*stats.incrReadsLoci(mapper.nrMappingsLocus);
@@ -1083,6 +1067,11 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             stats.setCtrHitsMultiLocusAndGenome(mapper.ctrHitsMultiLocusAndGenome);
             stats.setCtrHitsNone(mapper.ctrHitsNone);
             stats.setCtrHitsNoneMultiGenome(mapper.ctrHitsNoneMultiGenome);
+            // complete profile, if necessary
+            if (profile.getMappingStats().getReadLenMin()< 2)
+                profile.getMappingStats().setReadLenMin(stats.getReadLenMin());
+            if (profile.getMappingStats().getReadLenMax()< 2)
+                profile.getMappingStats().setReadLenMax(stats.getReadLenMax());
 
             //Execute tasks
             for (Task t : this.tasks) {
@@ -1205,6 +1194,16 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
      * The parameter file.
      */
     protected File file = null;
+
+    /**
+     * Flag that indicates whether annotation mapping enforces read paring (or not).
+     */
+    public boolean pairedEnd = false;
+
+    /**
+     * Flag that indicates whether annotation mapping enforces correct strand (or not).
+     */
+    public boolean stranded = false;
 
     /**
      * Mode of strand consideration for LP constraints:
@@ -1560,11 +1559,17 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                 settings.get(FluxCapacitorSettings.MAPPING_FILE).getAbsolutePath());
         Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
                 settings.getReadDescriptor().toString());
+        String ext = FileHelper.getExtension(settings.get(FluxCapacitorSettings.MAPPING_FILE)).toUpperCase();
+        if(ext.equals("BED") || ext.equals("GZ")) {
+            Log.info(FluxCapacitorSettings.READ_DESCRIPTOR.getName(),
+                    settings.get(FluxCapacitorSettings.READ_DESCRIPTOR).toString());
+        }
         Log.info("\tminimum intron length "+ Transcript.maxLengthIntronIsGap);
         if (settings.get(FluxCapacitorSettings.PROFILE_FILE) != null) {
             Log.info(FluxCapacitorSettings.PROFILE_FILE.getName(),
                     settings.get(FluxCapacitorSettings.PROFILE_FILE).toString());
         }
+
         Log.info(settings.SORT_IN_RAM.getName(),
                 Boolean.toString(settings.get(FluxCapacitorSettings.SORT_IN_RAM)));
 
@@ -1649,8 +1654,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         // pre-processing
         gtfReader= createAnnotationReader(settings.get(FluxCapacitorSettings.ANNOTATION_FILE), settings);
         mappingReader= createMappingReader(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
-        // TODO DEBUG
-        settings.set(FluxCapacitorSettings.NO_FILE_CHECK, Boolean.TRUE);
         if (!settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
             if (stats == null)
                 stats = new MappingStats(); //Initialize stats
@@ -1658,7 +1661,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             Log.info("Annotation and mapping input checked");
         } else {
             stats= new MappingStats();
-            stats.setReadsTotal(100007838);
+            stats.setReadsTotal(100007838); // TODO
         }
 
         //Gene[] oGenes= gtfReader.getGenes();
@@ -1751,13 +1754,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         MappingReader mappingReader =
                 (MappingReader) fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE), settings);
         Log.progressFinish("OK", true);
-
-        // ensure sync between paired and stranded annotation mapping
-        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
-            settings.setAnnotationMappingAuto(mappingReader.isPaired());
-        }
-        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).isPaired() && !mappingReader.isPaired())
-            throw new RuntimeException("Annotation mapping " + settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING) +" requires paired reads");
 
         return mappingReader;
     }
@@ -2288,6 +2284,8 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         gtfReader.setGeneWise(true);    // when setting false, clusterLoci sorts genes in another ordering
         gtfReader.setPrintStatistics(false);
         gtfReader.setReuse(true);
+
+        //gtfReader.setSourceExclude();
         Transcript.removeGaps = false;
 
         return gtfReader;
@@ -2399,7 +2397,9 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             //this.gtfReader= null;
             //GFFReader gtfReader= getGTFreader();
             gtfReader.reset();
-				mappingReader.reset();
+            gtfReader.setSourceInclude(null);
+            gtfReader.setSourceExclude(null);
+			mappingReader.reset();
 
             if (Constants.verboseLevel > Constants.VERBOSE_SHUTUP) {
                     if (currentTasks.contains(Task.COUNT_INTRONS)||currentTasks.contains(Task.COUNT_SJ)) {
@@ -2547,7 +2547,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
         MSIterator<Mapping> mappings= mappingReader.read(gene.getChromosome(), start, end);
         LocusSolver lsolver = new LocusSolver(gene, mappings, currentTasks, this.output, settings.isPaired(),
-                settings.isStranded(), settings, profile, settings.getReadDescriptor());
+                settings.isStranded(), settings, profile);
 
         try {
             stats.addLocus(lsolver.call());
@@ -2591,78 +2591,73 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         }
         // (2) sort, if needed
         AbstractFileIOWrapper wrapper = getWrapper(inputFile, settings);
-        if ((!settings.get(FluxCapacitorSettings.NO_FILE_CHECK))|| wrapper.isApplicable()) {
-            if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK))
-                Log.warn("Scanning of input files disabled");
-            return wrapper;
-        }
+        if (!wrapper.isApplicable()) {
+            File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
+            File f;
+            if (sortedDir!=null)
+                f = FileHelper.getSortedFile(new File(sortedDir, inputFile.getName()));
+            else
+                f = FileHelper.getSortedFile(inputFile);
+            File lock = FileHelper.getLockFile(f);
 
-        // else.. the long way
-        File sortedDir = settings.get(FluxCapacitorSettings.KEEP_SORTED);
-        File f;
-        if (sortedDir!=null)
-            f = FileHelper.getSortedFile(new File(sortedDir, inputFile.getName()));
-        else
-            f = FileHelper.getSortedFile(inputFile);
-        File lock = FileHelper.getLockFile(f);
+            if (f.exists() && !lock.exists()) {
 
-        if (f.exists() && !lock.exists()) {
+                Log.warn("Assuming file " + f.getName() + " is a sorted version of " + inputFile.getName());
 
-            Log.warn("Assuming file " + f.getName() + " is a sorted version of " + inputFile.getName());
+            } else {    // we have to sort
 
-        } else {    // we have to sort
+                boolean lockCreated = false;
+                if (sortedDir!=null) {//settings.get(FluxCapacitorSettings.KEEP_SORTED)) {    // try to store in original
 
-            boolean lockCreated = false;
-            if (sortedDir!=null) {//settings.get(FluxCapacitorSettings.KEEP_SORTED)) {    // try to store in original
-
-                if (lock.exists()) {    // switch to sorting to temp
-                    Log.warn("Seems that another process is just sorting file " + inputFile +
-                            "\nremove lock file " + lock.getName() + " if dead leftover." +
-                            "\nContinuing with sorting to temporary file " +
-                            (f = createTempFile(f,     // access to non-Temp
+                    if (lock.exists()) {    // switch to sorting to temp
+                        Log.warn("Seems that another process is just sorting file " + inputFile +
+                                "\nremove lock file " + lock.getName() + " if dead leftover." +
+                                "\nContinuing with sorting to temporary file " +
+                                (f = createTempFile(f,     // access to non-Temp
                                     settings.get(FluxCapacitorSettings.TMP_DIR),
-                                    FileHelper.getFileNameWithoutExtension(f),
-                                    FileHelper.getExtension(f),
-                                    false)).getAbsolutePath());
+                                        FileHelper.getFileNameWithoutExtension(f),
+                                        FileHelper.getExtension(f),
+                                        false)).getAbsolutePath());
 
-                } else if (!f.getParentFile().canWrite()) {    // sort to temp, but do not delete (parameter)
-                    Log.warn("Cannot write sorted file to " + f.getAbsolutePath() +
-                            "\nContinuing with sorting to temporary file " +
-                            (f = createTempFile(f, // access to non-Temp
+                    } else if (!f.getParentFile().canWrite()) {    // sort to temp, but do not delete (parameter)
+                        Log.warn("Cannot write sorted file to " + f.getAbsolutePath() +
+                                "\nContinuing with sorting to temporary file " +
+                                (f = createTempFile(f, // access to non-Temp
                                     settings.get(FluxCapacitorSettings.TMP_DIR),
-                                    FileHelper.getFileNameWithoutExtension(f),
-                                    FileHelper.getExtension(f),
-                                    false)).getAbsolutePath());
+                                        FileHelper.getFileNameWithoutExtension(f),
+                                        FileHelper.getExtension(f),
+                                        false)).getAbsolutePath());
 
-                } else {    // sort to default sorted file
-                    try {
-                        lock.createNewFile();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                    } else {    // sort to default sorted file
+                        try {
+                            lock.createNewFile();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        lockCreated = true;
                     }
-                    lockCreated = true;
+
+                } else {    // do not keep sorted files, sort to temp and delete on exit
+                    f = createTempFile(null,
+                        settings.get(FluxCapacitorSettings.TMP_DIR),
+                            FileHelper.getFileNameWithoutExtension(f),
+                            FileHelper.getExtension(f),
+                            true);
                 }
 
-            } else {    // do not keep sorted files, sort to temp and delete on exit
-                f = createTempFile(null,
-                        settings.get(FluxCapacitorSettings.TMP_DIR),
-                        FileHelper.getFileNameWithoutExtension(f),
-                        FileHelper.getExtension(f),
-                        true);
+                // doit
+                if (wrapper.getInputFile() != null)
+                    Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
+                wrapper.sort(f);
+
+                // if locked
+                if (lockCreated)
+                    lock.delete();
+
             }
-
-            // doit
-            if (wrapper.getInputFile() != null)
-                Log.info("Sorting " + wrapper.getInputFile().getAbsolutePath());
-            wrapper.sort(f);
-
-            // if locked
-            if (lockCreated)
-                lock.delete();
-
+            inputFile = f;
+            wrapper = getWrapper(inputFile, settings);
         }
-        inputFile = f;
-        wrapper = getWrapper(inputFile, settings);
 
         return wrapper;
     }
@@ -2679,6 +2674,14 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         if (((AbstractFileIOWrapper) reader).getNrInvalidLines() > 0)
             Log.warn("Skipped " + ((AbstractFileIOWrapper) reader).getNrInvalidLines() + " lines.");
 
+        // ensure sync between paired and stranded annotation mapping:
+        // mappingReader only knows now whether there are paired reads
+        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).equals(AnnotationMapping.AUTO)) {
+            settings.setAnnotationMappingAuto(mappingReader.isPaired());
+        }
+        if (settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING).isPaired() && !mappingReader.isPaired())
+            throw new RuntimeException("Annotation mapping " + settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING) +" requires paired reads");
+
         checkBEDscanMappings = reader.getCountMappings();
         stats.setReadsTotal(reader.getCountReads());
         stats.setMappingsTotal(reader.getCountMappings());
@@ -2690,15 +2693,26 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
                     + " split mappings (" + (reader.getCountSplitMappings() * 100f / reader.getCountMappings()) + "%)");
 
         // SAM/BAM wrapper prohibits to specify read descriptors
-        if (mappingReader instanceof SAMReader) {
-            if (mappingReader.isPaired())
-                settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
-            else
-                settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
-        }
+        //if (mappingReader instanceof SAMReader) {
+        //    if (mappingReader.isPaired())
+        //        settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+        //    else
+        //        settings.set(FluxCapacitorSettings.READ_DESCRIPTOR, new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
+        //}
 
 
         // (4) check if read descriptor is applicable
+        String ext = FileHelper.getExtension(settings.get(FluxCapacitorSettings.MAPPING_FILE)).toUpperCase();
+        if(ext.equals("BED") || ext.equals("GZ")) {
+            if (reader.isApplicable(settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)))
+                Log.info("\tRead descriptor seems OK");
+            else {
+                String msg = "Read Descriptor " + settings.get(FluxCapacitorSettings.READ_DESCRIPTOR)
+                        + " incompatible with read IDs";
+                Log.error(msg);
+                throw new RuntimeException(msg);
+            }
+        }
         if (reader.isApplicable(settings.getReadDescriptor()))
             Log.info("\tRead descriptor seems OK");
         else {
@@ -2732,7 +2746,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             case GFF:
                 return getWrapperGTF(inputFile);
             case BED:
-                return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.getReadDescriptor(),settings.get(FluxCapacitorSettings.TMP_DIR), settings.get(FluxCapacitorSettings.MIN_SCORE));
+                return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR), settings.get(FluxCapacitorSettings.MIN_SCORE));
             case BAM:
                 SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM), settings.get(FluxCapacitorSettings.MIN_SCORE), !settings.get(FluxCapacitorSettings.IGNORE_SAM_FLAGS), settings.get(FluxCapacitorSettings.SAM_PRIMARY_ONLY), settings.get(FluxCapacitorSettings.SAM_MATES_ONLY), settings.get(FluxCapacitorSettings.SAM_UNIQUE_ONLY));
                 if (!settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY).equals(SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY)) {

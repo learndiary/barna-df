@@ -6,7 +6,7 @@ import barna.commons.system.OSChecker;
 import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
-import barna.io.rna.UniversalReadDescriptor;
+import barna.model.rna.UniversalReadDescriptor;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.RequiredParameterMissingException;
@@ -70,7 +70,8 @@ public class FluxCapacitorRunner {
 
         //get instance for the read descriptor
         if (parameters.containsKey("READ_DESCRIPTOR")) {
-            UniversalReadDescriptor descriptor = new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+            UniversalReadDescriptor descriptor = UniversalReadDescriptor.createTestDescriptor();
+            descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         }
 
         //check if sorted files should be kept and set up directory

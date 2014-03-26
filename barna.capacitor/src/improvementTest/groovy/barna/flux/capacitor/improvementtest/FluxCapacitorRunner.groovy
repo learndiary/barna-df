@@ -2,7 +2,7 @@ package barna.flux.capacitor.improvementtest
 
 import barna.commons.system.OSChecker
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
-import barna.io.rna.UniversalReadDescriptor
+import barna.model.rna.UniversalReadDescriptor
 import com.martiansoftware.jsap.RequiredParameterMissingException
 import org.kamranzafar.jtar.TarInputStream
 

@@ -3,7 +3,6 @@ package barna.flux.capacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.PreprocessorTest;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
-import barna.io.rna.UniversalReadDescriptor;
 import org.junit.Test;
 
 import java.io.File;

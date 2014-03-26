@@ -5,7 +5,7 @@ import barna.commons.Execute
 import barna.commons.system.OSChecker
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping
 import barna.io.FileHelper
-import barna.io.rna.UniversalReadDescriptor
+import barna.model.rna.UniversalReadDescriptor
 import org.junit.*
 
 import static junit.framework.Assert.assertTrue

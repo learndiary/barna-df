@@ -25,9 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io.rna;
+package barna.model.rna;
 
-import barna.io.rna.UniversalReadDescriptor.Attributes;
+import barna.model.rna.UniversalReadDescriptor.Attributes;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

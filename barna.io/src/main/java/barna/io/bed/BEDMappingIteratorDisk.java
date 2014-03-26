@@ -25,13 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io;
+package barna.io.bed;
 
 import barna.commons.Execute;
 import barna.commons.log.Log;
-import barna.io.rna.UniversalReadDescriptor;
+import barna.io.*;
 import barna.model.Mapping;
 import barna.model.bed.BEDMapping;
+import barna.model.rna.UniversalReadDescriptor;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -107,14 +108,19 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
     private FileOutputStream currentOutputStream;
 
     /**
+     * The read descriptor
+     */
+    private UniversalReadDescriptor descriptor;
+
+    /**
 	 * Creates an instance with <i>sorted</i> BED lines read from a stream
 	 * and written to the intermediate file.
 	 * 
 	 * @param istream input stream with <b>sorted</b> lines
 	 * @param tmpFile temporary file storing the content of the input stream
 	 */
-	public BEDMappingIteratorDisk(InputStream istream, File tmpFile) {
-		this(istream, tmpFile, null, -1);
+	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, UniversalReadDescriptor descriptor) {
+		this(istream, tmpFile, null, -1, descriptor);
 	}
 	
 	/**
@@ -125,8 +131,8 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 * @param tmpFile temporary file storing the content of the input stream
 	 * @param comparator rules of comparison
 	 */
-	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator) {
-		this(istream, tmpFile, comparator, -1);
+	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, UniversalReadDescriptor descriptor) {
+		this(istream, tmpFile, comparator, -1, descriptor);
 	}
 	
 	/**
@@ -140,11 +146,12 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 * @param capacity capacity of the reader
 	 * @see #reader
 	 */
-	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, int capacity) {
+	public BEDMappingIteratorDisk(InputStream istream, File tmpFile, Comparator<CharSequence> comparator, int capacity, UniversalReadDescriptor descriptor) {
         this.inputStream= istream;
 		this.tmpFile= tmpFile;
 		this.comparator= comparator;
 		this.capacity= capacity;
+        this.descriptor = descriptor;
 	}
 	
 	/**
@@ -377,7 +384,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 			return null;
 		try {
 			reader= getReader(-1);
-			cs= new BEDMapping(reader.readLine(cs));
+			cs= new BEDMapping(reader.readLine(cs), descriptor);
 			// BEDMapping clones byte[]
 			return cs;
 		} catch (Exception e) {
@@ -503,7 +510,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	}
 
     @Override
-    public Iterator<Mapping> getMates(Mapping firstMate, UniversalReadDescriptor descriptor) {
+    public Iterator<Mapping> getMates(Mapping firstMate) {
         ArrayList<Mapping> mappings = new ArrayList<Mapping>();
         UniversalReadDescriptor.Attributes attr1 = null, attr2 = null;
         attr1 = getAttributes(firstMate,descriptor,attr1);
@@ -517,7 +524,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
                 break;
             if (attr2 == null || attr2.flag == 1)
                 continue;
-            mappings.add(new BEDMapping(currentMapping));
+            mappings.add(new BEDMapping(currentMapping, descriptor));
         }
         this.reset();
         return mappings.iterator();
@@ -525,7 +532,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 
     private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
 
-        CharSequence tag= mapping.getName();
+        CharSequence tag= mapping.getName(Boolean.TRUE);
         attributes= desc.getAttributes(tag, attributes);
         if (attributes == null) {
             Log.warn("Error in read ID: could not parse read identifier " + tag);

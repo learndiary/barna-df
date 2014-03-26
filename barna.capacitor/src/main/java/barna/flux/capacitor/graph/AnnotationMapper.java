@@ -29,12 +29,12 @@ package barna.flux.capacitor.graph;
 
 import barna.commons.log.Log;
 import barna.flux.capacitor.graph.ComplexCounter.CounterType;
+import barna.flux.capacitor.profile.MappingStats;
+import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
-import barna.io.rna.UniversalReadDescriptor;
-import barna.io.rna.UniversalReadDescriptor.Attributes;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
-import barna.model.sam.SAMMapping;
+import barna.model.rna.UniversalReadDescriptor;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -168,29 +168,108 @@ public class AnnotationMapper extends SplicingGraph {
     private boolean weighted=false;
 
     /**
+     * Pairedness and strandedness of the mapping
+     */
+    boolean paired = false;
+    boolean stranded = false;
+
+    /**
+     * Read strandedness
+     */
+    private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
+
+    /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted) {
-        this(gene, descriptor, weighted, DEFAULT_COUNTER_TYPES);
+
+    public MappingStats getStats() {
+        return stats;
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, EnumSet<CounterType> counterTypes) {
-        this(gene, descriptor, false, counterTypes);
+    public void setStats(MappingStats stats) {
+        this.stats = stats;
     }
 
-    public AnnotationMapper(Gene gene, UniversalReadDescriptor descriptor, boolean weighted, EnumSet<CounterType> counterTypes) {
+    /**
+     * Mapping statistics
+     */
+    MappingStats stats= null;
+
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand) {
+        this(gene, paired, stranded, weighted, readStrand, DEFAULT_COUNTER_TYPES);
+    }
+
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
+        this(gene, paired, stranded, false, readStrand, counterTypes);
+    }
+
+    public AnnotationMapper(Gene gene, boolean paired, boolean stranded, boolean weighted, FluxCapacitorSettings.ReadStrand readStrand, EnumSet<CounterType> counterTypes) {
 		super(gene);
+        collapseRedundantTranscripts();
 		constructGraph();
         getNodesInGenomicOrder();    //TODO important ??!
 		transformToFragmentGraph();
-        this.descriptor = descriptor;
+        this.paired = paired;
+        this.stranded = stranded;
         this.weighted = weighted;
+        this.readStrand = readStrand;
         if (!counterTypes.isEmpty())
             cc = new ComplexCounter(counterTypes);
 	}
-	
+
+    static boolean outputCollapsed= false;
+
+    /**
+     * Reduces transcripts with the same intron-exon structure to only one merged construct.
+     * @return the number of transcripts that have been collapsed
+     */
+    protected int collapseRedundantTranscripts() {
+
+        Transcript[] tt= gene.getTranscripts();
+        int ctr= 0;
+        for (int i = 0; i < tt.length; i++) {
+            for (int j = i+ 1; j < tt.length; j++) {
+
+                if (tt[i].getStrand()!= tt[j].getStrand())
+                    continue;
+                Exon[] e1= tt[i].getExons();
+                Exon[] e2= tt[j].getExons();
+                if (e1.length!= e2.length)
+                    continue;
+
+                int k = 0;
+                for (; k < e1.length; k++) {
+                    if (e1[k].getStart()!= e2[k].getStart()|| e1[k].getEnd()!= e2[k].getEnd())
+                        break;
+                }
+
+                // equal, collapse
+                if (k== e1.length) {
+                    String s= "Removing "+ tt[j].getTranscriptID()+ " because it is identical to "+ tt[i].getTranscriptID();
+                    if (outputCollapsed)
+                        Log.debug(s);
+                    else {
+                        Log.warn(s);
+                        Log.warn(" Further collapsed transcripts are sent at debug verbosity level.");
+                        outputCollapsed = true;
+                    }
+                    tt[i].setTranscriptID(tt[i].getTranscriptID()+ "_"+ tt[j].getTranscriptID());
+                    gene.removeTranscript(tt[j]);
+                    tt= gene.getTranscripts();
+                    ++ctr;
+                    --j;
+                }
+            }
+        }
+
+        // update
+        trpts = gene.getTranscripts();
+
+        return ctr;
+    }
+
 	public AbstractEdge getEdge(BEDMapping obj) {
 			
 		Vector<SimpleEdge> v= edgeVector; //new Vector<Edge>();
@@ -324,9 +403,9 @@ public class AnnotationMapper extends SplicingGraph {
 
     }
 
-	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
+	UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
 
-		CharSequence tag= mapping.getName();
+		CharSequence tag= mapping.getName(Boolean.TRUE);
 		attributes= desc.getAttributes(tag, attributes);
         if (attributes == null) {
             Log.warn("Error in read ID: could not parse read identifier " + tag);
@@ -379,13 +458,6 @@ public class AnnotationMapper extends SplicingGraph {
         return false;
     }   */
 
-
-    /**
-     * Maps genome-mapped reads into the graph.
-     *
-     * @param mappings iterator of input lines
-     * @param insertFile
-     */
     /**
      * Maps genome-mapped reads into the graph.
      *
@@ -406,13 +478,9 @@ public class AnnotationMapper extends SplicingGraph {
             }
 
         // init
-        Mapping mapping, otherMapping;
+		Mapping mapping, otherMapping;
         CharSequence lastName = null;
-        UniversalReadDescriptor.Attributes
-                attributes = descriptor.createAttributes(),
-                attributes2 = descriptor.createAttributes();
-        boolean paired = descriptor.isPaired();
-        boolean stranded = descriptor.isStranded();
+
         nrMappingsLocus = 0;
         nrMappingsLocusMultiMaps = 0;
         nrMappingsMapped = 0;
@@ -427,15 +495,28 @@ public class AnnotationMapper extends SplicingGraph {
 
             mapping= mappings.next();
             ++nrMappingsLocus;
-            CharSequence name= mapping.getName();
+            CharSequence name= mapping.getName(true);
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
             }
 
-            attributes= getAttributes(mapping, descriptor, attributes);
-            if (paired && attributes.flag == 2)    // don't iterate twice, for counters
+            // updates stats, if any
+            if (stats!= null) {
+                int x= mapping.getLength();
+                // 2 needed for junction mappings
+                if (stats.getReadLenMax()< 2|| x> stats.getReadLenMax())
+                    stats.setReadLenMax(x);
+                if (stats.getReadLenMin()< 2|| x< stats.getReadLenMin())
+                    stats.setReadLenMin(x);
+            }
+
+            // Check if input file contains mixed paired-end/single-end reads
+            if (paired && mapping.getMateFlag() ==  0)
+                Log.warn("Input file contains mixed reads. Skipped single-end read: " + mapping.getName(false) + ".");
+
+            if (paired && mapping.getMateFlag() == 2)    // don't iterate twice, for counters
                 continue;
-            AbstractEdge target= getEdge2(mapping);
+				AbstractEdge target= getEdge2(mapping);
             if (target == null) {
                 ++nrMappingsNotMapped;
                 continue;    // couldn't map
@@ -443,8 +524,8 @@ public class AnnotationMapper extends SplicingGraph {
 
             byte refStrand = trpts[0].getStrand();    // TODO get from edge
             if (stranded) {
-                boolean sense= mapping.getStrand()== refStrand;
-                byte dir = attributes.strand;
+					boolean sense= mapping.getStrand()== refStrand;
+                byte dir = mapping.getReadStrand(this.readStrand.toString());
                 if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                     ++nrMappingsWrongStrand;
                     continue;
@@ -457,16 +538,16 @@ public class AnnotationMapper extends SplicingGraph {
 
                 // scan for mates
 //                mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
+                Iterator<Mapping> mates = mappings.getMates(mapping);
                 while (mates.hasNext()) {
-                    otherMapping= mates.next();
+					otherMapping= mates.next();
 //						attributes2= getAttributes(otherMapping, descriptor, attributes2);
 //                    if (!attributes.id.equals(attributes2.id))
 //                        break;
 //                    if (attributes2 == null || attributes2.flag == 1)
 //                        continue;
 
-                    AbstractEdge target2= getEdge2(otherMapping);
+					AbstractEdge target2= getEdge2(otherMapping);
                     if (target2 == null) {
                         ++nrMappingsNotMapped;
                         continue;
@@ -474,8 +555,8 @@ public class AnnotationMapper extends SplicingGraph {
 
                     // check again strand in case one strand-info had been lost
                     if (stranded) {
-                        boolean sense= otherMapping.getStrand()== refStrand;
-                        byte dir = attributes2.strand;
+							boolean sense= otherMapping.getStrand()== refStrand;
+                        byte dir = otherMapping.getReadStrand(this.readStrand.toString());
                         if ((dir == 2 && sense) || (dir == 1 && !sense)) {
                             ++nrMappingsWrongStrand;
                             continue;
@@ -485,9 +566,9 @@ public class AnnotationMapper extends SplicingGraph {
                     // check directionality (sequencing-by-synthesis)
                     // 20101222: check also that the leftmost (in genomic direction)
                     // is sense (in genomic direction)
-                    if (mapping.getStrand()== otherMapping.getStrand()
-                            || (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
-                            || (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
+						if (mapping.getStrand()== otherMapping.getStrand()
+								|| (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
+								|| (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
                         nrMappingsWrongPairOrientation += 2;
                         continue;
                     }
@@ -518,429 +599,7 @@ public class AnnotationMapper extends SplicingGraph {
                         nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
                     if (buffy != null)
-                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
-                }
-//                mappings.reset();
-
-            } else {    // single reads, strand already checked
-                boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
-                if (target.isAllIntronic()) {
-                    if (sense)
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
-                    else
-                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
-                } else {
-                    if (sense)
-                        ((MappingsInterface) target).getMappings().incrReadNr();
-                    else
-                        ((MappingsInterface) target).getMappings().incrRevReadNr();
-                    //++nrMappingsMapped;
-                    nrMappingsMapped+=mapping.getCount(weighted);
-                }
-            }
-        } // end: while(iter.hasNext())
-
-        // close insert writer
-        if (buffy != null)
-            try {
-                buffy.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-    }
-
-    /**
-     * uses new counters and iteration order
-     * @deprecated
-     * @param mappings
-     * @param insertFile
-     */
-    public void mapExperiment02(MSIterator<Mapping> mappings, File insertFile) {
-
-        if (mappings == null)
-            return;
-
-        BufferedWriter buffy = null;
-        if (insertFile != null)
-            try {
-                buffy = new BufferedWriter(new FileWriter(insertFile, true));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-        // init
-        Mapping mapping, otherMapping;
-        UniversalReadDescriptor.Attributes
-                attributes = descriptor.createAttributes(),
-                attributes2 = descriptor.createAttributes();
-        boolean paired = descriptor.isPaired();
-        boolean stranded = descriptor.isStranded();
-        byte refStrand = trpts[0].getStrand();    // TODO get from edge
-        int mate1redGenome= -1, mate2redGenome= -1;
-
-        nrMappingsLocus = 0;
-        nrMappingsNotMapped = 0;
-        nrMappingsWrongStrand = 0;
-        nrMappingsMapped = 0;
-        nrMappingsLocusMultiMaps = 0;
-        long[] storeMappings= new long[5];
-        ctrHits= 0;
-        ctrHitsMultiLocus= 0;
-        ctrHitsMultiLocusAndGenome= 0;
-        ctrHitsMultiGenome= 0;
-        ctrHitsNone= 0;
-        ctrHitsNoneMultiGenome= 0;
-
-        for (CharSequence name, lastName= null; mappings.hasNext(); lastName= name.toString()) {
-
-            mapping= mappings.next();
-            if (!paired)
-                ++nrMappingsLocus;
-            attributes= getAttributes(mapping, descriptor, attributes);
-            name= mapping.getName();
-            if (!name.equals(lastName)) {   // new read or pair
-                if (lastName!= null) {
-                    boolean redGenome= false;
-                    if ((mate1redGenome> 0 && mate2redGenome> 0 && paired)
-                            || (mate1redGenome> 0 && !paired))
-                        redGenome= true;
-
-                    if (storeMappings[3]> nrMappingsMapped) {
-                        // assume that other mappings pair 1:1
-                        int mateSum= 1+ (paired? Math.min(mate1redGenome, mate2redGenome): mate1redGenome);
-                        if (mateSum< 1)
-                            mateSum= 1;
-                        ctrHits+= (redGenome&& weighted? 1d/ mateSum: 1d);
-                        if (storeMappings[4]> nrMappingsLocusMultiMaps) {
-                            if (redGenome)
-                                ++ctrHitsMultiLocusAndGenome;
-                            else
-                                ++ctrHitsMultiLocus;
-                        } else if (redGenome) {
-                            ++ctrHitsMultiGenome;
-                        }
-                    } else {
-                        if ((nrMappingsLocus- storeMappings[0])==
-                                ((nrMappingsNotMapped- storeMappings[1])+
-                                        (nrMappingsWrongStrand- storeMappings[2]))) {
-                            if (redGenome)
-                                ++ctrHitsNoneMultiGenome;
-                            else
-                                ++ctrHitsNone;
-                        }
-                    }
-
-                }
-                storeMappings[0]= nrMappingsLocus;
-                storeMappings[1]= nrMappingsNotMapped;
-                storeMappings[2]= nrMappingsWrongStrand;
-                storeMappings[3]= (long) nrMappingsMapped;
-                storeMappings[4]= nrMappingsLocusMultiMaps;
-                mate1redGenome= 0;
-                mate2redGenome= -1;
-                if (mapping instanceof SAMMapping) {
-                    mappings.mark();
-                    int c= countMappings(mappings);
-                    mappings.reset();
-                    int d= ((SAMMapping) mapping).getHits();
-                    mate1redGenome= d- c;
-                }
-
-            }
-
-            if (paired && attributes.flag == 2)    // don't iterate mate /2 twice
-                continue;
-            AbstractEdge target= getEdge2(mapping);
-            if (!paired) {
-
-                if (target == null) {         // couldn't map /1
-                    ++nrMappingsNotMapped;
-                    continue;
-                }
-                if (stranded) {
-                    boolean sense= mapping.getStrand()== refStrand;
-                    byte dir = attributes.strand;
-                    if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                        ++nrMappingsWrongStrand;
-                        continue;
-                    }
-                }
-
-                ++nrMappingsMapped;   // valid mapping /1
-                if (name.equals(lastName)) {
-                    ++nrMappingsLocusMultiMaps;
-                }
-
-                boolean sense= refStrand== mapping.getStrand();
-                if (target.isAllIntronic()) {
-                    if (sense)
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
-                    else
-                        ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
-                } else {
-                    if (sense)
-                        ((MappingsInterface) target).getMappings().incrReadNr();
-                    else
-                        ((MappingsInterface) target).getMappings().incrRevReadNr();
-                    nrMappingsMapped+=mapping.getCount(weighted);
-                }
-
-            } else {    // paired-end
-
-                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
-
-                if (!mates.hasNext()) {
-                    ++nrMappingsNotMapped;  // (1) not mapped because there is no mate /2
-                    continue;
-                }
-
-                while (mates.hasNext()) {
-                    otherMapping= mates.next();
-                    ++nrMappingsLocus;      // new pair considered for annotation mapping
-
-                    // check genomic redundancy
-                    if (!name.equals(lastName)) {
-                        mate2redGenome= 0;
-                        if (otherMapping instanceof SAMMapping) {
-                            int c= countMappings(mates);
-                            mates= mappings.getMates(mapping, descriptor);
-                            int d= ((SAMMapping) otherMapping).getHits();
-                            mate2redGenome= d- c;
-                        }
-                    }
-
-                    AbstractEdge target2= getEdge2(otherMapping);
-                    if (target2 == null) {
-                        ++nrMappingsNotMapped;  // (2) not mapped because /2 does not map to annotation
-                        continue;
-                    }
-
-                    // check orientation first
-                    // 20101222: check also that the leftmost (in genomic direction)
-                    // is sense (in genomic direction)
-                    if (mapping.getStrand()== otherMapping.getStrand()
-                            || (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
-                            || (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
-                        ++nrMappingsWrongStrand;
-                        continue;
-                    }
-                    // then check if also strand expectation matches, allow missing strand info
-                    if (stranded) {
-                        boolean sense= mapping.getStrand()== refStrand;
-                        byte dir = attributes.strand;
-                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                            ++nrMappingsWrongStrand;
-                            continue;
-                        }
-                        // got to re-check both mates for correct strand
-                        sense= otherMapping.getStrand()== refStrand;
-                        dir = attributes2.strand;
-                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                            ++nrMappingsWrongStrand;
-                            continue;
-                        }
-                    }
-
-                    // get common super-edge
-                    Vector<AbstractEdge> w = new Vector<AbstractEdge>();
-                    if (target.getDelimitingPos(true) < target2.getDelimitingPos(true)) {
-                        w.add(target);
-                        w.add(target2);
-                    } else {
-                        w.add(target2);
-                        w.add(target);
-                    }
-                    SuperEdge se = getSuperEdge(w, true, null);
-                    if (se == null) {
-                        ++nrMappingsNotMapped;  // (3) not mapped because of empty intersection
-                        continue;
-                    }
-
-                    if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
-                        ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
-                    }
-                    if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
-                        ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
-                    }
-
-                    if (se.isExonic()) {
-                        ++nrMappingsMapped; // increment obs
-                        if (name.equals(lastName)&& !paired) {  // now both mappings are valid
-                            ++nrMappingsLocusMultiMaps;
-                        }
-
-                        ++nrMappingsMapped;
-                        ((SuperEdgeMappings) se).getMappings().incrReadNr();
-                    } else
-                        ++nrMappingsNotMapped;  // not mapped because intronic
-
-                    if (buffy != null)
-                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
-                }
-
-            }
-
-        } // for all mate /1s
-
-        // close insert writer
-        if (buffy != null)
-            try {
-                buffy.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-    }
-
-    private int countMappings(Iterator<Mapping> mappings) {
-        int c= 0;
-        for(; mappings.hasNext(); mappings.next(), ++c);
-        return c;
-    }
-
-    /**
-     * @deprecated started to introduce edgeset
-     * @param mappings
-     * @param insertFile
-     */
- 	public void mapExperiment01(MSIterator<Mapping> mappings, File insertFile) {
-
-        if (mappings == null)
-            return;
-
-        BufferedWriter buffy = null;
-        if (insertFile != null)
-            try {
-                buffy = new BufferedWriter(new FileWriter(insertFile, true));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-        // init
-		Mapping mapping, otherMapping;
-        CharSequence lastName = null;
-        UniversalReadDescriptor.Attributes
-                attributes = descriptor.createAttributes(),
-                attributes2 = descriptor.createAttributes();
-        boolean paired = descriptor.isPaired();
-        boolean stranded = descriptor.isStranded();
-        nrMappingsLocus = 0;
-        nrMappingsLocusMultiMaps = 0;
-        nrMappingsMapped = 0;
-        nrMappingsNotMapped = 0;
-        //nrMappingsNotMappedAsPair = 0;
-        //nrMappingsWrongPairOrientation = 0;
-        nrMappingsWrongStrand = 0;
-
-        int multi= 0;
-        // map read pairs
-        HashMap<AbstractEdge, Integer> mmapHash= new HashMap<AbstractEdge, Integer>(2, 1f);
-        HashSet<AbstractEdge> mmapRead= new HashSet<AbstractEdge>(2, 1f);
-        while (mappings.hasNext()) {
-
-			mapping= mappings.next();
-            ++nrMappingsLocus;
-			CharSequence name= mapping.getName();
-            if (name.equals(lastName)) {
-                ++nrMappingsLocusMultiMaps;
-            } else {
-                //addConstraints(mmapHash, paired);
-                AbstractEdge[] edgeSet= new AbstractEdge[mmapRead.size()];
-
-                mmapRead.clear();
-            }
-
-			attributes= getAttributes(mapping, descriptor, attributes);
-            if (paired && attributes.flag == 2)    // don't iterate twice, for counters
-                continue;
-				AbstractEdge target= getEdge2(mapping);
-            if (target == null) {
-                ++nrMappingsNotMapped;
-                continue;    // couldn't map
-            }
-
-            byte refStrand = trpts[0].getStrand();    // TODO get from edge
-            if (stranded) {
-				boolean sense= mapping.getStrand()== refStrand;
-                byte dir = attributes.strand;
-                if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                    ++nrMappingsWrongStrand;
-                    continue;
-                }
-            }
-
-            lastName = name.toString();
-
-            if (paired) {
-
-                // scan for mates
-//                mappings.mark();
-                Iterator<Mapping> mates = mappings.getMates(mapping, descriptor);
-                while (mates.hasNext()) {
-					otherMapping= mates.next();
-//						attributes2= getAttributes(otherMapping, descriptor, attributes2);
-//                    if (!attributes.id.equals(attributes2.id))
-//                        break;
-//                    if (attributes2 == null || attributes2.flag == 1)
-//                        continue;
-
-					AbstractEdge target2= getEdge2(otherMapping);
-                    if (target2 == null) {
-                        ++nrMappingsNotMapped;
-                        continue;
-                    }
-
-                    // check again strand in case one strand-info had been lost
-                    if (stranded) {
-							boolean sense= otherMapping.getStrand()== refStrand;
-                        byte dir = attributes2.strand;
-                        if ((dir == 2 && sense) || (dir == 1 && !sense)) {
-                            ++nrMappingsWrongStrand;
-                            continue;
-                        }
-                    }
-
-                    // check directionality (sequencing-by-synthesis)
-                    // 20101222: check also that the leftmost (in genomic direction)
-                    // is sense (in genomic direction)
-					if (mapping.getStrand()== otherMapping.getStrand()
-								|| (mapping.getStart()< otherMapping.getStart()&& mapping.getStrand()!= Transcript.STRAND_POS)
-								|| (otherMapping.getStart()< mapping.getStart()&& otherMapping.getStrand()!= Transcript.STRAND_POS)) {
-                        //nrMappingsWrongPairOrientation += 2;
-                        continue;
-                    }
-
-                    // find common super-edge
-                    Vector<AbstractEdge> w = new Vector<AbstractEdge>();
-                    if (target.getDelimitingPos(true) < target2.getDelimitingPos(true)) {
-                        w.add(target);
-                        w.add(target2);
-                    } else {
-                        w.add(target2);
-                        w.add(target);
-                    }
-                    SuperEdge se = getSuperEdge(w, true, null);
-                    if (se == null) {
-                        // nrMappingsNotMappedAsPair += 2;
-                        continue;
-                    }
-
-                    // add to hash
-                    if (!mmapRead.contains(se)) {
-                        if (mmapHash.containsKey(se))
-                            mmapHash.put(se, mmapHash.remove(se)+ 1);
-                        else
-                            mmapHash.put(se, 1);
-                    }
-
-
-                    if (se.isExonic()) {
-                        nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
-                    }
-                    if (buffy != null)
-                        writeInsert(buffy, se, mapping, otherMapping, attributes2.id);
-
+							writeInsert(buffy, se, mapping, otherMapping, otherMapping.getName(false));
                 }
 //                mappings.reset();
 
@@ -969,50 +628,6 @@ public class AnnotationMapper extends SplicingGraph {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
-    }
-
-    private void addConstraints(HashMap<AbstractEdge, Integer> mmapHash, HashSet<AbstractEdge> mmapRead, boolean pend, boolean interLoci) {
-
-        // no mapping
-        if (mmapRead.size()== 0)
-            return;
-
-
-        int sum= 0, partial= 0;
-        // count observations
-        if (pend) {
-            for (AbstractEdge abstractEdge : mmapHash.keySet()) {
-                if (abstractEdge instanceof SuperEdge
-                        && ((SuperEdge) abstractEdge).isPend())
-                    ++sum;
-                else
-                    ++partial;
-            }
-        } else
-            sum= mmapRead.size();
-
-
-
-        double f= 1d/ sum;
-
-        for (AbstractEdge abstractEdge : mmapHash.keySet()) {
-
-            if (pend) {
-                assert(abstractEdge instanceof SuperEdge);
-                SuperEdge se= (SuperEdge) abstractEdge;
-
-/*                if (target.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target.isAllIntronic()) {
-                    ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), false);
-                }
-                if (target2.getClass().isAssignableFrom(SimpleEdgeIntronMappings.class) && target2.isAllIntronic() && !target2.equals(target)) {
-                    ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
-                }
-                ((SuperEdgeMappings) se).getMappings().incrReadNr();
-*/
-            }
-
-        }
 
     }
 

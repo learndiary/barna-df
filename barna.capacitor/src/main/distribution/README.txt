@@ -23,6 +23,24 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxCapacitor 1.6
+    * [BARNA-328] - When writing to stdout, the flux prints its version information which ends up in the GTF output
+    * [BARNA-366] - Joint deconvolution of paired-end reads
+    * [BARNA-367] - Simplification of delta values
+
+FluxCapacitor 1.5.2
+    * [BARNA-340] - implement parameters for annotation sources to be included or excluded in profiling
+    * [BARNA-341] - stabilize profiling in the presence of highly abundant transcripts added to the transcriptome annotation
+
+FluxCapacitor 1.5.1
+    * [BARNA-339] - Array overflow in profiling
+
+FluxCapacitor 1.5
+    * [BARNA-334] - Replace Attributes with Mapping properties
+    * [BARNA-336] - SAMException - Value for tag XT is not a Character
+    * [BARNA-337] - Improve profiles stability
+    * [BARNA-338] - Collapse transcripts that are exactly identical in terms of genomic coordinates of their exons
+
 FluxCapacitor 1.4
     * [BARNA-329] - AnnotationMapper maps genomic mappings spanning all-intronic edges
     * [BARNA-330] - Fraction Inconsistency

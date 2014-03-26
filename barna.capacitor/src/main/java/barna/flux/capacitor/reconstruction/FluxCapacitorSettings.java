@@ -31,9 +31,9 @@ import barna.commons.parameters.*;
 import barna.commons.utils.StringUtils;
 import barna.io.FileHelper;
 import barna.io.RelativePathParser;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.Transcript;
 import barna.model.constants.Constants;
+import barna.model.rna.UniversalReadDescriptor;
 import net.sf.samtools.SAMFileReader;
 
 import java.io.File;
@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * Container class for settings of the <code>FluxCapacitor</code>.
@@ -229,6 +230,46 @@ public class FluxCapacitorSettings extends ParameterSchema {
             ReadStrand.NONE,
             null);
 
+    /**
+     * Annotation sources that are disregarded during profiling.
+     */
+    public static final Parameter<List<String>> PROFILE_INCLUDE =
+            Parameters.listParameter(
+                    "PROFILE_INCLUDE",
+                    " Annotation sources (GTF field 2) that are considered during profiling",
+                    null,
+                    new ParameterValidator() {
+                        @Override
+                        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                            FluxCapacitorSettings.checkMutuallyExclusive(schema.get(PROFILE_INCLUDE), schema.get(PROFILE_EXCLUDE));
+                        }
+                    });
+
+
+    static protected void checkMutuallyExclusive(List<String> one, List<String> two) throws ParameterException {
+        for (int i = 0; one!= null&& i < one.size(); i++) {
+            for (int j = 0; two!= null&& j < two.size(); j++) {
+                if (one.get(i).equals(two.get(j)))
+                    throw new ParameterException("You cannot include AND exclude source "+ one.get(i)+ " for profiling!");
+            }
+        }
+
+    }
+
+    /**
+     * Annotation sources that are disregarded during profiling.
+     */
+    public static final Parameter<List<String>> PROFILE_EXCLUDE =
+            Parameters.listParameter(
+                    "PROFILE_EXCLUDE",
+                    " Annotation sources (GTF field 2) that are disregarded during profiling",
+                    null,
+                    new ParameterValidator() {
+                        @Override
+                        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+                            FluxCapacitorSettings.checkMutuallyExclusive(schema.get(PROFILE_INCLUDE), schema.get(PROFILE_EXCLUDE));
+                        }
+                    });
     /**
      * Information used during annotation mapping
      */
@@ -483,7 +524,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
     public static final Parameter<SAMFileReader.ValidationStringency> SAM_VALIDATION_STRINGENCY = Parameters.enumParameter(
             "SAM_VALIDATION_STRINGENCY",
             " Set SAMtools validation stringency for validating records. One of STRICT|LENIENT|SILENT",
-            SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY,
+            SAMFileReader.ValidationStringency.SILENT,
             null).longOption("sam-validation-stringency");
 
     /**

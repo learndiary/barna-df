@@ -1261,7 +1261,7 @@ public class LpSolve {
 	/**
 	 * Solve the model.
 	 */
-	public native int solve() throws LpSolveException;
+	public native int  solve() throws LpSolveException;
 
 	/**
 	 * Solve the model via Lagrangian relaxation.

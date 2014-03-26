@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package barna.io.rna;
+package barna.model.rna;
 
 import barna.model.constants.Constants;
 
@@ -170,7 +170,8 @@ public class UniversalReadDescriptor {
 	}
 
     public static UniversalReadDescriptor getDefaultDescriptor() {
-        UniversalReadDescriptor d = new UniversalReadDescriptor(mapSimpleDescriptors.get(DESCRIPTORID_DEFAULT));
+        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        d.init(mapSimpleDescriptors.get(DESCRIPTORID_DEFAULT));
         return d;
     }
 

@@ -1,5 +1,6 @@
 package barna.model.sam;
 
+import barna.commons.log.Log;
 import barna.model.Mapping;
 import net.sf.samtools.*;
 
@@ -15,6 +16,18 @@ public class SAMMapping implements Mapping{
     public static String SAM_OPTION_NH= "NH";
     public static String SAM_OPTION_XT= "XT";
 
+    // Mate flag
+    static final byte SINGLE_END = 0;
+    static final byte FIRST_MATE = 1;
+    static final byte SECOND_MATE = 2;
+
+    // Strand flag
+    static final byte FORWARD = 1;
+    static final byte REVERSE = -1;
+
+    // Mate separator
+    private final String sep = "/";
+
     private String readName;
     private String referenceName;
 
@@ -27,6 +40,7 @@ public class SAMMapping implements Mapping{
     private int length;
     private int mappingQuality;
     private byte strandFlag;
+    private byte mateFlag;
     private byte[] sequence;
     private Cigar cigar;
 
@@ -52,26 +66,30 @@ public class SAMMapping implements Mapping{
         insertSize = r.getInferredInsertSize();
         length = 0;
         mappingQuality = r.getMappingQuality();
-        strandFlag = r.getReadNegativeStrandFlag()?(byte)-1:(byte)1;
+        strandFlag = r.getReadNegativeStrandFlag() ? REVERSE : FORWARD;
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
         hits = r.getIntegerAttribute(SAM_OPTION_NH)!=null ? r.getIntegerAttribute(SAM_OPTION_NH) : -1;
-        xt = r.getCharacterAttribute(SAM_OPTION_XT);
+        try {
+            xt = r.getCharacterAttribute(SAM_OPTION_XT);
+        } catch (SAMException e) {
+            Log.warn("","");
+            Log.warn("Ignoring XT tag values. The XT tag is supported only when it specifies uniqueness of " +
+                    "GEM mappings");
+        }
         primary = !r.getNotPrimaryAlignmentFlag();
         paired = r.getReadPairedFlag();
         properlyPaired = paired ? r.getProperPairFlag() : false;
+        mateFlag = paired ? r.getFirstOfPairFlag() ? FIRST_MATE : SECOND_MATE : SINGLE_END;
         initBlocks();
     }
 
-    public SAMMapping(SAMRecord r, String suffix) {
-
-        this(r);
-        this.readName+=suffix;
-    }
-
     @Override
-    public String getName() {
-        return readName;
+    public String getName(Boolean appendMateNumber) {
+        String ret = readName;
+        if (paired && appendMateNumber)
+            ret+=sep+mateFlag;
+        return ret;
     }
 
     @Override
@@ -87,6 +105,10 @@ public class SAMMapping implements Mapping{
     @Override
     public int getEnd() {
         return alignmentEnd;
+    }
+
+    public byte getMateFlag() {
+        return mateFlag;
     }
 
     public int getMateStart() {
@@ -206,6 +228,23 @@ public class SAMMapping implements Mapping{
         return (weighted && this.hits > 0 ? 1.0/(double)this.hits : 1.0);
     }
 
+    @Override
+    public byte getReadStrand(String readStrand) {
+        if(readStrand.equals("NONE"))
+            return 0;
+        if(isPaired()) {
+            if(readStrand.equals("MATE1_SENSE") && getMateFlag() == 1)
+                return 1;
+            if(readStrand.equals("MATE2_SENSE") && getMateFlag() == 2)
+                return 1;
+            return 2;
+        } else {
+            if(readStrand.equals("SENSE"))
+                return 1;
+            return 2;
+        }
+    }
+
     public String getString() {
         return this.getChromosome()+","+(this.getStrand()>0?"+":"-")+(this.getStart()+1)+","+this.cigar.toString();
     }
@@ -250,7 +289,7 @@ public class SAMMapping implements Mapping{
 
     public static class SAMIdComparator implements Comparator<SAMMapping> {
         public int compare(SAMMapping o1, SAMMapping o2) {
-            return o1.getName().compareTo(o2.getName());
+            return o1.getName(true).compareTo(o2.getName(true));
         }
     }
 }

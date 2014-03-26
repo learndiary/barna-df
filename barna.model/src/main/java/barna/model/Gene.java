@@ -674,7 +674,59 @@ public class Gene extends DirectedRegion {
 				v.add(getTranscripts()[i]);
 		return ((Transcript[]) ArrayUtils.toField(v));
 	}
-	
+
+    public boolean removeTranscript(Transcript t) {
+
+        boolean succ= false;
+
+        SpliceSite[] ss= t.getSpliceSitesAll();
+        for (int i = 0; i < ss.length; i++) {
+            if(!ssTrptHash.containsKey(ss[i]))
+                continue;
+            Vector<Transcript> v= ssTrptHash.get(ss[i]);
+            boolean found= v.remove(t);
+            if (found)
+                succ= true;
+            if (v.size()== 0)
+                ssTrptHash.remove(ss[i]);
+        }
+
+        Exon[] e= t.getExons();
+        for (int i = 0; i < e.length; i++) {
+            if (!(exonHash.containsKey(e)))
+                continue;
+            Transcript[] v= exonHash.get(e[i]);
+            for (int j = 0; j < v.length; j++) {
+                if (v[j]== t) {
+                    succ= true;
+                    if (v.length== 1)
+                        exonHash.remove(e[i]);
+                    else {
+                        Transcript[] vv= new Transcript[v.length- 1];
+                        System.arraycopy(v, 0, vv, 0, j);
+                        System.arraycopy(v, j+ 1, vv, j, v.length- j- 1);
+                        exonHash.put(e[i], vv);
+                    }
+                    break;
+                }
+            }
+        }
+
+        Transcript[] tt= transcripts;
+        for (int i = 0; i < tt.length; i++) {
+            if(tt[i]== t) {
+                Transcript[] vv= new Transcript[tt.length- 1];
+                System.arraycopy(tt, 0, vv, 0, i);
+                System.arraycopy(tt, i+ 1, vv, i, tt.length- i- 1);
+                transcripts= vv;
+                succ= true;
+                break;
+            }
+        }
+
+        return succ;
+    }
+
 	/**
 	 * @param ss
 	 * @return

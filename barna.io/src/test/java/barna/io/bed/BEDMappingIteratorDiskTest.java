@@ -30,9 +30,8 @@ package barna.io.bed;
 import barna.commons.ByteArrayCharSequence;
 import barna.commons.Execute;
 import barna.commons.system.OSChecker;
-import barna.io.BEDMappingIteratorDisk;
-import barna.io.rna.UniversalReadDescriptor;
 import barna.model.bed.BEDMapping;
+import barna.model.rna.UniversalReadDescriptor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -75,7 +74,8 @@ public class BEDMappingIteratorDiskTest {
 			PipedInputStream pin= new PipedInputStream();
 			PipedOutputStream pout= new PipedOutputStream(pin);
 			
-			UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
+			UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 			Comparator<CharSequence> comp= new BEDDescriptorComparator(descriptor);
 			//Arrays.sort(beds, comp);
 			//for (int i = 0; i < beds.length; i++) {
@@ -83,7 +83,7 @@ public class BEDMappingIteratorDiskTest {
 			//}
 			File tmpFile= File.createTempFile(getClass().getSimpleName(), "bed");
 			tmpFile.deleteOnExit();
-			BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, comp);
+			BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(pin, tmpFile, comp, descriptor);
 			biter.init();
 			
 			OutputStreamWriter writer= new OutputStreamWriter(pout);
@@ -97,7 +97,7 @@ public class BEDMappingIteratorDiskTest {
 			int i= 0;
 			while(biter.hasNext()) {
 				ByteArrayCharSequence cs= biter.next();
-				BEDMapping obj= new BEDMapping(cs);
+				BEDMapping obj= new BEDMapping(cs, descriptor);
 				// do not exchange arguments, String.equalsTo() checks OID
 				assertEquals(obj, bedSorted[i++]);
 			}
@@ -125,7 +125,8 @@ public class BEDMappingIteratorDiskTest {
 			}
 			buffy.close();
 			
-			UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
+			UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
+			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 			BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(x);
 			biter.init();
 			
@@ -134,7 +135,7 @@ public class BEDMappingIteratorDiskTest {
 			boolean first= true;
 			while(biter.hasNext()) {
 				ByteArrayCharSequence cseq= biter.next();
-				BEDMapping cs= new BEDMapping(cseq);
+				BEDMapping cs= new BEDMapping(cseq, descriptor);
 				if (count) {
 					++tstL;
 					tstC+= cs.length();

@@ -351,10 +351,38 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	HashMap<String,Integer> filtSomeIDs = null;
 	boolean[] filtSomeIDSuccess = null;
 	DirectedRegion[] filtRegs = null;
-	String[] filtChrIDs = null, noIDs = new String[0], filtGeneIDs = null, filtTrptIDs = null,
-		readFeatures = new String[] { "exon", "CDS", "start_codon", "stop_codon" }, allowSources= null;
+	String[] filtChrIDs = null;
+    /**
+     * Default chromosome names to be disregarded.
+     */
+    String[] noIDs = null;  // don't use DEFAULT_CHROMOSOME_FILTER see BARNA-369
+    String[] filtGeneIDs = null;
+    String[] filtTrptIDs = null;
+    String[] readFeatures = new String[] { "exon", "CDS", "start_codon", "stop_codon" };
 
-	boolean silent = false;
+    /**
+     * Permitted source field values read from the input.
+     */
+    String[] sourceInclude = null;
+
+    public String[] getSourceExclude() {
+        return sourceExclude;
+    }
+
+    /**
+     * Source field values that are prevented to be read from file
+     * @param sourceExclude source field values that are not considered
+     */
+    public void setSourceExclude(String[] sourceExclude) {
+        this.sourceExclude = sourceExclude;
+    }
+
+    /**
+     * Source field values that are to be disregarded from the input.
+     */
+    String[] sourceExclude = null;
+
+    boolean silent = false;
     boolean stars= true;
     boolean outputWarnings= false;
     boolean chromosomeWise = true;
@@ -964,53 +992,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	}
 
-	void skipToNextChromosome_raf(RandomAccessFile raf) {
-		try {
-			// raf.seek(bytesRead);
-			String lastChrID = null;
-			int lastPerc = 0;
-			long t0 = System.currentTimeMillis();
-			while (true) {
-				int perc = (int) ((bytesRead * 10d) / raf.length());
-				if (perc > lastPerc && !silent) {
-					++lastPerc;
-					System.out.print("*");
-					System.out.flush();
-				}
-				String line = raf.readLine();
-				if (line == null) {
-					break;
-				}
-				// String[] tokens= line.split("\t");
-				// String chr= tokens[0];
-				StringTokenizer toki = new StringTokenizer(line, "\t");
-				String chr = toki.nextToken();
-				if (chr.length() <= 3)
-					chr = "chr" + chr.trim();
-				else
-					chr = chr.trim();
-
-				if (lastChrID == null) {
-					lastChrID = chr;
-					System.out.print("skip " + lastChrID + " -> ");
-					System.out.flush();
-				}
-				if (!chr.equals(lastChrID)) {
-					System.out.println(chr + " "
-							+ ((System.currentTimeMillis() - t0) / 1000)
-							+ " sec");
-					break;
-				}
-				bytesRead += (line.length() + lineSeparator.length()); // else
-				++nrLinesRead;
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
 	BufferedReader skipToNextChromosome(BufferedReader buffy, long size, String lastChrID) {
 		try {
 			// raf.seek(bytesRead);
@@ -1029,29 +1010,20 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				}
 				String[] tokens = line.split("\t");
 				String chr = tokens[0];
-				// StringTokenizer toki= new StringTokenizer(line, "\t");
-				// String chr= toki.nextToken();
-				if (chr.length() <= 3)
-					chr = "chr" + chr.trim();
-				else
-					chr = chr.trim();
+				// relict from old inconsistencies in the chromosome naming,
+                // do not use anymore (BARNA-369)
+//				if (chr.length() <= 3)
+//					chr = "chr" + chr.trim();
+//				else
+				chr = chr.trim();
 
 				if (lastChrID == null) {
 					lastChrID = chr;
-					// System.out.print("skip "+lastChrID+" -> ");
-					// System.out.flush();
 				}
 				if (!chr.equals(lastChrID)) {
 					
 					// buffy.reset();
-					/*
-					 * java.io.IOException: Mark invalid
-	at java.io.BufferedReader.reset(BufferedReader.java:485)
-	at gphase.io.gtf.GTFReader.skipToNextChromosome(GTFReader.java:1134)
-	at gphase.io.gtf.GTFReader.read(GTFReader.java:1533)
-	at gphase.tools.IntronExonSeqRetriever.read(IntronExonSeqRetriever.java:86)
-	at gphase.tools.IntronExonSeqRetriever.main(IntronExonSeqRetriever.java:23)
-					 */
+					// java.io.IOException: Mark invalid
 					if (reuse)
 						lastLine= line;
 					else {
@@ -1203,19 +1175,29 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	boolean checkSource(String source) {
 		int x; // skip mRNA, gene...
-		for (x = 0; allowSources != null && x < allowSources.length; x++) {
-			if (allowSources[x].equalsIgnoreCase(source))
+		for (x = 0; sourceInclude != null && x < sourceInclude.length; x++) {
+			if (sourceInclude[x].equalsIgnoreCase(source))
 				break;
 		}
-		if (allowSources != null && x == allowSources.length) 
-			return false;		
+		if (sourceInclude != null && x == sourceInclude.length)
+			return false;
+
+        for (x = 0; sourceExclude != null && x < sourceExclude.length; x++) {
+            if (sourceExclude[x].equalsIgnoreCase(source))
+                break;
+        }
+        if (sourceExclude != null && x != sourceExclude.length)
+            return false;
+
 		return true;
 	}
 
 	boolean checkChromosome(String chrID) {
-		
-		if (getInputFile().getName().contains("cow") && chrID.equals("30"))
-			chrID = "X";
+
+        // relict from old Ensembl times,
+        // don't touch (BARNA-369)
+//		if (getInputFile().getName().contains("cow") && chrID.equals("30"))
+//			chrID = "X";
 		
 		// neg chromosome filtering
 		if (noIDs != null) {
@@ -2831,12 +2813,12 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		this.strandWise = strandWise;
 	}
 
-	public String[] getAllowSources() {
-		return allowSources;
+	public String[] getSourceInclude() {
+		return sourceInclude;
 	}
 
-	public void setAllowSources(String[] allowSources) {
-		this.allowSources = allowSources;
+	public void setSourceInclude(String[] sourceInclude) {
+		this.sourceInclude = sourceInclude;
 	}
 
 	public int getReadAheadTranscripts() {

@@ -3,7 +3,7 @@ package barna.flux.capacitor.integrationtest
 import barna.commons.system.OSChecker
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings
 import barna.io.FileHelper
-import barna.io.rna.UniversalReadDescriptor
+import barna.model.rna.UniversalReadDescriptor
 import com.martiansoftware.jsap.RequiredParameterMissingException
 import groovy.json.JsonSlurper
 

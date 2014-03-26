@@ -264,10 +264,10 @@ public abstract class AbstractEdge {
 	/**
 	 * Compute effective length of edge
 	 * @param dir directionality
-	 * @param maxMapLen maximum length of mappings
+	 * @param mapLenMax maximum length of mappings
 	 * @return the effective length of the edge
 	 */
-	public abstract int getEffLength(byte dir, int maxMapLen);
+	public abstract int getEffLength(byte dir, int mapLenMax);
 	
 	/**
 	 * Returns the genomic position.

@@ -337,7 +337,7 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 	            }
 	
 	            // choose 5'-end for second strand synthesis
-	            int howmany2 = 5;    // roll 5 values
+	            int howmany2 = 1;    // roll 5 values
 	            int new5Prime = index1[i];
 	            int to2 = Math.min(from + 50, index1[i] - 1);    // within 50nt closest to 5'
 	            for (int j = 0; j < howmany2; j++) {
@@ -346,13 +346,14 @@ public class FragmentReverseTranscription implements FragmentProcessor {
 	                if (wAsense == null) {
 	                    p = from + (int) Math.floor(r * (to2 - from));
 	                } else {
-	                    to2 = Math.min(wSense.length-1, Math.min(leftFlank + from + 50, index1[i] - 1));    // within 50nt closest to 5'
+	                    to2 = Math.min(wSense.length- 1, Math.min(leftFlank + from + 50, index1[i] - 1));    // within 50nt closest to 5'
 	                    int from2 = Math.min(leftFlank + from, wSense.length-1);
 	
 	                    r = wSense[from2] + (r * (wSense[to2] - wSense[from2]));
                         // ensure we have something to search / BARNA-303
-                        if(to2 < from){
-                            from = Math.max(0, to2 - 1);
+                        if(to2 <= from2){
+                            from2 = Math.min(from2, to2 - 1);
+                            to2= from2+ 1;
                         }
 	                    p = Arrays.binarySearch(wSense, from2, to2, r);
 	                    p = (p >= 0 ? p : -(p + 1));

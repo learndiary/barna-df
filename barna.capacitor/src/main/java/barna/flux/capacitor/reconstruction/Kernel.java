@@ -96,7 +96,7 @@ public class Kernel {
 		return f;
 	}
 	
-	public static int smoothen(byte kernel, int w, int[] b) {
+	public static double smoothen(byte kernel, int w, double[] b) {
 		
 		double[] f= getKernel(kernel, w);
 		if (f== null)
@@ -107,7 +107,7 @@ public class Kernel {
 			a[i]= 0;
 		
 		for (int i = -w/ 2; i < a.length- (w/ 2); ++i) {
-			int med= b[i+ (w/ 2)];
+			double med= b[i+ (w/ 2)];
 			for (int j = 0; j < w; ++j) {
 				if (i+ j< 0|| i+ j>= a.length)
 					continue;
@@ -115,10 +115,10 @@ public class Kernel {
 			}
 		}
 		
-		int sum= 0;
+		double sum= 0;
 		for (int i = 0; i < a.length; i++) {
-			b[i]= (int) Math.round(a[i]);
-			sum+= b[i];
+			b[i]= a[i];
+			sum+= a[i];
 		}
 		
 		return sum;

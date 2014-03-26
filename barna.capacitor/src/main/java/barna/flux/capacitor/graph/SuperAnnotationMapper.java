@@ -14,7 +14,8 @@ public class SuperAnnotationMapper extends AnnotationMapper {
     AnnotationMapper[] annos= null;
 
     public SuperAnnotationMapper(SuperLocus sl) {
-        super(null, null, false);
+        //super(null, null, false);
+        super(sl, false, false, false, null);
     }
 
 }
