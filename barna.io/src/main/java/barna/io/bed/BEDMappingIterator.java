@@ -176,4 +176,12 @@ public class BEDMappingIterator implements MSIterator<BEDMapping> {
         }
         return attributes;
     }
+
+    @Override
+    public int size() {
+        if (elements== null)
+            return 0;
+        return elements.size();
+    }
+
 }

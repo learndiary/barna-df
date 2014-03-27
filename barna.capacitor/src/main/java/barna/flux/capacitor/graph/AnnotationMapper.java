@@ -459,12 +459,21 @@ public class AnnotationMapper extends SplicingGraph {
     }   */
 
     /**
+     * Lazy wrapper for mappings that do not require edge tracking.
+     * @param mappings iterator of input lines
+     * @param insertFile file to write observed insert sizes to
+     */
+    public void map(MSIterator<Mapping> mappings, File insertFile) {
+        map(mappings, insertFile, null);
+    }
+
+    /**
      * Maps genome-mapped reads into the graph.
      *
      * @param mappings iterator of input lines
-     * @param insertFile
+     * @param insertFile file to write observed insert sizes to
      */
-    public void map(MSIterator<Mapping> mappings, File insertFile) {
+    public void map(MSIterator<Mapping> mappings, File insertFile, HashMap<EdgeSet, Integer> esetMap) {
 
         if (mappings == null)
             return;

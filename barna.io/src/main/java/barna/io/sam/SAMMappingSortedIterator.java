@@ -246,4 +246,12 @@ public class SAMMappingSortedIterator implements MSIterator<SAMMapping>{
         wrappedIterator.remove();
     }
 
+    @Override
+    public int size() {
+        if (mappings== null)
+            return 0;
+        return mappings.size();
+    }
+
+
 }

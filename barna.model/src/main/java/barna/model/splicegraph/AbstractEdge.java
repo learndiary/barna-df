@@ -257,8 +257,8 @@ public abstract class AbstractEdge {
 	/**
 	 * Calculate hash codes by string conversion.
 	 */
-	public int hashCode() {		
-		return toString().hashCode();
+	public int hashCode() {
+        return toString().hashCode();
 	}
 
 	/**

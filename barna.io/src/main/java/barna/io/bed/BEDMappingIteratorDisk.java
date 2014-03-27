@@ -549,4 +549,9 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
         return attributes;
     }
 
+    @Override
+    public int size() {
+        return (-1);
+    }
+
 }
