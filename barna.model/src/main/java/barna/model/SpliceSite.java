@@ -401,58 +401,19 @@ public class SpliceSite extends AbstractSite {
 	public boolean equals(Object obj) {
 		
 		SpliceSite otherSS= (SpliceSite) obj;
-		if (getPos()== otherSS.getPos()&& getType()== otherSS.getType())
+        // consider chr for super loci
+		if (getPos()== otherSS.getPos()
+                && getType()== otherSS.getType()
+                && getGene().getChromosome().equals(otherSS.getGene().getChromosome()))
 			return true;
 		return false;
-		
-//		if (!super.equals(anotherSS))
-//			return false;
-//		
-//		if (!(anotherSS instanceof SpliceSite))
-//			return false;
-//		
-//		SpliceSite s2= (SpliceSite) anotherSS;
-//		if (s2.isDonor()!= isDonor())
-//			return false;
-////		SpliceSite aSS= (SpliceSite) anotherSS;
-////		if (gene!= aSS.getGene()|| pos!= aSS.getPos())
-////			return false;
-//		return true;
 	}
-	
-//	---------------------------------------------- 
-//	hashCode 
-//	public int hashCode() 
-//	Returns a hash code value for the object. This method is supported for the 
-//	benefit of hashtables such as those provided by java.util.Hashtable. 
-//	The general contract of hashCode is: 
-//	* Whenever it is invoked on the same object more than once during an 
-//	execution of a Java application, the hashCode method must consistently 
-//	return the same integer, provided no information used in equals comparisons 
-//	on the object is modified. This integer need not remain consistent from one 
-//	execution of an application to another execution of the same application. 
-//	* If two objects are equal according to the equals(Object) method, then 
-//	calling the hashCode method on each of the two objects must produce the same 
-//	integer result. 
-//	* It is not required that if two objects are unequal according to the 
-//	equals(java.lang.Object) method, then calling the hashCode method on each of 
-//	the two objects must produce distinct integer results. However, the 
-//	programmer should be aware that producing distinct integer results for 
-//	unequal objects may improve the performance of hashtables. 
-//
-//
-//	As much as is reasonably practical, the hashCode method defined by class 
-//	Object does return distinct integers for distinct objects. (This is 
-//	typically implemented by converting the internal address of the object into 
-//	an integer, but this implementation technique is not required by the JavaTM 
-//	programming language.) 
-//	----------------------------------------------
+
 	public int hashCode() {
 		// not required, read text
 		// bullshit, gotta change otherwise ss overwrite as in hash
 		// and the other way
-		return getPos(); //super.hashCode();
-		
+		return getPos();
 	}
 	
 	public static byte getTypeBySymbol(char c) {

@@ -2,6 +2,7 @@ package barna.model.splicegraph;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 /**
  * Administrates a set of edges.
@@ -57,12 +58,32 @@ public class EdgeSet {
 
     @Override
     public int hashCode() {
-        return super.hashCode();    //To change body of overridden methods use File | Settings | File Templates.
+
+        StringBuilder sb= new StringBuilder();
+        for (AbstractEdge e:eset) {
+             sb.append(e.toString());
+        }
+
+        return sb.toString().hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return super.equals(obj);    //To change body of overridden methods use File | Settings | File Templates.
+
+        if (!(obj instanceof EdgeSet))
+            return false;
+        EdgeSet otherEset= (EdgeSet) obj;
+
+        if (eset.size()!= otherEset.eset.size())
+            return false;
+
+        // falls back to edge and ss comparison, incl chr
+        Iterator<AbstractEdge> iter= eset.iterator();
+        while(iter.hasNext())
+            if (!otherEset.eset.contains(iter.next()))
+                return false;
+
+        return true;
     }
 
 
