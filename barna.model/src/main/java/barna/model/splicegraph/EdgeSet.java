@@ -18,20 +18,20 @@ public class EdgeSet {
      * Returns the set of edges managed by <code>this</code> instance.
      * @return a hashset with the edges
      */
-    public HashSet<AbstractEdge> getEset() {
+    public HashMap<AbstractEdge, Byte> getEset() {
         return eset;
     }
 
-    HashSet<AbstractEdge> eset; // TODO replace by constant growth hash, possibly on disk
+    HashMap<AbstractEdge, Byte> eset; // TODO replace by constant growth hash, possibly on disk
 
     // for internal use only
     private EdgeSet() {
     }
 
-    public EdgeSet(AbstractEdge e, int size) {
+    public EdgeSet(AbstractEdge e, byte dir, int size) {
         singletonMgr= new HashMap<EdgeSet, EdgeSet>(100, 1f);
-        eset= new HashSet<AbstractEdge>(size, 1f);
-        add(e);
+        eset= new HashMap<AbstractEdge, Byte>(size, 1f);
+        add(e, dir);
     }
 
     /**
@@ -40,12 +40,12 @@ public class EdgeSet {
      * @return <code>this</code> regardless whether the edge was added to the current set or not,
      * or another instance if the extended set already exists in the collection of singletons
      */
-    public EdgeSet add(AbstractEdge e){
+    public EdgeSet add(AbstractEdge e, Byte dir){
 
-        if (eset.contains(e))
+        if (eset.containsKey(e)&& eset.get(e)== dir)
             return this;
 
-        eset.add(e);
+        eset.put(e, dir);
         if (singletonMgr.containsKey(e)) {
             eset.remove(e); // in case the object is stored as singleton
             return singletonMgr.get(e);
@@ -60,7 +60,7 @@ public class EdgeSet {
     public int hashCode() {
 
         StringBuilder sb= new StringBuilder();
-        for (AbstractEdge e:eset) {
+        for (AbstractEdge e:eset.keySet()) {    // disregard directionalities
              sb.append(e.toString());
         }
 
@@ -78,10 +78,13 @@ public class EdgeSet {
             return false;
 
         // falls back to edge and ss comparison, incl chr
-        Iterator<AbstractEdge> iter= eset.iterator();
-        while(iter.hasNext())
-            if (!otherEset.eset.contains(iter.next()))
+        Iterator<AbstractEdge> iter= eset.keySet().iterator();
+        while(iter.hasNext()) {
+            AbstractEdge k= iter.next();
+            if ((!otherEset.eset.containsKey(k))
+                || (otherEset.eset.get(k)!= eset.get(k)))
                 return false;
+        }
 
         return true;
     }

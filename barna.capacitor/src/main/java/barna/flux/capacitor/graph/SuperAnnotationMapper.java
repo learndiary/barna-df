@@ -39,14 +39,14 @@ public class SuperAnnotationMapper {
      * @param mappings iterator over input mappings
      * @param insertFile file to write insert sizes to
      */
-    public void map(MSIterator<Mapping> mappings, File insertFile) {
+    public HashMap<EdgeSet, Integer> map(MSIterator<Mapping> mappings, File insertFile) {
 
         esetMap= new HashMap<EdgeSet, Integer>(Math.max(mappings.size(), 1), 1f);
 
-        for (int i = 0; i < annos.length; i++) {
-            annos[i].map(mappings, insertFile);
-        }
+        for (int i = 0; i < annos.length; i++)
+            annos[i].map(mappings, insertFile, esetMap);
 
+        return esetMap;
     }
 
 

@@ -499,6 +499,8 @@ public class AnnotationMapper extends SplicingGraph {
         nrMappingsWrongStrand = 0;
 
         int multi= 0;
+        EdgeSet currEset= null; // for collecting multimap edges
+
         // map read pairs
         while (mappings.hasNext()) {
 
@@ -507,6 +509,14 @@ public class AnnotationMapper extends SplicingGraph {
             CharSequence name= mapping.getName(true);
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
+            } else if (esetMap!= null) {
+                if (currEset!= null) {
+                    int cnt= 0;
+                    if (esetMap.containsKey(currEset))
+                        cnt= esetMap.get(currEset);
+                    esetMap.put(currEset, (cnt+ 1));
+                }
+                currEset= null;
             }
 
             // updates stats, if any
@@ -604,6 +614,13 @@ public class AnnotationMapper extends SplicingGraph {
                         ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
                     }
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
+                    if (esetMap!= null) {
+                        if (currEset== null)
+                            currEset= new EdgeSet(se, DirectedRegion.STRAND_POS, ((SuperLocus) gene).getGenes().length);
+                        else
+                            currEset= currEset.add(se, DirectedRegion.STRAND_POS);
+                    }
+
                     if (se.isExonic()) {
                         nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
@@ -613,22 +630,43 @@ public class AnnotationMapper extends SplicingGraph {
 //                mappings.reset();
 
             } else {    // single reads, strand already checked
-					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
-                    if (target.isAllIntronic()) {
-                        if (sense)
-                                ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
-                        else
-                                ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
-                    } else {
-                        if (sense)
-                            ((MappingsInterface) target).getMappings().incrReadNr();
-                        else
+                boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
+                if (target.isAllIntronic()) {
+                    if (sense)
+                            ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
+                    else
+                            ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
+                } else {
+                    if (sense) {
+                        ((MappingsInterface) target).getMappings().incrReadNr();
+                        if (esetMap!= null) {
+                            if (currEset== null)
+                                currEset= new EdgeSet(target, DirectedRegion.STRAND_POS, ((SuperLocus) gene).getGenes().length);
+                            else
+                                currEset= currEset.add(target, DirectedRegion.STRAND_POS);
+                        } else {
                             ((MappingsInterface) target).getMappings().incrRevReadNr();
-                        //++nrMappingsMapped;
-                        nrMappingsMapped+=mapping.getCount(weighted);
+                            if (currEset== null)
+                                currEset= new EdgeSet(target, DirectedRegion.STRAND_NEG, ((SuperLocus) gene).getGenes().length);
+                            else
+                                currEset= currEset.add(target, DirectedRegion.STRAND_NEG);
+                        }
+                    }
+                    //++nrMappingsMapped;
+                    nrMappingsMapped+=mapping.getCount(weighted);
                 }
             }
         } // end: while(iter.hasNext())
+
+        // last mmap edge
+        if (esetMap!= null) {
+            if (currEset!= null) {
+                int cnt= 0;
+                if (esetMap.containsKey(currEset))
+                    cnt= esetMap.get(currEset);
+                esetMap.put(currEset, (cnt+ 1));
+            }
+        }
 
         // close insert writer
         if (buffy != null)
