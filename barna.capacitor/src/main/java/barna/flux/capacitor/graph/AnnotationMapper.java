@@ -446,7 +446,7 @@ public class AnnotationMapper extends SplicingGraph {
 
             if (paired && mapping.getMateFlag() == 2)    // don't iterate twice, for counters
                 continue;
-				AbstractEdge target= getEdge2(mapping);
+			AbstractEdge target= getEdge2(mapping);
             if (target == null) {
                 ++nrMappingsNotMapped;
                 continue;    // couldn't map

@@ -1115,7 +1115,8 @@ public class GraphLPsolver {
         }
 
         // normalizaton factor
-        double nfac= (sum== 0? 1: nrMappingsObs/ sum);
+        // we want to rescale to the totally observed reads but not exceed them - BARNA-374
+        double nfac = (sum==0 ? 1 : nrMappingsObs/ Math.max(1.0, sum));
         for (Transcript trpt : trpts) {
             double x = trptExprHash.get(trpt.getTranscriptID());
             x *= nfac;
