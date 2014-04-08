@@ -586,7 +586,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
      */
     public static final Parameter<Boolean> IGNORE_SAM_FLAGS = Parameters.booleanParameter("IGNORE_SAM_FLAGS",
             "Use SAM flags when scanning the BAM mapping file",
-            false).longOption("use-flags");
+            false).longOption("ignore-sam-flags");
 
     /**
      * A <code>boolean</code> value specifying if only primary alignments should be considered
@@ -594,7 +594,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
      */
     public static final Parameter<Boolean> SAM_PRIMARY_ONLY = Parameters.booleanParameter("SAM_PRIMARY_ONLY",
             "Only use primary alignments for quantification",
-            true).longOption("sam-primary-only");
+            false).longOption("sam-primary-only");
 
     /**
      * A <code>boolean</code> value specifying if pairing information from the SAM file should be used
