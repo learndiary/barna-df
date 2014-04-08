@@ -9,6 +9,7 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
+import barna.io.gtf.GTFwrapper;
 import barna.model.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
 import org.junit.*;
@@ -42,6 +43,11 @@ public class FluxCapacitorTest {
     final File BAM_HG_MIXED = new File(getClass().getResource("/test_hg_chr22_24030323-24041363_mixed.bam").getFile());
     final File GTF_XT = new File(getClass().getResource("/test_xt.gtf").getFile());
     final File BAM_XT = new File(getClass().getResource("/test_xt.bam").getFile());
+    final File BAM_ZERO = new File(getClass().getResource("/SID38244_chr20_26167556_26232162.bam").getFile());
+    final File BAM_ZERO_PROFILE = new File(getClass().getResource("/SID38244.whole.profile.txt").getFile());
+    final File BAM_OVER = new File(getClass().getResource("/SID38233_chr20_26167556_26232162.bam").getFile());
+    final File BAM_OVER_PROFILE = new File(getClass().getResource("/SID38233.whole.profile.txt").getFile());
+    final File GENC_19 = new File(getClass().getResource("/genc19_chr20_26167556_26232162.gtf").getFile());
 
     @BeforeClass
     public static void initExecuter() {
@@ -859,5 +865,105 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
 
+    }
+
+    @Test
+    public void test_no_deconvolution_sam_primary_only() throws Exception {
+        //BARNA-373
+        Map pars = new HashMap();
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GENC_19);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_ZERO);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED_STRANDED);
+        pars.put(FluxCapacitorSettings.READ_STRAND.getName(), FluxCapacitorSettings.ReadStrand.MATE2_SENSE);
+        pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BAM_ZERO_PROFILE);
+        //pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), true);
+        //pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(),true);
+        //pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+
+        File output = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
+        assertTrue(output.exists());
+
+        BufferedReader runGtf = new BufferedReader(new FileReader(output));
+
+        List<String> runLines = new ArrayList<String>();
+
+        String line;
+        while ((line = runGtf.readLine()) != null) {
+            runLines.add(line);
+        }
+        runGtf.close();
+
+        assertEquals(runLines.size(),37);
+        for (String runLine : runLines) {
+            String[] l = runLine.split("\t");
+            HashMap<String, String> attrs = new HashMap<String, String>();
+            for (String s : l[8].split("; ")) {
+                attrs.put(s.split(" ")[0],s.split(" ")[1].replaceAll("\"",""));
+            }
+            if (!attrs.get("locus_id").equals("chr20:26167556-26232162C") && !attrs.get("locus_id").equals("chr20:26171625-26174582W")) {
+                fail();
+            }
+            if (!attrs.get("reads").equals("0.000000")) {
+                System.err.println("Transcript " + attrs.get("transcript_id") + ": " + attrs.get("reads"));
+                return;
+            }
+        }
+
+        fail();
+    }
+
+    @Test
+    public void test_over_quantification_sam_primary_only() throws Exception {
+        //BARNA-374
+        Map pars = new HashMap();
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GENC_19);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_OVER);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED_STRANDED);
+        pars.put(FluxCapacitorSettings.READ_STRAND.getName(), FluxCapacitorSettings.ReadStrand.MATE2_SENSE);
+        pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BAM_OVER_PROFILE);
+        //pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), true);
+        //pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(),true);
+        //pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+
+        MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
+
+        assertNotNull(stats);
+
+        File output = new File(currentTestDirectory, FluxCapacitorRunner.DEFAULT_OUTPUT_FILE.toString());
+        assertTrue(output.exists());
+
+        BufferedReader runGtf = new BufferedReader(new FileReader(output));
+
+        List<String> runLines = new ArrayList<String>();
+
+        String line;
+        while ((line = runGtf.readLine()) != null) {
+            runLines.add(line);
+        }
+        runGtf.close();
+
+        assertEquals(runLines.size(),37);
+        for (String runLine : runLines) {
+            String[] l = runLine.split("\t");
+            HashMap<String, String> attrs = new HashMap<String, String>();
+            for (String s : l[8].split("; ")) {
+                attrs.put(s.split(" ")[0],s.split(" ")[1].replaceAll("\"",""));
+            }
+            if (!attrs.get("locus_id").equals("chr20:26167556-26232162C") && !attrs.get("locus_id").equals("chr20:26171625-26174582W")) {
+                fail();
+            }
+            if (Double.parseDouble(attrs.get("reads")) >= 800000000) {
+                System.err.println("Transcript " + attrs.get("transcript_id") + ": " + attrs.get("reads"));
+                fail();
+            }
+        }
     }
 }
