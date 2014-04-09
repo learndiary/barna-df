@@ -342,26 +342,6 @@ public class FluxCapacitorTest {
         assertTrue(msg.contains("incompatible with read IDs"));
     }
 
-    @Test
-    public void testWrongBedGzReadDescriptor() throws Exception {
-        Map pars = new HashMap();
-        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_MM9_SORTED);
-        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED_GZ);
-        pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
-        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
-        pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
-
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
-
-        String msg = "";
-        try {
-            FluxCapacitorRunner.runCapacitor(parFile, null);
-        } catch (Exception e) {
-            msg = e.getMessage();
-        }
-        assertTrue(msg.contains("incompatible with read IDs"));
-    }
-
     /**
      * A test to guarantee correct handling of loci without reads.
      */

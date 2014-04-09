@@ -174,17 +174,6 @@ public class AnnotationMapper extends SplicingGraph {
     private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
 
     /**
-     * Pairedness and strandedness of the mapping
-     */
-    boolean paired = false;
-    boolean stranded = false;
-
-    /**
-     * Read strandedness
-     */
-    private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
-
-    /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
