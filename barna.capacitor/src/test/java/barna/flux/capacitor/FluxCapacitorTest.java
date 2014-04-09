@@ -163,7 +163,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
-        pars.put(FluxCapacitorSettings.DECONVOLUTE.getName(), false);
+        pars.put(FluxCapacitorSettings.DISABLE_DECONVOLUTION.getName(), true);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -178,7 +178,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-        pars.put(FluxCapacitorSettings.DECONVOLUTE.getName(), false);
+        pars.put(FluxCapacitorSettings.DISABLE_DECONVOLUTION.getName(), true);
         pars.put(FluxCapacitorSettings.COUNT_ELEMENTS.getName(), EnumSet.of(FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS));
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -194,7 +194,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-        pars.put(FluxCapacitorSettings.DECONVOLUTE.getName(), false);
+        pars.put(FluxCapacitorSettings.DISABLE_DECONVOLUTION.getName(), true);
         pars.put(FluxCapacitorSettings.COUNT_ELEMENTS.getName(), EnumSet.of(FluxCapacitorSettings.CountElements.INTRONS));
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -210,7 +210,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_PAIRED);
-        pars.put(FluxCapacitorSettings.DECONVOLUTE.getName(), false);
+        pars.put(FluxCapacitorSettings.DISABLE_DECONVOLUTION.getName(), true);
         pars.put(FluxCapacitorSettings.COUNT_ELEMENTS.getName(), EnumSet.allOf(FluxCapacitorSettings.CountElements.class));
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
@@ -644,7 +644,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_HG_JUNCTION);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED_STRANDED);
-        pars.put(FluxCapacitorSettings.DECONVOLUTE.getName(), false);
+        pars.put(FluxCapacitorSettings.DISABLE_DECONVOLUTION.getName(), true);
         pars.put(FluxCapacitorSettings.COUNT_ELEMENTS.getName(),FluxCapacitorSettings.CountElements.SPLICE_JUNCTIONS);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
@@ -704,8 +704,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_MULTI);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
-        pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), true);
-        pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
+        pars.put(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING.getName(), true);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
@@ -731,8 +730,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_MULTI);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
-        pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(), true);
-        pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
+        pars.put(FluxCapacitorSettings.IGNORE_SAM_PAIRING_INFORMATION.getName(), true);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -744,7 +742,7 @@ public class FluxCapacitorTest {
         assertEquals(0, stats.getMappingsSingleTxLoci());
         assertEquals(1, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
-        assertEquals(2, stats.getMappingsMapped());
+        assertEquals(6, stats.getMappingsMapped());
         assertEquals(0, stats.getMappingPairsNoTx());
         assertEquals(0, stats.getPairsWrongOrientation());
         assertEquals(0, stats.getMappingsWrongStrand());
@@ -758,9 +756,6 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_MULTI);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
-        pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), true);
-        pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(),true);
-        pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -787,8 +782,8 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
         pars.put(FluxCapacitorSettings.SAM_UNIQUE_ONLY.getName(), true);
-        pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), false);    // 2 unique mappings, but not in a sam pair
-        pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
+        pars.put(FluxCapacitorSettings.IGNORE_SAM_PAIRING_INFORMATION.getName(), true);    // 2 unique mappings, but not in a sam pair
+        pars.put(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING.getName(), true);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -814,9 +809,8 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_HG_MULTI);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BAM_HG_MULTI);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
-        pars.put(FluxCapacitorSettings.SAM_MATES_ONLY.getName(), true);
         pars.put(FluxCapacitorSettings.SAM_UNIQUE_ONLY.getName(), true);
-        //pars.put("WEIGHTED_COUNT", true);
+        pars.put(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING.getName(), true);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -824,7 +818,7 @@ public class FluxCapacitorTest {
 
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
-        assertEquals(1, stats.getReadsSingleTxLoci());
+        assertEquals(2, stats.getReadsSingleTxLoci());
         assertEquals(1, stats.getMappingsSingleTxLoci());
         assertEquals(0, stats.getMappingPairsSingleTxLoci());  // profiling only allows sam-pairing
         assertEquals(6, stats.getMappingsTotal());
@@ -876,6 +870,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED_STRANDED);
         pars.put(FluxCapacitorSettings.READ_STRAND.getName(), FluxCapacitorSettings.ReadStrand.MATE2_SENSE);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BAM_ZERO_PROFILE);
+        pars.put(FluxCapacitorSettings.MIN_OBS.getName(), 1);
 
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
 
@@ -907,7 +902,6 @@ public class FluxCapacitorTest {
                 fail();
             }
             if (!attrs.get("reads").equals("0.000000")) {
-                System.err.println("Transcript " + attrs.get("transcript_id") + ": " + attrs.get("reads"));
                 return;
             }
         }

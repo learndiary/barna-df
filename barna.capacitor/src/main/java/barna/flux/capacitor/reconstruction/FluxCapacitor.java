@@ -1041,7 +1041,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
             AnnotationMapping am = settings.get(FluxCapacitorSettings.ANNOTATION_MAPPING);
 
-            mapper = new AnnotationMapper(this.gene, am.isPaired(), am.isStranded(), settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), settings.get(FluxCapacitorSettings.READ_STRAND));
+            mapper = new AnnotationMapper(this.gene, am.isPaired(), am.isStranded(), !settings.get(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING), settings.get(FluxCapacitorSettings.READ_STRAND));
             mapper.setStats(stats);
             mapper.map(this.mappings, settings.get(FluxCapacitorSettings.INSERT_FILE));
 
@@ -1678,7 +1678,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             stats = new MappingStats();
 
         //cheatDisableFCheck = true;
-        if (settings.get(FluxCapacitorSettings.NO_FILE_CHECK)) {
+        if (settings.get(FluxCapacitorSettings.DISABLE_FILE_CHECK)) {
             Log.warn("Scanning of input files disabled");
             gtfReader = (GTFwrapper)fileInit(settings.get(FluxCapacitorSettings.ANNOTATION_FILE));
             mappingReader = (MappingReader)fileInit(settings.get(FluxCapacitorSettings.MAPPING_FILE));
@@ -1728,7 +1728,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
         //MappingStats stats = new MappingStats();
         long t0 = System.currentTimeMillis();
         if (currentTasks.contains(Task.PROFILE)) {
-            BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT), gtfReader,mappingReader);
+            BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, !settings.get(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING), gtfReader,mappingReader);
             stats=profiler.call().getMappingStats();
             printProfile((System.currentTimeMillis() - t0) / 1000);
         } else {
@@ -1762,7 +1762,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             }
         }
         //Get from settings the tasks to be executed in the current run
-        if (settings.get(FluxCapacitorSettings.DECONVOLUTE)) {
+        if (!settings.get(FluxCapacitorSettings.DISABLE_DECONVOLUTION)) {
             currentTasks.add(Task.DECOMPOSE);
         }
 
@@ -2091,7 +2091,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if (profile == null) {
                 profile = new Profile();
                 try {
-                    BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, settings.get(FluxCapacitorSettings.WEIGHTED_COUNT),gtfReader, mappingReader);
+                    BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, !settings.get(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING),gtfReader, mappingReader);
                     profile = profiler.call();
                 } catch (Throwable e) {
                     e.printStackTrace();
@@ -2754,7 +2754,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             case BED:
                 return new BEDReader(inputFile, settings.get(FluxCapacitorSettings.SORT_IN_RAM),settings.get(FluxCapacitorSettings.READ_DESCRIPTOR),settings.get(FluxCapacitorSettings.TMP_DIR), settings.get(FluxCapacitorSettings.MIN_SCORE));
             case BAM:
-                SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM), settings.get(FluxCapacitorSettings.MIN_SCORE), !settings.get(FluxCapacitorSettings.IGNORE_SAM_FLAGS), settings.get(FluxCapacitorSettings.SAM_PRIMARY_ONLY), settings.get(FluxCapacitorSettings.SAM_MATES_ONLY), settings.get(FluxCapacitorSettings.SAM_UNIQUE_ONLY));
+                SAMReader r = new SAMReader(inputFile, true, settings.get(FluxCapacitorSettings.SORT_IN_RAM), settings.get(FluxCapacitorSettings.MIN_SCORE), !settings.get(FluxCapacitorSettings.IGNORE_SAM_FLAGS), settings.get(FluxCapacitorSettings.SAM_PRIMARY_ONLY), !settings.get(FluxCapacitorSettings.IGNORE_SAM_PAIRING_INFORMATION), settings.get(FluxCapacitorSettings.SAM_UNIQUE_ONLY));
                 if (!settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY).equals(SAMFileReader.ValidationStringency.DEFAULT_STRINGENCY)) {
                     Log.info("SAM","Setting validation stringency to " + settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY));
                     r.setValidationStringency(settings.get(FluxCapacitorSettings.SAM_VALIDATION_STRINGENCY));
