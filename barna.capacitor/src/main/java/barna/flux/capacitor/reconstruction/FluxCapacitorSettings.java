@@ -468,11 +468,11 @@ public class FluxCapacitorSettings extends ParameterSchema {
     /**
      * Parameter for skipping deconvolution
      */
-    public static final Parameter<Boolean> DECONVOLUTE = Parameters.booleanParameter(
-            "DECONVOLUTE",
-            " Avoid running deconvolution step on the dataset",
-            true,
-            null);
+    public static final Parameter<Boolean> DISABLE_DECONVOLUTION = Parameters.booleanParameter(
+            "DISABLE_DECONVOLUTION",
+            "Disable the deconvolution step",
+            false,
+            null).longOption("disable-deconvolution");
 
     /**
      * Parameter for settting SAMtools validation stringency
@@ -551,7 +551,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
      * is carried out on disk.
      */
     public static final Parameter<Boolean> SORT_ON_DISK = Parameters.booleanParameter("SORT_ON_DISK",
-            "Sort reads in RAM  on disk",
+            "Sort reads on disk",
             false).longOption("sort-on-disk");
 
     /**
@@ -581,11 +581,36 @@ public class FluxCapacitorSettings extends ParameterSchema {
     }).longOption("minilen");
 
     /**
+     * Minimum number of reads to be left in a locus by the linear solver. If it's >0 the lp-solver will be forced to
+     * deconvolute the locus even if it would me more expensive that removing all the reads from it (BARNA-375).
+     *
+     * It can be specified as either:
+     * - absolute number of reads (>1)
+     * - fraction of the observed reads (0,1)
+     */
+    public static final Parameter<Double> MIN_OBS = Parameters.doubleParameter("MIN_OBS",
+            "Minimum number of reads to be left in a locus by the linear solver.\n" +
+                    " It can be expressed as an absolute number of reads (>1) or as fraction of the observed read count [0..1].\n" +
+                    "With MIN_OBS > 0 the lp-solver will be forced to provide a deconvolution in all loci with > 0 " +
+                    "annotation-mapped reads or pairs. The derived quantifications may be variable in " +
+                    "loci with less observations than changes that are necessary to perform the deconvolution.",
+            0, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            double val = (Double) schema.get(parameter);
+            if (val< 0) {
+                throw new ParameterException(parameter.getName()+ " has to be positive");
+            }
+            Transcript.maxLengthIntronIsGap= (byte) (val- 1);
+        }
+    }).longOption("min-obs");
+
+    /**
      * A <code>boolean</code> value specifying if the SAM flags have to be used to scan a BAM file
      * for quantification
      */
     public static final Parameter<Boolean> IGNORE_SAM_FLAGS = Parameters.booleanParameter("IGNORE_SAM_FLAGS",
-            "Use SAM flags when scanning the BAM mapping file",
+            "Ignore SAM flags when scanning the mapping file",
             false).longOption("ignore-sam-flags");
 
     /**
@@ -594,22 +619,30 @@ public class FluxCapacitorSettings extends ParameterSchema {
      */
     public static final Parameter<Boolean> SAM_PRIMARY_ONLY = Parameters.booleanParameter("SAM_PRIMARY_ONLY",
             "Only use primary alignments for quantification",
-            false).longOption("sam-primary-only");
+            false, new ParameterValidator() {
+        @Override
+        public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
+            boolean sam_primary_only = (Boolean)schema.get(parameter);
+            boolean weighted = !schema.get(DISABLE_MULTIMAP_WEIGHTING);
+            if (sam_primary_only && weighted)
+                schema.set(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING, true);
+        }
+    }).longOption("sam-primary-only");
 
     /**
      * A <code>boolean</code> value specifying if pairing information from the SAM file should be used
      * for quantification
      */
-    public static final Parameter<Boolean> SAM_MATES_ONLY = Parameters.booleanParameter("SAM_MATES_ONLY",
-            "Use SAM pairing information for quantification",
-            true, new ParameterValidator() {
+    public static final Parameter<Boolean> IGNORE_SAM_PAIRING_INFORMATION = Parameters.booleanParameter("IGNORE_SAM_PAIRING_INFORMATION",
+            "Ignore SAM pairing information in the quantification",
+            false, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             boolean sam_primary_only = schema.get(SAM_PRIMARY_ONLY);
             if (sam_primary_only)
-                schema.set(parameter, false);
+                schema.set(parameter, true);
         }
-    }).longOption("sam-mates-only");
+    }).longOption("ignore-sam-pairing-information");
 
     /**
      * A <code>boolean</code> value specifying if only unique alignments should be considered
@@ -622,23 +655,23 @@ public class FluxCapacitorSettings extends ParameterSchema {
     /**
      * A <code>boolean</code> value specifying to exclude file checking before the run
      */
-    public static final Parameter<Boolean> NO_FILE_CHECK = Parameters.booleanParameter("NO_FILE_CHECK",
+    public static final Parameter<Boolean> DISABLE_FILE_CHECK = Parameters.booleanParameter("DISABLE_FILE_CHECK",
             "Disable scanning of input files before the run",
-            false).longOption("no-file-check");
+            false).longOption("disable-file-check");
 
     /**
      * A <code>boolean</code> value specifying to weight mapping counts by the number of multi-maps
      */
-    public static final Parameter<Boolean> WEIGHTED_COUNT = Parameters.booleanParameter("WEIGHTED_COUNT",
-            "Enable weighted counts for multi-maps",
+    public static final Parameter<Boolean> DISABLE_MULTIMAP_WEIGHTING = Parameters.booleanParameter("DISABLE_MULTIMAP_WEIGHTING",
+            "Disable weighted counts for multi-maps",
             false, new ParameterValidator() {
         @Override
         public void validate(ParameterSchema schema, Parameter parameter) throws ParameterException {
             boolean sam_primary_only = schema.get(SAM_PRIMARY_ONLY);
             if (sam_primary_only)
-                schema.set(parameter, false);
+                schema.set(parameter, true);
         }
-    }).longOption("weighted-count");
+    }).longOption("disable-multimap-weighting");
 
     /**
      * Flag whether sorted input files (annotation, mappings) should be kept,
