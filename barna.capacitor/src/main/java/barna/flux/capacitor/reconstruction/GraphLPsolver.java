@@ -1663,19 +1663,30 @@ public class GraphLPsolver {
             c = ++constraintCtr;
             idx[idx.length- 1]= c;  // minus, substracts obs
             w.add(c);
-            // prevent from substracting complete observation
-            //double lim = (paird || !pairedEnd) ? Math.max(nr - (1d), 0) : nr;
-            //assert(effLen> 0|| nr== 0); // might occur for clipped mappings
-            //if (flux)
-            //    lim/= effLen;
-            //assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
-            // TODO
-            //if (count== 1)
-            //    try {
-            //        getLPsolve().setUpbo(constraintCtr, lim);
-            //    } catch (LpSolveException e1) {
-            //        e1.printStackTrace();
-            //    }
+            double min_observations = (Double)settings.get("MIN_OBS");
+            if (min_observations > 0) {
+                // prevent from substracting complete observation
+                boolean paird = (e instanceof SuperEdge) && ((SuperEdge) e).isPend();
+                int nr = ((paird || sa == 0) ? ((MappingsInterface) e).getMappings().getReadNr()
+                        : ((MappingsInterface) e).getMappings().getRevReadNr());
+                if (min_observations < 1) {
+                    min_observations = nr*min_observations;
+                }
+                double lim = (paird || !pairedEnd) ? Math.max(nr - min_observations, 0) : nr;
+                int effLen= e.getEffLength((sa==0? Constants.DIR_FORWARD: Constants.DIR_BACKWARD), mappingStats.getReadLenMax());
+                effLen= (effLen== 0? 1: effLen);    // prevent from div-by-0
+                assert(effLen> 0|| nr== 0); // might occur for clipped mappings
+                if (flux)
+                    lim/= effLen;
+                assert(lim>= 0&& (!Double.isInfinite(lim))&& (!Double.isNaN(lim)));
+                // TODO
+                if (count== 1)
+                    try {
+                        getLPsolve().setUpbo(constraintCtr, lim);
+                    } catch (LpSolveException e1) {
+                        e1.printStackTrace();
+                    }
+            }
 
             double[] val = new double[idx.length];
             Arrays.fill(val, 1d);
