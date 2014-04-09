@@ -616,7 +616,8 @@ public class AnnotationMapper extends SplicingGraph {
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
                     if (esetMap!= null) {
                         if (currEset== null)
-                            currEset= new EdgeSet(se, DirectedRegion.STRAND_POS, ((SuperLocus) gene).getGenes().length);
+                            currEset= new EdgeSet(se, DirectedRegion.STRAND_POS,
+                                    (gene instanceof SuperLocus? ((SuperLocus) gene).getGenes().length: 1));
                         else
                             currEset= currEset.add(se, DirectedRegion.STRAND_POS);
                     }
@@ -641,17 +642,22 @@ public class AnnotationMapper extends SplicingGraph {
                         ((MappingsInterface) target).getMappings().incrReadNr();
                         if (esetMap!= null) {
                             if (currEset== null)
-                                currEset= new EdgeSet(target, DirectedRegion.STRAND_POS, ((SuperLocus) gene).getGenes().length);
+                                currEset= new EdgeSet(target, DirectedRegion.STRAND_POS,
+                                        (gene instanceof SuperLocus? ((SuperLocus) gene).getGenes().length: 1));
                             else
                                 currEset= currEset.add(target, DirectedRegion.STRAND_POS);
-                        } else {
-                            ((MappingsInterface) target).getMappings().incrRevReadNr();
+                        }
+                    } else {
+                        ((MappingsInterface) target).getMappings().incrRevReadNr();
+                        if (esetMap!= null) {
                             if (currEset== null)
-                                currEset= new EdgeSet(target, DirectedRegion.STRAND_NEG, ((SuperLocus) gene).getGenes().length);
+                                currEset= new EdgeSet(target, DirectedRegion.STRAND_NEG,
+                                        (gene instanceof SuperLocus? ((SuperLocus) gene).getGenes().length: 1));
                             else
                                 currEset= currEset.add(target, DirectedRegion.STRAND_NEG);
                         }
                     }
+
                     //++nrMappingsMapped;
                     nrMappingsMapped+=mapping.getCount(weighted);
                 }

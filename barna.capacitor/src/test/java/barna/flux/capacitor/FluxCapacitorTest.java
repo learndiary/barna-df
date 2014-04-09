@@ -12,11 +12,12 @@ import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import barna.model.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
+import groovy.json.JsonSlurper;
 import org.junit.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 import static junit.framework.Assert.*;
@@ -310,7 +311,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         String msg = "";
         try {
@@ -735,7 +736,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(), true);
         pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 

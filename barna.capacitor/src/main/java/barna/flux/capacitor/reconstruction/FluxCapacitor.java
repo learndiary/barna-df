@@ -75,7 +75,7 @@ import java.util.concurrent.Callable;
 public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
 
     // global debug switch
-    public static boolean DEBUG= true;
+    public static boolean DEBUG= false;
 
     /**
      * Enumerates possible tasks for the FluxCapacitor

@@ -281,7 +281,7 @@ class FluxCapacitorRunner {
     /**
      * Helper to unzip unzip a file
      */
-    private static unzip = { File file, String dest ->
+    private static unzip(File file, String dest) {
         def result = new ZipInputStream(new FileInputStream(file))
         def destFile = new File(dest)
         if (!destFile.exists()) {

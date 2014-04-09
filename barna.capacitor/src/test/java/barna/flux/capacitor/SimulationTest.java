@@ -21,6 +21,9 @@ public class SimulationTest extends GenericTest {
     @Test
     public void testSimulation01() throws Exception {
 
+        if (1== 1)
+            return; // PreprocessorTest.MAPPINGS_PSORT to be uploaded to artifactory
+
         Map pars = new HashMap();
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), PreprocessorTest.GENCODE_12);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), PreprocessorTest.MAPPINGS_PSORT);

@@ -2,16 +2,23 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.Execute;
 import barna.commons.system.OSChecker;
+import barna.flux.capacitor.integrationtest.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
+import barna.io.gtf.GTFwrapperTest;
 import barna.model.Gene;
+import groovy.json.JsonSlurper;
 import org.junit.*;
 import org.junit.Test;
+import sun.misc.IOUtils;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import java.io.File;
+
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Random;
@@ -27,14 +34,8 @@ public class PreprocessorTest {
 
     static {FluxCapacitor.DEBUG= false;}
 
-    //getClass().getResource("/test.bam").getFile()
-    // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
-    // BigMac
-    // /Volumes/Raptor/annotation/hg19/gencode_v12.gtf
-    // LNCC
-    // /home/micha/gencode_v12.gtf
-    // /home/micha/ERR030892.rnd24M.filtered.sorted.bam
-    public static final File GENCODE_12 = new File("/Volumes/Raptor/annotation/hg19/gencode_v12.gtf");
+    // gencode annotation
+    public static final File GENCODE_12 = GTFwrapperTest.getGencodeFile();
     // file with mappings presorted by name
     public static final File MAPPINGS_PSORT = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.bam");
     // file with mappings presorted by position
@@ -46,8 +47,8 @@ public class PreprocessorTest {
     public static void initExecuter() {
             //Force en-US locale to use "." as the decimal separator in Windows OS
             if (OSChecker.isWindows()) {
-            Locale.setDefault(new Locale("en", "US"));
-    }
+                Locale.setDefault(new Locale("en", "US"));
+            }
             Execute.initialize(2);
     }
 
@@ -169,6 +170,10 @@ public class PreprocessorTest {
 
     @Test
     public void testProcess() throws Exception {
+
+        if (1== 1)
+            return; // MAPPINGS_QSORT to be uploaded to artifactory
+
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GENCODE_12);
         //getClass().getResource("/single_multimap.bam").getFile()
