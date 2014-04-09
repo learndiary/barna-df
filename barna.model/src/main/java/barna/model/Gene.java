@@ -386,12 +386,104 @@ public class Gene extends DirectedRegion {
 		return newGene;
 	}
 
-	/**
-	 * compares arbitrary two instances of String or Gene 
-	 * 
-	 * 
-	 * @author msammeth
-	 */
+
+    /**
+     * Comparator to compare gene boundaries, either amongst genes or between genes and integer values.
+     */
+    public static class BoundaryComparator implements Comparator {
+
+        /**
+         * Flag to indicate whether the start or the end of genes are compared.
+         */
+        boolean start= true;
+
+        /**
+         * Constructs a comparator that compares the indicated boundary
+         * of genes with an integer value.
+         * @param start
+         */
+        public BoundaryComparator(boolean start) {
+            this.start= start;
+        }
+
+        /**
+         * Compares genes with genes respectively integer values describing the cooridnate of one of the boundaries.
+         * @param o1 a <code>gene</code> or an integer value
+         * @param o2 another <code>gene</code> or an integer value
+         * @return <code>0</code> if both arguments are equal, otherwise the distance between the first and the
+         * second argument
+         */
+        @Override
+        public int compare(Object o1, Object o2) {
+            int v1, v2;
+            if (o1 instanceof Gene) {
+                v1= (start? Math.abs(((Gene) o1).getStart()): Math.abs(((Gene) o1).getEnd()));
+            } else if (o1 instanceof Integer)
+                v1= ((Integer) o1).intValue();
+            else throw new RuntimeException("Cannot compare "+ o1.getClass().getSimpleName());
+            if (o2 instanceof Gene) {
+                v2= (start? Math.abs(((Gene) o2).getStart()): Math.abs(((Gene) o2).getEnd()));
+            } else if (o2 instanceof Integer)
+                v2= ((Integer) o2).intValue();
+            else throw new RuntimeException("Cannot compare "+ o2.getClass().getSimpleName());
+
+            if (v1== v2)
+                return 0;
+            return (v1- v2);
+        }
+    }
+
+
+        /**
+     * Comparator to compare two genes by their position in the reference genome,
+     * disregarding the transcription directionality.
+     */
+    public static class OverlapComparator implements Comparator {
+
+        /**
+         * Compares the reference sequence sequence name, and the start/end position
+         * of two loci. The strand (i.e., the transcription directionality) is not
+         * considered in the comparison.
+         * @param arg0 a gene locus
+         * @param arg1 another gene locus
+         * @return in case the two loci are from different reference sequences (e.g.,
+         * chromosomes or scaffolds), the return value corresponds to the value of
+         * <code>String.compareTo()</code> between the chromosome names. Otherwise
+         * the method returns the distance between start respectively end positions
+         * (latter in the case of equal start positions of both of the compared genes).
+         */
+        public int compare(Object arg0, Object arg1) {
+            Gene g1= (Gene) arg0, g2= (Gene) arg1;
+            int val= g1.getChromosome().compareTo(g2.getChromosome());
+            if (val!= 0)
+                return val;
+
+            int b1= Math.abs(g1.getStart()), b2= Math.abs(g2.getStart()), e1= Math.abs(g1.getEnd()), e2= Math.abs(g2.getEnd());
+            if (b1!= b2)
+                return (b1- b2);
+            return (e1- e2);
+        }
+
+        /**
+         * Determines genomic overlap of two gene loci, disregarding their transcription
+         * directionality.
+         * @param g1 a gene locus
+         * @param g2 another gene locus
+         * @return <code>true</code> if both genes intersect in their genomic coordinates,
+         * <code>false</code> otherwise.
+         */
+        public boolean overlaps(Gene g1, Gene g2) {
+            int b1= Math.abs(g1.getStart()), b2= Math.abs(g2.getStart()), e1= Math.abs(g1.getEnd()), e2= Math.abs(g2.getEnd());
+            if ((b1>= b2&& b1<= e2)|| (b2>= b1&& b2<= e1))
+                return true;   // overlap
+            return false;
+        }
+    }
+
+    /**
+     * Comparator for comparing arbitrary two instances of String or Gene
+     * @author msammeth
+     */
 	public static class StableIDComparator implements Comparator {
 
 		public int compare(Object arg0, Object arg1) {

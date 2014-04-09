@@ -79,6 +79,94 @@ public class MappingStats {
     private double mappingsMapped;
     private long mappingPairsNoTx;
 
+    // new
+
+    public double getCtrHits() {
+        return ctrHits;
+    }
+
+    public void setCtrHits(double ctrHits) {
+        this.ctrHits = ctrHits;
+    }
+
+    public long getCtrHitsNone() {
+        return ctrHitsNone;
+    }
+
+    public void setCtrHitsNone(long ctrHitsNone) {
+        this.ctrHitsNone = ctrHitsNone;
+    }
+
+    public long getCtrHitsMultiLocus() {
+        return ctrHitsMultiLocus;
+    }
+
+    public void setCtrHitsMultiLocus(long ctrHitsMultiLocus) {
+        this.ctrHitsMultiLocus = ctrHitsMultiLocus;
+    }
+
+    public long getCtrHitsMultiGenome() {
+        return ctrHitsMultiGenome;
+    }
+
+    public void setCtrHitsMultiGenome(long ctrHitsMultiGenome) {
+        this.ctrHitsMultiGenome = ctrHitsMultiGenome;
+    }
+
+    public long getCtrHitsMultiLocusAndGenome() {
+        return ctrHitsMultiLocusAndGenome;
+    }
+
+    public void setCtrHitsMultiLocusAndGenome(long ctrHitsMultiLocusAndGenome) {
+        this.ctrHitsMultiLocusAndGenome = ctrHitsMultiLocusAndGenome;
+    }
+
+    public long getCtrHitsNoneMultiGenome() {
+        return ctrHitsNoneMultiGenome;
+    }
+
+    public void setCtrHitsNoneMultiGenome(long ctrHitsNoneMultiGenome) {
+        this.ctrHitsNoneMultiGenome = ctrHitsNoneMultiGenome;
+    }
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map to the locus, with at least one valid
+     * mapping. The number contains the count of <code>ctrHitsMultiLocus</code>, but not any other counters as it
+     * focuses on the reads of which we are really sure they stem from this locus. Hits are possibly weighted.
+     */
+    private double ctrHits= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) without any valid mapping within the locus. The
+     * redundant distribution of annotation mapping errors is stored in the corresponding mapping counter.
+     */
+    private long ctrHitsNone= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times only within the locus,
+     * with at least one valid mapping.
+     */
+    private long ctrHitsMultiLocus= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times within the genome but
+     * not within the locus and that have a valid mapping in the locus.
+     */
+    private long ctrHitsMultiGenome= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times within the locus and
+     * also in the genome.
+     */
+    private long ctrHitsMultiLocusAndGenome= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that do not map within the locus, but multiple
+     * times within the genome.
+     */
+    private long ctrHitsNoneMultiGenome= 0;
+
+
     //Deconvolution
     private long lociExp;
     private long txsExp;
@@ -231,6 +319,10 @@ public class MappingStats {
         return mappingPairsNoTx;
     }
 
+    /**
+     * @deprecated not supported anymore, see <code>mappingsNotMapped</code>
+     * @param mappingPairsNoTx
+     */
     public void setMappingPairsNoTx(long mappingPairsNoTx) {
         this.mappingPairsNoTx = mappingPairsNoTx;
     }
@@ -243,6 +335,10 @@ public class MappingStats {
         return pairsWrongOrientation;
     }
 
+    /**
+     * @deprecated not supported anymore, see <code>mappingsWrongStrand</code>
+     * @param mappingsPairsWa
+     */
     public void setPairsWrongOrientation(long mappingsPairsWa) {
         this.pairsWrongOrientation = mappingsPairsWa;
     }
@@ -369,6 +465,9 @@ public class MappingStats {
      */
     public void addLocus(MappingStats other){
         if(other == null) return;
+
+        // TODO reflective solution
+
         this.singleTxLoci               += other.singleTxLoci;
         this.lociExp                    += other.lociExp;
         this.txsExp                     += other.txsExp;
@@ -381,6 +480,13 @@ public class MappingStats {
         this.txs                        += other.txs;
         this.loci                       += other.loci;
         this.events                     += other.events;
+
+        this.ctrHits                    += other.ctrHits;
+        this.ctrHitsMultiGenome         += other.ctrHitsMultiGenome;
+        this.ctrHitsMultiLocus          += other.ctrHitsMultiLocus;
+        this.ctrHitsMultiLocusAndGenome += other.ctrHitsMultiLocusAndGenome;
+        this.ctrHitsNone                += other.ctrHitsNone;
+        this.ctrHitsNoneMultiGenome     += other.ctrHitsNoneMultiGenome;
     }
 
     /**

@@ -1,5 +1,6 @@
 package barna.flux.capacitor.diffexp;
 
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -7,6 +8,10 @@ import java.util.ArrayList;
 import static junit.framework.Assert.assertEquals;
 
 public class FDRCorrectionTest {
+
+    static {
+        FluxCapacitor.DEBUG= false;}
+
     @Test
     public void testFDR() throws Exception {
         ArrayList<DifferentialExpression> list = new ArrayList<DifferentialExpression>();

@@ -1,11 +1,16 @@
 package barna.flux.capacitor.diffexp;
 
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 
 public class GFFEntryTest {
+
+    static {
+        FluxCapacitor.DEBUG= false;}
+
     @Test
     public void testBasicParsing() throws Exception {
         GFFEntry e = GFFEntry.parse("chr1\tHAVANA\ttranscript\t12010\t13670\t.\t+\t.\ttranscript_id \"ENST00000450305.2\"; locus_id \"chr1:11869-14412W\"; gene_id \"ENSG00000223972.4\"; reads 86.362259; length 632; RPKM 5.362027\n");

@@ -27,6 +27,7 @@
 
 package barna.flux.capacitor.diffexp;
 
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import org.junit.Test;
 
 import java.io.StringReader;
@@ -39,6 +40,10 @@ import static junit.framework.Assert.assertNull;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 public class QuantificationModelTest {
+
+    static {
+        FluxCapacitor.DEBUG= false;}
+
     @Test
     public void testTableParsing() throws Exception {
         StringReader reader = new StringReader(

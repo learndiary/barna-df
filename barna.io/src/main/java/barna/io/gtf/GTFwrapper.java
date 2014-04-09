@@ -28,6 +28,7 @@
 package barna.io.gtf;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.Execute;
 import barna.commons.io.IOHandler;
 import barna.commons.io.IOHandlerFactory;
 import barna.commons.log.Log;
@@ -46,6 +47,8 @@ import barna.model.gff.GFFObject;
 import java.io.*;
 import java.text.Collator;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,6 +71,177 @@ import java.util.regex.Pattern;
  */
 public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapper {
 
+    public class GeneIterator implements Iterator<Gene> {
+
+        /**
+         * Wrapped loader thread.
+         */
+        GeneLoader loaderThread= null;
+
+        /**
+         * The last gene batch fetched from the underlying reader.
+         */
+        Gene[] genesFetched= null;
+
+        /**
+         * Position in the current gene batch.
+         */
+        int p= -1;
+
+        /**
+         * Instantiates and runs a loader thread given the current configuration of the wrapped reader.
+         */
+        public GeneIterator() {
+            loaderThread= new GeneLoader();
+            loaderThread.start();
+        }
+
+        /**
+         * Called internally to fetch the next batch of genes
+         */
+        protected void getNextBatch() {
+            while (genesFetched== null&& !loaderThread.finished) {
+                loaderThread.interrupt();
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    ; // :)
+                }
+                genesFetched= loaderThread.fetch();
+                p= 0;
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+
+            if (genesFetched!= null&& p>= genesFetched.length) {
+                genesFetched= null;
+                p= -1;
+            }
+            if (genesFetched== null)
+               getNextBatch();
+
+            if (genesFetched == null)
+                return false;
+            if (p< genesFetched.length)
+                return true;
+           return false;
+        }
+
+        @Override
+        public Gene next() {
+            if (p>= genesFetched.length) {
+                genesFetched= null;
+                p= -1;
+            }
+            if (genesFetched== null)
+                getNextBatch();
+            if (genesFetched == null)
+                return null;
+            if (p< genesFetched.length)
+                return genesFetched[p++];
+            return null;
+        }
+
+        @Override
+        public void remove() {
+            next();
+        }
+    }
+
+    /**
+     * Loads genes in an own thread, progressively or all-in-one.
+     */
+    public class GeneLoader extends Thread {
+
+        /**
+         * Constructor wraps thread around the configured reader
+         */
+        public GeneLoader() {
+            super(GTFwrapper.this.getClass().getSimpleName());
+        }
+
+        /**
+         * Getter method for current gene buffer.
+         * @return gene batch or <code>null</code> if no further genes are available
+         */
+        Gene[] getGeneBuffer() {
+            return geneBuffer;
+        }
+
+        /**
+         * Current gene buffer.
+         */
+        Gene[] geneBuffer= null;
+
+        /**
+         * Thread exited.
+         */
+        boolean finished= false;
+
+        /**
+         * Obtain the next batch of genes, the method will block until more genes have been read or the end of the
+         * data has been reached.
+         * @return the next batch of genes or <code>null</code> if there are no further genes.
+         */
+        public Gene[] fetch() {
+            while (!finished&& geneBuffer== null)
+                interrupt();
+            Gene[] geneT= geneBuffer;
+            geneBuffer= null;
+            return geneT;
+        }
+
+        /**
+         * Sleeps until the last batch of genes has been fetched, then tries to obtain the next one.
+         */
+        @Override
+        public void run() {
+
+            reset();
+            if (genes== null)
+                read();
+
+            Gene[] tmpGenes= getGenes();
+            nrGenes+= (tmpGenes== null? 0: tmpGenes.length);
+            geneBuffer= tmpGenes;
+
+            while (!finished) {
+
+                while (geneBuffer!= null) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        ; // (:
+                    }
+                }
+
+                if (finished&& geneBuffer== null)
+                    break;
+
+                // else..
+                if (geneBuffer== null) {
+
+                    try {
+                        read();
+                        // IOException wrapped into RuntimeException marks end of stream
+                    } catch (Exception e) {
+                        geneBuffer= null;
+                        finished= true;
+                        break;
+                    }
+                    tmpGenes= getGenes();
+                    nrGenes+= (tmpGenes== null? 0: tmpGenes.length);
+                    geneBuffer= tmpGenes;
+                    finished= GTFwrapper.this.finished;
+                }
+            }
+
+        }
+    }
+
+
     /**
      * Line splitter pattern
      */
@@ -76,6 +250,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
      * Pattern to findTranscriptID the transcript ID
      */
     static final Pattern TRANSCRIPTID_PATTERN = Pattern.compile(GFFObject.TRANSCRIPT_ID_TAG);
+
 
     /**
      * Helper to compare entries based on their global position
@@ -213,6 +388,27 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
     boolean chromosomeWise = true;
     boolean strandWise= true;
     boolean geneWise = true;
+
+    /**
+     * <code>This</code> wrapper is just parsing <code>gene_id</code> and <code>transcript_id</code>.
+     * @return
+     */
+    public boolean isBasic() {
+        return basic;
+    }
+
+    /**
+     * Set <code>this</code> wrapper to just parse <code>gene_id</code> and <code>transcript_id</code>.
+     * @return
+     */
+    public void setBasic(boolean basic) {
+        this.basic = basic;
+    }
+
+    /**
+     * Flag to just parse <code>transcript_id</code> and <code>gene_id</code>.
+     */
+    boolean basic= false;
 
     /**
      * Native gene clustering is applied.
@@ -554,6 +750,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		skippedTranscripts = new Vector();
 		skippedTranscripts = new Vector();
 		buffy= null;	// has to be inited
+        finished= false;
 		// TODO: region and ID-filtering?? or do it method-level..
 	}
 
@@ -678,8 +875,53 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
         }
 
 	}
-	
-	
+
+    /**
+     * Sets the reader to load all genes with the next batch.
+     */
+    public void setLoadAllGenes() {
+
+        // TODO allow random sorting, init hash chr#Gene[] sorted by start position
+
+        setReadGTF(false);
+        setReadGene(true);
+        setReadAheadLimit(-1);
+        setReadAheadTranscripts(-1); // keep mem low
+        setStrandWise(false);
+        setChromosomeWise(false);
+        setReadAll(true);
+        setBasic(true);
+        txPerLocus= new IntVector();
+        txLengths= new IntVector();
+    }
+
+    /**
+     * Loads all genes from the underlying wrapper.
+     */
+    public void loadAllGenes() {
+
+        // TODO allow random sorting, init hash chr#Gene[] sorted by start position
+
+        if(!silent && stars){
+            Log.progressStart("loading");
+        }
+        reset();
+
+        setLoadAllGenes();
+
+        try {
+            read();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        boolean b= close();
+        if(!silent && stars){
+            Log.progressFinish(StringUtils.OK, true);
+        }
+
+    }
+
 	
 	
 	public void sweepToChromosomeStrand(String chrom, byte strand) {
@@ -1168,19 +1410,30 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	boolean skipWarningPrinted = false;
     Object skippedObject = null;
 
+    boolean finished= false;
+
 	public void read() {
 
 		BufferedReader buffy = getBuffy();
-		if (buffy== null)
-			return;
-		
+		if (buffy== null|| finished) {
+            genes= null;
+            gtfObj= null;
+            return;
+        }
+
 		if (bytesRead== 0) {
 			skippedObjects= 0;
 		}
-		
-		clustered = false;
-		
-		Vector gtfV = null;
+
+        // TODO set correct
+        if (geneWise)
+		    clustered = true;
+        else
+            // if (chromosomeWise)
+            clustered = false;
+
+
+        Vector gtfV = null;
 		if (readGTF)
 			gtfV = new Vector();
 		Vector<Gene> geneV= null;
@@ -1217,6 +1470,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 					inited= false;
 				else {
 					line= buffy.readLine();
+                    lastLine= line;
 					if (line == null) {
 						if (trpt!= null) {	// necessary
 							if (readGene&& (geneV.size()== 0|| geneV.lastElement()!= trpt.getGene()))
@@ -1225,6 +1479,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 						
 						if (!silent)
 							printReadStatistics();
+                        finished= true;
 						break;
 					} else {
 						if (vLines!= null)
@@ -1240,7 +1495,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				// check line
 				if (line.startsWith("#"))
 					continue;
-				GFFObject obj= readBuildObject(line);
+				GFFObject obj= (basic? readBuildObjectBasic(line): readBuildObject(line));
 				if (!checkObject(obj)) {	// object based criteria
 					++skippedObjects;
 					if (skippedObject != null) {
@@ -1279,7 +1534,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 				if (!chrID.equals(lastChrID)) {		// chromosome
 					//++readChrs;
 					if (lastChrID != null) { 						
-						if (!checkChromosome(chrID)) {
+						if ((!basic)&& !checkChromosome(chrID)) {
 							++skippedObjects;
 							if (skippedObject != null) {
                                 skippedObject = chrID;
@@ -1454,6 +1709,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			}
 			
 		} catch (Exception e) {
+            finished= true;
 			throw new RuntimeException(e);
 		}
 		
@@ -1479,8 +1735,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 			}
 //			www.flush();
 //			www.close();
-			if (chromosomeWise)
-				clustered = false;
 		}
 		if (readGTF)
 			this.gtfObj = (GFFObject[]) ArrayUtils.toField(gtfV);
@@ -1583,7 +1837,94 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 		return obj;
 
 	}
-	
+
+    /**
+     * Reads an GTF object just including the basic attributes, i.e., transcript_id and gene_id.
+     * Avoids regexp API.
+     * @param line the line to be parsed
+     * @return the object that was built
+     */
+    protected GFFObject readBuildObjectBasic(String line) {
+
+        GFFObject obj = new GFFObject();
+
+        StringTokenizer toke= new StringTokenizer(line, "\t ");
+        if (toke.countTokens() < 8) {
+            if (!silent)
+                System.err.println("line " + nrLinesRead
+                        + ": skipped (<8 token)!\n\t" + line);
+            return obj;
+        }
+
+        // init attributes
+        obj.setSeqname(toke.nextToken());
+        obj.setSource(toke.nextToken());
+        obj.setFeature(toke.nextToken());
+
+        String s= toke.nextToken();
+        try {
+            obj.setStart(Integer.parseInt(s));
+        } catch (NumberFormatException e) {
+            if (!silent)
+                System.err.println("Error in line "+nrLinesRead+": invalid start position \'"+s+"\'.");
+        }
+        s= toke.nextToken();
+        try {
+            obj.setEnd(Integer.parseInt(s));
+        } catch (NumberFormatException e) {
+            if (!silent)
+                System.err.println("Error in line "+nrLinesRead+": invalid end position \'"+s+"\'.");
+        }
+
+        s= toke.nextToken();
+        try {
+            obj.setScore(s);
+        } catch (NumberFormatException e) {
+            //if (!silent)
+            System.err.println("Error in line "+nrLinesRead+": invalid score \'"+s+"\'.");
+        }
+
+        s= toke.nextToken().trim();
+        obj.setStrand(GFFObject.parseStrand(s));
+
+        s= toke.nextToken();
+        if (s.charAt(0)!= GFFObject.SYMBOL_NOT_INITED)
+            try {
+                obj.setFrame(Byte.parseByte(s));
+            } catch (NumberFormatException e) {
+                if (!silent)
+                    System.err.println("Error line "+nrLinesRead+": invalid frame assignment \'"+s+"\'.");
+            }
+
+        // attributes
+        int found= 0;
+        for (String id= null, val= null; toke.hasMoreTokens(); ) {
+            id= toke.nextToken();
+            val= toke.nextToken();
+            // just parse gene_id and transcript_id
+            if (!(id.equals(GFFObject.TRANSCRIPT_ID_TAG)|| id.equals(GFFObject.GENE_ID_TAG)))
+                continue;
+            int ofStart= 0, ofEnd= 0;
+            if (val.charAt(0) == '\"')
+                ofStart= 1;
+            if (val.charAt(val.length()- 1) == '\"')
+                ofEnd= 1;
+            if (val.length()>= 2&& val.charAt(val.length()- 2) == '\"')
+                ofEnd= 2;
+            if (val.length()- ofEnd<= ofStart)
+                val= "";	// empty fields
+            else
+                val = val.substring(ofStart, val.length()- ofEnd);
+            obj.addAttribute(id, val);
+            ++found;
+            if (found== 2)
+                break;
+        }
+
+        return obj;
+
+    }
+
 
 	private Gene[] clusterLoci(Gene[] g) {
 		if (g == null)
@@ -2043,6 +2384,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
      * @throws RuntimeException in case the file is not valid
      */
 	public boolean isApplicable() {
+
 		reset();
 		long lines= isApplicable(getInputFile(), clusterGenes);
 		if (lines< 0)
@@ -2077,7 +2419,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	 * entry
 	 */
 	protected long isApplicable(InputStream inputStream, long size) {
-		
+
 		long bytesRead = 0l;
 		BufferedReader buffy = new BufferedReader(new InputStreamReader(inputStream));
 

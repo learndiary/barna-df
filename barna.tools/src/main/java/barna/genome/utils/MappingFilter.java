@@ -277,7 +277,7 @@ public class MappingFilter implements Tool<Void> {
     }
 
     public void setDescriptor(String descriptor) {
-    	this.descriptor= new UniversalReadDescriptor();
+    	this.descriptor= UniversalReadDescriptor.createTestDescriptor();
     	try {
     		this.descriptor.init(UniversalReadDescriptor.getDescriptor(descriptor));
     	} catch (Exception e) {

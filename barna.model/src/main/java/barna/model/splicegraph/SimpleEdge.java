@@ -240,11 +240,11 @@ public class SimpleEdge extends AbstractEdge {
 	/**
 	 * Number of different locations with length mapLen.
 	 * @param dir
-	 * @param mapLenMax
+	 * @param maxMapLength maximum mapping length
 	 * @return
 	 */
-	public int getEffLength(byte dir, int mapLenMax) {
+	public int getEffLength(byte dir, int maxMapLength) {
 		
-		return (length()- getMapLength(mapLenMax));
+		return (length()- getMapLength(maxMapLength));
 	}
 }

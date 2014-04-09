@@ -176,8 +176,8 @@ public class NucleosomeFinder implements Tool<Void> {
 		NucleosomeFinder myFinder= new NucleosomeFinder(new File(
 				//"/Users/micha/projects/demassy/download_new/B6+K4me3+200511_sorted_chrY_testchrx.bed"));
 				"/Users/micha/projects/demassy/download_new/transfer/B6+K4me3+200511.sorted.bed_3K"));
-		myFinder.descriptor= new UniversalReadDescriptor();
-		myFinder.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+		myFinder.descriptor= new UniversalReadDescriptor(
+                UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 
 		Future<Void> captain= Execute.getExecutor().submit(myFinder);
 		try {
@@ -816,7 +816,7 @@ public class NucleosomeFinder implements Tool<Void> {
 
 
     public void setDescriptor(String descriptor) {
-    	this.descriptor= new UniversalReadDescriptor();
+    	this.descriptor= UniversalReadDescriptor.createTestDescriptor();
     	try {
     		this.descriptor.init(UniversalReadDescriptor.getDescriptor(descriptor));
     	} catch (Exception e) {

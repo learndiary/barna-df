@@ -532,7 +532,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 
     private UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
 
-        CharSequence tag= mapping.getName(true);
+        CharSequence tag= mapping.getName(Boolean.TRUE);
         attributes= desc.getAttributes(tag, attributes);
         if (attributes == null) {
             Log.warn("Error in read ID: could not parse read identifier " + tag);
@@ -547,6 +547,11 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
             return null;
         }
         return attributes;
+    }
+
+    @Override
+    public int size() {
+        return (-1);
     }
 
 }

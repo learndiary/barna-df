@@ -5,22 +5,26 @@ import barna.commons.system.OSChecker;
 import barna.flux.capacitor.profile.BiasProfiler;
 import barna.flux.capacitor.profile.MappingStats;
 import barna.flux.capacitor.profile.Profile;
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.flux.capacitor.reconstruction.FluxCapacitorSettings.AnnotationMapping;
 import barna.flux.capacitor.utils.FluxCapacitorRunner;
 import barna.io.FileHelper;
 import barna.model.rna.UniversalReadDescriptor;
 import com.google.gson.GsonBuilder;
+import groovy.json.JsonSlurper;
 import org.junit.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 import static junit.framework.Assert.*;
 
 public class FluxCapacitorTest {
+
+    static {FluxCapacitor.DEBUG= false;}
 
     static final int SORTED = -1, UNSORT_GTF = 8, UNSORT_BED = 10;
     final File GTF_MM9_SORTED = new File(getClass().getResource("/mm9_chr1_chrX_sorted.gtf").getFile());
@@ -274,6 +278,8 @@ public class FluxCapacitorTest {
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, params);
+        File f= (File) pars.get(FluxCapacitorSettings.STDOUT_FILE.getName());
+        f.delete(); // to avoid confirmation check
         stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 
         assertNotNull(stats);
@@ -301,6 +307,26 @@ public class FluxCapacitorTest {
         Map pars = new HashMap();
         pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_MM9_SORTED);
         pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED);
+        pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
+        pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
+        pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
+
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
+
+        String msg = "";
+        try {
+            FluxCapacitorRunner.runCapacitor(parFile, null);
+        } catch (Exception e) {
+            msg = e.getMessage();
+        }
+        assertTrue(msg.contains("incompatible with read IDs"));
+    }
+
+    @Test
+    public void testWrongBedGzReadDescriptor() throws Exception {
+        Map pars = new HashMap();
+        pars.put(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GTF_MM9_SORTED);
+        pars.put(FluxCapacitorSettings.MAPPING_FILE.getName(), BED_MM9_SORTED_GZ);
         pars.put(FluxCapacitorSettings.PROFILE_FILE.getName(), BED_MM9_PROFILE);
         pars.put(FluxCapacitorSettings.ANNOTATION_MAPPING.getName(), AnnotationMapping.PAIRED);
         pars.put(FluxCapacitorSettings.READ_DESCRIPTOR.getName(), UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
@@ -599,6 +625,8 @@ public class FluxCapacitorTest {
         File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
         String[] params = {"--profile", "-p", parFile.getAbsolutePath()};
         FluxCapacitorRunner.runCapacitor(parFile, params);
+        File f= (File) pars.get(FluxCapacitorSettings.STDOUT_FILE.getName());
+        f.delete(); // to avoid confirmation check
         FluxCapacitorRunner.runCapacitor(parFile,null);
 
         // check
@@ -728,7 +756,7 @@ public class FluxCapacitorTest {
         pars.put(FluxCapacitorSettings.WEIGHTED_COUNT.getName(), true);
         pars.put(FluxCapacitorSettings.SAM_PRIMARY_ONLY.getName(), false);
 
-        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory,pars);
+        File parFile = FluxCapacitorRunner.createTestDir(currentTestDirectory, pars);
 
         MappingStats stats = FluxCapacitorRunner.runCapacitor(parFile, null);
 

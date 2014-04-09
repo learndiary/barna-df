@@ -66,4 +66,11 @@ public interface MSIterator<T> extends Iterator<T>, Iterable<T>{
      * @return the mate
      */
     public Iterator<Mapping> getMates(Mapping firstMapping);
+
+    /**
+     * Get the number of mappings.
+     * @return (-1) if the size is unknown, otherwise the number of mappings stored in the underlying set
+     * (which might be 0).
+     */
+    public int size();
 }

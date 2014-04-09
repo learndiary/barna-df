@@ -81,8 +81,8 @@ public class ChipSeqMappingAnalyzerTest {
         ChipSeqMappingAnalyzer myRun = new ChipSeqMappingAnalyzer();
         myRun.fileInput= f;
         myRun.fileOutput = new File(currentTestDirectory,f.getName().replace("bed","txt"));
-        myRun.descriptor = new UniversalReadDescriptor();
-        myRun.descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+        myRun.descriptor = new UniversalReadDescriptor(
+                UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 
         Future<int[]> captain = Execute.getExecutor().submit(myRun);
         int[] distr = null;

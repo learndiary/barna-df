@@ -58,7 +58,7 @@ public class BEDMappingTest {
                 "\t"+ thickStart+ "\t"+ thickEnd+ "\t"+ col+ "\t"+ blockNr+ "\t"+
                 blockSizes1+ ","+ blockSizes2+ "\t"+ blockStart1+ ","+ blockStart2;
         ByteArrayCharSequence bacs= new ByteArrayCharSequence(bedLine);
-        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        UniversalReadDescriptor d = UniversalReadDescriptor.createTestDescriptor();
         d.init(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
         bed = new BEDMapping(bacs, d);
     }
@@ -79,7 +79,7 @@ public class BEDMappingTest {
 
     @Test
     public void testName() throws Exception {
-        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        UniversalReadDescriptor d = UniversalReadDescriptor.createTestDescriptor();
         d.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
         bed.descriptor = d;
         assertEquals("test1", bed.getName(true).toString());
@@ -104,7 +104,7 @@ public class BEDMappingTest {
     public void testMateFlag() throws Exception {
         bed.setDescriptor(UniversalReadDescriptor.getDefaultDescriptor());
         assertEquals(bed.getMateFlag(),0);
-        UniversalReadDescriptor d = new UniversalReadDescriptor();
+        UniversalReadDescriptor d = UniversalReadDescriptor.createTestDescriptor();
         d.init(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
         ByteArrayCharSequence oldName = bed.getName(true);
         // test mate 1

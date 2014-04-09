@@ -1,5 +1,6 @@
 package barna.flux.capacitor.diffexp;
 
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -7,6 +8,10 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 public class TranscriptComparatorTest {
+
+    static {
+        FluxCapacitor.DEBUG= false;}
+
     @Test
     public void testBothSpecified() throws Exception {
         QuantificationEntry source = new QuantificationEntry("transcript_id", new GFFEntry("chr1", "TEST", "transcript", 1, 100, (short) 0, '+', '.', "reads 756.000000; RPKM 22.246664; transcript_id \"a\""));

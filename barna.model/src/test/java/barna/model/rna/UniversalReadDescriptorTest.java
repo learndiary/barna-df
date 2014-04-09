@@ -87,7 +87,7 @@ public class UniversalReadDescriptorTest {
 
 	@Test
 	public void testInvalidDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+		UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
 		try {
 			descriptor.init(descriptorIDmissing);
 			fail(descriptorIDmissing);
@@ -122,9 +122,9 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testSimpleDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 		try {
-			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));	
+            UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                    UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
@@ -133,8 +133,8 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testSimpleID() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE));
 		Attributes a= 
 			descriptor.getAttributes(simRead1, null);
 		assertEquals(a.id, simRead1);
@@ -151,9 +151,9 @@ public class UniversalReadDescriptorTest {
 
 	@Test
 	public void testPairedDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 		try {
-			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+            UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                    UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
@@ -162,8 +162,9 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testPairedID() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
+
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED));
 		Attributes a= 
 			descriptor.getAttributes(simRead1, null);
 		assertEquals(a.id, simRead1.substring(0, simRead1.lastIndexOf('/')));
@@ -186,9 +187,9 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testSimulatorDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 		try {
-			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
+            UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                    UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
@@ -197,9 +198,9 @@ public class UniversalReadDescriptorTest {
 
     @Test
     public void testSenseDescriptor() {
-        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
         try {
-            descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SENSE));
+            UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                    UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SENSE));
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -207,8 +208,8 @@ public class UniversalReadDescriptorTest {
 
     @Test
     public void testSenseID() {
-        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SENSE));
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SENSE));
         Attributes a=
                 descriptor.getAttributes(simRead1, null);
         assertEquals(a.id, simRead1);
@@ -229,8 +230,7 @@ public class UniversalReadDescriptorTest {
 
     @Test
     public void testAntisenseID() {
-        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-        descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_ANTISENSE));
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_ANTISENSE));
         Attributes a=
                 descriptor.getAttributes(simRead1, null);
         assertEquals(a.id, simRead1);
@@ -251,7 +251,7 @@ public class UniversalReadDescriptorTest {
 
     @Test
     public void testAntisenseDescriptor() {
-        UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+        UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
         try {
             descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_ANTISENSE));
         } catch (Exception e) {
@@ -261,8 +261,8 @@ public class UniversalReadDescriptorTest {
 
     @Test
 	public void testSimulatorID() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor(
+                UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 		Attributes a= 
 			descriptor.getAttributes(simRead1, null);
 		assertEquals(a.id, simRead1.substring(0, simRead1.lastIndexOf(":")));
@@ -285,8 +285,7 @@ public class UniversalReadDescriptorTest {
 		assertEquals(a.flag, 2);
 
 		// alternative control, used for question mark operator before
-		descriptor= new UniversalReadDescriptor();
-		descriptor.init(
+		descriptor= new UniversalReadDescriptor(
 				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
 				UniversalReadDescriptor.TAG_ID+
 				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
@@ -308,8 +307,7 @@ public class UniversalReadDescriptorTest {
 		assertEquals(a.flag, 2);
 
 		// negative control
-		descriptor= new UniversalReadDescriptor();
-		descriptor.init(
+		descriptor= new UniversalReadDescriptor(
 				UniversalReadDescriptor.SYMBOL_TAG_LEFT+
 				UniversalReadDescriptor.TAG_ID+
 				UniversalReadDescriptor.SYMBOL_TAG_RIGHT+
@@ -331,7 +329,7 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testBarnaDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+		UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
 		try {
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA));
 		} catch (Exception e) {
@@ -342,9 +340,8 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testBarnaID() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA));
-		Attributes a= 
+		UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA);
+		Attributes a=
 			descriptor.getAttributes(barnaID1, null);
 		assertEquals(a.id, barnaID1.substring(0, barnaID1.lastIndexOf("/")));
 		assertEquals(a.flag, 1);
@@ -375,9 +372,8 @@ public class UniversalReadDescriptorTest {
 
 	@Test
 	public void testCSHLoldDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
 		try {
-			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE));			
+            UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE));
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
@@ -385,8 +381,8 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testCSHLoldID() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL));
+
+        UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL));
 		Attributes a= 
 			descriptor.getAttributes(oldCshlID1, null);
 		assertEquals(a.id, oldCshlID1.substring(0, oldCshlID1.lastIndexOf("/")));
@@ -401,7 +397,7 @@ public class UniversalReadDescriptorTest {
 
 	@Test
 	public void testCSHLcombiDescriptor() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+		UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
 		try {
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE));
 		} catch (Exception e) {
@@ -412,9 +408,8 @@ public class UniversalReadDescriptorTest {
 	
 	@Test
 	public void testCSHLcombiID() {
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE));
-		Attributes a= 
+		UniversalReadDescriptor descriptor= new UniversalReadDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE);
+		Attributes a=
 			descriptor.getAttributes(newCshlCombined, null);
 		assertEquals(a.id, newCshlCombined.substring(0, newCshlCombined.lastIndexOf("/")));
 		assertEquals(a.flag, 1);
@@ -425,43 +420,43 @@ public class UniversalReadDescriptorTest {
 	@Test
 	public void testToString() {
 		try {
-			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+			UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
 			
 			String expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMPLE);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_PAIRED);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_STRAND_MATE);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 			
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE_STRAND_CSHL);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE1_SENSE);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_MATE2_SENSE);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_BARNA);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
 			
-			descriptor= new UniversalReadDescriptor();
+			descriptor= UniversalReadDescriptor.createTestDescriptor();
 			expr= UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR);
 			descriptor.init(expr);
 			assertEquals(expr, descriptor.toString());
@@ -486,9 +481,8 @@ public class UniversalReadDescriptorTest {
 				+UniversalReadDescriptor.SYMBOL_TAG_RIGHT;
 
 		
-		UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
-		descriptor.init(descriptorGeneva);
-		
+		UniversalReadDescriptor descriptor= new UniversalReadDescriptor(descriptorGeneva);
+
 		Attributes a= null;
 		a= descriptor.getAttributes(genevaRead1, a);
 		String id= genevaRead1.split(" ")[0];

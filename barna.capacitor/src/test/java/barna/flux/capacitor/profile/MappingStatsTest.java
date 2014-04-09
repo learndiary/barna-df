@@ -1,10 +1,14 @@
 package barna.flux.capacitor.profile;
 
+import barna.flux.capacitor.reconstruction.FluxCapacitor;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 
 public class MappingStatsTest {
+
+    static {
+        FluxCapacitor.DEBUG= false;}
 
     @Test
     public void testAppendingToStats() throws Exception {

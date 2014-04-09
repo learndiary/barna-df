@@ -13,6 +13,9 @@ import java.util.Comparator;
  */
 public class SAMMapping implements Mapping{
 
+    public static String SAM_OPTION_NH= "NH";
+    public static String SAM_OPTION_XT= "XT";
+
     // Mate flag
     static final byte SINGLE_END = 0;
     static final byte FIRST_MATE = 1;
@@ -40,6 +43,11 @@ public class SAMMapping implements Mapping{
     private byte mateFlag;
     private byte[] sequence;
     private Cigar cigar;
+
+    public int getHits() {
+        return hits;
+    }
+
     private int hits;
     private boolean primary;
     private int insertSize;
@@ -61,9 +69,9 @@ public class SAMMapping implements Mapping{
         strandFlag = r.getReadNegativeStrandFlag() ? REVERSE : FORWARD;
         cigar = TextCigarCodec.getSingleton().decode(r.getCigarString());
         sequence = r.getReadBases();
-        hits = r.getIntegerAttribute("NH")!=null ? r.getIntegerAttribute("NH") : -1;
+        hits = r.getIntegerAttribute(SAM_OPTION_NH)!=null ? r.getIntegerAttribute(SAM_OPTION_NH) : -1;
         try {
-        xt = r.getCharacterAttribute("XT");
+            xt = r.getCharacterAttribute(SAM_OPTION_XT);
         } catch (SAMException e) {
             Log.warn("","");
             Log.warn("Ignoring XT tag values. The XT tag is supported only when it specifies uniqueness of " +

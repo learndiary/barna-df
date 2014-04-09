@@ -233,11 +233,31 @@ public class UniversalReadDescriptor {
      * Symbol for cases where the directionality failed to be determined
      */
     char symbolNoSense= '0';
-	
-	public UniversalReadDescriptor() {
+
+    /**
+     * Creates an uninitialized instance.
+     */
+	private UniversalReadDescriptor() {
 	}
-	
-	private int initSymbolsSense(String descriptor, int i) {
+
+    /**
+     * Creates an empty descriptor instance for testing.
+     * @return empty descriptor instance
+     */
+    public static UniversalReadDescriptor createTestDescriptor() {
+        return new UniversalReadDescriptor();
+    }
+
+    /**
+     * Creates an instance initialized with the parameters by the provided string,
+     * might trigger a <code>RuntimeException</code> during parsing.
+     * @param descriptor a string representation of the descriptor attributes
+     */
+    public UniversalReadDescriptor(String descriptor) {
+        init(descriptor);
+    }
+
+    private int initSymbolsSense(String descriptor, int i) {
 		if (i+5>= descriptor.length()|| descriptor.charAt(i+1)!= '['
 			|| descriptor.charAt(i+3)!= ',')
 			return i;

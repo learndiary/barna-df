@@ -133,7 +133,7 @@ public abstract class AbstractEdge {
 
 	/**
 	 * Sets the downstream site delimiting the edge.
-	 * @param tail the downstream site delimiting the edge
+	 * @param head the downstream site delimiting the edge
 	 */
 	public void setHead(Node head) {
 		this.head = head;
@@ -257,8 +257,8 @@ public abstract class AbstractEdge {
 	/**
 	 * Calculate hash codes by string conversion.
 	 */
-	public int hashCode() {		
-		return toString().hashCode();
+	public int hashCode() {
+        return toString().hashCode();
 	}
 
 	/**
@@ -272,6 +272,7 @@ public abstract class AbstractEdge {
 	/**
 	 * Returns the genomic position.
 	 * @param sense directionality
+	 * @param start	exonic position
 	 * @param minMapLen minimum length of mappings
 	 * @param maxMapLen maximum length of mappings
 	 * @return the corresponding genomic position

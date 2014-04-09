@@ -34,6 +34,7 @@ import barna.flux.capacitor.reconstruction.FluxCapacitorSettings;
 import barna.io.MSIterator;
 import barna.model.*;
 import barna.model.bed.BEDMapping;
+import barna.model.rna.UniversalReadDescriptor;
 import barna.model.splicegraph.*;
 
 import java.io.BufferedWriter;
@@ -54,39 +55,102 @@ public class AnnotationMapper extends SplicingGraph {
     static final int VARIANT_WINDOW= 60;
 
     /**
-     * The number of mappings in the current locus.
+     * The redundant number of mappings in the locus. For single reads, each mapping of each read is counted once, in
+     * the case of paired-end reads, all combinations that are considered for annotation mapping are counted once.
      */
 	public long nrMappingsLocus= 0;
 
     /**
-     * The number of mappings in the current locus that map to the annotation.
+     * The redundant number of all mappings in the locus that map to the annotation. For paired-end reads only mappings
+     * with both mates mapped to the annotation are counted.
      */
 	public double nrMappingsMapped= 0;
 
     /**
-     * The number of mappings in the current locus that do not map to the annotation
+     * The redundant number of mappings that do not map to the annotation. For paired-end reads, all mapping pairs that
+     * do not map to the annotation as pairs are counted.
      */
 	public long nrMappingsNotMapped= 0;
 
+    public long getNrMappingsNotMappedAsPair() {
+        return nrMappingsNotMappedAsPair;
+    }
+
+    public void setNrMappingsNotMappedAsPair(long nrMappingsNotMappedAsPair) {
+        this.nrMappingsNotMappedAsPair = nrMappingsNotMappedAsPair;
+    }
+
+    public long getNrMappingsWrongPairOrientation() {
+        return nrMappingsWrongPairOrientation;
+    }
+
+    public void setNrMappingsWrongPairOrientation(long nrMappingsWrongPairOrientation) {
+        this.nrMappingsWrongPairOrientation = nrMappingsWrongPairOrientation;
+    }
+
     /**
-     * The number of mappings that mapped to the annotation but no mate was found/mapped.
+     * @deprecated now the counter <code>nrMappingsNotMapped</code> is used instead
      */
 	public long nrMappingsNotMappedAsPair= 0;
 
     /**
-     * The number of mappings that did not match the expected strand.
+     * Redundant number of paired and annotation-mapped reads that did not exhibit the expected orientation. The counter
+     * is only increased for reads without a valid hit. For paired-end reads, an it means that both mates matched the
+     * annotation, but did not have the expected orientation. For single reads, the counter is only employed in stranded
+     * protocols. The counter reports a subset of <code>nrMappingsNotMapped</code>
      */
 	public long nrMappingsWrongStrand= 0;
-
     /**
-     * The number of paired and annotation-mapped reads that did not exhibit the expected orientation.
+     * @deprecated counted as <code>nrMappingsWrongStrand</code> in paired-end mode
      */
 	public long nrMappingsWrongPairOrientation= 0;
 
     /**
-     * The number of mappings that are mapped multiple times in the locus.
+     * The redundant number of multiple mappings for the same reads within the locus, each of them being a valid hit.
+     * For paired-end reads, this means that both mates have a valid annotation mapping in the expected directionality.
+     * The counter reports a subset of <code>nrMappingsMapped</code>.
      */
 	public long nrMappingsLocusMultiMaps= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map to the locus, with at least one valid
+     * mapping. The number contains the count of <code>ctrHitsMultiLocus</code>, but not any other counters as it
+     * focuses on the reads of which we are really sure they stem from this locus. Hits are possibly weighted.
+     */
+    public double ctrHits= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) without any valid mapping within the locus. The
+     * redundant distribution of annotation mapping errors is stored in the corresponding mapping counter.
+     */
+    public long ctrHitsNone= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times only within the locus,
+     * with at least one valid mapping.
+     */
+    public long ctrHitsMultiLocus= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times within the genome but
+     * not within the locus and that have a valid mapping in the locus.
+     */
+    public long ctrHitsMultiGenome= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that map multiple times within the locus and
+     * also in the genome.
+     */
+    public long ctrHitsMultiLocusAndGenome= 0;
+
+    /**
+     * The number of reads (single end) or read pairs (paired-end) that do not map within the locus, but multiple
+     * times within the genome.
+     */
+    public long ctrHitsNoneMultiGenome= 0;
+
+
+
 
     /**
      * For counting various stuff
@@ -110,9 +174,21 @@ public class AnnotationMapper extends SplicingGraph {
     private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
 
     /**
+     * Pairedness and strandedness of the mapping
+     */
+    boolean paired = false;
+    boolean stranded = false;
+
+    /**
+     * Read strandedness
+     */
+    private FluxCapacitorSettings.ReadStrand readStrand = FluxCapacitorSettings.ReadStrand.NONE;
+
+    /**
      * Default type(s) for counter
      */
     static final EnumSet<CounterType> DEFAULT_COUNTER_TYPES = EnumSet.of(CounterType.SIMPLE);
+
 
     public MappingStats getStats() {
         return stats;
@@ -333,24 +409,24 @@ public class AnnotationMapper extends SplicingGraph {
 
     }
 
-//	Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, Attributes attributes) {
-//
-//		CharSequence tag= mapping.getName();
-//		attributes= desc.getAttributes(tag, attributes);
-//        if (attributes == null) {
-//            Log.warn("Error in read ID: could not parse read identifier " + tag);
-//            return null;
-//        }
-//		if (desc.isPaired()&& attributes.flag<= 0) {
-//            Log.warn("Error in read ID: could not find mate in " + tag);
-//            return null;
-//        }
-//		if (desc.isStranded()&& attributes.strand< 0) {
-//            Log.warn("Error in read ID: could not find strand in " + tag);
-//            return null;
-//        }
-//        return attributes;
-//    }
+	UniversalReadDescriptor.Attributes getAttributes(Mapping mapping, UniversalReadDescriptor desc, UniversalReadDescriptor.Attributes attributes) {
+
+		CharSequence tag= mapping.getName(Boolean.TRUE);
+		attributes= desc.getAttributes(tag, attributes);
+        if (attributes == null) {
+            Log.warn("Error in read ID: could not parse read identifier " + tag);
+            return null;
+        }
+		if (desc.isPaired()&& attributes.flag<= 0) {
+            Log.warn("Error in read ID: could not find mate in " + tag);
+            return null;
+        }
+		if (desc.isStranded()&& attributes.strand< 0) {
+            Log.warn("Error in read ID: could not find strand in " + tag);
+            return null;
+        }
+        return attributes;
+    }
 
     /*@Override
     protected int createKeyElements(Document doc, Element graph) {
@@ -389,12 +465,21 @@ public class AnnotationMapper extends SplicingGraph {
     }   */
 
     /**
+     * Lazy wrapper for mappings that do not require edge tracking.
+     * @param mappings iterator of input lines
+     * @param insertFile file to write observed insert sizes to
+     */
+    public void map(MSIterator<Mapping> mappings, File insertFile) {
+        map(mappings, insertFile, null);
+    }
+
+    /**
      * Maps genome-mapped reads into the graph.
      *
      * @param mappings iterator of input lines
-     * @param insertFile
+     * @param insertFile file to write observed insert sizes to
      */
-	public void map(MSIterator<Mapping> mappings, File insertFile) {
+    public void map(MSIterator<Mapping> mappings, File insertFile, HashMap<EdgeSet, Integer> esetMap) {
 
         if (mappings == null)
             return;
@@ -420,6 +505,8 @@ public class AnnotationMapper extends SplicingGraph {
         nrMappingsWrongStrand = 0;
 
         int multi= 0;
+        EdgeSet currEset= null; // for collecting multimap edges
+
         // map read pairs
         while (mappings.hasNext()) {
 
@@ -428,6 +515,14 @@ public class AnnotationMapper extends SplicingGraph {
             CharSequence name= mapping.getName(true);
             if (name.equals(lastName)) {
                 ++nrMappingsLocusMultiMaps;
+            } else if (esetMap!= null) {
+                if (currEset!= null) {
+                    int cnt= 0;
+                    if (esetMap.containsKey(currEset))
+                        cnt= esetMap.get(currEset);
+                    esetMap.put(currEset, (cnt+ 1));
+                }
+                currEset= null;
             }
 
             // updates stats, if any
@@ -525,6 +620,14 @@ public class AnnotationMapper extends SplicingGraph {
                         ((SimpleEdgeIntronMappings) target2).incrReadNr(otherMapping.getStart(), otherMapping.getEnd(), false);
                     }
                     ((SuperEdgeMappings) se).getMappings().incrReadNr();
+                    if (esetMap!= null) {
+                        if (currEset== null)
+                            currEset= new EdgeSet(se, DirectedRegion.STRAND_POS,
+                                    (gene instanceof SuperLocus? ((SuperLocus) gene).getGenes().length: 1));
+                        else
+                            currEset= currEset.add(se, DirectedRegion.STRAND_POS);
+                    }
+
                     if (se.isExonic()) {
                         nrMappingsMapped+=(mapping.getCount(weighted)+otherMapping.getCount(weighted));
                     }
@@ -534,22 +637,48 @@ public class AnnotationMapper extends SplicingGraph {
 //                mappings.reset();
 
             } else {    // single reads, strand already checked
-					boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
-                    if (target.isAllIntronic()) {
-                        if (sense)
-                                ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
-                        else
-                                ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
+                boolean sense= trpts[0].getStrand()== mapping.getStrand();	// TODO get from edge
+                if (target.isAllIntronic()) {
+                    if (sense)
+                            ((SimpleEdgeIntronMappings) target).incrReadNr(mapping.getStart(), mapping.getEnd(), true);
+                    else
+                            ((SimpleEdgeIntronMappings) target).incrRevReadNr(mapping.getStart(), mapping.getEnd(), true);
+                } else {
+                    if (sense) {
+                        ((MappingsInterface) target).getMappings().incrReadNr();
+                        if (esetMap!= null) {
+                            if (currEset== null)
+                                currEset= new EdgeSet(target, DirectedRegion.STRAND_POS,
+                                        (gene instanceof SuperLocus? ((SuperLocus) gene).getGenes().length: 1));
+                            else
+                                currEset= currEset.add(target, DirectedRegion.STRAND_POS);
+                        }
                     } else {
-                        if (sense)
-                            ((MappingsInterface) target).getMappings().incrReadNr();
-                        else
-                            ((MappingsInterface) target).getMappings().incrRevReadNr();
-                        //++nrMappingsMapped;
-                        nrMappingsMapped+=mapping.getCount(weighted);
+                        ((MappingsInterface) target).getMappings().incrRevReadNr();
+                        if (esetMap!= null) {
+                            if (currEset== null)
+                                currEset= new EdgeSet(target, DirectedRegion.STRAND_NEG,
+                                        (gene instanceof SuperLocus? ((SuperLocus) gene).getGenes().length: 1));
+                            else
+                                currEset= currEset.add(target, DirectedRegion.STRAND_NEG);
+                        }
+                    }
+
+                    //++nrMappingsMapped;
+                    nrMappingsMapped+=mapping.getCount(weighted);
                 }
             }
         } // end: while(iter.hasNext())
+
+        // last mmap edge
+        if (esetMap!= null) {
+            if (currEset!= null) {
+                int cnt= 0;
+                if (esetMap.containsKey(currEset))
+                    cnt= esetMap.get(currEset);
+                esetMap.put(currEset, (cnt+ 1));
+            }
+        }
 
         // close insert writer
         if (buffy != null)
@@ -622,14 +751,6 @@ public class AnnotationMapper extends SplicingGraph {
 
     public double getNrMappingsMapped() {
         return nrMappingsMapped;
-    }
-
-    public long getNrMappingsNotMappedAsPair() {
-        return nrMappingsNotMappedAsPair;
-    }
-
-    public long getNrMappingsWrongPairOrientation() {
-        return nrMappingsWrongPairOrientation;
     }
 
     /**

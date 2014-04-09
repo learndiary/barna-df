@@ -74,7 +74,7 @@ public class BEDMappingIteratorDiskTest {
 			PipedInputStream pin= new PipedInputStream();
 			PipedOutputStream pout= new PipedOutputStream(pin);
 			
-			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+			UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 			Comparator<CharSequence> comp= new BEDDescriptorComparator(descriptor);
 			//Arrays.sort(beds, comp);
@@ -125,7 +125,7 @@ public class BEDMappingIteratorDiskTest {
 			}
 			buffy.close();
 			
-			UniversalReadDescriptor descriptor= new UniversalReadDescriptor();
+			UniversalReadDescriptor descriptor= UniversalReadDescriptor.createTestDescriptor();
 			descriptor.init(UniversalReadDescriptor.getDescriptor(UniversalReadDescriptor.DESCRIPTORID_SIMULATOR));
 			BEDMappingIteratorDisk biter= new BEDMappingIteratorDisk(x);
 			biter.init();

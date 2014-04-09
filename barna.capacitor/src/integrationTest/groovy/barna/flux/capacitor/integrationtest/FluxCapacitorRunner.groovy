@@ -83,8 +83,7 @@ class FluxCapacitorRunner {
 
         //get instance for the read descriptor
         if (parameters.containsKey("READ_DESCRIPTOR")) {
-            UniversalReadDescriptor descriptor = new UniversalReadDescriptor();
-            descriptor.init(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
+            UniversalReadDescriptor descriptor = new UniversalReadDescriptor(UniversalReadDescriptor.getDescriptor("SIMULATOR"));
         }
 
         //check if sorted files should be kept and set up directory
@@ -282,7 +281,7 @@ class FluxCapacitorRunner {
     /**
      * Helper to unzip unzip a file
      */
-    private static unzip = { File file, String dest ->
+    private static unzip(File file, String dest) {
         def result = new ZipInputStream(new FileInputStream(file))
         def destFile = new File(dest)
         if (!destFile.exists()) {
