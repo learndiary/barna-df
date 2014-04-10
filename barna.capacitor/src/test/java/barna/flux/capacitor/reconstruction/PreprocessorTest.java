@@ -2,23 +2,18 @@ package barna.flux.capacitor.reconstruction;
 
 import barna.commons.Execute;
 import barna.commons.system.OSChecker;
-import barna.flux.capacitor.integrationtest.FluxCapacitorRunner;
+import barna.io.ArtifactoryDownloader;
 import barna.io.FileHelper;
 import barna.io.gtf.GTFwrapper;
-import barna.io.gtf.GTFwrapperTest;
 import barna.model.Gene;
-import groovy.json.JsonSlurper;
 import org.junit.*;
 import org.junit.Test;
-import sun.misc.IOUtils;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Random;
@@ -35,7 +30,7 @@ public class PreprocessorTest {
     static {FluxCapacitor.DEBUG= false;}
 
     // gencode annotation
-    public static final File GENCODE_12 = GTFwrapperTest.getGencodeFile();
+    public static final File GENCODE_12 = ArtifactoryDownloader.getGencodeFile();
     // file with mappings presorted by name
     public static final File MAPPINGS_PSORT = new File("/Volumes/Raptor/scratch/hg19_gencode_paired_sim01.filtered.bam");
     // file with mappings presorted by position
