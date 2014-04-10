@@ -55,7 +55,7 @@ public class GTFwrapperTest {
     /**
      * Complete Gencode annotation
      */
-    private static File gencodeFile= null;
+    private static File gencodeFile= getGencodeFile();
 
     static {
         // initialize defaults
