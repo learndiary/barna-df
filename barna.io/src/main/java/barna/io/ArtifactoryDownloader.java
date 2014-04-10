@@ -113,7 +113,7 @@ public class ArtifactoryDownloader {
             }
         }
         System.out.println("Test data available");
-        return test_data_dir;
+        return gencodeFile;
     }
 
 }
