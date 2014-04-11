@@ -772,7 +772,7 @@ public class FluxCapacitorTest {
         assertNotNull(stats);
         assertEquals(1, stats.getSingleTxLoci());
         assertEquals(6, stats.getReadsSingleTxLoci());
-        assertEquals(0, stats.getMappingsSingleTxLoci());   // 0.3 rounded down
+        assertEquals(0, stats.getMappingsSingleTxLoci());   // 1 mate always iterated, 3 multis => 0.3
         assertEquals(1, stats.getMappingPairsSingleTxLoci());
         assertEquals(6, stats.getMappingsTotal());
         assertEquals(2, stats.getMappingsMapped());

@@ -1196,16 +1196,6 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
     protected File file = null;
 
     /**
-     * Flag that indicates whether annotation mapping enforces read paring (or not).
-     */
-    public boolean pairedEnd = false;
-
-    /**
-     * Flag that indicates whether annotation mapping enforces correct strand (or not).
-     */
-    public boolean stranded = false;
-
-    /**
      * Mode of strand consideration for LP constraints:
      * consider XXX (STRAND_NONE), both strands (STRAND_ENABLED), or XXX (STRAND_SPECIFIC).
      */
@@ -2124,7 +2114,7 @@ public class FluxCapacitor implements Tool<MappingStats>, ReadStatCalculator {
             if (profile == null) {
                 profile = new Profile();
                 try {
-                    BiasProfiler profiler = new BiasProfiler(this, strand, pairedEnd, !settings.get(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING),gtfReader, mappingReader);
+                    BiasProfiler profiler = new BiasProfiler(this, strand, settings.isPaired(), !settings.get(FluxCapacitorSettings.DISABLE_MULTIMAP_WEIGHTING),gtfReader, mappingReader);
                     profile = profiler.call();
                 } catch (Throwable e) {
                     e.printStackTrace();
