@@ -85,7 +85,7 @@ subprojects{
     apply from : "${rootDir}/gradle/licenses.gradle"
 
     test{
-        jvmArgs '-Xms128m', '-Xmx1G'
+        jvmArgs '-Xms128m', '-Xmx2G'
         //makes the standard streams (err and out) visible at console when running tests
         //testLogging.showStandardStreams = true
 
