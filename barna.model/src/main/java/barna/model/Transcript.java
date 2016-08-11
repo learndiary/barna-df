@@ -147,7 +147,9 @@ public class Transcript extends DirectedRegion {
 	 * Integer.MIN_VALUE indicates that the position falls in an intron.
 	 * 
 	 * @param pos genomic position, positive or negative
-	 * @return transcript-relative position of the genomic location
+	 * @return transcript-relative position of the genomic location,
+     *          or <code>Integer.MIN_VALUE</code> if the position is in an
+     *          intron
 	 */
 	public int getExonicPosition(int pos) {
 		
@@ -174,7 +176,113 @@ public class Transcript extends DirectedRegion {
 		return dist+ (pos- exons[exons.length- 1].get3PrimeEdge());
 	}
 
-	/**
+    /**
+     * Gives 0-based position relative to transcript start of the next
+     * transcriptomic coordinate after the given genomic position.
+     *
+     * @param pos genomic position, positive or negative
+     * @return transcript-relative position of the genomic location,
+     *          or <code>(-1)</code> if the next position is after
+     *          the transcript's 3'-end
+     */
+    public int getNextExonicPosition(int pos) {
+
+        // safety correction
+        if (pos> 0&& !isForward())
+            pos= -pos;
+
+        // before transcription start, next position is 0
+        if (pos< exons[0].get5PrimeEdge())
+            return 0;
+
+        // find containing exon, 0-based coordinates
+        int dist= 0;
+        for (int x = 0; x < exons.length; x++) {
+            if (exons[x].get5PrimeEdge()> pos)
+                return dist+ 1;	// pos was in preceeding intron
+            if (exons[x].contains(pos)) {
+                if (x== exons.length&& pos== exons[x].get3PrimeEdge())
+                    return (-1);    // position after pos is outside transcript
+                return dist+ (pos- exons[x].get5PrimeEdge());
+            }
+            // else
+            dist+= exons[x].getLength();
+        }
+
+        return (-1);    // pos after transcript end
+    }
+
+    /**
+     * Gives 0-based position relative to transcript start of the next
+     * transcriptomic coordinate after the given genomic position.
+     *
+     * @param pos genomic position, positive or negative
+     * @return transcript-relative position of the genomic location,
+     *          or <code>(-1)</code> if the next position is before
+     *          the transcript's 5'-end
+     */
+    public int getPrevExonicPosition(int pos) {
+
+        // safety correction
+        if (pos> 0&& !isForward())
+            pos= -pos;
+
+        // before transcription start, next position is 0
+        if (pos< exons[0].get5PrimeEdge())
+            return (-1);    // pos is before 5'-start
+
+        // find containing exon, 0-based coordinates
+        int dist= 0;
+        for (int x = 0; x < exons.length; x++) {
+            if (exons[x].get5PrimeEdge()> pos)
+                return dist;	// pos was in preceeding intron
+            if (exons[x].contains(pos)) {
+                return dist+ (pos- exons[x].get5PrimeEdge())- 1;
+            }
+            // else
+            dist+= exons[x].getLength();
+        }
+
+        return (dist- 1);    // pos after transcript end
+    }
+
+
+    /**
+     * Gives 0-based position relative to transcript cds start of the next
+     * transcriptomic coordinate after the given genomic position.
+     *
+     * @param pos genomic position, positive or negative
+     * @return transcript cds-relative position of the genomic location,
+     *          or <code>(-1)</code> if the next position is before
+     *          the transcript's 5'-end
+     */
+    public int getPrevCDSPosition(int pos) {
+
+        // safety correction
+//        if (pos> 0&& !isForward())
+//            pos= -pos;
+
+        // before transcription start, next position is 0
+        if (pos< getCDSRegions()[0].get5PrimeEdge())
+            return (-1);    // pos is before 5'-start
+
+        // find containing exon, 0-based coordinates
+        int dist= 0;
+        for (int x = 0; x < getCDSRegions().length; x++) {
+            if (getCDSRegions()[x].get5PrimeEdge()> pos)
+                return dist;	// pos was in preceeding intron
+            if (getCDSRegions()[x].contains(pos)) {
+                return dist+ (pos- getCDSRegions()[x].get5PrimeEdge())- 1;
+            }
+            // else
+            dist+= getCDSRegions()[x].getLength();
+        }
+
+        return (dist- 1);    // pos after transcript end
+    }
+
+
+    /**
 	 * @param exonPos 0-based coordinate
 	 * @return genomic pos 1-based
 	 */
@@ -494,7 +602,11 @@ public class Transcript extends DirectedRegion {
 	public void setExonicLength(int newLen) {
 		elength= newLen;
 	}
-	
+
+    /**
+     * Get the length of exonic region
+     * @return Sum of all exons lenght of transcript
+     */
 	public int getExonicLength() {
 		if (elength == -1) {
 			elength= 0;
@@ -1002,8 +1114,8 @@ public class Transcript extends DirectedRegion {
 		setID("transcript");
 	}
 	
-	/**
-	 * @return
+	/** Get array with exons of transcript
+	 * @return Array of exons
 	 */
 	public Exon[] getExons() {
 		return exons;
@@ -1086,8 +1198,8 @@ public class Transcript extends DirectedRegion {
 		return gene;
 	}
 
-	/**
-	 * @return
+	/** Get the identifier of transcript in annotation
+	 * @return Transcript ID in annotation
 	 */
 	public String getTranscriptID() {
 		return transcriptID;
@@ -1741,7 +1853,7 @@ public class Transcript extends DirectedRegion {
 		Vector v= new Vector(exons.length);
 		DirectedRegion reg;
 		for (int i = 0; i < exons.length; i++) {
-			if (!exons[i].isCodingCompletely())
+			if (!exons[i].isCoding())
 				continue;
 			reg= new DirectedRegion(exons[i].get5PrimeCDS(), exons[i].get3PrimeCDS(), exons[i].getStrand());
 			reg.setChromosome(getChromosome());
@@ -1754,6 +1866,11 @@ public class Transcript extends DirectedRegion {
 		//regs[regs.length- 1].set3PrimeEdge(regs[regs.length- 1].get3PrimeEdge()+ 3);	// to include stop codon
 		return regs;
 	}
+
+    /**
+     * Retrieve the nucleotide sequence of CDS
+     * @return CDS sequence
+     */
 	
 	public String getCDSSequenceNt() {
 		DirectedRegion[] regs= getCDSRegions();	// not sorted

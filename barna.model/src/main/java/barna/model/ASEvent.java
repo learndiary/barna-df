@@ -233,6 +233,28 @@ public class ASEvent {
 	int[] frame3, frame5;
 	boolean[] cdsValid;
 
+    /**
+     * Returns transcript bit pattern.
+     * @return transcripts encoded in bit patterns
+     */
+    public long[] getTranscriptsBit() {
+        return transcriptsBit;
+    }
+
+    /**
+     * Sets transcript bit pattern
+     * @param transcriptsBit the bit pattern of the transcripts
+     */
+    public void setTranscriptsBit(long[] transcriptsBit) {
+        this.transcriptsBit = transcriptsBit;
+    }
+
+    /**
+     * Transcripts used by <code>this</code> event encoded as
+     * bit pattern of the corresponding <code>SplicingGraph</code>.
+     */
+    long[] transcriptsBit= null;
+
     public ASEvent(GFFObject obj) {
         fromGTFObject(obj);
     }
@@ -1083,7 +1105,7 @@ public class ASEvent {
 	 * 
 	 * conf= (float) (seen+ notseen)+ ovl_trpts / max_t1,t2(seen- notseen)+ ovl_trpts 
 	 * 
-	 * @return
+	 * @return Score
 	 */
 	public float getScore() {
 		if (score == -1f&& getGene()!= null) {
@@ -1129,7 +1151,7 @@ public class ASEvent {
 	/**
 	 * Gets the genomic region the event covers, extended up to the flanks.
 	 * Corrects for infinity boundaries.
-	 * @return
+	 * @return Directed Region of the event
 	 */
 	public DirectedRegion getRegionEvent() {
 		int srcPos= src.getPos();	// infinity has to be eliminated
@@ -1679,7 +1701,8 @@ public class ASEvent {
 		
 		return regs;
 	}
-
+    //TODO Remember to change this name!
+    @Deprecated
 	public DirectedRegion[] getVariableRegions_last_how_did_this_shit_ever_work() {
 		
 		SpliceSite[] su= getSpliceUniverseWithFlanks();

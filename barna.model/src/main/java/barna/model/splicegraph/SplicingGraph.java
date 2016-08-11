@@ -30,16 +30,12 @@ package barna.model.splicegraph;
 import barna.commons.utils.ArrayUtils;
 import barna.model.*;
 import barna.model.commons.IntVector;
-import barna.model.commons.MyFile;
 import barna.model.commons.MyMath;
-import barna.model.commons.MyTime;
 import barna.model.constants.Constants;
 import barna.model.gff.GFFObject;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * <tt>07/11/14</tt>: handles soft starts
@@ -305,6 +301,18 @@ public class SplicingGraph {
 
     static TranscriptByNameComparator defaultTranscriptByNameComparator = new TranscriptByNameComparator();
     static Node.PositionTypeComparator defaultNodeByPositionTypeComparator = new Node.PositionTypeComparator();
+
+    /**
+     * Returns the gene model linked to <code>this</code> splicing graph.
+     * @return the gene model
+     */
+    public Gene getGene() {
+        return gene;
+    }
+
+    /**
+     * The gene model linked to <code>this</code> splicing graph.
+     */
     protected Gene gene;
     public Transcript[] trpts;    // for flux capacitor
     int taSize;
@@ -320,9 +328,11 @@ public class SplicingGraph {
     protected AbstractEdge[] exonicEdgesInGenomicOrder = null;
 
     /**
-     * Converts gene model to splicegraph.
+     * Converts gene model to splicing graph, but only initializes the
+     * transcript set so far. That allows for leightweight instances
+     * without all the nodes and edges.
      *
-     * @param g a gene
+     * @param g the gene for <code>this</code> splicing graph
      */
     public SplicingGraph(Gene g) {
         this.gene = g;
@@ -332,6 +342,57 @@ public class SplicingGraph {
         if (trpts.length % 64 != 0)
             ++taSize;
     }
+
+    /**
+     * Returns the (first) common transcript of both events,
+     * or <code>null</code> if the variant sets are non-intersecting.
+     * @param ev1 an event, based on <code>this</code> splicing graph
+     * @param ev2 another event, based on <code>this</code> splicing graph
+     * @return a <code>Transcript</code> common to both events,
+     *          or <code>null</code>
+     */
+    public Transcript getCommonTranscript(ASEvent ev1, ASEvent ev2) {
+
+        // get transcripts of first event
+        long[] t1= ev1.getTranscriptsBit();
+        if (t1== null) {
+            t1= encodeTSet(ev1);
+            ev1.setTranscriptsBit(t1);
+        }
+
+        // get transcripts of second event
+        long[] t2= ev2.getTranscriptsBit();
+        if (t2== null) {
+            t2= encodeTSet(ev2);
+            ev2.setTranscriptsBit(t2);
+        }
+
+        long[] isect= intersect(t1, t2);
+        if (isNull(isect))
+            return null;
+
+        // should be null-proof
+        return getAnyTranscript(isect);
+    }
+
+    /**
+     * Encodes all transcripts in the variants of an event.
+     * @param e an AS event based on <code>this</code> splicing graph
+     * @return the bit-encoded pattern of transcripts involved in the event
+     */
+    public long[] encodeTSet(ASEvent e) {
+
+        // assertion should hold that event has >1 variant
+        if (e.getTranscripts()== null|| e.getTranscripts().length== 0)
+            return null;
+
+        long[] tt= encodeTset(e.getTranscripts()[0]);
+        for (int i = 1; i < e.getTranscripts().length; i++)
+            tt= unite(tt, encodeTset(e.getTranscripts()[i]));
+
+        return tt;
+    }
+
 
     public long[] encodeTset(Transcript[] t) {
         long[] taVector = new long[taSize];

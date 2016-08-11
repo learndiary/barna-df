@@ -452,13 +452,13 @@ public class Translation extends DirectedRegion {
 		Exon[] ex= getTranscript().getExons();
 		Vector regV= new Vector(ex.length);
 		for (int i = 0; i < ex.length; i++) {
-			if (!ex[i].isCodingCompletely())
+			if (!ex[i].isCoding())
 				continue;
 			if (ex[i].isCoding5Prime()&& ex[i].isCoding3Prime()) {
 				regV.add(ex[i]);
 				continue;
 			}
-				
+			// subset region of partially coding exons
 			DirectedRegion reg= new DirectedRegion(
 					ex[i].get5PrimeCDS(), ex[i].get3PrimeCDS(), ex[i].getStrand());
 			reg.setChromosome(getChromosome());
@@ -527,7 +527,7 @@ public class Translation extends DirectedRegion {
 		for (int i = 0; i < s.length()- 3; i+= 3) {
 			String c= CODON_HASH.get(s.substring(i, i+3).toUpperCase());
 			if (c== null|| c.equals(""))	// stop
-				return null;
+                return null;
 			b.append(c);
 		}
 		if (s.length()< 3)
@@ -674,7 +674,12 @@ public class Translation extends DirectedRegion {
 		
 		return frame;
 	}
-	
+
+    /**
+     * Retrieves the genomic sequences of exon parts that are coding.
+     * @return a nucleotide string with the coding sequence (CDS).
+     * @see #getExonicRegions()
+     */
 	public String getSplicedSequence() {
 		DirectedRegion[] regs= getExonicRegions();	// not sorted?
 		if (regs== null)
@@ -685,8 +690,8 @@ public class Translation extends DirectedRegion {
 			sb.append(Graph.readSequence(regs[i]));
 		return sb.toString();
 	}
-	
-	public int getGenomicPosition(int exonPos) {
+
+    public int getGenomicPosition(int exonPos) {
 
 		Exon[] exons= getTranscript().getExons();
 		
@@ -730,7 +735,7 @@ public class Translation extends DirectedRegion {
 	 * 
 	 * @return 0-based position in the reading frame
 	 */
-	public int getTranslatedPosition(int genomicPos) {
+    public int getTranslatedPosition(int genomicPos) {
 		int a= getTranscript().getExonicPosition(genomicPos),
 			b= getTranscript().getExonicPosition(get5PrimeEdge());
 		int x= (a- b);
