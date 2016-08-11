@@ -1,13 +1,9 @@
 package barna.astafunk;
 
-import barna.commons.log.Log;
-import barna.func.DP.Hit;
-import barna.func.HMM.ProfileHMM;
-import barna.func.parser.HMMParser;
-import barna.func.parser.HeuristicTableParser;
-import barna.func.utils.FunkSettings;
-import barna.model.Transcript;
-import com.sun.corba.se.impl.encoding.OSFCodeSetRegistry;
+import barna.astafunk.DP.Hit;
+import barna.astafunk.HMM.ProfileHMM;
+import barna.astafunk.parser.HMMParser;
+import barna.astafunk.parser.HeuristicTableParser;
 import org.junit.Test;
 
 import java.io.*;
@@ -28,7 +24,7 @@ public class ParsingTest {
     public void hmmerOutputTest() throws IOException {
 
         // read output hmmer file
-        String hmmerOutputPath = "barna.astalavista/src/test/java/barna/astafunk/example-hmmer-output.txt";
+        String hmmerOutputPath = new File(getClass().getResource("/example-hmmer-output.txt").getFile()).getAbsolutePath();
         HeuristicTableParser parseH = new HeuristicTableParser(hmmerOutputPath);
         HashMap<String, List<Hit>> heuristicHash = parseH.parse();
         printHeuristicTable(heuristicHash);
@@ -37,7 +33,7 @@ public class ParsingTest {
     @Test
     public void createReferenceList() throws IOException {
 
-        String hmmerOutputPath = "barna.astalavista/src/test/java/barna/astafunk/example-hmmer-output.txt";
+        String hmmerOutputPath = new File(getClass().getResource("/example-hmmer-output.txt").getFile()).getAbsolutePath();
 
         HeuristicTableParser parseH = new HeuristicTableParser(hmmerOutputPath);
         HashMap<String, List<Hit>> heuristicHash = parseH.parse();
@@ -69,7 +65,7 @@ public class ParsingTest {
     @Test
     public void hmmFileTest() throws IOException {
 
-        String hmmFilePath = "barna.astalavista/src/test/java/barna/astafunk/test.hmm";
+        String hmmFilePath = new File(getClass().getResource("/test.hmm").getFile()).getAbsolutePath();
 
         HMMParser hmmParser = new HMMParser(hmmFilePath);
 

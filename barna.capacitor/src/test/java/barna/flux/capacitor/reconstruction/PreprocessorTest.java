@@ -166,8 +166,9 @@ public class PreprocessorTest {
     @Test
     public void testProcess() throws Exception {
 
+        // TODO MAPPINGS_QSORT to be uploaded to artifactory
         if (1== 1)
-            return; // MAPPINGS_QSORT to be uploaded to artifactory
+            return;
 
         FluxCapacitorSettings settings= new FluxCapacitorSettings();
         settings.set(FluxCapacitorSettings.ANNOTATION_FILE.getName(), GENCODE_12);
