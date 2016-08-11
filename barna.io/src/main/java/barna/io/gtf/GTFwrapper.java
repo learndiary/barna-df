@@ -1750,8 +1750,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	/**
 	 * Builds up a GTF object from a GTF line.
-	 * @param line a GTF line of the format <code>\<seqname\> \<source\> \<feature\>  \<start\> 
-	 * \<end\> \<score\> \<strand\> \<frame\> [attributes] [comments]</code>
+	 * @param line a GTF line of the format <code>&lt;seqname\> &lt;source&gt;&nbsp;&lt;feature\>&gt;&nbsp;&lt;start&gt;&nbsp;
+	 * &lt;end&gt;&nbsp;&lt;score&gt;&nbsp;&lt;strand&gt;&nbsp;&lt;frame&gt;&nbsp;[attributes]&nbsp;[comments]</code>
 	 * @return an instance of <code>GTFObject</code> representing that line 
 	 */
 	protected GFFObject readBuildObject(String line) {

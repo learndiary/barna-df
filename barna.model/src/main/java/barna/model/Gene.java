@@ -589,10 +589,12 @@ public class Gene extends DirectedRegion {
 	}
 	
 	/**
-	 * handles multiple ref regions
+	 * Determines the overlap of a query region with a reference CDS and
+     * handles multiple types
 	 * 1= 5UTR, 2= 5UTR+CDS, 3= CDS, 4= CDS+3UTR, 5= 3UTR, 6= 5UTR+CDS+3UTR
-	 * @param reg
-	 * @return
+	 * @param reg the query region
+     * @param refRegs the coding regions of the reference
+	 * @return the type of overlap with the coding regions of the reference transcript
 	 */
 	public byte[] getLocalization(DirectedRegion reg, DirectedRegion[] refRegs) {
 		if (refRegs.length== 0)
@@ -728,8 +730,11 @@ public class Gene extends DirectedRegion {
     }
 
 	/**
-	 * @param ss
-	 * @return
+     * Adds a (splice) site and its supporting transcripts to <code>this</code> gene
+	 * @param ss the (splice) site to be added
+     * @param trptV a vector of transcripts that supports the provided (splice) site
+	 * @return <code>true</code> if the provided (splice) site has been newly added,
+     * <code>false</code> if the (splice) site was already known to <code>this</code> Gene
 	 */
 	public boolean addSpliceSite(SpliceSite ss, Vector<Transcript> trptV) {
 		
@@ -1039,7 +1044,7 @@ public class Gene extends DirectedRegion {
 	}
 	
 	/**
-	 * @return
+	 * @return the locus identifier in UCSC format
 	 */
 	public String getLocusID() {
 		//return geneID;
@@ -1101,7 +1106,7 @@ public class Gene extends DirectedRegion {
     }
 	
 	/**
-	 * @return
+	 * @return the vector of transcripts from <code>this</code> Gene
 	 */
 	public Transcript[] getTranscripts() {
 		return transcripts;
@@ -1121,8 +1126,9 @@ public class Gene extends DirectedRegion {
 	
 	/**
 	 * gets non-redundant set of coding exons
-	 * @param completelyCoding
-	 * @return
+	 * @param completelyCoding flag to request only exons that code from their 5&rsquot;
+     *                         to their 3&rsquot; end
+	 * @return a vector of exons
 	 */
 	public Exon[] getCodingExons(boolean completelyCoding) {
 		Exon[] ex= getExons();

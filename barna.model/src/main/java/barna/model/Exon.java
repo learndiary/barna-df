@@ -442,14 +442,14 @@ public class Exon extends DirectedRegion {
 		newTranscript.addExon(this);
 	}	
 	/**
-	 * @return
+	 * @return the ID of <code>this</code> exon
 	 */
 	public String getExonID() {
 		return exonID;
 	}
 
 	/**
-	 * @return
+	 * @return the gene to which <code>this</code> exon belongs
 	 */
 	public Gene getGene() {
 		return this.gene;
