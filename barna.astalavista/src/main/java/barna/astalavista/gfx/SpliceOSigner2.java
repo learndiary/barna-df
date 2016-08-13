@@ -27,7 +27,7 @@ import javax.swing.JPanel;
  * Date: 03/3/06
  * Time: 10:28 PM
  * To change this template use File | Settings | File Templates.
- * @@author msammeth
+ * @author msammeth
  */
 public class SpliceOSigner2 extends JPanel {
 

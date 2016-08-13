@@ -64,12 +64,15 @@ public DevNullReaderThread() {
 }  
 /**  
  * DevNullThread - erstellt einen neunen DevNullReader mit dem ?bergebenen Stream ohne Name.  
- */  
+ * @param in input stream
+ */
 public DevNullReaderThread(InputStream in) {  
         this(in, null);  
 }  
 /**  
- * DevNullThread - erstellt einen neuen DevNullReader mit den ?bergebenen Stream und Name.  
+ * DevNullThread - erstellt einen neuen DevNullReader mit den ?bergebenen Stream und Name.
+ * @param in input stream
+ * @param name name
  */  
 public DevNullReaderThread(InputStream in, String name) {  
         super("DevNullReader");  

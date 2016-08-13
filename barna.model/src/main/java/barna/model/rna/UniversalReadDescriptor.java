@@ -287,7 +287,7 @@ public class UniversalReadDescriptor {
 
     /**
      * Generates an expression for the rules underlying <code>this</code> descriptor.
-     * @return
+     * @return the generated string
      */
 	@Override
 	public String toString() {

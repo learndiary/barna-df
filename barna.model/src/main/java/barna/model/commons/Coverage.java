@@ -76,7 +76,7 @@ public class Coverage {
      * Computes the mean coverage, with or without considering 0-values. 
      * @param excludeZero flag whether positions with 0-counts 
      * should be excluded
-     * @return
+     * @return the average coverage
      */
     public double getMean(boolean excludeZero) {
         // exclude 0-positions
@@ -97,6 +97,7 @@ public class Coverage {
      * Computes the chi-square metrics of the coverage profile.
      * @param excludeZero flag whether positions with 0-counts 
      * should be excluded
+	 * @param anscombe flag
      * @return the chi-square value of the current profile
      */
     public long getChiSquare(boolean excludeZero, boolean anscombe) {
@@ -122,6 +123,7 @@ public class Coverage {
      * to something close to normally distributed.
      * @param excludeZero flag whether positions with 0-counts 
      * should be excluded
+	 * @param anscombe flag
      * @return the coefficient of variation computed as described
      */
     public double getCV(boolean excludeZero, boolean anscombe) {

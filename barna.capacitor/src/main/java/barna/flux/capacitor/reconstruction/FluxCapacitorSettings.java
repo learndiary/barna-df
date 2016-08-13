@@ -608,7 +608,7 @@ public class FluxCapacitorSettings extends ParameterSchema {
 
     /**
      * Minimum length of introns that are considered to be functional and not gaps/indels in genomic alignments of cDNA.
-     * Neighboring exons in the same transcript with a distance < min_ilen are joined.
+     * Neighboring exons in the same transcript with a distance &lt; min_ilen are joined.
      */
     public static final Parameter<Integer> MIN_ILEN = Parameters.intParameter("MIN_ILEN",
             "Minimum length of introns of the annotation that are considered real and not indels/gaps, " +
@@ -625,11 +625,11 @@ public class FluxCapacitorSettings extends ParameterSchema {
     }).longOption("minilen");
 
     /**
-     * Minimum number of reads to be left in a locus by the linear solver. If it's >0 the lp-solver will be forced to
+     * Minimum number of reads to be left in a locus by the linear solver. If it's &gt;0 the lp-solver will be forced to
      * deconvolute the locus even if it would me more expensive that removing all the reads from it (BARNA-375).
      *
      * It can be specified as either:
-     * - absolute number of reads (>1)
+     * - absolute number of reads (&gt;1)
      * - fraction of the observed reads (0,1)
      */
     public static final Parameter<Double> MIN_OBS = Parameters.doubleParameter("MIN_OBS",

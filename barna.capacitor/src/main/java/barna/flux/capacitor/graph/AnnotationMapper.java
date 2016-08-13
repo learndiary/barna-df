@@ -913,7 +913,7 @@ public class AnnotationMapper extends SplicingGraph {
 
     /**
      * Maps a continous stretch of positions between
-     * <code>bstart</code> and <code>end</code to an atomic edge,
+     * <code>bstart</code> and <code>end</code> to an atomic edge,
      * or, a series of edges corresponding to an EEJ.
      *
      * @param bstart start on positive strand

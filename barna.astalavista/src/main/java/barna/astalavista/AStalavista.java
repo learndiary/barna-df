@@ -74,6 +74,7 @@ public abstract class AStalavista implements Tool<Void> {
 
     /**
      * Tasks to carry out when solving one locus (gene).
+     * @param g a gene
      * @throws Exception if something went wrong
      */
     protected void callLoop(Gene g) throws Exception {
@@ -354,6 +355,7 @@ public abstract class AStalavista implements Tool<Void> {
 
     /**
      * Summarizes the settings before the run
+     * @param settings the settings
      */
     @Deprecated
     protected void printSettings(AStalavistaSettings settings) {

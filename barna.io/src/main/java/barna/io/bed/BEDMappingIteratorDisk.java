@@ -239,7 +239,7 @@ public class BEDMappingIteratorDisk implements MSIteratorDisk<BEDMapping> {
 	 * correspondingly provided input (i.e., streams or files, 
 	 * sorted or unsorted). Possible copying and sorting processes
 	 * are executed in parallel, the result is availble as soon 
-	 * as the corresponding <code>Future</object> returns.<br>  
+	 * as the corresponding <code>Future</code> returns.<br>
 	 * <b>Note</b>: the method has to be called before iteration 
 	 * can start. It is recommended to call <code>init()</code>
 	 * directly after the constructor. Otherwise, an intrinsic 

@@ -139,7 +139,7 @@ HashSet<String> refIDset;
 	}
 	
 	/**
-	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * Checks for correct sorting, returns number of lines read (&lt;0 if not applicable).
 	 * @param inputFile file from which is read
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
@@ -168,10 +168,10 @@ HashSet<String> refIDset;
 	}
 	
 	/**
-	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * Checks for correct sorting, returns number of lines read (&lt;0 if not applicable).
 	 * <b>Note:</b> does not close the given stream.
 	 * @param inputStream stream from which is read
-	 * @param size total size of data in the stream, if known, otherwise <= 0
+	 * @param size total size of data in the stream, if known, otherwise &le; 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */

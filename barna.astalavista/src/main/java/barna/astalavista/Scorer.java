@@ -317,6 +317,7 @@ public class Scorer extends AStalavista {
      * @param ss the splice site
      * @param flank5 upstream sequence flanking the dinucleotide
      * @param flank3 downstream sequence flanking the dinucleotide
+     * @return vector of strings
      */
     protected Vector<String> getVariants(SpliceSite ss, int flank5, int flank3) {
 
@@ -467,7 +468,7 @@ public class Scorer extends AStalavista {
     /**
      * Retrieves the score of splice sites as obtained from the genomic sequence,
      * and also of variants of those, if annotated.
-     * @param spliceSites
+     * @param spliceSites vector of (splice) sites
      */
     protected void scoreSites(SpliceSite[] spliceSites) {
 

@@ -42,10 +42,10 @@ import java.util.Map;
 
 /**
  * Command line options class.
- * <p/>
+ * <br>
  * Command line options can have an arbitrary number of names and must have a description.
  * They are mapped to method names for a given object. The methods are then called using reflection API.
- * <p/>
+ * <br>
  * You can use @link{#addOption} to add a boolean parameter or @link{#addParameter} to map a method
  * that evaluates the given parameter string.
  *

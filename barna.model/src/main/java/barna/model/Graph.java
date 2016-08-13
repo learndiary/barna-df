@@ -219,8 +219,8 @@ public class Graph implements Serializable {
 	 * Inefficient - traverses hash via loop. 
 	 * Species names are to be given in the format "mus_musculus". 
 	 * (Warning, contains an ineficient iteration over all species.)
-	 * @param binomialName
-	 * @return
+	 * @param binomialName first and last name of a species
+	 * @return the <code>Species</code> instance found with this name
 	 */
 	public Species getSpeciesByName(String binomialName) {
 		
@@ -289,7 +289,7 @@ public class Graph implements Serializable {
 	
 	/**
 	 * 
-	 * @param newSpecies
+	 * @param newSpecies the species to be added
 	 * @return <code>true</code> if new <code>Species[]</code> has been added successfully
 	 */
 	public boolean addSpecies(Species newSpecies) {
@@ -321,9 +321,6 @@ public class Graph implements Serializable {
 		return (Exon[]) ArrayUtils.toField(v);
 	}
 
-	/**
-	 * @return
-	 */
 	public Species[] getSpecies() {
 
 		Collection c= speciesHash.values();
@@ -610,13 +607,13 @@ public class Graph implements Serializable {
 
 	/**
 	 * 
-	 * @param spe
-	 * @param chromosome
-	 * @param forwardStrand
+	 * @param spe the species
+	 * @param chromosome contig/chromosome
+	 * @param forwardStrand DNA strand
 	 * @param start 1st position to be read
 	 * @param end	1st position to be read
      * @param isCircular circular chromosome
-	 * @return
+	 * @return the sequence read
 	 */
 	public static String readSequence(Species spe, CharSequence chromosome, boolean forwardStrand, 
 			long start, long end, boolean isCircular)
@@ -1057,7 +1054,7 @@ public class Graph implements Serializable {
 	
 	/**
 	 * 
-	 * @param newSpecies
+	 * @param newSpecies the species to be added
 	 * @return <code>true</code> if new <code>Species[]</code> has been added successfully
 	 */
 	public boolean addSpecies(Species[] newSpecies) {
@@ -1251,12 +1248,14 @@ public class Graph implements Serializable {
 
 	/**
 			 * 
-			 * @param spe
-			 * @param chromosome
-			 * @param forwardStrand
+			 * @param spe species
+			 * @param chromosome contig
+			 * @param forwardStrand strand
 			 * @param start 1st position to be read
 			 * @param end	1st position not to be read
-			 * @return
+	 		 * @param cs character sequence to be filled
+	 		 * @param from start position to fill character sequence
+			 * @param to end position to fill character sequence
 			 */
 			public static void readSequence(Species spe, CharSequence chromosome, boolean forwardStrand,
 					long start, long end,

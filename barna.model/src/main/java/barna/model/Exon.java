@@ -335,7 +335,7 @@ public class Exon extends DirectedRegion {
 	
 	/**
 	 * 
-	 * @return <true> if some transcript shows this exon as internal exon
+	 * @return <code>true</code> if some transcript shows this exon as internal exon
 	 */
 	public boolean isInternal() {
 		for (int i = 0; i < getTranscripts().length; i++) {
@@ -410,7 +410,10 @@ public class Exon extends DirectedRegion {
 	}
 	
 	/**
-	 * @param b
+	 * Confirms the directionality of <code>this</code> region.
+	 * @param b the queried directionality
+	 * @return <code>true</code> if <code>this</code> strand is the same directionality as queried,
+	 * <code>false</code> otherwise.
 	 */
 	public boolean checkStrand(boolean b) {
 		

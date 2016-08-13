@@ -60,7 +60,8 @@ public class QualityErrorModel {
 
     /**
      * Create a new error model
-     *
+     * @param technology the sequencing technology
+     * @param readLength the read length
      * @param qualityModel the quality model
      * @param crossTalk the crosstalk table
      */

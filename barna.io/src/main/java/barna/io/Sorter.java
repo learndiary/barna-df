@@ -46,11 +46,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * The Sorter follows the Builder pattern. Use the {@link #create(java.io.InputStream, java.io.OutputStream, boolean)}
+ * The Sorter follows the Builder pattern. Use the {@link #create(InputStream, OutputStream, boolean, String)}
  * method to get a new sorter instance. You can then call methods to configure the sorter. For example, call {@link #field(int, boolean)}
  * to specify a field that is used for sorting. You can call the {@code field} methods multiple times to add fields
  * to the consecutive sort order, i.e., if two values are equal in the first field, the next field is used.
- * <p/>
+ * <br>
  * You can start sorting by calling {@link #sort()}. To create a background task that performs sorting until
  * no more data are available or it is canceled, use {@link #sortInBackground()}. The returned feature is already submitted
  * and running. To wait until it is finished, call {@link java.util.concurrent.Future#get()}.

@@ -110,17 +110,19 @@ task dist(dependsOn: ['distTar', 'distZip'])
 
 
 /**
- * Create aggregated javaDoc from all subprojects
+ * Create aggregated javaDoc from all simulator subprojects
  */
 task aggregatedJavadoc(type: Javadoc){
     description = "Build the aggregated JavaDocs for all simulator modules"
     source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.simulator") ].collectAll{p-> p.sourceSets.main.java}
+    options.addStringOption('Xdoclint:all,-html', "-quiet")
+    [project(":barna.commons"), project(":barna.io"), project(":barna.model"), project(":barna.simulator")].each{p-> classpath += p.configurations.compile }
     destinationDir = file("${buildDir}/docs/flux-simulator-${version}")
     configure(options) {
-        windowTitle = 'Flux-Simulator API Documentation'
-        docTitle = "Flux-Simulator JavaDoc (${project(':barna.simulator').version})"
-        links = [ 'http://download.oracle.com/javase/6/docs/api/',
-                'http://download.oracle.com/javaee/6/api/' ]
+        windowTitle = 'Flux Simulator API Documentation'
+        docTitle = "Simulator ${project(':barna.simulator').version} API"
+        links = [ 'http://download.oracle.com/javase/8/docs/api/',
+                'http://download.oracle.com/javaee/8/api/' ]
     }
 }
 

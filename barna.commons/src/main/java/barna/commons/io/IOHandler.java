@@ -73,7 +73,7 @@ public interface IOHandler {
     /**
      * Remove a given {@link InputStream} or {@link OutputStream} from the list of managed streams
      *
-     * @param stream
+     * @param stream a stream
      */
     public void removeStream(Object stream);
 
@@ -131,7 +131,7 @@ public interface IOHandler {
      * @param in the input stream
      * @param cs the sequence
      * @return index number of bytes read or -1 if nothing could be read (EOF)
-     * @throws IOException
+     * @throws IOException an exeption
      */
     public int readLine(InputStream in, ByteArrayCharSequence cs) throws IOException;
 }

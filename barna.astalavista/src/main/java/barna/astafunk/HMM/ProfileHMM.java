@@ -17,43 +17,43 @@ public class ProfileHMM {
     /* Constants */
 
     /**
-     * Index of m -> m transition values
+     * Index of m &rarr; m transition values
      * @see #stateTransitionMatrix
      */
     public static final int MM = 0; // m -> m
 
     /**
-     * Index of m -> i transition values
+     * Index of m &rarr; i transition values
      * @see #stateTransitionMatrix
      */
     public static final int MI = 1; // m -> i
 
     /**
-     * Index of m -> d transition values
+     * Index of m &rarr; d transition values
      * @see #stateTransitionMatrix
      */
     public static final int MD = 2; // m -> d
 
     /**
-     * Index of i -> m transition values
+     * Index of i &rarr; m transition values
      * @see #stateTransitionMatrix
      */
     public static final int IM = 3; // i -> m
 
     /**
-     * Index of i -> i transition values
+     * Index of i &rarr; i transition values
      * @see #stateTransitionMatrix
      */
     public static final int II = 4; // i -> i
 
     /**
-     * Index of d -> m transition values
+     * Index of d &rarr; m transition values
      * @see #stateTransitionMatrix
      */
     public static final int DM = 5; // d -> m
 
     /**
-     * Index of d -> d transition values
+     * Index of d &rarr; d transition values
      * @see #stateTransitionMatrix
      */
     public static final int DD = 6; // d -> d
@@ -742,15 +742,15 @@ public class ProfileHMM {
     /**
      * Purpose:   Given a model already configured for scoring, in some
      *            particular algorithm mode; reset the expected length
-     *            distribution of the profile for a new mean of <L>.
+     *            distribution of the profile for a new mean of <code>L</code>.
      *
      *            This doesn't affect the length distribution of the null
-     *            model. That must also be reset, using <p7_bg_SetLength()>.
+     *            model. That must also be reset, using p7_bg_SetLength().
      *
      *            We want this routine to run as fast as possible, because
      *            the caller needs to dynamically reconfigure the model
      *            for the length of each target sequence in a database
-     *            search. The profile has precalculated <gm->nj>,
+     *            search. The profile has precalculated gm&rarr;nj,
      *            the number of times the J state is expected to be used,
      *            based on the E state loop transition in the current
      *            configuration.

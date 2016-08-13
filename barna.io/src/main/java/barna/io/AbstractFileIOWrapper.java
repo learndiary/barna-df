@@ -140,7 +140,8 @@ public abstract class AbstractFileIOWrapper extends AbstractIOWrapper {
 	 * Reports the number of invalid lines in the file encountered
 	 * from the file start to the current point by calls to 
 	 * the <code>read()</code> or <code>scanFile()</code> methods.
-	 * @see read, scanFile
+	 * @see #read()
+	 * @see #scanFile()
 	 * @return the number of lines that have been rejected
 	 * so far while reading through the file.
 	 */

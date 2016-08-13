@@ -151,18 +151,20 @@ task distZip(type: Zip) {
 
 
 /**
- * Create aggregated javaDoc from all subprojects
+ * Create aggregated javaDoc for flux and all subprojects
  */
 task aggregatedJavadoc(type: Javadoc){
-    description = "Build the aggregated JavaDocs for all capacitor modules"
+    description = "Build the aggregated JavaDocs for all flux modules"
+    options.addStringOption('Xdoclint:all,-html', "-quiet")
     source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.capacitor"),project(":barna.lpsolver") ].collectAll{p-> p.sourceSets.main.java}
+    [project(":barna.commons"), project(":barna.io"), project(":barna.model"), project(":barna.lpsolver"), project(":barna.capacitor")].each{p-> classpath += p.configurations.compile }
     destinationDir = file("${buildDir}/docs/flux-capacitor-${version}")
     configure(options) {
-        windowTitle = 'Flux-Capacitor API Documentation'
-        docTitle = "Flux-Capacitor JavaDoc (${project(':barna.capacitor').version})"
+        windowTitle = 'Flux API Documentation'
+        docTitle = "Flux Capacitor ${project(':barna.capacitor').version} API"
         failOnError = false
-        links = [ 'http://download.oracle.com/javase/6/docs/api/',
-                'http://download.oracle.com/javaee/6/api/' ]
+        links = [ 'http://download.oracle.com/javase/8/docs/api/',
+                'http://download.oracle.com/javaee/8/api/' ]
     }
 }
 

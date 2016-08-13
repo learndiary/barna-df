@@ -86,9 +86,8 @@ public class TProfile {
 		this.ID= ID;
 	}
 	
-	/**
-	 * 
-	 * @param values [0] readLen, [1] x1 ([2] y1)
+	/*
+	 * values [0] readLen, [1] x1 ([2] y1)
 	 */
 	public void addRead(int exonicStartPos, int readLen, byte dir) {
 		

@@ -836,7 +836,7 @@ and U2 branch points and Poly Pyrimidine Tract */
     }
 
 
-    /**
+    /*
      * Read the input of statistics data model
      */
     public static GParam[] readParam (String name, GeneIDsettings settings) throws Exception {

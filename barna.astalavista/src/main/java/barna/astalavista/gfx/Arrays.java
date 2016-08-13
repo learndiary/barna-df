@@ -50,11 +50,8 @@ public class Arrays {
         return p;
     }
 
-    /**
+    /*
      * two arrays are equal, if all of their elements are equal
-     * @@param a1
-     * @@param a2
-     * @@return
      */
     public static boolean compare(Object[] a1, Object[] a2) {
         if (a1== null&& a2== null)
@@ -86,11 +83,8 @@ public class Arrays {
     }
 
 
-    /**
+    /*
      * assumes not sorted arrays
-     * @@param c
-     * @@param a
-     * @@return
      */
     public static Collection addUnique(Collection c, Object[] a) {
         Object[] ca= c.toArray();
@@ -383,16 +377,12 @@ public class Arrays {
         return -1;
     }
 
-    /**
+    /*
      * Assuming that a and o share the same class and some other things, this
      * inserts an object in an array at the specified position. Automatically
      * converts (negative) insertion points as proposed by for instance
      * <code>barna.astalavista.gfx.Arrays.binarySearch</code>.
      *
-     * @@param a
-     * @@param o
-     * @@param p
-     * @@return
      */
     public static Object[] insert(Object[] a, Object o, int p) {
 
@@ -469,13 +459,8 @@ public class Arrays {
         o[1]= oh;
     }
 
-    /**
+    /*
      * counts a n-dimensional field until dimension <code>lastLevel</code>
-     * @@param nField
-     * @@param currLevel
-     * @@param count
-     * @@param lastLevel
-     * @@return
      */
     public static int countFieldsRek(Object nField, int currLevel, int count, int lastLevel) {
         if (nField== null|| currLevel> lastLevel)
@@ -498,10 +483,8 @@ public class Arrays {
         return count;
     }
 
-    /**
+    /*
      * Converts an eventually highdimensional barna.astalavista.gfx.Array or Vector to an barna.astalavista.gfx.Array.
-     * @@param base
-     * @@return
      */
     public static Object toField(Object base) {
 
@@ -547,10 +530,8 @@ public class Arrays {
         return i;
     }
 
-    /**
+    /*
      * Converts an eventually highdimensional barna.astalavista.gfx.Array or Vector to an barna.astalavista.gfx.Array.
-     * @@param base
-     * @@return
      */
     public static Object toPrimitiveField(Object base, Class type) {
 

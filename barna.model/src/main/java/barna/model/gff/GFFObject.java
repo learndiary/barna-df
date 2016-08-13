@@ -767,9 +767,9 @@ public class GFFObject {
 	 * all attributes set on pattern (ie, not <code>null</code> or 0) are compared against
 	 * objects in array. Objects that match all criteria are added to the solution. Attribute
 	 * is a minimum score threshold.
-	 * @param objs
-	 * @param pattern
-	 * @return
+	 * @param objs vector with gff objects
+	 * @param pattern object that describes a filter pattern
+	 * @return vector with the filtered objects
 	 */
 	public static GFFObject[] filterGTFObjects(GFFObject[] objs, GFFObject pattern) {
 		Vector v= new Vector();
@@ -1086,7 +1086,7 @@ public void setFeature(String feature) {
 		return Float.toString(score);
 	}
 	/**
-	 * @param score The score to set.
+	 * @param scoreStr The score to set.
 	 */
 	public void setScore(String scoreStr) throws NumberFormatException {
 		
@@ -1097,7 +1097,7 @@ public void setFeature(String feature) {
 	}
 
 	/**
-	 * @param score The score to set.
+	 * @param sc The score to set.
 	 */
 	public void setScore(float sc) {
 		
@@ -1204,7 +1204,8 @@ public boolean isStrand() {
 	return (strand== 1);
 }
 /**
- * @param strand The leadingStrand to set.
+ * @param leadingLagging The leadingStrand to set.
+ * @throws Exception if something went wrong
  */
 public void setStrand(String leadingLagging) throws Exception{
 	if (leadingLagging.trim().equals("+")|| leadingLagging.trim().equals("1")) {

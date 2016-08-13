@@ -110,10 +110,10 @@ public class CrossTalkModel {
 
     /**
      * Retrieves a falsified base for the original character.
-     * @param state
+     * @param state a state
      * @param from original character
-     * @param random
-     * @return
+     * @param random a randomly generated number
+     * @return a falsified base
      */
     public char getTransition(int state, char from, double random) {
 

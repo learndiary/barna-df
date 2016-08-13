@@ -905,7 +905,7 @@ public class ByteArrayCharSequence implements CharSequence, Comparable<CharSeque
      * follows the argument string. The result is zero if the strings
      * are equal; <code>compareTo</code> returns <code>0</code> exactly when
      * the {@link #equals(Object)} method would return <code>true</code>.
-     * <p/>
+     * <br>
      * This is the definition of lexicographic ordering. If two strings are
      * different, then either they have different characters at some index
      * that is a valid index for both strings, or their lengths are different,

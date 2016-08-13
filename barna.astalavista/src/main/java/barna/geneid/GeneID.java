@@ -476,7 +476,7 @@ public class GeneID {
      * matching the given site profile.
      * @param s sequence that is evaluated
      * @param p site profile for evaluation
-     * @return
+     * @return the log-likelihood score
      */
     public static float scoreSite(String s, Profile p) {
         float score= 0f;

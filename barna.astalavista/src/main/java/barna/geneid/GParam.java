@@ -10,7 +10,7 @@ package barna.geneid;
 public class GParam {
 
     /**
-     * Lazily compute the number of nucleotides <b></b>upstream</b> of a <u>donor</u> site
+     * Lazily compute the number of nucleotides <b>upstream</b> of a <u>donor</u> site
      * that are required to compute its score according to the profile.
      * @param profile a donor profile
      * @return number of nucleotides to be read upstream of the splice site
@@ -21,7 +21,7 @@ public class GParam {
     }
 
     /**
-     * Lazily compute the number of nucleotides <b></b>downstream</b> of a <u>donor</u> site
+     * Lazily compute the number of nucleotides <b>downstream</b> of a <u>donor</u> site
      * that are required to compute its score according to the profile.
      * @param profile a donor profile
      * @return number of nucleotides to be read downstream of the splice site
@@ -32,7 +32,7 @@ public class GParam {
     }
 
     /**
-     * Lazily compute the number of nucleotides <b></b>upstream</b> of an <u>acceptor</u> site
+     * Lazily compute the number of nucleotides <b>upstream</b> of an <u>acceptor</u> site
      * that are required to compute its score according to the profile.
      * @param profile an acceptor profile
      * @return number of nucleotides to be read upstream of the splice site
@@ -42,7 +42,7 @@ public class GParam {
     }
 
     /**
-     * Lazily compute the number of nucleotides <b></b>downstream</b> of an <u>acceptor</u> site
+     * Lazily compute the number of nucleotides <b>downstream</b> of an <u>acceptor</u> site
      * that are required to compute its score according to the profile.
      * @param profile an acceptor profile
      * @return number of nucleotides to be read downstream of the splice site

@@ -400,7 +400,7 @@ public class Gene extends DirectedRegion {
         /**
          * Constructs a comparator that compares the indicated boundary
          * of genes with an integer value.
-         * @param start
+         * @param start flag to indicate whether the start or the end of genes are compared
          */
         public BoundaryComparator(boolean start) {
             this.start= start;
@@ -1126,8 +1126,8 @@ public class Gene extends DirectedRegion {
 	
 	/**
 	 * gets non-redundant set of coding exons
-	 * @param completelyCoding flag to request only exons that code from their 5&rsquot;
-     *                         to their 3&rsquot; end
+	 * @param completelyCoding flag to request only exons that code from their 5&apos;
+     *                         to their 3&apos; end
 	 * @return a vector of exons
 	 */
 	public Exon[] getCodingExons(boolean completelyCoding) {
@@ -1155,8 +1155,8 @@ public class Gene extends DirectedRegion {
 	/**
 	 * @deprecated does not work that easy for constitutive exons, 
 	 * bette take non-involvement in ASVariation as criterion
-	 * @param constitutive
-	 * @return
+	 * @param constitutive flag to indicate whether to retrieve exclusively constitutive exons
+	 * @return the vextor of exons
 	 */
 	public Exon[] getExons(boolean constitutive) {
 		
@@ -1461,16 +1461,19 @@ public class Gene extends DirectedRegion {
 	}
 
 	/**
-	 * @param i
+	 * @param i the identifier for <code>this</code> Gene
 	 */
 	public void setGeneID(String i) {
 		geneID= i; 
 	}
 
 	/**
-	 * called during clustering process
-	 * @param newExon
-	 * @return
+	 * Adds an exon to <code>this</code> Gene, or adds to supporting transcripts to an already exixting exon.
+	 * Called during clustering process.
+	 * @param newExon the exon to be added
+	 * @param trpts the transcript support of the exon to be added
+	 * @return <code>true</code> if the exon has been added newly to <code>this</code> Gene,
+	 * <code>false</code> otherwise.
 	 */
 	public boolean addExon(Exon newExon, Transcript[] trpts) {
 
@@ -1563,6 +1566,7 @@ public class Gene extends DirectedRegion {
 	/**
      * Adds a transcript to a locus.
 	 * @param newTranscript the transcript to be added to the locus
+	 * @return <code>true</code> if the transcript has been newly added, <code>false</code> otherwise.
 	 */
 	public boolean addTranscript(Transcript newTranscript) {
 
@@ -1597,9 +1601,10 @@ public class Gene extends DirectedRegion {
 	}
 	
 	/**
-	 * takes the transcript with the most 5' start to name the locus.
+	 * takes the transcript with the most 5&rsquo; start to name the locus.
 	 * dangerous when they omitted from future releases..
 	 * @deprecated
+	 * @return the transcript with the 5&rsquo; start in <code>this</code> Gene
 	 */
 	public Transcript getNameTranscript() {
 		int minStart= Integer.MAX_VALUE;
@@ -1620,7 +1625,7 @@ public class Gene extends DirectedRegion {
 	 * takes the transcripts with the highest confidence level, and of those
 	 * the longest one (yeah, length matters !!) or the one with the most exons (yeah, 
 	 * quantity also matters !!!).
-	 * @return
+	 * @return the transcript with the highest confidence
 	 */
 	public Transcript getReferenceTranscript() {
 		HashMap<Integer, Vector<Transcript>> map= new HashMap<Integer, Vector<Transcript>>();
@@ -1662,7 +1667,7 @@ public class Gene extends DirectedRegion {
 	}
 
 	/**
-	 * @param transcripts
+	 * @param transcripts the transcripts for <code>this</code> Gene
 	 */
 	public void setTranscripts(Transcript[] transcripts) {
 		this.transcripts= transcripts;
@@ -1693,9 +1698,7 @@ public class Gene extends DirectedRegion {
 		return result.toString();
 	}
 	
-	/**
-	 * @return
-	 */
+
 	public String getStableID() {
 		
 		return geneID;
@@ -1741,8 +1744,8 @@ public class Gene extends DirectedRegion {
 	/**
 	 * just returning global regions, eg real/max/transcript utr/cds
 	 * intronic/exonic arrays delegated to submethods..
-	 * @param regionID
-	 * @return
+	 * @param regionID the type of region to be retrieved
+	 * @return the region retrieved
 	 */ 
 	public DirectedRegion getRegion(int regionID) {
 		
@@ -1770,16 +1773,10 @@ public class Gene extends DirectedRegion {
 	public static final byte REGION_COMPLETE_GENE= 0, REGION_REAL_5UTR= 1, REGION_REAL_CDS= 2, REGION_REAL_3UTR= 3, REGION_MAX_5UTR= 4, REGION_MAX_CDS= 5, REGION_MAX_3UTR= 6,
 		REGION_TRANSCRIPT_5UTR= 7, REGION_TRANSCRIPT_CDS= 8, REGION_TRANSCRIPT_3UTR= 9;
 
-	/**
-	 * @return
-	 */
 	public String getChromosome() {
 		return chromosome;
 	}
 
-	/**
-	 * @param string
-	 */
 	public void setChromosome(String string) {
 //		String stringU= string.toUpperCase();
 //		if (stringU.startsWith("SCAFFOLD")|| stringU.startsWith("REFTIG")
