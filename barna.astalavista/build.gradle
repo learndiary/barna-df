@@ -87,7 +87,7 @@ task aggregatedJavadoc(type: Javadoc){
         windowTitle = 'Astalavista API Documentation'
         docTitle = "Astalavista ${project(':barna.astalavista').version} API"
         links = [ 'http://download.oracle.com/javase/8/docs/api/',
-                'http://download.oracle.com/javaee/8/api/' ]
+                'http://download.oracle.com/javaee/7/api/' ]
     }
 }
 

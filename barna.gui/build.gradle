@@ -13,6 +13,6 @@ task aggregatedJavadoc(type: Javadoc){
     [project(":barna.gui"), project(":barna.io"), project(":barna.tools")].each{p-> classpath += p.configurations.compile }
     configure(options) {
         links = [ 'http://download.oracle.com/javase/8/docs/api/',
-                'http://download.oracle.com/javaee/8/api/' ]
+                'http://download.oracle.com/javaee/7/api/' ]
     }
 }

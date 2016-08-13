@@ -85,7 +85,7 @@ subprojects{
     apply from : "${rootDir}/gradle/licenses.gradle"
 
     test{
-        jvmArgs '-Xms128m', '-Xmx2G'
+        jvmArgs '-Xms128m', '-Xmx2G', '-ea'
         //makes the standard streams (err and out) visible at console when running tests
         //testLogging.showStandardStreams = true
 
@@ -111,7 +111,7 @@ task aggregatedJavadoc(type: Javadoc){
         docTitle = "Barna ${project.version} API"
         failOnError = false
         links = [ 'http://download.oracle.com/javase/8/docs/api/',
-                  'http://download.oracle.com/javaee/8/api/' ]
+                  'http://download.oracle.com/javaee/7/api/' ]
     }
 }
 
