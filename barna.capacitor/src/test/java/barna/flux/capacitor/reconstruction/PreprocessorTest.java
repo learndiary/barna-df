@@ -116,7 +116,15 @@ public class PreprocessorTest {
             assertEquals(cGenes[p], qGene);
             // check overlap at start
             rPos= Math.abs(cGenes[p].getStart())+ r.nextInt(readLength- 1);
-            int min= (p> 0? Math.abs(cGenes[p- 1].getEnd())+ 1: 0);
+
+            // && ()
+            // fixes underflow due to strand change between [p-1] and [p]
+            // e.g.:
+            // Gene chr3:65431-66175
+            // Queried chr3:51239738-65484
+            // Found chr3:50712672-51421629
+            int min= (p> 0 && (cGenes[p-1].getStrand()== cGenes[p].getStrand())? Math.abs(cGenes[p- 1].getEnd())+ 1: 0);
+
             qGene= PreProcessor.getGene(hGenes,
                     cGenes[p].getChromosome(),
                     Math.max(rPos - readLength, min),
