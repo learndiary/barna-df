@@ -480,7 +480,7 @@ public class GeneID {
      */
     public static float scoreSite(String s, Profile p) {
         float score= 0f;
-        if (s.length()!= p.dimension) // + p.order)
+        if (s.length()!= p.dimension ) //+ p.order)
             throw new RuntimeException("Site sequence "+ s.length()+ "nt, expected "+ p.dimension+ "nt!");
 
         /* Applying part of the profile */

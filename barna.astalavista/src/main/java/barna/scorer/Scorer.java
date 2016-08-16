@@ -1,5 +1,7 @@
-package barna.astalavista;
+package barna.scorer;
 
+import barna.astalavista.AStalavista;
+import barna.astalavista.AStalavistaSettings;
 import barna.commons.Execute;
 import barna.commons.cli.jsap.JSAPParameters;
 import barna.commons.log.Log;

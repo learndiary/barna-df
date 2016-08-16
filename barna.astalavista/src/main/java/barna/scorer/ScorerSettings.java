@@ -1,5 +1,6 @@
-package barna.astalavista;
+package barna.scorer;
 
+import barna.astalavista.AStalavistaSettings;
 import barna.commons.parameters.*;
 
 import java.io.File;
