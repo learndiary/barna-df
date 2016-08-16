@@ -9,6 +9,7 @@ import barna.model.Gene;
 import barna.model.Graph;
 import barna.model.SpliceSite;
 import com.martiansoftware.jsap.JSAP;
+import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
@@ -39,6 +40,42 @@ public class Scorer extends AStalavista {
      * Variant hash, maps location to SNP base.
      */
     HashMap<String,String> variants= null;
+
+
+    /**
+     * Run a Scorer with the specified parameters.
+     *
+     * @param settings the parameters in a settings object
+     * @param params alternatively, a vector of command line arguments
+     */
+    public static void runIt(ScorerSettings settings, String[] params) {
+        Scorer aScorer= new Scorer();
+        if (params != null) {
+            JSAP jsap = new JSAP();
+            for (Parameter p : aScorer.getParameter()) {
+                try {
+                    jsap.registerParameter(p);
+                } catch (JSAPException e) {
+                    e.printStackTrace();
+                }
+            }
+            aScorer.validateParameter(jsap.parse(params));
+        } else {
+            aScorer.setSettings(settings);
+            if (!aScorer.validateSettings(settings))
+                return;
+        }
+
+        Future<Void> captain= Execute.getExecutor().submit(aScorer);
+        try {
+            Object o = captain.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+     }
+
 
     public static void main(String[] args) {
 
@@ -127,12 +164,20 @@ public class Scorer extends AStalavista {
         if (!super.validateParameter(new ScorerSettings(), args))
             return false;
 
+        return validateSettings(settings);
+    }
+
+    public boolean validateSettings(AStalavistaSettings settings) {
+
+        if (!super.validateSettings(settings))
+            return false;
+
         // check splice site scoring stuff
         if (settings.get(ScorerSettings.SITES_OPT).contains(ScorerSettings.SiteOptions.SSS)) {
 
             if(settings.get(AStalavistaSettings.CHR_SEQ)== null) {
                 Log.error("Splice site scoring requires the genomic sequence, provide a value for parameter \'"+
-                    AStalavistaSettings.CHR_SEQ.getName()+ "\' in the parameter file, or via " +
+                        AStalavistaSettings.CHR_SEQ.getName()+ "\' in the parameter file, or via " +
                         "the command line flags -"+ (AStalavistaSettings.CHR_SEQ.getShortOption())+
                         " or --"+ (AStalavistaSettings.CHR_SEQ.getLongOption())+ "!");
                 return false;

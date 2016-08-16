@@ -480,13 +480,13 @@ public class GeneID {
      */
     public static float scoreSite(String s, Profile p) {
         float score= 0f;
-        if (s.length()!= p.dimension+ p.order)
+        if (s.length()!= p.dimension) // + p.order)
             throw new RuntimeException("Site sequence "+ s.length()+ "nt, expected "+ p.dimension+ "nt!");
 
         /* Applying part of the profile */
         //System.err.println(p.offset+",dim="+p.dimension+",slen="+s.length());
-        for (int i= 0; i < p.dimension; i++) {
-
+        //for (int i= 0; i < p.dimension; i++) {
+        for (int i= 0; i < (p.dimension- p.order- 1); i++) {
 
             /* i is the position inside the region */
             int index = OligoToInt(s.substring(i), p.order+ 1, 5);
@@ -495,13 +495,16 @@ public class GeneID {
             if (index >= p.dimensionTrans)
                 inc= -GeneIDconstants.INFI;
             else
-                inc= p.transitionValues[i][index];
+                //inc= p.transitionValues[i][index]; // reverted in lncc_fix, this line was probably wrong
+                inc= p.transitionValues[i+ 1][index];
             score+= inc;
         }
         score = p.afactor + (p.bfactor * score);
 
         return score;
     }
+
+
     public static float scoreDonor(String s, Profile p) {
 
         // TODO this is a simplified version of the BuildDonors.c
@@ -524,7 +527,8 @@ public class GeneID {
             if (index >= p.dimensionTrans)
                 incr= -GeneIDconstants.INFI;
             else
-                incr= p.transitionValues[j][index];
+                // incr= p.transitionValues[j][index]; // reverted in lncc_fix, this line was probably wrong
+                incr= p.transitionValues[i][index];
             score+= incr;
         }
         score = p.afactor + (p.bfactor * score);

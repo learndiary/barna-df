@@ -44,6 +44,10 @@ import java.util.*;
 
 public abstract class AStalavista implements Tool<Void> {
 
+    public void setSettings(AStalavistaSettings settings) {
+        this.settings = settings;
+    }
+
     /**
      * Parameters for the AStalavista run
      */
@@ -244,23 +248,38 @@ public abstract class AStalavista implements Tool<Void> {
 
         // TODO think about pulling up to interface / abstract class in commons
 
-        // non-null settings are to be assumed
-        if (schema== null|| !(schema instanceof AStalavistaSettings)) {
-            Log.error("Must provide an instance of AStalavistaSettings!");
-            return false;
-        }
-        settings= (AStalavistaSettings) schema;
-
         // output help\
-        if (args.userSpecified("printParameters")) {
+        if (args != null && args.userSpecified("printParameters")) {
             // TODO
             // check why the following line does not work
             // because parameter is disabled in AStalavistaSettings
             //if (settings.get(AStalavistaSettings.HELP)) {
-                settings.write(System.out);
+            settings.write(System.out);
             //}
             return false;
         }
+
+        // non-null settings are to be assumed
+        if (schema == null || !(schema instanceof AStalavistaSettings)) {
+            Log.error("Must provide an instance of AStalavistaSettings!");
+            return false;
+        }
+        settings = (AStalavistaSettings) schema;
+
+        if (args != null)
+            try {
+                settings = (AStalavistaSettings) ParameterSchema.create(settings,
+                        JSAPParameters.getParameterMap(settings, args));
+            } catch (ParameterException e) {
+                Log.error(e.getMessage(), e);
+                return false;
+            }
+
+
+        return validateSettings(settings);
+    }
+
+    public boolean validateSettings(AStalavistaSettings settings) {
 
         // init values from parameter file, if any
         if (settings.get(AStalavistaSettings.PAR_FILE)!= null) {
@@ -283,15 +302,6 @@ public abstract class AStalavista implements Tool<Void> {
                     }
                 }
             }
-
-        }
-
-        try {
-            settings= (AStalavistaSettings) ParameterSchema.create(settings,
-                        JSAPParameters.getParameterMap(settings, args));
-        } catch (ParameterException e) {
-            Log.error(e.getMessage(), e);
-            return false;
         }
 
         if (settings.get(AStalavistaSettings.IN_FILE)== null) {
