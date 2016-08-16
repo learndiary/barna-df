@@ -230,8 +230,8 @@ public class ASEventRegions extends ASEvent implements Comparable {
 
     /**
      * input regions must be sorted
-     * @@param regs
-     * @@return
+     * @param regs1 the first set of regions
+     * @param regs2 the second set of regions
      */
     protected void overlap(DirectedRegion[] regs1, DirectedRegion[] regs2) {
 
@@ -326,8 +326,8 @@ public class ASEventRegions extends ASEvent implements Comparable {
 
     /**
      * domain name with or with-out final numbering
-     * @@param domName
-     * @@return
+     * @param domName the name of the domain
+     * @return TODO the symbol of the region
      */
     public String getRegionSymbol(String domName) {
         if (mapRegSymbols == null) {	// build up hash

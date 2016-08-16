@@ -350,7 +350,7 @@ public class MarkovErrorModel implements Tool {
 
     /**
      * Load an error model from file
-     *
+     * @param file a file
      * @return model the model
      * @throws IOException in case of any errors
      */
@@ -360,8 +360,9 @@ public class MarkovErrorModel implements Tool {
 
     /**
      * Load an error model from file
-     *
-     * @return input the input stream
+     * @param name name of the file containing the error model
+     * @param inputStream the input stream
+     * @return the error model
      * @throws IOException in case of any errors
      */
     public static QualityErrorModel loadErrorModel(String name, InputStream inputStream) throws IOException {

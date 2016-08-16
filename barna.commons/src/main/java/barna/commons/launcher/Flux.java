@@ -56,6 +56,11 @@ import java.util.*;
  * this checks for any {@link Tool} implementations and adds them to the list of available utils.
  */
 public class Flux {
+
+
+    public static final String URL_CONFLUENCE= "http://sammeth.net/confluence";
+    public static final String URL_JIRA= "http://sammeth.net/jira";
+
     /**
      * Required java version
      */
@@ -153,7 +158,8 @@ public class Flux {
             if(parameter != null){
                 try{
                     for (Parameter p : parameter) {
-                        jsap.registerParameter(p);
+                        jsap.registerParameter(p);  // here is the registration point, exception flies if two pars
+                                                    // use the same short option "parameter already registered.."
                     }
                 } catch (Exception e) {
                     Log.error("Parameter error : " + e.getMessage(), e);
@@ -314,8 +320,8 @@ public class Flux {
 
         if(userRequestsHelp){
             System.err.println("-------Documentation & Issue Tracker-------");
-            System.err.println("Flux Wiki (Docs): http://sammeth.net/confluence");
-            System.err.println("Flux JIRA (Bugs): http://sammeth.net/jira");
+            System.err.println("Barna Wiki (Docs): "+ URL_CONFLUENCE);
+            System.err.println("Barna JIRA (Bugs): "+ URL_JIRA);
             System.err.println("");
             System.err.println("Please feel free to create an account in the public");
             System.err.println("JIRA and reports any bugs or feature requests.");
@@ -351,7 +357,7 @@ public class Flux {
             }
 
             JSAP baseOptions = createBaseOptions();
-            System.err.println("The Flux library comes with a set of tools.\n" +
+            System.err.println("The Barna library comes with a set of tools.\n" +
                     "You can switch tools with the -t option. The general options\n" +
                     "change the behaviour of all the packaged tools.");
             System.err.println("");
@@ -371,7 +377,7 @@ public class Flux {
      * @param tools the tools available flux tools
      */
     private static void printTools(List<Tool> tools) {
-        System.err.println("The Flux library consists of a set of tools bundled with the package.");
+        System.err.println("The Barna library consists of a set of tools bundled with the package.");
         if(System.getProperty("flux.tool", null) != null){
             System.err.println("The current bundle uses '" + System.getProperty("flux.tool") + "' as the default tool.");
         }
@@ -541,7 +547,7 @@ public class Flux {
         }
 
         /**
-         * Get the flux library version
+         * Get the barna library version
          * @return libVersion the library version
          */
         public String getLibVersion() {

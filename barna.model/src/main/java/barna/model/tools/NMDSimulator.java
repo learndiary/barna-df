@@ -55,9 +55,11 @@ public class NMDSimulator {
 	/**
 	 * The stop codon must be in the last exon or no further than 50bp`
 	 * from the end of the penultimate exon. [HAVANA]
-	 * 
-	 * @param minDistNts
-	 * @return
+	 *
+	 * @param tln a translation
+	 * @param minDistNt a minimum distance in nucleotides
+	 * @return <code>true</code> if the translation frame is terminating more than the provided distance upstream of
+	 * the exon junction complex, <code>false</code> otherwise
 	 */
 	public boolean isTerminatingUpstreamOfEJC(Translation tln, int minDistNt) {
 		
@@ -78,14 +80,14 @@ public class NMDSimulator {
 	}
 
 	/**
-	 * Never annotate an ATG starting internal of another CDS > 35 aa upstream
+	 * Never annotate an ATG starting internal of another CDS &gt; 35 aa upstream
 	 * of the ATG as is subject to NMD. [HAVANA]
 	 * 
-	 * @param trans
-	 * @param maxDistAA
+	 * @param trans a translation
+	 * @param maxDistAA a minimum distance in amino acids
 	 * @deprecated HAVANA seems to mean something different by this phrase,
 	 * see <code>hasUsORF</code>
-	 * @return
+	 * @return <code>true</code> if the CDS shows an internal ATG, <code>false</code> otherwise
 	 */
 	public boolean isInternalATG(Translation trans, int maxDistAA) {
 		int maxDistNt= maxDistAA* 3;
@@ -114,12 +116,13 @@ public class NMDSimulator {
 	}
 
 	/**
-	 * Never annotate an ATG starting internal of another CDS > 35 aa upstream
+	 * Never annotate an ATG starting internal of another CDS &gt; 35 aa upstream
 	 * of the ATG as is subject to NMD. [HAVANA]
 	 * 
-	 * @param trans
-	 * @param maxDistAA
-	 * @return
+	 * @param trans a translation
+	 * @param minSizeAA minimal size in amino acids
+	 * @return <code>true</code> if there is an upstream open reading frame with the given attributes,
+	 * <code>false</code> otherwise
 	 */
 	public boolean hasUsORF(Translation trans, int minSizeAA) {
 		int minSizeNt= minSizeAA* 3;

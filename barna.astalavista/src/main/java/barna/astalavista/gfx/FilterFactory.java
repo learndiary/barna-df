@@ -38,10 +38,8 @@ public class FilterFactory {
 //			nMethod[i]= 0;
     }
 
-    /**
+    /*
      * recursive version
-     * @@param o
-     * @@return
      */
     public Object filterRek(Object o) {
         if (mNames== null|| mNames.length== 0|| o== null)

@@ -266,14 +266,14 @@ public class ProfilerFile {
 
     /**
      * Writes initial profile consisting of
-     * <p/>
+     * <br>
      * <pre>
      *     1. chromosome and global position
      *     2. transcript ID
      *     3. type (CDS or NC)
      *     4. length
      * </pre>
-     * <p/>
+     * <br>
      * Expression values are not written
      *
      * @param profile the profile

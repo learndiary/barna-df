@@ -768,10 +768,7 @@ public class David extends Thread {
 		}
 	}
 	
-	
-	/**
-	 * @param args
-	 */
+
 	public static void main(String[] args) {
 		David dave= parseArguments(args);
 		dave.run();

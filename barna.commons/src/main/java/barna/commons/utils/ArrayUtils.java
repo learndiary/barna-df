@@ -186,7 +186,7 @@ public class ArrayUtils {
     /**
      * Converts values returned by search methods to indices where to insert
      * a corresponding value.
-     * @param p
+     * @param p an insertion point to convert
      * @return The index as is, if positive, otherwise the insertion point converted to
      * a positive index.
      */
@@ -324,9 +324,9 @@ public class ArrayUtils {
     /**
      * Inserts an object into an array at the specified position. Automatically
      * converts negative positions to insertion points as described in {@link Arrays#binarySearch(Object[], Object)} )}.
-     * <p/>
+     * <br>
      * Null is permitted for the array. In this case the array will be created.
-     * <p/>
+     * <br>
      * Note that this method always create a new array with {@code length == length + 1} and
      * copies the data.
      *

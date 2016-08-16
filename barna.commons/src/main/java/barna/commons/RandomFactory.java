@@ -37,7 +37,7 @@ import java.util.Random;
  * Random} is used. The public {@link #SEED} field can be set to specify the
  * global seed used for all instances.
  *
- * @author Thasso Griebel <thasso.griebel@gmail.com>
+ * @author Thasso Griebel (thasso.griebel@gmail.com)
  */
 public class RandomFactory {
     /**

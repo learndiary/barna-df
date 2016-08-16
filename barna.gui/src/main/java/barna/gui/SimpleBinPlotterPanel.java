@@ -89,10 +89,11 @@ public class SimpleBinPlotterPanel extends JPanel {
         setInvert(invert);
     }
 
-    /**
+    /*
      * @param data
      * @param nrBins maximal number, gets smaller if width< nrBins
      */
+
     protected int osiCalled = 0;
     protected Color[] lineColors = new Color[0];
     protected double[] lastXY = null;

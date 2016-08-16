@@ -235,9 +235,9 @@ public class Translation extends DirectedRegion {
 	
 	/**
 	 * @deprecated	
-	 * @param prime5
-	 * @param prime3
-	 * @return
+	 * @param prime5 frame at 5&rsquo; end
+	 * @param prime3 frame at 3&rsquo; end
+	 * @return combined frame
 	 */
 	public static int cdsCombine(byte prime5, byte prime3) {
 		int combined= prime5 << FRAME_BYTEVAL.length;
@@ -386,9 +386,9 @@ public class Translation extends DirectedRegion {
 
 	/**
 	 * condenses all 3 frames to one position array
-	 * @param codons
-	 * @param seq
-	 * @return
+	 * @param codons a vector of codons
+	 * @param seq a sequence
+	 * @return a vector of positions
 	 */
 	public static int[] getCodonPositions(String[] codons, String seq) {
 		IntVector res= new IntVector();
@@ -452,13 +452,13 @@ public class Translation extends DirectedRegion {
 		Exon[] ex= getTranscript().getExons();
 		Vector regV= new Vector(ex.length);
 		for (int i = 0; i < ex.length; i++) {
-			if (!ex[i].isCodingCompletely())
+			if (!ex[i].isCoding())
 				continue;
 			if (ex[i].isCoding5Prime()&& ex[i].isCoding3Prime()) {
 				regV.add(ex[i]);
 				continue;
 			}
-				
+			// subset region of partially coding exons
 			DirectedRegion reg= new DirectedRegion(
 					ex[i].get5PrimeCDS(), ex[i].get3PrimeCDS(), ex[i].getStrand());
 			reg.setChromosome(getChromosome());
@@ -490,6 +490,7 @@ public class Translation extends DirectedRegion {
 		return getTranscript().getGene().getSpecies();
 	}
 	/**
+     * @param idCode a code
 	 * @return Returns the translationID.
 	 */
 	public String[] getProteinID(int idCode) {
@@ -510,7 +511,7 @@ public class Translation extends DirectedRegion {
 		return (String[]) ArrayUtils.toField(proteinIDs);
 	}
 	/**
-	 * @param translationID The translationID to set.
+	 * @param newTranslationID The translationID to set.
 	 */
 	public void addProteinID(String newTranslationID) {
 		
@@ -527,7 +528,7 @@ public class Translation extends DirectedRegion {
 		for (int i = 0; i < s.length()- 3; i+= 3) {
 			String c= CODON_HASH.get(s.substring(i, i+3).toUpperCase());
 			if (c== null|| c.equals(""))	// stop
-				return null;
+                return null;
 			b.append(c);
 		}
 		if (s.length()< 3)
@@ -543,12 +544,10 @@ public class Translation extends DirectedRegion {
 	}
 
 	/**
-	 * Never annotate an ATG starting internal of another CDS > 35 aa upstream
+	 * Never annotate an ATG starting internal of another CDS &gt; 35 aa upstream
 	 * of the ATG as is subject to NMD. [HAVANA]
 	 * 
-	 * @param trans
-	 * @param maxDistAA
-	 * @return
+	 * @return a vector of translations
 	 */
 	public Translation[] getUsORF() {
 		
@@ -674,7 +673,12 @@ public class Translation extends DirectedRegion {
 		
 		return frame;
 	}
-	
+
+    /**
+     * Retrieves the genomic sequences of exon parts that are coding.
+     * @return a nucleotide string with the coding sequence (CDS).
+     * @see #getExonicRegions()
+     */
 	public String getSplicedSequence() {
 		DirectedRegion[] regs= getExonicRegions();	// not sorted?
 		if (regs== null)
@@ -685,8 +689,8 @@ public class Translation extends DirectedRegion {
 			sb.append(Graph.readSequence(regs[i]));
 		return sb.toString();
 	}
-	
-	public int getGenomicPosition(int exonPos) {
+
+    public int getGenomicPosition(int exonPos) {
 
 		Exon[] exons= getTranscript().getExons();
 		
@@ -706,6 +710,8 @@ public class Translation extends DirectedRegion {
 	
 	/**
 	 * to also deal with predicted reading frames
+	 * @param ex an exon
+     * @return length of the CDS in the queried exon
 	 */
 	public int getCDSLength(Exon ex) {
 		if (!this.overlaps(ex))
@@ -727,10 +733,10 @@ public class Translation extends DirectedRegion {
 	}
 	
 	/**
-	 * 
+	 * @param genomicPos the genomic position
 	 * @return 0-based position in the reading frame
 	 */
-	public int getTranslatedPosition(int genomicPos) {
+    public int getTranslatedPosition(int genomicPos) {
 		int a= getTranscript().getExonicPosition(genomicPos),
 			b= getTranscript().getExonicPosition(get5PrimeEdge());
 		int x= (a- b);
@@ -739,8 +745,8 @@ public class Translation extends DirectedRegion {
 	
 	/**
 	 * 
-	 * @param genomicPos
-	 * @return 0,1, or 2
+	 * @param genomicPos the genomic position
+	 * @return 0,1, or 2 (the frame)
 	 */
 	public int getFrameAtPosition(int genomicPos) {
 		return ((getTranslatedPosition(genomicPos))% 3);	// translated pos is 0-based, 20101028, killed +1 for trans.pos	

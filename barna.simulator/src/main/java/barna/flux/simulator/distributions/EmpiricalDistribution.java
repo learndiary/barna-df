@@ -234,7 +234,10 @@ public class EmpiricalDistribution extends AbstractDistribution {
      * Creates an instance with the histogram <code>a</code> and
      * <code>min, max, mean</code> attributes of the underlying distribution
      *
-     * @param x a value from the empirical distribution
+     * @param a values from the empirical distribution
+     * @param min the minimum
+     * @param max the maximum
+     * @param mean the mean
      */
     public EmpiricalDistribution(double[] a, double min, double max, double mean) {
         this.a = a;

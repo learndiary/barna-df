@@ -23,7 +23,7 @@ public class AStaSettings extends AStalavistaSettings {
      * <li>1 for 'mRNA' appears in the source field of the annotation</li>
      * <li>2 for 'EST' appears in the source field of the annotation</li>
      * </ul>
-     * All introns in transcripts of confidence level > threshold are discarded.
+     * All introns in transcripts of confidence level &gt; threshold are discarded.
      * @deprecated to be refactored to IN_OPTIONS
      */
     public static final Parameter<Integer> INTRON_CONFIDENCE = Parameters.intParameter("INTRON_CONFIDENCE",
@@ -47,7 +47,7 @@ public class AStaSettings extends AStalavistaSettings {
      * <li>2 if 'EST' appears in the source field of the annotation</li>
      * <li>3 if if none of the above applies</li>
      * </ul>
-     * All transcript edges of confidence level > edgeConfidence will be extended in case the
+     * All transcript edges of confidence level &gt; edgeConfidence will be extended in case the
      * annotation shows another exon with the same adjacent splice site and an earlier/later
      * start/end.
      * @deprecated to be refactored to IN_OPTIONS
@@ -81,8 +81,8 @@ public class AStaSettings extends AStalavistaSettings {
 
     /**
      * Dimension of the AS events to be extracted,
-     * retrieves 'complete' events <TM> for parameter
-     * values < 2.
+     * retrieves 'complete' events &trade; for parameter
+     * values &lt; 2.
      */
     public static final Parameter<Integer> EVENTS_DIMENSION = Parameters.intParameter("EVENTS_DIMENSION",
             "Dimension of the AS events to be extracted, retrieves 'complete' events <TM>\n" +
@@ -103,14 +103,15 @@ public class AStaSettings extends AStalavistaSettings {
      * Types of alternative splicing can either be &quot;internal&quot;
      * and delimited by two common sites, or &quot;external&quot;
      * comprising at least one alternative splice site in addition
-     * to alternative 5'- or 3' transcript structures.</li>
+     * to alternative 5&apos;- or 3&apos; transcript structures.</li>
      * extending transcript structures by additional (splice) sites
-     * to the 5'- or the 3'-end</li>
+     * to the 5&apos;- or the 3&apos;-end</li>
+     * <li>DS= additional splicing that are flanked by a common site and</li>
      * <li>VS= variable sites is any other form of sites that differ
      * between overlapping transcript structures</li>
+     * </ul>
      * @see barna.model.ASEvent#getType()
-     * @see <a href="http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147">
-     *     http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147</a><li>DS= additional splicing that are flanked by a common site and
+     * @see <a href="http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147">http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000147</a>
      */
     public static enum EventTypes {
         /** external AS events */

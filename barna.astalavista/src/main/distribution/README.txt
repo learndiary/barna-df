@@ -20,6 +20,10 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+AStalavista 4.0
+    * released astafunk tool
+    * [BARNA-386] - astalavista scorer always complains of pre-existing 'h' flag
+
 AStalavista 3.2
     * [BARNA-304] - Astalavista starter gives an error on startup
     * [BARNA-305] - Scorer specific parameters --vcf and --sp are not recognized

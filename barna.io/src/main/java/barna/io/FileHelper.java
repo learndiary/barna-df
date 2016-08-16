@@ -495,18 +495,18 @@ public class FileHelper {
 
     /**
      * Reads last N lines from the given file. File reading is done in chunks.
-     * <p/>
+     * <br>
      * Constraints:
      * 1 Minimize the number of file reads -- Avoid reading the complete file
      * to get last few lines.
      * 2 Minimize the JVM in-memory usage -- Avoid storing the complete file
      * info in in-memory.
-     * <p/>
+     * <br>
      * Approach: Read a chunk of characters from end of file. One chunk should
      * contain multiple lines. Reverse this chunk and extract the lines.
      * Repeat this until you get required number of last N lines. In this way
      * we read and store only the required part of the file.
-     * <p/>
+     * <br>
      * 1 Create a RandomAccessFile.
      * 2 Get the position of last character using (i.e length-1). Let this be curPos.
      * 3 Move the cursor to fromPos = (curPos - chunkSize). Use seek().

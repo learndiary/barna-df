@@ -6,7 +6,7 @@ import barna.model.splicegraph.SplicingGraph;
 import java.util.Arrays;
 
 /**
- * Extension of <code><SimpleEdgeMappings/code> for all-intronic regions.
+ * Extension of <code>SimpleEdgeMappings</code> for all-intronic regions.
  *
  * @author  Emilio Palumbo (emiliopalumbo@gmail.com)
  */

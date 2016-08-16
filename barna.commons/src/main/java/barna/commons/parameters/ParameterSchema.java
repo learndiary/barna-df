@@ -93,7 +93,7 @@ public abstract class ParameterSchema {
 
     /**
      * Manually register a parameter
-     * @see ParameterSchema()
+     * @see #ParameterSchema()
      * @param parameter the parameter
      */
     public void register(Parameter parameter) {
@@ -190,6 +190,7 @@ public abstract class ParameterSchema {
      * @param paramName a <code>String</code> identifying the parameter
      * @param value the value
      * @param <T> the type
+     * @throws ParameterException if something went wrong
      */
     public <T> void set(String paramName, String value) throws ParameterException {
         Parameter local = parameters.get(paramName.toUpperCase());

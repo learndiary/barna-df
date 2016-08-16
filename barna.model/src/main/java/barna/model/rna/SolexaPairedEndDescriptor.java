@@ -79,7 +79,8 @@ public class SolexaPairedEndDescriptor implements ReadDescriptor {
 	/**
 	 * 
 	 * @param readNr 1-based
-	 * @return
+	 * @param mateInfo mate
+	 * @return the identifier sequence
 	 */
 	public static String generateID(int readNr, byte mateInfo) {
 /*		>SLXA-B3_604:6:1:533:275

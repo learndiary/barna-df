@@ -6,3 +6,18 @@ dependencies{
     compile project(":barna.capacitor")
     compile project(":barna.astalavista")
 }
+
+/**
+ * Create aggregated javaDoc from all dependencies of this subproject
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for this module"
+    options.addStringOption('Xdoclint:all,-html', "-quiet")
+    source = [project(":barna.commons"), project(":barna.model"), project(":barna.simulator"), project(":barna.capacitor"), project(":barna.astalavista")].collectAll{p-> p.sourceSets.main.java}
+    [project(":barna.commons"), project(":barna.model"), project(":barna.simulator"), project(":barna.capacitor"), project(":barna.astalavista")].each{p-> classpath += p.configurations.compile }
+    configure(options) {
+        links = [ 'http://download.oracle.com/javase/8/docs/api/',
+                'http://download.oracle.com/javaee/7/api/' ]
+    }    
+}
+

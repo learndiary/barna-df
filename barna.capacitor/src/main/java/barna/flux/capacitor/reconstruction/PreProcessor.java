@@ -278,19 +278,25 @@ public class PreProcessor implements Callable<File> {
         int p= Arrays.binarySearch(gg, start, sCompi);
 
         if (p< 0)
-            p= -(p+ 1)- 1; // insertion point- 1
+            p= -(p+ 1)- 1; // left neighbor: insertion point- 1
 
 
         // check left neighbor
         if (p>= 0) {
             int gs= Math.abs(gg[p].getStart()),
                     ge= Math.abs(gg[p].getEnd());
-            if (start>= gs&& start<= ge) {
-                if ((!contained)|| (end>= gs&& end<= ge))
+            boolean startIn= start>= gs&& start<= ge,
+                    endIn= end>= gs&& end<= ge;
+            if (contained) {
+                if (startIn && endIn)
+                    return gg[p];
+            } else {
+                if (startIn || endIn)
                     return gg[p];
             }
         }
-        if (!contained) {
+        // else: if not yet found
+        if (!contained) {    // cannot be completely contained in right neighbor
             ++p;    // check right neighbor
             if (p< gg.length) {
                 int gs= Math.abs(gg[p].getStart()),
@@ -298,6 +304,7 @@ public class PreProcessor implements Callable<File> {
                 if (end>= gs&& end<= ge)
                     return gg[p];
             }
+
         }
 
         return null;    // no locus found

@@ -399,7 +399,6 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
     /**
      * Set <code>this</code> wrapper to just parse <code>gene_id</code> and <code>transcript_id</code>.
-     * @return
      */
     public void setBasic(boolean basic) {
         this.basic = basic;
@@ -1750,8 +1749,8 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 
 	/**
 	 * Builds up a GTF object from a GTF line.
-	 * @param line a GTF line of the format <code>\<seqname\> \<source\> \<feature\>  \<start\> 
-	 * \<end\> \<score\> \<strand\> \<frame\> [attributes] [comments]</code>
+	 * @param line a GTF line of the format <code>&lt;seqname&gt;&nbsp;&lt;source&gt;&nbsp;&lt;feature&gt;&nbsp;&lt;start&gt;&nbsp;
+	 * &lt;end&gt;&nbsp;&lt;score&gt;&nbsp;&lt;strand&gt;&nbsp;&lt;frame&gt;&nbsp;[attributes]&nbsp;[comments]</code>
 	 * @return an instance of <code>GTFObject</code> representing that line 
 	 */
 	protected GFFObject readBuildObject(String line) {
@@ -2393,7 +2392,7 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	}
 	
 	/**
-	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * Checks for correct sorting, returns number of lines read (&lt;0 if not applicable).
 	 * @param inputFile the file from which is read
 	 * @param clusterGenes indicates whether native gene clustering is applied
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
@@ -2411,10 +2410,10 @@ public class GTFwrapper extends AbstractFileIOWrapper implements AnnotationWrapp
 	}
 	
 	/**
-	 * Checks for correct sorting, returns number of lines read (<0 if not applicable).
+	 * Checks for correct sorting, returns number of lines read (&lt;0 if not applicable).
 	 * <b>Note:</b> does not close the given stream.
 	 * @param inputStream stream from which is read
-	 * @param size total size of data in the stream, if known, otherwise <= 0
+	 * @param size total size of data in the stream, if known, otherwise &le; 0
 	 * @return number of lines read, or -(number of lines read) up to the unsorted
 	 * entry
 	 */

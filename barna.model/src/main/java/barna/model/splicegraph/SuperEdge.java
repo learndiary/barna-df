@@ -117,9 +117,9 @@ public class SuperEdge extends AbstractEdge {
 
     /**
      * Constructor to create anything but an edgeset.
-	 * @param edges
-	 * @param supp
-	 * @param pend
+	 * @param edges vector of edges
+	 * @param supp vector of transcripts supporting the edges
+	 * @param pend flag to indicate paired-end reads
 	 */
 	public SuperEdge(AbstractEdge[] edges, long[] supp, boolean pend) {
 
@@ -466,10 +466,10 @@ public class SuperEdge extends AbstractEdge {
 
 	/**
 	 * @deprecated
-	 * @param t
-	 * @param readLen
-	 * @param edges
-	 * @return
+	 * @param t a transcript
+	 * @param readLen read length
+	 * @param edges vector of edges
+	 * @return vector of four positions (left, left, right, right)
 	 */
 	public static int[] getPEfrac(Transcript t, int readLen, AbstractEdge[] edges) {
 		assert(edges.length== 2);
@@ -481,10 +481,10 @@ public class SuperEdge extends AbstractEdge {
 
 	/**
 	 * @deprecated
-	 * @param t
-	 * @param readLen
-	 * @param edges
-	 * @return
+	 * @param t a transcript
+	 * @param readLen read length
+	 * @param edges vector of edges
+	 * @return vector of two positions (first, last)
 	 */
 	public static int[] getFrac(Transcript t, int readLen, AbstractEdge[] edges) {
 			int[] res= null;

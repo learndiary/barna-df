@@ -30,22 +30,18 @@ package barna.model.splicegraph;
 import barna.commons.utils.ArrayUtils;
 import barna.model.*;
 import barna.model.commons.IntVector;
-import barna.model.commons.MyFile;
 import barna.model.commons.MyMath;
-import barna.model.commons.MyTime;
 import barna.model.constants.Constants;
 import barna.model.gff.GFFObject;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * <tt>07/11/14</tt>: handles soft starts
  * <tt>07/11/22</tt>: writes out stats as comments in GTF
  * <tt>08/03/08</tt>: edgeConfidenceLevel delegated to <code>model.Transcript</code>
- * constructGraph() now takes <= for trusting transcript end
+ * constructGraph() now takes &le; for trusting transcript end
  * <tt>08/03/09</tt>: changed strategy how to connect soft starts/ends to root/leaf
  * constructGraph() saved in constructGraph_x3()
  * generateTuples adapted to correct for ss extraction acc. to graph and not in annotation
@@ -305,6 +301,18 @@ public class SplicingGraph {
 
     static TranscriptByNameComparator defaultTranscriptByNameComparator = new TranscriptByNameComparator();
     static Node.PositionTypeComparator defaultNodeByPositionTypeComparator = new Node.PositionTypeComparator();
+
+    /**
+     * Returns the gene model linked to <code>this</code> splicing graph.
+     * @return the gene model
+     */
+    public Gene getGene() {
+        return gene;
+    }
+
+    /**
+     * The gene model linked to <code>this</code> splicing graph.
+     */
     protected Gene gene;
     public Transcript[] trpts;    // for flux capacitor
     int taSize;
@@ -320,9 +328,11 @@ public class SplicingGraph {
     protected AbstractEdge[] exonicEdgesInGenomicOrder = null;
 
     /**
-     * Converts gene model to splicegraph.
+     * Converts gene model to splicing graph, but only initializes the
+     * transcript set so far. That allows for leightweight instances
+     * without all the nodes and edges.
      *
-     * @param g a gene
+     * @param g the gene for <code>this</code> splicing graph
      */
     public SplicingGraph(Gene g) {
         this.gene = g;
@@ -332,6 +342,57 @@ public class SplicingGraph {
         if (trpts.length % 64 != 0)
             ++taSize;
     }
+
+    /**
+     * Returns the (first) common transcript of both events,
+     * or <code>null</code> if the variant sets are non-intersecting.
+     * @param ev1 an event, based on <code>this</code> splicing graph
+     * @param ev2 another event, based on <code>this</code> splicing graph
+     * @return a <code>Transcript</code> common to both events,
+     *          or <code>null</code>
+     */
+    public Transcript getCommonTranscript(ASEvent ev1, ASEvent ev2) {
+
+        // get transcripts of first event
+        long[] t1= ev1.getTranscriptsBit();
+        if (t1== null) {
+            t1= encodeTSet(ev1);
+            ev1.setTranscriptsBit(t1);
+        }
+
+        // get transcripts of second event
+        long[] t2= ev2.getTranscriptsBit();
+        if (t2== null) {
+            t2= encodeTSet(ev2);
+            ev2.setTranscriptsBit(t2);
+        }
+
+        long[] isect= intersect(t1, t2);
+        if (isNull(isect))
+            return null;
+
+        // should be null-proof
+        return getAnyTranscript(isect);
+    }
+
+    /**
+     * Encodes all transcripts in the variants of an event.
+     * @param e an AS event based on <code>this</code> splicing graph
+     * @return the bit-encoded pattern of transcripts involved in the event
+     */
+    public long[] encodeTSet(ASEvent e) {
+
+        // assertion should hold that event has >1 variant
+        if (e.getTranscripts()== null|| e.getTranscripts().length== 0)
+            return null;
+
+        long[] tt= encodeTset(e.getTranscripts()[0]);
+        for (int i = 1; i < e.getTranscripts().length; i++)
+            tt= unite(tt, encodeTset(e.getTranscripts()[i]));
+
+        return tt;
+    }
+
 
     public long[] encodeTset(Transcript[] t) {
         long[] taVector = new long[taSize];
@@ -438,10 +499,11 @@ public class SplicingGraph {
     /**
      * All edge creation delegated to here, to be customized by sub-classes
      *
-     * @param v
-     * @param w
-     * @param newTset
-     * @return
+     * @param v a node
+     * @param w another node
+     * @param newTset a transcript set
+     * @param type a type
+     * @return the edge created with the given attributes
      */
     protected SimpleEdge createSimpleEdge(Node v, Node w, long[] newTset, byte type) {
         SimpleEdge e = new SimpleEdge(v, w);
@@ -452,10 +514,10 @@ public class SplicingGraph {
     /**
      * All super-edge creation delegated to here, to be customized by sub-classes
      *
-     * @param newEdges
-     * @param newTset
-     * @param isPairedEnd
-     * @return
+     * @param newEdges a set of edges
+     * @param newTset a set of transcripts
+     * @param isPairedEnd a flag to indicate paired-end reads
+     * @return the (super-)edge describing these edges
      */
     protected SuperEdge createSuperEdge(AbstractEdge[] newEdges, long[] newTset, boolean isPairedEnd) {
         SuperEdge se = new SuperEdge(newEdges, newTset, isPairedEnd);
@@ -672,7 +734,7 @@ public class SplicingGraph {
     }
 
     /**
-     * extends evidence >= ec (edge confidence)
+     * extends evidence &ge; ec (edge confidence)
      * with the same 1st splice site
      * to the longest exonic evidence.
      *
@@ -1353,9 +1415,9 @@ public class SplicingGraph {
      * create node with a specific transcript set and - in case -
      * add this tset to already existing node.
      *
-     * @param ss
-     * @param tset
-     * @return
+     * @param ss a splice site
+     * @param tset a transcript set
+     * @return a node
      */
     public Node createNode(SpliceSite ss, long[] tset) {
         Node n = getNode(ss);
@@ -1378,9 +1440,8 @@ public class SplicingGraph {
      * sites stay the same, just reconnect:
      * - traverse the graph with nodes in genomic order
      * - maintain array with exonic status of transcripts
-     * - preserve root->TSS, TES->leaf
+     * - preserve root&rarr;TSS, TES&rarr;leaf
      *
-     * @return
      */
     public void transformToFragmentGraph() {
 
@@ -1581,7 +1642,7 @@ public class SplicingGraph {
      * - intronic edges
      * - superedges
      *
-     * @return
+     * @return the vector of edges
      */
     public AbstractEdge[] getExonicEdgesInGenomicOrder() {
         if (exonicEdgesInGenomicOrder == null) {
@@ -1610,7 +1671,7 @@ public class SplicingGraph {
     /**
      * returns the first (5'most) exonic edge
      *
-     * @return
+     * @return the edge
      */
     public AbstractEdge getFirstExonicEdge() {
 
@@ -1790,8 +1851,10 @@ public class SplicingGraph {
     /**
      * iterates SJ and exons. NO PAIR-ENDS!
      *
-     * @param e
-     * @return
+     * @param e an edge
+     * @param partition a transcript set
+     * @param oneWayOnly flag
+     * @return the edge
      */
     public AbstractEdge nextEdge(AbstractEdge e, long[] partition, boolean oneWayOnly) {
 
@@ -1929,8 +1992,8 @@ public class SplicingGraph {
     /**
      * adds junction edges to the graph
      *
-     * @param readLen
-     * @return
+     * @param readLen length of the read
+     * @return the number of splice junctions
      */
     public int addEJ(int readLen) {
         AbstractEdge[] edges = getExonicEdgesInGenomicOrder();
@@ -2043,11 +2106,11 @@ public class SplicingGraph {
     /**
      * finds one/all pathes between start and end in the graph
      *
-     * @param start
-     * @param end
-     * @param lenBounds
-     * @param existsOne
-     * @return
+     * @param start vector of regions
+     * @param end vector of regions
+     * @param lenBounds vector of lengths
+     * @param existsOne flag
+     * @return vector
      */
     public int[] walker(DirectedRegion[] start, DirectedRegion[] end, int[] lenBounds, boolean existsOne) {
 
@@ -2103,9 +2166,10 @@ public class SplicingGraph {
      * iterates existing super-edges and returns the one with the
      * given edge set, creates new if necessary
      *
-     * @param v
-     * @param pe
-     * @return
+     * @param v a vector of edges
+     * @param pe flag to indicate paired-end
+     * @param part vector of transcripts
+     * @return a transcript set
      */
     public SuperEdge getSuperEdge(Vector<AbstractEdge> v, boolean pe, long[] part) {
 

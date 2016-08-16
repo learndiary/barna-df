@@ -129,7 +129,9 @@ public class ASEvent {
     public static class IdentityComparator implements Comparator {
 
         /**
-         * @@return <code>0</code> if both objects are equal, <code>1</code>
+         * @param arg0 the first AS event
+         * @param arg1 the second AS event
+         * @return <code>0</code> if both objects are equal, <code>1</code>
          * otherwise
          */
         public int compare_old(Object arg0, Object arg1) {
@@ -176,7 +178,7 @@ public class ASEvent {
         }
 
         /**
-         * @@return <code>0</code> if both objects are equal, <code>-1</code>
+         * @return <code>0</code> if both objects are equal, <code>-1</code>
          * otherwise
          */
         public int compare(Object arg0, Object arg1) {
@@ -232,6 +234,28 @@ public class ASEvent {
 	
 	int[] frame3, frame5;
 	boolean[] cdsValid;
+
+    /**
+     * Returns transcript bit pattern.
+     * @return transcripts encoded in bit patterns
+     */
+    public long[] getTranscriptsBit() {
+        return transcriptsBit;
+    }
+
+    /**
+     * Sets transcript bit pattern
+     * @param transcriptsBit the bit pattern of the transcripts
+     */
+    public void setTranscriptsBit(long[] transcriptsBit) {
+        this.transcriptsBit = transcriptsBit;
+    }
+
+    /**
+     * Transcripts used by <code>this</code> event encoded as
+     * bit pattern of the corresponding <code>SplicingGraph</code>.
+     */
+    long[] transcriptsBit= null;
 
     public ASEvent(GFFObject obj) {
         fromGTFObject(obj);
@@ -458,6 +482,7 @@ public class ASEvent {
 	 * 0= not included
 	 * 1= overlapping
 	 * 2= included
+     * @return 0, 1, or 2
 	 * @deprecated get rid of that
 	 */
 	public int inCDS() {
@@ -622,7 +647,8 @@ public class ASEvent {
 	
 	/**
 	 * One line schematical representation of the splicing variation.
-	 */
+	 * @return the ASTA string of <code>this</code> event
+     */
 	public String toStringASTA() {
 	
 			// build final string
@@ -751,6 +777,8 @@ public class ASEvent {
 	}
 	/**
 	 * new GTF compliance
+     * @param outSeq flag to output the sequence in GTF format
+     * @return the GTF string
 	 */
 	public String toStringGTF(boolean outSeq) {
 	
@@ -1083,7 +1111,7 @@ public class ASEvent {
 	 * 
 	 * conf= (float) (seen+ notseen)+ ovl_trpts / max_t1,t2(seen- notseen)+ ovl_trpts 
 	 * 
-	 * @return
+	 * @return Score
 	 */
 	public float getScore() {
 		if (score == -1f&& getGene()!= null) {
@@ -1129,7 +1157,7 @@ public class ASEvent {
 	/**
 	 * Gets the genomic region the event covers, extended up to the flanks.
 	 * Corrects for infinity boundaries.
-	 * @return
+	 * @return Directed Region of the event
 	 */
 	public DirectedRegion getRegionEvent() {
 		int srcPos= src.getPos();	// infinity has to be eliminated
@@ -1171,8 +1199,8 @@ public class ASEvent {
 	
 	/**
 	 * returns every region between src and snk, if not +/- infinity
-	 * @param id
-	 * @return
+	 * @param id region type (exonic, ...)
+	 * @return a vector of corresponding regions from <code>this</code> event
 	 */
 	// TODO make more efficient ??!
 	public DirectedRegion[] getRegion(byte id) {
@@ -1373,7 +1401,7 @@ public class ASEvent {
 	}
 	
 	/**
-	 * 
+	 * @return a vector of splice sites
 	 * @deprecated replaced by new method..
 	 */
 	public SpliceSite[] getSpliceUniverseWithFlanks() {
@@ -1394,6 +1422,11 @@ public class ASEvent {
 		return su;
 	}
 
+    /**
+     * Retrieves the projection of all sites in <code>this</code> event.
+     * @param includeFlanks flag whether the first/last common site is included in the result
+     * @return a vector of (splice) sites
+     */
 	public SpliceSite[] getSpliceUniverse(boolean includeFlanks) {
 		HashMap<SpliceSite, Object> map= new HashMap<SpliceSite, Object>();
 		if (includeFlanks) {
@@ -1415,8 +1448,8 @@ public class ASEvent {
 	}
 	
 	/**
-	 * the regions where there is at least one exon
-	 * @return
+	 * Returns the regions where there is at least one exon.
+	 * @return a vector of regions where at least one variant is exonic
 	 */
 	public DirectedRegion[] getExonicRegions() {
 		int[] p= new int[spliceChains.length];
@@ -1679,7 +1712,8 @@ public class ASEvent {
 		
 		return regs;
 	}
-
+    //TODO Remember to change this name!
+    @Deprecated
 	public DirectedRegion[] getVariableRegions_last_how_did_this_shit_ever_work() {
 		
 		SpliceSite[] su= getSpliceUniverseWithFlanks();
@@ -1937,7 +1971,12 @@ public class ASEvent {
 		}
 		frame3[ttpos]= frame;
 	}
-	
+
+    /**
+     * Sets the 5&rsquo; coding frame of a variant.
+     * @param ttpos the variant number
+     * @param frame the coding frame at the variants 5&rsquo; edge
+     */
 	public void setFrame5(int ttpos, int frame) {
 		if (frame5== null) {
 			frame5= new int[trpts.length];
@@ -1947,7 +1986,7 @@ public class ASEvent {
 	
 	/**
 	 * @deprecated does not consider cds frames
-	 * @param ttpos
+	 * @param ttpos the number of the AS variant
 	 */
 	public void setCDSloc(int ttpos) {
 		
@@ -1984,7 +2023,7 @@ public class ASEvent {
 	
 	/**
 	 * @deprecated incomplete
-	 * @param tpos
+	 * @param tpos variant number
 	 */
 	public void setCDSloc(int[] tpos) {
 		

@@ -124,11 +124,11 @@ public class Subsetter implements Tool<Void> {
 	/**
 	 * Subsets the number of lines in a file to extract (about) a desired number.
 	 * @param inputFile file from which line superset are read
-	 * @param inputLines number of liens in the input file, set to <=0 if unknown 
+	 * @param inputLines number of liens in the input file, set to &le;0 if unknown
 	 * @param ostream stream to which the subset of lines retrieved from the input
 	 * is written
 	 * @param numberLines number of lines to be extracted from the input, has to be 
-	 * strictly <= inputLines
+	 * strictly &le; inputLines
 	 */
 	public static void subset(File inputFile, long inputLines, OutputStream ostream, int numberLines) {
 		
@@ -241,11 +241,11 @@ public class Subsetter implements Tool<Void> {
 	 * read identifier scheme.
 	 * @deprecated works, but make it general before production
 	 * @param inputFile file from which line superset are read
-	 * @param inputLines number of liens in the input file, set to <=0 if unknown 
+	 * @param inputLines number of liens in the input file, set to &le;0 if unknown
 	 * @param ostream stream to which the subset of lines retrieved from the input
 	 * is written
 	 * @param numberLines number of lines to be extracted from the input, has to be 
-	 * strictly <= inputLines
+	 * strictly &le; inputLines
 	 */
 	public static void subsetPairs(File inputFile, long inputLines, OutputStream ostream, int numberLines) {
 		

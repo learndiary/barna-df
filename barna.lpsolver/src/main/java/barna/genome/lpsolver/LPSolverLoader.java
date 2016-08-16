@@ -187,7 +187,7 @@ public class LPSolverLoader {
      *
      * @param jniLibrary the native interface
      * @param sharedLibrary the shared library
-     * @throws Exception in case the library could not be loaded successfully
+     * @throws UnsatisfiedLinkError in case the library could not be loaded successfully
      */
     public static void load(File jniLibrary, File sharedLibrary) throws UnsatisfiedLinkError{
         if(jniLibrary == null ) throw new NullPointerException("You have to specify a JNI library file");

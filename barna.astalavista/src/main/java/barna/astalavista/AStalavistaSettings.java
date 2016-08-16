@@ -23,8 +23,8 @@ public class AStalavistaSettings extends ParameterSchema /*GTFschema*/ {
     /**
      * Print parameters and descriptions.
      */
-    public static final Parameter<Boolean> HELP = Parameters.booleanParameter("HELP",
-            "print parameters and descriptions", false, null).longOption("printParameters").shortOption('h');
+//    public static final Parameter<Boolean> HELP = Parameters.booleanParameter("HELP",
+//            "print parameters and descriptions", false, null).longOption("printParameters").shortOption('h');
 
     /**
      * Path to parameter file.

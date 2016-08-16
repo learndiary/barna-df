@@ -94,11 +94,11 @@ public class SimpleEdge extends AbstractEdge {
 	
 	/**
 	 * can over-/underflow edge position when not possible
-	 * @param sense
-	 * @param start
-	 * @param minMapLen
-	 * @param maxMapLen
-	 * @return
+	 * @param sense the direction
+	 * @param start flag
+	 * @param minMapLen minimum length of mapping
+	 * @param maxMapLen maximum length of mapping
+	 * @return the position
 	 */
 	public int getGpos(boolean sense, boolean start, int minMapLen, int maxMapLen) {
 		if (sense) {
@@ -181,9 +181,9 @@ public class SimpleEdge extends AbstractEdge {
 	
 	/**
 	 * @deprecated use with directionality
-	 * @param t
-	 * @param readLen
-	 * @return
+	 * @param t a transcript
+	 * @param readLen a read length
+	 * @return vector with two positions, the start and end
 	 */
 	public int[] getFrac(Transcript t, int readLen) {
 		int pos= getTail().getSite().getPos();
@@ -230,8 +230,8 @@ public class SimpleEdge extends AbstractEdge {
 
 	/**
 	 * Maximum mapping length that can map to the edge. 
-	 * @param maxMapLength
-	 * @return
+	 * @param maxMapLength maximum length of a mapping
+	 * @return the length of a mapping
 	 */
 	public int getMapLength(int maxMapLength) {
 		return Math.min(length(), maxMapLength);
@@ -239,9 +239,9 @@ public class SimpleEdge extends AbstractEdge {
 	
 	/**
 	 * Number of different locations with length mapLen.
-	 * @param dir
+	 * @param dir a direction
 	 * @param maxMapLength maximum mapping length
-	 * @return
+	 * @return the effective length
 	 */
 	public int getEffLength(byte dir, int maxMapLength) {
 		

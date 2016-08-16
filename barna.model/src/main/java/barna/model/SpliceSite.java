@@ -640,7 +640,7 @@ public class SpliceSite extends AbstractSite {
 
 	/**
 	 * 
-	 * @param constitutive
+	 * @param constitutive flag to indicate whether site is constitutively used
 	 * @deprecated as to link SSs with ASVars
 	 */
 	public void setConstitutive(boolean constitutive) {
@@ -651,9 +651,9 @@ public class SpliceSite extends AbstractSite {
 	 * from (-x to + y) number of exonic/intronic positions to
 	 * number of positions before and after ss
 	 * before and after ss
-	 * @param left
-	 * @param right
-	 * @return
+	 * @param left left-hand edge
+	 * @param right right-hand edge
+	 * @return two integers for the intronic limits
 	 */
 	public int[] convertToExonIntronPositions(int left, int right) {
 		int[] result= new int[2];
@@ -749,7 +749,7 @@ public class SpliceSite extends AbstractSite {
 	
 	/**
 	 * +1 for donors, -1 for acceptors
-	 * @return
+	 * @return the position of the delimiting splice site dinucleotide
 	 */
 	public int getRealSSpos() {
 		if (isDonor())
