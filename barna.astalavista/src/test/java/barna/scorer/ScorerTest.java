@@ -26,7 +26,7 @@ public class ScorerTest {
 
     @Test
     public void testChr19() throws Exception {
-        Object o= getClass().getResource("/gencode.v19.chr19.annotation.gtf_sorted");
+        Object o= getClass().getResource("/gencode.v19.chr19.annotation.gtf.gz");
         File gtf= new File(getClass().getResource("/gencode.v19.chr19.annotation.gtf_sorted").getFile());
         File chrDir= new File(getClass().getResource("/./").getFile());
         File vcf= new File(getClass().getResource("/chr19_markers_CEU-only_0.9.vcf").getFile());
