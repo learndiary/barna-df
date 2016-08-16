@@ -936,7 +936,7 @@ public class Transcript extends DirectedRegion {
 	/**
 	 * see  Lopez1 et al., RNA 2006
 	 * check complete3PSandro()
-	 * @return <code>true</code> if <code>this</code> transcript is 3&apos; complete, <code>false</code> otherwise
+	 * @return <code>true</code> if <code>this</code> transcript is 3&#8217; complete, <code>false</code> otherwise
 	 */
 	public boolean is3Pcomplete() {
 		

@@ -1126,8 +1126,8 @@ public class Gene extends DirectedRegion {
 	
 	/**
 	 * gets non-redundant set of coding exons
-	 * @param completelyCoding flag to request only exons that code from their 5&apos;
-     *                         to their 3&apos; end
+	 * @param completelyCoding flag to request only exons that code from their 5&#8217;
+     *                         to their 3&#8217; end
 	 * @return a vector of exons
 	 */
 	public Exon[] getCodingExons(boolean completelyCoding) {
