@@ -22,6 +22,10 @@ REQUIREMENTS
 CHANGES
 ---------------
 
+FluxSimulator 1.2.3
+    * [BARNA-370] - Fragmenatation crashes with short transcripts (<4nt)
+    * [BARNA-369] - Possible bug in barna.io.gtf.GTFwrapper.skipToNextChromosome() ?
+
 FluxSimulator 1.2.1
     * [BARNA-306] - Added a seed parameter and pass it to all Random instances to make results reproducable
 
