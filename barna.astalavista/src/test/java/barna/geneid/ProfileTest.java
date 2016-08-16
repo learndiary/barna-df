@@ -6,6 +6,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 /**
  * Created with IntelliJ IDEA.
  * User: micha
@@ -28,13 +30,17 @@ public class ProfileTest {
     @Test
     public void testReadProfile() throws Exception {
         GeneIDsettings settings= new GeneIDsettings();
-        GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
+        GParam[] isochores= Profile.readParam(
+                new File(getClass().getResource(GeneIDconstants.PARAMETERFILE).getFile()).getAbsolutePath(),
+                settings);
     }
 
     @Test
     public void testScoreSpliceSites() throws Exception {
         GeneIDsettings settings= new GeneIDsettings();
-        GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
+        GParam[] isochores= Profile.readParam(
+                new File(getClass().getResource(GeneIDconstants.PARAMETERFILE).getFile()).getAbsolutePath(),
+                settings);
         System.currentTimeMillis();
 
         // sequence length: (dimesion+ order)

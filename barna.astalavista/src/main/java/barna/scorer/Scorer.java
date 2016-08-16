@@ -188,7 +188,9 @@ public class Scorer extends AStalavista {
             try {
                 if(settings.get(ScorerSettings.GENE_ID)== null) {
                     Log.warn("No GeneID parameter file for scoring models, using default (for human)");
-                    geneidParam= Profile.readParam(GeneIDconstants.PARAMETERFILE, new GeneIDsettings())[0];
+                    geneidParam= Profile.readParam(
+                            new File(getClass().getResource(GeneIDconstants.PARAMETERFILE).getFile()).getAbsolutePath(),
+                            new GeneIDsettings())[0];
                 } else
                     geneidParam= Profile.readParam(settings.get(ScorerSettings.GENE_ID).getAbsolutePath(),
                             new GeneIDsettings())[0];
