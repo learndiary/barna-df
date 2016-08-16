@@ -16,6 +16,7 @@ import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -186,14 +187,11 @@ public class Scorer extends AStalavista {
             }
 
             try {
-                if(settings.get(ScorerSettings.GENE_ID)== null) {
-                    Log.warn("No GeneID parameter file for scoring models, using default (for human)");
-                    geneidParam= Profile.readParam(
-                            new File(getClass().getResource(GeneIDconstants.PARAMETERFILE).getFile()).getAbsolutePath(),
-                            new GeneIDsettings())[0];
-                } else
-                    geneidParam= Profile.readParam(settings.get(ScorerSettings.GENE_ID).getAbsolutePath(),
-                            new GeneIDsettings())[0];
+                String pFileName= (settings.get(ScorerSettings.GENE_ID)== null)?
+                        null: settings.get(ScorerSettings.GENE_ID).getAbsolutePath();
+
+                // load it fro file provided, or take default matrices (human)
+                geneidParam= Profile.readParam(pFileName, new GeneIDsettings())[0];
             } catch (Exception e) {
                 Log.error(e.getMessage(), e);
                 return false;

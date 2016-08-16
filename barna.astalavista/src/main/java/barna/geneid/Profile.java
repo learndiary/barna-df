@@ -1,10 +1,13 @@
 package barna.geneid;
 
+import barna.astalavista.AStalavista;
 import barna.commons.log.Log;
+import barna.scorer.ScorerSettings;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 
 /**
@@ -838,6 +841,9 @@ and U2 branch points and Poly Pyrimidine Tract */
 
     /*
      * Read the input of statistics data model
+     * @param name name of an explicitly provided geneID parameter file
+     * @param settings the geneID settings
+     * @return the geneID parameters
      */
     public static GParam[] readParam (String name, GeneIDsettings settings) throws Exception {
 
@@ -846,19 +852,23 @@ and U2 branch points and Poly Pyrimidine Tract */
         String Geneid= System.getProperty("GENEID");
 
         /* rootfile will be the parameter file handle descriptor */
-        /* (a) Using -P option */
         BufferedReader rootFile= null;
-        if (!GeneIDconstants.PARAMETERFILE.equals(name)) {
-            Log.message("Loading parameter file by using -P option: "+ name);
+
+        /* (a) Using -P option */
+        //the original GeneID code uses this branch
+        //if (!GeneIDconstants.PARAMETERFILE.equals(name)) {
+        if (name!= null) {
+            Log.message("Loading parameter file "+ name);
             try {
                 rootFile= new BufferedReader(new FileReader(name));
             } catch (Exception e) {
-                Log.error("Parameter file (-P) can not be open to read");
+                Log.error("Parameter file (-P) can not be open to read: "+ e.getMessage());
+                e.printStackTrace();
             }
 
         /* (b) Using GENEID environment var */
         } else if (Geneid!= null) {
-            Log.message("Loading parameter file by using GENEID (env. var): "+ Geneid);
+            Log.message("Loading parameter file from GENEID env. var "+ Geneid);
             try {
                 rootFile= new BufferedReader(new FileReader(Geneid));
             } catch (Exception e) {
@@ -867,11 +877,14 @@ and U2 branch points and Poly Pyrimidine Tract */
 
         /* (c) Using default parameter file */
         } else {
-            Log.message("Loading parameter file default");
+            Log.message("Loading default parameter file (human) "+ GeneIDconstants.PARAMETERFILE);
             try {
-                rootFile= new BufferedReader(new FileReader(
-                        new File(Profile.class.getResource(GeneIDconstants.PARAMETERFILE).getFile())
-                ));
+                // cannot be loaded directly by a file reader (i.e., dynamic resource)
+                //rootFile= new BufferedReader(
+                //        new FileReader(new File(Profile.class.getResource(GeneIDconstants.PARAMETERFILE).getFile())
+                //));
+                rootFile= new BufferedReader(new InputStreamReader(
+                        Profile.class.getResourceAsStream(GeneIDconstants.PARAMETERFILE)));
             } catch (Exception e) {
                 Log.error("Parameter file (default) can not be open to read");
             }
