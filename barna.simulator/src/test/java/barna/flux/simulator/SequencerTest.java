@@ -28,6 +28,7 @@
 package barna.flux.simulator;
 
 import barna.commons.ByteArrayCharSequence;
+import barna.commons.log.Log;
 import barna.flux.simulator.error.MarkovErrorModel;
 import barna.flux.simulator.error.ModelPool;
 import barna.flux.simulator.error.QualityErrorModel;
@@ -186,7 +187,12 @@ public class SequencerTest {
                     allChars.length(), // fragment length
                     babes);
             String[] scs= cs.toString().split(barna.commons.system.OSChecker.NEW_LINE);
-            Assert.assertTrue(allChars.equals(scs[0]));
+            try {
+                Assert.assertTrue(allChars.equals(scs[0]));
+            } catch (AssertionError e) {
+                Log.error(allChars+ " <> "+ scs[0]);
+                throw e;
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
