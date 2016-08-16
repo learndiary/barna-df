@@ -295,7 +295,7 @@ public class Dictionary {
         return(key);
     }
 
-    /**
+    /*
      * Hash Function:: String . Integer between 0..MAXENTRY-1
      */
     public int f(String s) {
@@ -309,9 +309,9 @@ public class Dictionary {
         return total;
     }
 
-    /** 
+    /*
      * Returns the key for the word request; 
-     * NOTFOUND is Not found 
+     * NOTFOUND is Not found
      */
     public int getkeyDict(String s) {
         

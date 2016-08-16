@@ -28,7 +28,7 @@ import java.util.zip.ZipFile;
 /**
  * A class for profiling read biases on mappings
  *
- * @author Emilio Palumbo <emiliopalumbo@gmail.com>
+ * @author Emilio Palumbo (emiliopalumbo@gmail.com)
  */
 public class BiasProfiler implements Callable<Profile> {
 

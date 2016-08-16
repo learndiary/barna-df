@@ -6,6 +6,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 /**
  * Created with IntelliJ IDEA.
  * User: micha
@@ -28,13 +30,13 @@ public class ProfileTest {
     @Test
     public void testReadProfile() throws Exception {
         GeneIDsettings settings= new GeneIDsettings();
-        GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
+        GParam[] isochores= Profile.readParam(null, settings);
     }
 
     @Test
     public void testScoreSpliceSites() throws Exception {
         GeneIDsettings settings= new GeneIDsettings();
-        GParam[] isochores= Profile.readParam(GeneIDconstants.PARAMETERFILE, settings);
+        GParam[] isochores= Profile.readParam(null, settings);
         System.currentTimeMillis();
 
         // sequence length: (dimesion+ order)
@@ -50,7 +52,8 @@ public class ProfileTest {
         // suffix_acceptor = offset
         // AcceptorProfile: order= 1, offset= 24, dimension= 27
         // "CTCTCTCTCTCTCTCTCTCTCTAGCGC"
-        float accScore= GeneID.scoreAcceptor("CTCTCTCTCTCTCTCTCTCTCTCAGCGG", isochores[0].AcceptorProfile, null, null);
+        // "CTCTCTCTCTCTCTCTCTCTCTCAGCGG" => this sequence had 28 instead of 27 chars, removed 5' most C
+        float accScore= GeneID.scoreAcceptor("TCTCTCTCTCTCTCTCTCTCTCAGCGG", isochores[0].AcceptorProfile, null, null);
         System.err.println("score "+ accScore);
 
 //        myGID.buildDonors(

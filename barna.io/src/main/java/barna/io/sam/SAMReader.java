@@ -196,7 +196,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	}
 
 	/**
-     * Sort <this>inputFile</this> by position.
+     * Sort <code>inputFile</code> by position.
 	 * @see barna.io.IOWrapper#sort(java.io.OutputStream)
 	 */
 	@Override
@@ -213,7 +213,7 @@ public class SAMReader extends AbstractFileIOWrapper implements
 	}
 
     /**
-     * Sort <this>inputFile</this> lexicographically by query name (= readID).
+     * Sort <code>inputFile</code> lexicographically by query name (= readID).
      */
     public void sortByReadID(OutputStream outputStream) {
         SAMFileReader reader= new SAMFileReader(this.inputFile);

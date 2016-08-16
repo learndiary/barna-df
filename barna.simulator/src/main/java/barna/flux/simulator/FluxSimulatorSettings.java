@@ -633,7 +633,7 @@ public class FluxSimulatorSettings extends ParameterSchema {
      * Size distribution of fragments after filtering,
      * either specified by the fully qualified path of a file with an empirical distribution
      * where each line represents the length of a read, no ordering required<br>
-     * </br>
+     * <br>
      * or attributes of a gaussian distribution (mean and standard deviation) in the form:<br>
      * <br>
      * N(mean, sd)<br>

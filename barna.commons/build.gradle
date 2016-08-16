@@ -15,3 +15,18 @@ configurations{
     compile.exclude group:"bouncycastle"
 }
 
+
+/**
+ * Create aggregated javaDoc from all dependencies of this subproject
+ */
+task aggregatedJavadoc(type: Javadoc){
+    description = "Build the aggregated JavaDocs for this module"
+    options.addStringOption('Xdoclint:all,-html', "-quiet")
+    source = [project(":barna.commons")].collectAll{p-> p.sourceSets.main.java}
+    [project(":barna.commons")].each{p-> classpath += p.configurations.compile }
+    configure(options) {
+        links = [ 'http://download.oracle.com/javase/8/docs/api/',
+                'http://download.oracle.com/javaee/7/api/' ]
+    }
+}
+

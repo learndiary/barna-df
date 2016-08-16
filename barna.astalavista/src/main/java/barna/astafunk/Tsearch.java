@@ -51,7 +51,6 @@ public class Tsearch implements Runnable{
      * to create a thread, starting the thread causes the object's
      * <code>run</code> method to be called in that separately executing
      * thread.
-     * <p/>
      * The general contract of the method <code>run</code> is that it may
      * take any action whatsoever. Search method is selected by command line.
      *
@@ -336,10 +335,12 @@ public class Tsearch implements Runnable{
     /**
      * Group events by delta overlapping and next calls the method to split the alternative
      * transcripts by variants
+     * @param referenceList vector of references
+     * @param referenceList vector of hits
      * @param events List of alternative splicing events
+     * @param hitList vector of hits
      * @return Hashmap of hit lists
      */
-
     public List<Hit> groupEvents(List<ASEvent> events, List<String> referenceList, List<Hit> hitList){
         // check
         if (events.size()== 0)
@@ -444,6 +445,7 @@ public class Tsearch implements Runnable{
      * @param first first index of events to be merged (included)
      * @param last last index of events to be merged (included)
      * @param hmm the HMM model to be aligned
+     * @param hitList vector of <code>Hit</code>s
      * @return Hashmap of hits. Key 0 - all hits; Key 1 - AS hits
      */
     public List<Hit> splitVariantsToAlign(List<ASEvent> events, int first, int last,

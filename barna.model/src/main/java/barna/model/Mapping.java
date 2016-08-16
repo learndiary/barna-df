@@ -10,7 +10,7 @@ package barna.model;
 public interface Mapping {
 
 	/**
-	 * 
+	 * @param appendMateNumber flag
 	 * @return the name of the mapping
 	 */
 	public CharSequence getName(Boolean appendMateNumber);
@@ -90,12 +90,13 @@ public interface Mapping {
     /**
      *
      * @param weighted whether reporting the count weighted by the number of hits for the read the mapping refers to
-     * @return
+     * @return the (weighted) number of mappings
      */
     public double getCount(boolean weighted);
 
     /**
      * @param readStrand the directionality of the reads
+	 * @return the strand
      */
     public byte getReadStrand(String readStrand);
 }

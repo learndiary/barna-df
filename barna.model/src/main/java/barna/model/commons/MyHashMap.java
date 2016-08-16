@@ -379,6 +379,7 @@ public class MyHashMap<K,V>
      * for the sake of performance in the two most commonly used
      * operations (get and put), but incorporated with conditionals in
      * others.
+     * @return value
      */
     protected V getForNullKey() {
         for (Entry<K,V> e = table[0]; e != null; e = e.next) {
@@ -453,6 +454,8 @@ public class MyHashMap<K,V>
 
     /**
      * Offloaded version of put for null keys
+     * @param value a value
+     * @return V
      */
     protected V putForNullKey(V value) {
         for (Entry<K,V> e = table[0]; e != null; e = e.next) {

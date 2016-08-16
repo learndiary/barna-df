@@ -49,7 +49,8 @@ public class BARNAdescriptor implements ReadDescriptor {
 	}
 	/**
 	 * 
-	 * @param cs
+	 * @param cs a character sequence
+	 * @param fromTo vector with two positions
 	 * @return -1 for error, 0 for no annotation
 	 */
 	public int getMode(CharSequence cs, int[] fromTo) {

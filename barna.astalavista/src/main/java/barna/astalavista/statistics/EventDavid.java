@@ -856,9 +856,6 @@ public class EventDavid extends Thread {
 	}
 
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		EventDavid dave= parseArguments(args);
 		dave.run();

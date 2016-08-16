@@ -136,11 +136,11 @@ public class DirectedRegion extends DefaultRegion {
 	
 	
 	/**
-	 * returns sites contained in ANY of the regions. inefficient
+	 * Returns sites contained in ANY of the regions. (inefficient!)
 	 * 
-	 * @param regs
-	 * @param s
-	 * @return
+	 * @param regs a vector of regions
+	 * @param s a vector of sites
+	 * @return the subset of sites contained in the provided regions
 	 */
 	public static AbstractSite[] contained(DirectedRegion[] regs, SpliceSite[] s) {
 		if (regs== null|| s== null)
@@ -177,8 +177,8 @@ public class DirectedRegion extends DefaultRegion {
 	
 	/**
 	 * deletes contained regions, concatenates overlapping regions, st every nt is only covered once
-	 * @param regs
-	 * @return
+	 * @param regs a vector of regions
+	 * @return a non-redundantly merged set of the provided regions
 	 */
 	public static DirectedRegion[] getUniqueRegions(DirectedRegion[] regs) {
 		if (regs== null)
@@ -618,7 +618,10 @@ public class DirectedRegion extends DefaultRegion {
 	}
 	
 	/**
-	 * @param b
+     * Confirms the directionality of <code>this</code> region.
+	 * @param b the queried directionality
+     * @return <code>true</code> if <code>this</code> strand is the same directionality as queried,
+     * <code>false</code> otherwise.
 	 */
 	public boolean checkStrand(boolean b) {
 		

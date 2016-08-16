@@ -59,6 +59,7 @@ public class Astafunk implements Tool<Void> {
     /**
      * Main class.
      * @param args List of options for ASTAFUNK.
+     * @throws Exception an exeption
      */
     public static void main(String [] args) throws Exception {
 
@@ -382,7 +383,7 @@ public class Astafunk implements Tool<Void> {
     /**
      * Parse a file (heuristic table) with gene entries and the respective HMM ACCs.
      * @return A hashmap of gene ID and the respective profile HMM ACC list.
-     * @throws IOException
+     * @throws IOException if something went wrong
      */
     public static HashMap<String, List<String>> parseHeuristicTable() throws IOException {
         if(isExhaustive())
@@ -425,7 +426,7 @@ public class Astafunk implements Tool<Void> {
 
     /**
      * Clear hmm list and heuristic table; close reader.
-     * @throws Exception
+     * @throws Exception something went wrong
      */
     protected static void callFinish() throws Exception{
         wrapper.close();

@@ -77,7 +77,7 @@ public class Toolbox {
 	
 	/**
 	 * 
-	 * @param fName
+	 * @param fName a name
 	 * @return absolute file name
 	 */
 	public static String checkFileExists(String fName) {
@@ -114,7 +114,7 @@ public class Toolbox {
 
 	/**
 	 * limit are 100 files the same day
-	 * @param fName
+	 * @param fName a file name
 	 * @return absolute file name
 	 */
 	public static String getDateStampIncr(String fName) {

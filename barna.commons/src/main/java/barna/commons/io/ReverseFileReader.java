@@ -81,7 +81,7 @@ public class ReverseFileReader {
      * Reads the next line
      *
      * @return line the next line
-     * @throws Exception in case of any errors
+     * @throws IOException in case of any errors
      */
     public String readLine() throws IOException {
         if(randomfile==null){

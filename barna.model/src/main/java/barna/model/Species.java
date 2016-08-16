@@ -580,6 +580,7 @@ public class Species implements Serializable {
 	
 	/**
 	 * @deprecated no longer used, see Graph.getSequenceDirectory
+	 * @return the species directory
 	 */
 	public String getSequenceDirectory() {
 	
@@ -620,7 +621,8 @@ public class Species implements Serializable {
 	 * Initilizes the <code>HashMap</code> with the specified capacity and the
 	 * specified loading factor for the expected number of genes. 
 	 * 
-	 * @param nbGenes
+	 * @param nbGenes number of genes
+	 * @param loadFactor load factor
 	 * @return <code>true</code> when the <code>HashMap</code> was successfully
 	 * initialized, <code>false</code> when it had already been filled with
 	 * values beforeahead.
@@ -640,7 +642,7 @@ public class Species implements Serializable {
 	 * loading factor of <code>nbGenes/100</code> for the expected number 
 	 * of genes.
 	 * 
-	 * @param nbGenes
+	 * @param nbGenes number of genes
 	 * @return <code>true</code> when the <code>HashMap</code> was successfully
 	 * initialized, <code>false</code> when it had already been filled with
 	 * values beforeahead.
@@ -739,7 +741,7 @@ public class Species implements Serializable {
 	/**
 	 * More effective than <code>getGenes().length</code> since it does not 
 	 * convert <code>Object[]</code> to <code>Gene[]</code>.
-	 * @return 
+	 * @return the number of genes
 	 */
 	public int getGeneNb() {
 	
@@ -751,9 +753,9 @@ public class Species implements Serializable {
 	
 	/**
 	 * @deprecated deactivated
-	 * @param regionType
-	 * @param ssType
-	 * @return
+	 * @param regionType the type of region of interest
+	 * @param ssType the type of (splice) site of interest
+	 * @return a vector of (splice) sites
 	 */
 	public SpliceSite[] getSpliceSites(int regionType, int ssType) {
 //		int perc= 0;

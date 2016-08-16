@@ -108,7 +108,7 @@ public class SpliceJunctionExtractor { //implements Tool<Void> {
     /**
      * Set the 5' flank
      *
-     * @param length flank length  @code{> 0}
+     * @param length flank length  @code{&gt; 0}
      */
 
 //    @Option(name = "5", longName = "5flank", description = "exonic flank 5' of intron")
@@ -123,7 +123,7 @@ public class SpliceJunctionExtractor { //implements Tool<Void> {
     /**
      * Set the 3' flank
      *
-     * @param length flank length @code{> 0}
+     * @param length flank length @code{&gt; 0}
      */
 //    @Option(name = "3", longName = "3flank", description = "exonic flank 3' of intron")
     public void set3flank(int length) {

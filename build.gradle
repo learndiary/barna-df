@@ -85,7 +85,7 @@ subprojects{
     apply from : "${rootDir}/gradle/licenses.gradle"
 
     test{
-        jvmArgs '-Xms128m', '-Xmx2G'
+        jvmArgs '-Xms128m', '-Xmx2G', '-ea'
         //makes the standard streams (err and out) visible at console when running tests
         //testLogging.showStandardStreams = true
 
@@ -98,18 +98,20 @@ subprojects{
 }
 
 /**
- * Create aggregated javaDoc from all subprojects
+ * Create aggregated javaDoc from all Barna subprojects
  */
 task aggregatedJavadoc(type: Javadoc){
-    description = "Build the aggregated JavaDocs for all modules"
+    description = "Build the aggregated JavaDocs for all barna modules"
+    options.addStringOption('Xdoclint:all,-html', "-quiet")
     source = subprojects.collectAll{p-> p.sourceSets.main.java}
+    [project(":barna.astalavista"), project(":barna.capacitor"), project(":barna.commons"),project(":barna.gui"), project(":barna.io"), project(":barna.lpsolver"), project(":barna.model"), project(":barna.simulator"), project(":barna.tools")].each{p-> classpath += p.configurations.compile }
     destinationDir = file("${buildDir}/docs/barna-${project.version}")
     configure(options) {
         windowTitle = 'Barna API Documentation'
-        docTitle = "Barna JavaDoc (${project.version})"
+        docTitle = "Barna ${project.version} API"
         failOnError = false
-        links = [ 'http://download.oracle.com/javase/6/docs/api/',
-                  'http://download.oracle.com/javaee/6/api/' ]
+        links = [ 'http://download.oracle.com/javase/8/docs/api/',
+                  'http://download.oracle.com/javaee/7/api/' ]
     }
 }
 

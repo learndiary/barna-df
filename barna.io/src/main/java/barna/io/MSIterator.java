@@ -62,7 +62,7 @@ public interface MSIterator<T> extends Iterator<T>, Iterable<T>{
 	public void clear();
 
     /**
-     * In case of paired reads retrieve the mate given a <code>Iterator<Mapping></code>
+     * In case of paired reads retrieve the mate given a <code>Iterator&lt;Mapping&gt;</code>
      * @return the mate
      */
     public Iterator<Mapping> getMates(Mapping firstMapping);

@@ -139,7 +139,7 @@ public class Transcript extends DirectedRegion {
 	 * Negative values indicate position before the transcription start site,
      * counted 1-based, i.e., (-3) is 3 positions upstream of the transcript
      * start site.
-	 * Values >= (transcript length) are positions after the cleavage site,
+	 * Values &ge; (transcript length) are positions after the cleavage site,
      * also counted 1based, i.e., the distance to the cleavage site can
      * by reconstructed by (exon pos) - (transcript length).
      * Consequently, the value of the transcript length is never returned by
@@ -520,7 +520,7 @@ public class Transcript extends DirectedRegion {
 	
 	/**
 	 * what is the difference to exons?
-	 * @return
+	 * @return vector of regions
 	 */
 	public DirectedRegion[] getExonicRegions() {
 		if (exons== null)
@@ -655,7 +655,7 @@ public class Transcript extends DirectedRegion {
 	
 	/**
 	 * @deprecated repair
-	 * @return
+	 * @return the sequence
 	 */
 	public String get5UTRSequence() {
 //		DirectedRegion[] reg= get5UTRRegion(false);
@@ -689,8 +689,9 @@ public class Transcript extends DirectedRegion {
 
 	/**
 	 * @deprecated repair
-	 * @param regCode
-	 * @return
+	 * @param regCode a code
+	 * @return the sequence
+	 * @return the sequence
 	 */
 	public String getSequence(int regCode) {
 //		DirectedRegion[] reg= null;
@@ -781,8 +782,8 @@ public class Transcript extends DirectedRegion {
 	
 	/**
 	 * @deprecated repair
-	 * @param intron
-	 * @return
+	 * @param intron region of the intron
+	 * @return the exon
 	 */
 	public Exon getUpstreamExon(DirectedRegion intron) {
 //		for (int i = 0; i < exons.length; i++) {
@@ -794,8 +795,8 @@ public class Transcript extends DirectedRegion {
 	
 	/**
 	 * @deprecated repair
-	 * @param intron
-	 * @return
+	 * @param intron region of the intron
+	 * @return the exon
 	 */
 	public Exon getDownstreamExon(DirectedRegion intron) {
 //		for (int i = 0; i < exons.length; i++) {
@@ -878,6 +879,7 @@ public class Transcript extends DirectedRegion {
 	}
 	/**
 	 * see  Lopez1 et al., RNA 2006
+	 * @return <code>true</code> if <code>this</code> transcript is ...
 	 */
 	public boolean isInternallyPrimed() {
 		final int FLANK_REGION= 50;
@@ -934,7 +936,7 @@ public class Transcript extends DirectedRegion {
 	/**
 	 * see  Lopez1 et al., RNA 2006
 	 * check complete3PSandro()
-	 * @return
+	 * @return <code>true</code> if <code>this</code> transcript is 3&apos; complete, <code>false</code> otherwise
 	 */
 	public boolean is3Pcomplete() {
 		
@@ -1058,8 +1060,8 @@ public class Transcript extends DirectedRegion {
 
 	/**
 	 * when 
-	 * @param pos
-	 * @return
+	 * @param pos the position of interest
+	 * @return <code>true</code> if the queried position is within the CDS, <code>false</code> otherwise
 	 */
 	public boolean isCDS(int pos) {
 		
@@ -1191,9 +1193,7 @@ public class Transcript extends DirectedRegion {
 		
 	}
 	
-	/**
-	 * @return
-	 */
+
 	public Gene getGene() {
 		return gene;
 	}
@@ -1212,24 +1212,15 @@ public class Transcript extends DirectedRegion {
 		return id;
 	}
 	
-	/**
-	 * @return
-	 */
 	public String getStableID() {
 		
 		return transcriptID;
 	}	
 
-	/**
-	 * @param exons
-	 */
 	public void setExons(Exon[] exons) {
 		this.exons= exons;
 	}
 
-	/**
-	 * @param gene
-	 */
 	public void setGene(Gene gene) {
 		this.gene= gene;
 		setStrand(getGene().getStrand());
@@ -1259,9 +1250,6 @@ public class Transcript extends DirectedRegion {
 		return getGene().getSpecies();
 	}
 	
-	/**
-	 * @param b
-	 */
 	public boolean checkStrand(boolean b) {
 		
 		return (b== getGene().isForward());
@@ -1378,7 +1366,7 @@ public class Transcript extends DirectedRegion {
 			 * of their start/stop position. <b>IMPORTANT</b>: add exons AFTER adding 
 			 * transcripts to ensure the correct init of AS types.
 			 * 
-			 * @param newExon
+			 * @param newExon the exon to be added
 			 * @return the exon already contained or <code>newExon</code> case of the exon was added successfully
 			 */
 			public boolean addExon(Exon newExon) {
@@ -1507,8 +1495,8 @@ public class Transcript extends DirectedRegion {
 	 * Finds the first exon containing the corresponding position
 	 * 
 	 * deprecated inconsistent for overlapping exons // why?!		 
-	 * @param absPos
-	 * @return
+	 * @param absPos the absolute position
+	 * @return the index of the exon the queried position is contained in
 	 */
 	public int getExonIdx(int absPos) {
 		
@@ -1527,9 +1515,9 @@ public class Transcript extends DirectedRegion {
 	
 	/**
 	 * gets exons in between e1 and e2
-	 * @param e1
-	 * @param e2
-	 * @return
+	 * @param e1 an exon
+	 * @param e2 anoother exon
+	 * @return vector with the exons between both specified exons
 	 */
 	public Exon[] getExons(Exon e1, Exon e2) {
 		Comparator compi= new AbstractRegion.PositionComparator();
@@ -1589,7 +1577,7 @@ public class Transcript extends DirectedRegion {
 	 * gene for in-frame stop. If one is found and the start of the gene is
 	 * in a CpG island, use the ATG, otherwise start the open-ended CDS at the
 	 * start of the gene.
-	 * @return
+	 * @return the translation
 	 */
 	public Translation findHavanaORF() {
 		
@@ -1740,11 +1728,10 @@ public class Transcript extends DirectedRegion {
 		}
 	
 	/**
-	 * 
-	 * @param seq
-	 * @param frame
 	 * @deprecated not in use, check inframe stop
-	 * @return
+	 * @param seq a sequence
+	 * @param frame a frame
+	 * @return a vector of translations
 	 */
 	public Translation[] forceORFs(String seq, int frame) {
 //		seq= seq.substring(frame).toUpperCase();
@@ -1846,7 +1833,7 @@ public class Transcript extends DirectedRegion {
 	}
 	/**
 	 * working with cds in exons
-	 * @return
+	 * @return a vector of regions
 	 */
 	public DirectedRegion[] getCDSRegions() {
 		Exon[] exons= getExons();

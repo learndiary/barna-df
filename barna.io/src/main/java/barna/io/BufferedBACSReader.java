@@ -263,7 +263,7 @@ public class BufferedBACSReader {
 	 * Tries to jump back to the last marked position, iff
 	 * this is still within the buffer
 	 * @return byte position to which could not be jumped
-	 * (if value >= 0)
+	 * (if value &ge; 0)
 	 */
 	public long reset() {
 		

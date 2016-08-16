@@ -41,7 +41,7 @@ import java.util.List;
  * Flux Tool implementation to expose differential expression analysis
  * to the command line
  *
- * @author Thasso Griebel <thasso.griebel@gmail.com>
+ * @author Thasso Griebel (thasso.griebel@gmail.com)
  */
 public class DiffExpTool implements Tool<Void> {
     private static final String longDescription = "Calculate differential expression between two quantificatons.\n" +

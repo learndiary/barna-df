@@ -75,17 +75,19 @@ task dist(dependsOn: ['distTar', 'distZip'])
 
 
 /**
- * Create aggregated javaDoc from all subprojects
+ * Create aggregated javaDoc for astalavista and dependent modules
  */
 task aggregatedJavadoc(type: Javadoc){
     description = "Build the aggregated JavaDocs for all astalavista modules"
+    options.addStringOption('Xdoclint:all,-html', "-quiet")
     source = [project(":barna.model"), project(":barna.io"), project(":barna.commons"),project(":barna.astalavista") ].collectAll{p-> p.sourceSets.main.java}
+    [project(":barna.astalavista")].each{p-> classpath += p.configurations.compile }
     destinationDir = file("${buildDir}/docs/astalavista-${version}")
     configure(options) {
         windowTitle = 'Astalavista API Documentation'
-        docTitle = "Astalavista JavaDoc (${project(':barna.astalavista').version})"
-        links = [ 'http://download.oracle.com/javase/6/docs/api/',
-                'http://download.oracle.com/javaee/6/api/' ]
+        docTitle = "Astalavista ${project(':barna.astalavista').version} API"
+        links = [ 'http://download.oracle.com/javase/8/docs/api/',
+                'http://download.oracle.com/javaee/7/api/' ]
     }
 }
 

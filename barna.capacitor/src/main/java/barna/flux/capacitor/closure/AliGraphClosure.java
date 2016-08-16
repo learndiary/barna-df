@@ -32,10 +32,6 @@ import java.io.FileReader;
 /**
  * @author micha
  *
- * To change this generated comment edit the template variable "typecomment":
- * Window>Preferences>Java>Templates.
- * To enable and disable the creation of type comments go to
- * Window>Preferences>Java>Code Generation.
  */
 public class AliGraphClosure {
 
@@ -746,10 +742,10 @@ public class AliGraphClosure {
 	 * 		1) the 0-based positions of the params to 1-based
 	 * 		2) the 1-based positions of return to 0-based
 	 * 		3) the 'transitivity exclusions' to 'boundary inclusives', eg
-	 * matches: ub= lb, unaligned areas= lb< ub both included, and
+	 * matches: ub= lb, unaligned areas= lb&lt; ub both included, and
 	 * insertions: lb= ub+1 (x, x+1) is converted to (x+1,x)
 	 * @param
-	 * 		Closure clos	consistency structure for sequences
+	 * 		clos	consistency structure for sequences
 	 * 		int x			seqNo1 (0-based)
 	 * 		int i			pos in seq#1 (0-based)
 	 * 		int y			seqNo2 (0-based)
@@ -781,7 +777,7 @@ public class AliGraphClosure {
 	 * 		2) the 1-based positions of return to 0-based
 	 * 		3) the 'transitivity exclusions' to 'boundary inclusives'
 	 * @param
-	 * 		Closure clos	consistency structure for sequences
+	 * 		clos	consistency structure for sequences
 	 * 		int x			seqNo1 (0-based)
 	 * 		int i			pos in seq#1 (0-based)
 	 * 		int y			seqNo2 (0-based)
@@ -815,7 +811,7 @@ public class AliGraphClosure {
 	 * 		2) the 1-based positions of return to 0-based
 	 * 		3) the 'transitivity exclusions' to 'boundary inclusives'
 	 * @param
-	 * 		Closure clos	consistency structure for sequences
+	 * 		clos	consistency structure for sequences
 	 * 		int x			seqNo1 (0-based)
 	 * 		int i			pos in seq#1 (0-based)
 	 * 		int y			seqNo2 (0-based)

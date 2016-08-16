@@ -39,7 +39,7 @@ import java.util.concurrent.Future;
  * Do fisher exact test to get p-values for differential expression between
  * two quantifications created with the capacitor
  *
- * @author Thasso Griebel <thasso.griebel@gmail.com>
+ * @author Thasso Griebel (thasso.griebel@gmail.com)
  */
 public class FisherDifferentialExpression {
 

@@ -37,6 +37,7 @@ public class EdgeSet {
     /**
      * Adds non-redundantly an element to the edge set.
      * @param e the edge to be added
+     * @param dir the direction
      * @return <code>this</code> regardless whether the edge was added to the current set or not,
      * or another instance if the extended set already exists in the collection of singletons
      */

@@ -268,15 +268,16 @@ public class GEMobject {
 		return m;
 	}
 
-	/**
-	 * 
-	 * @param cs
-	 * @param pos return by parameter, int[0]= pos, int[1]= -1/1 strand
-	 * @return String with chromosome
-	 */
 	public static final char SYMBOL_POSITIVE= '+', SYMBOL_POSITIVE_GEM= 'F', SYMBOL_NEGATIVE= '-', SYMBOL_NEGATIVE_GEM= 'R';
 	public static final Pattern PATTY_PLUS_MINUS= Pattern.compile("(\\+|\\-)");
 	private static final HashMap<ByteArrayCharSequence, String> mapChrNames= new HashMap<ByteArrayCharSequence, String>();
+
+	/**
+	 *
+	 * @param cs a character sequence
+	 * @param pos return by parameter, int[0]= pos, int[1]= -1/1 strand
+	 * @return String with chromosome
+	 */
 	public String getMatchPos(ByteArrayCharSequence cs, int[] pos) {
 		
 		Matcher m= pattMM.matcher(cs);	// find mismatches
