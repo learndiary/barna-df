@@ -3,9 +3,9 @@
  */
 if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password')){
     artifactory {
-         contextUrl = 'http://barnaserver.com/artifactory'
+         contextUrl = 'http://sammeth.net/artifactory'
          publish {
-             contextUrl = 'http://barnaserver.com/artifactory'
+             contextUrl = 'http://sammeth.net/artifactory'
              //A closure defining publishing information
              repository {
                  repoKey = 'gradle-barna-devel'   //The Artifactory repository key to publish to
@@ -18,7 +18,7 @@ if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password'
 
          }
          resolve {
-             contextUrl = 'http://barnaserver.com/artifactory'   //The base Artifactory URL for the resolver
+             contextUrl = 'http://sammeth.net/artifactory'   //The base Artifactory URL for the resolver
              repository {
                  repoKey = 'repo'  //The Artifactory (preferably virtual) repository key to resolve from
                  maven = true                //Resolve Maven-style artifacts and descriptors (true by default)
@@ -38,7 +38,7 @@ if(hasProperty('jip_artifactory_user') && hasProperty('jip_artifactory_password'
                 contributors{
                     contributor{
                         name "Michael Sammeth"
-                        email "gmicha@googlemail.com"
+                        email "micha@sammeth.net"
                     }
                     contributor{
                         name "Thasso Griebel"
