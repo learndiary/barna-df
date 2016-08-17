@@ -103,9 +103,9 @@ public class AStaSettings extends AStalavistaSettings {
      * Types of alternative splicing can either be &quot;internal&quot;
      * and delimited by two common sites, or &quot;external&quot;
      * comprising at least one alternative splice site in addition
-     * to alternative 5&apos;- or 3&apos; transcript structures.</li>
+     * to alternative 5&#8217;- or 3&#8217; transcript structures.</li>
      * extending transcript structures by additional (splice) sites
-     * to the 5&apos;- or the 3&apos;-end</li>
+     * to the 5&#8217;- or the 3&#8217;-end</li>
      * <li>DS= additional splicing that are flanked by a common site and</li>
      * <li>VS= variable sites is any other form of sites that differ
      * between overlapping transcript structures</li>
