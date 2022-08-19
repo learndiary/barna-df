@@ -15,7 +15,7 @@ can be done.
 Everything else such as documentation, issue tracker and etc. please see
 original Barna project home on "https://confluence.sammeth.net/".
 
-2. How to building from source on Linux?
+2. How to build project from source on Linux?
 
 # Prepare environment
 Please make sure that you have a full jdk version 1.6 or above installed, i.e.,
