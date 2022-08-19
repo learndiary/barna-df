@@ -1,0 +1,100 @@
+diff -urN barna/barna.astalavista/build.gradle barna-df/barna.astalavista/build.gradle
+--- barna/barna.astalavista/build.gradle	2021-12-25 19:17:27.810902032 +0800
++++ barna-df/barna.astalavista/build.gradle	2021-12-31 11:46:10.491305860 +0800
+@@ -6,8 +6,10 @@
+     compile project(':barna.commons')
+     compile project(':barna.io')
+     compile project(':barna.model')
+-    compile 'sTASSEL:sTASSEL:1.0'
+-    compile 'ledatastream:ledatastream:1.0'
++    //compile 'sTASSEL:sTASSEL:1.0'
++    compile files('../patch/libs/sTASSEL-3.0.174.jar')
++    //compile 'ledatastream:ledatastream:1.0'
++    compile files('../patch/libs/apktool-lib-1.4.4-3.jar')
+     compile 'org.freehep:freehep-io:2.1'
+     compile 'org.freehep:freehep-graphicsio-swf:2.1.3'
+     compile 'org.freehep:freehep-graphicsio-svg:2.1.3'
+diff -urN barna/barna.commons/build.gradle barna-df/barna.commons/build.gradle
+--- barna/barna.commons/build.gradle	2021-12-25 19:17:28.410869956 +0800
++++ barna-df/barna.commons/build.gradle	2021-12-31 11:46:10.491305860 +0800
+@@ -7,7 +7,8 @@
+     compile 'org.reflections:reflections:0.9.5'
+     compile 'org.slf4j:slf4j-nop:1.6.1'
+     compile 'com.martiansoftware:jsap:2.1'
+-    compile 'net.sf.samtools:samtools:1.79'
++    //compile 'net.sf.samtools:samtools:1.79'
++    compile files('../patch/libs/samtools-1.93.jar')
+ }
+ 
+ configurations{
+diff -urN barna/barna.simulator/build.gradle barna-df/barna.simulator/build.gradle
+--- barna/barna.simulator/build.gradle	2021-12-25 19:17:28.458867390 +0800
++++ barna-df/barna.simulator/build.gradle	2021-12-31 11:46:10.491305860 +0800
+@@ -23,7 +23,8 @@
+ }
+ 
+ dependencies{
+-    compile "jdbm:jdbm:2.3"
++    //compile "jdbm:jdbm:2.3"
++    compile "jdbm:jdbm:2.4"
+     compile project(":barna.model")
+     compile project(":barna.io")
+     compile project(":barna.commons")
+diff -urN barna/build.gradle barna-df/build.gradle
+--- barna/build.gradle	2021-12-25 19:17:28.594860118 +0800
++++ barna-df/build.gradle	2021-12-31 11:46:55.902100696 +0800
+@@ -53,10 +53,14 @@
+     
+     group "barna"
+ 	repositories {
+-	    mavenCentral()
+-		maven {
+-		    url "http://artifactory.sammeth.net/artifactory/repo"
+-		}
++	    //mavenCentral()
++		//maven {
++		    //url "http://artifactory.sammeth.net/artifactory/repo"
++		//}
++            maven { url "https://repo1.maven.org/maven2/" }
++            maven { url "https://plugins.gradle.org/m2/" }
++            maven { url "http://hadoop-bam.sourceforge.net/maven/" }
++            maven { url "https://maven.aliyun.com/repository/public" }
+ 	}
+ }
+ 
+@@ -65,7 +69,7 @@
+ subprojects{
+     apply plugin: 'java'
+     apply plugin: 'maven'
+-    apply plugin: 'artifactory'
++    //apply plugin: 'artifactory'
+     apply plugin: 'eclipse'
+     apply plugin: 'project-report'
+ 
+@@ -141,10 +145,15 @@
+ */
+ buildscript {
+     repositories {
+-        maven { url 'http://repo.jfrog.org/artifactory/gradle-plugins' }
++        //maven { url 'http://repo.jfrog.org/artifactory/gradle-plugins' }
++        maven { url "https://repo1.maven.org/maven2/" }
++        maven { url "https://plugins.gradle.org/m2/" }
++        maven { url "http://hadoop-bam.sourceforge.net/maven/" }
++        maven { url "https://maven.aliyun.com/repository/public" }
+     }
+     dependencies {
+-        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.12')
++        //classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.12')
++        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.2.5')
+     }
+ }
+ 
+diff -urN barna/gradle/wrapper/gradle-wrapper.properties barna-df/gradle/wrapper/gradle-wrapper.properties
+--- barna/gradle/wrapper/gradle-wrapper.properties	2021-12-25 19:17:28.594860118 +0800
++++ barna-df/gradle/wrapper/gradle-wrapper.properties	2021-12-31 11:46:10.491305860 +0800
+@@ -3,4 +3,4 @@
+ distributionPath=wrapper/dists
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+-distributionUrl=http\://services.gradle.org/distributions/gradle-1.2-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-1.2-bin.zip
