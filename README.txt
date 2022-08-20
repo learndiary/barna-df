@@ -18,7 +18,7 @@ original Barna project home on "https://confluence.sammeth.net/".
 2. How to build project from source on Linux?
 
 # Prepare environment
-Please make sure that you have a full jdk version 1.6 or above installed, i.e.,
+Please make sure that you have a full jdk version 1.7 or 1.8 installed, i.e.,
 not just a runtime environment without the 'javac' compiler binary. You can
 check the presence of the compiler commnd in JAVA_HOME/bin. Also make sure that
 the JAVA_HOME environment variable is set to the root folder of your Java
